@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-  
 }: Readonly<{
   children: React.ReactNode;
 }>) {
@@ -27,7 +26,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >      
+      >
         {children}
       </body>
     </html>

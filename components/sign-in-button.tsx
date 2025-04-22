@@ -1,16 +1,54 @@
-"use client"
+"use client";
 
 import { signIn } from "@/lib/auth-client";
 import { Button } from "./ui/button";
+import Image from "next/image";
+import { MicrosoftButton } from "./ui/microsoft-signin-button";
+import { LogOut } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
-export const signInGitHub = async () => {
+export const signInGitHub = async (callback: string) => {
   const data = await signIn.social({
-      provider: "github",
-      callbackURL: "/private"
+    provider: "github",
+    callbackURL: callback,
   });
   return data;
 };
 
-export function SignInButton() {
-    return (<Button onClick={signInGitHub}>Please Login</Button>)
+export function SignInMicrosoft() {
+  const searchParams = useSearchParams();
+
+  const callbackURL =
+    searchParams.get("callbackurl") == null
+      ? "/private"
+      : (searchParams.get("callbackurl") as string);
+
+  return (
+    <>
+      <MicrosoftButton
+        onClick={() => signInGitHub(callbackURL)}
+        variant={"light"}
+      >
+        <Image
+          src="/images/ms-symbollockup_mssymbol_19.svg"
+          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+          width={21}
+          height={21}
+        />
+        Sign in with Microsoft
+      </MicrosoftButton>
+      <MicrosoftButton
+        onClick={() => signInGitHub(callbackURL)}
+        variant={"dark"}
+      >
+        <Image
+          src="/images/ms-symbollockup_mssymbol_19.svg"
+          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+          width={21}
+          height={21}
+        />
+        Sign in with Microsoft
+      </MicrosoftButton>
+    </>
+  );
 }

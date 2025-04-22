@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
 import Image from "next/image";
 
 import {
-  BookOpen,
+  Calendar,
   Bot,
   Command,
   Frame,
@@ -15,12 +15,12 @@ import {
   Send,
   Settings2,
   SquareTerminal,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/nav-main";
+import { NavProjects } from "@/components/nav-projects";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -29,73 +29,33 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { useSession } from "@/lib/auth-client";
+import Link from "next/link";
 
 const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    image: "/avatars/shadcn.jpg",
   },
   navMain: [
     {
-      title: "Playground",
+      title: "Bookings",
       url: "#",
-      icon: SquareTerminal,
+      icon: Calendar,
       isActive: true,
       items: [
         {
-          title: "History",
+          title: "View Calendar",
+          url: "/private/viewcalendar",
+        },
+        {
+          title: "View Booking Details",
           url: "#",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
+          title: "Manage Bookings",
           url: "#",
         },
       ],
@@ -106,19 +66,15 @@ const data = {
       icon: Settings2,
       items: [
         {
-          title: "General",
+          title: "Add Room",
           url: "#",
         },
         {
-          title: "Team",
+          title: "Add User",
           url: "#",
         },
         {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
+          title: "Manage Permissions",
           url: "#",
         },
       ],
@@ -131,7 +87,7 @@ const data = {
       icon: LifeBuoy,
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -143,21 +99,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
+              <Link href="/private">
                 <div className="flex aspect-square size-8 items-center justify-center">
                   <Image
-                      src="/city-shield-wreath-cmyk.svg"
-                      alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-                      width={32}
-                      height={32}
-                    />
+                    src="/images/city-shield-wreath-cmyk.svg"
+                    alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+                    width={32}
+                    height={32}
+                  />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Room Scheduling/Booking</span>
-                  <span className="cenet text-xs">The City of Sault Ste. Marie</span>
+                  <span className="truncate font-medium">
+                    Room Scheduling/Booking
+                  </span>
+                  <span className="cenet text-xs">
+                    The City of Sault Ste. Marie
+                  </span>
                 </div>
-                
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -169,5 +128,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

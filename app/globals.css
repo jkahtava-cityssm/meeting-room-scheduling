@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+.microsoft-light {
+  color: #ffffff;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 15px;
+  font-display: "Segoe UI", sans-serif;
+}
+
+.microsoft-dark {
+  color: #5e5e5e;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 15px;
+  font-display: "Segoe UI", sans-serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

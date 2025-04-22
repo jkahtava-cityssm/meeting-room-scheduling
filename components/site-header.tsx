@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { SidebarIcon } from "lucide-react"
+import { SidebarIcon } from "lucide-react";
 
-import { SearchForm } from "@/components/search-form"
+import { SearchForm } from "@/components/search-form";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,23 +10,26 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { useSidebar } from "@/components/ui/sidebar"
-import { NavUser } from "./nav-user"
-
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-}
-
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useSidebar } from "@/components/ui/sidebar";
+import { NavUser } from "./nav-user";
+import { useSession } from "@/lib/auth-client";
 
 export function SiteHeader() {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar } = useSidebar();
+  const { data: session, isPending } = useSession();
+  console.log(isPending);
+  console.log(session?.user);
+
+  const user = {
+    name: session?.user.name == null ? "unknown" : session?.user.name,
+    email: session?.user.email == null ? "unknown" : session?.user.email,
+    image: session?.user.image == null ? "emptyImage" : session?.user.image,
+  };
+
+  console.log(user);
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
@@ -53,9 +56,10 @@ export function SiteHeader() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <SearchForm className="w-full sm:ml-auto sm:w-auto" />
-       
+        <div className="w-full sm:ml-auto sm:w-auto">
+          <NavUser user={user} isPending={isPending} />
+        </div>
       </div>
     </header>
-  )
+  );
 }
