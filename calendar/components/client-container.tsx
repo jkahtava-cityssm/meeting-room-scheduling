@@ -13,13 +13,14 @@ import { CalendarDayView } from "@/calendar/components/week-and-day-view/calenda
 import { CalendarWeekView } from "@/calendar/components/week-and-day-view/calendar-week-view";
 
 import type { TCalendarView } from "@/calendar/types";
+import { splitMultiDayEvents } from "../helpers";
 
 interface IProps {
   view: TCalendarView;
 }
 
 export function ClientContainer({ view }: IProps) {
-  const { selectedDate, selectedUserId, events } = useCalendar();
+  const { selectedDate, selectedRoomId, events, visibleHours } = useCalendar();
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -28,41 +29,17 @@ export function ClientContainer({ view }: IProps) {
 
       if (view === "year") {
         const yearStart = new Date(selectedDate.getFullYear(), 0, 1);
-        const yearEnd = new Date(
-          selectedDate.getFullYear(),
-          11,
-          31,
-          23,
-          59,
-          59,
-          999
-        );
-        const isInSelectedYear =
-          eventStartDate <= yearEnd && eventEndDate >= yearStart;
-        const isUserMatch =
-          selectedUserId === "all" || event.user.id === selectedUserId;
+        const yearEnd = new Date(selectedDate.getFullYear(), 11, 31, 23, 59, 59, 999);
+        const isInSelectedYear = eventStartDate <= yearEnd && eventEndDate >= yearStart;
+        const isUserMatch = selectedRoomId === "all" || event.room.id === selectedRoomId;
         return isInSelectedYear && isUserMatch;
       }
 
       if (view === "month" || view === "agenda") {
-        const monthStart = new Date(
-          selectedDate.getFullYear(),
-          selectedDate.getMonth(),
-          1
-        );
-        const monthEnd = new Date(
-          selectedDate.getFullYear(),
-          selectedDate.getMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-          999
-        );
-        const isInSelectedMonth =
-          eventStartDate <= monthEnd && eventEndDate >= monthStart;
-        const isUserMatch =
-          selectedUserId === "all" || event.user.id === selectedUserId;
+        const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59, 999);
+        const isInSelectedMonth = eventStartDate <= monthEnd && eventEndDate >= monthStart;
+        const isUserMatch = selectedRoomId === "all" || event.room.id === selectedRoomId;
         return isInSelectedMonth && isUserMatch;
       }
 
@@ -77,22 +54,13 @@ export function ClientContainer({ view }: IProps) {
         weekEnd.setDate(weekStart.getDate() + 6);
         weekEnd.setHours(23, 59, 59, 999);
 
-        const isInSelectedWeek =
-          eventStartDate <= weekEnd && eventEndDate >= weekStart;
-        const isUserMatch =
-          selectedUserId === "all" || event.user.id === selectedUserId;
+        const isInSelectedWeek = eventStartDate <= weekEnd && eventEndDate >= weekStart;
+        const isUserMatch = selectedRoomId === "all" || event.room.id === selectedRoomId;
         return isInSelectedWeek && isUserMatch;
       }
 
       if (view === "day") {
-        const dayStart = new Date(
-          selectedDate.getFullYear(),
-          selectedDate.getMonth(),
-          selectedDate.getDate(),
-          0,
-          0,
-          0
-        );
+        const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0);
         const dayEnd = new Date(
           selectedDate.getFullYear(),
           selectedDate.getMonth(),
@@ -101,14 +69,12 @@ export function ClientContainer({ view }: IProps) {
           59,
           59
         );
-        const isInSelectedDay =
-          eventStartDate <= dayEnd && eventEndDate >= dayStart;
-        const isUserMatch =
-          selectedUserId === "all" || event.user.id === selectedUserId;
+        const isInSelectedDay = eventStartDate <= dayEnd && eventEndDate >= dayStart;
+        const isUserMatch = selectedRoomId === "all" || event.room.id === selectedRoomId;
         return isInSelectedDay && isUserMatch;
       }
     });
-  }, [selectedDate, selectedUserId, events, view]);
+  }, [selectedDate, selectedRoomId, events, view]);
 
   const singleDayEvents = filteredEvents.filter((event) => {
     const startDate = parseISO(event.startDate);
@@ -122,6 +88,7 @@ export function ClientContainer({ view }: IProps) {
     return !isSameDay(startDate, endDate);
   });
 
+  const combinedDayEvents = [...singleDayEvents, ...splitMultiDayEvents(multiDayEvents, visibleHours)];
   // For year view, we only care about the start date
   // by using the same date for both start and end,
   // we ensure only the start day will show a dot
@@ -135,31 +102,11 @@ export function ClientContainer({ view }: IProps) {
   return (
     <div className="overflow-hidden rounded-xl border">
       <CalendarHeader view={view} events={filteredEvents} />
-      {view === "day" && (
-        <CalendarDayView
-          singleDayEvents={singleDayEvents}
-          multiDayEvents={multiDayEvents}
-        />
-      )}
-      {view === "month" && (
-        <CalendarMonthView
-          singleDayEvents={singleDayEvents}
-          multiDayEvents={multiDayEvents}
-        />
-      )}
-      {view === "week" && (
-        <CalendarWeekView
-          singleDayEvents={singleDayEvents}
-          multiDayEvents={multiDayEvents}
-        />
-      )}
+      {view === "day" && <CalendarDayView singleDayEvents={combinedDayEvents} multiDayEvents={multiDayEvents} />}
+      {view === "month" && <CalendarMonthView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
+      {view === "week" && <CalendarWeekView singleDayEvents={combinedDayEvents} multiDayEvents={multiDayEvents} />}
       {view === "year" && <CalendarYearView allEvents={eventStartDates} />}
-      {view === "agenda" && (
-        <CalendarAgendaView
-          singleDayEvents={singleDayEvents}
-          multiDayEvents={multiDayEvents}
-        />
-      )}
+      {view === "agenda" && <CalendarAgendaView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
     </div>
   );
 }

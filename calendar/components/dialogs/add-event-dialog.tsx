@@ -12,21 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 //import { TimeInput } from "@/components/ui/time-input";
 import { SingleDayPicker } from "@/components/ui/single-day-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Form,
-  FormField,
-  FormLabel,
-  FormItem,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectItem,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogHeader,
@@ -50,7 +37,7 @@ interface IProps {
 }
 
 export function AddEventDialog({ children, startDate, startTime }: IProps) {
-  const { users } = useCalendar();
+  const { rooms } = useCalendar();
 
   const { isOpen, onClose, onToggle } = useDisclosure();
 
@@ -78,20 +65,16 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
         <DialogHeader>
           <DialogTitle>Add New Event</DialogTitle>
           <DialogDescription>
-            This is just and example of how to use the form. In a real
-            application, you would call the API to create the event
+            This is just and example of how to use the form. In a real application, you would call the API to create the
+            event
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            id="event-form"
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="grid gap-4 py-4"
-          >
+          <form id="event-form" onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
             <FormField
               control={form.control}
-              name="user"
+              name="room"
               render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel>Responsible</FormLabel>
@@ -102,24 +85,15 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
                       </SelectTrigger>
 
                       <SelectContent>
-                        {users.map((user) => (
-                          <SelectItem
-                            key={user.id}
-                            value={user.id}
-                            className="flex-1"
-                          >
+                        {rooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id} className="flex-1">
                             <div className="flex items-center gap-2">
-                              <Avatar key={user.id} className="size-6">
-                                <AvatarImage
-                                  src={user.picturePath ?? undefined}
-                                  alt={user.name}
-                                />
-                                <AvatarFallback className="text-xxs">
-                                  {user.name[0]}
-                                </AvatarFallback>
+                              <Avatar key={room.id} className="size-6">
+                                <AvatarImage src={room.picturePath ?? undefined} alt={room.name} />
+                                <AvatarFallback className="text-xxs">{room.name[0]}</AvatarFallback>
                               </Avatar>
 
-                              <p className="truncate">{user.name}</p>
+                              <p className="truncate">{room.name}</p>
                             </div>
                           </SelectItem>
                         ))}
@@ -139,12 +113,7 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
                   <FormLabel htmlFor="title">Title</FormLabel>
 
                   <FormControl>
-                    <Input
-                      id="title"
-                      placeholder="Enter a title"
-                      data-invalid={fieldState.invalid}
-                      {...field}
-                    />
+                    <Input id="title" placeholder="Enter a title" data-invalid={fieldState.invalid} {...field} />
                   </FormControl>
 
                   <FormMessage />
@@ -313,11 +282,7 @@ export function AddEventDialog({ children, startDate, startTime }: IProps) {
                   <FormLabel>Description</FormLabel>
 
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      value={field.value}
-                      data-invalid={fieldState.invalid}
-                    />
+                    <Textarea {...field} value={field.value} data-invalid={fieldState.invalid} />
                   </FormControl>
 
                   <FormMessage />

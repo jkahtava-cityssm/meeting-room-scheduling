@@ -3,17 +3,15 @@
 import { createContext, useContext, useState } from "react";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { IEvent, IUser } from "@/calendar/interfaces";
-import type { TBadgeVariant, TVisibleHours, TWorkingHours } from "@/calendar/types";
+import type { IEvent, IRoom } from "@/calendar/interfaces";
+import type { TVisibleHours, TWorkingHours } from "@/calendar/types";
 
 interface ICalendarContext {
   selectedDate: Date;
   setSelectedDate: (date: Date | undefined) => void;
-  selectedUserId: IUser["id"] | "all";
-  setSelectedUserId: (userId: IUser["id"] | "all") => void;
-  badgeVariant: TBadgeVariant;
-  setBadgeVariant: (variant: TBadgeVariant) => void;
-  users: IUser[];
+  selectedRoomId: IRoom["id"] | "all";
+  setSelectedRoomId: (roomId: IRoom["id"] | "all") => void;
+  rooms: IRoom[];
   workingHours: TWorkingHours;
   setWorkingHours: Dispatch<SetStateAction<TWorkingHours>>;
   visibleHours: TVisibleHours;
@@ -36,13 +34,20 @@ const WORKING_HOURS = {
 
 const VISIBLE_HOURS = { from: 7, to: 18 };
 
-export function CalendarProvider({ children, users, events }: { children: React.ReactNode; users: IUser[]; events: IEvent[] }) {
-  const [badgeVariant, setBadgeVariant] = useState<TBadgeVariant>("colored");
+export function CalendarProvider({
+  children,
+  rooms,
+  events,
+}: {
+  children: React.ReactNode;
+  rooms: IRoom[];
+  events: IEvent[];
+}) {
   const [visibleHours, setVisibleHours] = useState<TVisibleHours>(VISIBLE_HOURS);
   const [workingHours, setWorkingHours] = useState<TWorkingHours>(WORKING_HOURS);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedUserId, setSelectedUserId] = useState<IUser["id"] | "all">("all");
+  const [selectedRoomId, setSelectedRoomId] = useState<IRoom["id"] | "all">("all");
 
   // This localEvents doesn't need to exists in a real scenario.
   // It's used here just to simulate the update of the events.
@@ -60,11 +65,9 @@ export function CalendarProvider({ children, users, events }: { children: React.
       value={{
         selectedDate,
         setSelectedDate: handleSelectDate,
-        selectedUserId,
-        setSelectedUserId,
-        badgeVariant,
-        setBadgeVariant,
-        users,
+        selectedRoomId,
+        setSelectedRoomId,
+        rooms,
         visibleHours,
         setVisibleHours,
         workingHours,

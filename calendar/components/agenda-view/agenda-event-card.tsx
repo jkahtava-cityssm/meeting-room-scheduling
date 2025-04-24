@@ -2,7 +2,7 @@
 
 import { format, parseISO } from "date-fns";
 import { cva } from "class-variance-authority";
-import { Clock, Text, User } from "lucide-react";
+import { Book, Clock, Text, User } from "lucide-react";
 
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 
@@ -30,20 +30,13 @@ const agendaEventCardVariants = cva(
         gray: "border-neutral-200 bg-neutral-50 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 [&_.event-dot]:fill-neutral-600",
 
         // Dot variants
-        "blue-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-blue-600",
-        "green-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-green-600",
-        "red-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-red-600",
-        "orange-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-orange-600",
-        "purple-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-purple-600",
-        "yellow-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-yellow-600",
-        "gray-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-neutral-600",
+        "blue-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-blue-600",
+        "green-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-green-600",
+        "red-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-red-600",
+        "orange-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-orange-600",
+        "purple-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-purple-600",
+        "yellow-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-yellow-600",
+        "gray-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-neutral-600",
       },
     },
     defaultVariants: {
@@ -58,22 +51,18 @@ interface IProps {
   eventTotalDays?: number;
 }
 
-export function AgendaEventCard({
-  event,
-  eventCurrentDay,
-  eventTotalDays,
-}: IProps) {
-  const { badgeVariant } = useCalendar();
+export function AgendaEventCard({ event, eventCurrentDay, eventTotalDays }: IProps) {
+  //const { badgeVariant } = useCalendar();
 
   const startDate = parseISO(event.startDate);
   const endDate = parseISO(event.endDate);
-
-  const color = (
-    badgeVariant === "dot" ? `${event.color}-dot` : event.color
-  ) as VariantProps<typeof agendaEventCardVariants>["color"];
+  /*
+  const color = (badgeVariant === "dot" ? `${event.color}-dot` : event.color) as VariantProps<
+    typeof agendaEventCardVariants
+  >["color"];
 
   const agendaEventCardClasses = agendaEventCardVariants({ color });
-
+*/
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -86,21 +75,15 @@ export function AgendaEventCard({
       <div
         role="button"
         tabIndex={0}
-        className={agendaEventCardClasses}
+        //className={agendaEventCardClasses}
+        color={event.room.color}
         onKeyDown={handleKeyDown}
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5">
-            {["mixed", "dot"].includes(badgeVariant) && (
-              <svg
-                width="8"
-                height="8"
-                viewBox="0 0 8 8"
-                className="event-dot shrink-0"
-              >
-                <circle cx="4" cy="4" r="4" />
-              </svg>
-            )}
+            <svg width="8" height="8" viewBox="0 0 8 8" className="event-dot shrink-0">
+              <circle cx="4" cy="4" r="4" />
+            </svg>
 
             <p className="font-medium">
               {eventCurrentDay && eventTotalDays && (
@@ -113,8 +96,8 @@ export function AgendaEventCard({
           </div>
 
           <div className="mt-1 flex items-center gap-1">
-            <User className="size-3 shrink-0" />
-            <p className="text-xs text-foreground">{event.user.name}</p>
+            <Book className="size-3 shrink-0" />
+            <p className="text-xs text-foreground">{event.room.name}</p>
           </div>
 
           <div className="flex items-center gap-1">

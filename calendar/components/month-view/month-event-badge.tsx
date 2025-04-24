@@ -29,26 +29,17 @@ const eventBadgeVariants = cva(
         gray: "border-neutral-200 bg-neutral-50 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 [&_.event-dot]:fill-neutral-600",
 
         // Dot variants
-        "blue-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-blue-600",
-        "green-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-green-600",
-        "red-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-red-600",
-        "yellow-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-yellow-600",
-        "purple-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-purple-600",
-        "orange-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-orange-600",
-        "gray-dot":
-          "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-neutral-600",
+        "blue-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-blue-600",
+        "green-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-green-600",
+        "red-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-red-600",
+        "yellow-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-yellow-600",
+        "purple-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-purple-600",
+        "orange-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-orange-600",
+        "gray-dot": "bg-neutral-50 dark:bg-neutral-900 [&_.event-dot]:fill-neutral-600",
       },
       multiDayPosition: {
-        first:
-          "relative z-10 mr-0 w-[calc(100%_-_3px)] rounded-r-none border-r-0 [&>span]:mr-2.5",
-        middle:
-          "relative z-10 mx-0 w-[calc(100%_+_1px)] rounded-none border-x-0",
+        first: "relative z-10 mr-0 w-[calc(100%_-_3px)] rounded-r-none border-r-0 [&>span]:mr-2.5",
+        middle: "relative z-10 mx-0 w-[calc(100%_+_1px)] rounded-none border-x-0",
         last: "ml-0 rounded-l-none border-l-0",
         none: "",
       },
@@ -59,11 +50,7 @@ const eventBadgeVariants = cva(
   }
 );
 
-interface IProps
-  extends Omit<
-    VariantProps<typeof eventBadgeVariants>,
-    "color" | "multiDayPosition"
-  > {
+interface IProps extends Omit<VariantProps<typeof eventBadgeVariants>, "color" | "multiDayPosition"> {
   event: IEvent;
   cellDate: Date;
   eventCurrentDay?: number;
@@ -80,8 +67,6 @@ export function MonthEventBadge({
   className,
   position: propPosition,
 }: IProps) {
-  const { badgeVariant } = useCalendar();
-
   const itemStart = startOfDay(parseISO(event.startDate));
   const itemEnd = endOfDay(parseISO(event.endDate));
 
@@ -105,13 +90,13 @@ export function MonthEventBadge({
 
   const renderBadgeText = ["first", "none"].includes(position);
 
-  const color = (
+  /*const color = (
     badgeVariant === "dot" ? `${event.color}-dot` : event.color
   ) as VariantProps<typeof eventBadgeVariants>["color"];
 
   const eventBadgeClasses = cn(
     eventBadgeVariants({ color, multiDayPosition: position, className })
-  );
+  );*/
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -125,21 +110,14 @@ export function MonthEventBadge({
       <div
         role="button"
         tabIndex={0}
-        className={eventBadgeClasses}
+        color={event.room.color}
+        //className={eventBadgeClasses}
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-center gap-1.5 truncate">
-          {!["middle", "last"].includes(position) &&
-            ["mixed", "dot"].includes(badgeVariant) && (
-              <svg
-                width="8"
-                height="8"
-                viewBox="0 0 8 8"
-                className="event-dot shrink-0"
-              >
-                <circle cx="4" cy="4" r="4" />
-              </svg>
-            )}
+          <svg width="8" height="8" viewBox="0 0 8 8" className="event-dot shrink-0">
+            <circle cx="4" cy="4" r="4" />
+          </svg>
 
           {renderBadgeText && (
             <p className="flex-1 truncate font-semibold">
@@ -153,9 +131,7 @@ export function MonthEventBadge({
             </p>
           )}
         </div>
-        {renderBadgeText && (
-          <span>{format(new Date(event.startDate), "h:mm a")}</span>
-        )}
+        {renderBadgeText && <span>{format(new Date(event.startDate), "h:mm a")}</span>}
       </div>
     </EventDetailsDialog>
   );

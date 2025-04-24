@@ -1,32 +1,102 @@
-import type { TEventColor } from "@/calendar/types";
-import type { IEvent, IUser } from "@/calendar/interfaces";
+import type { TColors } from "@/calendar/types";
+import type { IEvent, IRoom } from "@/calendar/interfaces";
+import { description } from "@/app/private/layout";
 
 // ================================== //
 
-export const USERS_MOCK: IUser[] = [
+export const CALENDAR_ROOMS_MOCK: IRoom[] = [
   {
-    id: "dd503cf9-6c38-43cf-94cc-0d4032e2f77a",
-    name: "Leonardo Ramos",
+    id: "1",
+    name: "Algoma Board Room",
     picturePath: null,
+    color: "red",
   },
   {
-    id: "f3b035ac-49f7-4e92-a715-35680bf63175",
-    name: "Michael Doe",
+    id: "2",
+    name: "Biggings Room",
     picturePath: null,
+    color: "orange",
   },
   {
-    id: "3e36ea6e-78f3-40dd-ab8c-a6c737c3c422",
-    name: "Alice Johnson",
+    id: "3",
+    name: "Cafeteria",
     picturePath: null,
+    color: "amber",
   },
   {
-    id: "a7aff6bd-a50a-4d6a-ab57-76f76bb27cf5",
-    name: "Robert Smith",
+    id: "4",
+    name: "Council Chambers",
     picturePath: null,
+    color: "yellow",
+  },
+  {
+    id: "5",
+    name: "H.C. Hamilton Room",
+    picturePath: null,
+    color: "lime",
+  },
+  {
+    id: "6",
+    name: "Korah Room",
+    picturePath: null,
+    color: "green",
+  },
+  {
+    id: "7",
+    name: "Penthouse",
+    picturePath: null,
+    color: "emerald",
+  },
+  {
+    id: "8",
+    name: "W.J. Thompson Room",
+    picturePath: null,
+    color: "teal",
+  },
+  {
+    id: "9",
+    name: "Plummer Room",
+    picturePath: null,
+    color: "cyan",
+  },
+  {
+    id: "10",
+    name: "Steelton Room",
+    picturePath: null,
+    color: "sky",
+  },
+  {
+    id: "11",
+    name: "Tarentarus Room",
+    picturePath: null,
+    color: "blue",
   },
 ];
 
-const COLORS: TEventColor[] = ["blue", "green", "red", "yellow", "purple", "orange", "gray"];
+const COLORS: TColors[] = [
+  "red",
+  "orange",
+  "amber",
+  "yellow",
+  "lime",
+  "green",
+  "emerald",
+  "teal",
+  "cyan",
+  "sky",
+  "blue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "pink",
+  "rose",
+  "slate",
+  "gray",
+  "zinc",
+  "neutral",
+  "stone",
+];
 
 const EVENTS = [
   "Doctor's appointment",
@@ -117,9 +187,18 @@ const EVENTS = [
   "Home renovation meeting",
 ];
 
+const description = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla mollis eget ipsum id tristique. Donec in orci in nisl bibendum fermentum. Donec ac enim risus. Fusce sagittis, magna id aliquam viverra, nibh dui posuere mauris, id malesuada libero libero sit amet sem. Suspendisse potenti. Donec ac ante nisi. Nulla a lobortis odio, eget condimentum nisl. Vivamus dictum, augue at vulputate eleifend, nisi mauris dignissim libero, faucibus vehicula tellus urna sed leo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur vitae posuere nibh, id accumsan ante. Suspendisse ac quam ipsum. Sed vestibulum tortor eget risus mattis, ut cursus est finibus. Aenean id felis vel erat porttitor pretium at non leo.
+Donec non odio lorem. Vestibulum mattis erat vel gravida interdum. Ut non porta orci. Integer efficitur magna at maximus faucibus. Donec hendrerit dolor vel nulla posuere, vitae rutrum metus suscipit. Fusce blandit elit quis risus sodales maximus. Phasellus placerat vulputate dui luctus facilisis. Nunc sed dignissim velit. Etiam non sapien lacus. Donec nec felis tincidunt, maximus ligula eu, tempor eros. Aenean non porttitor eros. Phasellus laoreet rutrum libero et iaculis.
+Praesent scelerisque, nisl eget venenatis suscipit, risus ante consectetur arcu, a cursus ipsum neque ut justo. Mauris enim tellus, mattis quis ultrices id, aliquet eget sem. Pellentesque eu mauris non odio ultricies gravida. Nam mi nisi, commodo vitae vulputate eget, convallis quis libero. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Phasellus eu augue imperdiet, convallis metus in, facilisis ante. Duis faucibus urna vel lacus cursus, dictum ullamcorper nunc iaculis. Donec vitae dolor quis odio semper euismod maximus vitae ex. In hac habitasse platea dictumst. Nulla ac auctor urna. Nullam purus metus, aliquam nec interdum quis, convallis ut purus. Phasellus nec posuere felis, sit amet sagittis est. Duis tincidunt tortor nec lectus tincidunt aliquam. Aliquam erat volutpat.
+Pellentesque sagittis, augue non facilisis bibendum, metus mauris blandit dolor, sed lobortis sem enim id lorem. Nulla porttitor ut velit nec malesuada. Suspendisse ut feugiat urna. Vestibulum maximus ut tortor eget lobortis. Sed ac cursus risus, non vehicula purus. Sed ex quam, hendrerit vel tincidunt ut, tincidunt a massa. Proin convallis efficitur purus sit amet dignissim.
+Pellentesque at eleifend mauris. Quisque et eros vitae mi sollicitudin molestie vel sed mi. Curabitur et facilisis dolor, id imperdiet ligula. Nulla id orci id lectus pulvinar porttitor et vitae lectus. Aenean convallis varius tortor vitae lobortis. Aenean ac eleifend quam. Sed non sem quis elit pellentesque porta a in risus. In hac habitasse platea dictumst. Integer volutpat est et lacus iaculis, id suscipit est semper. Cras mauris elit, dignissim vel risus quis, efficitur posuere velit. Etiam ornare ullamcorper interdum.`;
+
 // This was generated by AI -- minus the part where I added my wedding as an "easter egg" :)
 const mockGenerator = (numberOfEvents: number): IEvent[] => {
-  const result: IEvent[] = [
+  const result: IEvent[] = [];
+
+  const descriptionList = description.split(".");
+  /*[
     {
       id: 1204,
       startDate: new Date("2025-09-20T00:00:00-03:00").toISOString(),
@@ -127,13 +206,14 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
       title: "My wedding :)",
       color: "red",
       description: "Can't wait to see the most beautiful woman in that dress!",
-      user: USERS_MOCK[0],
+      subevent: null,
+      room: ROOMS_MOCK[0],
     },
-  ];
+  ];*/
 
   let currentId = 1;
 
-  const randomUser = USERS_MOCK[Math.floor(Math.random() * USERS_MOCK.length)];
+  const randomRoom = CALENDAR_ROOMS_MOCK[Math.floor(Math.random() * CALENDAR_ROOMS_MOCK.length)];
 
   // Date range: 30 days before and after now
   const now = new Date();
@@ -148,9 +228,9 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
     startDate: new Date(now.getTime() - 30 * 60000).toISOString(),
     endDate: new Date(now.getTime() + 30 * 60000).toISOString(),
     title: EVENTS[Math.floor(Math.random() * EVENTS.length)],
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    user: randomUser,
+    description: descriptionList[Math.floor(Math.random() * descriptionList.length)],
+    subevent: null,
+    room: randomRoom,
   };
 
   // Only add the current event if it's not on September 20th
@@ -212,9 +292,9 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       title: EVENTS[Math.floor(Math.random() * EVENTS.length)],
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      user: USERS_MOCK[Math.floor(Math.random() * USERS_MOCK.length)],
+      description: descriptionList[Math.floor(Math.random() * descriptionList.length)],
+      subevent: null,
+      room: CALENDAR_ROOMS_MOCK[Math.floor(Math.random() * CALENDAR_ROOMS_MOCK.length)],
     });
 
     i++;
@@ -223,4 +303,4 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
   return result;
 };
 
-export const CALENDAR_ITENS_MOCK: IEvent[] = mockGenerator(80);
+export const CALENDAR_EVENTS_MOCK: IEvent[] = mockGenerator(80);

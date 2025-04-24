@@ -22,7 +22,7 @@ export function YearViewDayCell({ day, date, events }: IProps) {
 
   const handleClick = () => {
     setSelectedDate(date);
-    push("/day-view");
+    push("day-view");
   };
 
   return (
@@ -43,34 +43,12 @@ export function YearViewDayCell({ day, date, events }: IProps) {
       {eventCount > 0 && (
         <div className="mt-0.5 flex gap-0.5">
           {eventCount <= maxIndicators ? (
-            events.map(event => (
-              <div
-                key={event.id}
-                className={cn(
-                  "size-1.5 rounded-full",
-                  event.color === "blue" && "bg-blue-600",
-                  event.color === "green" && "bg-green-600",
-                  event.color === "red" && "bg-red-600",
-                  event.color === "yellow" && "bg-yellow-600",
-                  event.color === "purple" && "bg-purple-600",
-                  event.color === "orange" && "bg-orange-600",
-                  event.color === "gray" && "bg-neutral-600"
-                )}
-              />
+            events.map((event) => (
+              <div key={event.id} color={event.room.color} className={cn("size-1.5 rounded-full")} />
             ))
           ) : (
             <>
-              <div
-                className={cn(
-                  "size-1.5 rounded-full",
-                  events[0].color === "blue" && "bg-blue-600",
-                  events[0].color === "green" && "bg-green-600",
-                  events[0].color === "red" && "bg-red-600",
-                  events[0].color === "yellow" && "bg-yellow-600",
-                  events[0].color === "purple" && "bg-purple-600",
-                  events[0].color === "orange" && "bg-orange-600"
-                )}
-              />
+              <div color={events[0].room.color} className={cn("size-1.5 rounded-full")} />
               <span className="text-[7px] text-muted-foreground">+{eventCount - 1}</span>
             </>
           )}

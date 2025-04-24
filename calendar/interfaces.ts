@@ -1,9 +1,19 @@
-import type { TEventColor } from "@/calendar/types";
+import type { TColors } from "@/calendar/types";
 
-export interface IUser {
+export interface IRoom {
   id: string;
   name: string;
+  color: TColors;
   picturePath: string | null;
+}
+
+export interface ISubEvent {
+  index: number;
+  startDate: string;
+  endDate: string;
+  title: string;
+  subtitle: string;
+  description: string;
 }
 
 export interface IEvent {
@@ -11,9 +21,9 @@ export interface IEvent {
   startDate: string;
   endDate: string;
   title: string;
-  color: TEventColor;
   description: string;
-  user: IUser;
+  subevent: ISubEvent | null;
+  room: IRoom;
 }
 
 export interface ICalendarCell {

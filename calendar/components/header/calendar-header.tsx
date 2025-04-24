@@ -1,16 +1,9 @@
 import Link from "next/link";
-import {
-  Columns,
-  Grid3x3,
-  List,
-  Plus,
-  Grid2x2,
-  CalendarRange,
-} from "lucide-react";
+import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-import { UserSelect } from "@/calendar/components/header/user-select";
+import { RoomSelect } from "@/calendar/components/header/room-select";
 import { TodayButton } from "@/calendar/components/header/today-button";
 import { DateNavigator } from "@/calendar/components/header/date-navigator";
 import { AddEventDialog } from "@/calendar/components/dialogs/add-event-dialog";
@@ -95,7 +88,7 @@ export function CalendarHeader({ view, events }: IProps) {
             </Button>
           </div>
 
-          <UserSelect />
+          <RoomSelect />
         </div>
 
         <AddEventDialog>

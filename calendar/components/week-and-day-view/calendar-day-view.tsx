@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
 
 import { AddEventDialog } from "@/calendar/components/dialogs/add-event-dialog";
-import { EventBlock } from "@/calendar/components/week-and-day-view/event-block";
+//import { EventBlock } from "@/calendar/components/week-and-day-view/event-block";
 
 import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
 import { DayViewMultiDayEventsRow } from "@/calendar/components/week-and-day-view/day-view-multi-day-events-row";
@@ -23,6 +23,10 @@ import {
 } from "@/calendar/helpers";
 
 import type { IEvent } from "@/calendar/interfaces";
+import { DayHourlyEventDialogs } from "../day-hourly-event-dialogs";
+import { HourColumn } from "../column-hourly";
+import { ColumnDayHeader } from "../column-day-header";
+import { EventBlock } from "../event-block";
 
 interface IProps {
   singleDayEvents: IEvent[];
@@ -30,16 +34,16 @@ interface IProps {
 }
 
 export function CalendarDayView({ singleDayEvents, multiDayEvents }: IProps) {
-  const { selectedDate, setSelectedDate, users, visibleHours, workingHours } = useCalendar();
+  const { selectedDate, setSelectedDate, rooms, visibleHours, workingHours } = useCalendar();
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, singleDayEvents);
 
-  const test = splitMultiDayEvents(multiDayEvents, visibleHours);
+  //const test = splitMultiDayEvents(multiDayEvents, visibleHours);
 
-  singleDayEvents = [...singleDayEvents, ...test];
-  const currentEvents = getCurrentEvents(singleDayEvents);
+  //singleDayEvents = [...singleDayEvents, ...test];
+  const currentEvents = singleDayEvents; //getCurrentEvents(singleDayEvents);
 
-  console.log(singleDayEvents);
+  //console.log(singleDayEvents);
 
   const dayEvents = singleDayEvents.filter((event) => {
     const eventDate = parseISO(event.startDate);
@@ -55,68 +59,17 @@ export function CalendarDayView({ singleDayEvents, multiDayEvents }: IProps) {
   return (
     <div className="flex">
       <div className="flex flex-1 flex-col">
-        <div>
-          <DayViewMultiDayEventsRow selectedDate={selectedDate} multiDayEvents={multiDayEvents} />
+        <ColumnDayHeader weekDays={[selectedDate]} />
 
-          {/* Day header */}
-          <div className="relative z-20 flex border-b">
-            <div className="w-18"></div>
-            <span className="flex-1 border-l py-2 text-center text-xs font-medium text-muted-foreground">
-              {format(selectedDate, "EE")}{" "}
-              <span className="font-semibold text-foreground">{format(selectedDate, "d")}</span>
-            </span>
-          </div>
-        </div>
-
-        <ScrollArea className="h-[800px]" type="always">
-          <div className="flex">
-            {/* Hours column */}
-            <div className="relative w-18">
-              {hours.map((hour, index) => (
-                <div key={hour} className="relative" style={{ height: "96px" }}>
-                  <div className="absolute -top-3 right-2 flex h-6 items-center">
-                    {index !== 0 && (
-                      <span className="text-xs text-muted-foreground">{format(new Date().setHours(hour), "hh a")}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+        <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
+          <div className="flex border-l">
+            {/* Hours column   h-[500px]  */}
+            <HourColumn hours={hours} />
 
             {/* Day grid */}
-            <div className="relative flex-1 border-l">
+            <div className="relative flex-1 border-b">
               <div className="relative">
-                {hours.map((hour, index) => {
-                  const isDisabled = !isWorkingHour(selectedDate, hour, workingHours);
-
-                  return (
-                    <div
-                      key={hour}
-                      className={cn("relative", isDisabled && "bg-calendar-disabled-hour")}
-                      style={{ height: "96px" }}
-                    >
-                      {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b"></div>}
-
-                      <AddEventDialog startDate={selectedDate} startTime={{ hour, minute: 0 }}>
-                        <div className="absolute inset-x-0 top-0 h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                      </AddEventDialog>
-
-                      <AddEventDialog startDate={selectedDate} startTime={{ hour, minute: 15 }}>
-                        <div className="absolute inset-x-0 top-[24px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                      </AddEventDialog>
-
-                      <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed"></div>
-
-                      <AddEventDialog startDate={selectedDate} startTime={{ hour, minute: 30 }}>
-                        <div className="absolute inset-x-0 top-[48px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                      </AddEventDialog>
-
-                      <AddEventDialog startDate={selectedDate} startTime={{ hour, minute: 45 }}>
-                        <div className="absolute inset-x-0 top-[72px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                      </AddEventDialog>
-                    </div>
-                  );
-                })}
+                <DayHourlyEventDialogs hours={hours} day={selectedDate} workingHours={workingHours} />
 
                 {groupedEvents.map((group, groupIndex) =>
                   group.map((event) => {
@@ -145,7 +98,7 @@ export function CalendarDayView({ singleDayEvents, multiDayEvents }: IProps) {
 
                     return (
                       <div key={event.id} className="absolute p-1" style={style}>
-                        <EventBlock event={event} />
+                        <EventBlock event={event} pixelSize={96} />
                       </div>
                     );
                   })
@@ -184,38 +137,44 @@ export function CalendarDayView({ singleDayEvents, multiDayEvents }: IProps) {
           )}
 
           {currentEvents.length > 0 && (
-            <ScrollArea className="h-[422px] px-4" type="always">
-              <div className="space-y-6 pb-4">
-                {currentEvents.map((event) => {
-                  const user = users.find((user) => user.id === event.user.id);
+            <div className="flex">
+              <div className="flex flex-1 flex-col">
+                <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] px-4" type="always">
+                  {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
+                  <div className="space-y-6 pb-4">
+                    {currentEvents.map((event, index) => {
+                      const room = rooms.find((room) => room.id === event.room.id);
 
-                  return (
-                    <div key={event.id} className="space-y-1.5">
-                      <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
+                      return (
+                        <div key={event.id + "-" + index} className="space-y-1.5">
+                          <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
 
-                      {user && (
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <User className="size-3.5" />
-                          <span className="text-sm">{user.name}</span>
+                          {room && (
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <User className="size-3.5" />
+                              <span className="text-sm">{room.name}</span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Calendar className="size-3.5" />
+                            <span className="text-sm">{format(new Date(), "MMM d, yyyy")}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Clock className="size-3.5" />
+                            <span className="text-sm">
+                              {format(parseISO(event.startDate), "h:mm a")} -{" "}
+                              {format(parseISO(event.endDate), "h:mm a")}
+                            </span>
+                          </div>
                         </div>
-                      )}
-
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Calendar className="size-3.5" />
-                        <span className="text-sm">{format(new Date(), "MMM d, yyyy")}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Clock className="size-3.5" />
-                        <span className="text-sm">
-                          {format(parseISO(event.startDate), "h:mm a")} - {format(parseISO(event.endDate), "h:mm a")}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               </div>
-            </ScrollArea>
+            </div>
           )}
         </div>
       </div>

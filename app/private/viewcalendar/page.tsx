@@ -1,35 +1,13 @@
 import AuthProvider from "@/app/component/AuthProvider";
 import { ClientContainer } from "@/calendar/components/client-container";
 import { CalendarProvider } from "@/calendar/contexts/calendar-context";
-import { IEvent, IUser } from "@/calendar/interfaces";
-
-const events: IEvent[] = [
-  {
-    id: 111,
-    title: "string",
-    description: "string",
-    startDate: "2025-01-01", // ISO string
-    endDate: "2025-01-01", // ISO string
-    color: "blue",
-    user: {
-      id: "string",
-      name: "string",
-      picturePath: null,
-    },
-  },
-];
-const users: IUser[] = [
-  {
-    id: "string",
-    name: "string",
-    picturePath: null,
-  },
-];
+import { IEvent, IRoom } from "@/calendar/interfaces";
+import { CALENDAR_EVENTS_MOCK, CALENDAR_ROOMS_MOCK } from "@/calendar/mocks";
 
 export default async function Home() {
   return (
     <AuthProvider>
-      <CalendarProvider events={events} users={users}>
+      <CalendarProvider events={CALENDAR_EVENTS_MOCK} rooms={CALENDAR_ROOMS_MOCK}>
         <div>PRIVATE SUBFOLDER</div>
         <ClientContainer view="month" />
       </CalendarProvider>

@@ -27,6 +27,7 @@ import {
   setHours,
   formatISO,
   set,
+  endOfDay,
 } from "date-fns";
 
 import type { ICalendarCell, IEvent } from "@/calendar/interfaces";
@@ -127,23 +128,30 @@ export function splitMultiDayEvents(events: IEvent[], visibleHours: TVisibleHour
     const currentStartDate = parseISO(element.startDate);
     const currentEndDate = parseISO(element.endDate);
 
-    const totalDaysBetween = differenceInDays(currentEndDate, currentStartDate);
+    const endDay = endOfDay(currentEndDate);
+    const startDay = startOfDay(currentStartDate);
+
+    const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
 
     for (let index = 0; index <= totalDaysBetween; index++) {
       const newEvent = { ...element };
 
       if (index === 0) {
         //First Day
+        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
         newEvent.endDate = formatISO(
           set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 })
         );
       } else if (index === totalDaysBetween) {
         //LAST DAY
+        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
         newEvent.startDate = formatISO(
           set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 })
         );
       } else {
         const newDay = addDays(currentStartDate, index);
+
+        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
 
         newEvent.startDate = formatISO(set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 }));
         newEvent.endDate = formatISO(set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }));
