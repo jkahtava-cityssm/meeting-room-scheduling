@@ -28,9 +28,10 @@ import {
   formatISO,
   set,
   endOfDay,
+  areIntervalsOverlapping,
 } from "date-fns";
 
-import type { ICalendarCell, IEvent } from "@/calendar/interfaces";
+import type { ICalendarCell, IEvent, IMultiDayBlock } from "@/calendar/interfaces";
 import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/calendar/types";
 
 // ================ Header helper functions ================ //
@@ -164,6 +165,83 @@ export function splitMultiDayEvents(events: IEvent[], visibleHours: TVisibleHour
   return eventList;
 }
 
+export function generateMultiDayBlocks(
+  event: IEvent,
+  visibleHours: TVisibleHours
+
+  //visibleHours: TVisibleHours
+): IEvent[] {
+  const minStartTime = visibleHours.from;
+  const maxEndTime = visibleHours.to;
+
+  const eventList: IEvent[] = [];
+
+  const currentStartDate = parseISO(event.startDate);
+  const currentEndDate = parseISO(event.endDate);
+
+  const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
+
+  for (let index = 0; index <= totalDaysBetween; index++) {
+    const title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + event.title;
+
+    let startDate = "";
+    let endDate = "";
+
+    if (index === 0) {
+      //First Day
+      startDate = formatISO(currentStartDate);
+      //endDate = formatISO(endOfDay(currentStartDate));
+      endDate = formatISO(set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }));
+    } else if (index === totalDaysBetween) {
+      //LAST DAY
+
+      startDate = formatISO(set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 }));
+      //startDate = formatISO(startOfDay(currentStartDate));
+      endDate = formatISO(currentEndDate);
+    } else {
+      const newDay = addDays(currentStartDate, index);
+      //startDate = formatISO(startOfDay(newDay));
+      //endDate = formatISO(endOfDay(newDay));
+
+      startDate = formatISO(set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 }));
+      endDate = formatISO(set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }));
+      //MIDDLE DAY
+    }
+    eventList.push({
+      ...event,
+      key: event.key + "-" + index,
+      startDate: startDate,
+      endDate: endDate,
+      title: title,
+      parentEvent: event,
+    });
+  }
+
+  return eventList;
+}
+
+export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Date) {
+  const dayStart = startOfDay(selectedDate);
+  const dayEnd = endOfDay(selectedDate);
+
+  return events.filter((event) => {
+    const eventStart = parseISO(event.startDate);
+    const eventEnd = parseISO(event.endDate);
+
+    const isOverlapping =
+      isWithinInterval(dayStart, { start: eventStart, end: eventEnd }) ||
+      isWithinInterval(dayEnd, { start: eventStart, end: eventEnd }) ||
+      (eventStart <= dayStart && eventEnd >= dayEnd);
+
+    return isOverlapping;
+  });
+  /*.sort((a, b) => {
+      const durationA = differenceInDays(parseISO(a.endDate), parseISO(a.startDate));
+      const durationB = differenceInDays(parseISO(b.endDate), parseISO(b.startDate));
+      return durationB - durationA;
+    });*/
+}
+
 export function groupEvents(dayEvents: IEvent[]) {
   const sortedEvents = dayEvents.sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
   const groups: IEvent[][] = [];
@@ -224,6 +302,31 @@ export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHou
   return hour >= dayHours.from && hour < dayHours.to;
 }
 
+export function hasOverlap(groupedEvents: IEvent[][], event: IEvent, index: number): boolean {
+  return groupedEvents.some(
+    (otherGroup, otherIndex) =>
+      otherIndex !== index &&
+      otherGroup.some((otherEvent) =>
+        areIntervalsOverlapping(
+          {
+            start: parseISO(event.startDate),
+            end: parseISO(event.endDate),
+          },
+          {
+            start: parseISO(otherEvent.startDate),
+            end: parseISO(otherEvent.endDate),
+          }
+        )
+      )
+  );
+}
+
+/**
+ * Loop through each event, increase the Earliest and Latest Visible Hours if an Event occurs outside of the window
+ * @param visibleHours
+ * @param singleDayEvents
+ * @returns
+ */
 export function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IEvent[]) {
   let earliestEventHour = visibleHours.from;
   let latestEventHour = visibleHours.to;

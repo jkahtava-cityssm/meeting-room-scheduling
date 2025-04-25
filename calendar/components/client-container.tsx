@@ -15,11 +15,7 @@ import { CalendarWeekView } from "@/calendar/components/week-and-day-view/calend
 import type { TCalendarView } from "@/calendar/types";
 import { splitMultiDayEvents } from "../helpers";
 
-interface IProps {
-  view: TCalendarView;
-}
-
-export function ClientContainer({ view }: IProps) {
+export function ClientContainer({ view }: { view: TCalendarView }) {
   const { selectedDate, selectedRoomId, events, visibleHours } = useCalendar();
 
   const filteredEvents = useMemo(() => {
@@ -102,9 +98,9 @@ export function ClientContainer({ view }: IProps) {
   return (
     <div className="overflow-hidden rounded-xl border">
       <CalendarHeader view={view} events={filteredEvents} />
-      {view === "day" && <CalendarDayView singleDayEvents={combinedDayEvents} multiDayEvents={multiDayEvents} />}
+      {view === "day" && <CalendarDayView events={filteredEvents} />}
       {view === "month" && <CalendarMonthView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
-      {view === "week" && <CalendarWeekView singleDayEvents={combinedDayEvents} multiDayEvents={multiDayEvents} />}
+      {view === "week" && <CalendarWeekView singleDayEvents={filteredEvents} multiDayEvents={multiDayEvents} />}
       {view === "year" && <CalendarYearView allEvents={eventStartDates} />}
       {view === "agenda" && <CalendarAgendaView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
     </div>

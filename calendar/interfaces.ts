@@ -7,23 +7,35 @@ export interface IRoom {
   picturePath: string | null;
 }
 
-export interface ISubEvent {
-  index: number;
+export interface IMultiDayBlock {
+  parentID: number;
+  key: string;
   startDate: string;
   endDate: string;
   title: string;
-  subtitle: string;
-  description: string;
 }
+/*
+export interface IEvent {
+  id: number;
+  key: string;
+  startDate: string;
+  endDate: string;
+  title: string;
+  description: string;
+  multiDayBlocks: IMultiDayBlock[];
+  room: IRoom;
+}
+*/
 
 export interface IEvent {
   id: number;
+  key: string;
   startDate: string;
   endDate: string;
   title: string;
   description: string;
-  subevent: ISubEvent | null;
   room: IRoom;
+  parentEvent: IEvent | null;
 }
 
 export interface ICalendarCell {

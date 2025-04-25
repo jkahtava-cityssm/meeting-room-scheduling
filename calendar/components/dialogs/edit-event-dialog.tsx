@@ -32,6 +32,8 @@ import { eventSchema } from "@/calendar/schemas";
 import type { IEvent } from "@/calendar/interfaces";
 //import type { TimeValue } from "react-aria-components";
 import type { TEventFormData } from "@/calendar/schemas";
+import { TimePicker } from "@/components/ui/time-picker";
+import { BookKey } from "lucide-react";
 
 interface IProps {
   children: React.ReactNode;
@@ -52,15 +54,17 @@ export function EditEventDialog({ children, event }: IProps) {
       title: event.title,
       description: event.description,
       startDate: parseISO(event.startDate),
-      startTime: {
+      startTime: parseISO(event.startDate),
+      /*startTime: {
         hour: parseISO(event.startDate).getHours(),
         minute: parseISO(event.startDate).getMinutes(),
-      },
+      },*/
       endDate: parseISO(event.endDate),
-      endTime: {
+      endTime: parseISO(event.endDate),
+      /*endTime: {
         hour: parseISO(event.endDate).getHours(),
         minute: parseISO(event.endDate).getMinutes(),
-      },
+      },*/
       color: event.room.color,
     },
   });
@@ -71,10 +75,10 @@ export function EditEventDialog({ children, event }: IProps) {
     if (!room) throw new Error("User not found");
 
     const startDateTime = new Date(values.startDate);
-    startDateTime.setHours(values.startTime.hour, values.startTime.minute);
+    startDateTime.setHours(values.startTime.getHours(), values.startTime.getMinutes());
 
     const endDateTime = new Date(values.endDate);
-    endDateTime.setHours(values.endTime.hour, values.endTime.minute);
+    endDateTime.setHours(values.endTime.getHours(), values.endTime.getMinutes());
 
     updateEvent({
       ...event,
@@ -89,7 +93,7 @@ export function EditEventDialog({ children, event }: IProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onToggle}>
+    <Dialog open={isOpen} onOpenChange={onToggle} modal={false}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent>
@@ -108,29 +112,26 @@ export function EditEventDialog({ children, event }: IProps) {
               name="room"
               render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel>Responsible</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                  <FormLabel>Room</FormLabel>
+
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
                       <SelectTrigger data-invalid={fieldState.invalid}>
                         <SelectValue placeholder="Select an option" />
                       </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {rooms.map((room) => (
+                        <SelectItem key={room.id} value={room.id} className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <BookKey color={room.color}></BookKey>
+                            <p className="truncate">{room.name}</p>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                      <SelectContent>
-                        {rooms.map((room) => (
-                          <SelectItem key={room.id} value={room.id} className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <Avatar key={room.id} className="size-6">
-                                <AvatarImage src={room.picturePath ?? undefined} alt={room.name} />
-                                <AvatarFallback className="text-xxs">{room.name[0]}</AvatarFallback>
-                              </Avatar>
-
-                              <p className="truncate">{room.name}</p>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -180,9 +181,9 @@ export function EditEventDialog({ children, event }: IProps) {
                 name="startTime"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Start Time</FormLabel>
-
                     <FormControl>
+                      <TimePicker date={field.value} setDate={field.onChange} />
+
                       {/*<TimeInput
                         value={field.value as TimeValue}
                         onChange={field.onChange}
@@ -222,8 +223,8 @@ export function EditEventDialog({ children, event }: IProps) {
                 name="endTime"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>End Time</FormLabel>
                     <FormControl>
+                      <TimePicker date={field.value} setDate={field.onChange} />
                       {/*<TimeInput
                         value={field.value as TimeValue}
                         onChange={field.onChange}

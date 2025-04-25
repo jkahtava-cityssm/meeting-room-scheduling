@@ -20,6 +20,8 @@ import {
   getCurrentEvents,
   getVisibleHours,
   splitMultiDayEvents,
+  getOverlappingMultiDayEvents,
+  hasOverlap,
 } from "@/calendar/helpers";
 
 import type { IEvent } from "@/calendar/interfaces";
@@ -33,19 +35,19 @@ interface IProps {
   multiDayEvents: IEvent[];
 }
 
-export function CalendarDayView({ singleDayEvents, multiDayEvents }: IProps) {
+export function CalendarDayView({ events }: { events: IEvent[] }) {
   const { selectedDate, setSelectedDate, rooms, visibleHours, workingHours } = useCalendar();
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, singleDayEvents);
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
 
-  //const test = splitMultiDayEvents(multiDayEvents, visibleHours);
+  //const test = splitMultiDayEvents(getOverlappingMultiDayEvents(events, selectedDate), visibleHours);
 
-  //singleDayEvents = [...singleDayEvents, ...test];
-  const currentEvents = singleDayEvents; //getCurrentEvents(singleDayEvents);
+  //singleDayEvents = [...events, ...test];
+  const currentEvents = getCurrentEvents(events);
 
   //console.log(singleDayEvents);
 
-  const dayEvents = singleDayEvents.filter((event) => {
+  const dayEvents = events.filter((event) => {
     const eventDate = parseISO(event.startDate);
     return (
       eventDate.getDate() === selectedDate.getDate() &&
@@ -77,24 +79,8 @@ export function CalendarDayView({ singleDayEvents, multiDayEvents }: IProps) {
                       from: earliestEventHour,
                       to: latestEventHour,
                     });
-                    const hasOverlap = groupedEvents.some(
-                      (otherGroup, otherIndex) =>
-                        otherIndex !== groupIndex &&
-                        otherGroup.some((otherEvent) =>
-                          areIntervalsOverlapping(
-                            {
-                              start: parseISO(event.startDate),
-                              end: parseISO(event.endDate),
-                            },
-                            {
-                              start: parseISO(otherEvent.startDate),
-                              end: parseISO(otherEvent.endDate),
-                            }
-                          )
-                        )
-                    );
 
-                    if (!hasOverlap) style = { ...style, width: "100%", left: "0%" };
+                    if (!hasOverlap(groupedEvents, event, groupIndex)) style = { ...style, width: "100%", left: "0%" };
 
                     return (
                       <div key={event.id} className="absolute p-1" style={style}>

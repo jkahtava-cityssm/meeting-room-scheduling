@@ -5,6 +5,7 @@ import { createContext, useContext, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { IEvent, IRoom } from "@/calendar/interfaces";
 import type { TVisibleHours, TWorkingHours } from "@/calendar/types";
+import { VISIBLE_HOURS } from "../mocks";
 
 interface ICalendarContext {
   selectedDate: Date;
@@ -31,8 +32,6 @@ const WORKING_HOURS = {
   5: { from: 8, to: 17 },
   6: { from: 8, to: 12 },
 };
-
-const VISIBLE_HOURS = { from: 7, to: 18 };
 
 export function CalendarProvider({
   children,

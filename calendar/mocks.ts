@@ -1,8 +1,12 @@
-import type { TColors } from "@/calendar/types";
+import type { TColors, TVisibleHours } from "@/calendar/types";
 import type { IEvent, IRoom } from "@/calendar/interfaces";
-import { description } from "@/app/private/layout";
+
+import { generateMultiDayBlocks, getVisibleHours } from "./helpers";
+import { isSameDay } from "date-fns";
 
 // ================================== //
+
+export const VISIBLE_HOURS: TVisibleHours = { from: 7, to: 18 };
 
 export const CALENDAR_ROOMS_MOCK: IRoom[] = [
   {
@@ -27,7 +31,7 @@ export const CALENDAR_ROOMS_MOCK: IRoom[] = [
     id: "4",
     name: "Council Chambers",
     picturePath: null,
-    color: "yellow",
+    color: "indigo",
   },
   {
     id: "5",
@@ -45,13 +49,13 @@ export const CALENDAR_ROOMS_MOCK: IRoom[] = [
     id: "7",
     name: "Penthouse",
     picturePath: null,
-    color: "emerald",
+    color: "violet",
   },
   {
     id: "8",
     name: "W.J. Thompson Room",
     picturePath: null,
-    color: "teal",
+    color: "fuchsia",
   },
   {
     id: "9",
@@ -63,7 +67,7 @@ export const CALENDAR_ROOMS_MOCK: IRoom[] = [
     id: "10",
     name: "Steelton Room",
     picturePath: null,
-    color: "sky",
+    color: "slate",
   },
   {
     id: "11",
@@ -187,29 +191,78 @@ const EVENTS = [
   "Home renovation meeting",
 ];
 
-const description = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla mollis eget ipsum id tristique. Donec in orci in nisl bibendum fermentum. Donec ac enim risus. Fusce sagittis, magna id aliquam viverra, nibh dui posuere mauris, id malesuada libero libero sit amet sem. Suspendisse potenti. Donec ac ante nisi. Nulla a lobortis odio, eget condimentum nisl. Vivamus dictum, augue at vulputate eleifend, nisi mauris dignissim libero, faucibus vehicula tellus urna sed leo. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur vitae posuere nibh, id accumsan ante. Suspendisse ac quam ipsum. Sed vestibulum tortor eget risus mattis, ut cursus est finibus. Aenean id felis vel erat porttitor pretium at non leo.
-Donec non odio lorem. Vestibulum mattis erat vel gravida interdum. Ut non porta orci. Integer efficitur magna at maximus faucibus. Donec hendrerit dolor vel nulla posuere, vitae rutrum metus suscipit. Fusce blandit elit quis risus sodales maximus. Phasellus placerat vulputate dui luctus facilisis. Nunc sed dignissim velit. Etiam non sapien lacus. Donec nec felis tincidunt, maximus ligula eu, tempor eros. Aenean non porttitor eros. Phasellus laoreet rutrum libero et iaculis.
-Praesent scelerisque, nisl eget venenatis suscipit, risus ante consectetur arcu, a cursus ipsum neque ut justo. Mauris enim tellus, mattis quis ultrices id, aliquet eget sem. Pellentesque eu mauris non odio ultricies gravida. Nam mi nisi, commodo vitae vulputate eget, convallis quis libero. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Phasellus eu augue imperdiet, convallis metus in, facilisis ante. Duis faucibus urna vel lacus cursus, dictum ullamcorper nunc iaculis. Donec vitae dolor quis odio semper euismod maximus vitae ex. In hac habitasse platea dictumst. Nulla ac auctor urna. Nullam purus metus, aliquam nec interdum quis, convallis ut purus. Phasellus nec posuere felis, sit amet sagittis est. Duis tincidunt tortor nec lectus tincidunt aliquam. Aliquam erat volutpat.
-Pellentesque sagittis, augue non facilisis bibendum, metus mauris blandit dolor, sed lobortis sem enim id lorem. Nulla porttitor ut velit nec malesuada. Suspendisse ut feugiat urna. Vestibulum maximus ut tortor eget lobortis. Sed ac cursus risus, non vehicula purus. Sed ex quam, hendrerit vel tincidunt ut, tincidunt a massa. Proin convallis efficitur purus sit amet dignissim.
-Pellentesque at eleifend mauris. Quisque et eros vitae mi sollicitudin molestie vel sed mi. Curabitur et facilisis dolor, id imperdiet ligula. Nulla id orci id lectus pulvinar porttitor et vitae lectus. Aenean convallis varius tortor vitae lobortis. Aenean ac eleifend quam. Sed non sem quis elit pellentesque porta a in risus. In hac habitasse platea dictumst. Integer volutpat est et lacus iaculis, id suscipit est semper. Cras mauris elit, dignissim vel risus quis, efficitur posuere velit. Etiam ornare ullamcorper interdum.`;
+const description = [
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  "Nulla mollis eget ipsum id tristique.",
+  "Donec in orci in nisl bibendum fermentum.",
+  "Donec ac enim risus.",
+  "Fusce sagittis, magna id aliquam viverra, nibh dui posuere mauris, id malesuada libero libero sit amet sem.",
+  "Suspendisse potenti.",
+  "Donec ac ante nisi.",
+  "Nulla a lobortis odio, eget condimentum nisl.",
+  "Vivamus dictum, augue at vulputate eleifend, nisi mauris dignissim libero, faucibus vehicula tellus urna sed leo.",
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  "Curabitur vitae posuere nibh, id accumsan ante.",
+  "Suspendisse ac quam ipsum.",
+  "Sed vestibulum tortor eget risus mattis, ut cursus est finibus.",
+  "Aenean id felis vel erat porttitor pretium at non leo.",
+  "Donec non odio lorem.",
+  "Vestibulum mattis erat vel gravida interdum.",
+  "Ut non porta orci.",
+  "Integer efficitur magna at maximus faucibus.",
+  "Donec hendrerit dolor vel nulla posuere, vitae rutrum metus suscipit.",
+  "Fusce blandit elit quis risus sodales maximus.",
+  "Phasellus placerat vulputate dui luctus facilisis.",
+  "Nunc sed dignissim velit.",
+  "Etiam non sapien lacus.",
+  "Donec nec felis tincidunt, maximus ligula eu, tempor eros.",
+  "Aenean non porttitor eros.",
+  "Phasellus laoreet rutrum libero et iaculis.",
+  "Praesent scelerisque, nisl eget venenatis suscipit, risus ante consectetur arcu, a cursus ipsum neque ut justo.",
+  "Mauris enim tellus, mattis quis ultrices id, aliquet eget sem.",
+  "Pellentesque eu mauris non odio ultricies gravida.",
+  "Nam mi nisi, commodo vitae vulputate eget, convallis quis libero.",
+  "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Phasellus eu augue imperdiet, convallis metus in, facilisis ante.",
+  "Duis faucibus urna vel lacus cursus, dictum ullamcorper nunc iaculis.",
+  "Donec vitae dolor quis odio semper euismod maximus vitae ex.",
+  "In hac habitasse platea dictumst.",
+  "Nulla ac auctor urna.",
+  "Nullam purus metus, aliquam nec interdum quis, convallis ut purus.",
+  "Phasellus nec posuere felis, sit amet sagittis est.",
+  "Duis tincidunt tortor nec lectus tincidunt aliquam.",
+  "Aliquam erat volutpat.",
+  "Pellentesque sagittis, augue non facilisis bibendum, metus mauris blandit dolor, sed lobortis sem enim id lorem.",
+  "Nulla porttitor ut velit nec malesuada.",
+  "Suspendisse ut feugiat urna.",
+  "Vestibulum maximus ut tortor eget lobortis.",
+  "Sed ac cursus risus, non vehicula purus.",
+  "Sed ex quam, hendrerit vel tincidunt ut, tincidunt a massa.",
+  "Proin convallis efficitur purus sit amet dignissim.",
+  "Pellentesque at eleifend mauris.",
+  "Quisque et eros vitae mi sollicitudin molestie vel sed mi.",
+  "Curabitur et facilisis dolor, id imperdiet ligula.",
+  "Nulla id orci id lectus pulvinar porttitor et vitae lectus.",
+  "Aenean convallis varius tortor vitae lobortis.",
+  "Aenean ac eleifend quam.",
+  "Sed non sem quis elit pellentesque porta a in risus.",
+  "In hac habitasse platea dictumst.",
+  "Integer volutpat est et lacus iaculis, id suscipit est semper.",
+  "Cras mauris elit, dignissim vel risus quis, efficitur posuere velit",
+  "Etiam ornare ullamcorper interdum",
+];
+
+const getRandomDescription = (): string => {
+  const numberOfLines = Math.floor(Math.random() * description.length);
+  let newDescription = "";
+  for (let index = 0; index <= numberOfLines; index++) {
+    newDescription += description[index] + "\n";
+  }
+  return newDescription;
+};
 
 // This was generated by AI -- minus the part where I added my wedding as an "easter egg" :)
 const mockGenerator = (numberOfEvents: number): IEvent[] => {
   const result: IEvent[] = [];
-
-  const descriptionList = description.split(".");
-  /*[
-    {
-      id: 1204,
-      startDate: new Date("2025-09-20T00:00:00-03:00").toISOString(),
-      endDate: new Date("2025-09-20T23:59:00-03:00").toISOString(),
-      title: "My wedding :)",
-      color: "red",
-      description: "Can't wait to see the most beautiful woman in that dress!",
-      subevent: null,
-      room: ROOMS_MOCK[0],
-    },
-  ];*/
 
   let currentId = 1;
 
@@ -223,13 +276,13 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
   endRange.setDate(now.getDate() + 30);
 
   // Create an event happening now
-  const currentEvent = {
+  /*const currentEvent = {
     id: currentId++,
     startDate: new Date(now.getTime() - 30 * 60000).toISOString(),
     endDate: new Date(now.getTime() + 30 * 60000).toISOString(),
     title: EVENTS[Math.floor(Math.random() * EVENTS.length)],
-    description: descriptionList[Math.floor(Math.random() * descriptionList.length)],
-    subevent: null,
+    description: getRandomDescription(),
+    multiDayBlocks: generateMultiDayBlocks(startDate.toISOString(), endDate.toISOString(), EVENTS[eventIndex]),
     room: randomRoom,
   };
 
@@ -237,7 +290,7 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
   if (now.getMonth() !== 8 || now.getDate() !== 20) {
     // Month is 0-indexed (8 = September)
     result.push(currentEvent);
-  }
+  }*/
 
   // Generate the remaining events
   let i = 0;
@@ -286,16 +339,60 @@ const mockGenerator = (numberOfEvents: number): IEvent[] => {
       const durationMinutes = (Math.floor(Math.random() * 11) + 2) * 15; // 30 to 180 minutes, multiple of 15
       endDate.setTime(endDate.getTime() + durationMinutes * 60 * 1000);
     }
+    const eventIndex = Math.floor(Math.random() * EVENTS.length);
 
-    result.push({
-      id: currentId++,
+    /*     result.push({
+      id: i,
+      key: `${i}`,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      title: EVENTS[Math.floor(Math.random() * EVENTS.length)],
-      description: descriptionList[Math.floor(Math.random() * descriptionList.length)],
-      subevent: null,
+      title: EVENTS[eventIndex],
+      description: getRandomDescription(),
+      multiDayBlocks: generateMultiDayBlocks(
+        i,
+        startDate.toISOString(),
+        endDate.toISOString(),
+        EVENTS[eventIndex],
+        VISIBLE_HOURS
+      ),
       room: CALENDAR_ROOMS_MOCK[Math.floor(Math.random() * CALENDAR_ROOMS_MOCK.length)],
-    });
+    }); */
+
+    //IF MULTIPLE DAYS CREATE ALL THE EVENTS AS INDIVIDUAL DAYS?
+
+    const newEvent: IEvent = {
+      id: i,
+      key: `${i}`,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      title: EVENTS[eventIndex],
+      description: getRandomDescription(),
+      parentEvent: null,
+      room: CALENDAR_ROOMS_MOCK[Math.floor(Math.random() * CALENDAR_ROOMS_MOCK.length)],
+    };
+
+    if (isSameDay(endDate, startDate)) {
+      result.push(newEvent);
+    } else {
+      result.push(...generateMultiDayBlocks(newEvent, VISIBLE_HOURS));
+    }
+
+    /* result.push({
+      id: i,
+      key: `${i}`,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      title: EVENTS[eventIndex],
+      description: getRandomDescription(),
+      multiDayBlocks: generateMultiDayBlocks(
+        i,
+        startDate.toISOString(),
+        endDate.toISOString(),
+        EVENTS[eventIndex],
+        VISIBLE_HOURS
+      ),
+      room: CALENDAR_ROOMS_MOCK[Math.floor(Math.random() * CALENDAR_ROOMS_MOCK.length)],
+    });*/
 
     i++;
   }

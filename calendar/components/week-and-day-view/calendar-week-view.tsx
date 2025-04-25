@@ -16,6 +16,7 @@ import {
   isWorkingHour,
   getVisibleHours,
   splitMultiDayEvents,
+  getOverlappingMultiDayEvents,
 } from "@/calendar/helpers";
 
 import type { IEvent } from "@/calendar/interfaces";
@@ -33,7 +34,8 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
   const { selectedDate, workingHours, visibleHours } = useCalendar();
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, singleDayEvents);
-
+  console.log(singleDayEvents);
+  //const test = splitMultiDayEvents(getOverlappingMultiDayEvents(singleDayEvents, selectedDate), visibleHours);
   //const test = splitMultiDayEvents(multiDayEvents, visibleHours);
 
   //singleDayEvents = [...singleDayEvents, ...test];

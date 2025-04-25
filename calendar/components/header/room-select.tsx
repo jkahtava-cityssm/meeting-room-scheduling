@@ -1,4 +1,5 @@
 import { useCalendar } from "@/calendar/contexts/calendar-context";
+import { IconColored } from "@/components/ui/icon-colored";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Asterisk, BookKey } from "lucide-react";
@@ -21,7 +22,10 @@ export function RoomSelect() {
         {rooms.map((room) => (
           <SelectItem key={room.id} value={room.id} className="flex-1">
             <div className="flex items-center gap-2">
-              <BookKey color={room.color}></BookKey>
+              <IconColored color={room.color}>
+                <BookKey />
+              </IconColored>
+
               <p className="truncate">{room.name}</p>
             </div>
           </SelectItem>
