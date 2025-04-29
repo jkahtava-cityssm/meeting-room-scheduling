@@ -1,7 +1,16 @@
 import { IEvent } from "@/calendar/interfaces";
 import { eventSchema, TEventFormData } from "@/calendar/schemas";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format, isSameDay, parseISO } from "date-fns";
+import {
+  differenceInDays,
+  differenceInHours,
+  differenceInMinutes,
+  formatDistance,
+  formatDistanceStrict,
+  formatDuration,
+  intervalToDuration,
+  parseISO,
+} from "date-fns";
 import { Clock, MapPin, Text } from "lucide-react";
 import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +25,10 @@ import { TimePicker } from "@/components/ui/time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { IconColored } from "@/components/ui/icon-colored";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { fi } from "date-fns/locale";
+import { startTask } from "better-auth/react";
 
 export function EditEvent({ event }: { event: IEvent }) {
   const startDate = parseISO(event.startDate);
@@ -26,6 +39,8 @@ export function EditEvent({ event }: { event: IEvent }) {
 
   const form = useForm<TEventFormData>({
     resolver: zodResolver(eventSchema),
+    reValidateMode: "onChange",
+    mode: "all",
     defaultValues: {
       room: event.room.id,
       title: event.title,
@@ -38,6 +53,7 @@ export function EditEvent({ event }: { event: IEvent }) {
       },*/
       endDate: parseISO(event.endDate),
       endTime: parseISO(event.endDate),
+      duration: "Duration:",
       /*endTime: {
         hour: parseISO(event.endDate).getHours(),
         minute: parseISO(event.endDate).getMinutes(),
@@ -46,16 +62,32 @@ export function EditEvent({ event }: { event: IEvent }) {
     },
   });
 
+  const getDurationText = (values: TEventFormData): string => {
+    const startDateTime = combineDateTime(values.startDate, values.startTime);
+    const endDateTime = combineDateTime(values.endDate, values.endTime);
+
+    return formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
+      format: ["years", "months", "days", "hours", "minutes"],
+      delimiter: ", ",
+    });
+  };
+
+  const combineDateTime = (dateField: Date, timeField: Date) => {
+    return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
+  };
+
   const onSubmit = (values: TEventFormData) => {
     const room = rooms.find((room) => room.id === values.room);
 
     if (!room) throw new Error("User not found");
 
-    const startDateTime = new Date(values.startDate);
-    startDateTime.setHours(values.startTime.getHours(), values.startTime.getMinutes());
+    const startDateTime = combineDateTime(values.startDate, values.startTime);
+    const endDateTime = combineDateTime(values.endDate, values.endTime);
+    //new Date(values.startDate);
+    //startDateTime.setHours(values.startTime.getHours(), values.startTime.getMinutes());
 
-    const endDateTime = new Date(values.endDate);
-    endDateTime.setHours(values.endTime.getHours(), values.endTime.getMinutes());
+    //const endDateTime = new Date(values.endDate);
+    //endDateTime.setHours(values.endTime.getHours(), values.endTime.getMinutes());
 
     updateEvent({
       ...event,
@@ -66,72 +98,40 @@ export function EditEvent({ event }: { event: IEvent }) {
       endDate: endDateTime.toISOString(),
     });
   };
-
+  /*
+  const onTest = (value: string) => {
+    console.log(value);
+  };
+*/
   return (
     <Form {...form}>
-      <form id="event-form" onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
-        <FormField
-          control={form.control}
-          name="room"
-          render={({ field, fieldState }) => (
-            <FormItem>
-              <FormLabel>Room</FormLabel>
-
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger data-invalid={fieldState.invalid}>
-                    <SelectValue placeholder="Select an option" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {rooms.map((room) => (
-                    <SelectItem key={room.id} value={room.id} className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <BookKey color={room.color}></BookKey>
-                        <p className="truncate">{room.name}</p>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field, fieldState }) => (
-            <FormItem>
-              <FormLabel htmlFor="title">Title</FormLabel>
-
-              <FormControl>
-                <Input id="title" placeholder="Enter a title" data-invalid={fieldState.invalid} {...field} />
-              </FormControl>
-
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex items-start gap-2">
+      <form id="event-form" onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col md:flex-row gap-2">
+        <div className="flex flex-col flex-1 gap-4 py-4">
           <FormField
             control={form.control}
-            name="startDate"
+            name="room"
             render={({ field, fieldState }) => (
-              <FormItem className="flex-1">
-                <FormLabel htmlFor="startDate">Start Date</FormLabel>
-
+              <FormItem>
+                <FormLabel id="roomLabel" htmlFor="room">
+                  Room
+                </FormLabel>
                 <FormControl>
-                  <SingleDayPicker
-                    id="startDate"
-                    value={field.value}
-                    onSelect={(date) => field.onChange(date as Date)}
-                    placeholder="Select a date"
-                    data-invalid={fieldState.invalid}
-                  />
+                  <Select name={field.name} value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id={field.name} data-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Select an option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rooms.map((room) => (
+                        <SelectItem key={room.id} value={room.id} className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <IconColored color={room.color} showBackground={false} children={<BookKey />} />
+
+                            <p className="truncate">{room.name}</p>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormControl>
 
                 <FormMessage />
@@ -141,81 +141,169 @@ export function EditEvent({ event }: { event: IEvent }) {
 
           <FormField
             control={form.control}
-            name="startTime"
+            name="title"
             render={({ field, fieldState }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <TimePicker date={field.value} setDate={field.onChange} />
+              <FormItem className="pr-11">
+                <FormLabel htmlFor="title">Title</FormLabel>
 
-                  {/*<TimeInput
+                <FormControl>
+                  <Input id="title" placeholder="Enter a title" data-invalid={fieldState.invalid} {...field} />
+                </FormControl>
+
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex items-start gap-2">
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field, fieldState }) => (
+                <FormItem className="flex-1">
+                  <FormLabel htmlFor="startDate">Start Date</FormLabel>
+
+                  <FormControl>
+                    <SingleDayPicker
+                      id="startDate"
+                      value={field.value}
+                      onSelect={(date) => {
+                        field.onChange(date as Date);
+                        form.trigger(["endDate", "endTime", "startTime"]);
+                        form.setValue("duration", getDurationText(form.getValues()));
+                      }}
+                      placeholder="Select a date"
+                      data-invalid={fieldState.invalid}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="startTime"
+              render={({ field, fieldState }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <TimePicker
+                      id="startTime"
+                      date={field.value}
+                      setDate={(date) => {
+                        field.onChange(date as Date);
+                        form.trigger(["startDate", "endDate", "endTime"]);
+                        form.setValue("duration", getDurationText(form.getValues()));
+                      }}
+                      data-invalid={fieldState.invalid}
+                    />
+                  </FormControl>
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="flex items-start gap-2">
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field, fieldState }) => (
+                <FormItem className="flex-1">
+                  <FormLabel htmlFor="endDate">End Date</FormLabel>
+                  <FormControl>
+                    <SingleDayPicker
+                      id="endDate"
+                      value={field.value}
+                      onSelect={(date) => {
+                        field.onChange(date as Date);
+                        form.trigger(["startDate", "endTime", "startTime"]);
+                        form.setValue("duration", getDurationText(form.getValues()));
+                      }}
+                      placeholder="Select a date"
+                      data-invalid={fieldState.invalid}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="endTime"
+              render={({ field, fieldState }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <TimePicker
+                      id="endTime"
+                      date={field.value}
+                      setDate={(date) => {
+                        field.onChange(date as Date);
+                        form.trigger(["startDate", "endDate", "startTime"]);
+                        form.setValue("duration", getDurationText(form.getValues()));
+                      }}
+                      data-invalid={fieldState.invalid}
+                    />
+                    {/*<TimeInput
                         value={field.value as TimeValue}
                         onChange={field.onChange}
                         hourCycle={12}
                         data-invalid={fieldState.invalid}
                       />*/}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <FormField
+            control={form.control}
+            name="duration"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>Duration:</FormLabel>
+
+                <FormControl>
+                  <Label className="text-sm h-9 px-3 py-1 content-center" id="duration" {...field}>
+                    {field.value}
+                  </Label>
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="flex flex-col flex-1 gap-4 py-4">
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+
+                {
+                  //<ScrollArea className="h-[25vh]" type="always">
+                }
+                <FormControl>
+                  <Textarea
+                    className="max-h-100 resize-none"
+                    {...field}
+                    value={field.value}
+                    data-invalid={fieldState.invalid}
+                  ></Textarea>
+                </FormControl>
+                {
+                  //</ScrollArea>
+                }
 
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-
-        <div className="flex items-start gap-2">
-          <FormField
-            control={form.control}
-            name="endDate"
-            render={({ field, fieldState }) => (
-              <FormItem className="flex-1">
-                <FormLabel>End Date</FormLabel>
-                <FormControl>
-                  <SingleDayPicker
-                    value={field.value}
-                    onSelect={(date) => field.onChange(date as Date)}
-                    placeholder="Select a date"
-                    data-invalid={fieldState.invalid}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="endTime"
-            render={({ field, fieldState }) => (
-              <FormItem className="flex-1">
-                <FormControl>
-                  <TimePicker date={field.value} setDate={field.onChange} />
-                  {/*<TimeInput
-                        value={field.value as TimeValue}
-                        onChange={field.onChange}
-                        hourCycle={12}
-                        data-invalid={fieldState.invalid}
-                      />*/}
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field, fieldState }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <ScrollArea className="h-[25vh]" type="always">
-                <FormControl>
-                  <Textarea {...field} value={field.value} data-invalid={fieldState.invalid} />
-                </FormControl>
-              </ScrollArea>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </form>
     </Form>
   );

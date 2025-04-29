@@ -1,7 +1,9 @@
 import { IEvent } from "@/calendar/interfaces";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { format, isSameDay, parseISO } from "date-fns";
 import { Clock, MapPin, Text } from "lucide-react";
+import { twMerge } from "tailwind-merge";
 
 export function ReadEvent({ event }: { event: IEvent }) {
   const startDate = parseISO(event.startDate);
@@ -35,11 +37,17 @@ export function ReadEvent({ event }: { event: IEvent }) {
           </div>
         </div>
         <div className="flex items-center gap-2 pl-7">
-          <ScrollArea className="h-[50vh]" type="always">
+          {/*
+            <ScrollArea className="h-[50vh]" type="always">
             <div className="flex overflow-hidden pr-3">
               <p className="text-sm ">{event.description}</p>
             </div>
-          </ScrollArea>
+          </ScrollArea>*/}
+          <Textarea
+            className={twMerge("max-h-80 resize-none disabled:opacity-100")}
+            disabled={true}
+            value={event.description}
+          ></Textarea>
         </div>
       </div>
     </div>

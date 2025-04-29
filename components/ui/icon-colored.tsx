@@ -55,11 +55,13 @@ React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<SVGSVGElement>
 function IconColored(
   {
     color,
+    showBackground = false,
     children,
   }: //className,
   //...props
   {
     color: TColors;
+    showBackground: boolean;
     children: React.ReactElement<SVGSVGElement>;
   } //& React.HTMLAttributes<HTMLDivElement> &
 ) {
@@ -77,10 +79,14 @@ function IconColored(
 
   return (
     <div
-      className={cn(
-        EventCardClasses,
-        "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      )}
+      className={
+        showBackground
+          ? cn(
+              EventCardClasses,
+              "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            )
+          : ""
+      }
     >
       {renderIcon()}
     </div>

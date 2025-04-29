@@ -29,6 +29,7 @@ import { DayHourlyEventDialogs } from "../day-hourly-event-dialogs";
 import { HourColumn } from "../column-hourly";
 import { ColumnDayHeader } from "../column-day-header";
 import { EventBlock } from "../event-block";
+import React from "react";
 
 interface IProps {
   singleDayEvents: IEvent[];
@@ -38,8 +39,14 @@ interface IProps {
 export function CalendarDayView({ events }: { events: IEvent[] }) {
   const { selectedDate, setSelectedDate, rooms, visibleHours, workingHours } = useCalendar();
 
+  const [currentMonth, setCurrentMonth] = React.useState<Date>(selectedDate);
+
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
 
+  const handleToday = () => {
+    setCurrentMonth(new Date());
+    setSelectedDate(new Date());
+  };
   //const test = splitMultiDayEvents(getOverlappingMultiDayEvents(events, selectedDate), visibleHours);
 
   //singleDayEvents = [...events, ...test];
@@ -97,13 +104,16 @@ export function CalendarDayView({ events }: { events: IEvent[] }) {
         </ScrollArea>
       </div>
 
-      <div className="hidden w-64 divide-y border-l md:block">
+      <div className="hidden w-74 divide-y border-l md:block">
         <SingleCalendar
           className="mx-auto w-fit"
           mode="single"
           selected={selectedDate}
           onSelect={setSelectedDate}
-          initialFocus
+          month={currentMonth}
+          onMonthChange={setCurrentMonth}
+          required
+          onToday={handleToday}
         />
 
         <div className="flex-1 space-y-3">

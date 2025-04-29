@@ -50,22 +50,27 @@ export function EventDetailsDialog({ event, children }: IProps) {
           //modal={false}
         }
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 lg:max-h-9/12">
+          <DialogHeader className="md:text-left">
             <DialogTitle>{currentEvent.title}</DialogTitle>
             <DialogDescription className="sr-only">Event Details</DialogDescription>
           </DialogHeader>
           {isReadOnly ? <ReadEvent event={currentEvent} /> : <EditEvent event={currentEvent} />}
 
-          <DialogFooter>
+          <DialogFooter className="sm:flex-col-reverse md:flex-row md:justify-end">
             {isReadOnly ? (
               <Button type="button" variant="outline" onClick={() => setIsReadOnly(false)}>
                 Edit2
               </Button>
             ) : (
-              <Button type="button" variant="outline" onClick={() => setIsReadOnly(true)}>
-                Cancel
-              </Button>
+              <>
+                <Button form="event-form" type="submit">
+                  Save changes
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setIsReadOnly(true)}>
+                  Cancel
+                </Button>
+              </>
             )}
 
             {/*<EditEventDialog event={currentEvent}>

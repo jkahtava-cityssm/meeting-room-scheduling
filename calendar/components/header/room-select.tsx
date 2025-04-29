@@ -15,14 +15,16 @@ export function RoomSelect() {
 
       <SelectContent align="end">
         <SelectItem value="all">
-          <Asterisk></Asterisk>
+          <IconColored showBackground={true} color={"zinc"}>
+            <Asterisk></Asterisk>
+          </IconColored>
           <div className="flex items-center gap-1">All Rooms</div>
         </SelectItem>
 
         {rooms.map((room) => (
           <SelectItem key={room.id} value={room.id} className="flex-1">
             <div className="flex items-center gap-2">
-              <IconColored color={room.color}>
+              <IconColored showBackground={true} color={room.color}>
                 <BookKey />
               </IconColored>
 
