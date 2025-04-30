@@ -33,6 +33,7 @@ import {
 
 import type { ICalendarCell, IEvent, IMultiDayBlock } from "@/calendar/interfaces";
 import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/calendar/types";
+import { MAX_VISIBLE_EVENTS } from "./mocks";
 
 // ================ Header helper functions ================ //
 
@@ -411,7 +412,7 @@ export function calculateMonthEventPositions(multiDayEvents: IEvent[], singleDay
 
     let position = -1;
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < MAX_VISIBLE_EVENTS; i++) {
       if (
         eventDays.every((day) => {
           const dayPositions = occupiedPositions[startOfDay(day).toISOString()];
@@ -446,7 +447,7 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
     .map((event) => ({
       ...event,
       position: eventPositions[event.id] ?? -1,
-      isMultiDay: event.startDate !== event.endDate,
+      isMultiDay: !isSameDay(event.endDate, event.startDate), // event.startDate !== event.endDate,
     }))
     .sort((a, b) => {
       if (a.isMultiDay && !b.isMultiDay) return -1;

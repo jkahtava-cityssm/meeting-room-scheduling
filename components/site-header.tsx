@@ -18,8 +18,8 @@ import { useSession } from "@/lib/auth-client";
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const { data: session, isPending } = useSession();
-  console.log(isPending);
-  console.log(session?.user);
+  console.log("SITE HEADER RE-RENDER????");
+  //console.log(session?.user);
 
   const user = {
     name: session?.user.name == null ? "unknown" : session?.user.name,
@@ -27,26 +27,19 @@ export function SiteHeader() {
     image: session?.user.image == null ? "emptyImage" : session?.user.image,
   };
 
-  console.log(user);
+  //console.log(user);
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
       <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
-        <Button
-          className="h-8 w-8"
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-        >
+        <Button className="h-8 w-8" variant="ghost" size="icon" onClick={toggleSidebar}>
           <SidebarIcon />
         </Button>
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumb className="hidden sm:block">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">
-                Building Your Application
-              </BreadcrumbLink>
+              <BreadcrumbLink href="#">Building Your Application</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>

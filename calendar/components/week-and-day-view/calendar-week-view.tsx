@@ -26,15 +26,14 @@ import { ColumnDayHeader } from "../column-day-header";
 import { EventBlock } from "../event-block";
 
 interface IProps {
-  singleDayEvents: IEvent[];
-  multiDayEvents: IEvent[];
+  events: IEvent[];
 }
 
-export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
+export function CalendarWeekView({ events }: IProps) {
   const { selectedDate, workingHours, visibleHours } = useCalendar();
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, singleDayEvents);
-  console.log(singleDayEvents);
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
+  //console.log(events);
   //const test = splitMultiDayEvents(getOverlappingMultiDayEvents(singleDayEvents, selectedDate), visibleHours);
   //const test = splitMultiDayEvents(multiDayEvents, visibleHours);
 
@@ -70,9 +69,12 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
                 <div className="relative flex-1 border-l">
                   <div className="grid grid-cols-7 divide-x">
                     {weekDays.map((day, dayIndex) => {
-                      const dayEvents = singleDayEvents.filter(
-                        (event) => isSameDay(parseISO(event.startDate), day) || isSameDay(parseISO(event.endDate), day)
+                      const dayEvents = events.filter(
+                        (event) => isSameDay(parseISO(event.startDate), day) //|| isSameDay(parseISO(event.endDate), day)
                       );
+
+                      const test = dayEvents.filter((event) => event.id === event.parentEvent?.id);
+
                       const groupedEvents = groupEvents(dayEvents);
 
                       return (
@@ -105,7 +107,7 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
                               if (!hasOverlap) style = { ...style, width: "100%", left: "0%" };
 
                               return (
-                                <div key={event.id} className="absolute p-1" style={style}>
+                                <div key={event.key} className="absolute p-1" style={style}>
                                   <EventBlock event={event} pixelSize={96} />
                                 </div>
                               );

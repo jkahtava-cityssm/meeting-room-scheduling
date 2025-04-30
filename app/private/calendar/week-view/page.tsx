@@ -1,5 +1,5 @@
 import { ClientContainer } from "@/calendar/components/client-container";
 
-export default function Page() {
+export default async function Page() {
   return <ClientContainer view="week" />;
 }

@@ -1,15 +1,15 @@
-import { CALENDAR_ITENS_MOCK, USERS_MOCK } from "@/calendar/mocks";
+import { CALENDAR_EVENTS_MOCK, CALENDAR_ROOMS_MOCK } from "@/calendar/mocks";
 
 export const getEvents = async () => {
   // TO DO: implement this
   // Increase the delay to better see the loading state
   // await new Promise(resolve => setTimeout(resolve, 800));
-  return CALENDAR_ITENS_MOCK;
+  return CALENDAR_EVENTS_MOCK;
 };
 
-export const getUsers = async () => {
+export const getRooms = async () => {
   // TO DO: implement this
   // Increase the delay to better see the loading state
   // await new Promise(resolve => setTimeout(resolve, 800));
-  return USERS_MOCK;
+  return CALENDAR_ROOMS_MOCK;
 };

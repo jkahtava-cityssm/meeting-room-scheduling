@@ -37,6 +37,20 @@ export function EditEvent({ event }: { event: IEvent }) {
 
   const { updateEvent } = useUpdateEvent();
 
+  const getDurationText = (startDate: Date, startTime: Date, endDate: Date, endTime: Date): string => {
+    const startDateTime = combineDateTime(startDate, startTime);
+    const endDateTime = combineDateTime(endDate, endTime);
+
+    return formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
+      format: ["years", "months", "days", "hours", "minutes"],
+      delimiter: ", ",
+    });
+  };
+
+  const combineDateTime = (dateField: Date, timeField: Date) => {
+    return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
+  };
+
   const form = useForm<TEventFormData>({
     resolver: zodResolver(eventSchema),
     reValidateMode: "onChange",
@@ -53,7 +67,12 @@ export function EditEvent({ event }: { event: IEvent }) {
       },*/
       endDate: parseISO(event.endDate),
       endTime: parseISO(event.endDate),
-      duration: "Duration:",
+      duration: getDurationText(
+        parseISO(event.startDate),
+        parseISO(event.startDate),
+        parseISO(event.endDate),
+        parseISO(event.endDate)
+      ),
       /*endTime: {
         hour: parseISO(event.endDate).getHours(),
         minute: parseISO(event.endDate).getMinutes(),
@@ -61,20 +80,6 @@ export function EditEvent({ event }: { event: IEvent }) {
       color: event.room.color,
     },
   });
-
-  const getDurationText = (values: TEventFormData): string => {
-    const startDateTime = combineDateTime(values.startDate, values.startTime);
-    const endDateTime = combineDateTime(values.endDate, values.endTime);
-
-    return formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
-      format: ["years", "months", "days", "hours", "minutes"],
-      delimiter: ", ",
-    });
-  };
-
-  const combineDateTime = (dateField: Date, timeField: Date) => {
-    return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
-  };
 
   const onSubmit = (values: TEventFormData) => {
     const room = rooms.find((room) => room.id === values.room);
@@ -103,6 +108,7 @@ export function EditEvent({ event }: { event: IEvent }) {
     console.log(value);
   };
 */
+  console.log(event);
   return (
     <Form {...form}>
       <form id="event-form" onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col md:flex-row gap-2">
@@ -124,7 +130,12 @@ export function EditEvent({ event }: { event: IEvent }) {
                       {rooms.map((room) => (
                         <SelectItem key={room.id} value={room.id} className="flex-1">
                           <div className="flex items-center gap-2">
-                            <IconColored color={room.color} showBackground={false} children={<BookKey />} />
+                            <IconColored
+                              color={room.color}
+                              showBorder={false}
+                              children={<BookKey />}
+                              hideBackground={false}
+                            />
 
                             <p className="truncate">{room.name}</p>
                           </div>
@@ -170,7 +181,10 @@ export function EditEvent({ event }: { event: IEvent }) {
                       onSelect={(date) => {
                         field.onChange(date as Date);
                         form.trigger(["endDate", "endTime", "startTime"]);
-                        form.setValue("duration", getDurationText(form.getValues()));
+                        form.setValue(
+                          "duration",
+                          getDurationText(...form.getValues(["startDate", "startTime", "endDate", "endTime"]))
+                        );
                       }}
                       placeholder="Select a date"
                       data-invalid={fieldState.invalid}
@@ -194,7 +208,10 @@ export function EditEvent({ event }: { event: IEvent }) {
                       setDate={(date) => {
                         field.onChange(date as Date);
                         form.trigger(["startDate", "endDate", "endTime"]);
-                        form.setValue("duration", getDurationText(form.getValues()));
+                        form.setValue(
+                          "duration",
+                          getDurationText(...form.getValues(["startDate", "startTime", "endDate", "endTime"]))
+                        );
                       }}
                       data-invalid={fieldState.invalid}
                     />
@@ -220,7 +237,10 @@ export function EditEvent({ event }: { event: IEvent }) {
                       onSelect={(date) => {
                         field.onChange(date as Date);
                         form.trigger(["startDate", "endTime", "startTime"]);
-                        form.setValue("duration", getDurationText(form.getValues()));
+                        form.setValue(
+                          "duration",
+                          getDurationText(...form.getValues(["startDate", "startTime", "endDate", "endTime"]))
+                        );
                       }}
                       placeholder="Select a date"
                       data-invalid={fieldState.invalid}
@@ -243,7 +263,10 @@ export function EditEvent({ event }: { event: IEvent }) {
                       setDate={(date) => {
                         field.onChange(date as Date);
                         form.trigger(["startDate", "endDate", "startTime"]);
-                        form.setValue("duration", getDurationText(form.getValues()));
+                        form.setValue(
+                          "duration",
+                          getDurationText(...form.getValues(["startDate", "startTime", "endDate", "endTime"]))
+                        );
                       }}
                       data-invalid={fieldState.invalid}
                     />

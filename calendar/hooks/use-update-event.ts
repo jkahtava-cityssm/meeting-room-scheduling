@@ -1,6 +1,8 @@
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 
 import type { IEvent } from "@/calendar/interfaces";
+import { generateMultiDayBlocks } from "../helpers";
+import { VISIBLE_HOURS } from "../mocks";
 
 export function useUpdateEvent() {
   const { setLocalEvents } = useCalendar();
@@ -13,10 +15,23 @@ export function useUpdateEvent() {
     newEvent.startDate = new Date(event.startDate).toISOString();
     newEvent.endDate = new Date(event.endDate).toISOString();
 
-    setLocalEvents(prev => {
-      const index = prev.findIndex(e => e.id === event.id);
-      if (index === -1) return prev;
-      return [...prev.slice(0, index), newEvent, ...prev.slice(index + 1)];
+    const eventList = generateMultiDayBlocks(newEvent, VISIBLE_HOURS);
+
+    //THIS IS A USE_EFFECT STATEMENT THAT IS COLLECTING THE LAST EVENT ARRAY
+    //IT IS THEN REMOVING ELEMENTS AT THE SPECIFIED INDEX AND INSERTING A NEW ONE
+
+    setLocalEvents((prev) => {
+      const firstIndex = prev.findIndex((e) => e.id === event.id);
+      const lastIndex = prev.findLastIndex((e) => e.id === event.id);
+      if (firstIndex === -1) return prev;
+
+      const firstArrayHalf = [...prev.slice(0, firstIndex)];
+      const lastArrayHalf = [...prev.slice(lastIndex + 1)];
+
+      if (eventList.length > 0) {
+        return [...firstArrayHalf, ...eventList, ...lastArrayHalf];
+      }
+      return [...firstArrayHalf, newEvent, ...lastArrayHalf];
     });
   };
 

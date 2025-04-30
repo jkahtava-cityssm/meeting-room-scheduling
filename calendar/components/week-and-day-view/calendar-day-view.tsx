@@ -90,7 +90,7 @@ export function CalendarDayView({ events }: { events: IEvent[] }) {
                     if (!hasOverlap(groupedEvents, event, groupIndex)) style = { ...style, width: "100%", left: "0%" };
 
                     return (
-                      <div key={event.id} className="absolute p-1" style={style}>
+                      <div key={event.key} className="absolute p-1" style={style}>
                         <EventBlock event={event} pixelSize={96} />
                       </div>
                     );

@@ -47,7 +47,7 @@ export const eventSchema = z
       });*/
     }
 
-    if (EndTime < StartTime) {
+    if (EndTime < StartTime && EndDate === StartDate) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["startTime"],

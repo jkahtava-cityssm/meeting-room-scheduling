@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { isSameDay, parseISO } from "date-fns";
+import { uniqBy } from "lodash";
 
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 
@@ -14,6 +15,7 @@ import { CalendarWeekView } from "@/calendar/components/week-and-day-view/calend
 
 import type { TCalendarView } from "@/calendar/types";
 import { splitMultiDayEvents } from "../helpers";
+import { IEvent } from "../interfaces";
 
 export function ClientContainer({ view }: { view: TCalendarView }) {
   const { selectedDate, selectedRoomId, events, visibleHours } = useCalendar();
@@ -84,7 +86,7 @@ export function ClientContainer({ view }: { view: TCalendarView }) {
     return !isSameDay(startDate, endDate);
   });
 
-  const combinedDayEvents = [...singleDayEvents, ...splitMultiDayEvents(multiDayEvents, visibleHours)];
+  //const combinedDayEvents = [...singleDayEvents, ...splitMultiDayEvents(multiDayEvents, visibleHours)];
   // For year view, we only care about the start date
   // by using the same date for both start and end,
   // we ensure only the start day will show a dot
@@ -97,12 +99,14 @@ export function ClientContainer({ view }: { view: TCalendarView }) {
 
   return (
     <div className="overflow-hidden rounded-xl border">
-      <CalendarHeader view={view} events={filteredEvents} />
-      {view === "day" && <CalendarDayView events={filteredEvents} />}
-      {view === "month" && <CalendarMonthView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
-      {view === "week" && <CalendarWeekView singleDayEvents={filteredEvents} multiDayEvents={multiDayEvents} />}
-      {view === "year" && <CalendarYearView allEvents={eventStartDates} />}
-      {view === "agenda" && <CalendarAgendaView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
+      <Suspense fallback={<div> MAIN CONTENT</div>}>
+        <CalendarHeader view={view} events={filteredEvents} />
+        {view === "day" && <CalendarDayView events={filteredEvents} />}
+        {view === "month" && <CalendarMonthView events={filteredEvents} />}
+        {view === "week" && <CalendarWeekView events={filteredEvents} />}
+        {view === "year" && <CalendarYearView allEvents={eventStartDates} />}
+        {view === "agenda" && <CalendarAgendaView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
+      </Suspense>
     </div>
   );
 }
