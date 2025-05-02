@@ -4,7 +4,9 @@ import { prisma } from "@/prisma";
 import { Room } from "@prisma/client";
 
 export async function getRooms() {
-  const res = await fetch("/api/rooms");
+  const res = await fetch("/api/rooms", {
+    cache: "force-cache",
+  });
   const data = await res.json();
 
   if (res.status !== 200) {
