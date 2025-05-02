@@ -16,8 +16,8 @@ export const auth = betterAuth({
   session: {
     //expiresIn: 60 * 60 * 24 * 7, // 7 days
     //updateAge: 60 * 60 * 24, // 1 day
-    expiresIn: 60 * 3, // 3 Minutes
-    updateAge: 60 * 1, // 1 Minute
+    expiresIn: 60 * 60 * 24 * 7, // 3 Minutes
+    updateAge: 60 * 60 * 24, // 1 Minute
   },
   /* GithubProvider({
               clientId: process.env.GITHUB_ID as string,

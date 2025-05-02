@@ -13,7 +13,7 @@ interface IProps {
   events: IEvent[];
 }
 
-export function YearViewMonth({ month, events }: IProps) {
+export default function YearViewMonth({ month, events }: IProps) {
   const { push } = useRouter();
   const { setSelectedDate } = useCalendar();
 
@@ -60,9 +60,7 @@ export function YearViewMonth({ month, events }: IProps) {
             if (day === null) return <div key={`blank-${index}`} className="h-10" />;
 
             const date = new Date(month.getFullYear(), month.getMonth(), day);
-            const dayEvents = events.filter(
-              (event) => isSameDay(parseISO(event.startDate), date) || isSameDay(parseISO(event.endDate), date)
-            );
+            const dayEvents = events.filter((event) => isSameDay(event.startDate, date));
 
             return <YearViewDayCell key={`day-${day}`} day={day} date={date} events={dayEvents} />;
           })}

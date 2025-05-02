@@ -82,8 +82,8 @@ export function MonthEventBadge({
   className,
   position: propPosition,
 }: IProps) {
-  const itemStart = startOfDay(parseISO(event.startDate));
-  const itemEnd = endOfDay(parseISO(event.endDate));
+  const itemStart = startOfDay(event.startDate);
+  const itemEnd = endOfDay(event.endDate);
 
   if (cellDate < itemStart || cellDate > itemEnd) return null;
 

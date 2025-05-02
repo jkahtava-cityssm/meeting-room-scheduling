@@ -14,6 +14,7 @@ export const eventSchema = z
     //endTime: z.object({ hour: z.number(), minute: z.number() }, { required_error: "End time is required" }),
     color: z.string().min(1, "Color is required"),
   })
+
   .superRefine((data, ctx) => {
     const EndDate = new Date(data.endDate.toDateString());
     const StartDate = new Date(data.startDate.toDateString());

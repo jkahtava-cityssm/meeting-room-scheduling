@@ -17,7 +17,7 @@ interface IProps {
   eventPositions: Record<string, number>;
 }
 
-export function DayCell({ cell, events, eventPositions }: IProps) {
+export function MonthViewDayCell({ cell, events, eventPositions }: IProps) {
   const { day, currentMonth, date } = cell;
 
   const cellEvents = useMemo(() => getMonthCellEvents(date, events, eventPositions), [date, events, eventPositions]);
@@ -53,7 +53,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
           <div className="flex flex-col gap-1 ">
             {[...Array(maxPosition + 1).keys()].map((position) => {
               const event = cellEvents.find((e) => e.position === position);
-              const eventKey = event ? `event-${event.id}-${position}` : `empty-${position}`;
+              const eventKey = event ? `event-${event.eventId}-${position}` : `empty-${position}`;
               //console.log(maxPosition, position);
 
               if (event) {

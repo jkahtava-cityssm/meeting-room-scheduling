@@ -2,6 +2,9 @@
   "name": "meeting-room-scheduling",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -47,7 +50,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/lodash": "^4.17.16",
-    "@types/node": "^20",
+    "@types/node": "^20.17.32",
     "@types/pg": "^8.11.13",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -55,6 +58,7 @@
     "eslint-config-next": "15.3.0",
     "prisma": "^6.6.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

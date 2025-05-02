@@ -99,8 +99,8 @@ export function getCurrentEvents(events: IEvent[]) {
   return (
     events.filter((event) =>
       isWithinInterval(now, {
-        start: parseISO(event.startDate),
-        end: parseISO(event.endDate),
+        start: event.startDate,
+        end: event.endDate,
       })
     ) || null
   );
@@ -127,8 +127,8 @@ export function splitMultiDayEvents(events: IEvent[], visibleHours: TVisibleHour
   const eventList: IEvent[] = [];
 
   events.forEach((element) => {
-    const currentStartDate = parseISO(element.startDate);
-    const currentEndDate = parseISO(element.endDate);
+    const currentStartDate = element.startDate;
+    const currentEndDate = element.endDate;
 
     const endDay = endOfDay(currentEndDate);
     const startDay = startOfDay(currentStartDate);
@@ -177,8 +177,8 @@ export function generateMultiDayBlocks(
 
   const eventList: IEvent[] = [];
 
-  const currentStartDate = parseISO(event.startDate);
-  const currentEndDate = parseISO(event.endDate);
+  const currentStartDate = event.startDate;
+  const currentEndDate = event.endDate;
 
   const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
 
@@ -226,8 +226,8 @@ export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Dat
   const dayEnd = endOfDay(selectedDate);
 
   return events.filter((event) => {
-    const eventStart = parseISO(event.startDate);
-    const eventEnd = parseISO(event.endDate);
+    const eventStart = event.startDate;
+    const eventEnd = event.endDate;
 
     const isOverlapping =
       isWithinInterval(dayStart, { start: eventStart, end: eventEnd }) ||
@@ -237,23 +237,23 @@ export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Dat
     return isOverlapping;
   });
   /*.sort((a, b) => {
-      const durationA = differenceInDays(parseISO(a.endDate), parseISO(a.startDate));
-      const durationB = differenceInDays(parseISO(b.endDate), parseISO(b.startDate));
+      const durationA = differenceInDays(a.endDate), a.startDate));
+      const durationB = differenceInDays(b.endDate), b.startDate));
       return durationB - durationA;
     });*/
 }
 
 export function groupEvents(dayEvents: IEvent[]) {
-  const sortedEvents = dayEvents.sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+  const sortedEvents = dayEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
   const groups: IEvent[][] = [];
 
   for (const event of sortedEvents) {
-    const eventStart = parseISO(event.startDate);
+    const eventStart = event.startDate;
 
     let placed = false;
     for (const group of groups) {
       const lastEventInGroup = group[group.length - 1];
-      const lastEventEnd = parseISO(lastEventInGroup.endDate);
+      const lastEventEnd = lastEventInGroup.endDate;
 
       if (eventStart >= lastEventEnd) {
         group.push(event);
@@ -275,7 +275,7 @@ export function getEventBlockStyle(
   groupSize: number,
   visibleHoursRange?: { from: number; to: number }
 ) {
-  const startDate = parseISO(event.startDate);
+  const startDate = event.startDate;
   const dayStart = new Date(day.setHours(0, 0, 0, 0));
   const eventStart = startDate < dayStart ? dayStart : startDate;
   const startMinutes = differenceInMinutes(eventStart, dayStart);
@@ -310,12 +310,12 @@ export function hasOverlap(groupedEvents: IEvent[][], event: IEvent, index: numb
       otherGroup.some((otherEvent) =>
         areIntervalsOverlapping(
           {
-            start: parseISO(event.startDate),
-            end: parseISO(event.endDate),
+            start: event.startDate,
+            end: event.endDate,
           },
           {
-            start: parseISO(otherEvent.startDate),
-            end: parseISO(otherEvent.endDate),
+            start: otherEvent.startDate,
+            end: otherEvent.endDate,
           }
         )
       )
@@ -333,8 +333,8 @@ export function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IE
   let latestEventHour = visibleHours.to;
 
   singleDayEvents.forEach((event) => {
-    const startHour = parseISO(event.startDate).getHours();
-    const endTime = parseISO(event.endDate);
+    const startHour = event.startDate.getHours();
+    const endTime = event.endDate;
     const endHour = endTime.getHours() + (endTime.getMinutes() > 0 ? 1 : 0);
     if (startHour < earliestEventHour) earliestEventHour = startHour;
     if (endHour > latestEventHour) latestEventHour = endHour;
@@ -395,16 +395,16 @@ export function calculateMonthEventPositions(multiDayEvents: IEvent[], singleDay
 
   const sortedEvents = [
     ...multiDayEvents.sort((a, b) => {
-      const aDuration = differenceInDays(parseISO(a.endDate), parseISO(a.startDate));
-      const bDuration = differenceInDays(parseISO(b.endDate), parseISO(b.startDate));
-      return bDuration - aDuration || parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime();
+      const aDuration = differenceInDays(a.endDate, a.startDate);
+      const bDuration = differenceInDays(b.endDate, b.startDate);
+      return bDuration - aDuration || a.startDate.getTime() - b.startDate.getTime();
     }),
-    ...singleDayEvents.sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime()),
+    ...singleDayEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
   ];
 
   sortedEvents.forEach((event) => {
-    const eventStart = parseISO(event.startDate);
-    const eventEnd = parseISO(event.endDate);
+    const eventStart = event.startDate;
+    const eventEnd = event.endDate;
     const eventDays = eachDayOfInterval({
       start: eventStart < monthStart ? monthStart : eventStart,
       end: eventEnd > monthEnd ? monthEnd : eventEnd,
@@ -429,7 +429,7 @@ export function calculateMonthEventPositions(multiDayEvents: IEvent[], singleDay
         const dayKey = startOfDay(day).toISOString();
         occupiedPositions[dayKey][position] = true;
       });
-      eventPositions[event.id] = position;
+      eventPositions[event.eventId] = position;
     }
   });
 
@@ -438,15 +438,15 @@ export function calculateMonthEventPositions(multiDayEvents: IEvent[], singleDay
 
 export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions: Record<string, number>) {
   const eventsForDate = events.filter((event) => {
-    const eventStart = parseISO(event.startDate);
-    const eventEnd = parseISO(event.endDate);
+    const eventStart = event.startDate;
+    const eventEnd = event.endDate;
     return (date >= eventStart && date <= eventEnd) || isSameDay(date, eventStart) || isSameDay(date, eventEnd);
   });
 
   return eventsForDate
     .map((event) => ({
       ...event,
-      position: eventPositions[event.id] ?? -1,
+      position: eventPositions[event.eventId] ?? -1,
       isMultiDay: !isSameDay(event.endDate, event.startDate), // event.startDate !== event.endDate,
     }))
     .sort((a, b) => {

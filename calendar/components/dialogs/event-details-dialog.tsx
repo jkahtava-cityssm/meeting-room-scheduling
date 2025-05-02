@@ -33,7 +33,7 @@ export function EventDetailsDialog({ event, children }: IProps) {
 
   const onToggle = () => setIsOpen((currentValue) => !currentValue);
 
-  const currentEvent = event.parentEvent === null ? event : event.parentEvent;
+  const currentEvent = event.parentEvent == null ? event : event.parentEvent;
 
   const onDialogChange = () => {
     console.log("RUN");

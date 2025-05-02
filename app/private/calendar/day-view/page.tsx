@@ -1,7 +1,7 @@
 import { ClientContainer } from "@/calendar/components/client-container";
+import { CalendarDayView } from "@/calendar/components/week-and-day-view/calendar-day-view";
 import { CalendarProvider } from "@/calendar/contexts/calendar-context";
-import { IEvent, IRoom } from "@/calendar/interfaces";
 
 export default async function Page() {
-  return <ClientContainer view="day" />;
+  return <CalendarDayView />;
 }

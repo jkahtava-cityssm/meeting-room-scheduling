@@ -10,7 +10,8 @@ import { AddEventDialog } from "@/calendar/components/dialogs/add-event-dialog";
 
 import type { IEvent } from "@/calendar/interfaces";
 import type { TCalendarView } from "@/calendar/types";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { CalendarHeaderSkeleton } from "./calendar-header-skeleton";
 
 interface IProps {
   view: TCalendarView;
@@ -18,8 +19,19 @@ interface IProps {
 }
 
 export function CalendarHeader({ view, events }: IProps) {
+  const [isLoading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 1);
+    //setLoading(false);
+  }, []);
+
+  if (isLoading) {
+    return <CalendarHeaderSkeleton view={view} />;
+  }
+
   return (
-    <Suspense fallback={<div>LOADING NAVIGATION</div>}>
+    <>
       <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <TodayButton />
@@ -101,6 +113,6 @@ export function CalendarHeader({ view, events }: IProps) {
           </AddEventDialog>
         </div>
       </div>
-    </Suspense>
+    </>
   );
 }

@@ -1,5 +1,5 @@
-import { ClientContainer } from "@/calendar/components/client-container";
+import { CalendarWeekView } from "@/calendar/components/week-and-day-view/calendar-week-view";
 
 export default async function Page() {
-  return <ClientContainer view="week" />;
+  return <CalendarWeekView />;
 }

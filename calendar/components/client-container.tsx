@@ -90,12 +90,12 @@ export function ClientContainer({ view }: { view: TCalendarView }) {
   // For year view, we only care about the start date
   // by using the same date for both start and end,
   // we ensure only the start day will show a dot
-  const eventStartDates = useMemo(() => {
+  /*const eventStartDates = useMemo(() => {
     return filteredEvents.map((event) => ({
       ...event,
       endDate: event.startDate,
     }));
-  }, [filteredEvents]);
+  }, [filteredEvents]);*/
 
   return (
     <div className="overflow-hidden rounded-xl border">
@@ -104,7 +104,9 @@ export function ClientContainer({ view }: { view: TCalendarView }) {
         {view === "day" && <CalendarDayView events={filteredEvents} />}
         {view === "month" && <CalendarMonthView events={filteredEvents} />}
         {view === "week" && <CalendarWeekView events={filteredEvents} />}
-        {view === "year" && <CalendarYearView allEvents={eventStartDates} />}
+        {
+          //view === "year" && <CalendarYearView />
+        }
         {view === "agenda" && <CalendarAgendaView singleDayEvents={singleDayEvents} multiDayEvents={multiDayEvents} />}
       </Suspense>
     </div>

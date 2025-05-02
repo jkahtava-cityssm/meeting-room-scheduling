@@ -57,6 +57,7 @@ React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<SVGSVGElement>
 
 function IconDot({
   color,
+  ...props
 }: //className,
 //...props
 {
@@ -66,7 +67,7 @@ function IconDot({
   //React.RefAttributes<SVGSVGElement>
   const EventCardClasses = IconColor({ color: color });
 
-  return <div className={cn("size-1.5 rounded-full", EventCardClasses)} />;
+  return <div {...props} className={cn("size-1.5 rounded-full", EventCardClasses)} />;
 }
 
 export { IconDot };

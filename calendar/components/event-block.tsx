@@ -64,8 +64,8 @@ interface IProps extends HTMLAttributes<HTMLDivElement>, Omit<VariantProps<typeo
 }
 
 export function EventBlock({ event, pixelSize = 96 }: { event: IEvent; pixelSize: number }) {
-  const start = parseISO(event.startDate);
-  const end = parseISO(event.endDate);
+  const start = event.startDate;
+  const end = event.endDate;
   const durationInMinutes = differenceInMinutes(end, start);
   const heightInPixels = (durationInMinutes / 60) * pixelSize - 8;
 

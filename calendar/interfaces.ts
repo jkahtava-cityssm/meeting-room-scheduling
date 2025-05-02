@@ -1,11 +1,7 @@
 import type { TColors } from "@/calendar/types";
+import type { Event, Room } from "@prisma/client";
 
-export interface IRoom {
-  id: string;
-  name: string;
-  color: TColors;
-  picturePath: string | null;
-}
+export interface IRoom extends Room {}
 
 export interface IMultiDayBlock {
   parentID: number;
@@ -27,16 +23,7 @@ export interface IEvent {
 }
 */
 
-export interface IEvent {
-  id: number;
-  key: string;
-  startDate: string;
-  endDate: string;
-  title: string;
-  description: string;
-  room: IRoom;
-  parentEvent: IEvent | null;
-}
+export interface IEvent extends Event {}
 
 export interface ICalendarCell {
   day: number;
