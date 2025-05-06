@@ -36,16 +36,24 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "View Calendar",
+          title: "View Calendar - Year",
           url: "/private/calendar/year-view",
         },
         {
-          title: "View Booking Details",
-          url: "#",
+          title: "View Calendar - Month",
+          url: "/private/calendar/month-view",
         },
         {
-          title: "Manage Bookings",
-          url: "#",
+          title: "View Calendar - Week",
+          url: "/private/calendar/week-view",
+        },
+        {
+          title: "View Calendar - Day",
+          url: "/private/calendar/day-view",
+        },
+        {
+          title: "View Calendar - Agenda",
+          url: "/private/calendar/agenda-view",
         },
       ],
     },

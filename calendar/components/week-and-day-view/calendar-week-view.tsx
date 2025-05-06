@@ -79,74 +79,76 @@ export function CalendarWeekView() {
       <div className="hidden flex-col sm:flex">
         <div className="flex">
           <div className="flex flex-1 flex-col">
-            <div>
-              <ColumnDayHeader weekDays={weekDays} />
-            </div>
             {isLoading ? (
               <CalendarWeekViewSkeleton />
             ) : (
-              <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
-                <div className="flex overflow-hidden">
-                  {/* Hours column */}
-                  <HourColumn hours={hours} />
-
-                  {/* Week grid */}
-                  <div className="relative flex-1 border-l">
-                    <div className="grid grid-cols-7 divide-x">
-                      {weekDays.map((day, dayIndex) => {
-                        const dayEvents = events.filter(
-                          (event) => isSameDay(event.startDate, day) //|| isSameDay(parseISO(event.endDate), day)
-                        );
-
-                        const test = dayEvents.filter((event) => event.eventId === event.parentEvent?.eventId);
-
-                        const groupedEvents = groupEvents(dayEvents);
-
-                        return (
-                          <div key={dayIndex} className="relative">
-                            <DayHourlyEventDialogs hours={hours} day={day} workingHours={workingHours} />
-
-                            {groupedEvents.map((group, groupIndex) =>
-                              group.map((event) => {
-                                let style = getEventBlockStyle(event, day, groupIndex, groupedEvents.length, {
-                                  from: earliestEventHour,
-                                  to: latestEventHour,
-                                });
-                                const hasOverlap = groupedEvents.some(
-                                  (otherGroup, otherIndex) =>
-                                    otherIndex !== groupIndex &&
-                                    otherGroup.some((otherEvent) =>
-                                      areIntervalsOverlapping(
-                                        {
-                                          start: event.startDate,
-                                          end: event.endDate,
-                                        },
-                                        {
-                                          start: otherEvent.startDate,
-                                          end: otherEvent.endDate,
-                                        }
-                                      )
-                                    )
-                                );
-
-                                if (!hasOverlap) style = { ...style, width: "100%", left: "0%" };
-
-                                return (
-                                  <div key={event.eventId} className="absolute p-1" style={style}>
-                                    <EventBlock event={event} pixelSize={96} />
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <CalendarTimeline />
-                  </div>
+              <>
+                <div>
+                  <ColumnDayHeader weekDays={weekDays} />
                 </div>
-              </ScrollArea>
+                <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
+                  <div className="flex overflow-hidden">
+                    {/* Hours column */}
+                    <HourColumn hours={hours} />
+
+                    {/* Week grid */}
+                    <div className="relative flex-1 border-l">
+                      <div className="grid grid-cols-7 divide-x">
+                        {weekDays.map((day, dayIndex) => {
+                          const dayEvents = events.filter(
+                            (event) => isSameDay(event.startDate, day) //|| isSameDay(parseISO(event.endDate), day)
+                          );
+
+                          //const test = dayEvents.filter((event) => event.eventId === event.parentEvent?.eventId);
+
+                          const groupedEvents = groupEvents(dayEvents);
+
+                          return (
+                            <div key={dayIndex} className="relative">
+                              <DayHourlyEventDialogs hours={hours} day={day} workingHours={workingHours} />
+
+                              {groupedEvents.map((group, groupIndex) =>
+                                group.map((event) => {
+                                  let style = getEventBlockStyle(event, day, groupIndex, groupedEvents.length, {
+                                    from: earliestEventHour,
+                                    to: latestEventHour,
+                                  });
+                                  const hasOverlap = groupedEvents.some(
+                                    (otherGroup, otherIndex) =>
+                                      otherIndex !== groupIndex &&
+                                      otherGroup.some((otherEvent) =>
+                                        areIntervalsOverlapping(
+                                          {
+                                            start: event.startDate,
+                                            end: event.endDate,
+                                          },
+                                          {
+                                            start: otherEvent.startDate,
+                                            end: otherEvent.endDate,
+                                          }
+                                        )
+                                      )
+                                  );
+
+                                  if (!hasOverlap) style = { ...style, width: "100%", left: "0%" };
+
+                                  return (
+                                    <div key={event.eventId} className="absolute p-1" style={style}>
+                                      <EventBlock event={event} pixelSize={96} />
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <CalendarTimeline />
+                    </div>
+                  </div>
+                </ScrollArea>
+              </>
             )}
           </div>
         </div>

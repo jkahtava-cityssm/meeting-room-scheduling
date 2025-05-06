@@ -35,6 +35,7 @@ import React, { useEffect, useState } from "react";
 import { getEvents } from "@/services/events";
 import { CalendarHeader } from "../header/calendar-header";
 import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
+import { CalendarDayViewSkeleton } from "./calendar-day-view-skeleton";
 
 interface IProps {
   singleDayEvents: IEvent[];
@@ -63,7 +64,11 @@ export function CalendarDayView() {
   };
 
   useEffect(() => {
-    fetchEvents();
+    //fetchEvents();
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 4000);
   }, [selectedDate]);
 
   const handleToday = () => {
@@ -94,13 +99,13 @@ export function CalendarDayView() {
   return (
     <>
       {isLoading ? <CalendarHeaderSkeleton view={"day"} /> : <CalendarHeader view={"day"} events={events} />}
+      {isLoading ? (
+        <CalendarDayViewSkeleton />
+      ) : (
+        <div className="flex">
+          <div className="flex flex-1 flex-col">
+            <ColumnDayHeader weekDays={[selectedDate]} />
 
-      <div className="flex">
-        <div className="flex flex-1 flex-col">
-          <ColumnDayHeader weekDays={[selectedDate]} />
-          {isLoading ? (
-            <div>BBBB</div>
-          ) : (
             <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
               <div className="flex border-l">
                 {/* Hours column   h-[500px]  */}
@@ -122,7 +127,7 @@ export function CalendarDayView() {
                           style = { ...style, width: "100%", left: "0%" };
 
                         return (
-                          <div key={event.key} className="absolute p-1" style={style}>
+                          <div key={event.eventId} className="absolute p-1" style={style}>
                             <EventBlock event={event} pixelSize={96} />
                           </div>
                         );
@@ -134,79 +139,79 @@ export function CalendarDayView() {
                 </div>
               </div>
             </ScrollArea>
-          )}
-        </div>
+          </div>
 
-        <div className="hidden w-74 divide-y border-l md:block">
-          <SingleCalendar
-            className="mx-auto w-fit"
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            month={currentMonth}
-            onMonthChange={setCurrentMonth}
-            required
-            onToday={handleToday}
-          />
+          <div className="hidden w-74 divide-y border-l md:block">
+            <SingleCalendar
+              className="mx-auto w-fit"
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              month={currentMonth}
+              onMonthChange={setCurrentMonth}
+              required
+              onToday={handleToday}
+            />
 
-          <div className="flex-1 space-y-3">
-            {currentEvents.length > 0 ? (
-              <div className="flex items-start gap-2 px-4 pt-4">
-                <span className="relative mt-[5px] flex size-2.5">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex size-2.5 rounded-full bg-green-600"></span>
-                </span>
+            <div className="flex-1 space-y-3">
+              {currentEvents.length > 0 ? (
+                <div className="flex items-start gap-2 px-4 pt-4">
+                  <span className="relative mt-[5px] flex size-2.5">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex size-2.5 rounded-full bg-green-600"></span>
+                  </span>
 
-                <p className="text-sm font-semibold text-foreground">Happening now</p>
-              </div>
-            ) : (
-              <p className="p-4 text-center text-sm italic text-muted-foreground">
-                No appointments or consultations at the moment
-              </p>
-            )}
-
-            {currentEvents.length > 0 && (
-              <div className="flex">
-                <div className="flex flex-1 flex-col">
-                  <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] px-4" type="always">
-                    {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
-                    <div className="space-y-6 pb-4">
-                      {currentEvents.map((event, index) => {
-                        const room = false; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
-
-                        return (
-                          <div key={event.eventId + "-" + index} className="space-y-1.5">
-                            <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
-
-                            {room && (
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
-                                <User className="size-3.5" />
-                                <span className="text-sm">{room.name}</span>
-                              </div>
-                            )}
-
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Calendar className="size-3.5" />
-                              <span className="text-sm">{format(new Date(), "MMM d, yyyy")}</span>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Clock className="size-3.5" />
-                              <span className="text-sm">
-                                {format(event.startDate, "h:mm a")} - {format(event.endDate, "h:mm a")}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
+                  <p className="text-sm font-semibold text-foreground">Happening now</p>
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="p-4 text-center text-sm italic text-muted-foreground">
+                  No appointments or consultations at the moment
+                </p>
+              )}
+
+              {currentEvents.length > 0 && (
+                <div className="flex">
+                  <div className="flex flex-1 flex-col">
+                    <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] px-4" type="always">
+                      {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
+                      <div className="space-y-6 pb-4">
+                        {currentEvents.map((event, index) => {
+                          const room = false; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
+
+                          return (
+                            <div key={event.eventId + "-" + index} className="space-y-1.5">
+                              <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
+
+                              {room && (
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <User className="size-3.5" />
+                                  <span className="text-sm">{room}</span>
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <Calendar className="size-3.5" />
+                                <span className="text-sm">{format(new Date(), "MMM d, yyyy")}</span>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <Clock className="size-3.5" />
+                                <span className="text-sm">
+                                  {format(event.startDate, "h:mm a")} - {format(event.endDate, "h:mm a")}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

@@ -19,10 +19,10 @@ interface IProps {
 }
 
 export function CalendarHeader({ view, events }: IProps) {
-  const [isLoading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 1);
+    //setTimeout(() => setLoading(false), 1);
     //setLoading(false);
   }, []);
 
