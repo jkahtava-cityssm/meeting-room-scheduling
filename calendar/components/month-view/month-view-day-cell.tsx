@@ -11,13 +11,17 @@ import type { ICalendarCell, IEvent } from "@/calendar/interfaces";
 import { MAX_VISIBLE_EVENTS } from "@/calendar/mocks";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 
-interface IProps {
+export function MonthViewDayCell({
+  cell,
+  events,
+  eventPositions,
+  fetchData,
+}: {
   cell: ICalendarCell;
   events: IEvent[];
   eventPositions: Record<string, number>;
-}
-
-export function MonthViewDayCell({ cell, events, eventPositions }: IProps) {
+  fetchData: () => Promise<void>;
+}) {
   const { day, currentMonth, date } = cell;
 
   const cellEvents = useMemo(() => getMonthCellEvents(date, events, eventPositions), [date, events, eventPositions]);
@@ -59,7 +63,14 @@ export function MonthViewDayCell({ cell, events, eventPositions }: IProps) {
               if (event) {
                 return (
                   <div key={eventKey} className="md:flex-1">
-                    {event && <MonthEventBadge className="hidden sm:flex" event={event} cellDate={startOfDay(date)} />}
+                    {event && (
+                      <MonthEventBadge
+                        className="hidden sm:flex"
+                        event={event}
+                        cellDate={startOfDay(date)}
+                        fetchData={fetchData}
+                      />
+                    )}
                   </div>
                 );
               } else if (position < maxPosition + 1) {

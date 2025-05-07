@@ -1,35 +1,90 @@
 import { prisma } from "@/prisma";
 import { endOfYear, formatDate, parseISO, startOfYear } from "date-fns";
 import { Star } from "lucide-react";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { start } from "repl";
 
+async function CreatedMessage() {
+  return NextResponse.json({ message: "Created Event" }, { status: 201 });
+}
+
+async function UpdatedMessage() {
+  return NextResponse.json({ message: "Updated Event" }, { status: 200 });
+}
+
+async function InternalServerErrorMessage(details?: string) {
+  return NextResponse.json({ error: "Internal Server Error" + details && ": " + details }, { status: 500 });
+}
+
+async function BadRequestMessage() {
+  return NextResponse.json({ error: "Bad Request" }, { status: 400 });
+}
+
 export async function POST(req: Request) {
   if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ error: "DATABASE_URL is not set" }, { status: 500 });
+    return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
   const { title, description, startDate, endDate, roomId } = await req.json();
 
-  await prisma.event.create({
+  if (!title || !description || !startDate || !endDate || !roomId) {
+    return BadRequestMessage();
+  }
+
+  const result = await prisma.event.create({
     data: { title, description, startDate, endDate, roomId },
   });
 
-  return NextResponse.json({ message: "Created Event" }, { status: 200 });
+  if (!result) {
+    InternalServerErrorMessage();
+  }
+
+  return CreatedMessage();
+}
+
+export async function PUT(req: Request) {
+  if (!process.env.DATABASE_URL) {
+    return InternalServerErrorMessage("DATABASE_URL Missing");
+  }
+
+  const { eventId, title, description, startDate, endDate, roomId } = await req.json();
+
+  if (!title || !description || !startDate || !endDate || !roomId) {
+    return BadRequestMessage();
+  }
+
+  const result = await prisma.event.upsert({
+    create: { title, description, startDate, endDate, roomId },
+    where: { eventId: eventId },
+    update: { title, description, startDate, endDate, roomId },
+  });
+
+  if (!result) {
+    InternalServerErrorMessage();
+  }
+
+  revalidateTag("EventsUpdated");
+  //revalidatePath("/private/calendar/month-view");
+
+  if (result.eventId === eventId) {
+    return UpdatedMessage();
+  }
+
+  return CreatedMessage();
 }
 
 export async function GET(req: NextRequest) {
   if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ error: "DATABASE_URL is not set" }, { status: 500 });
+    return InternalServerErrorMessage("DATABASE_URL Missing");
   }
-
   const searchParams = req.nextUrl.searchParams;
 
   const startDateParam = searchParams.get("startdate");
   const endDateParam = searchParams.get("enddate");
 
   if (!startDateParam || !endDateParam) {
-    return NextResponse.json({ error: "Failed to fetch Events, insufficient parameters provided" }, { status: 500 });
+    return BadRequestMessage();
   }
 
   const StartDate: Date = parseISO(startDateParam);
@@ -41,7 +96,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (!events) {
-    return NextResponse.json({ error: "Failed to fetch Events" }, { status: 500 });
+    return InternalServerErrorMessage();
   }
 
   return NextResponse.json(events);

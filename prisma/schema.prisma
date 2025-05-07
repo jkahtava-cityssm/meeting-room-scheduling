@@ -78,16 +78,18 @@ model Room {
   icon      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Event     Event[]
+
+  Event Event[]
 
   @@map("room")
 }
 
 model Member {
-  memberId   Int          @id @default(autoincrement())
+  memberId   Int    @id @default(autoincrement())
   userId     String
   theme      String
   timeFormat String //12hour or 24 hour
+
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   MemberRole MemberRole[]
 
@@ -110,10 +112,11 @@ model MemberRole {
 }
 
 model Role {
-  roleId             Int                  @id @default(autoincrement())
-  name               String
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
+  roleId    Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   MemberRole         MemberRole[]
   RoleResourceAction RoleResourceAction[]
   // RolePermission     RolePermission[]
@@ -170,20 +173,22 @@ model RoleResourceAction {
 
 //Events, Rooms, etc...
 model Resource {
-  resourceId         Int                  @id @default(autoincrement())
-  name               String
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
+  resourceId Int      @id @default(autoincrement())
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   RoleResourceAction RoleResourceAction[]
 
   @@map("resource")
 }
 
 model Action {
-  actionId           Int                  @id @default(autoincrement())
-  name               String
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
+  actionId  Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   RoleResourceAction RoleResourceAction[]
 
   @@map("action")
@@ -196,6 +201,8 @@ model Recurrence {
   period       Int //1
   startDate    DateTime
   endDate      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("recurrence")
 }
@@ -208,8 +215,11 @@ model Event {
   title         String
   description   String
   parentEventId Int?
-  parentEvent   Event?   @relation("ParentEvents", fields: [parentEventId], references: [eventId])
-  Event         Event[]  @relation("ParentEvents")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  parentEvent Event?  @relation("ParentEvents", fields: [parentEventId], references: [eventId])
+  Event       Event[] @relation("ParentEvents")
 
   room Room @relation(fields: [roomId], references: [roomId])
 

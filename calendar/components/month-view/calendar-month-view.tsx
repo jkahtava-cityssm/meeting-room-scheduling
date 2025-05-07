@@ -35,17 +35,20 @@ export function CalendarMonthView() {
 
   const [isLoading, setLoading] = useState(true);
 
-  const fetchEvents = async () => {
+  const fetchMonthlyEvents = async () => {
     setLoading(true);
 
     const eventList = await getEventsMonthly(selectedDate);
+
+    const StartOfMonth = startOfMonth(selectedDate);
+    const EndOfMonth = endOfMonth(selectedDate);
 
     setEvents(eventList.data);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchMonthlyEvents();
   }, [selectedDate]);
 
   const filteredEvents = useMemo(
@@ -87,6 +90,7 @@ export function CalendarMonthView() {
               cell={cell}
               events={filteredEvents}
               eventPositions={eventPositions}
+              fetchData={fetchMonthlyEvents}
             />
           )
         )}

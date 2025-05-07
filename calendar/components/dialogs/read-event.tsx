@@ -1,11 +1,19 @@
 import { IEvent } from "@/calendar/interfaces";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { format, isSameDay, parseISO } from "date-fns";
 import { Clock, MapPin, Text } from "lucide-react";
+import { SetStateAction } from "react";
 import { twMerge } from "tailwind-merge";
 
-export function ReadEvent({ event }: { event: IEvent }) {
+export function ReadEvent({
+  event,
+  setIsEditable,
+}: {
+  event: IEvent;
+  setIsEditable: (value: SetStateAction<boolean>) => void;
+}) {
   const startDate = event.startDate;
   const endDate = event.endDate;
   return (
@@ -49,6 +57,11 @@ export function ReadEvent({ event }: { event: IEvent }) {
             value={event.description}
           ></Textarea>
         </div>
+      </div>
+      <div className="flex gap-2 sm:flex-col-reverse md:flex-row md:justify-end ">
+        <Button type="button" variant="outline" onClick={() => setIsEditable(true)}>
+          Edit
+        </Button>
       </div>
     </div>
   );

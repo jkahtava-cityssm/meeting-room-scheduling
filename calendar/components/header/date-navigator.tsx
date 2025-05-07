@@ -19,7 +19,7 @@ interface IProps {
 }
 
 export function DateNavigator({ view }: IProps) {
-  const { selectedDate, setSelectedDate } = useCalendar();
+  const { selectedDate, setSelectedDate, selectedRoomId } = useCalendar();
 
   const [eventTotal, setEventTotal] = useState<number>(0);
 

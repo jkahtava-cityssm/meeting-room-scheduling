@@ -15,34 +15,60 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import type { IEvent } from "@/calendar/interfaces";
+import type { IEvent, IRoom } from "@/calendar/interfaces";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDisclosure } from "@/hooks/use-disclosure";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ReadEvent } from "./read-event";
 import { EditEvent } from "./edit-event";
+import { getEvent } from "@/services/events";
+import { getRooms } from "@/services/rooms";
+import { setTimeout } from "timers";
+import { EditEventSkeleton } from "./edit-event-skeleton";
 
 interface IProps {
   event: IEvent;
   children: React.ReactNode;
+  fetchData: () => Promise<void>;
 }
 
-export function EventDetailsDialog({ event, children }: IProps) {
+export function EventDetailsDialog({ event, children, fetchData }: IProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isReadOnly, setIsReadOnly] = useState(true);
+  const [isEditable, setIsEditable] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
+  const [currentEvent, setCurrentEvent] = useState<IEvent>();
+  const [rooms, setRooms] = useState<IRoom[]>([]);
 
   const onToggle = () => setIsOpen((currentValue) => !currentValue);
 
-  const currentEvent = event; //event.parentEvent == null ? event : event.parentEvent;
+  //const currentEvent = event; //event.parentEvent == null ? event : event.parentEvent;
 
   const onDialogChange = () => {
-    console.log("RUN");
     setIsOpen((currentValue) => !currentValue);
 
-    setIsReadOnly(true);
+    setIsEditable(false);
   };
+
+  const fetchSingleEvent = async () => {
+    setLoading(true);
+
+    const eventList = await getEvent(event.eventId);
+    const roomList = await getRooms();
+
+    setTimeout(() => {
+      setRooms(roomList.data);
+      setCurrentEvent(eventList.data[0]);
+      setLoading(false);
+    }, 4000);
+  };
+
+  useEffect(() => {
+    if (isEditable) {
+      console.log("Editable");
+      fetchSingleEvent();
+    }
+  }, [isEditable]);
 
   return (
     <>
@@ -54,39 +80,16 @@ export function EventDetailsDialog({ event, children }: IProps) {
         <DialogTrigger asChild>{children}</DialogTrigger>
         <DialogContent className="sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 lg:max-h-9/12">
           <DialogHeader className="md:text-left">
-            <DialogTitle>{currentEvent.title}</DialogTitle>
+            <DialogTitle>
+              {isEditable && currentEvent !== undefined && !isLoading ? "Edit: " + currentEvent.title : event.title}
+            </DialogTitle>
             <DialogDescription className="sr-only">Event Details</DialogDescription>
           </DialogHeader>
-          {isLoading ? (
-            <></>
-          ) : isReadOnly ? (
-            <ReadEvent event={currentEvent} />
-          ) : (
-            <EditEvent event={currentEvent} rooms={[]} />
+          {isEditable && isLoading && <EditEventSkeleton></EditEventSkeleton>}
+          {isEditable && currentEvent !== undefined && !isLoading && (
+            <EditEvent event={currentEvent} rooms={rooms} fetchData={fetchData} setIsEditable={setIsEditable} />
           )}
-
-          <DialogFooter className="sm:flex-col-reverse md:flex-row md:justify-end">
-            {isReadOnly ? (
-              <Button type="button" variant="outline" onClick={() => setIsReadOnly(false)}>
-                Edit2
-              </Button>
-            ) : (
-              <>
-                <Button form="event-form" type="submit">
-                  Save changes
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setIsReadOnly(true)}>
-                  Cancel
-                </Button>
-              </>
-            )}
-
-            {/*<EditEventDialog event={currentEvent}>
-              <Button type="button" variant="outline">
-                Edit
-              </Button>
-            </EditEventDialog>*/}
-          </DialogFooter>
+          {!isEditable && <ReadEvent event={event} setIsEditable={setIsEditable} />}
         </DialogContent>
       </Dialog>
     </>
