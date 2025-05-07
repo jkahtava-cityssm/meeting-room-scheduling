@@ -15,10 +15,9 @@ import { CalendarHeaderSkeleton } from "./calendar-header-skeleton";
 
 interface IProps {
   view: TCalendarView;
-  events: IEvent[];
 }
 
-export function CalendarHeader({ view, events }: IProps) {
+export function CalendarHeader({ view }: IProps) {
   const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -35,7 +34,7 @@ export function CalendarHeader({ view, events }: IProps) {
       <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <TodayButton />
-          <DateNavigator view={view} events={events} />
+          <DateNavigator view={view} />
         </div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">

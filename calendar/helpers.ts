@@ -106,7 +106,7 @@ export function getCurrentEvents(events: IEvent[]) {
   );
 }
 
-export function splitMultiDayEvents(events: IEvent[], visibleHours: TVisibleHours) {
+export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodEnd: Date, visibleHours: TVisibleHours) {
   /* 
     CHECK IF THE EVENT STARTS TODAY
     
@@ -130,33 +130,31 @@ export function splitMultiDayEvents(events: IEvent[], visibleHours: TVisibleHour
     const currentStartDate = element.startDate;
     const currentEndDate = element.endDate;
 
-    const endDay = endOfDay(currentEndDate);
-    const startDay = startOfDay(currentStartDate);
+    //const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
+    const totalDaysBetween = differenceInDays(currentEndDate, currentStartDate);
 
-    const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
+    for (let index = 0; index < totalDaysBetween; index++) {
+      const newEvent = { ...element, eventIsSplit: true };
 
-    for (let index = 0; index <= totalDaysBetween; index++) {
-      const newEvent = { ...element };
+      const newDay = set(addDays(currentStartDate, index), { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
+
+      if (!isWithinInterval(newDay, { start: periodStart, end: periodEnd })) {
+        continue;
+      }
 
       if (index === 0) {
         //First Day
         newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-        newEvent.endDate = formatISO(
-          set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 })
-        );
+        newEvent.endDate = set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
       } else if (index === totalDaysBetween) {
         //LAST DAY
         newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-        newEvent.startDate = formatISO(
-          set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 })
-        );
+        newEvent.startDate = set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
       } else {
-        const newDay = addDays(currentStartDate, index);
-
         newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
 
-        newEvent.startDate = formatISO(set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 }));
-        newEvent.endDate = formatISO(set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }));
+        newEvent.startDate = set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
+        newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
         //MIDDLE DAY
       }
       eventList.push(newEvent);

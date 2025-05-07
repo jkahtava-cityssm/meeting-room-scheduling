@@ -10,31 +10,26 @@ import { getCalendarCells } from "@/calendar/helpers";
 
 import type { IEvent } from "@/calendar/interfaces";
 
-import { uniqBy } from "lodash";
 import {
   differenceInDays,
   eachDayOfInterval,
   endOfMonth,
-  endOfWeek,
   isSameDay,
   parseISO,
   parseJSON,
   startOfDay,
   startOfMonth,
-  startOfWeek,
 } from "date-fns";
 import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
 import { CalendarHeader } from "../header/calendar-header";
 import { MonthViewDayCellSkeleton } from "./month-view-day-cell-skeleton";
 import { MAX_VISIBLE_EVENTS } from "@/calendar/mocks";
-import { tr } from "date-fns/locale";
-import { getEvents } from "@/services/events";
-import { prisma } from "@/prisma";
+import { getEventsMonthly } from "@/services/events";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function CalendarMonthView() {
-  const { selectedDate } = useCalendar();
+  const { selectedDate, selectedRoomId } = useCalendar();
 
   const [events, setEvents] = useState<IEvent[]>([]);
 
@@ -43,12 +38,9 @@ export function CalendarMonthView() {
   const fetchEvents = async () => {
     setLoading(true);
 
-    const StartOfMonth = startOfMonth(selectedDate);
-    const EndOfMonth = endOfMonth(selectedDate);
+    const eventList = await getEventsMonthly(selectedDate);
 
-    const eventList = await getEvents(StartOfMonth, EndOfMonth);
-
-    setEvents(eventList);
+    setEvents(eventList.data);
     setLoading(false);
   };
 
@@ -56,25 +48,27 @@ export function CalendarMonthView() {
     fetchEvents();
   }, [selectedDate]);
 
-  const parentEvents = events
-    .filter((event) => event.parentEvent)
-    .map((event) => {
-      return event.parentEvent;
-    });
-
-  //const multiDayEvents = uniqBy(parentEvents, "id") as IEvent[];
-
-  //const singleDayEvents = events.filter((event) => event.parentEvent == null);
-
-  //const allEvents = [...multiDayEvents, ...singleDayEvents];
+  const filteredEvents = useMemo(
+    () =>
+      events.filter((event) => {
+        return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
+      }),
+    [events, selectedRoomId]
+  );
 
   const cells = useMemo(() => getCalendarCells(selectedDate), [selectedDate]);
 
-  const eventPositions = useMemo(() => calculateEventPositions(events, selectedDate), [events, selectedDate]);
+  const eventPositions = useMemo(
+    () => calculateEventPositions(filteredEvents, selectedDate),
+    [filteredEvents, selectedDate]
+  );
 
   return (
     <div>
-      {isLoading ? <CalendarHeaderSkeleton view={"month"} /> : <CalendarHeader view={"month"} events={events} />}
+      <CalendarHeader view={"month"} />
+      {
+        //isLoading ? <CalendarHeaderSkeleton view={"month"} /> : <CalendarHeader view={"month"} />
+      }
       <div className="grid grid-cols-7 divide-x">
         {WEEK_DAYS.map((day) => (
           <div key={day} className="flex items-center justify-center py-2">
@@ -91,7 +85,7 @@ export function CalendarMonthView() {
             <MonthViewDayCell
               key={cell.date.toISOString()}
               cell={cell}
-              events={events}
+              events={filteredEvents}
               eventPositions={eventPositions}
             />
           )

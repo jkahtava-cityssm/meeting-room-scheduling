@@ -1,43 +1,28 @@
 "use client";
 
-import { startOfWeek, addDays, format, parseISO, isSameDay, areIntervalsOverlapping, endOfWeek } from "date-fns";
+import { startOfWeek, addDays, isSameDay, areIntervalsOverlapping, endOfWeek } from "date-fns";
 
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { AddEventDialog } from "@/calendar/components/dialogs/add-event-dialog";
-//import { EventBlock } from "@/calendar/components/week-and-day-view/event-block";
 import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
-import { WeekViewMultiDayEventsRow } from "@/calendar/components/week-and-day-view/week-view-multi-day-events-row";
 
-import { cn } from "@/lib/utils";
-import {
-  groupEvents,
-  getEventBlockStyle,
-  isWorkingHour,
-  getVisibleHours,
-  splitMultiDayEvents,
-  getOverlappingMultiDayEvents,
-} from "@/calendar/helpers";
+import { groupEvents, getEventBlockStyle, getVisibleHours, splitMultiDayEvents } from "@/calendar/helpers";
 
 import type { IEvent } from "@/calendar/interfaces";
 import { DayHourlyEventDialogs } from "../day-hourly-event-dialogs";
 import { HourColumn } from "../column-hourly";
 import { ColumnDayHeader } from "../column-day-header";
 import { EventBlock } from "../event-block";
-import { useEffect, useState } from "react";
-import { getEvents } from "@/services/events";
+import { useEffect, useMemo, useState } from "react";
+import { getEventsWeekly } from "@/services/events";
 import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
 import { CalendarHeader } from "../header/calendar-header";
 import { CalendarWeekViewSkeleton } from "./calendar-week-view-skeleton";
 
-interface IProps {
-  events: IEvent[];
-}
-
 export function CalendarWeekView() {
-  const { selectedDate, workingHours, visibleHours } = useCalendar();
+  const { selectedDate, workingHours, visibleHours, selectedRoomId } = useCalendar();
   const [events, setEvents] = useState<IEvent[]>([]);
 
   const [isLoading, setLoading] = useState(true);
@@ -45,12 +30,9 @@ export function CalendarWeekView() {
   const fetchEvents = async () => {
     setLoading(true);
 
-    const StartOfWeek = startOfWeek(selectedDate);
-    const EndOfWeek = endOfWeek(selectedDate);
+    const eventList = await getEventsWeekly(selectedDate);
 
-    const eventList = await getEvents(StartOfWeek, EndOfWeek);
-
-    setEvents(eventList);
+    setEvents(eventList.data);
     setLoading(false);
   };
 
@@ -58,7 +40,20 @@ export function CalendarWeekView() {
     fetchEvents();
   }, [selectedDate]);
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
+  const filteredEvents = useMemo(
+    () =>
+      events.filter((event) => {
+        return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
+      }),
+    [events, selectedRoomId]
+  );
+
+  const splitEvents = useMemo(
+    () => splitMultiDayEvents(filteredEvents, startOfWeek(selectedDate), endOfWeek(selectedDate), visibleHours),
+    [filteredEvents, visibleHours]
+  );
+
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, splitEvents);
   //console.log(events);
   //const test = splitMultiDayEvents(getOverlappingMultiDayEvents(singleDayEvents, selectedDate), visibleHours);
   //const test = splitMultiDayEvents(multiDayEvents, visibleHours);
@@ -70,7 +65,10 @@ export function CalendarWeekView() {
 
   return (
     <>
-      {isLoading ? <CalendarHeaderSkeleton view={"week"} /> : <CalendarHeader view={"week"} events={events} />}
+      <CalendarHeader view={"week"} />
+      {
+        //isLoading ? <CalendarHeaderSkeleton view={"week"} /> : <CalendarHeader view={"week"} events={events} />
+      }
       <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
         <p>Weekly view is not available on smaller devices.</p>
         <p>Please switch to daily or monthly view.</p>
@@ -95,7 +93,7 @@ export function CalendarWeekView() {
                     <div className="relative flex-1 border-l">
                       <div className="grid grid-cols-7 divide-x">
                         {weekDays.map((day, dayIndex) => {
-                          const dayEvents = events.filter(
+                          const dayEvents = splitEvents.filter(
                             (event) => isSameDay(event.startDate, day) //|| isSameDay(parseISO(event.endDate), day)
                           );
 

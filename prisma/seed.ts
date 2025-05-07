@@ -245,7 +245,7 @@ async function main() {
     icon: string | null;
   }[] = [];
 
-  await FindCreateRooms("All", "zinc", "Asterisk");
+  //await FindCreateRooms("All", "zinc", "Asterisk");
   roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey"));
   roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey"));
   roomList.push(await FindCreateRooms("Cafeteria", "amber", "BookKey"));

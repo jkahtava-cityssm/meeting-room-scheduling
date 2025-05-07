@@ -31,9 +31,11 @@ export function EventDetailsDialog({ event, children }: IProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   const onToggle = () => setIsOpen((currentValue) => !currentValue);
 
-  const currentEvent = event.parentEvent == null ? event : event.parentEvent;
+  const currentEvent = event; //event.parentEvent == null ? event : event.parentEvent;
 
   const onDialogChange = () => {
     console.log("RUN");
@@ -55,7 +57,13 @@ export function EventDetailsDialog({ event, children }: IProps) {
             <DialogTitle>{currentEvent.title}</DialogTitle>
             <DialogDescription className="sr-only">Event Details</DialogDescription>
           </DialogHeader>
-          {isReadOnly ? <ReadEvent event={currentEvent} /> : <EditEvent event={currentEvent} />}
+          {isLoading ? (
+            <></>
+          ) : isReadOnly ? (
+            <ReadEvent event={currentEvent} />
+          ) : (
+            <EditEvent event={currentEvent} rooms={[]} />
+          )}
 
           <DialogFooter className="sm:flex-col-reverse md:flex-row md:justify-end">
             {isReadOnly ? (

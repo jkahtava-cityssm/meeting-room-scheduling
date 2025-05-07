@@ -1,4 +1,4 @@
-import { IEvent } from "@/calendar/interfaces";
+import { IEvent, IRoom } from "@/calendar/interfaces";
 import { eventSchema, TEventFormData } from "@/calendar/schemas";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -29,11 +29,11 @@ import { IconColored } from "@/components/ui/icon-colored";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { fi } from "date-fns/locale";
 import { startTask } from "better-auth/react";
+import { TColors } from "@/calendar/types";
 
-export function EditEvent({ event }: { event: IEvent }) {
-  const startDate = parseISO(event.startDate);
-  const endDate = parseISO(event.endDate);
-  const { rooms } = useCalendar();
+export function EditEvent({ event, rooms }: { event: IEvent; rooms: IRoom[] }) {
+  const startDate = event.startDate;
+  const endDate = event.endDate;
 
   const { updateEvent } = useUpdateEvent();
 
@@ -56,23 +56,18 @@ export function EditEvent({ event }: { event: IEvent }) {
     reValidateMode: "onChange",
     mode: "all",
     defaultValues: {
-      room: event.room.id,
+      room: event.roomId,
       title: event.title,
       description: event.description,
-      startDate: parseISO(event.startDate),
-      startTime: parseISO(event.startDate),
+      startDate: event.startDate,
+      startTime: event.startDate,
       /*startTime: {
         hour: parseISO(event.startDate).getHours(),
         minute: parseISO(event.startDate).getMinutes(),
       },*/
-      endDate: parseISO(event.endDate),
-      endTime: parseISO(event.endDate),
-      duration: getDurationText(
-        parseISO(event.startDate),
-        parseISO(event.startDate),
-        parseISO(event.endDate),
-        parseISO(event.endDate)
-      ),
+      endDate: event.endDate,
+      endTime: event.endDate,
+      duration: getDurationText(event.startDate, event.startDate, event.endDate, event.endDate),
       /*endTime: {
         hour: parseISO(event.endDate).getHours(),
         minute: parseISO(event.endDate).getMinutes(),
@@ -82,7 +77,7 @@ export function EditEvent({ event }: { event: IEvent }) {
   });
 
   const onSubmit = (values: TEventFormData) => {
-    const room = rooms.find((room) => room.id === values.room);
+    const room = rooms.find((room) => room.roomId === values.room);
 
     if (!room) throw new Error("User not found");
 
@@ -99,8 +94,8 @@ export function EditEvent({ event }: { event: IEvent }) {
       room,
       title: values.title,
       description: values.description,
-      startDate: startDateTime.toISOString(),
-      endDate: endDateTime.toISOString(),
+      startDate: startDateTime,
+      endDate: endDateTime,
     });
   };
   /*
@@ -122,16 +117,16 @@ export function EditEvent({ event }: { event: IEvent }) {
                   Room
                 </FormLabel>
                 <FormControl>
-                  <Select name={field.name} value={field.value} onValueChange={field.onChange}>
+                  <Select name={field.name} value={field.value.toString()} onValueChange={field.onChange}>
                     <SelectTrigger id={field.name} data-invalid={fieldState.invalid}>
                       <SelectValue placeholder="Select an option" />
                     </SelectTrigger>
                     <SelectContent>
                       {rooms.map((room) => (
-                        <SelectItem key={room.id} value={room.id} className="flex-1">
+                        <SelectItem key={room.roomId} value={room.roomId.toString()} className="flex-1">
                           <div className="flex items-center gap-2">
                             <IconColored
-                              color={room.color}
+                              color={room.color as TColors}
                               showBorder={false}
                               children={<BookKey />}
                               hideBackground={false}

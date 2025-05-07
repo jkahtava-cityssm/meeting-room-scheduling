@@ -1,40 +1,10 @@
-import { startOfWeek, addDays, format, parseISO, isSameDay, areIntervalsOverlapping, endOfWeek } from "date-fns";
-
-import { useCalendar } from "@/calendar/contexts/calendar-context";
-
+import { startOfWeek, addDays, format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-import { AddEventDialog } from "@/calendar/components/dialogs/add-event-dialog";
-//import { EventBlock } from "@/calendar/components/week-and-day-view/event-block";
 import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
-import { WeekViewMultiDayEventsRow } from "@/calendar/components/week-and-day-view/week-view-multi-day-events-row";
-
 import { cn } from "@/lib/utils";
-import {
-  groupEvents,
-  getEventBlockStyle,
-  isWorkingHour,
-  getVisibleHours,
-  splitMultiDayEvents,
-  getOverlappingMultiDayEvents,
-} from "@/calendar/helpers";
-
-import type { IEvent } from "@/calendar/interfaces";
-import { DayHourlyEventDialogs } from "../day-hourly-event-dialogs";
 import { HourColumn } from "../column-hourly";
-import { ColumnDayHeader } from "../column-day-header";
-import { EventBlock } from "../event-block";
-import { useEffect, useState } from "react";
-import { getEvents } from "@/services/events";
-import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
-import { CalendarHeader } from "../header/calendar-header";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SingleCalendar } from "@/components/ui/single-calendar";
 import { ColumnDayHeaderSkeleton } from "../column-day-header-skeleton";
-
-interface IProps {
-  events: IEvent[];
-}
 
 export function CalendarDayViewSkeleton() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));

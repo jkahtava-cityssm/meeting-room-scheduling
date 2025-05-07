@@ -31,8 +31,8 @@ import { DayHourlyEventDialogs } from "../day-hourly-event-dialogs";
 import { HourColumn } from "../column-hourly";
 import { ColumnDayHeader } from "../column-day-header";
 import { EventBlock } from "../event-block";
-import React, { useEffect, useState } from "react";
-import { getEvents } from "@/services/events";
+import React, { useEffect, useMemo, useState } from "react";
+import { getEventsDaily } from "@/services/events";
 import { CalendarHeader } from "../header/calendar-header";
 import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
 import { CalendarDayViewSkeleton } from "./calendar-day-view-skeleton";
@@ -54,21 +54,18 @@ export function CalendarDayView() {
   const fetchEvents = async () => {
     setLoading(true);
 
-    const StartOfDay = startOfDay(selectedDate);
-    const EndOfDay = endOfDay(selectedDate);
+    const eventList = await getEventsDaily(selectedDate);
 
-    const eventList = await getEvents(StartOfDay, EndOfDay);
-
-    setEvents(eventList);
+    setEvents(eventList.data);
     setLoading(false);
   };
 
   useEffect(() => {
-    //fetchEvents();
+    fetchEvents();
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 4000);
+    /*setTimeout(() => {
+      fetchEvents();
+    },4000);*/
   }, [selectedDate]);
 
   const handleToday = () => {
@@ -76,29 +73,40 @@ export function CalendarDayView() {
     setSelectedDate(new Date());
   };
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
+  const filteredEvents = useMemo(
+    () =>
+      events.filter((event) => {
+        return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
+      }),
+    [events, selectedRoomId]
+  );
 
-  //const test = splitMultiDayEvents(getOverlappingMultiDayEvents(events, selectedDate), visibleHours);
+  const splitEvents = useMemo(
+    () => splitMultiDayEvents(filteredEvents, startOfDay(selectedDate), endOfDay(selectedDate), visibleHours),
+    [events, visibleHours]
+  );
 
-  //singleDayEvents = [...events, ...test];
-  const currentEvents = getCurrentEvents(events);
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, splitEvents);
 
-  //console.log(singleDayEvents);
+  //const currentEvents = getCurrentEvents(events);
 
-  const dayEvents = events.filter((event) => {
+  /*const dayEvents = events.filter((event) => {
     const eventDate = event.startDate;
     return (
       eventDate.getDate() === selectedDate.getDate() &&
       eventDate.getMonth() === selectedDate.getMonth() &&
       eventDate.getFullYear() === selectedDate.getFullYear()
     );
-  });
+  });*/
 
-  const groupedEvents = groupEvents(dayEvents);
+  const groupedEvents = groupEvents(splitEvents);
 
   return (
     <>
-      {isLoading ? <CalendarHeaderSkeleton view={"day"} /> : <CalendarHeader view={"day"} events={events} />}
+      <CalendarHeader view={"day"} />
+      {
+        //isLoading ? <CalendarHeaderSkeleton view={"day"} /> : <CalendarHeader view={"day"} />
+      }
       {isLoading ? (
         <CalendarDayViewSkeleton />
       ) : (
@@ -154,7 +162,7 @@ export function CalendarDayView() {
             />
 
             <div className="flex-1 space-y-3">
-              {currentEvents.length > 0 ? (
+              {splitEvents.length > 0 ? (
                 <div className="flex items-start gap-2 px-4 pt-4">
                   <span className="relative mt-[5px] flex size-2.5">
                     <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"></span>
@@ -169,13 +177,13 @@ export function CalendarDayView() {
                 </p>
               )}
 
-              {currentEvents.length > 0 && (
+              {splitEvents.length > 0 && (
                 <div className="flex">
                   <div className="flex flex-1 flex-col">
                     <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] px-4" type="always">
                       {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
                       <div className="space-y-6 pb-4">
-                        {currentEvents.map((event, index) => {
+                        {splitEvents.map((event, index) => {
                           const room = false; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
 
                           return (

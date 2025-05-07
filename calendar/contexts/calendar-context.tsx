@@ -10,8 +10,8 @@ import { VISIBLE_HOURS } from "../mocks";
 interface ICalendarContext {
   selectedDate: Date;
   setSelectedDate: (date: Date | undefined) => void;
-  selectedRoomId: IRoom["roomId"] | "all";
-  setSelectedRoomId: (roomId: IRoom["roomId"] | "all") => void;
+  selectedRoomId: string;
+  setSelectedRoomId: (roomId: string) => void;
   rooms: IRoom[];
   workingHours: TWorkingHours;
   setWorkingHours: Dispatch<SetStateAction<TWorkingHours>>;
@@ -36,7 +36,7 @@ export function CalendarProvider({ children, rooms }: { children: React.ReactNod
   const [workingHours, setWorkingHours] = useState<TWorkingHours>(WORKING_HOURS);
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedRoomId, setSelectedRoomId] = useState<IRoom["roomId"] | "all">("all");
+  const [selectedRoomId, setSelectedRoomId] = useState<string>("-1");
 
   const handleSelectDate = (date: Date | undefined) => {
     if (!date) return;

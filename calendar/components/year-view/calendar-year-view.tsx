@@ -14,7 +14,7 @@ import { YearViewMonthSkeleton } from "./year-view-month-skeleton";
 import { CalendarHeader } from "../header/calendar-header";
 import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
 import YearViewMonth from "./year-view-month";
-import { getEvents } from "@/services/events";
+import { getEventsYearly } from "@/services/events";
 
 interface IProps {
   allEvents: IEvent[];
@@ -30,12 +30,9 @@ export function CalendarYearView() {
   const fetchEvents = async () => {
     setLoading(true);
 
-    const StartOfYear = startOfYear(selectedDate);
-    const EndOfYear = endOfYear(selectedDate);
+    const eventList = await getEventsYearly(selectedDate);
 
-    const eventList = await getEvents(StartOfYear, EndOfYear);
-
-    setEvents(eventList);
+    setEvents(eventList.data);
     setLoading(false);
   };
 
@@ -50,7 +47,10 @@ export function CalendarYearView() {
 
   return (
     <>
-      {isLoading ? <CalendarHeaderSkeleton view={"year"} /> : <CalendarHeader view={"year"} events={events} />}
+      <CalendarHeader view={"year"} />
+      {
+        //isLoading ? <CalendarHeaderSkeleton view={"year"} /> : <CalendarHeader view={"year"} events={events} />
+      }
       <div className="p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {months.map((month) =>

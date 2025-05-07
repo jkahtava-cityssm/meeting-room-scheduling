@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import type { HTMLAttributes } from "react";
 import type { IEvent } from "@/calendar/interfaces";
 import type { VariantProps } from "class-variance-authority";
+import { TColors } from "../types";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -69,7 +70,7 @@ export function EventBlock({ event, pixelSize = 96 }: { event: IEvent; pixelSize
   const durationInMinutes = differenceInMinutes(end, start);
   const heightInPixels = (durationInMinutes / 60) * pixelSize - 8;
 
-  const color = event.room.color;
+  const color = event.room.color as TColors;
 
   const EventCardClasses = EventCard({ color });
 

@@ -6,8 +6,8 @@ import { Clock, MapPin, Text } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 
 export function ReadEvent({ event }: { event: IEvent }) {
-  const startDate = parseISO(event.startDate);
-  const endDate = parseISO(event.endDate);
+  const startDate = event.startDate;
+  const endDate = event.endDate;
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">

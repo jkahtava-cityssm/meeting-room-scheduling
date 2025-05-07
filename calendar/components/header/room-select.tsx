@@ -5,7 +5,7 @@ import { IconColored } from "@/components/ui/icon-colored";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { prisma } from "@/prisma";
-import { getRooms } from "@/services/rooms";
+import { getRoomsWithAll } from "@/services/rooms";
 import { Asterisk, BookKey } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -15,9 +15,9 @@ export function RoomSelect() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
 
   const fetchEvents = async () => {
-    const rooms = await getRooms();
+    const rooms = await getRoomsWithAll();
 
-    setRooms(rooms);
+    setRooms(rooms.data);
   };
 
   useEffect(() => {
@@ -25,17 +25,17 @@ export function RoomSelect() {
   }, []);
 
   return (
-    <Select value={selectedRoomId} onValueChange={setSelectedRoomId}>
+    <Select value={selectedRoomId.toString()} onValueChange={setSelectedRoomId}>
       <SelectTrigger className="flex-1 md:w-48">
         <SelectValue />
       </SelectTrigger>
 
       <SelectContent align="end">
-        <SelectItem value="all">
+        {/*<SelectItem value="all">
           <IconColored hideBackground={false} color={"zinc"} showBorder={true} children={<Asterisk />} />
 
           <div className="flex items-center gap-1">All Rooms</div>
-        </SelectItem>
+        </SelectItem>*/}
 
         {rooms.map((room) => (
           <SelectItem key={room.roomId} value={room.roomId.toString()} className="flex-1">
@@ -44,7 +44,7 @@ export function RoomSelect() {
                 hideBackground={false}
                 color={room.color as TColors}
                 showBorder={true}
-                children={<BookKey />}
+                children={room.roomId === -1 ? <Asterisk /> : <BookKey />}
               ></IconColored>
 
               <p className="truncate">{room.name}</p>

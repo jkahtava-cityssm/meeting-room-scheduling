@@ -6,7 +6,7 @@ import { AgendaEventCard } from "@/calendar/components/agenda-view/agenda-event-
 import type { IEvent } from "@/calendar/interfaces";
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 import { useEffect, useState } from "react";
-import { getEvents } from "@/services/events";
+import { getEventsDaily } from "@/services/events";
 import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
 import { CalendarHeader } from "../header/calendar-header";
 
@@ -26,12 +26,9 @@ export function AgendaDayView() {
   const fetchEvents = async () => {
     setLoading(true);
 
-    const StartOfDay = startOfDay(selectedDate);
-    const EndOfDay = endOfDay(selectedDate);
+    const eventList = await getEventsDaily(selectedDate);
 
-    const eventList = await getEvents(StartOfDay, EndOfDay);
-
-    setEvents(eventList);
+    setEvents(eventList.data);
     setLoading(false);
   };
 
@@ -43,7 +40,10 @@ export function AgendaDayView() {
 
   return (
     <>
-      {isLoading ? <CalendarHeaderSkeleton view={"agenda"} /> : <CalendarHeader view={"agenda"} events={events} />}
+      <CalendarHeader view={"agenda"} />
+      {
+        //isLoading ? <CalendarHeaderSkeleton view={"agenda"} /> : <CalendarHeader view={"agenda"} events={events} />
+      }
       <div className="space-y-4">
         <div className="sticky top-0 flex items-center gap-4 bg-background py-2">
           <p className="text-sm font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
