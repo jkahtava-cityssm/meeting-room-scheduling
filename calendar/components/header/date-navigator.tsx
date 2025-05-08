@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { getEventsCount, navigateDate, rangeText } from "@/calendar/helpers";
+import { uniqBy } from "lodash";
 
 import type { IEvent } from "@/calendar/interfaces";
 import type { TCalendarView } from "@/calendar/types";
@@ -18,47 +19,75 @@ interface IProps {
   view: TCalendarView;
 }
 
-export function DateNavigator({ view }: IProps) {
-  const { selectedDate, setSelectedDate, selectedRoomId } = useCalendar();
-
+export function DateNavigator({
+  view,
+  events,
+  selectedDate,
+  isLoading,
+}: {
+  view: TCalendarView;
+  events: IEvent[];
+  selectedDate: Date;
+  isLoading: boolean;
+}) {
+  const { setSelectedDate } = useCalendar();
+  //const [isLoading, setIsLoading] = useState(true);
   const [eventTotal, setEventTotal] = useState<number>(0);
 
-  const [isLoading, setLoading] = useState(true);
+  //const getTotal = useMemo(() => uniqBy(events, "eventId").length, [events, selectedDate]);
+
+  useEffect(() => {
+    //setIsLoading(true);
+    setEventTotal(uniqBy(events, "eventId").length);
+    //setIsLoading(false);
+  }, [isLoading]);
+
+  //const [events, setEvents] = useState<IEvent[]>([]);
+  /*const [eventTotal, setEventTotal] = useState<number>(0);
+
+  
 
   const fetchEvents = async () => {
     setLoading(true);
 
-    let eventList = [];
+    let uniqueList: IEvent[] = [];
     switch (view) {
       case "day":
       case "agenda":
         const dailyEvents = await getEventsDaily(selectedDate);
-        setEventTotal(dailyEvents.data.length);
+        uniqueList = uniqBy(dailyEvents.data, "eventId");
         break;
       case "week":
         const weeklyEvents = await getEventsWeekly(selectedDate);
-        setEventTotal(weeklyEvents.data.length);
+        uniqueList = uniqBy(weeklyEvents.data, "eventId");
         break;
       case "month":
         const monthlyEvents = await getEventsMonthly(selectedDate);
-        setEventTotal(monthlyEvents.data.length);
+        uniqueList = uniqBy(monthlyEvents.data, "eventId");
         break;
       case "year":
         const yearlyEvents = await getEventsYearly(selectedDate);
-        setEventTotal(yearlyEvents.data.length);
+        uniqueList = uniqBy(yearlyEvents.data, "eventId");
         break;
 
       default:
-        setEventTotal(0);
         break;
     }
+
+    //setEvents(uniqueList);
+
+    const filteredList = uniqueList.filter((event) => {
+      return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
+    });
+    setEventTotal(filteredList.length);
 
     setLoading(false);
   };
 
   useEffect(() => {
     fetchEvents();
-  }, [selectedDate]);
+  }, [selectedDate, selectedRoomId]);
+*/
 
   const month = formatDate(selectedDate, "MMMM");
   const year = selectedDate.getFullYear();
@@ -72,7 +101,7 @@ export function DateNavigator({ view }: IProps) {
     <div className="space-y-0.5">
       <div className="flex items-center gap-2">
         <span className="text-lg font-semibold">
-          {month} {year}
+          {formatDate(selectedDate, "MMMM")} {selectedDate.getFullYear()}
         </span>
 
         <Badge variant="outline" className={`px-1.5 ${isLoading ? "h-5.5" : ""}`}>

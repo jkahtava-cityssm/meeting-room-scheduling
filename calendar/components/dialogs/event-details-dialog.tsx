@@ -4,7 +4,7 @@ import { format, isSameDay, parseISO } from "date-fns";
 import { Calendar, Clock, MapPin, Text, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { EditEventDialog } from "@/calendar/components/dialogs/edit-event-dialog";
+
 import {
   Dialog,
   DialogContent,

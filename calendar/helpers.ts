@@ -31,9 +31,11 @@ import {
   areIntervalsOverlapping,
 } from "date-fns";
 
-import type { ICalendarCell, IEvent, IMultiDayBlock } from "@/calendar/interfaces";
+import type { ICalendarCell, IEvent } from "@/calendar/interfaces";
 import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/calendar/types";
-import { MAX_VISIBLE_EVENTS } from "./mocks";
+
+export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
+export const MAX_VISIBLE_EVENTS = 5;
 
 // ================ Header helper functions ================ //
 
@@ -43,10 +45,6 @@ export function rangeText(view: TCalendarView, date: Date) {
   let end: Date;
 
   switch (view) {
-    case "agenda":
-      start = startOfMonth(date);
-      end = endOfMonth(date);
-      break;
     case "year":
       start = startOfYear(date);
       end = endOfYear(date);
@@ -60,6 +58,7 @@ export function rangeText(view: TCalendarView, date: Date) {
       end = endOfWeek(date);
       break;
     case "day":
+    case "agenda":
       return format(date, formatString);
     default:
       return "Error while formatting ";
@@ -70,7 +69,7 @@ export function rangeText(view: TCalendarView, date: Date) {
 
 export function navigateDate(date: Date, view: TCalendarView, direction: "previous" | "next"): Date {
   const operations = {
-    agenda: direction === "next" ? addMonths : subMonths,
+    agenda: direction === "next" ? addDays : subDays,
     year: direction === "next" ? addYears : subYears,
     month: direction === "next" ? addMonths : subMonths,
     week: direction === "next" ? addWeeks : subWeeks,
@@ -82,7 +81,7 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
 
 export function getEventsCount(events: IEvent[], date: Date, view: TCalendarView): number {
   const compareFns = {
-    agenda: isSameMonth,
+    agenda: isSameDay,
     year: isSameYear,
     day: isSameDay,
     week: isSameWeek,
@@ -133,6 +132,11 @@ export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodE
     //const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
     const totalDaysBetween = differenceInDays(currentEndDate, currentStartDate);
 
+    if (totalDaysBetween === 0) {
+      eventList.push(element);
+      return;
+    }
+
     for (let index = 0; index < totalDaysBetween; index++) {
       const newEvent = { ...element, eventIsSplit: true };
 
@@ -160,61 +164,6 @@ export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodE
       eventList.push(newEvent);
     }
   });
-
-  return eventList;
-}
-
-export function generateMultiDayBlocks(
-  event: IEvent,
-  visibleHours: TVisibleHours
-
-  //visibleHours: TVisibleHours
-): IEvent[] {
-  const minStartTime = visibleHours.from;
-  const maxEndTime = visibleHours.to;
-
-  const eventList: IEvent[] = [];
-
-  const currentStartDate = event.startDate;
-  const currentEndDate = event.endDate;
-
-  const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
-
-  for (let index = 0; index <= totalDaysBetween; index++) {
-    const title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + event.title;
-
-    let startDate = "";
-    let endDate = "";
-
-    if (index === 0) {
-      //First Day
-      startDate = formatISO(currentStartDate);
-      //endDate = formatISO(endOfDay(currentStartDate));
-      endDate = formatISO(set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }));
-    } else if (index === totalDaysBetween) {
-      //LAST DAY
-
-      startDate = formatISO(set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 }));
-      //startDate = formatISO(startOfDay(currentStartDate));
-      endDate = formatISO(currentEndDate);
-    } else {
-      const newDay = addDays(currentStartDate, index);
-      //startDate = formatISO(startOfDay(newDay));
-      //endDate = formatISO(endOfDay(newDay));
-
-      startDate = formatISO(set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 }));
-      endDate = formatISO(set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }));
-      //MIDDLE DAY
-    }
-    eventList.push({
-      ...event,
-      key: event.key + "-" + index,
-      startDate: startDate,
-      endDate: endDate,
-      title: title,
-      parentEvent: event,
-    });
-  }
 
   return eventList;
 }

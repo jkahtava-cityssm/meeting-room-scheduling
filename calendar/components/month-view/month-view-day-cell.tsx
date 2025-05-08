@@ -5,10 +5,10 @@ import { EventBullet } from "@/calendar/components/month-view/event-bullet";
 import { eventBadgeVariants, MonthEventBadge } from "@/calendar/components/month-view/month-event-badge";
 
 import { cn } from "@/lib/utils";
-import { getMonthCellEvents } from "@/calendar/helpers";
+import { getMonthCellEvents, MAX_VISIBLE_EVENTS } from "@/calendar/helpers";
 
 import type { ICalendarCell, IEvent } from "@/calendar/interfaces";
-import { MAX_VISIBLE_EVENTS } from "@/calendar/mocks";
+
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 
 export function MonthViewDayCell({

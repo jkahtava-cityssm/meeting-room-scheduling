@@ -17,7 +17,6 @@ import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useUpdateEvent } from "@/calendar/hooks/use-update-event";
 
 import { BookKey } from "lucide-react";
 import { SingleDayPicker } from "@/components/ui/single-day-picker";

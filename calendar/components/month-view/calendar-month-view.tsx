@@ -6,7 +6,7 @@ import { useCalendar } from "@/calendar/contexts/calendar-context";
 
 import { MonthViewDayCell } from "@/calendar/components/month-view/month-view-day-cell";
 
-import { getCalendarCells } from "@/calendar/helpers";
+import { getCalendarCells, MAX_VISIBLE_EVENTS } from "@/calendar/helpers";
 
 import type { IEvent } from "@/calendar/interfaces";
 
@@ -23,7 +23,7 @@ import {
 import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
 import { CalendarHeader } from "../header/calendar-header";
 import { MonthViewDayCellSkeleton } from "./month-view-day-cell-skeleton";
-import { MAX_VISIBLE_EVENTS } from "@/calendar/mocks";
+
 import { getEventsMonthly } from "@/services/events";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -68,7 +68,7 @@ export function CalendarMonthView() {
 
   return (
     <div>
-      <CalendarHeader view={"month"} />
+      <CalendarHeader view={"month"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
       {
         //isLoading ? <CalendarHeaderSkeleton view={"month"} /> : <CalendarHeader view={"month"} />
       }

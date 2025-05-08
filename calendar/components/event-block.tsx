@@ -64,7 +64,15 @@ interface IProps extends HTMLAttributes<HTMLDivElement>, Omit<VariantProps<typeo
   event: IEvent;
 }
 
-export function EventBlock({ event, pixelSize = 96 }: { event: IEvent; pixelSize: number }) {
+export function EventBlock({
+  event,
+  pixelSize = 96,
+  fetchData,
+}: {
+  event: IEvent;
+  pixelSize: number;
+  fetchData: () => Promise<void>;
+}) {
   const start = event.startDate;
   const end = event.endDate;
   const durationInMinutes = differenceInMinutes(end, start);
@@ -82,7 +90,7 @@ export function EventBlock({ event, pixelSize = 96 }: { event: IEvent; pixelSize
   };
 
   return (
-    <EventDetailsDialog event={event}>
+    <EventDetailsDialog event={event} fetchData={fetchData}>
       <div
         role="button"
         tabIndex={0}

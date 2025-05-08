@@ -10,7 +10,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   return (
     <CalendarProvider>
-      <div className="overflow-hidden rounded-xl border">{children}</div>
+      <div className="rounded-xl border">{children}</div>
     </CalendarProvider>
   );
 }

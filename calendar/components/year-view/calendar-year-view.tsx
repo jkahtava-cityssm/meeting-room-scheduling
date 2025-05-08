@@ -21,7 +21,7 @@ interface IProps {
 }
 
 export function CalendarYearView() {
-  const { selectedDate } = useCalendar();
+  const { selectedDate, selectedRoomId } = useCalendar();
 
   const [events, setEvents] = useState<IEvent[]>([]);
 
@@ -45,9 +45,17 @@ export function CalendarYearView() {
     return Array.from({ length: 12 }, (_, i) => addMonths(yearStart, i));
   }, [selectedDate]);
 
+  const filteredEvents = useMemo(
+    () =>
+      events.filter((event) => {
+        return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
+      }),
+    [events, selectedRoomId]
+  );
+
   return (
     <>
-      <CalendarHeader view={"year"} />
+      <CalendarHeader view={"year"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
       {
         //isLoading ? <CalendarHeaderSkeleton view={"year"} /> : <CalendarHeader view={"year"} events={events} />
       }
@@ -57,7 +65,7 @@ export function CalendarYearView() {
             isLoading ? (
               <YearViewMonthSkeleton key={month.toString()}></YearViewMonthSkeleton>
             ) : (
-              <YearViewMonth key={month.toString()} month={month} events={events} />
+              <YearViewMonth key={month.toString()} month={month} events={filteredEvents} />
             )
           )}
         </div>

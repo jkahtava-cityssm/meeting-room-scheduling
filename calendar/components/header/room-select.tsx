@@ -14,14 +14,14 @@ export function RoomSelect() {
 
   const [rooms, setRooms] = useState<IRoom[]>([]);
 
-  const fetchEvents = async () => {
+  const fetchRooms = async () => {
     const rooms = await getRoomsWithAll();
 
     setRooms(rooms.data);
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchRooms();
   }, []);
 
   return (

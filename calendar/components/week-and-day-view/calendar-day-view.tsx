@@ -56,16 +56,25 @@ export function CalendarDayView() {
 
     const eventList = await getEventsDaily(selectedDate);
 
-    setEvents(eventList.data);
+    if (eventList.error) {
+      setEvents([]);
+      setLoading(false);
+      return;
+    }
+
+    const splitList = splitMultiDayEvents(
+      eventList.data,
+      startOfDay(selectedDate),
+      endOfDay(selectedDate),
+      visibleHours
+    );
+
+    setEvents(splitList);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchEvents();
-
-    /*setTimeout(() => {
-      fetchEvents();
-    },4000);*/
   }, [selectedDate]);
 
   const handleToday = () => {
@@ -81,32 +90,14 @@ export function CalendarDayView() {
     [events, selectedRoomId]
   );
 
-  const splitEvents = useMemo(
-    () => splitMultiDayEvents(filteredEvents, startOfDay(selectedDate), endOfDay(selectedDate), visibleHours),
-    [events, visibleHours]
-  );
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, splitEvents);
-
-  //const currentEvents = getCurrentEvents(events);
-
-  /*const dayEvents = events.filter((event) => {
-    const eventDate = event.startDate;
-    return (
-      eventDate.getDate() === selectedDate.getDate() &&
-      eventDate.getMonth() === selectedDate.getMonth() &&
-      eventDate.getFullYear() === selectedDate.getFullYear()
-    );
-  });*/
-
-  const groupedEvents = groupEvents(splitEvents);
+  const groupedEvents = groupEvents(filteredEvents);
 
   return (
     <>
-      <CalendarHeader view={"day"} />
-      {
-        //isLoading ? <CalendarHeaderSkeleton view={"day"} /> : <CalendarHeader view={"day"} />
-      }
+      <CalendarHeader view={"day"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
+
       {isLoading ? (
         <CalendarDayViewSkeleton />
       ) : (
@@ -136,7 +127,7 @@ export function CalendarDayView() {
 
                         return (
                           <div key={event.eventId} className="absolute p-1" style={style}>
-                            <EventBlock event={event} pixelSize={96} />
+                            <EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
                           </div>
                         );
                       })
@@ -162,7 +153,7 @@ export function CalendarDayView() {
             />
 
             <div className="flex-1 space-y-3">
-              {splitEvents.length > 0 ? (
+              {filteredEvents.length > 0 ? (
                 <div className="flex items-start gap-2 px-4 pt-4">
                   <span className="relative mt-[5px] flex size-2.5">
                     <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"></span>
@@ -177,13 +168,13 @@ export function CalendarDayView() {
                 </p>
               )}
 
-              {splitEvents.length > 0 && (
+              {filteredEvents.length > 0 && (
                 <div className="flex">
                   <div className="flex flex-1 flex-col">
-                    <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] px-4" type="always">
+                    <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[40vh] px-4" type="always">
                       {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
                       <div className="space-y-6 pb-4">
-                        {splitEvents.map((event, index) => {
+                        {filteredEvents.map((event, index) => {
                           const room = false; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
 
                           return (

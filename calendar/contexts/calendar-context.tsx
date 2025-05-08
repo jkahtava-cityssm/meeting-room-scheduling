@@ -5,7 +5,7 @@ import { createContext, useContext, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { IEvent, IRoom } from "@/calendar/interfaces";
 import type { TVisibleHours, TWorkingHours } from "@/calendar/types";
-import { VISIBLE_HOURS } from "../mocks";
+import { VISIBLE_HOURS } from "../helpers";
 
 interface ICalendarContext {
   selectedDate: Date;

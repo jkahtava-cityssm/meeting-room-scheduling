@@ -17,8 +17,18 @@ interface IProps {
   view: TCalendarView;
 }
 
-export function CalendarHeader({ view }: IProps) {
-  const [isLoading, setLoading] = useState(false);
+export function CalendarHeader({
+  view,
+  events,
+  selectedDate,
+  isLoading,
+}: {
+  view: TCalendarView;
+  events: IEvent[];
+  selectedDate: Date;
+  isLoading: boolean;
+}) {
+  /*const [isLoading, setLoading] = useState(false);
 
   useEffect(() => {
     //setTimeout(() => setLoading(false), 1);
@@ -28,13 +38,13 @@ export function CalendarHeader({ view }: IProps) {
   if (isLoading) {
     return <CalendarHeaderSkeleton view={view} />;
   }
-
+*/
   return (
     <>
       <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <TodayButton />
-          <DateNavigator view={view} />
+          <DateNavigator view={view} selectedDate={selectedDate} events={events} isLoading={isLoading} />
         </div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">

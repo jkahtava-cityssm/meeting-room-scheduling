@@ -32,7 +32,20 @@ export function CalendarWeekView() {
 
     const eventList = await getEventsWeekly(selectedDate);
 
-    setEvents(eventList.data);
+    if (eventList.error) {
+      setEvents([]);
+      setLoading(false);
+      return;
+    }
+
+    const splitList = splitMultiDayEvents(
+      eventList.data,
+      startOfWeek(selectedDate),
+      endOfWeek(selectedDate),
+      visibleHours
+    );
+
+    setEvents(splitList);
     setLoading(false);
   };
 
@@ -48,12 +61,7 @@ export function CalendarWeekView() {
     [events, selectedRoomId]
   );
 
-  const splitEvents = useMemo(
-    () => splitMultiDayEvents(filteredEvents, startOfWeek(selectedDate), endOfWeek(selectedDate), visibleHours),
-    [filteredEvents, visibleHours]
-  );
-
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, splitEvents);
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
   //console.log(events);
   //const test = splitMultiDayEvents(getOverlappingMultiDayEvents(singleDayEvents, selectedDate), visibleHours);
   //const test = splitMultiDayEvents(multiDayEvents, visibleHours);
@@ -65,7 +73,7 @@ export function CalendarWeekView() {
 
   return (
     <>
-      <CalendarHeader view={"week"} />
+      <CalendarHeader view={"week"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
       {
         //isLoading ? <CalendarHeaderSkeleton view={"week"} /> : <CalendarHeader view={"week"} events={events} />
       }
@@ -93,7 +101,7 @@ export function CalendarWeekView() {
                     <div className="relative flex-1 border-l">
                       <div className="grid grid-cols-7 divide-x">
                         {weekDays.map((day, dayIndex) => {
-                          const dayEvents = splitEvents.filter(
+                          const dayEvents = filteredEvents.filter(
                             (event) => isSameDay(event.startDate, day) //|| isSameDay(parseISO(event.endDate), day)
                           );
 
@@ -132,7 +140,7 @@ export function CalendarWeekView() {
 
                                   return (
                                     <div key={event.eventId} className="absolute p-1" style={style}>
-                                      <EventBlock event={event} pixelSize={96} />
+                                      <EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
                                     </div>
                                   );
                                 })

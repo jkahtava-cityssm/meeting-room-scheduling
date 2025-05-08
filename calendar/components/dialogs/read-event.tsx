@@ -38,7 +38,7 @@ export function ReadEvent({
         </div>
       </div>
       <div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
           <Text className="size-5 shrink-0" />
           <div>
             <p className="text-sm font-medium">Description</p>
