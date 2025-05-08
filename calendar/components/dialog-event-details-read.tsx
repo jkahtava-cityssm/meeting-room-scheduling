@@ -1,8 +1,7 @@
 import { IEvent } from "@/calendar/interfaces";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { format, isSameDay, parseISO } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { Clock, MapPin, Text } from "lucide-react";
 import { SetStateAction } from "react";
 import { twMerge } from "tailwind-merge";
@@ -45,12 +44,6 @@ export function ReadEvent({
           </div>
         </div>
         <div className="flex items-center gap-2 pl-7">
-          {/*
-            <ScrollArea className="h-[50vh]" type="always">
-            <div className="flex overflow-hidden pr-3">
-              <p className="text-sm ">{event.description}</p>
-            </div>
-          </ScrollArea>*/}
           <Textarea
             className={twMerge("max-h-80 resize-none disabled:opacity-100")}
             disabled={true}

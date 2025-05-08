@@ -1,12 +1,3 @@
-import { useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { format, isSameDay, parseISO, getDaysInMonth, startOfMonth } from "date-fns";
-
-import { useCalendar } from "@/calendar/contexts/calendar-context";
-
-import { YearViewDayCell } from "@/calendar/components/calendar-year-view-day-cell";
-
-import type { IEvent } from "@/calendar/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function YearViewMonthSkeleton() {

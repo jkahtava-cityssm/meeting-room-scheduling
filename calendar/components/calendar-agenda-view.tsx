@@ -1,26 +1,17 @@
 "use client";
-import { differenceInDays, endOfDay, format, parseISO, startOfDay } from "date-fns";
+import { format } from "date-fns";
 
 import { AgendaEventCard } from "@/calendar/components/calendar-agenda-event-block";
-
 import type { IEvent } from "@/calendar/interfaces";
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 import { useEffect, useMemo, useState } from "react";
 import { getEventsDaily } from "@/services/events";
-import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
 import { CalendarHeader } from "./calendar-all-header";
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Clock, Text, Book, MapPin, Calendar, User } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Clock, Calendar, User } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
-
-interface IProps {
-  date: Date;
-  events: IEvent[];
-  multiDayEvents: IEvent[];
-}
 
 export function AgendaDayView() {
   const { selectedDate, selectedRoomId, setSelectedDate } = useCalendar();

@@ -69,9 +69,6 @@ export function CalendarMonthView() {
   return (
     <div>
       <CalendarHeader view={"month"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
-      {
-        //isLoading ? <CalendarHeaderSkeleton view={"month"} /> : <CalendarHeader view={"month"} />
-      }
       <div className="grid grid-cols-7 divide-x">
         {WEEK_DAYS.map((day) => (
           <div key={day} className="flex items-center justify-center py-2">

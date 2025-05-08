@@ -34,7 +34,6 @@ export function MonthViewDayCell({
     maxPosition = MAX_VISIBLE_EVENTS;
   }
 
-  //console.log(maxPosition);
   return (
     <div className={cn("flex h-full flex-col gap-1 border-l border-t py-1 overflow-hidden", isSunday && "border-l-0")}>
       <span
@@ -53,7 +52,6 @@ export function MonthViewDayCell({
             {[...Array(maxPosition + 1).keys()].map((position) => {
               const event = cellEvents.find((e) => e.position === position);
               const eventKey = event ? `event-${event.eventId}-${position}` : `empty-${position}`;
-              //console.log(maxPosition, position);
 
               if (event) {
                 return (

@@ -37,8 +37,6 @@ interface IProps {
 }
 
 export function AddEventDialog({ children, startDate, startTime }: IProps) {
-  const { rooms } = useCalendar();
-
   const { isOpen, onClose, onToggle } = useDisclosure();
 
   const form = useForm<TEventFormData>({

@@ -1,16 +1,6 @@
-import Link from "next/link";
 import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-
-import { RoomSelect } from "@/calendar/components/calendar-all-header-room-select";
-import { TodayButton } from "@/calendar/components/calendar-all-header-today-button";
-import { DateNavigator } from "@/calendar/components/calendar-all-header-date-navigator";
-import { AddEventDialog } from "@/calendar/components/dialog-event-add";
-
-import type { IEvent } from "@/calendar/interfaces";
 import type { TCalendarView } from "@/calendar/types";
-import { Suspense, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 

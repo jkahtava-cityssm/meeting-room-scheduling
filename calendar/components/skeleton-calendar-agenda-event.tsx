@@ -1,7 +1,5 @@
 import { MapPin, Clock, Text } from "lucide-react";
 
-import type { TCalendarView } from "@/calendar/types";
-
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Label } from "@/components/ui/label";

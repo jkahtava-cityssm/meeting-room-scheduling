@@ -6,8 +6,6 @@ import { isToday } from "date-fns";
 export function MonthViewDayCellSkeleton({ cell }: { cell: ICalendarCell }) {
   const { day, currentMonth, date } = cell;
   const isSunday = date.getDay() === 0;
-  const currentDate = new Date();
-  const isTodays = isToday(date);
 
   return (
     <div className={cn("flex h-full flex-col gap-1 border-l border-t py-1 overflow-hidden", isSunday && "border-l-0")}>

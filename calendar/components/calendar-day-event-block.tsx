@@ -1,12 +1,6 @@
 import { cva } from "class-variance-authority";
-import { format, differenceInMinutes, parseISO } from "date-fns";
-
-import { useCalendar } from "@/calendar/contexts/calendar-context";
-
+import { format, differenceInMinutes } from "date-fns";
 import { EventDetailsDialog } from "@/calendar/components/dialog-event-details-container";
-
-import { cn } from "@/lib/utils";
-
 import type { HTMLAttributes } from "react";
 import type { IEvent } from "@/calendar/interfaces";
 import type { VariantProps } from "class-variance-authority";

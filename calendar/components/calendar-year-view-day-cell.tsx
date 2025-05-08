@@ -1,13 +1,8 @@
 import { isToday } from "date-fns";
 import { useRouter } from "next/navigation";
-
 import { useCalendar } from "@/calendar/contexts/calendar-context";
-
 import { cn } from "@/lib/utils";
-
 import type { IEvent } from "@/calendar/interfaces";
-import { IconColored } from "@/components/ui/icon-colored";
-import { Dot, DotIcon } from "lucide-react";
 import { IconDot } from "@/components/ui/icon-dot";
 import { TColors } from "../types";
 
@@ -47,10 +42,7 @@ export function YearViewDayCell({ day, date, events }: IProps) {
       {eventCount > 0 && (
         <div className="mt-0.5 flex gap-0.5">
           {eventCount <= maxIndicators ? (
-            events.map((event) => (
-              //<div key={event.id} color={event.room.color} className={cn("size-1.5 rounded-full bg-primary")} />
-              <IconDot key={event.eventId} color={event.room.color as TColors}></IconDot>
-            ))
+            events.map((event) => <IconDot key={event.eventId} color={event.room.color as TColors}></IconDot>)
           ) : (
             <>
               <IconDot key={events[0].eventId} color={events[0].room.color as TColors}></IconDot>

@@ -4,7 +4,6 @@ import { TColors } from "@/calendar/types";
 import { IconColored } from "@/components/ui/icon-colored";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { prisma } from "@/prisma";
 import { getRoomsWithAll } from "@/services/rooms";
 import { Asterisk, BookKey } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -31,12 +30,6 @@ export function RoomSelect() {
       </SelectTrigger>
 
       <SelectContent align="end">
-        {/*<SelectItem value="all">
-          <IconColored hideBackground={false} color={"zinc"} showBorder={true} children={<Asterisk />} />
-
-          <div className="flex items-center gap-1">All Rooms</div>
-        </SelectItem>*/}
-
         {rooms.map((room) => (
           <SelectItem key={room.roomId} value={room.roomId.toString()} className="flex-1">
             <div className="flex items-center gap-2">
@@ -46,7 +39,6 @@ export function RoomSelect() {
                 showBorder={true}
                 children={room.roomId === -1 ? <Asterisk /> : <BookKey />}
               ></IconColored>
-
               <p className="truncate">{room.name}</p>
             </div>
           </SelectItem>

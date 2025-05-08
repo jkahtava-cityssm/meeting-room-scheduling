@@ -2,16 +2,11 @@
 
 import { Calendar, Clock, User } from "lucide-react";
 import { format, startOfDay, endOfDay } from "date-fns";
-
 import { useCalendar } from "@/calendar/contexts/calendar-context";
-
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
-
 import { CalendarTimeline } from "@/calendar/components/calendar-day-timeline";
-
 import { groupEvents, getEventBlockStyle, getVisibleHours, splitMultiDayEvents, hasOverlap } from "@/calendar/helpers";
-
 import type { IEvent } from "@/calendar/interfaces";
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
 import { HourColumn } from "./calendar-day-column-hourly";
@@ -22,18 +17,10 @@ import { getEventsDaily } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 
-interface IProps {
-  singleDayEvents: IEvent[];
-  multiDayEvents: IEvent[];
-}
-
 export function CalendarDayView() {
   const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours } = useCalendar();
-
   const [currentMonth, setCurrentMonth] = React.useState<Date>(selectedDate);
-
   const [events, setEvents] = useState<IEvent[]>([]);
-
   const [isLoading, setLoading] = useState(true);
 
   const fetchEvents = async () => {

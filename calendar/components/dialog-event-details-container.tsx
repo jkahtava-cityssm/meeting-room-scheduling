@@ -1,23 +1,15 @@
 "use client";
 
-import { format, isSameDay, parseISO } from "date-fns";
-import { Calendar, Clock, MapPin, Text, User } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 
 import type { IEvent, IRoom } from "@/calendar/interfaces";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEffect, useState } from "react";
 import { ReadEvent } from "./dialog-event-details-read";
 import { EditEvent } from "./dialog-event-details-edit";
@@ -26,23 +18,20 @@ import { getRooms } from "@/services/rooms";
 import { setTimeout } from "timers";
 import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
 
-interface IProps {
+export function EventDetailsDialog({
+  event,
+  children,
+  fetchData,
+}: {
   event: IEvent;
   children: React.ReactNode;
   fetchData: () => Promise<void>;
-}
-
-export function EventDetailsDialog({ event, children, fetchData }: IProps) {
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
-
   const [isLoading, setLoading] = useState(true);
   const [currentEvent, setCurrentEvent] = useState<IEvent>();
   const [rooms, setRooms] = useState<IRoom[]>([]);
-
-  const onToggle = () => setIsOpen((currentValue) => !currentValue);
-
-  //const currentEvent = event; //event.parentEvent == null ? event : event.parentEvent;
 
   const onDialogChange = () => {
     setIsOpen((currentValue) => !currentValue);
@@ -51,6 +40,10 @@ export function EventDetailsDialog({ event, children, fetchData }: IProps) {
   };
 
   const fetchSingleEvent = async () => {
+    if (!isEditable) {
+      return;
+    }
+
     setLoading(true);
 
     const eventList = await getEvent(event.eventId);
@@ -64,19 +57,12 @@ export function EventDetailsDialog({ event, children, fetchData }: IProps) {
   };
 
   useEffect(() => {
-    if (isEditable) {
-      console.log("Editable");
-      fetchSingleEvent();
-    }
+    fetchSingleEvent();
   }, [isEditable]);
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onDialogChange}>
-        {" "}
-        {
-          //modal={false}
-        }
         <DialogTrigger asChild>{children}</DialogTrigger>
         <DialogContent className="sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 lg:max-h-9/12">
           <DialogHeader className="md:text-left">

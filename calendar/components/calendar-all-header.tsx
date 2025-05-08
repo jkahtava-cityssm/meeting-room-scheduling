@@ -1,21 +1,12 @@
 import Link from "next/link";
 import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
-
 import { RoomSelect } from "@/calendar/components/calendar-all-header-room-select";
 import { TodayButton } from "@/calendar/components/calendar-all-header-today-button";
 import { DateNavigator } from "@/calendar/components/calendar-all-header-date-navigator";
 import { AddEventDialog } from "@/calendar/components/dialog-event-add";
-
 import type { IEvent } from "@/calendar/interfaces";
 import type { TCalendarView } from "@/calendar/types";
-import { Suspense, useEffect, useState } from "react";
-import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
-
-interface IProps {
-  view: TCalendarView;
-}
 
 export function CalendarHeader({
   view,
@@ -28,17 +19,6 @@ export function CalendarHeader({
   selectedDate: Date;
   isLoading: boolean;
 }) {
-  /*const [isLoading, setLoading] = useState(false);
-
-  useEffect(() => {
-    //setTimeout(() => setLoading(false), 1);
-    //setLoading(false);
-  }, []);
-
-  if (isLoading) {
-    return <CalendarHeaderSkeleton view={view} />;
-  }
-*/
   return (
     <>
       <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
