@@ -8,23 +8,25 @@ generator client {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
-  email         String    
+  email         String
   emailVerified Boolean
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts Account[]
+  sessions Session[]
+  Member   Member[]
 
+  @@map("user")
 }
 
 model Session {
   id        String   @id @default(cuid())
   userId    String
-  token     String
+  token     String   @unique
   expiresAt DateTime
   ipAddress String?
   userAgent String?
@@ -32,10 +34,12 @@ model Session {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
 }
 
 model Account {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   userId                String
   accountId             String
   providerId            String
@@ -46,13 +50,16 @@ model Account {
   scope                 String?
   idToken               String?
   password              String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
 }
 
 //@@id([provider, providerAccountId])
+
 model Verification {
   id         String   @id @default(cuid())
   identifier String
@@ -60,4 +67,188 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@map("verification")
 }
+
+model Room {
+  roomId    Int      @id @default(autoincrement())
+  name      String
+  color     String
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Event Event[]
+
+  @@map("room")
+}
+
+model Member {
+  memberId   Int    @id @default(autoincrement())
+  userId     String
+  theme      String
+  timeFormat String //12hour or 24 hour
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MemberRole MemberRole[]
+
+  @@map("member")
+}
+
+//Member 1 or Many Roles, MemberRole
+
+model MemberRole {
+  memberRoleId Int      @id @default(autoincrement())
+  memberId     Int
+  roleId       Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  member Member @relation(fields: [memberId], references: [memberId], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+
+  @@map("member_role")
+}
+
+model Role {
+  roleId    Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  MemberRole         MemberRole[]
+  RoleResourceAction RoleResourceAction[]
+  // RolePermission     RolePermission[]
+
+  @@map("role")
+}
+
+/**
+ * ROLES
+ * {
+ * ADMIN - ROLE MANY RESOURCES
+ * {
+ * Event - RESOURCE ACTIONS
+ * {
+ * Create - ACTION
+ * {
+ * TRUE/FALSE - PERMISSION
+ * }
+ * }
+ * }
+ * }
+ */
+
+//Role 1 or Many Resources, RoleResource
+/**
+ * model RolePermission {
+ * rolePermissionId     Int      @id @default(autoincrement())
+ * roleId               Int
+ * roleResourceActionId Int
+ * createdAt            DateTime @default(now())
+ * updatedAt            DateTime @updatedAt
+ * role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+ * roleResourceAction RoleResourceAction @relation(fields: [roleResourceActionId], references: [roleResourceActionId], onDelete: Cascade)
+ * @@map("role_resource")
+ * }
+ */
+
+model RoleResourceAction {
+  roleResourceActionId Int      @id @default(autoincrement())
+  roleId               Int
+  resourceId           Int
+  actionId             Int
+  permit               Boolean
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  role     Role     @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
+  action   Action   @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
+  //RolePermission RolePermission[]
+
+  @@map("role_resource_action")
+}
+
+//Events, Rooms, etc...
+model Resource {
+  resourceId Int      @id @default(autoincrement())
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  RoleResourceAction RoleResourceAction[]
+
+  @@map("resource")
+}
+
+model Action {
+  actionId  Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  RoleResourceAction RoleResourceAction[]
+
+  @@map("action")
+}
+
+model Recurrence {
+  recurrenceId Int      @id @default(autoincrement())
+  type         String //Daily, Weekly, Monthly, Yearly
+  pattern      String //Evert Weekdays, 
+  period       Int //1
+  startDate    DateTime
+  endDate      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("recurrence")
+}
+
+model Event {
+  eventId       Int      @id @default(autoincrement())
+  roomId        Int
+  startDate     DateTime
+  endDate       DateTime
+  title         String
+  description   String
+  parentEventId Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  parentEvent Event?  @relation("ParentEvents", fields: [parentEventId], references: [eventId])
+  Event       Event[] @relation("ParentEvents")
+
+  room Room @relation(fields: [roomId], references: [roomId])
+
+  @@map("event")
+}
+
+/**
+ * export interface IEvent {
+ * id: number;
+ * key: string;
+ * startDate: string;
+ * endDate: string;
+ * title: string;
+ * description: string;
+ * room: IRoom;
+ * parentEvent: IEvent | null;
+ * }
+ */
+
+/**
+ * //Resource 1 or Many Attributes
+ * model Attribute {
+ * attributeId Int      @id @default(autoincrement())
+ * name        String
+ * resourceId  Int
+ * actionId    Int
+ * createdAt   DateTime @default(now())
+ * updatedAt   DateTime @updatedAt
+ * resource Resource @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
+ * action   Action   @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
+ * }
+ */
