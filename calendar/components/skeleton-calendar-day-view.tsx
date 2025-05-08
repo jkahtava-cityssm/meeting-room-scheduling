@@ -1,10 +1,10 @@
 import { startOfWeek, addDays, format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
+import { CalendarTimeline } from "@/calendar/components/calendar-day-timeline";
 import { cn } from "@/lib/utils";
-import { HourColumn } from "../column-hourly";
+import { HourColumn } from "./calendar-day-column-hourly";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ColumnDayHeaderSkeleton } from "../column-day-header-skeleton";
+import { ColumnDayHeaderSkeleton } from "./skeleton-calendar-day-column-header";
 
 export function CalendarDayViewSkeleton() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));

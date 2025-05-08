@@ -1,6 +1,6 @@
 import { ClientContainer } from "@/calendar/components/client-container";
-import { CalendarHeader } from "@/calendar/components/header/calendar-header";
-import { CalendarYearView } from "@/calendar/components/year-view/calendar-year-view";
+import { CalendarHeader } from "@/calendar/components/calendar-all-header";
+import { CalendarYearView } from "@/calendar/components/calendar-year-view";
 import { LoaderCircleIcon } from "lucide-react";
 import { Suspense } from "react";
 

@@ -31,7 +31,7 @@ import { startTask } from "better-auth/react";
 import { TColors } from "@/calendar/types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EditEventSkeleton } from "./edit-event-skeleton";
+import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
 import { updateEvent } from "@/services/events";
 
 export function EditEvent({

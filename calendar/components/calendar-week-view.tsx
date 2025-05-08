@@ -6,20 +6,20 @@ import { useCalendar } from "@/calendar/contexts/calendar-context";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
+import { CalendarTimeline } from "@/calendar/components/calendar-day-timeline";
 
 import { groupEvents, getEventBlockStyle, getVisibleHours, splitMultiDayEvents } from "@/calendar/helpers";
 
 import type { IEvent } from "@/calendar/interfaces";
-import { DayHourlyEventDialogs } from "../day-hourly-event-dialogs";
-import { HourColumn } from "../column-hourly";
-import { ColumnDayHeader } from "../column-day-header";
-import { EventBlock } from "../event-block";
+import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
+import { HourColumn } from "./calendar-day-column-hourly";
+import { ColumnDayHeader } from "./calendar-all-column-day-header";
+import { EventBlock } from "./calendar-day-event-block";
 import { useEffect, useMemo, useState } from "react";
 import { getEventsWeekly } from "@/services/events";
-import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
-import { CalendarHeader } from "../header/calendar-header";
-import { CalendarWeekViewSkeleton } from "./calendar-week-view-skeleton";
+import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
+import { CalendarHeader } from "./calendar-all-header";
+import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 
 export function CalendarWeekView() {
   const { selectedDate, workingHours, visibleHours, selectedRoomId } = useCalendar();

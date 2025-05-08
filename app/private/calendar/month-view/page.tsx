@@ -1,4 +1,4 @@
-import { CalendarMonthView } from "@/calendar/components/month-view/calendar-month-view";
+import { CalendarMonthView } from "@/calendar/components/calendar-month-view";
 
 export default async function Page() {
   return <CalendarMonthView />;

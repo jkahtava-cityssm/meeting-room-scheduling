@@ -10,10 +10,10 @@ import { useCalendar } from "@/calendar/contexts/calendar-context";
 //const YearViewMonth = lazy(() => import("@/calendar/components/year-view/year-view-month"));
 
 import type { IEvent } from "@/calendar/interfaces";
-import { YearViewMonthSkeleton } from "./year-view-month-skeleton";
-import { CalendarHeader } from "../header/calendar-header";
-import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
-import YearViewMonth from "./year-view-month";
+import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell";
+import { CalendarHeader } from "./calendar-all-header";
+import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
+import YearViewMonth from "./calendar-year-view-month";
 import { getEventsYearly } from "@/services/events";
 
 interface IProps {

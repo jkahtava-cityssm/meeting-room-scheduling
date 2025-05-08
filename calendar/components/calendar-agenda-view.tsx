@@ -1,51 +1,29 @@
 "use client";
+import { differenceInDays, endOfDay, format, parseISO, startOfDay } from "date-fns";
 
-import { Calendar, Clock, User } from "lucide-react";
-import { parseISO, areIntervalsOverlapping, format, startOfDay, endOfDay } from "date-fns";
+import { AgendaEventCard } from "@/calendar/components/calendar-agenda-event-block";
 
+import type { IEvent } from "@/calendar/interfaces";
 import { useCalendar } from "@/calendar/contexts/calendar-context";
-
+import { useEffect, useMemo, useState } from "react";
+import { getEventsDaily } from "@/services/events";
+import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
+import { CalendarHeader } from "./calendar-all-header";
+import { Label } from "@radix-ui/react-dropdown-menu";
+import { Clock, Text, Book, MapPin, Calendar, User } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
 
-import { AddEventDialog } from "@/calendar/components/dialogs/add-event-dialog";
-//import { EventBlock } from "@/calendar/components/week-and-day-view/event-block";
-
-import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
-import { DayViewMultiDayEventsRow } from "@/calendar/components/week-and-day-view/day-view-multi-day-events-row";
-
-import { cn } from "@/lib/utils";
-import {
-  groupEvents,
-  getEventBlockStyle,
-  isWorkingHour,
-  getCurrentEvents,
-  getVisibleHours,
-  splitMultiDayEvents,
-  getOverlappingMultiDayEvents,
-  hasOverlap,
-} from "@/calendar/helpers";
-
-import type { IEvent } from "@/calendar/interfaces";
-import { DayHourlyEventDialogs } from "../day-hourly-event-dialogs";
-import { HourColumn } from "../column-hourly";
-import { ColumnDayHeader } from "../column-day-header";
-import { EventBlock } from "../event-block";
-import React, { useEffect, useMemo, useState } from "react";
-import { getEventsDaily } from "@/services/events";
-import { CalendarHeader } from "../header/calendar-header";
-import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
-import { CalendarDayViewSkeleton } from "./calendar-day-view-skeleton";
-
 interface IProps {
-  singleDayEvents: IEvent[];
+  date: Date;
+  events: IEvent[];
   multiDayEvents: IEvent[];
 }
 
-export function CalendarDayView() {
-  const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours } = useCalendar();
-
-  const [currentMonth, setCurrentMonth] = React.useState<Date>(selectedDate);
+export function AgendaDayView() {
+  const { selectedDate, selectedRoomId, setSelectedDate } = useCalendar();
 
   const [events, setEvents] = useState<IEvent[]>([]);
 
@@ -56,31 +34,13 @@ export function CalendarDayView() {
 
     const eventList = await getEventsDaily(selectedDate);
 
-    if (eventList.error) {
-      setEvents([]);
-      setLoading(false);
-      return;
-    }
-
-    const splitList = splitMultiDayEvents(
-      eventList.data,
-      startOfDay(selectedDate),
-      endOfDay(selectedDate),
-      visibleHours
-    );
-
-    setEvents(splitList);
+    setEvents(eventList.data);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchEvents();
   }, [selectedDate]);
-
-  const handleToday = () => {
-    setCurrentMonth(new Date());
-    setSelectedDate(new Date());
-  };
 
   const filteredEvents = useMemo(
     () =>
@@ -90,66 +50,44 @@ export function CalendarDayView() {
     [events, selectedRoomId]
   );
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
-
-  const groupedEvents = groupEvents(filteredEvents);
+  const sortedEvents = [...filteredEvents].sort(
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  );
 
   return (
     <>
-      <CalendarHeader view={"day"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
-
+      <CalendarHeader view={"agenda"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
+      {
+        //isLoading ? <CalendarHeaderSkeleton view={"agenda"} /> : <CalendarHeader view={"agenda"} events={events} />
+      }
       {isLoading ? (
-        <CalendarDayViewSkeleton />
+        <>
+          <AgendaEventSkeleton selectedDate={selectedDate}></AgendaEventSkeleton>
+        </>
       ) : (
         <div className="flex">
-          <div className="flex flex-1 flex-col">
-            <ColumnDayHeader weekDays={[selectedDate]} />
+          <div className="space-y-2">
+            <div className="sticky top-14 flex items-center gap-4 bg-accent p-2">
+              <Label className="text-md font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</Label>
+            </div>
 
-            <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
-              <div className="flex border-l">
-                {/* Hours column   h-[500px]  */}
-                <HourColumn hours={hours} />
-
-                {/* Day grid */}
-                <div className="relative flex-1 border-b">
-                  <div className="relative">
-                    <DayHourlyEventDialogs hours={hours} day={selectedDate} workingHours={workingHours} />
-
-                    {groupedEvents.map((group, groupIndex) =>
-                      group.map((event) => {
-                        let style = getEventBlockStyle(event, selectedDate, groupIndex, groupedEvents.length, {
-                          from: earliestEventHour,
-                          to: latestEventHour,
-                        });
-
-                        if (!hasOverlap(groupedEvents, event, groupIndex))
-                          style = { ...style, width: "100%", left: "0%" };
-
-                        return (
-                          <div key={event.eventId} className="absolute p-1" style={style}>
-                            <EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  <CalendarTimeline />
-                </div>
-              </div>
-            </ScrollArea>
+            <div className="space-y-2 m-2">
+              {sortedEvents.length > 0 &&
+                sortedEvents.map((event) => (
+                  <AgendaEventCard key={event.eventId} event={event} fetchData={fetchEvents} />
+                ))}
+            </div>
           </div>
-
           <div className="hidden w-74 divide-y border-l md:block">
             <SingleCalendar
               className="mx-auto w-fit"
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              month={currentMonth}
-              onMonthChange={setCurrentMonth}
+              month={new Date()}
+              onMonthChange={() => {}}
               required
-              onToday={handleToday}
+              onToday={() => {}}
             />
 
             <div className="flex-1 space-y-3">

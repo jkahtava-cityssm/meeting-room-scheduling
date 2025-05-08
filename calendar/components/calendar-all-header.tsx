@@ -3,15 +3,15 @@ import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-rea
 
 import { Button } from "@/components/ui/button";
 
-import { RoomSelect } from "@/calendar/components/header/room-select";
-import { TodayButton } from "@/calendar/components/header/today-button";
-import { DateNavigator } from "@/calendar/components/header/date-navigator";
-import { AddEventDialog } from "@/calendar/components/dialogs/add-event-dialog";
+import { RoomSelect } from "@/calendar/components/calendar-all-header-room-select";
+import { TodayButton } from "@/calendar/components/calendar-all-header-today-button";
+import { DateNavigator } from "@/calendar/components/calendar-all-header-date-navigator";
+import { AddEventDialog } from "@/calendar/components/dialog-event-add";
 
 import type { IEvent } from "@/calendar/interfaces";
 import type { TCalendarView } from "@/calendar/types";
 import { Suspense, useEffect, useState } from "react";
-import { CalendarHeaderSkeleton } from "./calendar-header-skeleton";
+import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
 
 interface IProps {
   view: TCalendarView;

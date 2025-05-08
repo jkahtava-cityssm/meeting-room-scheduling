@@ -12,7 +12,6 @@ interface ICalendarContext {
   setSelectedDate: (date: Date | undefined) => void;
   selectedRoomId: string;
   setSelectedRoomId: (roomId: string) => void;
-  rooms: IRoom[];
   workingHours: TWorkingHours;
   setWorkingHours: Dispatch<SetStateAction<TWorkingHours>>;
   visibleHours: TVisibleHours;
@@ -31,7 +30,7 @@ const WORKING_HOURS = {
   6: { from: 8, to: 12 },
 };
 
-export function CalendarProvider({ children, rooms }: { children: React.ReactNode; rooms: IRoom[] }) {
+export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const [visibleHours, setVisibleHours] = useState<TVisibleHours>(VISIBLE_HOURS);
   const [workingHours, setWorkingHours] = useState<TWorkingHours>(WORKING_HOURS);
 
@@ -50,7 +49,6 @@ export function CalendarProvider({ children, rooms }: { children: React.ReactNod
         setSelectedDate: handleSelectDate,
         selectedRoomId,
         setSelectedRoomId,
-        rooms,
         visibleHours,
         setVisibleHours,
         workingHours,

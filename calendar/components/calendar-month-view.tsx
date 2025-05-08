@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 
-import { MonthViewDayCell } from "@/calendar/components/month-view/month-view-day-cell";
+import { MonthViewDayCell } from "@/calendar/components/calendar-month-view-day-cell";
 
 import { getCalendarCells, MAX_VISIBLE_EVENTS } from "@/calendar/helpers";
 
@@ -20,9 +20,9 @@ import {
   startOfDay,
   startOfMonth,
 } from "date-fns";
-import { CalendarHeaderSkeleton } from "../header/calendar-header-skeleton";
-import { CalendarHeader } from "../header/calendar-header";
-import { MonthViewDayCellSkeleton } from "./month-view-day-cell-skeleton";
+import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
+import { CalendarHeader } from "./calendar-all-header";
+import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 
 import { getEventsMonthly } from "@/services/events";
 

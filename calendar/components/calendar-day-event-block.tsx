@@ -3,7 +3,7 @@ import { format, differenceInMinutes, parseISO } from "date-fns";
 
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 
-import { EventDetailsDialog } from "@/calendar/components/dialogs/event-details-dialog";
+import { EventDetailsDialog } from "@/calendar/components/dialog-event-details-container";
 
 import { cn } from "@/lib/utils";
 

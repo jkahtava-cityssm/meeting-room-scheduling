@@ -2,12 +2,12 @@
 
 import { startOfWeek, addDays } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarTimeline } from "@/calendar/components/week-and-day-view/calendar-time-line";
+import { CalendarTimeline } from "@/calendar/components/calendar-day-timeline";
 import { cn } from "@/lib/utils";
 import type { IEvent } from "@/calendar/interfaces";
-import { HourColumn } from "../column-hourly";
+import { HourColumn } from "./calendar-day-column-hourly";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ColumnDayHeaderSkeleton } from "../column-day-header-skeleton";
+import { ColumnDayHeaderSkeleton } from "./skeleton-calendar-day-column-header";
 
 interface IProps {
   events: IEvent[];

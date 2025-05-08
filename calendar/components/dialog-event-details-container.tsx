@@ -19,12 +19,12 @@ import type { IEvent, IRoom } from "@/calendar/interfaces";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEffect, useState } from "react";
-import { ReadEvent } from "./read-event";
-import { EditEvent } from "./edit-event";
+import { ReadEvent } from "./dialog-event-details-read";
+import { EditEvent } from "./dialog-event-details-edit";
 import { getEvent } from "@/services/events";
 import { getRooms } from "@/services/rooms";
 import { setTimeout } from "timers";
-import { EditEventSkeleton } from "./edit-event-skeleton";
+import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
 
 interface IProps {
   event: IEvent;

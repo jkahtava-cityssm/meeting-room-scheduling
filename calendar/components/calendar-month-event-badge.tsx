@@ -3,7 +3,7 @@ import { differenceInDays, endOfDay, format, isSameDay, parseISO, startOfDay } f
 
 import { useCalendar } from "@/calendar/contexts/calendar-context";
 
-import { EventDetailsDialog } from "@/calendar/components/dialogs/event-details-dialog";
+import { EventDetailsDialog } from "@/calendar/components/dialog-event-details-container";
 
 import { cn } from "@/lib/utils";
 

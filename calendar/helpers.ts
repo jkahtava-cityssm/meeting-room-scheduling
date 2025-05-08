@@ -78,7 +78,7 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
 
   return operations[view](date, 1);
 }
-
+/*
 export function getEventsCount(events: IEvent[], date: Date, view: TCalendarView): number {
   const compareFns = {
     agenda: isSameDay,
@@ -104,6 +104,7 @@ export function getCurrentEvents(events: IEvent[]) {
     ) || null
   );
 }
+*/
 
 export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodEnd: Date, visibleHours: TVisibleHours) {
   /* 

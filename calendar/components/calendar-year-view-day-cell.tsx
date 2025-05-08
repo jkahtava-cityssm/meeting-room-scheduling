@@ -9,6 +9,7 @@ import type { IEvent } from "@/calendar/interfaces";
 import { IconColored } from "@/components/ui/icon-colored";
 import { Dot, DotIcon } from "lucide-react";
 import { IconDot } from "@/components/ui/icon-dot";
+import { TColors } from "../types";
 
 interface IProps {
   day: number;
@@ -48,11 +49,11 @@ export function YearViewDayCell({ day, date, events }: IProps) {
           {eventCount <= maxIndicators ? (
             events.map((event) => (
               //<div key={event.id} color={event.room.color} className={cn("size-1.5 rounded-full bg-primary")} />
-              <IconDot key={event.eventId} color={event.room.color}></IconDot>
+              <IconDot key={event.eventId} color={event.room.color as TColors}></IconDot>
             ))
           ) : (
             <>
-              <IconDot key={events[0].eventId} color={events[0].room.color}></IconDot>
+              <IconDot key={events[0].eventId} color={events[0].room.color as TColors}></IconDot>
               <span className="text-[7px] text-muted-foreground">+{eventCount - 1}</span>
             </>
           )}

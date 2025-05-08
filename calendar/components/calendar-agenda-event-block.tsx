@@ -1,15 +1,10 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { cva } from "class-variance-authority";
-import { Book, Clock, MapPin, Text, User } from "lucide-react";
-
-import { useCalendar } from "@/calendar/contexts/calendar-context";
-
-import { EventDetailsDialog } from "@/calendar/components/dialogs/event-details-dialog";
-
+import { Clock, MapPin, Text } from "lucide-react";
+import { EventDetailsDialog } from "@/calendar/components/dialog-event-details-container";
 import type { IEvent } from "@/calendar/interfaces";
-import type { VariantProps } from "class-variance-authority";
 import { TColors } from "@/calendar/types";
 
 const agendaEventCardVariants = cva(
@@ -60,13 +55,7 @@ const agendaEventCardVariants = cva(
   }
 );
 
-interface IProps {
-  event: IEvent;
-  eventCurrentDay?: number;
-  eventTotalDays?: number;
-}
-
-export function AgendaEventCard({ event, eventCurrentDay, eventTotalDays }: IProps) {
+export function AgendaEventCard({ event, fetchData }: { event: IEvent; fetchData: () => Promise<void> }) {
   //const { badgeVariant } = useCalendar();
 
   const startDate = event.startDate;
@@ -87,7 +76,7 @@ export function AgendaEventCard({ event, eventCurrentDay, eventTotalDays }: IPro
   };
 
   return (
-    <EventDetailsDialog event={event}>
+    <EventDetailsDialog event={event} fetchData={fetchData}>
       <div
         role="button"
         tabIndex={0}
@@ -97,14 +86,7 @@ export function AgendaEventCard({ event, eventCurrentDay, eventTotalDays }: IPro
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1.5">
-            <p className="text-md leading-none font-semibold">
-              {eventCurrentDay && eventTotalDays && (
-                <span className="mr-1 text-xs">
-                  Day {eventCurrentDay} of {eventTotalDays} •{" "}
-                </span>
-              )}
-              {event.title}
-            </p>
+            <p className="text-md leading-none font-semibold">{event.title}</p>
           </div>
 
           <div className="mt-1 flex items-center gap-1">

@@ -7,7 +7,7 @@ import { useCalendar } from "@/calendar/contexts/calendar-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { getEventsCount, navigateDate, rangeText } from "@/calendar/helpers";
+import { navigateDate, rangeText } from "@/calendar/helpers";
 import { uniqBy } from "lodash";
 
 import type { IEvent } from "@/calendar/interfaces";
