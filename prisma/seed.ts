@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { TColors } from "@/calendar/types";
+import { TColors } from "@/components/calendar/lib/types";
 import { addDays } from "date-fns";
 import { EVENTDESCRIPTIONS, EVENTS } from "./seed-data";
 

@@ -1,5 +1,5 @@
 //import { IEvent } from "@/calendar/interfaces";
-import { IEvent, IRoom } from "@/calendar/interfaces";
+import { IEvent, IRoom } from "@/components/calendar/lib/interfaces";
 import { prisma } from "@/prisma";
 import { Room } from "@prisma/client";
 

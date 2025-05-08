@@ -1,5 +1,4 @@
-import { AgendaDayView } from "@/calendar/components/calendar-agenda-view";
-import { ClientContainer } from "@/calendar/components/client-container";
+import { AgendaDayView } from "@/components/calendar/calendar-agenda-view";
 
 export default async function Page() {
   return <AgendaDayView />;
