@@ -9,7 +9,7 @@ import { LogOut } from "lucide-react";
 export function SignOutMenuItem() {
   const router = useRouter();
   const pathname = usePathname();
-  console.log(pathname);
+  //console.log(pathname);
 
   const handleLogOut = () => {
     signOut({

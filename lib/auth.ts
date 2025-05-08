@@ -7,15 +7,19 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  socialProviders:
-  {
-    github:
-    {
-        clientId: process.env.GITHUB_ID as string,
-        clientSecret: process.env.GITHUB_SECRET as string
-    }
-  }
-         /* GithubProvider({
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
+    },
+  },
+  session: {
+    //expiresIn: 60 * 60 * 24 * 7, // 7 days
+    //updateAge: 60 * 60 * 24, // 1 day
+    expiresIn: 60 * 60 * 24 * 7, // 3 Minutes
+    updateAge: 60 * 60 * 24, // 1 Minute
+  },
+  /* GithubProvider({
               clientId: process.env.GITHUB_ID as string,
               clientSecret: process.env.GITHUB_SECRET as string
           }),
@@ -26,15 +30,13 @@ export const auth = betterAuth({
           })*/
 });
 
-export async function getServerSession()
-{
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+export async function getServerSession() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-    return session;
+  return session;
 }
-
 
 /*
 export getServerSession()

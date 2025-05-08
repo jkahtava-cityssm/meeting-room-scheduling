@@ -4,18 +4,7 @@ import * as React from "react";
 
 import Image from "next/image";
 
-import {
-  Calendar,
-  Bot,
-  Command,
-  Frame,
-  LifeBuoy,
-  Map,
-  PieChart,
-  Send,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react";
+import { Calendar, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
@@ -47,16 +36,24 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "View Calendar",
-          url: "/private/viewcalendar",
+          title: "View Calendar - Year",
+          url: "/private/calendar/year-view",
         },
         {
-          title: "View Booking Details",
-          url: "#",
+          title: "View Calendar - Month",
+          url: "/private/calendar/month-view",
         },
         {
-          title: "Manage Bookings",
-          url: "#",
+          title: "View Calendar - Week",
+          url: "/private/calendar/week-view",
+        },
+        {
+          title: "View Calendar - Day",
+          url: "/private/calendar/day-view",
+        },
+        {
+          title: "View Calendar - Agenda",
+          url: "/private/calendar/agenda-view",
         },
       ],
     },
@@ -91,10 +88,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar
-      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
-      {...props}
-    >
+    <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -109,12 +103,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    Room Scheduling/Booking
-                  </span>
-                  <span className="cenet text-xs">
-                    The City of Sault Ste. Marie
-                  </span>
+                  <span className="truncate font-medium">Room Scheduling/Booking</span>
+                  <span className="cenet text-xs">The City of Sault Ste. Marie</span>
                 </div>
               </Link>
             </SidebarMenuButton>
