@@ -91,8 +91,13 @@ export async function GET(req: NextRequest) {
   const EndDate: Date = parseISO(endDateParam);
 
   const events = await prisma.event.findMany({
-    include: { room: true },
-    where: { OR: [{ startDate: { lte: EndDate }, endDate: { gte: StartDate } }] },
+    include: { room: true, recurrence: true },
+    where: {
+      OR: [
+        { startDate: { lte: EndDate }, endDate: { gte: StartDate } },
+        { recurrence: { startDate: { lte: EndDate }, endDate: { gte: StartDate } } },
+      ],
+    },
   });
 
   if (!events) {
