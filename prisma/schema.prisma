@@ -195,31 +195,32 @@ model Action {
 }
 
 model Recurrence {
-  recurrenceId Int      @id @default(autoincrement())
-  type         String //Daily, Weekly, Monthly, Yearly
-  pattern      String //Evert Weekdays, 
-  period       Int //1
-  startDate    DateTime
-  endDate      DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  recurrenceId     Int      @id @default(autoincrement())
+  type             String //Daily, Weekly, Monthly, Yearly
+  pattern          String //Every Weekdays, 
+  period           Int //1
+  startDate        DateTime
+  endDate          DateTime
+  totalOccurrences Int? //1 or 25 replaces End Date, maybe calculated field to auto set end date
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  Event            Event[]
 
   @@map("recurrence")
 }
 
 model Event {
-  eventId       Int      @id @default(autoincrement())
-  roomId        Int
-  startDate     DateTime
-  endDate       DateTime
-  title         String
-  description   String
-  parentEventId Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  eventId      Int      @id @default(autoincrement())
+  roomId       Int
+  startDate    DateTime
+  endDate      DateTime
+  title        String
+  description  String
+  recurrenceId Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  parentEvent Event?  @relation("ParentEvents", fields: [parentEventId], references: [eventId])
-  Event       Event[] @relation("ParentEvents")
+  recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: Cascade)
 
   room Room @relation(fields: [roomId], references: [roomId])
 

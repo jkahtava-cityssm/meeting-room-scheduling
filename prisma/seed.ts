@@ -201,6 +201,62 @@ async function CreateRandomEvents(
   }
 }
 
+async function CreateRandomRecurrence(startDate: Date, endDate: Date, maxEvents: number, maxRangeInDays: number = 30) {
+  // Date range: maxRangeInDays days before and after Now()
+  const startRange = addDays(startDate, maxRangeInDays);
+  const endRange = addDays(endDate, -maxRangeInDays);
+
+  // Determine if this is a recurring event (10% chance)
+  const isRecurringEvent = Math.random() < 0.1;
+
+  if (!isRecurringEvent) {
+    return null;
+  }
+
+  const recurrence = await prisma.recurrence.create({
+    data: {
+      type: "",
+      period: 2,
+      pattern: "",
+      startDate: startDate,
+      endDate: endDate,
+      totalOccurrences: Math.floor(Math.random() * 100) + 1,
+    },
+  });
+
+  for (let index = 0; index < maxEvents; index++) {
+    // Determine if this is a multi-day event (10% chance)
+
+    const startDate = new Date(startRange.getTime() + Math.random() * (endRange.getTime() - startRange.getTime()));
+
+    // Set time between 8 AM and 8 PM
+    startDate.setHours(8 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 4) * 15, 0, 0);
+
+    const endDate = new Date(startDate);
+
+    if (isMultiDay) {
+      // Multi-day event: Add 1-12 days
+      const additionalDays = Math.floor(Math.random() * 12) + 1;
+      endDate.setDate(startDate.getDate() + additionalDays);
+
+      endDate.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 4) * 15, 0, 0);
+    } else {
+      const durationMinutes = (Math.floor(Math.random() * 11) + 2) * 15; // 30 to 180 minutes, multiple of 15
+      endDate.setTime(endDate.getTime() + durationMinutes * 60 * 1000);
+    }
+    const eventIndex = Math.floor(Math.random() * EVENTS.length);
+  }
+}
+
+function getRandomRecurrenceValue(): string {
+  const numberOfLines = Math.floor(Math.random() * EVENTDESCRIPTIONS.length);
+  let newDescription = "";
+  for (let index = 0; index <= numberOfLines; index++) {
+    newDescription += EVENTDESCRIPTIONS[index] + "\n";
+  }
+  return newDescription;
+}
+
 async function main() {
   const actionCreate = await FindCreateAction("Create");
   const actionRead = await FindCreateAction("Read");
