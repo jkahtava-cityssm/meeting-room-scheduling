@@ -13,6 +13,7 @@ import {
   splitMultiDayEvents,
   hasOverlap,
   filterEventsByRoom,
+  CreateRandomRecurrence,
 } from "@/components/calendar/lib/helpers";
 import type { IEvent } from "@/components/calendar/lib/interfaces";
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
@@ -54,6 +55,10 @@ export function CalendarDayView() {
 
   useEffect(() => {
     fetchEvents();
+
+    for (let index = 0; index < 100; index++) {
+      CreateRandomRecurrence();
+    }
   }, [selectedDate]);
 
   const handleToday = () => {

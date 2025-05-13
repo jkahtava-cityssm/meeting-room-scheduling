@@ -29,10 +29,15 @@ import {
   set,
   endOfDay,
   areIntervalsOverlapping,
+  isWeekend,
+  setDate,
+  compareAsc,
 } from "date-fns";
 
 import type { ICalendarCell, IEvent } from "@/components/calendar/lib/interfaces";
-import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
+import type { TCalendarView, TRecurrencePattern, TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
+import { start } from "repl";
+import { RECURRENCE_PATTERN, RECURRENCE_TYPE } from "@/prisma/seed-data";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -358,4 +363,39 @@ export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
   return events.filter((event) => {
     return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
   });
+}
+
+export function calculateMonthlyRecurrenceEndDate(startDate: Date, occurrences: number, day: number, months: number) {
+  let iterations = occurrences;
+  let firstMonth = set(startDate, { date: day });
+  if (compareAsc(startDate, firstMonth) > 0) {
+    firstMonth = addMonths(firstMonth, months);
+    iterations -= 1;
+  }
+  //once we found the first occurrence we can add all the others
+  return addMonths(firstMonth, months * iterations);
+}
+
+export function calculateYearlyRecurrenceEndDate(
+  startDate: Date,
+  occurrences: number,
+  day: number,
+  month: number,
+  years: number
+) {
+  //OUTLOOK HAS AN INTERESTING BEHAVIOUR I WILL TRY AND MIMIC
+  //IT SETS THE FIRST EVENT TO OCCUR IN THE SAME YEAR
+  //SO IF THE RECURRENCE IS EVERY 3 YEARS IT WILL SET THE FIRST OCCURRENCE TO THIS YEAR.
+  //2026-08-21, 1 Occurrence @ 3 Years, September, 19th = 2026-09-19
+  //THEN EACH RECURRENCE IS CALCULATED BASED ON THIS VALUE 2026-09-19
+  //IF THE START DATE WOULD HAPPEN AFTER THOUGH SO IF 2026-09-20 THEN IT BECOMES 2029-09-19
+  let iterations = occurrences;
+  let firstYear = set(startDate, { month: month, date: day });
+
+  if (compareAsc(startDate, firstYear) > 0) {
+    firstYear = addYears(firstYear, years);
+    iterations -= 1;
+  }
+
+  return addYears(firstYear, years * iterations);
 }
