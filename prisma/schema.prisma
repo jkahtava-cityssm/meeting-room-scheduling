@@ -194,17 +194,35 @@ model Action {
   @@map("action")
 }
 
+/**
+ * type = frequency
+ * pattern = "ByDay"
+ * totalOccurrences = Count
+ * daySpan/week/month/year = Interval
+ */
+
 model Recurrence {
   recurrenceId     Int      @id @default(autoincrement())
   type             String //Daily, Weekly, Monthly, Yearly
-  pattern          String //Every Weekdays, 
-  period           Int //1
+  pattern          String //"Every X Days", "Every Weekday","Every X Weeks","Every X Weeks on Every Selected Day","Every X Months on X Day","Every X Year on X Month on X Day",
+  totalOccurrences Int      @default(0) //Auto-calculates based on Start Date so if 10 then Start Date * 10
   startDate        DateTime
   endDate          DateTime
-  totalOccurrences Int? //1 or 25 replaces End Date, maybe calculated field to auto set end date
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  Event            Event[]
+  daySpan          Int      @default(0)
+  weekSpan         Int      @default(0)
+  monthSpan        Int      @default(0)
+  yearSpan         Int      @default(0)
+  monday           Int      @default(0)
+  tuesday          Int      @default(0)
+  wednesday        Int      @default(0)
+  thursday         Int      @default(0)
+  friday           Int      @default(0)
+  saturday         Int      @default(0)
+  sunday           Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Event     Event[]
 
   @@map("recurrence")
 }

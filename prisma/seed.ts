@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { TColors } from "@/components/calendar/lib/types";
-import { addDays } from "date-fns";
-import { EVENTDESCRIPTIONS, EVENTS } from "./seed-data";
+import { addDays, addMonths, addWeeks, addYears, compareAsc, formatISO, isWeekend, parseISO, set } from "date-fns";
+import { EVENTDESCRIPTIONS, EVENTS, RECURRENCE_PATTERN, RECURRENCE_PERIOD, RECURRENCE_TYPE } from "./seed-data";
+import { start } from "repl";
+import { first } from "lodash";
 
 const prisma = new PrismaClient();
 
@@ -196,65 +198,200 @@ async function CreateRandomEvents(
         endDate: endDate.toISOString(),
         title: EVENTS[eventIndex],
         description: getRandomDescription(),
+        recurrenceId: await CreateRandomRecurrence(startDate, endDate),
       },
     });
   }
 }
 
-async function CreateRandomRecurrence(startDate: Date, endDate: Date, maxEvents: number, maxRangeInDays: number = 30) {
-  // Date range: maxRangeInDays days before and after Now()
-  const startRange = addDays(startDate, maxRangeInDays);
-  const endRange = addDays(endDate, -maxRangeInDays);
-
+async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
   // Determine if this is a recurring event (10% chance)
   const isRecurringEvent = Math.random() < 0.1;
 
   if (!isRecurringEvent) {
-    return null;
+    return undefined;
+  }
+
+  const TypeValue = RECURRENCE_TYPE[Math.floor(Math.random() * RECURRENCE_TYPE.length)];
+  const PatternValue = RECURRENCE_PATTERN[Math.floor(Math.random() * RECURRENCE_PATTERN.length)];
+
+  const occurrences = Math.floor(Math.random() * 100) + 1;
+
+  let IsMonday = 0;
+  let IsTuesday = 0;
+  let IsWednesday = 0;
+  let IsThursday = 0;
+  let IsFriday = 0;
+  let IsSaturday = 0;
+  let IsSunday = 0;
+
+  let daySpan = 0;
+  let weekSpan = 0;
+  let monthSpan = 0;
+  let yearSpan = 0;
+
+  let PeriodValue = "";
+
+  switch (PatternValue) {
+    case "Every X Days":
+      PeriodValue = "Daily";
+      daySpan = Math.floor(Math.random() * 7);
+      break;
+    case "Every Weekday":
+      PeriodValue = "Daily";
+      daySpan = 1;
+
+      IsMonday = 1;
+      IsTuesday = 1;
+      IsWednesday = 1;
+      IsThursday = 1;
+      IsFriday = 1;
+      IsSaturday = 0;
+      IsSunday = 0;
+      break;
+    case "Every X Weeks":
+      PeriodValue = "Weekly";
+      weekSpan = Math.floor(Math.random() * 7) + 1;
+      break;
+    case "Every X Weeks on Every Selected Day":
+      PeriodValue = "Weekly";
+      weekSpan = Math.floor(Math.random() * 7) + 1;
+      IsMonday = Math.floor(Math.random() * 1);
+      IsTuesday = Math.floor(Math.random() * 1);
+      IsWednesday = Math.floor(Math.random() * 1);
+      IsThursday = Math.floor(Math.random() * 1);
+      IsFriday = Math.floor(Math.random() * 1);
+      IsSaturday = Math.floor(Math.random() * 1);
+      IsSunday = Math.floor(Math.random() * 1);
+      break;
+    case "Every X Months on X Day":
+      PeriodValue = "Monthly";
+      daySpan = Math.floor(Math.random() * 31) + 1;
+      monthSpan = Math.floor(Math.random() * 12);
+      break;
+    case "Every X Year on X Month on X Day":
+      PeriodValue = "Yearly";
+      daySpan = Math.floor(Math.random() * 31) + 1;
+      monthSpan = Math.floor(Math.random() * 12);
+      yearSpan = Math.floor(Math.random() * 5) + 1;
+      break;
+    default:
+      PeriodValue = "Daily";
+      daySpan = Math.floor(Math.random() * 7);
+      break;
+  }
+
+  let newStartDate = addDays(startDate, -Math.floor(Math.random() * 31));
+  let newEndDate = addDays(endDate, Math.floor(Math.random() * 31));
+
+  if (TypeValue === "Forever") {
+    newEndDate = parseISO("9999-12-31");
+  } else if (TypeValue === "Occurrences") {
+    let tempTotal = occurrences;
+    let tempDate = newStartDate;
+    switch (PatternValue) {
+      case "Every X Days":
+        tempDate = addDays(tempDate, daySpan * tempTotal);
+        break;
+      case "Every Weekday":
+        for (let index = 1; index < tempTotal; index++) {
+          //if the date is a weekend we need to get to the next weekday to increase the occurrence period
+          while (isWeekend(tempDate)) {
+            tempDate = addDays(tempDate, 1);
+          }
+
+          tempDate = addDays(tempDate, 1);
+        }
+
+        break;
+      case "Every X Weeks":
+      case "Every X Weeks on Every Selected Day":
+        tempDate = addWeeks(tempDate, weekSpan * tempTotal);
+        break;
+      case "Every X Months on X Day":
+        //Set the Date to the Month that we need
+        //Then Add the Months to that Date 03-23 + 1 04-23
+
+        //Take the current Month, change the Day so it matches the pattern.
+        //Add the new Month Span to the current Month and Day that was set
+        //This should give us the first recurrence.
+        console.log(`\nSTART MONTH CALC  ${formatISO(tempDate, { representation: "date" })}`);
+        console.log(occurrences, monthSpan, daySpan);
+        let firstMonth = set(tempDate, { date: daySpan });
+
+        if (compareAsc(tempDate, firstMonth) > 0) {
+          console.log(
+            `FIRST DATE ${formatISO(firstMonth, { representation: "date" })} LESS THEN CURRENT DATE ${formatISO(
+              tempDate,
+              { representation: "date" }
+            )}`
+          );
+          console.log(`ADD ${monthSpan} MONTHS`);
+          firstMonth = addMonths(firstMonth, monthSpan);
+          tempTotal = tempTotal - 1;
+        }
+        console.log(`FIRST MONTH ${formatISO(firstMonth, { representation: "date" })}`);
+        //once we found the first occurrence we can add all the others
+        tempDate = addMonths(firstMonth, monthSpan * tempTotal);
+        console.log(`CALCULATED DATE: ${formatISO(tempDate, { representation: "date" })}`);
+        console.log("###END MONTH###");
+        break;
+      case "Every X Year on X Month on X Day":
+        //OUTLOOK HAS AN INTERESTING BEHAVIOUR I WILL TRY AND MIMIC
+        //IT SETS THE FIRST EVENT TO OCCUR IN THE SAME YEAR
+        //SO IF THE RECURRENCE IS EVERY 3 YEARS IT WILL SET THE FIRST OCCURRENCE TO THIS YEAR.
+        //2026-08-21, 1 Occurrence @ 3 Years, September, 19th = 2026-09-19
+        //THEN EACH RECURRENCE IS CALCULATED BASED ON THIS VALUE 2026-09-19
+        //IF THE START DATE WOULD HAPPEN AFTER THOUGH SO IF 2026-09-20 THEN IT BECOMES 2029-09-19
+        console.log(`START YEAR CALC  ${tempDate}`);
+        console.log(occurrences, yearSpan, monthSpan + 1, daySpan);
+        let firstDate = set(tempDate, { month: monthSpan, date: daySpan });
+
+        if (compareAsc(tempDate, firstDate) > 0) {
+          console.log(`FIRST DATE ${firstDate} LESS THEN CURRENT DATE ${tempDate}`);
+          console.log(`ADD ${yearSpan} YEARS`);
+          firstDate = addYears(firstDate, yearSpan);
+          tempTotal = tempTotal - 1;
+        }
+
+        console.log(`FIRST DATE ${firstDate}`);
+        tempDate = addYears(firstDate, yearSpan * tempTotal);
+
+        //const firstYear = addYears(set(tempDate, { month: monthSpan, date: daySpan }), yearSpan);
+        //console.log(firstYear);
+
+        //tempDate = addYears(firstYear, yearSpan * occurrences);
+        console.log(`CALCULATED DATE: ${tempDate}`);
+        console.log("###END YEAR###");
+        //tempDate = set(tempDate, { month: monthSpan, date: daySpan });
+        break;
+    }
+    newEndDate = tempDate;
+  } else if (TypeValue === "Between") {
   }
 
   const recurrence = await prisma.recurrence.create({
     data: {
-      type: "",
-      period: 2,
-      pattern: "",
-      startDate: startDate,
-      endDate: endDate,
-      totalOccurrences: Math.floor(Math.random() * 100) + 1,
+      type: TypeValue,
+      pattern: PatternValue,
+      totalOccurrences: occurrences,
+      startDate: newStartDate,
+      endDate: newEndDate,
+      daySpan: daySpan,
+      weekSpan: weekSpan,
+      monthSpan: monthSpan,
+      yearSpan: yearSpan,
+      monday: IsMonday,
+      tuesday: IsTuesday,
+      wednesday: IsWednesday,
+      thursday: IsThursday,
+      friday: IsFriday,
+      saturday: IsSaturday,
+      sunday: IsSunday,
     },
   });
 
-  for (let index = 0; index < maxEvents; index++) {
-    // Determine if this is a multi-day event (10% chance)
-
-    const startDate = new Date(startRange.getTime() + Math.random() * (endRange.getTime() - startRange.getTime()));
-
-    // Set time between 8 AM and 8 PM
-    startDate.setHours(8 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 4) * 15, 0, 0);
-
-    const endDate = new Date(startDate);
-
-    if (isMultiDay) {
-      // Multi-day event: Add 1-12 days
-      const additionalDays = Math.floor(Math.random() * 12) + 1;
-      endDate.setDate(startDate.getDate() + additionalDays);
-
-      endDate.setHours(8 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 4) * 15, 0, 0);
-    } else {
-      const durationMinutes = (Math.floor(Math.random() * 11) + 2) * 15; // 30 to 180 minutes, multiple of 15
-      endDate.setTime(endDate.getTime() + durationMinutes * 60 * 1000);
-    }
-    const eventIndex = Math.floor(Math.random() * EVENTS.length);
-  }
-}
-
-function getRandomRecurrenceValue(): string {
-  const numberOfLines = Math.floor(Math.random() * EVENTDESCRIPTIONS.length);
-  let newDescription = "";
-  for (let index = 0; index <= numberOfLines; index++) {
-    newDescription += EVENTDESCRIPTIONS[index] + "\n";
-  }
-  return newDescription;
+  return recurrence.recurrenceId;
 }
 
 async function main() {
@@ -315,6 +452,7 @@ async function main() {
   roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey"));
 
   await prisma.event.deleteMany();
+  await prisma.recurrence.deleteMany();
 
   CreateRandomEvents(roomList, 200);
 
