@@ -202,29 +202,44 @@ model Action {
  */
 
 model Recurrence {
-  recurrenceId     Int      @id @default(autoincrement())
-  type             String //Daily, Weekly, Monthly, Yearly
-  pattern          String //"Every X Days", "Every Weekday","Every X Weeks","Every X Weeks on Every Selected Day","Every X Months on X Day","Every X Year on X Month on X Day",
-  totalOccurrences Int      @default(0) //Auto-calculates based on Start Date so if 10 then Start Date * 10
-  startDate        DateTime
-  endDate          DateTime
-  daySpan          Int      @default(0)
-  weekSpan         Int      @default(0)
-  monthSpan        Int      @default(0)
-  yearSpan         Int      @default(0)
-  monday           Int      @default(0)
-  tuesday          Int      @default(0)
-  wednesday        Int      @default(0)
-  thursday         Int      @default(0)
-  friday           Int      @default(0)
-  saturday         Int      @default(0)
-  sunday           Int      @default(0)
+  recurrenceId             Int      @id @default(autoincrement())
+  recurrenceCancellationId Int?
+  recurrenceExceptionId    Int?
+  rule                     String
+  startDate                DateTime
+  endDate                  DateTime
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Event     Event[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  Event                  Event[]
+  RecurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
+  RecurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
 
   @@map("recurrence")
+}
+
+model RecurrenceCancellation {
+  recurrenceCancellationId Int      @id @default(autoincrement())
+  recurrenceDate           DateTime
+  cancellationDate         DateTime
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Recurrence Recurrence[]
+
+  @@map("recurrence_cancellation")
+}
+
+model RecurrenceException {
+  recurrenceExceptionId Int      @id @default(autoincrement())
+  recurrenceDate        DateTime
+  rescheduledDate       DateTime
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Recurrence Recurrence[]
+
+  @@map("recurrence_exception")
 }
 
 model Event {

@@ -4,6 +4,7 @@ import { addDays, addMonths, addWeeks, addYears, compareAsc, formatISO, isWeeken
 import { EVENTDESCRIPTIONS, EVENTS, RECURRENCE_PATTERN, RECURRENCE_PERIOD, RECURRENCE_TYPE } from "./seed-data";
 import { start } from "repl";
 import { first } from "lodash";
+import { ByWeekday, datetime, RRule, RRuleSet, rrulestr } from "rrule";
 
 const prisma = new PrismaClient();
 
@@ -206,188 +207,168 @@ async function CreateRandomEvents(
 
 async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
   // Determine if this is a recurring event (10% chance)
-  const isRecurringEvent = Math.random() < 0.1;
+  /*const isRecurringEvent = Math.random() < 0.1;
 
   if (!isRecurringEvent) {
     return undefined;
-  }
+  }*/
 
   const TypeValue = RECURRENCE_TYPE[Math.floor(Math.random() * RECURRENCE_TYPE.length)];
   const PatternValue = RECURRENCE_PATTERN[Math.floor(Math.random() * RECURRENCE_PATTERN.length)];
 
   const occurrences = Math.floor(Math.random() * 100) + 1;
 
-  let IsMonday = 0;
-  let IsTuesday = 0;
-  let IsWednesday = 0;
-  let IsThursday = 0;
-  let IsFriday = 0;
-  let IsSaturday = 0;
-  let IsSunday = 0;
+  let interval = 0;
+  let dayValue = 0;
 
-  let daySpan = 0;
-  let weekSpan = 0;
-  let monthSpan = 0;
-  let yearSpan = 0;
+  let weekValue = 0;
+  let monthValue = 0;
+  let yearValue = 0;
 
   let PeriodValue = "";
+
+  const maxPossibleDay: number[] = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  const weekdayArray: ByWeekday[] = [];
 
   switch (PatternValue) {
     case "Every X Days":
       PeriodValue = "Daily";
-      daySpan = Math.floor(Math.random() * 7);
+      interval = Math.floor(Math.random() * 7) + 1;
       break;
     case "Every Weekday":
       PeriodValue = "Daily";
-      daySpan = 1;
-
-      IsMonday = 1;
-      IsTuesday = 1;
-      IsWednesday = 1;
-      IsThursday = 1;
-      IsFriday = 1;
-      IsSaturday = 0;
-      IsSunday = 0;
+      interval = 1;
+      weekdayArray.push(RRule.MO);
+      weekdayArray.push(RRule.TU);
+      weekdayArray.push(RRule.WE);
+      weekdayArray.push(RRule.TH);
+      weekdayArray.push(RRule.FR);
       break;
     case "Every X Weeks":
       PeriodValue = "Weekly";
-      weekSpan = Math.floor(Math.random() * 7) + 1;
+      interval = Math.floor(Math.random() * 7) + 1;
       break;
     case "Every X Weeks on Every Selected Day":
       PeriodValue = "Weekly";
-      weekSpan = Math.floor(Math.random() * 7) + 1;
-      IsMonday = Math.floor(Math.random() * 1);
-      IsTuesday = Math.floor(Math.random() * 1);
-      IsWednesday = Math.floor(Math.random() * 1);
-      IsThursday = Math.floor(Math.random() * 1);
-      IsFriday = Math.floor(Math.random() * 1);
-      IsSaturday = Math.floor(Math.random() * 1);
-      IsSunday = Math.floor(Math.random() * 1);
+      interval = Math.floor(Math.random() * 7) + 1;
+
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.MO);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.TU);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.WE);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.TH);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.FR);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.SA);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.SU);
+
       break;
     case "Every X Months on X Day":
       PeriodValue = "Monthly";
-      daySpan = Math.floor(Math.random() * 31) + 1;
-      monthSpan = Math.floor(Math.random() * 12);
+      interval = Math.floor(Math.random() * 12) + 1;
+      dayValue = Math.floor(Math.random() * 31) + 1;
+
       break;
     case "Every X Year on X Month on X Day":
       PeriodValue = "Yearly";
-      daySpan = Math.floor(Math.random() * 31) + 1;
-      monthSpan = Math.floor(Math.random() * 12);
-      yearSpan = Math.floor(Math.random() * 5) + 1;
+      interval = Math.floor(Math.random() * 5) + 1;
+
+      monthValue = Math.floor(Math.random() * 12) + 1;
+      dayValue = Math.floor(Math.random() * maxPossibleDay[monthValue - 1]) + 1;
+
       break;
     default:
       PeriodValue = "Daily";
-      daySpan = Math.floor(Math.random() * 7);
+      interval = Math.floor(Math.random() * 100) + 1;
+      dayValue = Math.floor(Math.random() * 7) + 1;
       break;
   }
 
   let newStartDate = addDays(startDate, -Math.floor(Math.random() * 31));
-  let newEndDate = addDays(endDate, Math.floor(Math.random() * 31));
 
-  if (TypeValue === "Forever") {
-    newEndDate = parseISO("9999-12-31");
-  } else if (TypeValue === "Occurrences") {
-    let tempTotal = occurrences;
-    let tempDate = newStartDate;
+  let newRule = undefined;
+
+  if (TypeValue === "Occurrences") {
     switch (PatternValue) {
       case "Every X Days":
-        tempDate = addDays(tempDate, daySpan * tempTotal);
+        newRule = new RRule({
+          freq: RRule.DAILY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          count: occurrences,
+          until: null,
+        });
         break;
       case "Every Weekday":
-        for (let index = 1; index < tempTotal; index++) {
-          //if the date is a weekend we need to get to the next weekday to increase the occurrence period
-          while (isWeekend(tempDate)) {
-            tempDate = addDays(tempDate, 1);
-          }
-
-          tempDate = addDays(tempDate, 1);
-        }
-
+        newRule = new RRule({
+          freq: RRule.DAILY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          count: occurrences,
+          until: null,
+        });
         break;
       case "Every X Weeks":
+        newRule = new RRule({
+          freq: RRule.WEEKLY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          count: occurrences,
+          until: null,
+        });
       case "Every X Weeks on Every Selected Day":
-        tempDate = addWeeks(tempDate, weekSpan * tempTotal);
+        newRule = new RRule({
+          freq: RRule.WEEKLY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          count: occurrences,
+          until: null,
+        });
         break;
       case "Every X Months on X Day":
-        //Set the Date to the Month that we need
-        //Then Add the Months to that Date 03-23 + 1 04-23
-
-        //Take the current Month, change the Day so it matches the pattern.
-        //Add the new Month Span to the current Month and Day that was set
-        //This should give us the first recurrence.
-        console.log(`\nSTART MONTH CALC  ${formatISO(tempDate, { representation: "date" })}`);
-        console.log(occurrences, monthSpan, daySpan);
-        let firstMonth = set(tempDate, { date: daySpan });
-
-        if (compareAsc(tempDate, firstMonth) > 0) {
-          console.log(
-            `FIRST DATE ${formatISO(firstMonth, { representation: "date" })} LESS THEN CURRENT DATE ${formatISO(
-              tempDate,
-              { representation: "date" }
-            )}`
-          );
-          console.log(`ADD ${monthSpan} MONTHS`);
-          firstMonth = addMonths(firstMonth, monthSpan);
-          tempTotal = tempTotal - 1;
-        }
-        console.log(`FIRST MONTH ${formatISO(firstMonth, { representation: "date" })}`);
-        //once we found the first occurrence we can add all the others
-        tempDate = addMonths(firstMonth, monthSpan * tempTotal);
-        console.log(`CALCULATED DATE: ${formatISO(tempDate, { representation: "date" })}`);
-        console.log("###END MONTH###");
+        newRule = new RRule({
+          freq: RRule.MONTHLY,
+          interval: interval,
+          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          bymonthday: dayValue,
+          count: occurrences,
+          until: null,
+        });
         break;
       case "Every X Year on X Month on X Day":
-        //OUTLOOK HAS AN INTERESTING BEHAVIOUR I WILL TRY AND MIMIC
-        //IT SETS THE FIRST EVENT TO OCCUR IN THE SAME YEAR
-        //SO IF THE RECURRENCE IS EVERY 3 YEARS IT WILL SET THE FIRST OCCURRENCE TO THIS YEAR.
-        //2026-08-21, 1 Occurrence @ 3 Years, September, 19th = 2026-09-19
-        //THEN EACH RECURRENCE IS CALCULATED BASED ON THIS VALUE 2026-09-19
-        //IF THE START DATE WOULD HAPPEN AFTER THOUGH SO IF 2026-09-20 THEN IT BECOMES 2029-09-19
-        console.log(`START YEAR CALC  ${tempDate}`);
-        console.log(occurrences, yearSpan, monthSpan + 1, daySpan);
-        let firstDate = set(tempDate, { month: monthSpan, date: daySpan });
-
-        if (compareAsc(tempDate, firstDate) > 0) {
-          console.log(`FIRST DATE ${firstDate} LESS THEN CURRENT DATE ${tempDate}`);
-          console.log(`ADD ${yearSpan} YEARS`);
-          firstDate = addYears(firstDate, yearSpan);
-          tempTotal = tempTotal - 1;
-        }
-
-        console.log(`FIRST DATE ${firstDate}`);
-        tempDate = addYears(firstDate, yearSpan * tempTotal);
-
-        //const firstYear = addYears(set(tempDate, { month: monthSpan, date: daySpan }), yearSpan);
-        //console.log(firstYear);
-
-        //tempDate = addYears(firstYear, yearSpan * occurrences);
-        console.log(`CALCULATED DATE: ${tempDate}`);
-        console.log("###END YEAR###");
-        //tempDate = set(tempDate, { month: monthSpan, date: daySpan });
+        newRule = new RRule({
+          freq: RRule.YEARLY,
+          interval: interval,
+          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          bymonth: monthValue,
+          bymonthday: dayValue,
+          count: occurrences,
+          until: null,
+        });
         break;
     }
-    newEndDate = tempDate;
   } else if (TypeValue === "Between") {
   }
 
+  if (!newRule) {
+    return;
+  }
+
+  console.log(newRule.all().at(-1));
+  if (!newRule.all().at(-1)) {
+    console.log(newRule);
+    console.log(newRule.toString());
+  }
+  //let newEndDate = parseISO(newRule.all().at(-1)?.toISOString());
+
   const recurrence = await prisma.recurrence.create({
     data: {
-      type: TypeValue,
-      pattern: PatternValue,
-      totalOccurrences: occurrences,
+      rule: newRule.toString(),
       startDate: newStartDate,
-      endDate: newEndDate,
-      daySpan: daySpan,
-      weekSpan: weekSpan,
-      monthSpan: monthSpan,
-      yearSpan: yearSpan,
-      monday: IsMonday,
-      tuesday: IsTuesday,
-      wednesday: IsWednesday,
-      thursday: IsThursday,
-      friday: IsFriday,
-      saturday: IsSaturday,
-      sunday: IsSunday,
+      endDate: newRule.all().at(-1) ?? "",
     },
   });
 
