@@ -21,59 +21,6 @@ async function BadRequestMessage() {
   return NextResponse.json({ error: "Bad Request" }, { status: 400 });
 }
 
-export async function POST(req: Request) {
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage("DATABASE_URL Missing");
-  }
-
-  const { title, description, startDate, endDate, roomId } = await req.json();
-
-  if (!title || !description || !startDate || !endDate || !roomId) {
-    return BadRequestMessage();
-  }
-
-  const result = await prisma.event.create({
-    data: { title, description, startDate, endDate, roomId },
-  });
-
-  if (!result) {
-    InternalServerErrorMessage();
-  }
-
-  return CreatedMessage();
-}
-
-export async function PUT(req: Request) {
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage("DATABASE_URL Missing");
-  }
-
-  const { eventId, title, description, startDate, endDate, roomId } = await req.json();
-
-  if (!title || !description || !startDate || !endDate || !roomId) {
-    return BadRequestMessage();
-  }
-
-  const result = await prisma.event.upsert({
-    create: { title, description, startDate, endDate, roomId },
-    where: { eventId: eventId },
-    update: { title, description, startDate, endDate, roomId },
-  });
-
-  if (!result) {
-    InternalServerErrorMessage();
-  }
-
-  revalidateTag("EventsUpdated");
-  //revalidatePath("/private/calendar/month-view");
-
-  if (result.eventId === eventId) {
-    return UpdatedMessage();
-  }
-
-  return CreatedMessage();
-}
-
 export async function GET(req: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
@@ -93,7 +40,7 @@ export async function GET(req: NextRequest) {
   const events = await prisma.event.findMany({
     include: { room: true, recurrence: true },
     where: {
-      OR: [{ startDate: { lte: EndDate }, endDate: { gte: StartDate } }],
+      recurrence: { startDate: { lte: EndDate }, endDate: { gte: StartDate } },
     },
   });
 

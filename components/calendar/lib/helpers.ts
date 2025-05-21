@@ -38,6 +38,7 @@ import type { ICalendarCell, IEvent } from "@/components/calendar/lib/interfaces
 import type { TCalendarView, TRecurrencePattern, TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
 import { start } from "repl";
 import { RECURRENCE_PATTERN, RECURRENCE_TYPE } from "@/prisma/seed-data";
+import { datetime, RRule, rrulestr } from "rrule";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -110,6 +111,55 @@ export function getCurrentEvents(events: IEvent[]) {
   );
 }
 */
+
+export function getRecurringEvents(events: IEvent[], periodStart: Date, periodEnd: Date) {
+  const eventList: IEvent[] = [];
+
+  events.forEach((element) => {
+    if (element.recurrenceId == null) {
+      return;
+    }
+
+    const currentRule = element.recurrence?.rule as string;
+
+    const rrule = rrulestr(currentRule);
+    const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
+
+    for (let index = 0; index < recurrenceArray.length; index++) {
+      const newEvent = { ...element, eventIsSplit: true };
+      const recurringDate = setUTCPartsToDate(recurrenceArray[index]);
+      newEvent.title = "Series - " + newEvent.title;
+      newEvent.startDate = set(newEvent.startDate, {
+        year: recurringDate.getFullYear(),
+        month: recurringDate.getMonth(),
+        date: recurringDate.getDate(),
+      });
+      newEvent.endDate = set(newEvent.endDate, {
+        year: recurringDate.getFullYear(),
+        month: recurringDate.getMonth(),
+        date: recurringDate.getDate(),
+      });
+
+      eventList.push(newEvent);
+    }
+  });
+  return eventList;
+}
+
+function setPartsToUTCDate(d: Date) {
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()));
+}
+
+function setUTCPartsToDate(d: Date) {
+  return new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
+    d.getUTCSeconds()
+  );
+}
 
 export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodEnd: Date, visibleHours: TVisibleHours) {
   /* 
@@ -360,9 +410,10 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
 ########################################################################*/
 
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
-  return events.filter((event) => {
+  const test = events.filter((event) => {
     return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
   });
+  return test;
 }
 
 export function calculateMonthlyRecurrenceEndDate(startDate: Date, occurrences: number, day: number, months: number) {

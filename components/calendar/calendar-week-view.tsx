@@ -10,6 +10,7 @@ import {
   getVisibleHours,
   splitMultiDayEvents,
   filterEventsByRoom,
+  getRecurringEvents,
 } from "@/components/calendar/lib/helpers";
 import type { IEvent } from "@/components/calendar/lib/interfaces";
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
@@ -20,6 +21,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getEventsWeekly } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
+import { getRecurrencesWeekly } from "@/services/recurrence";
 
 export function CalendarWeekView() {
   const { selectedDate, workingHours, visibleHours, selectedRoomId } = useCalendar();
@@ -44,7 +46,10 @@ export function CalendarWeekView() {
       visibleHours
     );
 
-    setEvents(splitList);
+    const recurrenceList = await getRecurrencesWeekly(selectedDate);
+    const repreatingList = getRecurringEvents(recurrenceList.data, startOfWeek(selectedDate), endOfWeek(selectedDate));
+
+    setEvents([...splitList, ...repreatingList]);
     setLoading(false);
   };
 
