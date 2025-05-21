@@ -1,4 +1,4 @@
-//import { IEvent } from "@/calendar/interfaces";
+"use server";
 import { IEvent, IRoom } from "@/components/calendar/lib/interfaces";
 import { prisma } from "@/prisma";
 import { Room } from "@prisma/client";
@@ -13,8 +13,9 @@ const AllRooms: IRoom = {
 };
 
 export async function getRooms(): Promise<{ data: IRoom[]; error: string | undefined }> {
-  const res = await fetch("/api/rooms", {
+  const res = await fetch(`${process.env.NEXTAPP_URL}/api/rooms`, {
     cache: "force-cache",
+    next: { tags: ["RoomsUpdated"], revalidate: 30 },
   });
   const data = await res.json();
 

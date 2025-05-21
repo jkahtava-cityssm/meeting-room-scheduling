@@ -294,7 +294,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.DAILY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
           count: occurrences,
           until: null,
         });
@@ -304,7 +310,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.DAILY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
           count: occurrences,
           until: null,
         });
@@ -314,7 +326,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.WEEKLY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
           count: occurrences,
           until: null,
         });
@@ -323,7 +341,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.WEEKLY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
           count: occurrences,
           until: null,
         });
@@ -332,7 +356,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
         newRule = new RRule({
           freq: RRule.MONTHLY,
           interval: interval,
-          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
           bymonthday: dayValue,
           count: occurrences,
           until: null,
@@ -342,7 +372,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
         newRule = new RRule({
           freq: RRule.YEARLY,
           interval: interval,
-          dtstart: datetime(newStartDate.getUTCFullYear(), newStartDate.getUTCMonth(), newStartDate.getUTCDay()),
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
           bymonth: monthValue,
           bymonthday: dayValue,
           count: occurrences,
@@ -357,7 +393,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
     return;
   }
 
-  console.log(newRule.all().at(-1));
+  //console.log(newRule.all().at(-1));
   if (!newRule.all().at(-1)) {
     console.log(newRule);
     console.log(newRule.toString());
