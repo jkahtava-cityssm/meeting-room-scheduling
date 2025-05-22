@@ -409,7 +409,11 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
     GENERIC FUNCTIONS
 ########################################################################*/
 
-export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
+export function filterEventsByRoom(events: IEvent[] | undefined, selectedRoomId: string) {
+  if (!events) {
+    return;
+  }
+
   const test = events.filter((event) => {
     return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
   });
