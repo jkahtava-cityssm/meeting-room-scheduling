@@ -1,7 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { TColors } from "@/components/calendar/lib/types";
-import { addDays } from "date-fns";
-import { EVENTDESCRIPTIONS, EVENTS } from "./seed-data";
+import { addDays, addMonths, addWeeks, addYears, compareAsc, formatISO, isWeekend, parseISO, set } from "date-fns";
+import { EVENTDESCRIPTIONS, EVENTS, RECURRENCE_PATTERN, RECURRENCE_PERIOD, RECURRENCE_TYPE } from "./seed-data";
+import { start } from "repl";
+import { first } from "lodash";
+import { ByWeekday, datetime, RRule, RRuleSet, rrulestr } from "rrule";
 
 const prisma = new PrismaClient();
 
@@ -196,9 +199,216 @@ async function CreateRandomEvents(
         endDate: endDate.toISOString(),
         title: EVENTS[eventIndex],
         description: getRandomDescription(),
+        recurrenceId: await CreateRandomRecurrence(startDate, endDate),
       },
     });
   }
+}
+
+async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
+  // Determine if this is a recurring event (10% chance)
+  /*const isRecurringEvent = Math.random() < 0.1;
+
+  if (!isRecurringEvent) {
+    return undefined;
+  }*/
+
+  const TypeValue = RECURRENCE_TYPE[Math.floor(Math.random() * RECURRENCE_TYPE.length)];
+  const PatternValue = RECURRENCE_PATTERN[Math.floor(Math.random() * RECURRENCE_PATTERN.length)];
+
+  const occurrences = Math.floor(Math.random() * 100) + 1;
+
+  let interval = 0;
+  let dayValue = 0;
+
+  let weekValue = 0;
+  let monthValue = 0;
+  let yearValue = 0;
+
+  let PeriodValue = "";
+
+  const maxPossibleDay: number[] = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  const weekdayArray: ByWeekday[] = [];
+
+  switch (PatternValue) {
+    case "Every X Days":
+      PeriodValue = "Daily";
+      interval = Math.floor(Math.random() * 7) + 1;
+      break;
+    case "Every Weekday":
+      PeriodValue = "Daily";
+      interval = 1;
+      weekdayArray.push(RRule.MO);
+      weekdayArray.push(RRule.TU);
+      weekdayArray.push(RRule.WE);
+      weekdayArray.push(RRule.TH);
+      weekdayArray.push(RRule.FR);
+      break;
+    case "Every X Weeks":
+      PeriodValue = "Weekly";
+      interval = Math.floor(Math.random() * 7) + 1;
+      break;
+    case "Every X Weeks on Every Selected Day":
+      PeriodValue = "Weekly";
+      interval = Math.floor(Math.random() * 7) + 1;
+
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.MO);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.TU);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.WE);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.TH);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.FR);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.SA);
+      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.SU);
+
+      break;
+    case "Every X Months on X Day":
+      PeriodValue = "Monthly";
+      interval = Math.floor(Math.random() * 12) + 1;
+      dayValue = Math.floor(Math.random() * 31) + 1;
+
+      break;
+    case "Every X Year on X Month on X Day":
+      PeriodValue = "Yearly";
+      interval = Math.floor(Math.random() * 5) + 1;
+
+      monthValue = Math.floor(Math.random() * 12) + 1;
+      dayValue = Math.floor(Math.random() * maxPossibleDay[monthValue - 1]) + 1;
+
+      break;
+    default:
+      PeriodValue = "Daily";
+      interval = Math.floor(Math.random() * 100) + 1;
+      dayValue = Math.floor(Math.random() * 7) + 1;
+      break;
+  }
+
+  let newStartDate = addDays(startDate, -Math.floor(Math.random() * 31));
+
+  let newRule = undefined;
+
+  if (TypeValue === "Occurrences") {
+    switch (PatternValue) {
+      case "Every X Days":
+        newRule = new RRule({
+          freq: RRule.DAILY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
+          count: occurrences,
+          until: null,
+        });
+        break;
+      case "Every Weekday":
+        newRule = new RRule({
+          freq: RRule.DAILY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
+          count: occurrences,
+          until: null,
+        });
+        break;
+      case "Every X Weeks":
+        newRule = new RRule({
+          freq: RRule.WEEKLY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
+          count: occurrences,
+          until: null,
+        });
+      case "Every X Weeks on Every Selected Day":
+        newRule = new RRule({
+          freq: RRule.WEEKLY,
+          interval: interval,
+          byweekday: weekdayArray,
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
+          count: occurrences,
+          until: null,
+        });
+        break;
+      case "Every X Months on X Day":
+        newRule = new RRule({
+          freq: RRule.MONTHLY,
+          interval: interval,
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
+          bymonthday: dayValue,
+          count: occurrences,
+          until: null,
+        });
+        break;
+      case "Every X Year on X Month on X Day":
+        newRule = new RRule({
+          freq: RRule.YEARLY,
+          interval: interval,
+          dtstart: datetime(
+            newStartDate.getUTCFullYear(),
+            newStartDate.getUTCMonth(),
+            newStartDate.getUTCDate(),
+            newStartDate.getUTCHours(),
+            newStartDate.getUTCMinutes()
+          ),
+          bymonth: monthValue,
+          bymonthday: dayValue,
+          count: occurrences,
+          until: null,
+        });
+        break;
+    }
+  } else if (TypeValue === "Between") {
+  }
+
+  if (!newRule) {
+    return;
+  }
+
+  //console.log(newRule.all().at(-1));
+  if (!newRule.all().at(-1)) {
+    console.log(newRule);
+    console.log(newRule.toString());
+  }
+  //let newEndDate = parseISO(newRule.all().at(-1)?.toISOString());
+
+  const recurrence = await prisma.recurrence.create({
+    data: {
+      rule: newRule.toString(),
+      startDate: newStartDate,
+      endDate: newRule.all().at(-1) ?? "",
+    },
+  });
+
+  return recurrence.recurrenceId;
 }
 
 async function main() {
@@ -259,6 +469,7 @@ async function main() {
   roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey"));
 
   await prisma.event.deleteMany();
+  await prisma.recurrence.deleteMany();
 
   CreateRandomEvents(roomList, 200);
 

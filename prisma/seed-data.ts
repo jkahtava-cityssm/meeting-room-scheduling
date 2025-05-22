@@ -1,3 +1,16 @@
+export const RECURRENCE_TYPE = ["Between", "Occurrences", "Forever"];
+
+export const RECURRENCE_PERIOD = ["daily", "weekly", "monthly", "yearly"];
+
+export const RECURRENCE_PATTERN = [
+  "Every X Days",
+  "Every Weekday",
+  "Every X Weeks",
+  "Every X Weeks on Every Selected Day",
+  "Every X Months on X Day",
+  "Every X Year on X Month on X Day",
+];
+
 export const EVENTS = [
   "Doctor's appointment",
   "Dental cleaning",

@@ -1,7 +1,7 @@
 "use client";
 
 import { Calendar, Clock, User } from "lucide-react";
-import { format, startOfDay, endOfDay } from "date-fns";
+import { format, startOfDay, endOfDay, addYears } from "date-fns";
 import { useCalendar } from "@/components/calendar/contexts/calendar-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
@@ -13,6 +13,7 @@ import {
   splitMultiDayEvents,
   hasOverlap,
   filterEventsByRoom,
+  getRecurringEvents,
 } from "@/components/calendar/lib/helpers";
 import type { IEvent } from "@/components/calendar/lib/interfaces";
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
@@ -23,6 +24,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { getEventsDaily } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
+import { getRecurrencesWeekly } from "@/services/recurrence";
 
 export function CalendarDayView() {
   const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours } = useCalendar();
@@ -48,7 +50,10 @@ export function CalendarDayView() {
       visibleHours
     );
 
-    setEvents(splitList);
+    const recurrenceList = await getRecurrencesWeekly(selectedDate);
+    const repreatingList = getRecurringEvents(recurrenceList.data, startOfDay(selectedDate), endOfDay(selectedDate));
+
+    setEvents([...splitList, ...repreatingList]);
     setLoading(false);
   };
 
@@ -123,6 +128,8 @@ export function CalendarDayView() {
               onMonthChange={setCurrentMonth}
               required
               onToday={handleToday}
+              startMonth={addYears(selectedDate, -25)}
+              endMonth={addYears(selectedDate, 25)}
             />
 
             <div className="flex-1 space-y-3">

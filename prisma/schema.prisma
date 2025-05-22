@@ -194,32 +194,66 @@ model Action {
   @@map("action")
 }
 
+/**
+ * type = frequency
+ * pattern = "ByDay"
+ * totalOccurrences = Count
+ * daySpan/week/month/year = Interval
+ */
+
 model Recurrence {
-  recurrenceId Int      @id @default(autoincrement())
-  type         String //Daily, Weekly, Monthly, Yearly
-  pattern      String //Evert Weekdays, 
-  period       Int //1
-  startDate    DateTime
-  endDate      DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  recurrenceId             Int      @id @default(autoincrement())
+  recurrenceCancellationId Int?
+  recurrenceExceptionId    Int?
+  rule                     String
+  startDate                DateTime
+  endDate                  DateTime
+
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  Event                  Event[]
+  RecurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
+  RecurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
 
   @@map("recurrence")
 }
 
-model Event {
-  eventId       Int      @id @default(autoincrement())
-  roomId        Int
-  startDate     DateTime
-  endDate       DateTime
-  title         String
-  description   String
-  parentEventId Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model RecurrenceCancellation {
+  recurrenceCancellationId Int      @id @default(autoincrement())
+  recurrenceDate           DateTime
+  cancellationDate         DateTime
 
-  parentEvent Event?  @relation("ParentEvents", fields: [parentEventId], references: [eventId])
-  Event       Event[] @relation("ParentEvents")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Recurrence Recurrence[]
+
+  @@map("recurrence_cancellation")
+}
+
+model RecurrenceException {
+  recurrenceExceptionId Int      @id @default(autoincrement())
+  recurrenceDate        DateTime
+  rescheduledDate       DateTime
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Recurrence Recurrence[]
+
+  @@map("recurrence_exception")
+}
+
+model Event {
+  eventId      Int      @id @default(autoincrement())
+  roomId       Int
+  startDate    DateTime
+  endDate      DateTime
+  title        String
+  description  String
+  recurrenceId Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: Cascade)
 
   room Room @relation(fields: [roomId], references: [roomId])
 

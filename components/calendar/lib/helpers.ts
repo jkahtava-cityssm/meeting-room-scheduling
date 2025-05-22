@@ -29,10 +29,16 @@ import {
   set,
   endOfDay,
   areIntervalsOverlapping,
+  isWeekend,
+  setDate,
+  compareAsc,
 } from "date-fns";
 
 import type { ICalendarCell, IEvent } from "@/components/calendar/lib/interfaces";
-import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
+import type { TCalendarView, TRecurrencePattern, TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
+import { start } from "repl";
+import { RECURRENCE_PATTERN, RECURRENCE_TYPE } from "@/prisma/seed-data";
+import { datetime, RRule, rrulestr } from "rrule";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -105,6 +111,55 @@ export function getCurrentEvents(events: IEvent[]) {
   );
 }
 */
+
+export function getRecurringEvents(events: IEvent[], periodStart: Date, periodEnd: Date) {
+  const eventList: IEvent[] = [];
+
+  events.forEach((element) => {
+    if (element.recurrenceId == null) {
+      return;
+    }
+
+    const currentRule = element.recurrence?.rule as string;
+
+    const rrule = rrulestr(currentRule);
+    const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
+
+    for (let index = 0; index < recurrenceArray.length; index++) {
+      const newEvent = { ...element, eventIsSplit: true };
+      const recurringDate = setUTCPartsToDate(recurrenceArray[index]);
+      newEvent.title = "Series - " + newEvent.title;
+      newEvent.startDate = set(newEvent.startDate, {
+        year: recurringDate.getFullYear(),
+        month: recurringDate.getMonth(),
+        date: recurringDate.getDate(),
+      });
+      newEvent.endDate = set(newEvent.endDate, {
+        year: recurringDate.getFullYear(),
+        month: recurringDate.getMonth(),
+        date: recurringDate.getDate(),
+      });
+
+      eventList.push(newEvent);
+    }
+  });
+  return eventList;
+}
+
+function setPartsToUTCDate(d: Date) {
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()));
+}
+
+function setUTCPartsToDate(d: Date) {
+  return new Date(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    d.getUTCHours(),
+    d.getUTCMinutes(),
+    d.getUTCSeconds()
+  );
+}
 
 export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodEnd: Date, visibleHours: TVisibleHours) {
   /* 
@@ -355,7 +410,43 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
 ########################################################################*/
 
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
-  return events.filter((event) => {
+  const test = events.filter((event) => {
     return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
   });
+  return test;
+}
+
+export function calculateMonthlyRecurrenceEndDate(startDate: Date, occurrences: number, day: number, months: number) {
+  let iterations = occurrences;
+  let firstMonth = set(startDate, { date: day });
+  if (compareAsc(startDate, firstMonth) > 0) {
+    firstMonth = addMonths(firstMonth, months);
+    iterations -= 1;
+  }
+  //once we found the first occurrence we can add all the others
+  return addMonths(firstMonth, months * iterations);
+}
+
+export function calculateYearlyRecurrenceEndDate(
+  startDate: Date,
+  occurrences: number,
+  day: number,
+  month: number,
+  years: number
+) {
+  //OUTLOOK HAS AN INTERESTING BEHAVIOUR I WILL TRY AND MIMIC
+  //IT SETS THE FIRST EVENT TO OCCUR IN THE SAME YEAR
+  //SO IF THE RECURRENCE IS EVERY 3 YEARS IT WILL SET THE FIRST OCCURRENCE TO THIS YEAR.
+  //2026-08-21, 1 Occurrence @ 3 Years, September, 19th = 2026-09-19
+  //THEN EACH RECURRENCE IS CALCULATED BASED ON THIS VALUE 2026-09-19
+  //IF THE START DATE WOULD HAPPEN AFTER THOUGH SO IF 2026-09-20 THEN IT BECOMES 2029-09-19
+  let iterations = occurrences;
+  let firstYear = set(startDate, { month: month, date: day });
+
+  if (compareAsc(startDate, firstYear) > 0) {
+    firstYear = addYears(firstYear, years);
+    iterations -= 1;
+  }
+
+  return addYears(firstYear, years * iterations);
 }
