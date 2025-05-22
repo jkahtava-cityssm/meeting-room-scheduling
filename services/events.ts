@@ -1,4 +1,4 @@
-"use server";
+//"use server";
 //import { IEvent } from "@/calendar/interfaces";
 import { IEvent } from "@/components/calendar/lib/interfaces";
 import { prisma } from "@/prisma";
@@ -28,11 +28,11 @@ async function getEvents(startDate: Date, endDate: Date): Promise<{ data: IEvent
       --IF YOU DO THIS SAME CALL ON A CLIENT COMPONENTS USE-EFFECT FUNCTION IT WONT REVALIDATE ON TAG OR TIME
   ########################################################*/
   const res = await fetch(
-    `${process.env.NEXTAPP_URL}/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`,
-    {
+    `${process.env.NEXTAPP_URL}/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+    /*{
       cache: "force-cache",
       next: { tags: ["EventsUpdated"], revalidate: 30 },
-    }
+    }*/
   );
   const data = await res.json();
 

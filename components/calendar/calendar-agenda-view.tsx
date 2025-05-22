@@ -1,18 +1,20 @@
 "use client";
 import { endOfDay, format, startOfDay } from "date-fns";
+import { useReactToPrint } from "react-to-print";
 
 import { AgendaEventCard } from "@/components/calendar/calendar-agenda-event-block";
 import type { IEvent } from "@/components/calendar/lib/interfaces";
 import { useCalendar } from "@/components/calendar/contexts/calendar-context";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { getEventsDaily } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Clock, Calendar, User } from "lucide-react";
+import { Clock, Calendar, User, Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
 import { filterEventsByRoom, splitMultiDayEvents } from "./lib/helpers";
+import { Button } from "../ui/button";
 
 export function AgendaDayView() {
   const { selectedDate, selectedRoomId, setSelectedDate, visibleHours } = useCalendar();
@@ -51,6 +53,13 @@ export function AgendaDayView() {
     (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
   );
 
+  const printContentRef = useRef<HTMLDivElement>(null);
+  const reactPrintFunction = useReactToPrint({
+    contentRef: printContentRef,
+    documentTitle: `Agenda: ${format(selectedDate, "EEEE, MMMM d, yyyy")}`,
+    pageStyle: "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
+  });
+
   return (
     <>
       <CalendarHeader view={"agenda"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
@@ -60,15 +69,22 @@ export function AgendaDayView() {
         <div className="flex">
           <div className="flex flex-1 flex-col space-y-2">
             <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
-              <div className="sticky top-0 flex items-center gap-4 bg-accent p-2">
-                <Label className="text-md font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</Label>
-              </div>
+              <div ref={printContentRef}>
+                <div className="sticky top-0 flex items-center gap-4 bg-accent p-2">
+                  <Label className="flex-1 text-md font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</Label>
+                  <Button className="no-print mr-2" onClick={reactPrintFunction}>
+                    <Printer /> Print Agenda
+                  </Button>
+                </div>
 
-              <div className="space-y-2 m-2">
-                {sortedEvents.length > 0 &&
-                  sortedEvents.map((event) => (
-                    <AgendaEventCard key={event.eventId} event={event} fetchData={fetchEvents} />
-                  ))}
+                <div className="space-y-2 m-2">
+                  {sortedEvents.length > 0 &&
+                    sortedEvents.map((event, index) => (
+                      <div key={index} className="break-inside-avoid">
+                        <AgendaEventCard key={event.eventId} event={event} fetchData={fetchEvents} />
+                      </div>
+                    ))}
+                </div>
               </div>
             </ScrollArea>
           </div>

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { getMonthCellEvents, MAX_VISIBLE_EVENTS } from "@/components/calendar/lib/helpers";
 import type { ICalendarCell, IEvent } from "@/components/calendar/lib/interfaces";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { Button } from "../ui/button";
 
 export function MonthViewDayCell({
   cell,
@@ -36,16 +37,26 @@ export function MonthViewDayCell({
 
   return (
     <div className={cn("flex h-full flex-col gap-1 border-l border-t py-1 overflow-hidden", isSunday && "border-l-0")}>
-      <span
+      <Button
+        variant={"ghost"}
         className={cn(
-          "h-4 px-1 text-xs font-semibold lg:px-2",
+          "flex w-8 translate-x-1 items-center justify-center h-4 px-1 text-xs font-semibold lg:px-2",
+          !currentMonth && "opacity-20 hover:bg-primary/20",
+          isToday(date) && "rounded-full bg-primary px-0 font-bold text-primary-foreground"
+        )}
+      >
+        {day}
+      </Button>
+      {/*<span
+        className={cn(
+          "flex w-6 translate-x-1 items-center justify-center h-4 px-1 text-xs font-semibold lg:px-2",
           !currentMonth && "opacity-20",
-          isToday(date) &&
-            "flex w-6 translate-x-1 items-center justify-center rounded-full bg-primary px-0 font-bold text-primary-foreground"
+          isToday(date) && "rounded-full bg-primary px-0 font-bold text-primary-foreground"
         )}
       >
         {day}
       </span>
+      */}
       <div className={cn("flex h-6 gap-1 px-2 sm:h-18 lg:h-23 sm:flex-col sm:px-0", !currentMonth && "opacity-50")}>
         <ScrollArea type="always" className="max-h-[200px] overflow-y-auto overflow-x-hidden">
           <div className="flex flex-col gap-1 ">
