@@ -1,8 +1,9 @@
 //"use server";
 //import { IEvent } from "@/calendar/interfaces";
-import { IEvent } from "@/components/calendar/lib/interfaces";
+import { IRecurrence, IRoom } from "@/components/calendar/lib/interfaces";
 import { prisma } from "@/prisma";
-import { Room } from "@prisma/client";
+
+import { Event, Room } from "@prisma/client";
 import {
   endOfDay,
   endOfMonth,
@@ -15,6 +16,88 @@ import {
 } from "date-fns";
 import { revalidateTag } from "next/cache";
 import { revalidateEventCache } from "./actions";
+
+import useSWR from "swr";
+import { date, z } from "zod";
+
+export const SRoom = z.object({
+  roomId: z.number(),
+  color: z.string().min(1, "Colour is required"),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  updatedAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  icon: z.string().nullable(),
+});
+
+export const SRecurrence = z.object({
+  recurrenceId: z.number(),
+  recurrenceCancellationId: z.number().nullable(),
+  recurrenceExceptionId: z.number().nullable(),
+  rule: z.string().min(1, "Rule is required"),
+  startDate: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  endDate: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  createdAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  updatedAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+});
+
+export const SEvent: z.ZodType<IEvent> = z.object({
+  eventId: z.number(),
+  roomId: z.number(),
+  recurrenceId: z.number().nullable(),
+  startDate: z.coerce.date(), //z.string().transform((value) => new Date(value)), //.date({ required_error: "Start date is required" }),
+  endDate: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  parentEventId: z.number().nullable().optional(),
+  room: SRoom,
+  recurrence: SRecurrence.optional(),
+  createdAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  updatedAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+});
+
+export interface IEvent extends Event {
+  eventId: number;
+  roomId: number;
+  recurrenceId: number | null;
+  startDate: Date;
+  endDate: Date;
+  title: string;
+  description: string;
+  //parentEventId: number | null;
+  //eventIsSplit: boolean;
+  room: IRoom;
+  recurrence?: IRecurrence;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const SEvents = z.array(SEvent);
+
+export function useDailyEvents(selectedDate: Date) {
+  const StartOfDay = startOfDay(selectedDate);
+  const EndOfDay = endOfDay(selectedDate);
+
+  return useEvents(StartOfDay, EndOfDay);
+}
+
+function useEvents(startDate: Date, endDate: Date): { events: IEvent[] | undefined; isLoading: boolean; isError: any } {
+  const { data, error, isLoading } = useSWR<IEvent[]>(
+    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+  );
+
+  if (data) {
+    console.log(data);
+    //console.log(SEvents.parse(data));
+    const b: IEvent[] = SEvents.parse(data);
+    console.log(b);
+  }
+
+  return {
+    events: data,
+    isLoading,
+    isError: error,
+  };
+}
 
 /**
  *

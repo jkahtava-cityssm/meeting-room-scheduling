@@ -21,7 +21,7 @@ import { HourColumn } from "./calendar-day-column-hourly";
 import { ColumnDayHeader } from "./calendar-all-column-day-header";
 import { EventBlock } from "./calendar-day-event-block";
 import React, { useEffect, useMemo, useState } from "react";
-import { getEventsDaily } from "@/services/events";
+import { getEventsDaily, useDailyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 import { getRecurrencesWeekly } from "@/services/recurrence";
@@ -29,10 +29,12 @@ import { getRecurrencesWeekly } from "@/services/recurrence";
 export function CalendarDayView() {
   const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours } = useCalendar();
   const [currentMonth, setCurrentMonth] = React.useState<Date>(selectedDate);
-  const [events, setEvents] = useState<IEvent[]>([]);
-  const [isLoading, setLoading] = useState(true);
+  //const [events, setEvents] = useState<IEvent[]>([]);
+  //const [isLoading, setLoading] = useState(true);
 
-  const fetchEvents = async () => {
+  const { events, isLoading, isError } = useDailyEvents(selectedDate);
+
+  /*const fetchEvents = async () => {
     setLoading(true);
 
     const eventList = await getEventsDaily(selectedDate);
@@ -60,17 +62,26 @@ export function CalendarDayView() {
   useEffect(() => {
     fetchEvents();
   }, [selectedDate]);
+*/
 
   const handleToday = () => {
     setCurrentMonth(new Date());
     setSelectedDate(new Date());
   };
 
-  const filteredEvents = useMemo(() => filterEventsByRoom(events, selectedRoomId), [events, selectedRoomId]);
+  const filteredEvents = useMemo(() => {
+    if (events) {
+      return filterEventsByRoom(events, selectedRoomId);
+    }
+    return [];
+  }, [events, selectedRoomId]);
+
+  if (!events) return <>FETCHING???</>;
+  if (isError) return <>ERROR</>;
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
 
-  const groupedEvents = groupEvents(filteredEvents);
+  const groupedEvents = events; //groupEvents(filteredEvents);
 
   return (
     <>
@@ -105,7 +116,9 @@ export function CalendarDayView() {
 
                         return (
                           <div key={event.eventId} className="absolute p-1" style={style}>
-                            <EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
+                            {
+                              //<EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
+                            }
                           </div>
                         );
                       })

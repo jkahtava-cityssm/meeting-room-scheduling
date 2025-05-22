@@ -21,20 +21,6 @@ export interface IRecurrence extends Recurrence {
   endDate: Date;
 }
 
-export interface IEvent extends Event {
-  eventId: number;
-  roomId: number;
-  recurrenceId: number | null;
-  startDate: Date;
-  endDate: Date;
-  title: string;
-  description: string;
-  parentEventId: number | null;
-  eventIsSplit: boolean;
-  room: IRoom;
-  recurrence?: IRecurrence;
-}
-
 export interface ICalendarCell {
   day: number;
   currentMonth: boolean;
