@@ -24,14 +24,14 @@ import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
 import { CalendarHeader } from "./calendar-all-header";
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 
-import { getEventsMonthly } from "@/services/events";
+import { getEventsMonthly, useAllMonthlyEvents } from "@/services/events";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function CalendarMonthView() {
-  const { selectedDate, selectedRoomId } = useCalendar();
+  const { selectedDate, selectedRoomId, visibleHours } = useCalendar();
 
-  const [events, setEvents] = useState<IEvent[]>([]);
+  /* const [events, setEvents] = useState<IEvent[]>([]);
 
   const [isLoading, setLoading] = useState(true);
 
@@ -50,8 +50,15 @@ export function CalendarMonthView() {
   useEffect(() => {
     fetchMonthlyEvents();
   }, [selectedDate]);
+*/
+  const { events, isLoading, isError } = useAllMonthlyEvents(selectedDate, visibleHours);
 
-  const filteredEvents = useMemo(() => filterEventsByRoom(events, selectedRoomId), [events, selectedRoomId]);
+  const filteredEvents = useMemo(() => {
+    if (events) {
+      return filterEventsByRoom(events, selectedRoomId);
+    }
+    return [];
+  }, [events, selectedRoomId]);
 
   const cells = useMemo(() => getCalendarCells(selectedDate), [selectedDate]);
 
@@ -81,7 +88,7 @@ export function CalendarMonthView() {
               cell={cell}
               events={filteredEvents}
               eventPositions={eventPositions}
-              fetchData={fetchMonthlyEvents}
+              fetchData={async () => {}}
             />
           )
         )}

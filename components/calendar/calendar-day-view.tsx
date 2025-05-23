@@ -21,7 +21,7 @@ import { HourColumn } from "./calendar-day-column-hourly";
 import { ColumnDayHeader } from "./calendar-all-column-day-header";
 import { EventBlock } from "./calendar-day-event-block";
 import React, { useEffect, useMemo, useState } from "react";
-import { getEventsDaily, useDailyEvents } from "@/services/events";
+import { getEventsDaily, useAllDailyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 import { getRecurrencesWeekly } from "@/services/recurrence";
@@ -29,40 +29,8 @@ import { getRecurrencesWeekly } from "@/services/recurrence";
 export function CalendarDayView() {
   const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours } = useCalendar();
   const [currentMonth, setCurrentMonth] = React.useState<Date>(selectedDate);
-  //const [events, setEvents] = useState<IEvent[]>([]);
-  //const [isLoading, setLoading] = useState(true);
 
-  const { events, isLoading, isError } = useDailyEvents(selectedDate);
-
-  /*const fetchEvents = async () => {
-    setLoading(true);
-
-    const eventList = await getEventsDaily(selectedDate);
-
-    if (eventList.error) {
-      setEvents([]);
-      setLoading(false);
-      return;
-    }
-
-    const splitList = splitMultiDayEvents(
-      eventList.data,
-      startOfDay(selectedDate),
-      endOfDay(selectedDate),
-      visibleHours
-    );
-
-    const recurrenceList = await getRecurrencesWeekly(selectedDate);
-    const repreatingList = getRecurringEvents(recurrenceList.data, startOfDay(selectedDate), endOfDay(selectedDate));
-
-    setEvents([...splitList, ...repreatingList]);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, [selectedDate]);
-*/
+  const { events, isLoading, isError } = useAllDailyEvents(selectedDate, visibleHours);
 
   const handleToday = () => {
     setCurrentMonth(new Date());
@@ -76,16 +44,16 @@ export function CalendarDayView() {
     return [];
   }, [events, selectedRoomId]);
 
-  if (!events) return <>FETCHING???</>;
-  if (isError) return <>ERROR</>;
+  //if (!events) return <>FETCHING???</>;
+  //if (!isError) return <>ERROR</>;
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, filteredEvents);
 
-  const groupedEvents = events; //groupEvents(filteredEvents);
+  const groupedEvents = groupEvents(filteredEvents);
 
   return (
     <>
-      <CalendarHeader view={"day"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
+      <CalendarHeader view={"day"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
 
       {isLoading ? (
         <CalendarDayViewSkeleton />
@@ -116,9 +84,7 @@ export function CalendarDayView() {
 
                         return (
                           <div key={event.eventId} className="absolute p-1" style={style}>
-                            {
-                              //<EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
-                            }
+                            {<EventBlock event={event} pixelSize={96} fetchData={async () => {}} />}
                           </div>
                         );
                       })
