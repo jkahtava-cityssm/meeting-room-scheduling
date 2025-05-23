@@ -33,8 +33,10 @@ const YearViewDayCell = ({ day, month, events }: IProps) => {
       setIsLoading(false);
     }
 
-    lazyLoad();
-  }, []);
+    const timer = setTimeout(() => lazyLoad(), 10);
+
+    return () => clearTimeout(timer);
+  }, [events]);
 
   const handleClick = () => {
     setSelectedDate(date);
@@ -67,10 +69,15 @@ const YearViewDayCell = ({ day, month, events }: IProps) => {
       {
         <div className="mt-0.5 flex gap-0.5">
           {currentEvents.length <= maxIndicators ? (
-            currentEvents.map((event) => <IconDot key={event.eventId} color={event.room.color as TColors}></IconDot>)
+            currentEvents.map((event, index) => (
+              <IconDot key={`day-${day}-${event.eventId}-${index}`} color={event.room.color as TColors}></IconDot>
+            ))
           ) : (
             <>
-              <IconDot key={currentEvents[0].eventId} color={currentEvents[0].room.color as TColors}></IconDot>
+              <IconDot
+                key={`day-${day}-${currentEvents[0].eventId}`}
+                color={currentEvents[0].room.color as TColors}
+              ></IconDot>
               <span className="text-[7px] text-muted-foreground">+{currentEvents.length - 1}</span>
             </>
           )}
