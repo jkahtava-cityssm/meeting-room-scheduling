@@ -1,53 +1,23 @@
 "use client";
-import { endOfDay, format, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 
 import { AgendaEventCard } from "@/components/calendar/calendar-agenda-event-block";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { getEventsDaily, useAllDailyEvents } from "@/services/events";
+
+import { useCalendar } from "@/contexts/calendar-context";
+import { useMemo, useRef } from "react";
+import { useAllDailyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Clock, Calendar, User, Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
-import { filterEventsByRoom, splitMultiDayEvents } from "./lib/helpers";
+import { filterEventsByRoom } from "../../lib/helpers";
 import { Button } from "../ui/button";
 
 export function AgendaDayView() {
   const { selectedDate, selectedRoomId, setSelectedDate, visibleHours } = useCalendar();
-  /*const [events, setEvents] = useState<IEvent[]>([]);
-  const [isLoading, setLoading] = useState(true);
-
-  const fetchEvents = async () => {
-    setLoading(true);
-
-    const eventList = await getEventsDaily(selectedDate);
-
-    if (eventList.error) {
-      setEvents([]);
-      setLoading(false);
-      return;
-    }
-
-    const splitList = splitMultiDayEvents(
-      eventList.data,
-      startOfDay(selectedDate),
-      endOfDay(selectedDate),
-      visibleHours
-    );
-
-    setEvents(splitList);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, [selectedDate]);
-
-  */
 
   const { events, isLoading, isError } = useAllDailyEvents(selectedDate, visibleHours);
 

@@ -2,9 +2,9 @@ import { cva } from "class-variance-authority";
 import { format, differenceInMinutes } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
 import type { HTMLAttributes } from "react";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+import type { IEvent } from "@/lib/interfaces";
 import type { VariantProps } from "class-variance-authority";
-import { TColors } from "./lib/types";
+import { TColors } from "../../lib/types";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

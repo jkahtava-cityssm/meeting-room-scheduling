@@ -5,40 +5,29 @@ import {
   subDays,
   subMonths,
   subWeeks,
-  isSameWeek,
   isSameDay,
-  isSameMonth,
   startOfWeek,
   startOfMonth,
   endOfMonth,
   endOfWeek,
   format,
-  parseISO,
   differenceInMinutes,
-  eachDayOfInterval,
   startOfDay,
-  differenceInDays,
   endOfYear,
   startOfYear,
   subYears,
   addYears,
-  isSameYear,
   isWithinInterval,
-  setHours,
-  formatISO,
   set,
   endOfDay,
   areIntervalsOverlapping,
-  isWeekend,
-  setDate,
   compareAsc,
 } from "date-fns";
 
-import type { ICalendarCell, IEvent } from "@/components/calendar/lib/interfaces";
-import type { TCalendarView, TRecurrencePattern, TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
-import { start } from "repl";
-import { RECURRENCE_PATTERN, RECURRENCE_TYPE } from "@/prisma/seed-data";
-import { datetime, RRule, rrulestr } from "rrule";
+import type { ICalendarCell } from "@/lib/interfaces";
+import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/lib/types";
+
+import { IEvent } from "./schemas/schemas";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -83,145 +72,6 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
   };
 
   return operations[view](date, 1);
-}
-/*
-export function getEventsCount(events: IEvent[], date: Date, view: TCalendarView): number {
-  const compareFns = {
-    agenda: isSameDay,
-    year: isSameYear,
-    day: isSameDay,
-    week: isSameWeek,
-    month: isSameMonth,
-  };
-
-  return events.filter((event) => compareFns[view](new Date(event.startDate), date)).length;
-}
-
-// ================ Week and day view helper functions ================ //
-
-export function getCurrentEvents(events: IEvent[]) {
-  const now = new Date();
-  return (
-    events.filter((event) =>
-      isWithinInterval(now, {
-        start: event.startDate,
-        end: event.endDate,
-      })
-    ) || null
-  );
-}
-*/
-
-export function getRecurringEvents(events: IEvent[], periodStart: Date, periodEnd: Date) {
-  const eventList: IEvent[] = [];
-
-  events.forEach((element) => {
-    if (element.recurrenceId == null) {
-      return;
-    }
-
-    const currentRule = element.recurrence?.rule as string;
-
-    const rrule = rrulestr(currentRule);
-    const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
-
-    for (let index = 0; index < recurrenceArray.length; index++) {
-      const newEvent = { ...element, eventIsSplit: true };
-      const recurringDate = setUTCPartsToDate(recurrenceArray[index]);
-      newEvent.title = "Series - " + newEvent.title;
-      newEvent.startDate = set(newEvent.startDate, {
-        year: recurringDate.getFullYear(),
-        month: recurringDate.getMonth(),
-        date: recurringDate.getDate(),
-      });
-      newEvent.endDate = set(newEvent.endDate, {
-        year: recurringDate.getFullYear(),
-        month: recurringDate.getMonth(),
-        date: recurringDate.getDate(),
-      });
-
-      eventList.push(newEvent);
-    }
-  });
-  return eventList;
-}
-
-function setPartsToUTCDate(d: Date) {
-  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()));
-}
-
-function setUTCPartsToDate(d: Date) {
-  return new Date(
-    d.getUTCFullYear(),
-    d.getUTCMonth(),
-    d.getUTCDate(),
-    d.getUTCHours(),
-    d.getUTCMinutes(),
-    d.getUTCSeconds()
-  );
-}
-
-export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodEnd: Date, visibleHours: TVisibleHours) {
-  /* 
-    CHECK IF THE EVENT STARTS TODAY
-    
-    CHECK IF THE EVENT ENDS TODAY
-
-    IF THE EVENT STARTS AND ENDS IN THE SAME DAY IT WONT BE IN THIS LIST?
-
-    IF THE EVENT STARTED TODAY SET THE END TIME TO THE MAXIMUM VISIBLE HOUR
-
-    IF THE EVENT ENDED TODAY SET THE START TIME TO THE MINIMUM VISIBLE HOUR
-
-    IF THE EVENT STARTS AND ENDS ON A DIFFERENT DAY SET THE START AND END TIMES TO THE MIN AND MAX VISIBLE HOURS
-  */
-
-  const minStartTime = visibleHours.from;
-  const maxEndTime = visibleHours.to;
-
-  const eventList: IEvent[] = [];
-
-  events.forEach((element) => {
-    const currentStartDate = element.startDate;
-    const currentEndDate = element.endDate;
-
-    //const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
-    const totalDaysBetween = differenceInDays(currentEndDate, currentStartDate);
-
-    if (totalDaysBetween === 0) {
-      eventList.push(element);
-      return;
-    }
-
-    for (let index = 0; index < totalDaysBetween; index++) {
-      const newEvent = { ...element, eventIsSplit: true };
-
-      const newDay = set(addDays(currentStartDate, index), { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
-
-      if (!isWithinInterval(newDay, { start: periodStart, end: periodEnd })) {
-        continue;
-      }
-
-      if (index === 0) {
-        //First Day
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-        newEvent.endDate = set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
-      } else if (index === totalDaysBetween) {
-        //LAST DAY
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-        newEvent.startDate = set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
-      } else {
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-
-        newEvent.startDate = set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
-        newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
-        //MIDDLE DAY
-      }
-      eventList.push(newEvent);
-    }
-  });
-
-  return eventList;
 }
 
 export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Date) {

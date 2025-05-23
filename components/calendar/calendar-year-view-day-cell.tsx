@@ -1,10 +1,10 @@
 import { isToday } from "date-fns";
 import { useRouter } from "next/navigation";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/calendar-context";
 import { cn } from "@/lib/utils";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+import type { IEvent } from "@/lib/interfaces";
 import { IconDot } from "@/components/ui/icon-dot";
-import { TColors } from "./lib/types";
+import { TColors } from "../../lib/types";
 
 interface IProps {
   day: number;

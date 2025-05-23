@@ -3,8 +3,8 @@
 import { createContext, useContext, useState } from "react";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { IEvent, IRoom } from "@/components/calendar/lib/interfaces";
-import type { TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
+
+import type { TVisibleHours, TWorkingHours } from "@/lib/types";
 import { VISIBLE_HOURS } from "../lib/helpers";
 
 interface ICalendarContext {

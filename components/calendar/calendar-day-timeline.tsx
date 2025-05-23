@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/calendar-context";
 
 export function CalendarTimeline() {
   const { visibleHours } = useCalendar();

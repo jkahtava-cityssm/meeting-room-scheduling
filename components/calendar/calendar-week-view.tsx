@@ -1,62 +1,21 @@
 "use client";
 
 import { startOfWeek, addDays, isSameDay, areIntervalsOverlapping, endOfWeek } from "date-fns";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/calendar-context";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
-import {
-  groupEvents,
-  getEventBlockStyle,
-  getVisibleHours,
-  splitMultiDayEvents,
-  filterEventsByRoom,
-  getRecurringEvents,
-} from "@/components/calendar/lib/helpers";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+import { groupEvents, getEventBlockStyle, getVisibleHours, filterEventsByRoom } from "@/lib/helpers";
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
 import { HourColumn } from "./calendar-day-column-hourly";
 import { ColumnDayHeader } from "./calendar-all-column-day-header";
 import { EventBlock } from "./calendar-day-event-block";
 import { useEffect, useMemo, useState } from "react";
-import { getEventsWeekly, useAllWeeklyEvents } from "@/services/events";
+import { useAllWeeklyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
-import { getRecurrencesWeekly } from "@/services/recurrence";
 
 export function CalendarWeekView() {
   const { selectedDate, workingHours, visibleHours, selectedRoomId } = useCalendar();
-  /*const [events, setEvents] = useState<IEvent[]>([]);
-  const [isLoading, setLoading] = useState(true);
-
-  const fetchEvents = async () => {
-    setLoading(true);
-
-    const eventList = await getEventsWeekly(selectedDate);
-
-    if (eventList.error) {
-      setEvents([]);
-      setLoading(false);
-      return;
-    }
-
-    const splitList = splitMultiDayEvents(
-      eventList.data,
-      startOfWeek(selectedDate),
-      endOfWeek(selectedDate),
-      visibleHours
-    );
-
-    const recurrenceList = await getRecurrencesWeekly(selectedDate);
-    const repreatingList = getRecurringEvents(recurrenceList.data, startOfWeek(selectedDate), endOfWeek(selectedDate));
-
-    setEvents([...splitList, ...repreatingList]);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, [selectedDate]);
-*/
 
   const { events, isLoading, isError } = useAllWeeklyEvents(selectedDate, visibleHours);
 

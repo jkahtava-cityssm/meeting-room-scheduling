@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/calendar-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { navigateDate, rangeText } from "@/components/calendar/lib/helpers";
+import { navigateDate, rangeText } from "@/lib/helpers";
 import { uniqBy } from "lodash";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
-import type { TCalendarView } from "@/components/calendar/lib/types";
+
+import type { TCalendarView } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IEvent } from "@/lib/schemas/schemas";
 
 export function DateNavigator({
   view,

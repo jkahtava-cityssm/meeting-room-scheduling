@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { format, isSameDay, getDaysInMonth, startOfMonth } from "date-fns";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/calendar-context";
 import { YearViewDayCell } from "@/components/calendar/calendar-year-view-day-cell";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+import type { IEvent } from "@/lib/interfaces";
 
 export default function YearViewMonth({ month, events }: { month: Date; events: IEvent[] }) {
   const { push } = useRouter();

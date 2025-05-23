@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/calendar-context";
 
 import { MonthViewDayCell } from "@/components/calendar/calendar-month-view-day-cell";
 
-import { filterEventsByRoom, getCalendarCells, MAX_VISIBLE_EVENTS } from "@/components/calendar/lib/helpers";
-
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+import { filterEventsByRoom, getCalendarCells, MAX_VISIBLE_EVENTS } from "@/lib/helpers";
 
 import {
   differenceInDays,
@@ -20,37 +18,18 @@ import {
   startOfDay,
   startOfMonth,
 } from "date-fns";
-import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
+
 import { CalendarHeader } from "./calendar-all-header";
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 
-import { getEventsMonthly, useAllMonthlyEvents } from "@/services/events";
+import { useAllMonthlyEvents } from "@/services/events";
+import { IEvent } from "@/lib/schemas/schemas";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function CalendarMonthView() {
   const { selectedDate, selectedRoomId, visibleHours } = useCalendar();
 
-  /* const [events, setEvents] = useState<IEvent[]>([]);
-
-  const [isLoading, setLoading] = useState(true);
-
-  const fetchMonthlyEvents = async () => {
-    setLoading(true);
-
-    const eventList = await getEventsMonthly(selectedDate);
-
-    const StartOfMonth = startOfMonth(selectedDate);
-    const EndOfMonth = endOfMonth(selectedDate);
-
-    setEvents(eventList.data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchMonthlyEvents();
-  }, [selectedDate]);
-*/
   const { events, isLoading, isError } = useAllMonthlyEvents(selectedDate, visibleHours);
 
   const filteredEvents = useMemo(() => {

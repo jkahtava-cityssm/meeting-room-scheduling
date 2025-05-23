@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { isWorkingHour } from "./lib/helpers";
-import { TWorkingHours } from "./lib/types";
+import { isWorkingHour } from "../../lib/helpers";
+import { TWorkingHours } from "../../lib/types";
 import { AddEventDialog } from "./dialog-event-add";
 
 export function DayHourlyEventDialogs({

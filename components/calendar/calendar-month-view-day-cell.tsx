@@ -2,10 +2,11 @@ import { useMemo } from "react";
 import { isToday, startOfDay } from "date-fns";
 import { eventBadgeVariants, MonthEventBadge } from "@/components/calendar/calendar-month-event-badge";
 import { cn } from "@/lib/utils";
-import { getMonthCellEvents, MAX_VISIBLE_EVENTS } from "@/components/calendar/lib/helpers";
-import type { ICalendarCell, IEvent } from "@/components/calendar/lib/interfaces";
+import { getMonthCellEvents, MAX_VISIBLE_EVENTS } from "@/lib/helpers";
+import type { ICalendarCell } from "@/lib/interfaces";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Button } from "../ui/button";
+import { IEvent } from "@/lib/schemas/schemas";
 
 export function MonthViewDayCell({
   cell,

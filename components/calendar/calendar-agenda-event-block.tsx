@@ -4,8 +4,8 @@ import { format } from "date-fns";
 import { cva } from "class-variance-authority";
 import { Clock, MapPin, Text } from "lucide-react";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
-import { TColors } from "@/components/calendar/lib/types";
+import type { IEvent } from "@/lib/interfaces";
+import { TColors } from "@/lib/types";
 
 const agendaEventCardVariants = cva(
   "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

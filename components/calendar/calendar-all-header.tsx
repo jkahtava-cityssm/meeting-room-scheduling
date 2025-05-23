@@ -5,8 +5,9 @@ import { RoomSelect } from "@/components/calendar/calendar-all-header-room-selec
 import { TodayButton } from "@/components/calendar/calendar-all-header-today-button";
 import { DateNavigator } from "@/components/calendar/calendar-all-header-date-navigator";
 import { AddEventDialog } from "@/components/calendar/dialog-event-add";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
-import type { TCalendarView } from "@/components/calendar/lib/types";
+
+import type { TCalendarView } from "@/lib/types";
+import { IEvent } from "@/lib/schemas/schemas";
 
 export function CalendarHeader({
   view,
