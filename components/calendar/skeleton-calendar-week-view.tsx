@@ -4,10 +4,11 @@ import { startOfWeek, addDays } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
 import { cn } from "@/lib/utils";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+
 import { HourColumn } from "./calendar-day-column-hourly";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ColumnDayHeaderSkeleton } from "./skeleton-calendar-day-column-header";
+import { IEvent } from "@/lib/schemas/schemas";
 
 interface IProps {
   events: IEvent[];

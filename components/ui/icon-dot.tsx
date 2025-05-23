@@ -10,7 +10,7 @@ import { TimePeriodSelect } from "./time-period-select";
 import { cva, VariantProps } from "class-variance-authority";
 import { Book, LucideProps } from "lucide-react";
 
-import { TColors } from "@/components/calendar/lib/types";
+import { TColors } from "@/lib/types";
 import { twMerge } from "tailwind-merge";
 
 const IconColor = cva("", {

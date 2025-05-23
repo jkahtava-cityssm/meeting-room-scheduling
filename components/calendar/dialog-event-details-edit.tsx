@@ -1,5 +1,5 @@
-import { IEvent, IRoom } from "@/components/calendar/lib/interfaces";
-import { eventSchema, TEventFormData } from "@/components/calendar/lib/schemas";
+import { IEvent, IRoom } from "@/lib/interfaces";
+import { eventSchema, TEventFormData } from "@/lib/schemas";
 import { formatDuration, intervalToDuration } from "date-fns";
 
 import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { SetStateAction, useState } from "react";
 import { IconColored } from "@/components/ui/icon-colored";
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { TColors } from "@/components/calendar/lib/types";
+import { TColors } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { updateEvent } from "@/services/events";
 

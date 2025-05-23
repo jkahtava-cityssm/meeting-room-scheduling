@@ -3,32 +3,16 @@
 import { useEffect, useMemo, useState, lazy } from "react";
 import { addMonths, startOfYear } from "date-fns";
 
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+import { useCalendar } from "@/contexts/calendar-context";
+
 import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell";
 import { CalendarHeader } from "./calendar-all-header";
 import YearViewMonth from "./calendar-year-view-month";
-import { getEventsYearly, useAllYearlyEvents } from "@/services/events";
-import { filterEventsByRoom } from "./lib/helpers";
+import { useAllYearlyEvents } from "@/services/events";
+import { filterEventsByRoom } from "../../lib/helpers";
 
 export function CalendarYearView() {
   const { selectedDate, selectedRoomId, visibleHours } = useCalendar();
-  /*const [events, setEvents] = useState<IEvent[]>([]);
-  const [isLoading, setLoading] = useState(true);
-
-  const fetchEvents = async () => {
-    setLoading(true);
-
-    const eventList = await getEventsYearly(selectedDate);
-
-    setEvents(eventList.data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, [selectedDate]);
-8=*/
 
   const { events, isLoading, isError } = useAllYearlyEvents(selectedDate, visibleHours);
 

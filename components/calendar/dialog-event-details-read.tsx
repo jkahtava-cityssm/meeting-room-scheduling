@@ -1,4 +1,4 @@
-import { IEvent } from "@/components/calendar/lib/interfaces";
+import { IEvent } from "@/lib/interfaces";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { format, isSameDay } from "date-fns";

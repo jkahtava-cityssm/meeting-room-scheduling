@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useDisclosure } from "@/hooks/use-disclosure";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/calendar-context";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,10 +25,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-import { eventSchema } from "@/components/calendar/lib/schemas";
+import { eventSchema } from "@/lib/schemas";
 
 //import type { TimeValue } from "react-aria-components";
-import type { TEventFormData } from "@/components/calendar/lib/schemas";
+import type { TEventFormData } from "@/lib/schemas";
 
 interface IProps {
   children: React.ReactNode;

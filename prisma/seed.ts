@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { TColors } from "@/components/calendar/lib/types";
+import { TColors } from "@/lib/types";
 import { addDays, addMonths, addWeeks, addYears, compareAsc, formatISO, isWeekend, parseISO, set } from "date-fns";
 import { EVENTDESCRIPTIONS, EVENTS, RECURRENCE_PATTERN, RECURRENCE_PERIOD, RECURRENCE_TYPE } from "./seed-data";
 import { start } from "repl";

@@ -1,6 +1,6 @@
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
-import { IRoom } from "@/components/calendar/lib/interfaces";
-import { TColors } from "@/components/calendar/lib/types";
+import { useCalendar } from "@/contexts/calendar-context";
+import { IRoom } from "@/lib/interfaces";
+import { TColors } from "@/lib/types";
 import { IconColored } from "@/components/ui/icon-colored";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

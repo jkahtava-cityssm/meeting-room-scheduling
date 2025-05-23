@@ -1,4 +1,4 @@
-import { ICalendarCell } from "@/components/calendar/lib/interfaces";
+import { ICalendarCell } from "@/lib/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { isToday } from "date-fns";
