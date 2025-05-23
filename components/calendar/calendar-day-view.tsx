@@ -46,7 +46,7 @@ export function CalendarDayView() {
     <>
       <CalendarHeader view={"day"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
 
-      {isLoading ? (
+      {isLoading || !events ? (
         <CalendarDayViewSkeleton />
       ) : (
         <div className="flex">

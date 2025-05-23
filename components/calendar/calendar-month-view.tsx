@@ -32,6 +32,14 @@ export function CalendarMonthView() {
 
   const { events, isLoading, isError } = useAllMonthlyEvents(selectedDate, visibleHours);
 
+  const [isRendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setRendered(true);
+    }, 1);
+  }, []);
+
   const filteredEvents = useMemo(() => {
     if (events) {
       return filterEventsByRoom(events, selectedRoomId);
@@ -48,7 +56,12 @@ export function CalendarMonthView() {
 
   return (
     <div>
-      <CalendarHeader view={"month"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
+      <CalendarHeader
+        view={"month"}
+        selectedDate={selectedDate}
+        events={filteredEvents}
+        isLoading={isLoading || !isRendered}
+      />
       <div className="grid grid-cols-7 divide-x">
         {WEEK_DAYS.map((day) => (
           <div key={day} className="flex items-center justify-center py-2">
@@ -59,7 +72,7 @@ export function CalendarMonthView() {
 
       <div className="grid grid-cols-7 overflow-hidden">
         {cells.map((cell) =>
-          isLoading ? (
+          isLoading || !isRendered ? (
             <MonthViewDayCellSkeleton cell={cell} key={cell.date.toISOString()}></MonthViewDayCellSkeleton>
           ) : (
             <MonthViewDayCell

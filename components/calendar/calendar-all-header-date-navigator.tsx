@@ -26,8 +26,10 @@ export function DateNavigator({
   const [eventTotal, setEventTotal] = useState<number>(0);
 
   useEffect(() => {
-    setEventTotal(uniqBy(events, "eventId").length);
-  }, [isLoading]);
+    //setEventTotal(uniqBy(events, "eventId").length);
+    setEventTotal(events.length);
+    //console.log(events.length);
+  }, [events]);
 
   const handlePrevious = () => setSelectedDate(navigateDate(selectedDate, view, "previous"));
   const handleNext = () => setSelectedDate(navigateDate(selectedDate, view, "next"));
