@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { navigateDate, rangeText } from "@/lib/helpers";

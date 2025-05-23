@@ -4,7 +4,7 @@ import { useReactToPrint } from "react-to-print";
 
 import { AgendaEventCard } from "@/components/calendar/calendar-agenda-event-block";
 
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 import { useMemo, useRef } from "react";
 import { useAllDailyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, lazy } from "react";
 import { addMonths, startOfYear } from "date-fns";
 
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell";
 import { CalendarHeader } from "./calendar-all-header";

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { useCalendar } from "../../contexts/calendar-context";
+import { useCalendar } from "../../contexts/CalendarProvider";
 import Link from "next/link";
 
 export function ColumnDayHeader({ weekDays }: { weekDays: Date[] }) {

@@ -1,6 +1,6 @@
 import { isToday } from "date-fns";
 import { useRouter } from "next/navigation";
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 import { cn } from "@/lib/utils";
 import type { IEvent } from "@/lib/interfaces";
 import { IconDot } from "@/components/ui/icon-dot";

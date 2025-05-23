@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { MonthViewDayCell } from "@/components/calendar/calendar-month-view-day-cell";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { startOfWeek, addDays, isSameDay, areIntervalsOverlapping, endOfWeek } from "date-fns";
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
 import { groupEvents, getEventBlockStyle, getVisibleHours, filterEventsByRoom } from "@/lib/helpers";
