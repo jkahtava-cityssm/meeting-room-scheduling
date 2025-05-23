@@ -20,8 +20,9 @@ export default function YearViewMonth({ month, events }: { month: Date; events: 
     async function lazyLoad() {
       setLoading(false);
     }
+    const timer = setTimeout(() => lazyLoad(), 10);
 
-    lazyLoad();
+    return () => clearTimeout(timer);
   }, []);
 
   const monthName = format(month, "MMMM");
