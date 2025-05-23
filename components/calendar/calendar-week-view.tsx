@@ -18,14 +18,14 @@ import { HourColumn } from "./calendar-day-column-hourly";
 import { ColumnDayHeader } from "./calendar-all-column-day-header";
 import { EventBlock } from "./calendar-day-event-block";
 import { useEffect, useMemo, useState } from "react";
-import { getEventsWeekly } from "@/services/events";
+import { getEventsWeekly, useAllWeeklyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { getRecurrencesWeekly } from "@/services/recurrence";
 
 export function CalendarWeekView() {
   const { selectedDate, workingHours, visibleHours, selectedRoomId } = useCalendar();
-  const [events, setEvents] = useState<IEvent[]>([]);
+  /*const [events, setEvents] = useState<IEvent[]>([]);
   const [isLoading, setLoading] = useState(true);
 
   const fetchEvents = async () => {
@@ -56,17 +56,25 @@ export function CalendarWeekView() {
   useEffect(() => {
     fetchEvents();
   }, [selectedDate]);
+*/
 
-  const filteredEvents = useMemo(() => filterEventsByRoom(events, selectedRoomId), [events, selectedRoomId]);
+  const { events, isLoading, isError } = useAllWeeklyEvents(selectedDate, visibleHours);
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
+  const filteredEvents = useMemo(() => {
+    if (events) {
+      return filterEventsByRoom(events, selectedRoomId);
+    }
+    return [];
+  }, [events, selectedRoomId]);
+
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, filteredEvents);
 
   const weekStart = startOfWeek(selectedDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
     <>
-      <CalendarHeader view={"week"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
+      <CalendarHeader view={"week"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
       <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
         <p>Weekly view is not available on smaller devices.</p>
         <p>Please switch to daily or monthly view.</p>
@@ -126,7 +134,7 @@ export function CalendarWeekView() {
 
                                   return (
                                     <div key={event.eventId} className="absolute p-1" style={style}>
-                                      <EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
+                                      <EventBlock event={event} pixelSize={96} fetchData={async () => {}} />
                                     </div>
                                   );
                                 })

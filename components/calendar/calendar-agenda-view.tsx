@@ -6,7 +6,7 @@ import { AgendaEventCard } from "@/components/calendar/calendar-agenda-event-blo
 import type { IEvent } from "@/components/calendar/lib/interfaces";
 import { useCalendar } from "@/components/calendar/contexts/calendar-context";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { getEventsDaily } from "@/services/events";
+import { getEventsDaily, useAllDailyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Clock, Calendar, User, Printer } from "lucide-react";
@@ -18,7 +18,7 @@ import { Button } from "../ui/button";
 
 export function AgendaDayView() {
   const { selectedDate, selectedRoomId, setSelectedDate, visibleHours } = useCalendar();
-  const [events, setEvents] = useState<IEvent[]>([]);
+  /*const [events, setEvents] = useState<IEvent[]>([]);
   const [isLoading, setLoading] = useState(true);
 
   const fetchEvents = async () => {
@@ -47,7 +47,16 @@ export function AgendaDayView() {
     fetchEvents();
   }, [selectedDate]);
 
-  const filteredEvents = useMemo(() => filterEventsByRoom(events, selectedRoomId), [events, selectedRoomId]);
+  */
+
+  const { events, isLoading, isError } = useAllDailyEvents(selectedDate, visibleHours);
+
+  const filteredEvents = useMemo(() => {
+    if (events) {
+      return filterEventsByRoom(events, selectedRoomId);
+    }
+    return [];
+  }, [events, selectedRoomId]);
 
   const sortedEvents = [...filteredEvents].sort(
     (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
@@ -62,7 +71,7 @@ export function AgendaDayView() {
 
   return (
     <>
-      <CalendarHeader view={"agenda"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
+      <CalendarHeader view={"agenda"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
       {isLoading ? (
         <AgendaEventSkeleton selectedDate={selectedDate}></AgendaEventSkeleton>
       ) : (
@@ -81,7 +90,7 @@ export function AgendaDayView() {
                   {sortedEvents.length > 0 &&
                     sortedEvents.map((event, index) => (
                       <div key={index} className="break-inside-avoid">
-                        <AgendaEventCard key={event.eventId} event={event} fetchData={fetchEvents} />
+                        <AgendaEventCard key={event.eventId} event={event} fetchData={async () => {}} />
                       </div>
                     ))}
                 </div>
