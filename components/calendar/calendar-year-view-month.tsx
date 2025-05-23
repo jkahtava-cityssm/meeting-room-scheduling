@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { format, isSameDay, getDaysInMonth, startOfMonth } from "date-fns";
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 import { YearViewDayCell } from "@/components/calendar/calendar-year-view-day-cell";
 import type { IEvent } from "@/lib/interfaces";
 

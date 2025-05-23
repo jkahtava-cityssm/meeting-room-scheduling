@@ -2,7 +2,7 @@
 
 import { Calendar, Clock, User } from "lucide-react";
 import { format, addYears } from "date-fns";
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";

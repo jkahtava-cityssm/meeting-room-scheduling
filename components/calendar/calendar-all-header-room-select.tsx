@@ -1,4 +1,4 @@
-import { useCalendar } from "@/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 import { IRoom } from "@/lib/interfaces";
 import { TColors } from "@/lib/types";
 import { IconColored } from "@/components/ui/icon-colored";
