@@ -32,28 +32,44 @@ const data = {
     {
       title: "Bookings",
       url: "#",
+      icon: Send,
+      isActive: true,
+      items: [
+        {
+          title: "My Bookings",
+          url: "/private/bookings/user-view",
+        },
+        {
+          title: "Pending Requests",
+          url: "/private/bookings/user-view",
+        },
+      ],
+    },
+    {
+      title: "View Calendar",
+      url: "#",
       icon: Calendar,
       isActive: true,
       items: [
         {
-          title: "View Calendar - Year",
-          url: "/private/calendar/year-view",
+          title: "Calendar - Daily Agenda",
+          url: "/private/calendar/agenda-view",
         },
         {
-          title: "View Calendar - Month",
-          url: "/private/calendar/month-view",
-        },
-        {
-          title: "View Calendar - Week",
-          url: "/private/calendar/week-view",
-        },
-        {
-          title: "View Calendar - Day",
+          title: "Calendar - Day",
           url: "/private/calendar/day-view",
         },
         {
-          title: "View Calendar - Agenda",
-          url: "/private/calendar/agenda-view",
+          title: "Calendar - Week",
+          url: "/private/calendar/week-view",
+        },
+        {
+          title: "Calendar - Month",
+          url: "/private/calendar/month-view",
+        },
+        {
+          title: "Calendar - Year",
+          url: "/private/calendar/year-view",
         },
       ],
     },

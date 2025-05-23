@@ -1,13 +1,28 @@
-import { useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, isSameDay, getDaysInMonth, startOfMonth } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
-import { YearViewDayCell } from "@/components/calendar/calendar-year-view-day-cell";
-import type { IEvent } from "@/lib/interfaces";
+import YearViewDayCell from "@/components/calendar/calendar-year-view-day-cell";
+
+import React from "react";
+import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell";
+import { IEvent } from "@/lib/schemas/schemas";
+
+//const YearViewDayCell = React.lazy(() => import("@/components/calendar/calendar-year-view-day-cell"));
 
 export default function YearViewMonth({ month, events }: { month: Date; events: IEvent[] }) {
   const { push } = useRouter();
   const { setSelectedDate } = useCalendar();
+
+  const [isLoading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function lazyLoad() {
+      setLoading(false);
+    }
+
+    lazyLoad();
+  }, []);
 
   const monthName = format(month, "MMMM");
 
@@ -27,6 +42,10 @@ export default function YearViewMonth({ month, events }: { month: Date; events: 
     setSelectedDate(new Date(month.getFullYear(), month.getMonth(), 1));
     push("month-view");
   };
+
+  if (isLoading) {
+    return <YearViewMonthSkeleton key={month.toString()}></YearViewMonthSkeleton>;
+  }
 
   return (
     <div className="flex flex-col">
@@ -50,11 +69,7 @@ export default function YearViewMonth({ month, events }: { month: Date; events: 
         <div className="grid grid-cols-7 gap-x-0.5 gap-y-2">
           {daysInMonth.map((day, index) => {
             if (day === null) return <div key={`blank-${index}`} className="h-10" />;
-
-            const date = new Date(month.getFullYear(), month.getMonth(), day);
-            const dayEvents = events.filter((event) => isSameDay(event.startDate, date));
-
-            return <YearViewDayCell key={`day-${day}`} day={day} date={date} events={dayEvents} />;
+            return <YearViewDayCell key={`day-${day}`} day={day} month={month} events={events} />;
           })}
         </div>
       </div>
