@@ -14,18 +14,29 @@ export function CalendarHeader({
   events,
   selectedDate,
   isLoading,
+  onPreviousClick,
+  onNextClick,
 }: {
   view: TCalendarView;
   events: IEvent[];
   selectedDate: Date;
   isLoading: boolean;
+  onPreviousClick: () => void;
+  onNextClick: () => void;
 }) {
   return (
     <>
       <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <TodayButton />
-          <DateNavigator view={view} selectedDate={selectedDate} events={events} isLoading={isLoading} />
+          <DateNavigator
+            view={view}
+            selectedDate={selectedDate}
+            events={events}
+            isLoading={isLoading}
+            onPreviousClick={onPreviousClick}
+            onNextClick={onNextClick}
+          />
         </div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
