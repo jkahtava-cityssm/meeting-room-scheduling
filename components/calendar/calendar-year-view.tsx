@@ -61,7 +61,7 @@ function getDays(selectedDate: Date) {
 }
 
 function getSelectedDate(selectedDate: string | null) {
-  return selectedDate !== null ? parse(selectedDate, "yyyy", new Date()) : new Date();
+  return selectedDate !== null ? startOfYear(parse(selectedDate, "yyyy", new Date())) : startOfYear(new Date());
 }
 
 export function CalendarYearView() {
@@ -73,7 +73,7 @@ export function CalendarYearView() {
 
   const { selectedRoomId, visibleHours } = useCalendar();
   const [monthViews, setMonthViews] = useState<MonthView[]>([]);
-  const [pendingRecord, setPendingRecord] = useState({ isPending: true, currentDate: new Date() });
+  const [pendingRecord, setPendingRecord] = useState({ isPending: true, currentDate: selectedDate });
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
 
   const startDate: Date = startOfYear(selectedDate);
@@ -148,16 +148,21 @@ export function CalendarYearView() {
     push(navigateURL(nextDate, "year", "next"));
   };
 
+  const handleRoomChange = (value: string) => {
+    console.log(value);
+  };
+
   if (pendingRecord.isPending) {
     return (
       <>
         <CalendarHeader
           view={"year"}
-          selectedDate={startDate}
+          selectedDate={pendingRecord.currentDate}
           events={filteredEvents}
           isLoading={pendingRecord.isPending}
           onPreviousClick={handlePrevious}
           onNextClick={handleNext}
+          onRoomChange={handleRoomChange}
         />
         <div className="p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -176,11 +181,12 @@ export function CalendarYearView() {
     <>
       <CalendarHeader
         view={"year"}
-        selectedDate={startDate}
+        selectedDate={pendingRecord.currentDate}
         events={filteredEvents}
         isLoading={pendingRecord.isPending}
         onPreviousClick={handlePrevious}
         onNextClick={handleNext}
+        onRoomChange={handleRoomChange}
       />
       <div className="p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
