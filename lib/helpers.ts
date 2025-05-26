@@ -61,7 +61,7 @@ export function rangeText(view: TCalendarView, date: Date) {
 
   return `${format(start, formatString)} - ${format(end, formatString)}`;
 }
-
+/*
 export function navigateDate(date: Date, view: TCalendarView, direction: "previous" | "next"): Date {
   const operations = {
     agenda: direction === "next" ? addDays : subDays,
@@ -72,6 +72,41 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
   };
 
   return operations[view](date, 1);
+}*/
+
+export function navigateURL(date: Date, view: TCalendarView, direction: "previous" | "next"): string {
+  const path = {
+    agenda: "agenda-view?selectedDate=",
+    year: "year-view?selectedDate=",
+    month: "month-view?selectedDate=",
+    week: "week-view?selectedDate=",
+    day: "day-view?selectedDate=",
+  };
+
+  const operations = {
+    agenda: direction === "next" ? addDays : subDays,
+    year: direction === "next" ? addYears : subYears,
+    month: direction === "next" ? addMonths : subMonths,
+    week: direction === "next" ? addWeeks : subWeeks,
+    day: direction === "next" ? addDays : subDays,
+  };
+
+  const formatDate = (view: TCalendarView, value: Date) => {
+    switch (view) {
+      case "year":
+        return format(value, "yyyy");
+      case "month":
+        return format(value, "yyyy-MM");
+      case "week":
+        return format(value, "yyyy-ww");
+      case "agenda":
+      case "day":
+      default:
+        return format(value, "yyyy-MM-dd");
+    }
+  };
+
+  return path[view] + formatDate(view, operations[view](date, 1));
 }
 
 export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Date) {
@@ -260,10 +295,10 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
 ########################################################################*/
 
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
-  const test = events.filter((event) => {
+  const results = events.filter((event) => {
     return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
   });
-  return test;
+  return results;
 }
 
 export function calculateMonthlyRecurrenceEndDate(startDate: Date, occurrences: number, day: number, months: number) {

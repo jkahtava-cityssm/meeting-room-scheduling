@@ -13,6 +13,7 @@ import {
   eachDayOfInterval,
   endOfMonth,
   isSameDay,
+  parse,
   parseISO,
   parseJSON,
   startOfDay,
@@ -24,11 +25,20 @@ import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 
 import { useAllMonthlyEvents } from "@/services/events";
 import { IEvent } from "@/lib/schemas/schemas";
+import { useSearchParams } from "next/navigation";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+function getSelectedDate(selectedDate: string | null) {
+  return selectedDate !== null ? parse(selectedDate, "yyyy-MM", new Date()) : new Date();
+}
+
 export function CalendarMonthView() {
-  const { selectedDate, selectedRoomId, visibleHours } = useCalendar();
+  const searchParams = useSearchParams();
+
+  const value = searchParams.get("selectedDate");
+  const selectedDate = getSelectedDate(value);
+  const { selectedRoomId, visibleHours } = useCalendar();
 
   const { events, isLoading, isError } = useAllMonthlyEvents(selectedDate, visibleHours);
 

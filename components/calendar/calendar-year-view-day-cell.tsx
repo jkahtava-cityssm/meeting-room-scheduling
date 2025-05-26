@@ -1,6 +1,6 @@
 "use client";
 
-import { isSameDay, isToday } from "date-fns";
+import { format, isSameDay, isToday } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { cn } from "@/lib/utils";
@@ -10,47 +10,18 @@ import { TColors } from "../../lib/types";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { IEvent } from "@/lib/schemas/schemas";
+import { DayView } from "./calendar-year-view";
 
-interface IProps {
-  day: number;
-  month: Date;
-  events: IEvent[];
-}
-
-const YearViewDayCell = ({ day, month, events }: IProps) => {
+const YearViewDayCell = ({ day }: { day: DayView }) => {
   const { push } = useRouter();
   const { setSelectedDate } = useCalendar();
-  const [currentEvents, setCurrentEvents] = useState<IEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   const maxIndicators = 3;
 
-  const date = new Date(month.getFullYear(), month.getMonth(), day);
-
-  useEffect(() => {
-    async function lazyLoad() {
-      setCurrentEvents(events.filter((event) => isSameDay(event.startDate, date)));
-      setIsLoading(false);
-    }
-
-    const timer = setTimeout(() => lazyLoad(), 10);
-
-    return () => clearTimeout(timer);
-  }, [events]);
-
   const handleClick = () => {
-    setSelectedDate(date);
-    push("day-view");
+    //setSelectedDate(day.dayDate);
+    push(`day-view?selectedDate=${format(day.dayDate, "yyyy-MM-dd")}`);
   };
-
-  if (isLoading) {
-    return (
-      <Skeleton
-        key={`day-${day}`}
-        className="flex h-11 flex-1 flex-col items-center justify-start gap-0.5 rounded-md pt-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      />
-    );
-  }
 
   return (
     <button
@@ -61,24 +32,24 @@ const YearViewDayCell = ({ day, month, events }: IProps) => {
       <div
         className={cn(
           "flex size-6 items-center justify-center rounded-full text-xs font-medium",
-          date ? isToday(date) && "bg-primary font-semibold text-primary-foreground" : ""
+          day.isToday && "bg-primary font-semibold text-primary-foreground"
         )}
       >
-        {day}
+        {day.day}
       </div>
       {
         <div className="mt-0.5 flex gap-0.5">
-          {currentEvents.length <= maxIndicators ? (
-            currentEvents.map((event, index) => (
-              <IconDot key={`day-${day}-${event.eventId}-${index}`} color={event.room.color as TColors}></IconDot>
+          {day.dayEvents.length <= maxIndicators ? (
+            day.dayEvents.map((event, index) => (
+              <IconDot key={`day-${day.day}-${event.eventId}-${index}`} color={event.room.color as TColors}></IconDot>
             ))
           ) : (
             <>
               <IconDot
-                key={`day-${day}-${currentEvents[0].eventId}`}
-                color={currentEvents[0].room.color as TColors}
+                key={`day-${day.day}-${day.dayEvents[0].eventId}`}
+                color={day.dayEvents[0].room.color as TColors}
               ></IconDot>
-              <span className="text-[7px] text-muted-foreground">+{currentEvents.length - 1}</span>
+              <span className="text-[7px] text-muted-foreground">+{day.dayEvents.length - 1}</span>
             </>
           )}
         </div>

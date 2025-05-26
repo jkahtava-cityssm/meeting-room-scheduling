@@ -4,12 +4,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { navigateDate, rangeText } from "@/lib/helpers";
+import { navigateURL, rangeText } from "@/lib/helpers";
 import { uniqBy } from "lodash";
 
 import type { TCalendarView } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IEvent } from "@/lib/schemas/schemas";
+import { useRouter } from "next/navigation";
 
 export function DateNavigator({
   view,
@@ -22,8 +23,9 @@ export function DateNavigator({
   selectedDate: Date;
   isLoading: boolean;
 }) {
-  const { setSelectedDate } = useCalendar();
+  //const { setSelectedDate } = useCalendar();
   const [eventTotal, setEventTotal] = useState<number>(0);
+  const { push } = useRouter();
 
   useEffect(() => {
     //setEventTotal(uniqBy(events, "eventId").length);
@@ -31,8 +33,8 @@ export function DateNavigator({
     //console.log(events.length);
   }, [events]);
 
-  const handlePrevious = () => setSelectedDate(navigateDate(selectedDate, view, "previous"));
-  const handleNext = () => setSelectedDate(navigateDate(selectedDate, view, "next"));
+  const handlePrevious = () => push(navigateURL(selectedDate, view, "previous"));
+  const handleNext = () => push(navigateURL(selectedDate, view, "next"));
 
   return (
     <div className="space-y-0.5">
