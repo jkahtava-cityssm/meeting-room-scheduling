@@ -24,11 +24,11 @@ import {
   useAllYearlyEvents,
   useEvents,
 } from "@/services/events";
-import { filterEventsByRoom } from "../../lib/helpers";
+import { filterEventsByRoom, navigateDate, navigateURL } from "../../lib/helpers";
 import { IEvent } from "@/lib/schemas/schemas";
 import { forEach } from "lodash";
 import useSWR from "swr";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export interface MonthView {
   month: number;
@@ -55,10 +55,8 @@ function getDays(selectedDate: Date) {
   const firstDay = startOfMonth(selectedDate).getDay();
 
   const days: number[] = Array.from({ length: totalDays }, (_, i) => i + 1);
-  //const blanks: number[] = Array(firstDay).fill(null);
 
   const blanks: number[] = Array.from({ length: firstDay }, (_, i) => i * -1).reverse();
-  //const bb = [...days2, ...days];
   return [...blanks, ...days];
 }
 
@@ -68,13 +66,14 @@ function getSelectedDate(selectedDate: string | null) {
 
 export function CalendarYearView() {
   const searchParams = useSearchParams();
+  const { push } = useRouter();
 
   const value = searchParams.get("selectedDate");
   const selectedDate = getSelectedDate(value);
 
   const { selectedRoomId, visibleHours } = useCalendar();
-  //const [monthViews, setMonthViews] = useState<MonthView[]>([]);
-  const [isPending, setPending] = useState(true);
+  const [monthViews, setMonthViews] = useState<MonthView[]>([]);
+  const [pendingRecord, setPendingRecord] = useState({ isPending: true, currentDate: new Date() });
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
 
   const startDate: Date = startOfYear(selectedDate);
@@ -88,59 +87,7 @@ export function CalendarYearView() {
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
-  const monthViews = useMemo(() => {
-    //setPending(true);
-    if (!events || !recurringEvents) {
-      return [];
-    }
-
-    const combinedEvents: IEvent[] = [
-      ...generateMultiDayEventsInPeriod(events, startDate, endDate, visibleHours),
-      ...generateRecurringEventsInPeriod(recurringEvents, startDate, endDate),
-    ];
-    const filteredEvents: IEvent[] = filterEventsByRoom(combinedEvents, selectedRoomId);
-
-    const monthData: MonthView[] = [];
-    const months: Date[] = getMonths(selectedDate);
-
-    months.forEach((month, index) => {
-      const days: number[] = getDays(month);
-      const yearValue = month.getFullYear();
-      const monthValue = month.getMonth();
-
-      const dayData: DayView[] = [];
-
-      days.forEach((day, index) => {
-        if (day <= 0) {
-          dayData.push({ day: day, dayDate: new Date(0), isBlank: true, isToday: false, dayEvents: [] });
-          return;
-        }
-
-        const date: Date = new Date(yearValue, monthValue, day);
-        const today: boolean = isToday(date);
-        const events: IEvent[] = filteredEvents.filter((event) => isSameDay(event.startDate, date));
-
-        dayData.push({ day: day, dayDate: date, isBlank: false, isToday: today, dayEvents: events });
-      });
-
-      monthData.push({ month: index, monthDate: month, monthName: format(month, "MMMM"), days: dayData });
-    });
-    //setPending(false);
-
-    return monthData;
-    //setFilteredEvents(filteredEvents);
-    //setMonthViews(monthData);
-  }, [events, recurringEvents, value, selectedRoomId]);
-
   useEffect(() => {
-    if (monthViews) {
-      setPending(false);
-    } else {
-      setPending(true);
-    }
-  });
-
-  /*useEffect(() => {
     async function formatYearData(
       eventList: IEvent[],
       recurringEventList: IEvent[],
@@ -180,45 +127,41 @@ export function CalendarYearView() {
       });
       setFilteredEvents(filteredEvents);
       setMonthViews(monthData);
+      setPendingRecord({ isPending: false, currentDate: selectedDate });
     }
 
-    setPending(true);
     if (events && recurringEvents) {
-      setTimeout(() => {
-        formatYearData(events, recurringEvents, startDate, selectedRoomId);
-        setPending(false);
-      }, 1);
-      //setPending(false);
+      formatYearData(events, recurringEvents, startDate, selectedRoomId);
     }
-  }, [events, recurringEvents, value, selectedRoomId]);*/
-  /*const months = useMemo(() => {
-    const yearStart = startOfYear(selectedDate);
-    return Array.from({ length: 12 }, (_, i) => addMonths(yearStart, i));
-  }, [selectedDate]);
+  }, [events, recurringEvents, value, selectedRoomId]);
 
-  const filteredEvents = useMemo(() => {
-    if (events) {
-      return filterEventsByRoom(events, selectedRoomId);
-    }
-    return [];
-  }, [events, selectedRoomId]);*/
+  const handlePrevious = () => {
+    const previousDate = navigateDate(selectedDate, "year", "previous");
+    setPendingRecord({ isPending: true, currentDate: previousDate });
 
-  /*const monthName = format(month, "MMMM");
+    push(navigateURL(previousDate, "year", "previous"));
+  };
+  const handleNext = () => {
+    const nextDate = navigateDate(selectedDate, "year", "next");
+    setPendingRecord({ isPending: true, currentDate: nextDate });
 
+    push(navigateURL(nextDate, "year", "next"));
+  };
 
-
-  const date = new Date(month.getFullYear(), month.getMonth(), day);
-  const dailyEvents = events.filter((event) => isSameDay(event.startDate, date)
-*/
-  //return <>{isPending ? "ttt" : "bbb"}</>;
-
-  if (isPending) {
+  if (pendingRecord.isPending) {
     return (
       <>
-        <CalendarHeader view={"year"} selectedDate={startDate} events={filteredEvents} isLoading={isPending} />
+        <CalendarHeader
+          view={"year"}
+          selectedDate={startDate}
+          events={filteredEvents}
+          isLoading={pendingRecord.isPending}
+          onPreviousClick={handlePrevious}
+          onNextClick={handleNext}
+        />
         <div className="p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {getMonths(startDate).map((month) => {
+            {getMonths(pendingRecord.currentDate).map((month) => {
               return (
                 <YearViewMonthSkeleton key={month.toString()} totalDays={getDays(month).length}></YearViewMonthSkeleton>
               );
@@ -231,34 +174,20 @@ export function CalendarYearView() {
 
   return (
     <>
-      <CalendarHeader view={"year"} selectedDate={startDate} events={filteredEvents} isLoading={isPending} />
+      <CalendarHeader
+        view={"year"}
+        selectedDate={startDate}
+        events={filteredEvents}
+        isLoading={pendingRecord.isPending}
+        onPreviousClick={handlePrevious}
+        onNextClick={handleNext}
+      />
       <div className="p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {isPending
-            ? getMonths(startDate).map((month) => {
-                return <YearViewMonthSkeleton key={month.toString()} totalDays={0}></YearViewMonthSkeleton>;
-              })
-            : monthViews.map((month) => {
-                //console.log(month);
-                return <YearViewMonth key={month.month.toString()} month={month} />;
-              })}
-        </div>
-      </div>
-    </>
-  );
-
-  return (
-    <>
-      <CalendarHeader view={"year"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
-      <div className="p-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {months.map((month) =>
-            isLoading ? (
-              <YearViewMonthSkeleton key={month.toString()}></YearViewMonthSkeleton>
-            ) : (
-              <YearViewMonth key={month.toString()} month={month} events={filteredEvents} />
-            )
-          )}
+          {monthViews.map((month) => {
+            //console.log(month);
+            return <YearViewMonth key={month.month.toString()} month={month} />;
+          })}
         </div>
       </div>
     </>
