@@ -16,6 +16,7 @@ export function CalendarHeader({
   isLoading,
   onPreviousClick,
   onNextClick,
+  onRoomChange,
 }: {
   view: TCalendarView;
   events: IEvent[];
@@ -23,6 +24,7 @@ export function CalendarHeader({
   isLoading: boolean;
   onPreviousClick: () => void;
   onNextClick: () => void;
+  onRoomChange: (value: string) => void;
 }) {
   return (
     <>
@@ -103,7 +105,7 @@ export function CalendarHeader({
               </Button>
             </div>
 
-            <RoomSelect />
+            <RoomSelect onRoomChange={onRoomChange} />
           </div>
 
           <AddEventDialog>

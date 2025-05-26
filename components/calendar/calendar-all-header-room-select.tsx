@@ -9,7 +9,7 @@ import { Asterisk, BookKey } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 
-export function RoomSelect() {
+export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => void }) {
   const { selectedRoomId, setSelectedRoomId } = useCalendar();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +33,12 @@ export function RoomSelect() {
   }
 
   return (
-    <Select value={selectedRoomId.toString()} onValueChange={setSelectedRoomId}>
+    <Select
+      value={selectedRoomId.toString()}
+      onValueChange={(value) => {
+        onRoomChange(value);
+      }}
+    >
       <SelectTrigger className="flex-1 md:w-60">
         <SelectValue />
       </SelectTrigger>
