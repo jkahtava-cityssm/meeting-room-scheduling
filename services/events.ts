@@ -77,7 +77,7 @@ function useAllEvents(
   };
 }
 
-function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
+export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
   const eventList: IEvent[] = [];
 
   events.forEach((element) => {
@@ -111,7 +111,7 @@ function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, pe
   return eventList;
 }
 
-function generateMultiDayEventsInPeriod(
+export function generateMultiDayEventsInPeriod(
   events: IEvent[],
   periodStart: Date,
   periodEnd: Date,
@@ -180,7 +180,10 @@ function setUTCPartsToDate(d: Date) {
   );
 }
 
-function useEvents(startDate: Date, endDate: Date): { events: IEvent[] | undefined; isLoading: boolean; isError: any } {
+export function useEvents(
+  startDate: Date,
+  endDate: Date
+): { events: IEvent[] | undefined; isLoading: boolean; isError: any } {
   const { data, error, isLoading } = useSWR<IEvent[]>(
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
@@ -192,7 +195,7 @@ function useEvents(startDate: Date, endDate: Date): { events: IEvent[] | undefin
   };
 }
 
-function useRecurrence(
+export function useRecurrence(
   startDate: Date,
   endDate: Date
 ): { events: IEvent[] | undefined; isLoading: boolean; isError: any } {

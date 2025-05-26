@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function YearViewMonthSkeleton() {
+export function YearViewMonthSkeleton({ totalDays = 36 }: { totalDays?: number }) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
@@ -17,7 +17,7 @@ export function YearViewMonthSkeleton() {
         </div>
 
         <div className="grid grid-cols-7 gap-x-0.5 gap-y-2">
-          {[...Array(36).keys()].map((index) => {
+          {[...Array(totalDays).keys()].map((index) => {
             return (
               <Skeleton
                 key={index}
