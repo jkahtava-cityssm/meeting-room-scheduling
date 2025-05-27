@@ -74,7 +74,7 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
   return operations[view](date, 1);
 }
 
-export function navigateURL(date: Date, view: TCalendarView, direction: "previous" | "next"): string {
+export function navigateURL(date: Date, view: TCalendarView): string {
   const path = {
     agenda: "agenda-view?selectedDate=",
     year: "year-view?selectedDate=",

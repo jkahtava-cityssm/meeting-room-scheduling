@@ -8,6 +8,7 @@ import React from "react";
 import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell";
 import { IEvent } from "@/lib/schemas/schemas";
 import { MonthView } from "./calendar-year-view";
+import { navigateURL } from "@/lib/helpers";
 
 //const YearViewDayCell = React.lazy(() => import("@/components/calendar/calendar-year-view-day-cell"));
 
@@ -18,8 +19,7 @@ export default function YearViewMonth({ month }: { month: MonthView }) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const handleClick = () => {
-    //setSelectedDate(month.monthDate);
-    push(`month-view?selectedDate=${format(month.monthDate, "yyyy-MM")}`);
+    push(navigateURL(month.monthDate, "month"));
   };
 
   return (
