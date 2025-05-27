@@ -8,6 +8,7 @@ import { AddEventDialog } from "@/components/calendar/dialog-event-add";
 
 import type { TCalendarView } from "@/lib/types";
 import { IEvent } from "@/lib/schemas/schemas";
+import { navigateURL } from "@/lib/helpers";
 
 export function CalendarHeader({
   view,
@@ -51,7 +52,7 @@ export function CalendarHeader({
                 variant={view === "day" ? "default" : "outline"}
                 className="rounded-r-none [&_svg]:size-5"
               >
-                <Link href="day-view">
+                <Link href={navigateURL(selectedDate, "day")}>
                   <List strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -63,7 +64,7 @@ export function CalendarHeader({
                 variant={view === "week" ? "default" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href="week-view">
+                <Link href={navigateURL(selectedDate, "week")}>
                   <Columns strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -75,7 +76,7 @@ export function CalendarHeader({
                 variant={view === "month" ? "default" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href="month-view">
+                <Link href={navigateURL(selectedDate, "month")}>
                   <Grid2x2 strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -87,7 +88,7 @@ export function CalendarHeader({
                 variant={view === "year" ? "default" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href="year-view">
+                <Link href={navigateURL(selectedDate, "year")}>
                   <Grid3x3 strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -99,7 +100,7 @@ export function CalendarHeader({
                 variant={view === "agenda" ? "default" : "outline"}
                 className="-ml-px rounded-l-none [&_svg]:size-5"
               >
-                <Link href="agenda-view">
+                <Link href={navigateURL(selectedDate, "agenda")}>
                   <CalendarRange strokeWidth={1.8} />
                 </Link>
               </Button>

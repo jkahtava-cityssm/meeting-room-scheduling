@@ -79,7 +79,7 @@ export function CalendarYearView() {
   const startDate: Date = startOfYear(selectedDate);
   const endDate: Date = endOfYear(selectedDate);
 
-  const { data: events } = useSWR<IEvent[]>(
+  const { data: events, isLoading } = useSWR<IEvent[]>(
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
@@ -125,6 +125,7 @@ export function CalendarYearView() {
 
         monthData.push({ month: index, monthDate: month, monthName: format(month, "MMMM"), days: dayData });
       });
+
       setFilteredEvents(filteredEvents);
       setMonthViews(monthData);
       setPendingRecord({ isPending: false, currentDate: selectedDate });
@@ -135,21 +136,22 @@ export function CalendarYearView() {
     }
   }, [events, recurringEvents, value, selectedRoomId]);
 
-  const handlePrevious = () => {
+  const handleNavigatePrevious = () => {
     const previousDate = navigateDate(selectedDate, "year", "previous");
     setPendingRecord({ isPending: true, currentDate: previousDate });
 
-    push(navigateURL(previousDate, "year", "previous"));
+    push(navigateURL(previousDate, "year"));
   };
-  const handleNext = () => {
+
+  const handleNavigateNext = () => {
     const nextDate = navigateDate(selectedDate, "year", "next");
     setPendingRecord({ isPending: true, currentDate: nextDate });
 
-    push(navigateURL(nextDate, "year", "next"));
+    push(navigateURL(nextDate, "year"));
   };
 
-  const handleRoomChange = (value: string) => {
-    console.log(value);
+  const handleNavigateRoomChange = (value: string) => {
+    console.log(isLoading);
   };
 
   if (pendingRecord.isPending) {
@@ -160,15 +162,19 @@ export function CalendarYearView() {
           selectedDate={pendingRecord.currentDate}
           events={filteredEvents}
           isLoading={pendingRecord.isPending}
-          onPreviousClick={handlePrevious}
-          onNextClick={handleNext}
-          onRoomChange={handleRoomChange}
+          onPreviousClick={handleNavigatePrevious}
+          onNextClick={handleNavigateNext}
+          onRoomChange={handleNavigateRoomChange}
         />
         <div className="p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {getMonths(pendingRecord.currentDate).map((month) => {
               return (
-                <YearViewMonthSkeleton key={month.toString()} totalDays={getDays(month).length}></YearViewMonthSkeleton>
+                <YearViewMonthSkeleton
+                  key={month.toString()}
+                  totalDays={getDays(month).length}
+                  month={month}
+                ></YearViewMonthSkeleton>
               );
             })}
           </div>
@@ -184,14 +190,13 @@ export function CalendarYearView() {
         selectedDate={pendingRecord.currentDate}
         events={filteredEvents}
         isLoading={pendingRecord.isPending}
-        onPreviousClick={handlePrevious}
-        onNextClick={handleNext}
-        onRoomChange={handleRoomChange}
+        onPreviousClick={handleNavigatePrevious}
+        onNextClick={handleNavigateNext}
+        onRoomChange={handleNavigateRoomChange}
       />
       <div className="p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {monthViews.map((month) => {
-            //console.log(month);
             return <YearViewMonth key={month.month.toString()} month={month} />;
           })}
         </div>

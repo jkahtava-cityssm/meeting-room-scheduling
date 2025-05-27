@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
+import { navigateURL } from "@/lib/helpers";
 
 const data = {
   user: {
@@ -53,23 +54,23 @@ const data = {
       items: [
         {
           title: "Calendar - Daily Agenda",
-          url: "/private/calendar/agenda-view",
+          url: "/private/calendar/" + navigateURL(new Date(), "agenda"),
         },
         {
           title: "Calendar - Day",
-          url: "/private/calendar/day-view",
+          url: "/private/calendar/" + navigateURL(new Date(), "day"),
         },
         {
           title: "Calendar - Week",
-          url: "/private/calendar/week-view",
+          url: "/private/calendar/" + navigateURL(new Date(), "week"),
         },
         {
           title: "Calendar - Month",
-          url: "/private/calendar/month-view",
+          url: "/private/calendar/" + navigateURL(new Date(), "month"),
         },
         {
           title: "Calendar - Year",
-          url: "/private/calendar/year-view",
+          url: "/private/calendar/" + navigateURL(new Date(), "year"),
         },
       ],
     },
