@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,25 +9,73 @@ import { AddEventDialog } from "@/components/calendar/dialog-event-add";
 
 import type { TCalendarView } from "@/lib/types";
 import { IEvent } from "@/lib/schemas/schemas";
-import { navigateURL } from "@/lib/helpers";
+import { navigateDate, navigateURL } from "@/lib/helpers";
+import { useCalendar } from "@/contexts/CalendarProvider";
+import { useRouter } from "next/navigation";
+import { addHours, addWeeks, format } from "date-fns";
 
-export function CalendarHeader({
+function DayButton({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
+  return (
+    <Button
+      asChild
+      aria-label="View by day"
+      size="icon"
+      variant={view === "day" ? "default" : "outline"}
+      className="rounded-r-none [&_svg]:size-5"
+    >
+      <Link href={navigateURL(selectedDate, "day")}>
+        <List strokeWidth={1.8} />
+      </Link>
+    </Button>
+  );
+}
+
+function YearButton({
   view,
-  events,
   selectedDate,
   isLoading,
-  onPreviousClick,
-  onNextClick,
-  onRoomChange,
 }: {
   view: TCalendarView;
-  events: IEvent[];
   selectedDate: Date;
   isLoading: boolean;
-  onPreviousClick: () => void;
-  onNextClick: () => void;
-  onRoomChange: (value: string) => void;
 }) {
+  console.log(isLoading, view);
+  return (
+    <Button
+      key={"yearButton"}
+      asChild
+      aria-label="View by year"
+      size="icon"
+      variant={view === "year" ? "default" : "outline"}
+      className="-ml-px rounded-none [&_svg]:size-5"
+    >
+      <Link href={navigateURL(selectedDate, "year")}>
+        <Grid3x3 strokeWidth={1.8} />
+      </Link>
+    </Button>
+  );
+}
+
+export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
+  const { isLoading, totalEvents, setSelectedRoomId } = useCalendar();
+  const { push } = useRouter();
+
+  const handleNavigatePrevious = () => {
+    const previousDate = navigateDate(selectedDate, view, "previous");
+
+    push(navigateURL(previousDate, view));
+  };
+
+  const handleNavigateNext = () => {
+    const nextDate = navigateDate(selectedDate, view, "next");
+
+    push(navigateURL(nextDate, view));
+  };
+
+  const handleNavigateRoomChange = (value: string) => {
+    setSelectedRoomId(value);
+  };
+
   return (
     <>
       <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
@@ -35,27 +84,17 @@ export function CalendarHeader({
           <DateNavigator
             view={view}
             selectedDate={selectedDate}
-            events={events}
+            totalEvents={totalEvents}
             isLoading={isLoading}
-            onPreviousClick={onPreviousClick}
-            onNextClick={onNextClick}
+            onPreviousClick={handleNavigatePrevious}
+            onNextClick={handleNavigateNext}
           />
         </div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
           <div className="flex w-full items-center gap-1.5">
             <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
-              <Button
-                asChild
-                aria-label="View by day"
-                size="icon"
-                variant={view === "day" ? "default" : "outline"}
-                className="rounded-r-none [&_svg]:size-5"
-              >
-                <Link href={navigateURL(selectedDate, "day")}>
-                  <List strokeWidth={1.8} />
-                </Link>
-              </Button>
+              <DayButton view={view} selectedDate={selectedDate} />
 
               <Button
                 asChild
@@ -81,17 +120,7 @@ export function CalendarHeader({
                 </Link>
               </Button>
 
-              <Button
-                asChild
-                aria-label="View by year"
-                size="icon"
-                variant={view === "year" ? "default" : "outline"}
-                className="-ml-px rounded-none [&_svg]:size-5"
-              >
-                <Link href={navigateURL(selectedDate, "year")}>
-                  <Grid3x3 strokeWidth={1.8} />
-                </Link>
-              </Button>
+              <YearButton view={view} selectedDate={selectedDate} isLoading={isLoading}></YearButton>
 
               <Button
                 asChild
@@ -106,7 +135,7 @@ export function CalendarHeader({
               </Button>
             </div>
 
-            <RoomSelect onRoomChange={onRoomChange} />
+            <RoomSelect onRoomChange={handleNavigateRoomChange} />
           </div>
 
           <AddEventDialog>

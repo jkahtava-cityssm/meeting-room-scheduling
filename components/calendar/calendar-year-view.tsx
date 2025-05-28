@@ -15,7 +15,6 @@ import {
 
 import { useCalendar } from "@/contexts/CalendarProvider";
 
-import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell";
 import { CalendarHeader } from "./calendar-all-header";
 import YearViewMonth from "./calendar-year-view-month";
 import {
@@ -29,6 +28,8 @@ import { IEvent } from "@/lib/schemas/schemas";
 import { forEach } from "lodash";
 import useSWR from "swr";
 import { useSearchParams, useRouter } from "next/navigation";
+import { YearViewSkeleton } from "./skeleton-calendar-year-view";
+import { TVisibleHours } from "@/lib/types";
 
 export interface MonthView {
   month: number;
@@ -45,41 +46,33 @@ export interface DayView {
   dayEvents: IEvent[];
 }
 
-function getMonths(selectedDate: Date) {
-  const yearStart = startOfYear(selectedDate);
-  return Array.from({ length: 12 }, (_, i) => addMonths(yearStart, i));
+export interface YearProcessData {
+  eventList: IEvent[];
+  recurringEventList: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  visibleHours: TVisibleHours;
 }
 
-function getDays(selectedDate: Date) {
-  const totalDays = getDaysInMonth(selectedDate);
-  const firstDay = startOfMonth(selectedDate).getDay();
-
-  const days: number[] = Array.from({ length: totalDays }, (_, i) => i + 1);
-
-  const blanks: number[] = Array.from({ length: firstDay }, (_, i) => i * -1).reverse();
-  return [...blanks, ...days];
+export interface YearResponseData {
+  totalEvents: number;
+  monthsViews: MonthView[];
 }
 
 function getSelectedDate(selectedDate: string | null) {
   return selectedDate !== null ? startOfYear(parse(selectedDate, "yyyy", new Date())) : startOfYear(new Date());
 }
 
-export function CalendarYearView() {
-  const searchParams = useSearchParams();
-  const { push } = useRouter();
-
-  const value = searchParams.get("selectedDate");
-  const selectedDate = getSelectedDate(value);
-
-  const { selectedRoomId, visibleHours } = useCalendar();
+export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: boolean }) {
+  const { selectedRoomId, visibleHours, setIsLoading, setTotalEvents } = useCalendar();
   const [monthViews, setMonthViews] = useState<MonthView[]>([]);
-  const [pendingRecord, setPendingRecord] = useState({ isPending: true, currentDate: selectedDate });
-  const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
 
-  const startDate: Date = startOfYear(selectedDate);
-  const endDate: Date = endOfYear(selectedDate);
+  //const [isPending, setIsPending] = useState(true);
 
-  const { data: events, isLoading } = useSWR<IEvent[]>(
+  const startDate: Date = startOfYear(date);
+  const endDate: Date = endOfYear(date);
+
+  const { data: events } = useSWR<IEvent[]>(
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
@@ -87,113 +80,44 @@ export function CalendarYearView() {
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
+  const yearProcessor = useMemo(() => new Worker(new URL("./calendar-year-webworker.ts", import.meta.url)), []);
+
   useEffect(() => {
-    async function formatYearData(
-      eventList: IEvent[],
-      recurringEventList: IEvent[],
-      selectedDate: Date,
-      selectedRoomId: string
-    ) {
-      const combinedEvents: IEvent[] = [
-        ...generateMultiDayEventsInPeriod(eventList, startDate, endDate, visibleHours),
-        ...generateRecurringEventsInPeriod(recurringEventList, startDate, endDate),
-      ];
-      const filteredEvents: IEvent[] = filterEventsByRoom(combinedEvents, selectedRoomId);
-
-      const monthData: MonthView[] = [];
-      const months: Date[] = getMonths(selectedDate);
-
-      months.forEach((month, index) => {
-        const days: number[] = getDays(month);
-        const yearValue = month.getFullYear();
-        const monthValue = month.getMonth();
-
-        const dayData: DayView[] = [];
-
-        days.forEach((day, index) => {
-          if (day <= 0) {
-            dayData.push({ day: day, dayDate: new Date(0), isBlank: true, isToday: false, dayEvents: [] });
-            return;
-          }
-
-          const date: Date = new Date(yearValue, monthValue, day);
-          const today: boolean = isToday(date);
-          const events: IEvent[] = filteredEvents.filter((event) => isSameDay(event.startDate, date));
-
-          dayData.push({ day: day, dayDate: date, isBlank: false, isToday: today, dayEvents: events });
-        });
-
-        monthData.push({ month: index, monthDate: month, monthName: format(month, "MMMM"), days: dayData });
-      });
-
-      setFilteredEvents(filteredEvents);
-      setMonthViews(monthData);
-      setPendingRecord({ isPending: false, currentDate: selectedDate });
+    if (!events || !recurringEvents) {
+      return;
     }
 
-    if (events && recurringEvents) {
-      formatYearData(events, recurringEvents, startDate, selectedRoomId);
+    if (window.Worker) {
+      const data: YearProcessData = {
+        eventList: events,
+        recurringEventList: recurringEvents,
+        selectedDate: date,
+        selectedRoomId: selectedRoomId,
+
+        visibleHours: visibleHours,
+      };
+      yearProcessor.postMessage(data);
     }
-  }, [events, recurringEvents, value, selectedRoomId]);
+  }, [events, recurringEvents, date, selectedRoomId, visibleHours]);
 
-  const handleNavigatePrevious = () => {
-    const previousDate = navigateDate(selectedDate, "year", "previous");
-    setPendingRecord({ isPending: true, currentDate: previousDate });
+  useEffect(() => {
+    if (window.Worker) {
+      yearProcessor.onmessage = (event: MessageEvent<YearResponseData>) => {
+        const response = event.data;
+        console.log(response);
+        setMonthViews(event.data.monthsViews);
+        setTotalEvents(event.data.totalEvents);
+        setIsLoading(false);
+      };
+    }
+  }, [yearProcessor]);
 
-    push(navigateURL(previousDate, "year"));
-  };
-
-  const handleNavigateNext = () => {
-    const nextDate = navigateDate(selectedDate, "year", "next");
-    setPendingRecord({ isPending: true, currentDate: nextDate });
-
-    push(navigateURL(nextDate, "year"));
-  };
-
-  const handleNavigateRoomChange = (value: string) => {
-    console.log(isLoading);
-  };
-
-  if (pendingRecord.isPending) {
-    return (
-      <>
-        <CalendarHeader
-          view={"year"}
-          selectedDate={pendingRecord.currentDate}
-          events={filteredEvents}
-          isLoading={pendingRecord.isPending}
-          onPreviousClick={handleNavigatePrevious}
-          onNextClick={handleNavigateNext}
-          onRoomChange={handleNavigateRoomChange}
-        />
-        <div className="p-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {getMonths(pendingRecord.currentDate).map((month) => {
-              return (
-                <YearViewMonthSkeleton
-                  key={month.toString()}
-                  totalDays={getDays(month).length}
-                  month={month}
-                ></YearViewMonthSkeleton>
-              );
-            })}
-          </div>
-        </div>
-      </>
-    );
+  if (isLoading) {
+    return <YearViewSkeleton date={date}></YearViewSkeleton>;
   }
 
   return (
     <>
-      <CalendarHeader
-        view={"year"}
-        selectedDate={pendingRecord.currentDate}
-        events={filteredEvents}
-        isLoading={pendingRecord.isPending}
-        onPreviousClick={handleNavigatePrevious}
-        onNextClick={handleNavigateNext}
-        onRoomChange={handleNavigateRoomChange}
-      />
       <div className="p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {monthViews.map((month) => {

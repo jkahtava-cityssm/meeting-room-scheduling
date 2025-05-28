@@ -14,10 +14,10 @@ import { useAllWeeklyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 
-export function CalendarWeekView() {
+export function CalendarWeekView({ date, isLoading }: { date: Date; isLoading: boolean }) {
   const { selectedDate, workingHours, visibleHours, selectedRoomId } = useCalendar();
 
-  const { events, isLoading, isError } = useAllWeeklyEvents(selectedDate, visibleHours);
+  const { events } = useAllWeeklyEvents(selectedDate, visibleHours);
 
   const filteredEvents = useMemo(() => {
     if (events) {
@@ -30,6 +30,10 @@ export function CalendarWeekView() {
 
   const weekStart = startOfWeek(selectedDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  if (isLoading) {
+    return <CalendarWeekViewSkeleton />;
+  }
 
   return (
     <>

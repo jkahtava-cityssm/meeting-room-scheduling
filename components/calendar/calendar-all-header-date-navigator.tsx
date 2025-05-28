@@ -13,14 +13,14 @@ import { IEvent } from "@/lib/schemas/schemas";
 
 export function DateNavigator({
   view,
-  events,
+  totalEvents,
   selectedDate,
   isLoading,
   onPreviousClick,
   onNextClick,
 }: {
   view: TCalendarView;
-  events: IEvent[];
+  totalEvents: number;
   selectedDate: Date;
   isLoading: boolean;
   onPreviousClick: () => void;
@@ -34,7 +34,7 @@ export function DateNavigator({
         </span>
 
         <Badge variant="outline" className={`px-1.5 ${isLoading ? "h-5.5" : ""}`}>
-          {isLoading ? <Skeleton className="w-14 h-2"></Skeleton> : events.length + " events"}
+          {isLoading ? <Skeleton className="w-14 h-2"></Skeleton> : totalEvents + " events"}
         </Badge>
       </div>
 
