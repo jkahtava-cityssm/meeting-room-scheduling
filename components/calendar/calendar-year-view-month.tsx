@@ -5,7 +5,7 @@ import { useCalendar } from "@/contexts/CalendarProvider";
 import YearViewDayCell from "@/components/calendar/calendar-year-view-day-cell";
 
 import React from "react";
-import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell";
+import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view";
 import { IEvent } from "@/lib/schemas/schemas";
 import { MonthView } from "./calendar-year-view";
 import { navigateURL } from "@/lib/helpers";

@@ -10,6 +10,10 @@ import { VISIBLE_HOURS } from "../lib/helpers";
 interface ICalendarContext {
   selectedDate: Date;
   setSelectedDate: (date: Date | undefined) => void;
+  isLoading: boolean;
+  setIsLoading: (value: boolean) => void;
+  totalEvents: number;
+  setTotalEvents: (total: number) => void;
   selectedRoomId: string;
   setSelectedRoomId: (roomId: string) => void;
   workingHours: TWorkingHours;
@@ -34,6 +38,8 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const [visibleHours, setVisibleHours] = useState<TVisibleHours>(VISIBLE_HOURS);
   const [workingHours, setWorkingHours] = useState<TWorkingHours>(WORKING_HOURS);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalEvents, setTotalEvents] = useState(0);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState<string>("-1");
 
@@ -45,6 +51,10 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   return (
     <CalendarContext.Provider
       value={{
+        isLoading,
+        setIsLoading,
+        totalEvents,
+        setTotalEvents,
         selectedDate,
         setSelectedDate: handleSelectDate,
         selectedRoomId,

@@ -18,7 +18,7 @@ import { useSession } from "@/lib/auth-client";
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const { data: session, isPending } = useSession();
-  console.log("SITE HEADER RE-RENDER????");
+  //console.log("SITE HEADER RE-RENDER????");
   //console.log(session?.user);
 
   const user = {

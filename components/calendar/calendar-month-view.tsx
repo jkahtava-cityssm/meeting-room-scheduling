@@ -33,14 +33,14 @@ function getSelectedDate(selectedDate: string | null) {
   return selectedDate !== null ? parse(selectedDate, "yyyy-MM", new Date()) : new Date();
 }
 
-export function CalendarMonthView() {
+export function CalendarMonthView({ date, isLoading }: { date: Date; isLoading: boolean }) {
   const searchParams = useSearchParams();
 
   const value = searchParams.get("selectedDate");
   const selectedDate = getSelectedDate(value);
   const { selectedRoomId, visibleHours } = useCalendar();
 
-  const { events, isLoading, isError } = useAllMonthlyEvents(selectedDate, visibleHours);
+  const { events } = useAllMonthlyEvents(selectedDate, visibleHours);
 
   const [isRendered, setRendered] = useState(false);
 
@@ -64,14 +64,12 @@ export function CalendarMonthView() {
     [filteredEvents, selectedDate]
   );
 
+  if (isLoading) {
+    return <MonthViewDayCellSkeleton date={date} />;
+  }
+
   return (
-    <div>
-      <CalendarHeader
-        view={"month"}
-        selectedDate={selectedDate}
-        events={filteredEvents}
-        isLoading={isLoading || !isRendered}
-      />
+    <>
       <div className="grid grid-cols-7 divide-x">
         {WEEK_DAYS.map((day) => (
           <div key={day} className="flex items-center justify-center py-2">
@@ -95,7 +93,7 @@ export function CalendarMonthView() {
           )
         )}
       </div>
-    </div>
+    </>
   );
 }
 

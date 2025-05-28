@@ -1,29 +1,26 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { navigateURL } from "@/lib/helpers";
-import { format } from "date-fns";
+import { format, getDaysInMonth, startOfMonth } from "date-fns";
 import { useRouter } from "next/navigation";
 
-export function YearViewMonthSkeleton({
-  totalDays = 36,
-  month = null,
-}: {
-  totalDays?: number;
-  showHeader?: boolean;
-  month?: Date | null;
-}) {
+function getDays(selectedDate: Date) {
+  const totalDays = getDaysInMonth(selectedDate);
+  const firstDay = startOfMonth(selectedDate).getDay();
+
+  const days: number[] = Array.from({ length: totalDays }, (_, i) => i + 1);
+
+  const blanks: number[] = Array.from({ length: firstDay }, (_, i) => i * -1).reverse();
+  return [...blanks, ...days];
+}
+
+export function YearViewMonthSkeleton({ date }: { date: Date }) {
   const { push } = useRouter();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const handleClick = () => {
-    if (month) {
-      push(navigateURL(month, "month"));
-    }
-  };
 
   return (
     <div className="flex flex-col">
       <Skeleton className="w-full h-10 rounded-t-lg rounded-b-none border px-3 py-2 text-sm font-semibold text-center">
-        {month && format(month, "MMMM")}
+        {format(date, "MMMM")}
       </Skeleton>
       <div className="flex-1 space-y-2 rounded-b-lg border border-t-0 p-3">
         <div className="grid grid-cols-7 gap-x-0.5 text-center">
@@ -35,7 +32,8 @@ export function YearViewMonthSkeleton({
         </div>
 
         <div className="grid grid-cols-7 gap-x-0.5 gap-y-2">
-          {[...Array(totalDays).keys()].map((index) => {
+          {getDays(date).map((day, index) => {
+            if (day <= 0) return <div key={index} className="h-10" />;
             return (
               <Skeleton
                 key={index}

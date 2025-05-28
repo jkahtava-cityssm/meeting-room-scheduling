@@ -76,11 +76,11 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
 
 export function navigateURL(date: Date, view: TCalendarView): string {
   const path = {
-    agenda: "agenda-view?selectedDate=",
-    year: "year-view?selectedDate=",
-    month: "month-view?selectedDate=",
-    week: "week-view?selectedDate=",
-    day: "day-view?selectedDate=",
+    agenda: "calendar?view=agenda&selectedDate=",
+    year: "calendar?view=year&selectedDate=",
+    month: "calendar?view=month&selectedDate=",
+    week: "calendar?view=week&selectedDate=",
+    day: "calendar?view=day&selectedDate=",
   };
 
   const formatDate = (view: TCalendarView, value: Date) => {
@@ -90,7 +90,7 @@ export function navigateURL(date: Date, view: TCalendarView): string {
       case "month":
         return format(value, "yyyy-MM");
       case "week":
-        return format(value, "yyyy-ww");
+        return format(value, "RRRR-II");
       case "agenda":
       case "day":
       default:

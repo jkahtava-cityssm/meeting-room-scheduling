@@ -54,23 +54,23 @@ const data = {
       items: [
         {
           title: "Calendar - Daily Agenda",
-          url: "/private/calendar/" + navigateURL(new Date(), "agenda"),
+          url: "/private/" + navigateURL(new Date(), "agenda"),
         },
         {
           title: "Calendar - Day",
-          url: "/private/calendar/" + navigateURL(new Date(), "day"),
+          url: "/private/" + navigateURL(new Date(), "day"),
         },
         {
           title: "Calendar - Week",
-          url: "/private/calendar/" + navigateURL(new Date(), "week"),
+          url: "/private/" + navigateURL(new Date(), "week"),
         },
         {
           title: "Calendar - Month",
-          url: "/private/calendar/" + navigateURL(new Date(), "month"),
+          url: "/private/" + navigateURL(new Date(), "month"),
         },
         {
           title: "Calendar - Year",
-          url: "/private/calendar/" + navigateURL(new Date(), "year"),
+          url: "/private/" + navigateURL(new Date(), "year"),
         },
       ],
     },
