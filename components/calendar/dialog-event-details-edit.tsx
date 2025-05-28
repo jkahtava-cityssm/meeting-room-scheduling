@@ -23,12 +23,11 @@ import { updateEvent } from "@/services/events";
 export function EditEvent({
   event,
   rooms,
-  fetchData,
   setIsEditable,
 }: {
   event: IEvent;
   rooms: IRoom[];
-  fetchData: () => Promise<void>;
+
   setIsEditable: (value: SetStateAction<boolean>) => void;
 }) {
   const getDurationText = (startDate: Date, startTime: Date, endDate: Date, endTime: Date): string => {
@@ -78,8 +77,6 @@ export function EditEvent({
       startDate: startDateTime,
       endDate: endDateTime,
     });
-
-    fetchData();
   };
 
   return (

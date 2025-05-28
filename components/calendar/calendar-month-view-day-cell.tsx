@@ -7,19 +7,10 @@ import type { ICalendarCell } from "@/lib/interfaces";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Button } from "../ui/button";
 import { IEvent } from "@/lib/schemas/schemas";
+import { DayView } from "./calendar-month-view";
 
-export function MonthViewDayCell({
-  cell,
-  events,
-  eventPositions,
-  fetchData,
-}: {
-  cell: ICalendarCell;
-  events: IEvent[];
-  eventPositions: Record<string, number>;
-  fetchData: () => Promise<void>;
-}) {
-  const { day, currentMonth, date } = cell;
+export function MonthViewDayCell({ dayRecord }: { dayRecord: DayView }) {
+  /* const { day, currentMonth, date } = cell;
 
   const cellEvents = useMemo(() => getMonthCellEvents(date, events, eventPositions), [date, events, eventPositions]);
   const isSunday = date.getDay() === 0;
@@ -34,6 +25,13 @@ export function MonthViewDayCell({
 
   if (maxPosition > MAX_VISIBLE_EVENTS) {
     maxPosition = MAX_VISIBLE_EVENTS;
+  }*/
+
+  const currentMonth: boolean = true;
+  const isSunday: boolean = false;
+
+  if (!dayRecord) {
+    return;
   }
 
   return (
@@ -43,10 +41,10 @@ export function MonthViewDayCell({
         className={cn(
           "flex w-8 translate-x-1 items-center justify-center h-4 px-1 text-xs font-semibold lg:px-2",
           !currentMonth && "opacity-20 hover:bg-primary/20",
-          isToday(date) && "rounded-full bg-primary px-0 font-bold text-primary-foreground"
+          dayRecord.isToday && "rounded-full bg-primary px-0 font-bold text-primary-foreground"
         )}
       >
-        {day}
+        {dayRecord.day}
       </Button>
       {/*<span
         className={cn(
@@ -61,26 +59,25 @@ export function MonthViewDayCell({
       <div className={cn("flex h-6 gap-1 px-2 sm:h-18 lg:h-23 sm:flex-col sm:px-0", !currentMonth && "opacity-50")}>
         <ScrollArea type="always" className="max-h-[200px] overflow-y-auto overflow-x-hidden">
           <div className="flex flex-col gap-1 ">
-            {[...Array(maxPosition + 1).keys()].map((position) => {
-              const event = cellEvents.find((e) => e.position === position);
-              const eventKey = event ? `event-${event.eventId}-${position}` : `empty-${position}`;
+            {dayRecord.eventRecords.map((record, index) => {
+              //const event = cellEvents.find((e) => e.position === position);
+              const eventKey = record.event
+                ? `event-${record.event.eventId}-${dayRecord.dayDate.toISOString()}-${index}`
+                : `empty-${record.position}`;
 
-              if (event) {
+              if (record.event) {
                 return (
                   <div key={eventKey} className="md:flex-1">
-                    {event && (
+                    {record.event && (
                       <MonthEventBadge
                         className="hidden sm:flex"
-                        event={event}
-                        cellDate={startOfDay(date)}
-                        fetchData={fetchData}
+                        event={record.event}
+                        cellDate={startOfDay(dayRecord.dayDate)}
                       />
                     )}
                   </div>
                 );
-              } else if (position < maxPosition + 1) {
-                //WHEN THERE ARE MULTIPLE EVENTS THAT SPAN ACROSS COLUMNS WE ADD A BLANK ENTRY TO KEEP THE MULTI DAY EVENTS
-                //ON IN THE SAME ROW WHEN POSSIBLE
+              } else {
                 return (
                   <div key={eventKey} className="md:flex-1">
                     <div className={cn(eventBadgeVariants({ color: "invisible" }), "hidden sm:flex")}></div>
@@ -92,10 +89,18 @@ export function MonthViewDayCell({
         </ScrollArea>
       </div>
       <p className={cn("h-4.5 px-1.5 text-xs font-semibold text-muted-foreground", !currentMonth && "opacity-50")}>
-        {cellEvents.length > 0 && <span className="sm:hidden">+{cellEvents.length}</span>}
-        {cellEvents.length > MAX_VISIBLE_EVENTS && (
-          <span className="hidden sm:block"> {cellEvents.length - MAX_VISIBLE_EVENTS} more...</span>
+        {dayRecord.eventRecords.length > 0 && <span className="sm:hidden">+{dayRecord.eventRecords.length}</span>}
+        {dayRecord.eventRecords.length > 0 && (
+          <span className="hidden sm:block"> {dayRecord.eventRecords.length} events</span>
         )}
+        {
+          //cellEvents.length > 0 && <span className="sm:hidden">+{cellEvents.length}</span>
+        }
+        {
+          //cellEvents.length > MAX_VISIBLE_EVENTS && (
+          //<span className="hidden sm:block"> {cellEvents.length - MAX_VISIBLE_EVENTS} more...</span>
+          //)
+        }
       </p>
     </div>
   );

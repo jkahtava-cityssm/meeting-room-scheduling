@@ -45,7 +45,7 @@ export function CalendarYearView({ date }: { date: Date }) {
   const [monthViews, setMonthViews] = useState<MonthView[]>([]);
 
   const [isLoading, setLoading] = useState(true);
-  const [isProcessing, setProcessing] = useState(false);
+  const [isRefreshed, setRefreshed] = useState(false);
 
   const startDate: Date = startOfYear(date);
   const endDate: Date = endOfYear(date);
@@ -59,6 +59,14 @@ export function CalendarYearView({ date }: { date: Date }) {
   );
 
   useEffect(() => {
+    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+    //nextjs cache's the route so this is my temporary fix
+    setRefreshed(true);
+  }, []);
+
+  useEffect(() => {
+    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
+    //But this example will come in handy for other applications
     const newWorker = new Worker(new URL("./calendar-year-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<YearResponseData>) => {
@@ -96,7 +104,7 @@ export function CalendarYearView({ date }: { date: Date }) {
 
       workerInstance.postMessage(data);
     }
-  }, [events, recurringEvents, date, selectedRoomId, visibleHours]);
+  }, [events, recurringEvents, date, selectedRoomId, visibleHours, isRefreshed]);
 
   if (isLoading) {
     return <YearViewSkeleton date={date}></YearViewSkeleton>;
