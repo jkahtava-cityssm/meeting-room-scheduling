@@ -33,6 +33,7 @@ export const SEvent = z.object({
   recurrence: SRecurrence.nullish(),
   createdAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
   updatedAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
+  isMultipleDays: z.boolean().default(false).nullish(),
 });
 
 export type IEvent = z.infer<typeof SEvent>;

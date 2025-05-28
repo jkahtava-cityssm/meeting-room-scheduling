@@ -18,15 +18,7 @@ import { getRooms } from "@/services/rooms";
 import { setTimeout } from "timers";
 import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
 
-export function EventDetailsDialog({
-  event,
-  children,
-  fetchData,
-}: {
-  event: IEvent;
-  children: React.ReactNode;
-  fetchData: () => Promise<void>;
-}) {
+export function EventDetailsDialog({ event, children }: { event: IEvent; children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
   const [isLoading, setLoading] = useState(true);
@@ -73,7 +65,7 @@ export function EventDetailsDialog({
           </DialogHeader>
           {isEditable && isLoading && <EditEventSkeleton></EditEventSkeleton>}
           {isEditable && currentEvent !== undefined && !isLoading && (
-            <EditEvent event={currentEvent} rooms={rooms} fetchData={fetchData} setIsEditable={setIsEditable} />
+            <EditEvent event={currentEvent} rooms={rooms} setIsEditable={setIsEditable} />
           )}
           {!isEditable && <ReadEvent event={event} setIsEditable={setIsEditable} />}
         </DialogContent>

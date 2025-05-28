@@ -17,9 +17,13 @@ import { useAllDailyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 
-export function CalendarDayView({ date, isLoading }: { date: Date; isLoading: boolean }) {
-  const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours } = useCalendar();
+export function CalendarDayView({ date }: { date: Date }) {
+  const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours, setIsHeaderLoading } =
+    useCalendar();
+
   const [currentMonth, setCurrentMonth] = useState<Date>(selectedDate);
+  const [isLoading, setLoading] = useState(true);
+  const [isRefreshed, setRefreshed] = useState(false);
 
   const { events } = useAllDailyEvents(selectedDate, visibleHours);
 

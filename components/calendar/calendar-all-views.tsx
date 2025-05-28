@@ -55,7 +55,7 @@ export function CalendarAllViews() {
       <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} />
 
       {view === "day" && <CalendarDayView date={dateValue} isLoading={false} />}
-      {view === "month" && <CalendarMonthView date={dateValue} isLoading={false} />}
+      {view === "month" && <CalendarMonthView date={dateValue} />}
       {view === "week" && <CalendarWeekView date={dateValue} isLoading={false} />}
       {view === "year" && <CalendarYearView date={dateValue} />}
       {view === "agenda" && <CalendarAgendaView date={dateValue} isLoading={false} />}
