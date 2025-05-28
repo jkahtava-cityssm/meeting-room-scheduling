@@ -65,9 +65,10 @@ function getSelectedDate(selectedDate: string | null) {
 
 export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: boolean }) {
   const { selectedRoomId, visibleHours, setIsLoading, setTotalEvents } = useCalendar();
-  const [monthViews, setMonthViews] = useState<MonthView[]>([]);
 
-  //const [isPending, setIsPending] = useState(true);
+  const [workerInstance, setWorkerInstance] = useState<Worker>();
+
+  const [monthViews, setMonthViews] = useState<MonthView[]>([]);
 
   const startDate: Date = startOfYear(date);
   const endDate: Date = endOfYear(date);
@@ -80,14 +81,32 @@ export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: b
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
-  const yearProcessor = useMemo(() => new Worker(new URL("./calendar-year-webworker.ts", import.meta.url)), []);
+  //const yearProcessor = useMemo(() => new Worker(new URL("./calendar-year-webworker.ts", import.meta.url)), []);
+
+  useEffect(() => {
+    const newWorker = new Worker(new URL("./calendar-year-webworker.ts", import.meta.url));
+
+    newWorker.onmessage = (event: MessageEvent<YearResponseData>) => {
+      setMonthViews(event.data.monthsViews);
+      setTotalEvents(event.data.totalEvents);
+      setIsLoading(false);
+    };
+
+    setWorkerInstance(newWorker);
+
+    return () => {
+      if (workerInstance) {
+        workerInstance.terminate();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!events || !recurringEvents) {
       return;
     }
 
-    if (window.Worker) {
+    /*if (window.Worker) {
       const data: YearProcessData = {
         eventList: events,
         recurringEventList: recurringEvents,
@@ -97,20 +116,20 @@ export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: b
         visibleHours: visibleHours,
       };
       yearProcessor.postMessage(data);
+    }*/
+
+    if (workerInstance) {
+      const data: YearProcessData = {
+        eventList: events,
+        recurringEventList: recurringEvents,
+        selectedDate: date,
+        selectedRoomId: selectedRoomId,
+
+        visibleHours: visibleHours,
+      };
+      workerInstance.postMessage(data);
     }
   }, [events, recurringEvents, date, selectedRoomId, visibleHours]);
-
-  useEffect(() => {
-    if (window.Worker) {
-      yearProcessor.onmessage = (event: MessageEvent<YearResponseData>) => {
-        const response = event.data;
-        console.log(response);
-        setMonthViews(event.data.monthsViews);
-        setTotalEvents(event.data.totalEvents);
-        setIsLoading(false);
-      };
-    }
-  }, [yearProcessor]);
 
   if (isLoading) {
     return <YearViewSkeleton date={date}></YearViewSkeleton>;
