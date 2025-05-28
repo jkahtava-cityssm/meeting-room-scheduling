@@ -38,8 +38,6 @@ function getViewDate(dateParam: string | null, view: string) {
 }*/
 
 export function CalendarAllViews() {
-  const { isLoading, setIsLoading, workingHours, visibleHours, selectedRoomId } = useCalendar();
-
   const searchParams = useSearchParams();
 
   const dateParam = searchParams.get("selectedDate");
@@ -49,18 +47,18 @@ export function CalendarAllViews() {
   const dateValue = getViewDate(dateParam, view);
 
   useEffect(() => {
-    setIsLoading(true);
+    //setIsLoading(true);
   }, [viewParam, dateParam]);
 
   return (
     <div className="overflow-hidden rounded-xl border">
       <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} />
 
-      {view === "day" && <CalendarDayView date={dateValue} isLoading={isLoading} />}
-      {view === "month" && <CalendarMonthView date={dateValue} isLoading={isLoading} />}
-      {view === "week" && <CalendarWeekView date={dateValue} isLoading={isLoading} />}
-      {view === "year" && <CalendarYearView date={dateValue} isLoading={isLoading} />}
-      {view === "agenda" && <CalendarAgendaView date={dateValue} isLoading={isLoading} />}
+      {view === "day" && <CalendarDayView date={dateValue} isLoading={false} />}
+      {view === "month" && <CalendarMonthView date={dateValue} isLoading={false} />}
+      {view === "week" && <CalendarWeekView date={dateValue} isLoading={false} />}
+      {view === "year" && <CalendarYearView date={dateValue} />}
+      {view === "agenda" && <CalendarAgendaView date={dateValue} isLoading={false} />}
     </div>
   );
 }

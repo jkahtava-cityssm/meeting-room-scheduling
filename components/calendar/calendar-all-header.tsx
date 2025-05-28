@@ -14,50 +14,8 @@ import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
 import { addHours, addWeeks, format } from "date-fns";
 
-function DayButton({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
-  return (
-    <Button
-      asChild
-      aria-label="View by day"
-      size="icon"
-      variant={view === "day" ? "default" : "outline"}
-      className="rounded-r-none [&_svg]:size-5"
-    >
-      <Link href={navigateURL(selectedDate, "day")}>
-        <List strokeWidth={1.8} />
-      </Link>
-    </Button>
-  );
-}
-
-function YearButton({
-  view,
-  selectedDate,
-  isLoading,
-}: {
-  view: TCalendarView;
-  selectedDate: Date;
-  isLoading: boolean;
-}) {
-  console.log(isLoading, view);
-  return (
-    <Button
-      key={"yearButton"}
-      asChild
-      aria-label="View by year"
-      size="icon"
-      variant={view === "year" ? "default" : "outline"}
-      className="-ml-px rounded-none [&_svg]:size-5"
-    >
-      <Link href={navigateURL(selectedDate, "year")}>
-        <Grid3x3 strokeWidth={1.8} />
-      </Link>
-    </Button>
-  );
-}
-
 export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
-  const { isLoading, totalEvents, setSelectedRoomId } = useCalendar();
+  const { isHeaderLoading, totalEvents, setSelectedRoomId } = useCalendar();
   const { push } = useRouter();
 
   const handleNavigatePrevious = () => {
@@ -85,7 +43,7 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
             view={view}
             selectedDate={selectedDate}
             totalEvents={totalEvents}
-            isLoading={isLoading}
+            isLoading={isHeaderLoading}
             onPreviousClick={handleNavigatePrevious}
             onNextClick={handleNavigateNext}
           />
@@ -94,7 +52,17 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
           <div className="flex w-full items-center gap-1.5">
             <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
-              <DayButton view={view} selectedDate={selectedDate} />
+              <Button
+                asChild
+                aria-label="View by day"
+                size="icon"
+                variant={view === "day" ? "default" : "outline"}
+                className="rounded-r-none [&_svg]:size-5"
+              >
+                <Link href={navigateURL(selectedDate, "day")}>
+                  <List strokeWidth={1.8} />
+                </Link>
+              </Button>
 
               <Button
                 asChild
@@ -120,7 +88,17 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
                 </Link>
               </Button>
 
-              <YearButton view={view} selectedDate={selectedDate} isLoading={isLoading}></YearButton>
+              <Button
+                asChild
+                aria-label="View by year"
+                size="icon"
+                variant={view === "year" ? "default" : "outline"}
+                className="-ml-px rounded-none [&_svg]:size-5"
+              >
+                <Link href={navigateURL(selectedDate, "year")}>
+                  <Grid3x3 strokeWidth={1.8} />
+                </Link>
+              </Button>
 
               <Button
                 asChild

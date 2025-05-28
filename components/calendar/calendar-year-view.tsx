@@ -1,33 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, lazy, Suspense, useTransition } from "react";
-import {
-  addMonths,
-  endOfYear,
-  format,
-  getDaysInMonth,
-  isSameDay,
-  isToday,
-  parse,
-  startOfMonth,
-  startOfYear,
-} from "date-fns";
+import { useEffect, useState } from "react";
+import { endOfYear, startOfYear } from "date-fns";
 
 import { useCalendar } from "@/contexts/CalendarProvider";
-
-import { CalendarHeader } from "./calendar-all-header";
 import YearViewMonth from "./calendar-year-view-month";
-import {
-  generateMultiDayEventsInPeriod,
-  generateRecurringEventsInPeriod,
-  useAllYearlyEvents,
-  useEvents,
-} from "@/services/events";
-import { filterEventsByRoom, navigateDate, navigateURL } from "../../lib/helpers";
 import { IEvent } from "@/lib/schemas/schemas";
-import { forEach } from "lodash";
 import useSWR from "swr";
-import { useSearchParams, useRouter } from "next/navigation";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";
 
@@ -59,16 +38,14 @@ export interface YearResponseData {
   monthsViews: MonthView[];
 }
 
-function getSelectedDate(selectedDate: string | null) {
-  return selectedDate !== null ? startOfYear(parse(selectedDate, "yyyy", new Date())) : startOfYear(new Date());
-}
-
-export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: boolean }) {
-  const { selectedRoomId, visibleHours, setIsLoading, setTotalEvents } = useCalendar();
+export function CalendarYearView({ date }: { date: Date }) {
+  const { selectedRoomId, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
   const [workerInstance, setWorkerInstance] = useState<Worker>();
-
   const [monthViews, setMonthViews] = useState<MonthView[]>([]);
+
+  const [isLoading, setLoading] = useState(true);
+  const [isProcessing, setProcessing] = useState(false);
 
   const startDate: Date = startOfYear(date);
   const endDate: Date = endOfYear(date);
@@ -81,15 +58,14 @@ export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: b
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
-  //const yearProcessor = useMemo(() => new Worker(new URL("./calendar-year-webworker.ts", import.meta.url)), []);
-
   useEffect(() => {
     const newWorker = new Worker(new URL("./calendar-year-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<YearResponseData>) => {
       setMonthViews(event.data.monthsViews);
       setTotalEvents(event.data.totalEvents);
-      setIsLoading(false);
+      setIsHeaderLoading(false);
+      setLoading(false);
     };
 
     setWorkerInstance(newWorker);
@@ -99,24 +75,12 @@ export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: b
         workerInstance.terminate();
       }
     };
-  }, []);
+  }, [date]);
 
   useEffect(() => {
     if (!events || !recurringEvents) {
       return;
     }
-
-    /*if (window.Worker) {
-      const data: YearProcessData = {
-        eventList: events,
-        recurringEventList: recurringEvents,
-        selectedDate: date,
-        selectedRoomId: selectedRoomId,
-
-        visibleHours: visibleHours,
-      };
-      yearProcessor.postMessage(data);
-    }*/
 
     if (workerInstance) {
       const data: YearProcessData = {
@@ -127,6 +91,9 @@ export function CalendarYearView({ date, isLoading }: { date: Date; isLoading: b
 
         visibleHours: visibleHours,
       };
+      setLoading(true);
+      setIsHeaderLoading(true);
+
       workerInstance.postMessage(data);
     }
   }, [events, recurringEvents, date, selectedRoomId, visibleHours]);
