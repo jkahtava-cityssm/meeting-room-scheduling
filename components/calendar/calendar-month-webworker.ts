@@ -1,132 +1,295 @@
 import { IEvent, SEvent } from "@/lib/schemas/schemas";
-import { TVisibleHours } from "@/lib/types";
-import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/services/events";
 import {
-  addMonths,
-  differenceInDays,
+  addDays,
   eachDayOfInterval,
   endOfMonth,
-  endOfYear,
   format,
   getDaysInMonth,
   isSameDay,
+  isSameMonth,
+  isSunday,
   isToday,
-  parseJSON,
-  startOfDay,
+  parse,
   startOfMonth,
-  startOfYear,
+  subDays,
 } from "date-fns";
-import { DayView, MonthView, YearProcessData, YearResponseData } from "./calendar-year-view";
-import { filterEventsByRoom, MAX_VISIBLE_EVENTS } from "../../lib/helpers";
-import { MonthProcessData } from "./calendar-month-view";
+
+import { DayView, EventView, MonthProcessData, MonthResponseData, WeekView } from "./calendar-month-view";
 import { z } from "zod";
+import { uniq, uniqBy } from "lodash";
+
+import { filterEventsByRoom, getDaysInView } from "../../lib/helpers";
 
 self.onmessage = (event: MessageEvent<MonthProcessData>) => {
   if (event.data) {
-    const result = calculateEventPositions(event.data);
+    const result = processMonthEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function calculateEventPositions(monthData: MonthProcessData) {
-  const monthStart = startOfMonth(monthData.selectedDate);
-  const monthEnd = endOfMonth(monthData.selectedDate);
+function processMonthEvents(monthData: MonthProcessData): MonthResponseData {
+  const { startDate: monthStart, endDate: monthEnd } = getDaysInView(monthData.selectedDate);
 
   const events = z.array(SEvent).parse(monthData.events);
 
-  /*const roomEvents = events.filter((event:IEvent) => {
-    return event.roomId.toString() === monthData.selectedRoomId
-  })*/
+  const filteredEvents: IEvent[] = filterEventsByRoom(events, monthData.selectedRoomId);
 
-  const multiDayEvents = events.filter((event: IEvent) => {
-    return !isSameDay(event.startDate, event.endDate);
-  });
+  filteredEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
-  const singleDayEvents = events.filter((event: IEvent) => {
-    return isSameDay(event.startDate, event.endDate);
-  });
+  const packedEvents = packEvents(filteredEvents, monthStart, monthEnd, monthData.multiDayEventsAtTop);
 
-  /*
-  MULTI DAY EVENTS NEED TO BE IDENTIFIED FIRST
-  - ADD ALL EVENTS TO EACH DAY
-  - SORT EACH DAYS EVENTS
-  - FIND THE DAY WITH THE MOST EVENTS WORKING DOWN
-  
-  */
+  const dayViews: DayView[] = [];
+  const weekViews: WeekView[] = [];
 
-  const eventPositions: { [key: string]: number } = {};
-  const occupiedPositions: { [key: string]: boolean[] } = {};
+  let index = 0;
 
-  //FILL OCCUPIED POSITIONS WITH EVERY DATE BETWEEN START AND END
-  eachDayOfInterval({ start: monthStart, end: monthEnd }).forEach((day) => {
-    occupiedPositions[day.toISOString()] = [false, false, false];
-  });
-
-  //SORT ALL THE EVENTS
-  const sortedEvents = [
-    ...multiDayEvents.sort((firstEvent, secondEvent) => {
-      const aDuration = differenceInDays(firstEvent.endDate, firstEvent.startDate);
-      const bDuration = differenceInDays(secondEvent.endDate, secondEvent.startDate);
-
-      const firstEventTime = firstEvent.startDate.getTime();
-      const secondEventTime = secondEvent.startDate.getTime();
-      return bDuration - aDuration || firstEventTime - secondEventTime;
-    }),
-    ...singleDayEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
-  ];
-
-  sortedEvents.forEach((event) => {
-    const eventStart = event.startDate;
-    const eventEnd = event.endDate;
-
-    const eventDays = eachDayOfInterval({
-      start: eventStart < monthStart ? monthStart : eventStart,
-      end: eventEnd > monthEnd ? monthEnd : eventEnd,
+  for (let day in packedEvents) {
+    const parsedDate = parse(day, "yyyy-MM-dd", new Date());
+    const dailyEvents = filteredEvents.filter((event) => {
+      return format(event.startDate, "yyyy-MM-dd") === day;
     });
 
-    let position = -1;
+    const eventViews: EventView[] = [];
 
-    for (let i = 0; i < MAX_VISIBLE_EVENTS; i++) {
-      if (
-        eventDays.every((day) => {
-          //LOOKUP IF THE OCCUPIED POSITION IS FOUND
-          const dayPositions = occupiedPositions[startOfDay(day).toISOString()];
-          return dayPositions && !dayPositions[i];
-        })
-      ) {
-        position = i;
-        break;
+    for (let index = 0; index < packedEvents[day].length; index++) {
+      const packedEventId = packedEvents[day][index];
+
+      if (packedEventId !== null) {
+        const matchingEvent = dailyEvents.find((event) => event.eventId === packedEventId);
+        const position = matchingEvent?.multiDay ? matchingEvent.multiDay.position : "none";
+        const newEventView: EventView = { index: index, position: position, event: matchingEvent };
+        eventViews.push(newEventView);
       }
     }
 
-    if (position !== -1) {
-      eventDays.forEach((day) => {
-        const dayKey = startOfDay(day).toISOString();
-        occupiedPositions[dayKey][position] = true;
-      });
-      eventPositions[event.eventId] = position;
+    const dayView: DayView = {
+      day: parsedDate.getDate(),
+      dayDate: parsedDate,
+      eventRecords: eventViews,
+      isToday: isToday(parsedDate),
+      isSunday: isSunday(parsedDate),
+      isCurrentMonth: isSameMonth(monthData.selectedDate, parsedDate),
+    };
+
+    dayViews.push(dayView);
+
+    const weekIndex = Math.floor(index / 7);
+    if (weekViews.length < weekIndex + 1) {
+      weekViews.push({ week: weekIndex, maxDailyEvents: 0, dayViews: [] });
+      weekViews[weekIndex].dayViews.push(dayView);
+    } else {
+      weekViews[weekIndex].dayViews.push(dayView);
+    }
+
+    index++;
+  }
+
+  let totalEventsInMonth = 0;
+  for (let week = 0; week < weekViews.length; week++) {
+    let mostEventsInDay = 0;
+    for (let day = 0; day < weekViews[week].dayViews.length; day++) {
+      const total = weekViews[week].dayViews[day].eventRecords.length;
+      if (total > mostEventsInDay) {
+        mostEventsInDay = total;
+      }
+
+      if (weekViews[week].dayViews[day].isCurrentMonth) {
+        totalEventsInMonth += total;
+      }
+    }
+    weekViews[week].maxDailyEvents = mostEventsInDay;
+  }
+
+  return { dayViews: dayViews, totalEvents: totalEventsInMonth, weekViews: weekViews };
+}
+
+function getMaxEventsInDay(listOfDaysInMonth: Date[], events: IEvent[]) {
+  let totalEventsInDay = 0;
+
+  listOfDaysInMonth.forEach((day) => {
+    const totalEventToday = events.filter((event: IEvent) => {
+      return isSameDay(day, event.startDate);
+    }).length;
+
+    if (totalEventToday > totalEventsInDay) {
+      totalEventsInDay = totalEventToday;
     }
   });
+
+  return totalEventsInDay;
+}
+/**
+ *
+ * @param parsedEvents requires a sorted event list that is parsed by zod
+ * @param startDate
+ * @param endDate
+ * @returns
+ */
+function packEvents(parsedEvents: IEvent[], startDate: Date, endDate: Date, multiDayEventsAtTop: boolean) {
+  const listOfDaysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
+  const eventPositions: { [key: string]: (number | null)[] } = {};
+
+  const maxEvents = getMaxEventsInDay(listOfDaysInMonth, parsedEvents);
+
+  listOfDaysInMonth.forEach((day) => {
+    //occupiedPositions[day.toISOString()] = [false, false, false];
+    eventPositions[format(day, "yyyy-MM-dd")] = [
+      ...Array(maxEvents)
+        .keys()
+        .map(() => {
+          return null;
+        }),
+    ];
+  });
+  mutateMultiDayEventPositions(parsedEvents, eventPositions, multiDayEventsAtTop);
+  mutateSingleDayEventPositions(parsedEvents, eventPositions, listOfDaysInMonth);
 
   return eventPositions;
 }
 
-function getMonthCellEvents(date: Date, events: IEvent[], eventPositions: Record<string, number>) {
-  const eventsForDate = events.filter((event) => {
-    const eventStart = event.startDate;
-    const eventEnd = event.endDate;
-    return (date >= eventStart && date <= eventEnd) || isSameDay(date, eventStart) || isSameDay(date, eventEnd);
+function mutateMultiDayEventPositions(
+  parsedEvents: IEvent[],
+  eventPositions: { [key: string]: (number | null)[] },
+  multiDayEventsAtTop: boolean = false
+) {
+  const multiDayEvents = parsedEvents.filter((event: IEvent) => {
+    return event.multiDay !== undefined;
   });
 
-  return eventsForDate
-    .map((event) => ({
-      ...event,
-      position: eventPositions[event.eventId] ?? -1,
-      isMultiDay: !isSameDay(event.endDate, event.startDate), // event.startDate !== event.endDate,
-    }))
-    .sort((a, b) => {
-      if (a.isMultiDay && !b.isMultiDay) return -1;
-      if (!a.isMultiDay && b.isMultiDay) return 1;
-      return a.position - b.position;
+  const firstDayEvents = uniqBy(multiDayEvents, "eventId");
+  const firstDaysToProcess = uniq(
+    firstDayEvents.map((event) => {
+      return format(event.startDate, "yyyy-MM-dd");
+    })
+  );
+
+  firstDaysToProcess.forEach((dateString) => {
+    //GET THE POSITION LIST
+    const currentDay = eventPositions[dateString];
+    //GET THE MULTIDAY EVENTID'S THAT HAVE THEIR FIRST DAY ON TODAY
+    const multiDayEvents = firstDayEvents
+      .filter((event) => {
+        return dateString === format(event.startDate, "yyyy-MM-dd");
+      })
+      .map((event) => {
+        return event.eventId;
+      });
+    //GET ALL THE EVENTS THAT OCCUR TODAY INCLUDING THE MULTI DAY EVENTS
+    const eventsToday = parsedEvents.filter((event: IEvent) => {
+      const isMultiDayFilter = multiDayEventsAtTop ? multiDayEvents.includes(event.eventId) : true;
+      const isMatchingDate = dateString === format(event.startDate, "yyyy-MM-dd");
+      return isMatchingDate && isMultiDayFilter;
     });
+
+    //ADD ALL THE EVENTS INTO THEIR POSITIONS
+    eventsToday.forEach((currentEvent) => {
+      //IF THE EVENT ALREADY EXISTS IN THE CURRENT POSITION LIST SKIP IT
+
+      if (currentDay.includes(currentEvent.eventId)) {
+        return;
+      }
+
+      for (let index = 0; index < currentDay.length; index++) {
+        //IF THE POSITION IS EMPTY ADD AN EVENT
+        if (currentDay[index] === null) {
+          //CHECK IF THE EVENT BEING ADDED IS A MULTI-DAY EVENT
+          eventPositions[dateString][index] = currentEvent.eventId;
+
+          if (multiDayEvents.includes(currentEvent.eventId)) {
+            //GET THE WHOLE SERIES FOR THE GIVEN MULTI-DAY EVENT
+            const multiDayEventSeries = parsedEvents.filter((event) => {
+              return currentEvent.eventId === event.eventId && event.multiDay !== undefined;
+            });
+            //UPDATE ALL OF THE POSITIONS IN EVERY OTHER DAY THAT THIS SERIES INTERSECTS WITH
+            multiDayEventSeries.forEach((series) => {
+              eventPositions[format(series.startDate, "yyyy-MM-dd")][index] = currentEvent.eventId;
+            });
+          }
+          return;
+        }
+      }
+    });
+  });
+
+  //IF ALL THE MULTI DAY EVENTS ARE AT THE TOP WE NEED TO ADD IN SOME BLANK VALUES
+  //TO ENSURE THAT THE SYSTEM DOESNT INSERT EVENTS
+  //WE ALSO THEN NEED TO EXTEND THE EVENTPOSITION ARRAY BECAUSE SOME EVENTS WILL NO LONGER FIT
+  if (multiDayEventsAtTop) {
+    let maxMultiEventIndex = 0;
+
+    for (let day in eventPositions) {
+      let lastEventIdIndex = 0;
+      //FIND THE LAST MULTI-DAY EVENT ADDED
+      for (let index = 0; index < eventPositions[day].length; index++) {
+        const eventId = eventPositions[day][index];
+        if (eventId !== null) {
+          lastEventIdIndex = index;
+        }
+      }
+      //NOW WE KNOW THE LAST INDEX FILL THE SPOTS BETWEEN
+      for (let index = 0; index < lastEventIdIndex; index++) {
+        const eventId = eventPositions[day][index];
+        if (eventId === null) {
+          eventPositions[day][index] = 0;
+        }
+      }
+
+      if (lastEventIdIndex > maxMultiEventIndex) {
+        maxMultiEventIndex = lastEventIdIndex;
+      }
+    }
+    //NOW WE HAVE THE MAXIMUM MULTI EVENT LOCATION WE CAN EXPAND THE ARRAY BY THAT NUMBER
+    for (let day in eventPositions) {
+      for (let index = 0; index < maxMultiEventIndex; index++) {
+        eventPositions[day].push(null);
+      }
+    }
+  }
 }
+
+function mutateSingleDayEventPositions(
+  parsedEvents: IEvent[],
+  eventPositions: { [key: string]: (number | null)[] },
+  listOfDaysInMonth: Date[]
+) {
+  listOfDaysInMonth.forEach((currentDate) => {
+    const dateString = format(currentDate, "yyyy-MM-dd");
+    //GET THE POSITION LIST
+    const currentDay = eventPositions[dateString];
+
+    //GET ALL THE EVENTS THAT OCCUR TODAY INCLUDING THE MULTI DAY EVENTS
+    const eventsToday = parsedEvents.filter((event: IEvent) => {
+      return dateString === format(event.startDate, "yyyy-MM-dd");
+    });
+
+    //ADD ALL THE EVENTS INTO THEIR POSITIONS
+    eventsToday.forEach((currentEvent) => {
+      //IF THE EVENT ALREADY EXISTS IN THE CURRENT POSITION LIST SKIP IT
+      if (currentDay.includes(currentEvent.eventId)) {
+        return;
+      }
+
+      for (let index = 0; index < currentDay.length; index++) {
+        //IF THE POSITION IS EMPTY ADD AN EVENT
+        if (currentDay[index] === null) {
+          //CHECK IF THE EVENT BEING ADDED IS A MULTI-DAY EVENT
+          eventPositions[dateString][index] = currentEvent.eventId;
+          return;
+        }
+      }
+    });
+  });
+}
+/*
+function getDaysInView(selectedDate: Date) {
+  const daysInMonth = getDaysInMonth(selectedDate);
+  const firstDayOfMonth = startOfMonth(selectedDate);
+  const beforeDays = firstDayOfMonth.getDay();
+
+  const daysInLastRow = (daysInMonth + beforeDays) % 7;
+  const afterDays = daysInLastRow > 0 ? 7 - daysInLastRow : 0;
+  const firstDate = subDays(selectedDate, beforeDays);
+  const lastDate = addDays(firstDayOfMonth, daysInMonth + afterDays - 1);
+
+  return { startDate: firstDate, endDate: lastDate };
+}*/

@@ -20,6 +20,10 @@ export const SRecurrence = z.object({
   updatedAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
 });
 
+export const SMultiDay = z.object({
+  position: z.enum(["first", "last", "middle"]),
+});
+
 export const SEvent = z.object({
   eventId: z.number(),
   roomId: z.number(),
@@ -33,7 +37,7 @@ export const SEvent = z.object({
   recurrence: SRecurrence.nullish(),
   createdAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
   updatedAt: z.coerce.date(), //z.string().transform((value) => new Date(value)),
-  isMultipleDays: z.boolean().default(false).nullish(),
+  multiDay: SMultiDay.optional(),
 });
 
 export type IEvent = z.infer<typeof SEvent>;
