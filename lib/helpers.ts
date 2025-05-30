@@ -22,6 +22,7 @@ import {
   endOfDay,
   areIntervalsOverlapping,
   compareAsc,
+  getDaysInMonth,
 } from "date-fns";
 
 import type { ICalendarCell } from "@/lib/interfaces";
@@ -228,6 +229,19 @@ export function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IE
 }
 
 // ================ Month view helper functions ================ //
+
+export function getDaysInView(selectedDate: Date) {
+  const daysInMonth = getDaysInMonth(selectedDate);
+  const firstDayOfMonth = startOfMonth(selectedDate);
+  const beforeDays = firstDayOfMonth.getDay();
+
+  const daysInLastRow = (daysInMonth + beforeDays) % 7;
+  const afterDays = daysInLastRow > 0 ? 7 - daysInLastRow : 0;
+  const firstDate = startOfDay(subDays(selectedDate, beforeDays));
+  const lastDate = endOfDay(addDays(firstDayOfMonth, daysInMonth + afterDays - 1));
+
+  return { startDate: firstDate, endDate: lastDate };
+}
 
 export function getCalendarCells(selectedDate: Date): ICalendarCell[] {
   const currentYear = selectedDate.getFullYear();

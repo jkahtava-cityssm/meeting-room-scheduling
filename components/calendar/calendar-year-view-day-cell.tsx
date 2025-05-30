@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { IEvent } from "@/lib/schemas/schemas";
 import { DayView } from "./calendar-year-view";
+import { navigateURL } from "@/lib/helpers";
 
 const YearViewDayCell = ({ day }: { day: DayView }) => {
   const { push } = useRouter();
@@ -19,8 +20,7 @@ const YearViewDayCell = ({ day }: { day: DayView }) => {
   const maxIndicators = 3;
 
   const handleClick = () => {
-    //setSelectedDate(day.dayDate);
-    push(`day-view?selectedDate=${format(day.dayDate, "yyyy-MM-dd")}`);
+    push(navigateURL(day.dayDate, "day"));
   };
 
   return (

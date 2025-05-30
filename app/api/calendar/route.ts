@@ -1,6 +1,6 @@
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent, SMultiDay } from "@/lib/schemas/schemas";
 import { prisma } from "@/prisma";
-import { addDays, differenceInDays, isWithinInterval, parseISO, set } from "date-fns";
+import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
 import { Star } from "lucide-react";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
@@ -46,10 +46,13 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const combinedEvents: IEvent[] = [
-    ...generateMultiDayEventsInPeriod(events, StartDate, EndDate),
-    ...generateRecurringEventsInPeriod(recurrence, StartDate, EndDate),
-  ];
+  //Collect the Recurring Events first, since a Recurring Event can also be a Multi Day event that happens many times.
+  //This probably needs to be adjusted a bit.
+  const recurringEvents = generateRecurringEventsInPeriod(recurrence, StartDate, EndDate);
+  //const multiRecurringEvents = generateMultiDayEventsInPeriod(recurringEvents, StartDate, EndDate);
+  const multiDayEvents = generateMultiDayEventsInPeriod(events, StartDate, EndDate);
+
+  const combinedEvents: IEvent[] = [...recurringEvents, ...multiDayEvents];
 
   if (!events) {
     return InternalServerErrorMessage();
@@ -102,16 +105,21 @@ function generateMultiDayEventsInPeriod(events: IEvent[], periodStart: Date, per
     const currentStartDate = element.startDate;
     const currentEndDate = element.endDate;
 
-    //const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
-    const totalDaysBetween = differenceInDays(currentEndDate, currentStartDate);
+    const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
+    //const totalDaysBetween = differenceInDays(currentEndDate, currentStartDate);
 
     if (totalDaysBetween === 0) {
       eventList.push(element);
       return;
     }
+    //Dont process multi-day events that are also recurring events
+    if (element.recurrence !== null) {
+      eventList.push(element);
+      return;
+    }
 
     for (let index = 0; index <= totalDaysBetween; index++) {
-      const newEvent = { ...element, isMultipleDays: true };
+      const newEvent: IEvent = { ...element };
 
       const newDay = set(addDays(currentStartDate, index), { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
 
@@ -121,19 +129,23 @@ function generateMultiDayEventsInPeriod(events: IEvent[], periodStart: Date, per
 
       if (index === 0) {
         //First Day
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
+        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " - " + newEvent.title;
         newEvent.endDate = set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
+        newEvent.multiDay = { position: "first" };
       } else if (index === totalDaysBetween) {
         //LAST DAY
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
+        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " - " + newEvent.title;
         newEvent.startDate = set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
+        newEvent.multiDay = { position: "last" };
       } else {
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
+        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " - " + newEvent.title;
 
         newEvent.startDate = set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
         newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
+        newEvent.multiDay = { position: "middle" };
         //MIDDLE DAY
       }
+
       eventList.push(newEvent);
     }
   });
