@@ -10,11 +10,11 @@ import { groupEvents, getEventBlockStyle, getVisibleHours, hasOverlap, filterEve
 
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
 import { HourColumn } from "./calendar-day-column-hourly";
-import { ColumnDayHeader } from "./calendar-all-column-day-header";
+import { DayViewDayHeader } from "./calendar-day-view-day-header";
 import { EventBlock } from "./calendar-day-event-block";
 import { useMemo, useState } from "react";
 import { useAllDailyEvents } from "@/services/events";
-import { CalendarHeader } from "./calendar-all-header";
+
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 
 export function CalendarDayView({ date }: { date: Date }) {
@@ -54,7 +54,7 @@ export function CalendarDayView({ date }: { date: Date }) {
     <>
       <div className="flex">
         <div className="flex flex-1 flex-col">
-          <ColumnDayHeader weekDays={[selectedDate]} />
+          <DayViewDayHeader weekDays={[selectedDate]} />
 
           <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
             <div className="flex border-l">

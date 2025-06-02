@@ -149,11 +149,12 @@ export function groupEvents(dayEvents: IEvent[]) {
   return groups;
 }
 
-export function getEventBlockStyle(
+export function calculateEventBlockStyle(
   event: IEvent,
   day: Date,
   groupIndex: number,
   groupSize: number,
+  hasOverlap: boolean,
   visibleHoursRange?: { from: number; to: number }
 ) {
   const startDate = event.startDate;
@@ -172,8 +173,8 @@ export function getEventBlockStyle(
     top = (startMinutes / 1440) * 100;
   }
 
-  const width = 100 / groupSize;
-  const left = groupIndex * width;
+  const width = hasOverlap ? 100 / groupSize : 100;
+  const left = hasOverlap ? groupIndex * width : 0;
 
   return { top: `${top}%`, width: `${width}%`, left: `${left}%` };
 }
