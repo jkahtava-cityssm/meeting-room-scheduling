@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { endOfYear, startOfYear } from "date-fns";
 
 import { useCalendar } from "@/contexts/CalendarProvider";
@@ -41,7 +41,7 @@ export interface YearResponseData {
 export function CalendarYearView({ date }: { date: Date }) {
   const { selectedRoomId, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
-  const [workerInstance, setWorkerInstance] = useState<Worker>();
+  const workerRef = useRef<Worker | null>(null);
   const [monthViews, setMonthViews] = useState<MonthView[]>([]);
 
   const [isLoading, setLoading] = useState(true);
@@ -76,21 +76,21 @@ export function CalendarYearView({ date }: { date: Date }) {
       setLoading(false);
     };
 
-    setWorkerInstance(newWorker);
+    workerRef.current = newWorker;
 
     return () => {
-      if (workerInstance) {
-        workerInstance.terminate();
+      if (workerRef.current) {
+        workerRef.current.terminate();
       }
     };
-  }, [date]);
+  }, [date, setIsHeaderLoading, setTotalEvents]);
 
   useEffect(() => {
     if (!events || !recurringEvents) {
       return;
     }
 
-    if (workerInstance) {
+    if (workerRef.current) {
       const data: YearProcessData = {
         eventList: events,
         recurringEventList: recurringEvents,
@@ -102,9 +102,9 @@ export function CalendarYearView({ date }: { date: Date }) {
       setLoading(true);
       setIsHeaderLoading(true);
 
-      workerInstance.postMessage(data);
+      workerRef.current.postMessage(data);
     }
-  }, [events, recurringEvents, date, selectedRoomId, visibleHours, isRefreshed]);
+  }, [events, recurringEvents, date, selectedRoomId, visibleHours, isRefreshed, setIsHeaderLoading]);
 
   if (isLoading) {
     return <YearViewSkeleton date={date}></YearViewSkeleton>;

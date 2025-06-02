@@ -1,10 +1,9 @@
-import { IEvent, SMultiDay } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/schemas";
 import { prisma } from "@/prisma";
 import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
-import { Star } from "lucide-react";
-import { revalidatePath, revalidateTag } from "next/cache";
+
 import { NextRequest, NextResponse } from "next/server";
-import { start } from "repl";
+
 import { rrulestr } from "rrule";
 
 async function InternalServerErrorMessage(details?: string) {
