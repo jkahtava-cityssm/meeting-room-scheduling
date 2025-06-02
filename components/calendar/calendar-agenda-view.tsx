@@ -16,10 +16,10 @@ import { SingleCalendar } from "@/components/ui/single-calendar";
 import { filterEventsByRoom } from "../../lib/helpers";
 import { Button } from "../ui/button";
 
-export function CalendarAgendaView({ date, isLoading }: { date: Date; isLoading: boolean }) {
+export function CalendarAgendaView({ date }: { date: Date }) {
   const { selectedDate, selectedRoomId, setSelectedDate, visibleHours } = useCalendar();
 
-  const { events, isError } = useAllDailyEvents(selectedDate, visibleHours);
+  const { events } = useAllDailyEvents(selectedDate, visibleHours);
 
   const filteredEvents = useMemo(() => {
     if (events) {

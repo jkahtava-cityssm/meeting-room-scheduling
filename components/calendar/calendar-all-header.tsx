@@ -8,14 +8,12 @@ import { DateNavigator } from "@/components/calendar/calendar-all-header-date-na
 import { AddEventDialog } from "@/components/calendar/dialog-event-add";
 
 import type { TCalendarView } from "@/lib/types";
-import { IEvent } from "@/lib/schemas/schemas";
 import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
-import { addHours, addWeeks, format } from "date-fns";
 
 export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
-  const { isHeaderLoading, totalEvents, setSelectedRoomId } = useCalendar();
+  const { setSelectedRoomId } = useCalendar();
   const { push } = useRouter();
 
   const handleNavigatePrevious = () => {
@@ -42,8 +40,6 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
           <DateNavigator
             view={view}
             selectedDate={selectedDate}
-            totalEvents={totalEvents}
-            isLoading={isHeaderLoading}
             onPreviousClick={handleNavigatePrevious}
             onNextClick={handleNavigateNext}
           />

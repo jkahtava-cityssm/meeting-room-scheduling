@@ -1,10 +1,12 @@
 import { cva } from "class-variance-authority";
-import { format, differenceInMinutes } from "date-fns";
+import { format } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
 import type { HTMLAttributes } from "react";
-import type { IEvent } from "@/lib/interfaces";
+
 import type { VariantProps } from "class-variance-authority";
 import { TColors } from "../../lib/types";
+import { IEvent } from "@/lib/schemas/schemas";
+import { EventBlock } from "./calendar-week-view";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -59,20 +61,18 @@ interface IProps extends HTMLAttributes<HTMLDivElement>, Omit<VariantProps<typeo
 }
 
 export function EventBlock({
-  event,
-  pixelSize = 96,
+  eventBlock,
+  heightInPixels,
   fetchData,
 }: {
-  event: IEvent;
-  pixelSize: number;
+  eventBlock: EventBlock;
+  heightInPixels: number;
   fetchData: () => Promise<void>;
 }) {
-  const start = event.startDate;
-  const end = event.endDate;
-  const durationInMinutes = differenceInMinutes(end, start);
-  const heightInPixels = (durationInMinutes / 60) * pixelSize - 8;
-
-  const color = event.room.color as TColors;
+  if (!eventBlock?.event) {
+    return;
+  }
+  const color = eventBlock.event.room.color as TColors;
 
   const EventCardClasses = EventCard({ color });
 
@@ -84,7 +84,7 @@ export function EventBlock({
   };
 
   return (
-    <EventDetailsDialog event={event} fetchData={fetchData}>
+    <EventDetailsDialog event={eventBlock.event} fetchData={fetchData}>
       <div
         role="button"
         tabIndex={0}
@@ -95,11 +95,11 @@ export function EventBlock({
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-center gap-1.5 ">
-          <p className="truncate font-semibold">{event.title}</p>
+          <p className="truncate font-semibold">{eventBlock.event.title}</p>
         </div>
         <div className="flex items-center gap-1.5 truncate">
           <p className="truncate">
-            {format(start, "h:mm a")} - {format(end, "h:mm a")}
+            {format(eventBlock.event.startDate, "h:mm a")} - {format(eventBlock.event.endDate, "h:mm a")}
           </p>
         </div>
         {/*durationInMinutes > 60 && <div className="flex flex-row flex-1 text-wrap truncate">{event.description}</div>*/}

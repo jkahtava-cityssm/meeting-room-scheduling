@@ -54,11 +54,11 @@ export function CalendarAllViews() {
     <div className="overflow-hidden rounded-xl border">
       <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} />
 
-      {view === "day" && <CalendarDayView date={dateValue} isLoading={false} />}
+      {view === "day" && <CalendarDayView date={dateValue} />}
       {view === "month" && <CalendarMonthView date={dateValue} />}
-      {view === "week" && <CalendarWeekView date={dateValue} isLoading={false} />}
+      {view === "week" && <CalendarWeekView date={dateValue} />}
       {view === "year" && <CalendarYearView date={dateValue} />}
-      {view === "agenda" && <CalendarAgendaView date={dateValue} isLoading={false} />}
+      {view === "agenda" && <CalendarAgendaView date={dateValue} />}
     </div>
   );
 }

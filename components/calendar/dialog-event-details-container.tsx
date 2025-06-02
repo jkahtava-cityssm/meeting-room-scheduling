@@ -45,7 +45,7 @@ export function EventDetailsDialog({ event, children }: { event: IEvent; childre
       setRooms(roomList.data);
       setCurrentEvent(eventList.data[0]);
       setLoading(false);
-    }, 4000);
+    }, 1);
   };
 
   useEffect(() => {

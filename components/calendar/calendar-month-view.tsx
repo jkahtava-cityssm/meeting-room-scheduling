@@ -78,6 +78,11 @@ export function CalendarMonthView({ date }: { date: Date }) {
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
     //But this example will come in handy for other applications
+
+    if (workerRef.current) {
+      return;
+    }
+
     const newWorker = new Worker(new URL("./calendar-month-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<MonthResponseData>) => {
@@ -92,6 +97,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
     return () => {
       if (workerRef.current) {
         workerRef.current.terminate();
+        workerRef.current = null;
       }
     };
   }, [date, setIsHeaderLoading, setTotalEvents]);

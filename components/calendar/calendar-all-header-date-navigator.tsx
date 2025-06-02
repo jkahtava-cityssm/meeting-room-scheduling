@@ -13,19 +13,17 @@ import { IEvent } from "@/lib/schemas/schemas";
 
 export function DateNavigator({
   view,
-  totalEvents,
   selectedDate,
-  isLoading,
   onPreviousClick,
   onNextClick,
 }: {
   view: TCalendarView;
-  totalEvents: number;
   selectedDate: Date;
-  isLoading: boolean;
   onPreviousClick: () => void;
   onNextClick: () => void;
 }) {
+  const { isHeaderLoading, totalEvents } = useCalendar();
+
   return (
     <div className="space-y-0.5">
       <div className="flex items-center gap-2">
@@ -33,8 +31,8 @@ export function DateNavigator({
           {formatDate(selectedDate, "MMMM")} {selectedDate.getFullYear()}
         </span>
 
-        <Badge variant="outline" className={`px-1.5 ${isLoading ? "h-5.5" : ""}`}>
-          {isLoading ? <Skeleton className="w-14 h-2"></Skeleton> : totalEvents + " events"}
+        <Badge variant="outline" className={`px-1.5 ${isHeaderLoading ? "h-5.5" : ""}`}>
+          {isHeaderLoading ? <Skeleton className="w-14 h-2"></Skeleton> : totalEvents + " events"}
         </Badge>
       </div>
 

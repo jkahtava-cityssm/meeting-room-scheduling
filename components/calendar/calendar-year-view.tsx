@@ -81,6 +81,7 @@ export function CalendarYearView({ date }: { date: Date }) {
     return () => {
       if (workerRef.current) {
         workerRef.current.terminate();
+        workerRef.current = null;
       }
     };
   }, [date, setIsHeaderLoading, setTotalEvents]);
