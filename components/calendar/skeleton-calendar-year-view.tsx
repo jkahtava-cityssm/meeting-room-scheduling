@@ -1,7 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { navigateURL } from "@/lib/helpers";
-import { addMonths, format, getDaysInMonth, startOfMonth, startOfYear } from "date-fns";
-import { useRouter } from "next/navigation";
+import { addMonths, startOfYear } from "date-fns";
 import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell copy";
 
 function getMonths(selectedDate: Date) {
@@ -10,7 +7,7 @@ function getMonths(selectedDate: Date) {
 }
 
 export function YearViewSkeleton({ date }: { date: Date }) {
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  //const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div className="p-4">

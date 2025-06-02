@@ -8,11 +8,6 @@ import { cn } from "@/lib/utils";
 import { HourColumn } from "./calendar-day-column-hourly";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ColumnDayHeaderSkeleton } from "./skeleton-calendar-day-column-header";
-import { IEvent } from "@/lib/schemas/schemas";
-
-interface IProps {
-  events: IEvent[];
-}
 
 export function CalendarWeekViewSkeleton() {
   const weekStart = startOfWeek(new Date());

@@ -1,12 +1,8 @@
-import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { format, isSameDay, getDaysInMonth, startOfMonth } from "date-fns";
-import { useCalendar } from "@/contexts/CalendarProvider";
 import YearViewDayCell from "@/components/calendar/calendar-year-view-day-cell";
 
 import React from "react";
-import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view";
-import { IEvent } from "@/lib/schemas/schemas";
+
 import { MonthView } from "./calendar-year-view";
 import { navigateURL } from "@/lib/helpers";
 
@@ -14,7 +10,6 @@ import { navigateURL } from "@/lib/helpers";
 
 export default function YearViewMonth({ month }: { month: MonthView }) {
   const { push } = useRouter();
-  const { setSelectedDate } = useCalendar();
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 

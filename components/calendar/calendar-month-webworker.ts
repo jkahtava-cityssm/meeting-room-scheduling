@@ -1,18 +1,5 @@
 import { IEvent, SEvent } from "@/lib/schemas/schemas";
-import {
-  addDays,
-  eachDayOfInterval,
-  endOfMonth,
-  format,
-  getDaysInMonth,
-  isSameDay,
-  isSameMonth,
-  isSunday,
-  isToday,
-  parse,
-  startOfMonth,
-  subDays,
-} from "date-fns";
+import { eachDayOfInterval, format, isSameDay, isSameMonth, isSunday, isToday, parse } from "date-fns";
 
 import { DayView, EventView, MonthProcessData, MonthResponseData, WeekView } from "./calendar-month-view";
 import { z } from "zod";
@@ -43,7 +30,7 @@ function processMonthEvents(monthData: MonthProcessData): MonthResponseData {
 
   let index = 0;
 
-  for (let day in packedEvents) {
+  for (const day in packedEvents) {
     const parsedDate = parse(day, "yyyy-MM-dd", new Date());
     const dailyEvents = filteredEvents.filter((event) => {
       return format(event.startDate, "yyyy-MM-dd") === day;
@@ -217,7 +204,7 @@ function mutateMultiDayEventPositions(
   if (multiDayEventsAtTop) {
     let maxMultiEventIndex = 0;
 
-    for (let day in eventPositions) {
+    for (const day in eventPositions) {
       let lastEventIdIndex = 0;
       //FIND THE LAST MULTI-DAY EVENT ADDED
       for (let index = 0; index < eventPositions[day].length; index++) {
@@ -239,7 +226,7 @@ function mutateMultiDayEventPositions(
       }
     }
     //NOW WE HAVE THE MAXIMUM MULTI EVENT LOCATION WE CAN EXPAND THE ARRAY BY THAT NUMBER
-    for (let day in eventPositions) {
+    for (const day in eventPositions) {
       for (let index = 0; index < maxMultiEventIndex; index++) {
         eventPositions[day].push(null);
       }

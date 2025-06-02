@@ -1,7 +1,6 @@
-import { ICalendarCell } from "@/lib/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { endOfMonth, getDaysInMonth, isToday, startOfMonth, subMonths } from "date-fns";
+import { getDaysInMonth, startOfMonth, subMonths } from "date-fns";
 
 function getDays(selectedDate: Date) {
   const daysInMonth = getDaysInMonth(selectedDate);
