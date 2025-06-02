@@ -1,51 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useCalendar } from "@/contexts/CalendarProvider";
 
-import { MonthViewDayCell } from "@/components/calendar/calendar-month-view-day-cell";
-
-import { filterEventsByRoom, getCalendarCells, getDaysInView, MAX_VISIBLE_EVENTS } from "@/lib/helpers";
-
-import {
-	addDays,
-	differenceInDays,
-	eachDayOfInterval,
-	endOfMonth,
-	endOfYear,
-	format,
-	getDaysInMonth,
-	isSameDay,
-	isToday,
-	parse,
-	parseISO,
-	parseJSON,
-	startOfDay,
-	startOfMonth,
-	startOfYear,
-	subDays,
-	subMonths,
-} from "date-fns";
-
-import { CalendarHeader } from "./calendar-all-header";
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
-
-import { useAllMonthlyEvents } from "@/services/events";
-import { IEvent, SEvent } from "@/lib/schemas/schemas";
-import { useSearchParams } from "next/navigation";
+import { IEvent } from "@/lib/schemas/schemas";
 import useSWR from "swr";
-import { z } from "zod";
 
-import { uniqBy, uniq } from "lodash";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { MonthViewDayEvents } from "./calendar-month-view-day-events";
 import { MonthViewDayHeader } from "./calendar-month-view-day-header";
 import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
-import { useMediaQuery } from "@/hooks/use-media-query";
-
-const defaultTheme = require("tailwindcss/defaultTheme");
+import { getDaysInView } from "@/lib/helpers";
 
 export interface MonthProcessData {
 	events: IEvent[];
@@ -86,14 +54,12 @@ const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export function CalendarMonthView({ date }: { date: Date }) {
 	//const startDate: Date = startOfMonth(date);
 	//const endDate: Date = endOfMonth(date);
-	const isSmall = useMediaQuery("(max-width: 48rem)");
-	console.log(isSmall);
+
 	const { startDate, endDate } = getDaysInView(date);
 	const { selectedRoomId, setTotalEvents, setIsHeaderLoading } = useCalendar();
 
-	const [workerInstance, setWorkerInstance] = useState<Worker>();
+	const workerRef = useRef<Worker | null>(null);
 
-	const [dayViews, setDayViews] = useState<DayView[]>([]);
 	const [weekViews, setWeekViews] = useState<WeekView[]>([]);
 
 	const [isLoading, setLoading] = useState(true);
@@ -102,8 +68,6 @@ export function CalendarMonthView({ date }: { date: Date }) {
 	const { data: events, isLoading: isPending } = useSWR<IEvent[]>(
 		`/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
 	);
-
-	const cells = useMemo(() => getCalendarCells(date), [date]);
 
 	useEffect(() => {
 		//The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -117,28 +81,27 @@ export function CalendarMonthView({ date }: { date: Date }) {
 		const newWorker = new Worker(new URL("./calendar-month-webworker.ts", import.meta.url));
 
 		newWorker.onmessage = (event: MessageEvent<MonthResponseData>) => {
-			setDayViews(event.data.dayViews);
 			setWeekViews(event.data.weekViews);
 			setTotalEvents(event.data.totalEvents);
 			setIsHeaderLoading(false);
 			setLoading(false);
 		};
 
-		setWorkerInstance(newWorker);
+		workerRef.current = newWorker;
 
 		return () => {
-			if (workerInstance) {
-				workerInstance.terminate();
+			if (workerRef.current) {
+				workerRef.current.terminate();
 			}
 		};
-	}, [date]);
+	}, [date, setIsHeaderLoading, setTotalEvents]);
 
 	useEffect(() => {
 		if (!events) {
 			return;
 		}
 
-		if (workerInstance) {
+		if (workerRef.current) {
 			const data: MonthProcessData = {
 				events: events,
 				selectedDate: date,
@@ -148,9 +111,9 @@ export function CalendarMonthView({ date }: { date: Date }) {
 			setLoading(true);
 			setIsHeaderLoading(true);
 
-			workerInstance.postMessage(data);
+			workerRef.current.postMessage(data);
 		}
-	}, [events, date, selectedRoomId, isRefreshed]);
+	}, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading]);
 
 	if (isLoading || isPending) {
 		return <MonthViewDayCellSkeleton date={date} />;
@@ -160,7 +123,6 @@ export function CalendarMonthView({ date }: { date: Date }) {
 	//94
 	//26
 
-	console.log(defaultTheme.screens);
 	return (
 		<>
 			<div
