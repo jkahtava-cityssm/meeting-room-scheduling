@@ -51,7 +51,7 @@ export function CalendarAllViews() {
   }, [viewParam, dateParam]);
 
   return (
-    <div className="overflow-hidden rounded-xl border">
+    <div className="overflow-hidden rounded-xl border min-w-92">
       <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} />
 
       {view === "day" && <CalendarDayView date={dateValue} />}
