@@ -27,7 +27,7 @@ export function DateNavigator({
   return (
     <div className="space-y-0.5">
       <div className="flex items-center gap-2">
-        <span className="text-lg font-semibold">
+        <span className="text-lg font-semibold w-35">
           {formatDate(selectedDate, "MMMM")} {selectedDate.getFullYear()}
         </span>
 
@@ -36,12 +36,12 @@ export function DateNavigator({
         </Badge>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center  gap-2">
         <Button variant="outline" className="size-6.5 px-0 [&_svg]:size-4.5" onClick={onPreviousClick}>
           <ChevronLeft />
         </Button>
 
-        <p className="text-sm text-muted-foreground">{rangeText(view, selectedDate)}</p>
+        <p className="text-sm text-muted-foreground text-center w-45">{rangeText(view, selectedDate)}</p>
 
         <Button variant="outline" className="size-6.5 px-0 [&_svg]:size-4.5" onClick={onNextClick}>
           <ChevronRight />

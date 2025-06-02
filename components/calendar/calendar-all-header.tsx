@@ -34,7 +34,7 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
 
   return (
     <>
-      <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <TodayButton />
           <DateNavigator
@@ -108,10 +108,10 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
                 </Link>
               </Button>
             </div>
-
+          </div>
+          <div className="w-full sm:w-auto">
             <RoomSelect onRoomChange={handleNavigateRoomChange} />
           </div>
-
           <AddEventDialog>
             <Button className="w-full sm:w-auto">
               <Plus />
