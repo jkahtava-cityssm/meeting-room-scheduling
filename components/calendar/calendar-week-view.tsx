@@ -27,7 +27,6 @@ export interface WeekProcessData {
 
 export interface WeekResponseData {
   totalEvents: number;
-  events: IEvent[];
   dayViews: DayView[];
   hours: number[];
   //weekViews: WeekView[];
