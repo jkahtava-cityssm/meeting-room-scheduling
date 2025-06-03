@@ -94,5 +94,5 @@ function processWeekEvents(weekData: WeekProcessData): WeekResponseData {
   });
 
   console.timeEnd("Process Start");
-  return { events: filteredEvents, dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours };
+  return { dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours };
 }

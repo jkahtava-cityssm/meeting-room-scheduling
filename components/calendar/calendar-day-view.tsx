@@ -1,50 +1,123 @@
 "use client";
 
 import { Calendar, Clock, User } from "lucide-react";
-import { format, addYears } from "date-fns";
+import { format, addYears, startOfDay, endOfDay } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
-import { groupEvents, getEventBlockStyle, getVisibleHours, hasOverlap, filterEventsByRoom } from "@/lib/helpers";
 
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
 import { HourColumn } from "./calendar-day-column-hourly";
 import { DayViewDayHeader } from "./calendar-day-view-day-header";
 import { EventBlock } from "./calendar-day-event-block";
-import { useMemo, useState } from "react";
-import { useAllDailyEvents } from "@/services/events";
+import { useEffect, useRef, useState } from "react";
 
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
+import { IEvent } from "@/lib/schemas/schemas";
+import { TVisibleHours } from "@/lib/types";
+import useSWR from "swr";
+
+export interface DayProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  pixelHeight: number;
+  visibleHours: TVisibleHours;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface DayResponseData {
+  totalEvents: number;
+  dayViews: DayView[];
+  hours: number[];
+}
+
+export interface DayView {
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  eventBlocks: EventBlock[];
+}
+
+export interface EventBlock {
+  groupIndex: number;
+  eventIndex: number;
+  eventStyle: { top: string; width: string; left: string };
+  eventHeight: number;
+  event: IEvent;
+}
 
 export function CalendarDayView({ date }: { date: Date }) {
-  const { selectedDate, setSelectedDate, selectedRoomId, visibleHours, workingHours, setIsHeaderLoading } =
-    useCalendar();
-
-  const [currentMonth, setCurrentMonth] = useState<Date>(selectedDate);
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
+  const [dayViews, setDayViews] = useState<DayView[]>([]);
+  const [hours, setHours] = useState<number[]>([]);
 
-  const { events } = useAllDailyEvents(selectedDate, visibleHours);
+  const { workingHours, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
-  const handleToday = () => {
-    setCurrentMonth(new Date());
-    setSelectedDate(new Date());
-  };
+  const workerRef = useRef<Worker | null>(null);
 
-  const filteredEvents = useMemo(() => {
-    if (events) {
-      return filterEventsByRoom(events, selectedRoomId);
+  const startDate: Date = startOfDay(date);
+  const endDate: Date = endOfDay(date);
+  const { data: events } = useSWR<IEvent[]>(
+    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+  );
+
+  useEffect(() => {
+    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+    //nextjs cache's the route so this is my temporary fix
+    setRefreshed(true);
+  }, []);
+
+  useEffect(() => {
+    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
+    //But this example will come in handy for other applications
+
+    if (workerRef.current) {
+      return;
     }
-    return [];
-  }, [events, selectedRoomId]);
 
-  //if (!events) return <>FETCHING???</>;
-  //if (!isError) return <>ERROR</>;
+    const newWorker = new Worker(new URL("./calendar-day-webworker.ts", import.meta.url));
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, filteredEvents);
+    newWorker.onmessage = (event: MessageEvent<DayResponseData>) => {
+      setDayViews(event.data.dayViews);
+      setHours(event.data.hours);
+      setTotalEvents(event.data.totalEvents);
+      setIsHeaderLoading(false);
+      setLoading(false);
+    };
 
-  const groupedEvents = groupEvents(filteredEvents);
+    workerRef.current = newWorker;
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
+  }, [date, setIsHeaderLoading, setTotalEvents]);
+
+  useEffect(() => {
+    if (!events) {
+      return;
+    }
+
+    if (workerRef.current) {
+      const data: DayProcessData = {
+        events: events,
+        visibleHours: visibleHours,
+        selectedDate: date,
+        selectedRoomId: selectedRoomId,
+        multiDayEventsAtTop: true,
+        pixelHeight: 96,
+      };
+      setLoading(true);
+      setIsHeaderLoading(true);
+
+      workerRef.current.postMessage(data);
+    }
+  }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
   if (isLoading) {
     return <CalendarDayViewSkeleton />;
@@ -54,7 +127,7 @@ export function CalendarDayView({ date }: { date: Date }) {
     <>
       <div className="flex">
         <div className="flex flex-1 flex-col">
-          <DayViewDayHeader weekDays={[selectedDate]} />
+          <DayViewDayHeader key={dayViews[0].day} dayView={dayViews[0]} />
 
           <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
             <div className="flex border-l">
@@ -64,25 +137,19 @@ export function CalendarDayView({ date }: { date: Date }) {
               {/* Day grid */}
               <div className="relative flex-1 border-b">
                 <div className="relative">
-                  <DayHourlyEventDialogs hours={hours} day={selectedDate} workingHours={workingHours} />
+                  <DayHourlyEventDialogs hours={hours} day={dayViews[0].dayDate} workingHours={workingHours} />
 
-                  {groupedEvents.map((group, groupIndex) =>
-                    group.map((event) => {
-                      let style = getEventBlockStyle(event, selectedDate, groupIndex, groupedEvents.length, {
-                        from: earliestEventHour,
-                        to: latestEventHour,
-                      });
-
-                      if (!hasOverlap(groupedEvents, event, groupIndex))
-                        style = { ...style, width: "100%", left: "0%" };
-
-                      return (
-                        <div key={event.eventId} className="absolute p-1" style={style}>
-                          {<EventBlock event={event} pixelSize={96} fetchData={async () => {}} />}
-                        </div>
-                      );
-                    })
-                  )}
+                  {dayViews[0].eventBlocks.map((block, blockIndex) => {
+                    return (
+                      <div
+                        key={`day-${dayViews[0].day}-block-${blockIndex}-event-${block.event.eventId}`}
+                        className="absolute p-1"
+                        style={block.eventStyle}
+                      >
+                        <EventBlock eventBlock={block} heightInPixels={block.eventHeight} fetchData={async () => {}} />
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <CalendarTimeline />
@@ -95,18 +162,18 @@ export function CalendarDayView({ date }: { date: Date }) {
           <SingleCalendar
             className="mx-auto w-fit"
             mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            month={currentMonth}
-            onMonthChange={setCurrentMonth}
+            selected={date}
+            onSelect={() => {}}
+            month={date}
+            onMonthChange={() => {}}
             required
-            onToday={handleToday}
-            startMonth={addYears(selectedDate, -25)}
-            endMonth={addYears(selectedDate, 25)}
+            onToday={() => {}}
+            startMonth={addYears(date, -25)}
+            endMonth={addYears(date, 25)}
           />
 
           <div className="flex-1 space-y-3">
-            {filteredEvents.length > 0 ? (
+            {dayViews[0].eventBlocks.length > 0 ? (
               <div className="flex items-start gap-2 px-4 pt-4">
                 <span className="relative mt-[5px] flex size-2.5">
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"></span>
@@ -121,18 +188,18 @@ export function CalendarDayView({ date }: { date: Date }) {
               </p>
             )}
 
-            {filteredEvents.length > 0 && (
+            {dayViews[0].eventBlocks.length > 0 && (
               <div className="flex">
                 <div className="flex flex-1 flex-col">
                   <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[40vh] px-4" type="always">
                     {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
                     <div className="space-y-6 pb-4">
-                      {filteredEvents.map((event, index) => {
+                      {dayViews[0].eventBlocks.map((block, blockIndex) => {
                         const room = false; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
 
                         return (
-                          <div key={event.eventId + "-" + index} className="space-y-1.5">
-                            <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
+                          <div key={block.event.eventId + "-" + blockIndex} className="space-y-1.5">
+                            <p className="line-clamp-2 text-sm font-semibold">{block.event.title}</p>
 
                             {room && (
                               <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -149,7 +216,7 @@ export function CalendarDayView({ date }: { date: Date }) {
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <Clock className="size-3.5" />
                               <span className="text-sm">
-                                {format(event.startDate, "h:mm a")} - {format(event.endDate, "h:mm a")}
+                                {format(block.event.startDate, "h:mm a")} - {format(block.event.endDate, "h:mm a")}
                               </span>
                             </div>
                           </div>
