@@ -3,10 +3,10 @@ import { navigateURL } from "@/lib/helpers";
 
 import { Button } from "../ui/button";
 
-import { DayView } from "./calendar-month-view";
+import { IDayView } from "./calendar-month-view";
 import { useRouter } from "next/navigation";
 
-export function MonthViewDayHeader({ dayRecord }: { dayRecord: DayView }) {
+export function MonthViewDayHeader({ dayRecord }: { dayRecord: IDayView }) {
   const { push } = useRouter();
 
   const handleClick = () => {

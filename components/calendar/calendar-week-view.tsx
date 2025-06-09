@@ -50,7 +50,7 @@ export interface IEventBlock {
 export function CalendarWeekView({ date }: { date: Date }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
-  const [dayViews, setDayViews] = useState<DayView[]>([]);
+  const [dayViews, setDayViews] = useState<IDayView[]>([]);
   const [hours, setHours] = useState<number[]>([]);
 
   const { workingHours, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
@@ -79,7 +79,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
 
     const newWorker = new Worker(new URL("./calendar-week-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (event: MessageEvent<WeekResponseData>) => {
+    newWorker.onmessage = (event: MessageEvent<IWeekResponseData>) => {
       setDayViews(event.data.dayViews);
       setHours(event.data.hours);
       setTotalEvents(event.data.totalEvents);
@@ -103,7 +103,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
     }
 
     if (workerRef.current) {
-      const data: WeekProcessData = {
+      const data: IWeekProcessData = {
         events: events,
         visibleHours: visibleHours,
         selectedDate: date,

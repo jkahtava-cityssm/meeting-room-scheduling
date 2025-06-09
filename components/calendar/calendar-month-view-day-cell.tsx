@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 
 import { Button } from "../ui/button";
 
-import { DayView } from "./calendar-month-view";
+import { IDayView } from "./calendar-month-view";
 
-export function MonthViewDayCell({ dayRecord }: { dayRecord: DayView }) {
+export function MonthViewDayCell({ dayRecord }: { dayRecord: IDayView }) {
   if (!dayRecord) {
     return;
   }

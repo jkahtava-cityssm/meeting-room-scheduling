@@ -2,10 +2,10 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DayView } from "./calendar-week-view";
+import { IDayView } from "./calendar-week-view";
 import { navigateURL } from "@/lib/helpers";
 
-export function DayViewDayHeader({ dayView }: { dayView: DayView }) {
+export function DayViewDayHeader({ dayView }: { dayView: IDayView }) {
   const { push } = useRouter();
 
   const handleClick = () => {
