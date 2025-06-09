@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfWeek, isSameDay, endOfWeek } from "date-fns";
+import { startOfWeek, endOfWeek } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
@@ -164,11 +164,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
                                     className="absolute p-1"
                                     style={block.eventStyle}
                                   >
-                                    <EventBlock
-                                      eventBlock={block}
-                                      heightInPixels={block.eventHeight}
-                                      fetchData={async () => {}}
-                                    />
+                                    <EventBlock eventBlock={block} heightInPixels={block.eventHeight} />
                                   </div>
                                 );
                               })}

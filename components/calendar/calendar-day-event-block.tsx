@@ -1,12 +1,7 @@
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
-import type { HTMLAttributes } from "react";
-
-import type { VariantProps } from "class-variance-authority";
 import { TColors } from "../../lib/types";
-import { IEvent } from "@/lib/schemas/schemas";
-import { EventBlock } from "./calendar-week-view";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -56,19 +51,7 @@ const EventCard = cva(
   }
 );
 
-interface IProps extends HTMLAttributes<HTMLDivElement>, Omit<VariantProps<typeof EventCard>, "color"> {
-  event: IEvent;
-}
-
-export function EventBlock({
-  eventBlock,
-  heightInPixels,
-  fetchData,
-}: {
-  eventBlock: EventBlock;
-  heightInPixels: number;
-  fetchData: () => Promise<void>;
-}) {
+export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: EventBlock; heightInPixels: number }) {
   if (!eventBlock?.event) {
     return;
   }
@@ -84,7 +67,7 @@ export function EventBlock({
   };
 
   return (
-    <EventDetailsDialog event={eventBlock.event} fetchData={fetchData}>
+    <EventDetailsDialog event={eventBlock.event}>
       <div
         role="button"
         tabIndex={0}

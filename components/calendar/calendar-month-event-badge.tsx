@@ -1,5 +1,5 @@
 import { cva } from "class-variance-authority";
-import { differenceInDays, endOfDay, format, isSameDay, startOfDay } from "date-fns";
+import { endOfDay, format, isSameDay, startOfDay } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
@@ -84,8 +84,6 @@ export function MonthEventBadge({
 
   let position: "first" | "middle" | "last" | "none" | undefined;
 
-  let currentDay = differenceInDays(cellDate, itemStart);
-
   if (propPosition) {
     position = propPosition;
   } else if (eventCurrentDay && eventTotalDays) {
@@ -102,7 +100,6 @@ export function MonthEventBadge({
 
   const renderBadgeText = ["first", "none"].includes(position);
   const renderDays = ["middle", "last"].includes(position);
-  const renderTitle = ["middle"].includes(position);
   const renderStartTime = ["first", "none"].includes(position);
   const renderEndTime = ["last"].includes(position);
 

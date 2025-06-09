@@ -54,12 +54,9 @@ export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => 
         {rooms.map((room) => (
           <SelectItem key={room.roomId} value={room.roomId.toString()} className="flex-1">
             <div className="flex items-center gap-2">
-              <IconColored
-                hideBackground={false}
-                color={room.color as TColors}
-                showBorder={true}
-                children={room.roomId === -1 ? <Asterisk /> : <BookKey />}
-              ></IconColored>
+              <IconColored hideBackground={false} color={room.color as TColors} showBorder={true}>
+                {room.roomId === -1 ? <Asterisk /> : <BookKey />}
+              </IconColored>
               <p className="truncate">{room.name}</p>
             </div>
           </SelectItem>

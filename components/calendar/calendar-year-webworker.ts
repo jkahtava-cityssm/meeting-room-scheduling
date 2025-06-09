@@ -1,5 +1,4 @@
 import { IEvent } from "@/lib/schemas/schemas";
-import { TVisibleHours } from "@/lib/types";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/services/events";
 import { addMonths, endOfYear, format, getDaysInMonth, isSameDay, isToday, startOfMonth, startOfYear } from "date-fns";
 import { DayView, MonthView, YearProcessData, YearResponseData } from "./calendar-year-view";
@@ -25,14 +24,14 @@ function formatYearData(yearData: YearProcessData): YearResponseData {
   const monthData: MonthView[] = [];
   const months: Date[] = getMonths(yearData.selectedDate);
 
-  months.forEach((month, index) => {
+  months.forEach((month, monthIndex) => {
     const days: number[] = getDays(month);
     const yearValue = month.getFullYear();
     const monthValue = month.getMonth();
 
     const dayData: DayView[] = [];
 
-    days.forEach((day, index) => {
+    days.forEach((day) => {
       if (day <= 0) {
         dayData.push({ day: day, dayDate: new Date(0), isBlank: true, isToday: false, dayEvents: [] });
         return;
@@ -45,7 +44,7 @@ function formatYearData(yearData: YearProcessData): YearResponseData {
       dayData.push({ day: day, dayDate: date, isBlank: false, isToday: today, dayEvents: events });
     });
 
-    monthData.push({ month: index, monthDate: month, monthName: format(month, "MMMM"), days: dayData });
+    monthData.push({ month: monthIndex, monthDate: month, monthName: format(month, "MMMM"), days: dayData });
   });
 
   return { totalEvents: filteredEvents.length, monthsViews: monthData };

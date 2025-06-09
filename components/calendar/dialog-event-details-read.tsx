@@ -1,6 +1,6 @@
-import { IEvent } from "@/lib/interfaces";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { IEvent } from "@/lib/schemas/schemas";
 import { format, isSameDay } from "date-fns";
 import { Clock, MapPin, Text } from "lucide-react";
 import { SetStateAction } from "react";
