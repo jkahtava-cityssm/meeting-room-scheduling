@@ -15,14 +15,14 @@ import useSWR from "swr";
 import { IEvent } from "@/lib/schemas/schemas";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 
-export interface AgendaProcessData {
+export interface IAgendaProcessData {
   events: IEvent[];
   selectedDate: Date;
   selectedRoomId: string;
   multiDayEventsAtTop: boolean;
 }
 
-export interface AgendaResponseData {
+export interface IAgendaResponseData {
   totalEvents: number;
   sortedEvents: IEvent[];
 }
@@ -58,7 +58,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
 
     const newWorker = new Worker(new URL("./calendar-agenda-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (event: MessageEvent<AgendaResponseData>) => {
+    newWorker.onmessage = (event: MessageEvent<IAgendaResponseData>) => {
       setFilteredEvents(event.data.sortedEvents);
       setTotalEvents(event.data.totalEvents);
       setIsHeaderLoading(false);
@@ -81,7 +81,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
     }
 
     if (workerRef.current) {
-      const data: AgendaProcessData = {
+      const data: IAgendaProcessData = {
         events: events,
         selectedDate: date,
         selectedRoomId: selectedRoomId,

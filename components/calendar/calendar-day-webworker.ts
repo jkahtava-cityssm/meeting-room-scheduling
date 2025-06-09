@@ -5,16 +5,16 @@ import { z } from "zod";
 import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../lib/helpers";
 
 import { areIntervalsOverlapping, differenceInMinutes, isSameDay, isToday } from "date-fns";
-import { DayProcessData, DayResponseData, DayView, EventBlock } from "./calendar-day-view";
+import { IDayProcessData, IDayResponseData, IDayView, IEventBlock } from "./calendar-day-view";
 
-self.onmessage = (event: MessageEvent<DayProcessData>) => {
+self.onmessage = (event: MessageEvent<IDayProcessData>) => {
   if (event.data) {
     const result = processDayEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function processDayEvents(dayData: DayProcessData): DayResponseData {
+function processDayEvents(dayData: IDayProcessData): IDayResponseData {
   const events = z.array(SEvent).parse(dayData.events);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, dayData.selectedRoomId);
@@ -25,9 +25,9 @@ function processDayEvents(dayData: DayProcessData): DayResponseData {
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(dayData.visibleHours, filteredEvents);
 
-  const dayViews: DayView[] = [];
+  const dayViews: IDayView[] = [];
 
-  const eventBlocks: EventBlock[] = [];
+  const eventBlocks: IEventBlock[] = [];
 
   const dailyEvents = filteredEvents.filter((event) => isSameDay(event.startDate, currentDate));
 
@@ -67,7 +67,7 @@ function processDayEvents(dayData: DayProcessData): DayResponseData {
       const durationInMinutes = differenceInMinutes(currentEvent.endDate, currentEvent.startDate);
       const heightInPixels = (durationInMinutes / 60) * dayData.pixelHeight - 8;
 
-      const newBlock: EventBlock = {
+      const newBlock: IEventBlock = {
         groupIndex,
         eventIndex,
         eventStyle: blockStyle,
@@ -78,7 +78,7 @@ function processDayEvents(dayData: DayProcessData): DayResponseData {
       eventBlocks.push(newBlock);
     });
   });
-  const newDay: DayView = {
+  const newDay: IDayView = {
     day: currentDate.getDate(),
     dayDate: currentDate,
     isToday: isToday(currentDate),

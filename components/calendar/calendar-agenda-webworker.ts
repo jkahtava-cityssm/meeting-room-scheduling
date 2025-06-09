@@ -3,16 +3,16 @@ import { IEvent, SEvent } from "@/lib/schemas/schemas";
 import { z } from "zod";
 
 import { filterEventsByRoom } from "../../lib/helpers";
-import { AgendaProcessData, AgendaResponseData } from "./calendar-agenda-view";
+import { IAgendaProcessData, IAgendaResponseData } from "./calendar-agenda-view";
 
-self.onmessage = (event: MessageEvent<AgendaProcessData>) => {
+self.onmessage = (event: MessageEvent<IAgendaProcessData>) => {
   if (event.data) {
     const result = processAgendaEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function processAgendaEvents(dayData: AgendaProcessData): AgendaResponseData {
+function processAgendaEvents(dayData: IAgendaProcessData): IAgendaResponseData {
   const events = z.array(SEvent).parse(dayData.events);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, dayData.selectedRoomId);

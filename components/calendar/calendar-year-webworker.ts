@@ -1,17 +1,17 @@
 import { IEvent } from "@/lib/schemas/schemas";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/services/events";
 import { addMonths, endOfYear, format, getDaysInMonth, isSameDay, isToday, startOfMonth, startOfYear } from "date-fns";
-import { DayView, MonthView, YearProcessData, YearResponseData } from "./calendar-year-view";
+import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "./calendar-year-view";
 import { filterEventsByRoom } from "../../lib/helpers";
 
-self.onmessage = (event: MessageEvent<YearProcessData>) => {
+self.onmessage = (event: MessageEvent<IYearProcessData>) => {
   if (event.data) {
     const result = formatYearData(event.data);
     self.postMessage(result);
   }
 };
 
-function formatYearData(yearData: YearProcessData): YearResponseData {
+function formatYearData(yearData: IYearProcessData): IYearResponseData {
   const startDate: Date = startOfYear(yearData.selectedDate);
   const endDate: Date = endOfYear(yearData.selectedDate);
 
@@ -21,7 +21,7 @@ function formatYearData(yearData: YearProcessData): YearResponseData {
   ];
   const filteredEvents: IEvent[] = filterEventsByRoom(combinedEvents, yearData.selectedRoomId);
 
-  const monthData: MonthView[] = [];
+  const monthData: IMonthView[] = [];
   const months: Date[] = getMonths(yearData.selectedDate);
 
   months.forEach((month, monthIndex) => {
@@ -29,7 +29,7 @@ function formatYearData(yearData: YearProcessData): YearResponseData {
     const yearValue = month.getFullYear();
     const monthValue = month.getMonth();
 
-    const dayData: DayView[] = [];
+    const dayData: IDayView[] = [];
 
     days.forEach((day) => {
       if (day <= 0) {

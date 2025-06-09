@@ -16,6 +16,7 @@ import { getEvent } from "@/services/events";
 import { getRooms } from "@/services/rooms";
 import { setTimeout } from "timers";
 import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
+import { IEvent, IRoom } from "@/lib/schemas/schemas";
 
 export function EventDetailsDialog({ event, children }: { event: IEvent; children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
