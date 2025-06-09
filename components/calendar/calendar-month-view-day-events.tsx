@@ -2,9 +2,9 @@ import { startOfDay } from "date-fns";
 import { eventBadgeVariants, MonthEventBadge } from "@/components/calendar/calendar-month-event-badge";
 import { cn } from "@/lib/utils";
 
-import { DayView } from "./calendar-month-view";
+import { IDayView } from "./calendar-month-view";
 
-export function MonthViewDayEvents({ dayRecord }: { dayRecord: DayView }) {
+export function MonthViewDayEvents({ dayRecord }: { dayRecord: IDayView }) {
   return (
     <div
       className={cn(

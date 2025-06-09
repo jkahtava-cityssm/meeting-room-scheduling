@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
-import { DayView } from "./calendar-month-view";
+import { IDayView } from "./calendar-month-view";
 
-export function MonthViewDayFooter({ dayRecord }: { dayRecord: DayView }) {
+export function MonthViewDayFooter({ dayRecord }: { dayRecord: IDayView }) {
   return (
     <div className={cn("flex h-full flex-col gap-1 border-l py-1 overflow-hidden", dayRecord.isSunday && "border-l-0")}>
       <p
