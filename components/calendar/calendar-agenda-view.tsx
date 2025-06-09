@@ -1,11 +1,11 @@
 "use client";
-import { format } from "date-fns";
+import { endOfDay, format, startOfDay } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 
 import { AgendaEventCard } from "@/components/calendar/calendar-agenda-event-block";
 
 import { useCalendar } from "@/contexts/CalendarProvider";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAllDailyEvents } from "@/services/events";
 import { CalendarHeader } from "./calendar-all-header";
 import { Label } from "@radix-ui/react-dropdown-menu";
@@ -15,50 +15,114 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SingleCalendar } from "@/components/ui/single-calendar";
 import { filterEventsByRoom } from "../../lib/helpers";
 import { Button } from "../ui/button";
+import useSWR from "swr";
+import { IEvent } from "@/lib/schemas/schemas";
+
+export interface AgendaProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface AgendaResponseData {
+  totalEvents: number;
+  sortedEvents: IEvent[];
+}
 
 export function CalendarAgendaView({ date }: { date: Date }) {
-  const { selectedDate, selectedRoomId, setSelectedDate, visibleHours } = useCalendar();
+  const [isLoading, setLoading] = useState(true);
+  const [isRefreshed, setRefreshed] = useState(false);
+  const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
 
-  const { events } = useAllDailyEvents(selectedDate, visibleHours);
+  const { visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
-  const filteredEvents = useMemo(() => {
-    if (events) {
-      return filterEventsByRoom(events, selectedRoomId);
-    }
-    return [];
-  }, [events, selectedRoomId]);
+  const workerRef = useRef<Worker | null>(null);
 
-  const sortedEvents = [...filteredEvents].sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  const startDate: Date = startOfDay(date);
+  const endDate: Date = endOfDay(date);
+  const { data: events } = useSWR<IEvent[]>(
+    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
+
+  useEffect(() => {
+    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+    //nextjs cache's the route so this is my temporary fix
+    setRefreshed(true);
+  }, []);
+
+  useEffect(() => {
+    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
+    //But this example will come in handy for other applications
+
+    if (workerRef.current) {
+      return;
+    }
+
+    const newWorker = new Worker(new URL("./calendar-agenda-webworker.ts", import.meta.url));
+
+    newWorker.onmessage = (event: MessageEvent<AgendaResponseData>) => {
+      setFilteredEvents(event.data.sortedEvents);
+      setTotalEvents(event.data.totalEvents);
+      setIsHeaderLoading(false);
+      setLoading(false);
+    };
+
+    workerRef.current = newWorker;
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
+  }, [date, setIsHeaderLoading, setTotalEvents]);
+
+  useEffect(() => {
+    if (!events) {
+      return;
+    }
+
+    if (workerRef.current) {
+      const data: AgendaProcessData = {
+        events: events,
+        selectedDate: date,
+        selectedRoomId: selectedRoomId,
+        multiDayEventsAtTop: true,
+      };
+      setLoading(true);
+      setIsHeaderLoading(true);
+
+      workerRef.current.postMessage(data);
+    }
+  }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
   const printContentRef = useRef<HTMLDivElement>(null);
   const reactPrintFunction = useReactToPrint({
     contentRef: printContentRef,
-    documentTitle: `Agenda: ${format(selectedDate, "EEEE, MMMM d, yyyy")}`,
+    documentTitle: `Agenda: ${format(date, "EEEE, MMMM d, yyyy")}`,
     pageStyle: "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
   });
 
   return (
     <>
-      <CalendarHeader view={"agenda"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
       {isLoading ? (
-        <AgendaEventSkeleton selectedDate={selectedDate}></AgendaEventSkeleton>
+        <AgendaEventSkeleton selectedDate={date}></AgendaEventSkeleton>
       ) : (
         <div className="flex">
           <div className="flex flex-1 flex-col space-y-2">
             <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
               <div ref={printContentRef}>
                 <div className="sticky top-0 flex items-center gap-4 bg-accent p-2">
-                  <Label className="flex-1 text-md font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</Label>
+                  <Label className="flex-1 text-md font-semibold">{format(date, "EEEE, MMMM d, yyyy")}</Label>
                   <Button className="no-print mr-2" onClick={reactPrintFunction}>
                     <Printer /> Print Agenda
                   </Button>
                 </div>
 
                 <div className="space-y-2 m-2">
-                  {sortedEvents.length > 0 &&
-                    sortedEvents.map((event, index) => (
+                  {filteredEvents.length > 0 &&
+                    filteredEvents.map((event, index) => (
                       <div key={index} className="break-inside-avoid">
                         <AgendaEventCard key={event.eventId} event={event} fetchData={async () => {}} />
                       </div>
@@ -72,8 +136,8 @@ export function CalendarAgendaView({ date }: { date: Date }) {
             <SingleCalendar
               className="mx-auto w-fit"
               mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
+              selected={date}
+              onSelect={() => {}}
               month={new Date()}
               onMonthChange={() => {}}
               required

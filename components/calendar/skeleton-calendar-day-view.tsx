@@ -7,14 +7,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ColumnDayHeaderSkeleton } from "./skeleton-calendar-day-column-header";
 import { SkeletonCalendarEventListRightPanel } from "./skeleton-calendar-day-right-panel";
 
-export function CalendarDayViewSkeleton() {
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));
+export function CalendarDayViewSkeleton({ date }: { date: Date }) {
+  //const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));
   const hours = [...Array(24).keys()];
 
   return (
     <div className="flex">
       <div className="flex flex-1 flex-col">
-        <ColumnDayHeaderSkeleton weekDays={[new Date()]} />
+        <ColumnDayHeaderSkeleton weekDays={[date]} />
         <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
           <div className="flex border-l">
             <HourColumn hours={hours} />
@@ -39,7 +39,7 @@ export function CalendarDayViewSkeleton() {
           </div>
         </ScrollArea>
       </div>
-      <SkeletonCalendarEventListRightPanel />
+      <SkeletonCalendarEventListRightPanel date={date} />
     </div>
   );
 }

@@ -40,9 +40,11 @@ export function DateNavigator({
         <Button variant="outline" className="size-6.5 px-0 [&_svg]:size-4.5" onClick={onPreviousClick}>
           <ChevronLeft />
         </Button>
-
-        <p className="text-sm text-muted-foreground text-center w-45">{rangeText(view, selectedDate)}</p>
-
+        {view === "day" || view === "agenda" ? (
+          <p className="text-sm text-muted-foreground text-center w-25">{rangeText(view, selectedDate)}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center w-45">{rangeText(view, selectedDate)}</p>
+        )}
         <Button variant="outline" className="size-6.5 px-0 [&_svg]:size-4.5" onClick={onNextClick}>
           <ChevronRight />
         </Button>
