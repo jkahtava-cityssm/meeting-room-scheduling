@@ -16,7 +16,7 @@ import useSWR from "swr";
 import { IEvent } from "@/lib/schemas/schemas";
 import { TVisibleHours } from "@/lib/types";
 
-export interface WeekProcessData {
+export interface IWeekProcessData {
   events: IEvent[];
   selectedDate: Date;
   selectedRoomId: string;
@@ -25,21 +25,21 @@ export interface WeekProcessData {
   multiDayEventsAtTop: boolean;
 }
 
-export interface WeekResponseData {
+export interface IWeekResponseData {
   totalEvents: number;
-  dayViews: DayView[];
+  dayViews: IDayView[];
   hours: number[];
   //weekViews: WeekView[];
 }
 
-export interface DayView {
+export interface IDayView {
   day: number;
   dayDate: Date;
   isToday: boolean;
-  eventBlocks: EventBlock[];
+  eventBlocks: IEventBlock[];
 }
 
-export interface EventBlock {
+export interface IEventBlock {
   groupIndex: number;
   eventIndex: number;
   eventStyle: { top: string; width: string; left: string };

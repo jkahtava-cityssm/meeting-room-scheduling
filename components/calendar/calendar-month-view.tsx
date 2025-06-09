@@ -15,35 +15,35 @@ import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
 
-export interface MonthProcessData {
+export interface IMonthProcessData {
   events: IEvent[];
   selectedDate: Date;
   selectedRoomId: string;
   multiDayEventsAtTop: boolean;
 }
 
-export interface MonthResponseData {
+export interface IMonthResponseData {
   totalEvents: number;
-  dayViews: DayView[];
-  weekViews: WeekView[];
+  dayViews: IDayView[];
+  weekViews: IWeekView[];
 }
 
-export interface WeekView {
+export interface IWeekView {
   week: number;
   maxDailyEvents: number;
-  dayViews: DayView[];
+  dayViews: IDayView[];
 }
 
-export interface DayView {
+export interface IDayView {
   day: number;
   dayDate: Date;
   isToday: boolean;
   isSunday: boolean;
   isCurrentMonth: boolean;
-  eventRecords: EventView[];
+  eventRecords: IEventView[];
 }
 
-export interface EventView {
+export interface IEventView {
   index: number;
   position: "none" | "middle" | "first" | "last";
   event: IEvent | undefined;
@@ -60,7 +60,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
 
   const workerRef = useRef<Worker | null>(null);
 
-  const [weekViews, setWeekViews] = useState<WeekView[]>([]);
+  const [weekViews, setWeekViews] = useState<IWeekView[]>([]);
 
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
@@ -85,7 +85,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
 
     const newWorker = new Worker(new URL("./calendar-month-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (event: MessageEvent<MonthResponseData>) => {
+    newWorker.onmessage = (event: MessageEvent<IMonthResponseData>) => {
       setWeekViews(event.data.weekViews);
       setTotalEvents(event.data.totalEvents);
       setIsHeaderLoading(false);
@@ -108,7 +108,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
     }
 
     if (workerRef.current) {
-      const data: MonthProcessData = {
+      const data: IMonthProcessData = {
         events: events,
         selectedDate: date,
         selectedRoomId: selectedRoomId,

@@ -18,7 +18,7 @@ import { TVisibleHours } from "@/lib/types";
 import useSWR from "swr";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 
-export interface DayProcessData {
+export interface IDayProcessData {
   events: IEvent[];
   selectedDate: Date;
   selectedRoomId: string;
@@ -27,21 +27,21 @@ export interface DayProcessData {
   multiDayEventsAtTop: boolean;
 }
 
-export interface DayResponseData {
+export interface IDayResponseData {
   totalEvents: number;
-  dayViews: DayView[];
+  dayViews: IDayView[];
   hours: number[];
   filteredEvents: IEvent[];
 }
 
-export interface DayView {
+export interface IDayView {
   day: number;
   dayDate: Date;
   isToday: boolean;
-  eventBlocks: EventBlock[];
+  eventBlocks: IEventBlock[];
 }
 
-export interface EventBlock {
+export interface IEventBlock {
   groupIndex: number;
   eventIndex: number;
   eventStyle: { top: string; width: string; left: string };
@@ -52,7 +52,7 @@ export interface EventBlock {
 export function CalendarDayView({ date }: { date: Date }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
-  const [dayViews, setDayViews] = useState<DayView[]>([]);
+  const [dayViews, setDayViews] = useState<IDayView[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
   const [hours, setHours] = useState<number[]>([]);
 
@@ -82,7 +82,7 @@ export function CalendarDayView({ date }: { date: Date }) {
 
     const newWorker = new Worker(new URL("./calendar-day-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (event: MessageEvent<DayResponseData>) => {
+    newWorker.onmessage = (event: MessageEvent<IDayResponseData>) => {
       setDayViews(event.data.dayViews);
       setHours(event.data.hours);
       setTotalEvents(event.data.totalEvents);
@@ -107,7 +107,7 @@ export function CalendarDayView({ date }: { date: Date }) {
     }
 
     if (workerRef.current) {
-      const data: DayProcessData = {
+      const data: IDayProcessData = {
         events: events,
         visibleHours: visibleHours,
         selectedDate: date,

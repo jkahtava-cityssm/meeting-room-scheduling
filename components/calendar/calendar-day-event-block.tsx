@@ -2,6 +2,7 @@ import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
 import { TColors } from "../../lib/types";
+import { IEventBlock } from "./calendar-day-view";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -51,7 +52,7 @@ const EventCard = cva(
   }
 );
 
-export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: EventBlock; heightInPixels: number }) {
+export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventBlock; heightInPixels: number }) {
   if (!eventBlock?.event) {
     return;
   }

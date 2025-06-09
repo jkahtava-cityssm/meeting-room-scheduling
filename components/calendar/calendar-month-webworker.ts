@@ -1,20 +1,20 @@
 import { IEvent, SEvent } from "@/lib/schemas/schemas";
 import { eachDayOfInterval, format, isSameDay, isSameMonth, isSunday, isToday, parse } from "date-fns";
 
-import { DayView, EventView, MonthProcessData, MonthResponseData, WeekView } from "./calendar-month-view";
+import { IDayView, IEventView, IMonthProcessData, IMonthResponseData, IWeekView } from "./calendar-month-view";
 import { z } from "zod";
 import { uniq, uniqBy } from "lodash";
 
 import { filterEventsByRoom, getDaysInView } from "../../lib/helpers";
 
-self.onmessage = (event: MessageEvent<MonthProcessData>) => {
+self.onmessage = (event: MessageEvent<IMonthProcessData>) => {
   if (event.data) {
     const result = processMonthEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function processMonthEvents(monthData: MonthProcessData): MonthResponseData {
+function processMonthEvents(monthData: IMonthProcessData): IMonthResponseData {
   const { startDate: monthStart, endDate: monthEnd } = getDaysInView(monthData.selectedDate);
 
   const events = z.array(SEvent).parse(monthData.events);
@@ -25,8 +25,8 @@ function processMonthEvents(monthData: MonthProcessData): MonthResponseData {
 
   const packedEvents = packEvents(filteredEvents, monthStart, monthEnd, monthData.multiDayEventsAtTop);
 
-  const dayViews: DayView[] = [];
-  const weekViews: WeekView[] = [];
+  const dayViews: IDayView[] = [];
+  const weekViews: IWeekView[] = [];
 
   let index = 0;
 
@@ -36,7 +36,7 @@ function processMonthEvents(monthData: MonthProcessData): MonthResponseData {
       return format(event.startDate, "yyyy-MM-dd") === day;
     });
 
-    const eventViews: EventView[] = [];
+    const eventViews: IEventView[] = [];
 
     for (let index = 0; index < packedEvents[day].length; index++) {
       const packedEventId = packedEvents[day][index];
@@ -44,12 +44,12 @@ function processMonthEvents(monthData: MonthProcessData): MonthResponseData {
       if (packedEventId !== null) {
         const matchingEvent = dailyEvents.find((event) => event.eventId === packedEventId);
         const position = matchingEvent?.multiDay ? matchingEvent.multiDay.position : "none";
-        const newEventView: EventView = { index: index, position: position, event: matchingEvent };
+        const newEventView: IEventView = { index: index, position: position, event: matchingEvent };
         eventViews.push(newEventView);
       }
     }
 
-    const dayView: DayView = {
+    const dayView: IDayView = {
       day: parsedDate.getDate(),
       dayDate: parsedDate,
       eventRecords: eventViews,

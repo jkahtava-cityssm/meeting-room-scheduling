@@ -10,14 +10,14 @@ import useSWR from "swr";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";
 
-export interface MonthView {
+export interface IMonthView {
   month: number;
   monthDate: Date;
   monthName: string;
-  days: DayView[];
+  days: IDayView[];
 }
 
-export interface DayView {
+export interface IDayView {
   day: number;
   dayDate: Date;
   isBlank: boolean;
@@ -25,7 +25,7 @@ export interface DayView {
   dayEvents: IEvent[];
 }
 
-export interface YearProcessData {
+export interface IYearProcessData {
   eventList: IEvent[];
   recurringEventList: IEvent[];
   selectedDate: Date;
@@ -33,16 +33,16 @@ export interface YearProcessData {
   visibleHours: TVisibleHours;
 }
 
-export interface YearResponseData {
+export interface IYearResponseData {
   totalEvents: number;
-  monthsViews: MonthView[];
+  monthsViews: IMonthView[];
 }
 
 export function CalendarYearView({ date }: { date: Date }) {
   const { selectedRoomId, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
   const workerRef = useRef<Worker | null>(null);
-  const [monthViews, setMonthViews] = useState<MonthView[]>([]);
+  const [monthViews, setMonthViews] = useState<IMonthView[]>([]);
 
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
@@ -69,7 +69,7 @@ export function CalendarYearView({ date }: { date: Date }) {
     //But this example will come in handy for other applications
     const newWorker = new Worker(new URL("./calendar-year-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (event: MessageEvent<YearResponseData>) => {
+    newWorker.onmessage = (event: MessageEvent<IYearResponseData>) => {
       setMonthViews(event.data.monthsViews);
       setTotalEvents(event.data.totalEvents);
       setIsHeaderLoading(false);
@@ -92,7 +92,7 @@ export function CalendarYearView({ date }: { date: Date }) {
     }
 
     if (workerRef.current) {
-      const data: YearProcessData = {
+      const data: IYearProcessData = {
         eventList: events,
         recurringEventList: recurringEvents,
         selectedDate: date,

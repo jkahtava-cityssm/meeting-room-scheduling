@@ -3,17 +3,17 @@ import { IEvent, SEvent } from "@/lib/schemas/schemas";
 import { z } from "zod";
 
 import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../lib/helpers";
-import { DayView, EventBlock, WeekProcessData, WeekResponseData } from "./calendar-week-view";
+import { IDayView, IEventBlock, IWeekProcessData, IWeekResponseData } from "./calendar-week-view";
 import { addDays, areIntervalsOverlapping, differenceInMinutes, isSameDay, isToday, startOfWeek } from "date-fns";
 
-self.onmessage = (event: MessageEvent<WeekProcessData>) => {
+self.onmessage = (event: MessageEvent<IWeekProcessData>) => {
   if (event.data) {
     const result = processWeekEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function processWeekEvents(weekData: WeekProcessData): WeekResponseData {
+function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
   console.time("Collection Start");
   const events = z.array(SEvent).parse(weekData.events);
 
@@ -26,13 +26,13 @@ function processWeekEvents(weekData: WeekProcessData): WeekResponseData {
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(weekData.visibleHours, filteredEvents);
 
-  const dayViews: DayView[] = [];
+  const dayViews: IDayView[] = [];
 
   console.timeEnd("Collection Start");
 
   console.time("Process Start");
   weekDays.forEach((currentDate) => {
-    const eventBlocks: EventBlock[] = [];
+    const eventBlocks: IEventBlock[] = [];
 
     const dailyEvents = filteredEvents.filter((event) => isSameDay(event.startDate, currentDate));
 
@@ -72,7 +72,7 @@ function processWeekEvents(weekData: WeekProcessData): WeekResponseData {
         const durationInMinutes = differenceInMinutes(currentEvent.endDate, currentEvent.startDate);
         const heightInPixels = (durationInMinutes / 60) * weekData.pixelHeight - 8;
 
-        const newBlock: EventBlock = {
+        const newBlock: IEventBlock = {
           groupIndex,
           eventIndex,
           eventStyle: blockStyle,
@@ -83,7 +83,7 @@ function processWeekEvents(weekData: WeekProcessData): WeekResponseData {
         eventBlocks.push(newBlock);
       });
     });
-    const newDay: DayView = {
+    const newDay: IDayView = {
       day: currentDate.getDate(),
       dayDate: currentDate,
       isToday: isToday(currentDate),
