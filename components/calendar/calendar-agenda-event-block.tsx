@@ -4,8 +4,8 @@ import { format } from "date-fns";
 import { cva } from "class-variance-authority";
 import { Clock, MapPin, Text } from "lucide-react";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
-import type { IEvent } from "@/lib/interfaces";
 import { TColors } from "@/lib/types";
+import { IEvent } from "@/lib/schemas/schemas";
 
 const agendaEventCardVariants = cva(
   "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -55,7 +55,7 @@ const agendaEventCardVariants = cva(
   }
 );
 
-export function AgendaEventCard({ event, fetchData }: { event: IEvent; fetchData: () => Promise<void> }) {
+export function AgendaEventCard({ event }: { event: IEvent }) {
   //const { badgeVariant } = useCalendar();
 
   const startDate = event.startDate;
@@ -76,7 +76,7 @@ export function AgendaEventCard({ event, fetchData }: { event: IEvent; fetchData
   };
 
   return (
-    <EventDetailsDialog event={event} fetchData={fetchData}>
+    <EventDetailsDialog event={event}>
       <div
         role="button"
         tabIndex={0}

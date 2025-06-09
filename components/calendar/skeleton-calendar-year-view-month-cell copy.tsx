@@ -1,7 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { navigateURL } from "@/lib/helpers";
 import { format, getDaysInMonth, startOfMonth } from "date-fns";
-import { useRouter } from "next/navigation";
 
 function getDays(selectedDate: Date) {
   const totalDays = getDaysInMonth(selectedDate);
@@ -14,7 +12,6 @@ function getDays(selectedDate: Date) {
 }
 
 export function YearViewMonthSkeleton({ date }: { date: Date }) {
-  const { push } = useRouter();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (

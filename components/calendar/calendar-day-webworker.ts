@@ -15,7 +15,6 @@ self.onmessage = (event: MessageEvent<DayProcessData>) => {
 };
 
 function processDayEvents(dayData: DayProcessData): DayResponseData {
-  console.time("Collection Start");
   const events = z.array(SEvent).parse(dayData.events);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, dayData.selectedRoomId);
@@ -27,10 +26,6 @@ function processDayEvents(dayData: DayProcessData): DayResponseData {
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(dayData.visibleHours, filteredEvents);
 
   const dayViews: DayView[] = [];
-
-  console.timeEnd("Collection Start");
-
-  console.time("Process Start");
 
   const eventBlocks: EventBlock[] = [];
 
@@ -92,5 +87,5 @@ function processDayEvents(dayData: DayProcessData): DayResponseData {
 
   dayViews.push(newDay);
 
-  return { dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours };
+  return { dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours, filteredEvents: dailyEvents };
 }

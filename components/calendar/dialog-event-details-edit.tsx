@@ -1,4 +1,3 @@
-import { IEvent, IRoom } from "@/lib/interfaces";
 import { eventSchema, TEventFormData } from "@/lib/schemas";
 import { formatDuration, intervalToDuration } from "date-fns";
 
@@ -13,12 +12,13 @@ import { SingleDayPicker } from "@/components/ui/single-day-picker";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { SetStateAction, useState } from "react";
+import { SetStateAction } from "react";
 import { IconColored } from "@/components/ui/icon-colored";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { TColors } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { updateEvent } from "@/services/events";
+import { IEvent, IRoom } from "@/lib/schemas/schemas";
 
 export function EditEvent({
   event,

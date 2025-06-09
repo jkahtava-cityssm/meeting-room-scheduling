@@ -9,7 +9,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import type { IEvent, IRoom } from "@/lib/interfaces";
 import { useEffect, useState } from "react";
 import { ReadEvent } from "./dialog-event-details-read";
 import { EditEvent } from "./dialog-event-details-edit";

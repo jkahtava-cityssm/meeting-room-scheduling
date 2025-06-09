@@ -7,14 +7,10 @@ import { CalendarWeekView } from "./calendar-week-view";
 import { CalendarYearView } from "./calendar-year-view";
 import { CalendarAgendaView } from "./calendar-agenda-view";
 import { CalendarHeader } from "./calendar-all-header";
-import { useEffect, useState } from "react";
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useEffect } from "react";
+
 import { useSearchParams } from "next/navigation";
-import { endOfWeek, parse, startOfDay, startOfMonth, startOfWeek, startOfYear } from "date-fns";
-import { YearViewSkeleton } from "./skeleton-calendar-year-view";
-import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
-import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
-import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
+import { endOfWeek, parse, startOfDay, startOfMonth, startOfYear } from "date-fns";
 
 function getViewDate(dateParam: string | null, view: string) {
   switch (view) {
