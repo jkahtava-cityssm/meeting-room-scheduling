@@ -75,13 +75,21 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
   return operations[view](date, 1);
 }
 
-export function navigateURL(date: Date, view: TCalendarView): string {
+export function navigateURL(date: Date | null, view: TCalendarView): string {
   const path = {
-    agenda: "calendar?view=agenda&selectedDate=",
-    year: "calendar?view=year&selectedDate=",
-    month: "calendar?view=month&selectedDate=",
-    week: "calendar?view=week&selectedDate=",
-    day: "calendar?view=day&selectedDate=",
+    agenda: "calendar?view=agenda",
+    year: "calendar?view=year",
+    month: "calendar?view=month",
+    week: "calendar?view=week",
+    day: "calendar?view=day",
+  };
+
+  const dateParams = {
+    agenda: "&selectedDate=",
+    year: "&selectedDate=",
+    month: "&selectedDate=",
+    week: "&selectedDate=",
+    day: "&selectedDate=",
   };
 
   const formatDate = (view: TCalendarView, value: Date) => {
@@ -99,7 +107,11 @@ export function navigateURL(date: Date, view: TCalendarView): string {
     }
   };
 
-  return path[view] + formatDate(view, date);
+  if (date === null) {
+    return path[view];
+  }
+
+  return path[view] + dateParams[view] + formatDate(view, date);
 }
 
 export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Date) {

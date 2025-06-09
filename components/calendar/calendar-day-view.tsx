@@ -120,7 +120,7 @@ export function CalendarDayView({ date }: { date: Date }) {
   }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
   if (isLoading) {
-    return <CalendarDayViewSkeleton />;
+    return <CalendarDayViewSkeleton date={date} />;
   }
 
   return (
