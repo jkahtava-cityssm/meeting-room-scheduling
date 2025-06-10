@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 import useSWR from "swr";
 
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";

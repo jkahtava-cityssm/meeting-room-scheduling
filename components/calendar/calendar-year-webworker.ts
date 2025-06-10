@@ -1,4 +1,4 @@
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/services/events";
 import { addMonths, endOfYear, format, getDaysInMonth, isSameDay, isToday, startOfMonth, startOfYear } from "date-fns";
 import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "./calendar-year-view";

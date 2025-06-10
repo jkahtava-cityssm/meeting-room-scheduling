@@ -1,4 +1,4 @@
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 import { prisma } from "@/prisma";
 import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
 

@@ -5,7 +5,7 @@ import { cva } from "class-variance-authority";
 import { Clock, MapPin, Text } from "lucide-react";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
 import { TColors } from "@/lib/types";
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 
 const agendaEventCardVariants = cva(
   "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

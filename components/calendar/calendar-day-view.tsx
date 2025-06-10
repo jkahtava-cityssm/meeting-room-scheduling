@@ -13,7 +13,7 @@ import { EventBlock } from "./calendar-day-event-block";
 import { useEffect, useRef, useState } from "react";
 
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 import useSWR from "swr";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";

@@ -5,7 +5,7 @@ import { endOfYear, startOfYear } from "date-fns";
 
 import { useCalendar } from "@/contexts/CalendarProvider";
 import YearViewMonth from "./calendar-year-view-month";
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 import useSWR from "swr";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";

@@ -9,7 +9,7 @@ import { Asterisk, BookKey } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import useSWR from "swr";
-import { IRoom } from "@/lib/schemas/schemas";
+import { IRoom } from "@/lib/schemas/calendar";
 
 export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => void }) {
   const { selectedRoomId } = useCalendar();

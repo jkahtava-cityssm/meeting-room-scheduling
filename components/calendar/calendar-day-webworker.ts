@@ -1,4 +1,4 @@
-import { IEvent, SEvent } from "@/lib/schemas/schemas";
+import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { z } from "zod";
 

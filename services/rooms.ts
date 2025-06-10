@@ -1,6 +1,6 @@
 "use server";
 
-import { IRoom } from "@/lib/schemas/schemas";
+import { IRoom } from "@/lib/schemas/calendar";
 import { prisma } from "@/prisma";
 import { Room } from "@prisma/client";
 

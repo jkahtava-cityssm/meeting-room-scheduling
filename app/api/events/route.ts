@@ -1,9 +1,8 @@
 import { prisma } from "@/prisma";
-import { endOfYear, formatDate, parseISO, startOfYear } from "date-fns";
-import { Star } from "lucide-react";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { parseISO } from "date-fns";
+
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { start } from "repl";
 
 async function CreatedMessage() {
   return NextResponse.json({ message: "Created Event" }, { status: 201 });

@@ -1,7 +1,7 @@
 import { format, isToday, isWithinInterval, set } from "date-fns";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "../ui/scroll-area";
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 import { Calendar, Clock, User } from "lucide-react";
 
 function getDateAsOfNow(date: Date) {
