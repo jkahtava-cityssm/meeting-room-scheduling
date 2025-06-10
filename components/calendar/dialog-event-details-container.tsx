@@ -16,14 +16,11 @@ import { getEvent } from "@/services/events";
 import { getRooms } from "@/services/rooms";
 import { setTimeout } from "timers";
 import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
-import { IEvent, IRoom } from "@/lib/schemas/schemas";
+import { IEvent, IRoom } from "@/lib/schemas/calendar";
 
 export function EventDetailsDialog({ event, children }: { event: IEvent; children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
-  const [isLoading, setLoading] = useState(true);
-  const [currentEvent, setCurrentEvent] = useState<IEvent>();
-  const [rooms, setRooms] = useState<IRoom[]>([]);
 
   const onDialogChange = () => {
     setIsOpen((currentValue) => !currentValue);
@@ -31,42 +28,16 @@ export function EventDetailsDialog({ event, children }: { event: IEvent; childre
     setIsEditable(false);
   };
 
-  const fetchSingleEvent = async () => {
-    if (!isEditable) {
-      return;
-    }
-
-    setLoading(true);
-
-    const eventList = await getEvent(event.eventId);
-    const roomList = await getRooms();
-
-    setTimeout(() => {
-      setRooms(roomList.data);
-      setCurrentEvent(eventList.data[0]);
-      setLoading(false);
-    }, 1);
-  };
-
-  useEffect(() => {
-    fetchSingleEvent();
-  }, [isEditable]);
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onDialogChange}>
         <DialogTrigger asChild>{children}</DialogTrigger>
         <DialogContent className="sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 lg:max-h-9/12">
           <DialogHeader className="md:text-left">
-            <DialogTitle>
-              {isEditable && currentEvent !== undefined && !isLoading ? "Edit: " + currentEvent.title : event.title}
-            </DialogTitle>
+            <DialogTitle>{isEditable ? "Edit: " + event.title : event.title}</DialogTitle>
             <DialogDescription className="sr-only">Event Details</DialogDescription>
           </DialogHeader>
-          {isEditable && isLoading && <EditEventSkeleton></EditEventSkeleton>}
-          {isEditable && currentEvent !== undefined && !isLoading && (
-            <EditEvent event={currentEvent} rooms={rooms} setIsEditable={setIsEditable} />
-          )}
+          {isEditable && <EditEvent eventId={event.eventId} rooms={[]} setIsEditable={setIsEditable} />}
           {!isEditable && <ReadEvent event={event} setIsEditable={setIsEditable} />}
         </DialogContent>
       </Dialog>

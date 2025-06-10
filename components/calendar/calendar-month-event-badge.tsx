@@ -3,7 +3,7 @@ import { endOfDay, format, isSameDay, startOfDay } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 
 export const eventBadgeVariants = cva(
   "mx-1 flex size-auto h-6.5 select-none items-center justify-between gap-1.5 truncate whitespace-nowrap rounded-md border px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

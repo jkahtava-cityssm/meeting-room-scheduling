@@ -1,5 +1,5 @@
 "use client";
-import { IEvent } from "@/lib/schemas/schemas";
+import { IEvent } from "@/lib/schemas/calendar";
 import { SingleCalendar } from "../ui/single-calendar";
 import { Skeleton } from "../ui/skeleton";
 

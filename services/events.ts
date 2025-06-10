@@ -17,7 +17,7 @@ import useSWR from "swr";
 
 import { rrulestr } from "rrule";
 import { TVisibleHours } from "@/lib/types";
-import { IEvent, SEvent } from "@/lib/schemas/schemas";
+import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { z } from "zod";
 
 export function useAllDailyEvents(selectedDate: Date, visibleHours: TVisibleHours) {
