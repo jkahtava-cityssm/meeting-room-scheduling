@@ -1,10 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import { TColors } from "@/lib/types";
-import { addDays, addMonths, addWeeks, addYears, compareAsc, formatISO, isWeekend, parseISO, set } from "date-fns";
-import { EVENTDESCRIPTIONS, EVENTS, RECURRENCE_PATTERN, RECURRENCE_PERIOD, RECURRENCE_TYPE } from "./seed-data";
-import { start } from "repl";
-import { first } from "lodash";
-import { ByWeekday, datetime, RRule, RRuleSet, rrulestr } from "rrule";
+import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
+import { EVENTDESCRIPTIONS, EVENTS, RECURRENCE_PATTERN, RECURRENCE_TYPE } from "./seed-data";
+import { ByWeekday, datetime, RRule } from "rrule";
 
 const prisma = new PrismaClient();
 
@@ -192,7 +190,7 @@ async function CreateRandomEvents(
     }
     const eventIndex = Math.floor(Math.random() * EVENTS.length);
 
-    const record = await prisma.event.create({
+    await prisma.event.create({
       data: {
         roomId: rooms[Math.floor(Math.random() * rooms.length)].roomId,
         startDate: startDate.toISOString(),
@@ -205,13 +203,29 @@ async function CreateRandomEvents(
   }
 }
 
-async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
-  // Determine if this is a recurring event (10% chance)
-  /*const isRecurringEvent = Math.random() < 0.1;
+function randomToggle(chance: "75" | "50" | "25" | "10") {
+  switch (chance) {
+    case "75":
+      return Math.random() < 0.75;
+      break;
+    case "50":
+      return Math.random() < 0.5;
+      break;
+    case "25":
+      return Math.random() < 0.25;
+      break;
+    case "10":
+    default:
+      return Math.random() < 0.1;
+      break;
+  }
+}
 
-  if (!isRecurringEvent) {
+async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
+  //IGNORE MULTI DAY EVENTS WE DONT WANT MULTI DAY RECURRING EVENTS
+  if (differenceInDays(startOfDay(startDate), endOfDay(endDate)) > 1) {
     return undefined;
-  }*/
+  }
 
   const TypeValue = RECURRENCE_TYPE[Math.floor(Math.random() * RECURRENCE_TYPE.length)];
   const PatternValue = RECURRENCE_PATTERN[Math.floor(Math.random() * RECURRENCE_PATTERN.length)];
@@ -220,12 +234,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
   let interval = 0;
   let dayValue = 0;
-
-  let weekValue = 0;
   let monthValue = 0;
-  let yearValue = 0;
-
-  let PeriodValue = "";
 
   const maxPossibleDay: number[] = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -233,11 +242,11 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
   switch (PatternValue) {
     case "Every X Days":
-      PeriodValue = "Daily";
+      //PeriodValue = "Daily";
       interval = Math.floor(Math.random() * 7) + 1;
       break;
     case "Every Weekday":
-      PeriodValue = "Daily";
+      //PeriodValue = "Daily";
       interval = 1;
       weekdayArray.push(RRule.MO);
       weekdayArray.push(RRule.TU);
@@ -246,30 +255,32 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
       weekdayArray.push(RRule.FR);
       break;
     case "Every X Weeks":
-      PeriodValue = "Weekly";
+      //PeriodValue = "Weekly";
       interval = Math.floor(Math.random() * 7) + 1;
       break;
     case "Every X Weeks on Every Selected Day":
-      PeriodValue = "Weekly";
+      //PeriodValue = "Weekly";
       interval = Math.floor(Math.random() * 7) + 1;
 
-      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.MO);
-      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.TU);
-      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.WE);
-      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.TH);
-      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.FR);
-      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.SA);
-      Math.floor(Math.random() * 2) === 1 && weekdayArray.push(RRule.SU);
+      if (randomToggle("25")) weekdayArray.push(RRule.MO);
+      if (randomToggle("25")) weekdayArray.push(RRule.TU);
+      if (randomToggle("25")) weekdayArray.push(RRule.WE);
+      if (randomToggle("25")) weekdayArray.push(RRule.TH);
+      if (randomToggle("25")) weekdayArray.push(RRule.FR);
+      if (randomToggle("25")) weekdayArray.push(RRule.SA);
+      if (randomToggle("25")) weekdayArray.push(RRule.SU);
+
+      if (weekdayArray.length === 0) weekdayArray.push(RRule.TU);
 
       break;
     case "Every X Months on X Day":
-      PeriodValue = "Monthly";
+      //PeriodValue = "Monthly";
       interval = Math.floor(Math.random() * 12) + 1;
       dayValue = Math.floor(Math.random() * 31) + 1;
 
       break;
     case "Every X Year on X Month on X Day":
-      PeriodValue = "Yearly";
+      //PeriodValue = "Yearly";
       interval = Math.floor(Math.random() * 5) + 1;
 
       monthValue = Math.floor(Math.random() * 12) + 1;
@@ -277,13 +288,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
       break;
     default:
-      PeriodValue = "Daily";
+      //PeriodValue = "Daily";
       interval = Math.floor(Math.random() * 100) + 1;
       dayValue = Math.floor(Math.random() * 7) + 1;
       break;
   }
 
-  let newStartDate = addDays(startDate, -Math.floor(Math.random() * 31));
+  const newStartDate = addDays(startDate, -Math.floor(Math.random() * 31));
 
   let newRule = undefined;
 
@@ -394,10 +405,10 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
   }
 
   //console.log(newRule.all().at(-1));
-  if (!newRule.all().at(-1)) {
+  /*if (!newRule.all().at(-1)) {
     console.log(newRule);
     console.log(newRule.toString());
-  }
+  }*/
   //let newEndDate = parseISO(newRule.all().at(-1)?.toISOString());
 
   const recurrence = await prisma.recurrence.create({

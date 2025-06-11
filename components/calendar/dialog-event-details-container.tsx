@@ -22,6 +22,8 @@ export function EventDetailsDialog({ event, children }: { event: IEvent; childre
   const [isOpen, setIsOpen] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
 
+  const [title, setTitle] = useState(event.title);
+
   const onDialogChange = () => {
     setIsOpen((currentValue) => !currentValue);
 
@@ -34,10 +36,10 @@ export function EventDetailsDialog({ event, children }: { event: IEvent; childre
         <DialogTrigger asChild>{children}</DialogTrigger>
         <DialogContent className="sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 lg:max-h-9/12">
           <DialogHeader className="md:text-left">
-            <DialogTitle>{isEditable ? "Edit: " + event.title : event.title}</DialogTitle>
+            <DialogTitle>{title}</DialogTitle>
             <DialogDescription className="sr-only">Event Details</DialogDescription>
           </DialogHeader>
-          {isEditable && <EditEvent eventId={event.eventId} rooms={[]} setIsEditable={setIsEditable} />}
+          {isEditable && <EditEvent eventId={event.eventId} setTitle={setTitle} setIsEditable={setIsEditable} />}
           {!isEditable && <ReadEvent event={event} setIsEditable={setIsEditable} />}
         </DialogContent>
       </Dialog>
