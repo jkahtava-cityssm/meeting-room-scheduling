@@ -14,7 +14,6 @@ self.onmessage = (event: MessageEvent<IWeekProcessData>) => {
 };
 
 function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
-  console.time("Collection Start");
   const events = z.array(SEvent).parse(weekData.events);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, weekData.selectedRoomId);
@@ -28,9 +27,6 @@ function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
 
   const dayViews: IDayView[] = [];
 
-  console.timeEnd("Collection Start");
-
-  console.time("Process Start");
   weekDays.forEach((currentDate) => {
     const eventBlocks: IEventBlock[] = [];
 
@@ -93,6 +89,5 @@ function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
     dayViews.push(newDay);
   });
 
-  console.timeEnd("Process Start");
   return { dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours };
 }

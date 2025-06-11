@@ -18,7 +18,6 @@ function getViewDate(dateParam: string | null, view: string) {
     case "day":
       return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy-MM-dd", new Date()));
     case "week":
-      console.log(dateParam);
       return dateParam === null ? endOfWeek(new Date()) : endOfWeek(parse(dateParam, "RRRR-II", new Date()));
     case "month":
       return dateParam === null ? startOfMonth(new Date()) : startOfMonth(parse(dateParam, "yyyy-MM", new Date()));

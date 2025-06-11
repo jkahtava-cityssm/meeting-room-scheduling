@@ -43,9 +43,11 @@ const combineDateTime = (dateField: Date, timeField: Date) => {
 export function EditEvent({
   eventId,
   setIsEditable,
+  setTitle,
 }: {
   eventId: number;
   setIsEditable: (value: SetStateAction<boolean>) => void;
+  setTitle: (value: SetStateAction<string>) => void;
 }) {
   /*const rooms = [
     { roomId: 5, name: "T", color: "red" },
@@ -60,7 +62,7 @@ export function EditEvent({
     reValidateMode: "onChange",
     mode: "all",
     defaultValues: {
-      room: 10,
+      room: 0,
       title: "",
       description: "",
       startDate: new Date(),
@@ -68,11 +70,10 @@ export function EditEvent({
       endDate: new Date(),
       endTime: new Date(),
       duration: "",
-      color: "",
     },
   });
 
-  const { reset, setValue } = form;
+  const { setValue } = form;
 
   const onSubmit = async (values: TEventFormData) => {
     const room = rooms?.find((room) => room.roomId === values.room);
@@ -82,8 +83,7 @@ export function EditEvent({
 
   useEffect(() => {
     if (event && rooms) {
-      console.log(event);
-      console.log(rooms);
+      setTitle("Edit: " + event.title);
       setValue("room", event.roomId);
       setValue("title", event.title);
       setValue("description", event.description);
@@ -93,40 +93,9 @@ export function EditEvent({
       setValue("endTime", event.endDate);
       setValue("duration", getDurationText(event.startDate, event.startDate, event.endDate, event.endDate));
       setValue("color", event.room.color);
-
-      /*reset({
-        room: 5,
-        title: "A",
-        description: "B",
-        startDate: new Date(),
-        startTime: new Date(),
-        endDate: new Date(),
-        endTime: new Date(),
-        duration: "C",
-        color: "D",
-      });*/
     }
-  }, [event, rooms, reset, setValue]);
+  }, [event, rooms, setValue, setTitle]);
 
-  /*const { data } = useSWR<IEvent[]>(`/api/events/${event.eventId}`);
-
-  useEffect(() => {
-    if (data) {
-      setLoading(false);
-      form.reset({
-        room: data[0].roomId,
-        title: data[0].title,
-        description: data[0].description,
-        startDate: data[0].startDate,
-        startTime: data[0].startDate,
-        endDate: data[0].endDate,
-        endTime: data[0].endDate,
-        duration: getDurationText(data[0].startDate, data[0].startDate, data[0].endDate, data[0].endDate),
-        color: data[0].room.color,
-      });
-    }
-  }, [data, form]);
-*/
   if (isEventLoading || isRoomLoading) {
     return <EditEventSkeleton></EditEventSkeleton>;
   }
@@ -158,7 +127,7 @@ export function EditEvent({
                               //There is a Bug with the Select Field when used with React Hook Form:
                               //https://github.com/radix-ui/primitives/issues/2944
                               //https://github.com/radix-ui/primitives/issues/3135
-                              //We can also force a re-render if we add the property key={field.value}
+                              //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
                               //return;
                             }
                             field.onChange(Number(value));
@@ -330,14 +299,18 @@ export function EditEvent({
               <FormField
                 control={form.control}
                 name="duration"
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Duration:</FormLabel>
+                    <FormLabel htmlFor="duration">Duration:</FormLabel>
 
                     <FormControl>
-                      <Label className="text-sm h-9 px-3 py-1 content-center" id="duration" {...field}>
-                        {field.value}
-                      </Label>
+                      <Input
+                        id="duration"
+                        className="text-sm h-9 px-3 py-1 content-center"
+                        {...field}
+                        value={field.value}
+                        readOnly
+                      ></Input>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

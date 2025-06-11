@@ -45,6 +45,7 @@ export function ReadEvent({
         </div>
         <div className="flex items-center gap-2 pl-7">
           <Textarea
+            id="description"
             className={twMerge("max-h-80 resize-none disabled:opacity-100")}
             disabled={true}
             value={event.description}
