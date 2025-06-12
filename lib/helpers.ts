@@ -23,6 +23,8 @@ import {
   areIntervalsOverlapping,
   compareAsc,
   getDaysInMonth,
+  intervalToDuration,
+  formatDuration,
 } from "date-fns";
 
 import type { ICalendarCell } from "@/lib/interfaces";
@@ -312,6 +314,20 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
 /*########################################################################
     GENERIC FUNCTIONS
 ########################################################################*/
+
+export const getDurationText = (startDate: Date, startTime: Date, endDate: Date, endTime: Date): string => {
+  const startDateTime = combineDateTime(startDate, startTime);
+  const endDateTime = combineDateTime(endDate, endTime);
+
+  return formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
+    format: ["years", "months", "days", "hours", "minutes"],
+    delimiter: ", ",
+  });
+};
+
+export const combineDateTime = (dateField: Date, timeField: Date) => {
+  return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
+};
 
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
   const results = events.filter((event) => {
