@@ -1,7 +1,6 @@
 "use client";
 
 import { eventSchema, TEventFormData } from "@/lib/schemas";
-import { formatDuration, intervalToDuration } from "date-fns";
 
 import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,29 +15,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { SetStateAction, useEffect } from "react";
 import { IconColored } from "@/components/ui/icon-colored";
-import { Label } from "@radix-ui/react-dropdown-menu";
+
 import { TColors } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-
-import { IRoom } from "@/lib/schemas/calendar";
 
 import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
 import { useEvent } from "@/hooks/use-events";
 import { useRooms } from "@/hooks/use-rooms";
-
-const getDurationText = (startDate: Date, startTime: Date, endDate: Date, endTime: Date): string => {
-  const startDateTime = combineDateTime(startDate, startTime);
-  const endDateTime = combineDateTime(endDate, endTime);
-
-  return formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
-    format: ["years", "months", "days", "hours", "minutes"],
-    delimiter: ", ",
-  });
-};
-
-const combineDateTime = (dateField: Date, timeField: Date) => {
-  return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
-};
+import { getDurationText } from "@/lib/helpers";
 
 export function EditEvent({
   eventId,
