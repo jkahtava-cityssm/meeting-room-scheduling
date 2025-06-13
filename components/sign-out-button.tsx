@@ -1,7 +1,7 @@
 "use client";
 
 import { signOut } from "@/lib/auth-client";
-import { Button } from "./ui/button";
+
 import { usePathname, useRouter } from "next/navigation";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";

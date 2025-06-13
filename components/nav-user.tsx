@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, Bell, ChevronDown, CreditCard } from "lucide-react";
+import { Bell, ChevronDown, CreditCard, SunMoon } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,19 +14,13 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { SignOutMenuItem } from "./sign-out-button";
 import { Skeleton } from "./ui/skeleton";
+import { Switch } from "./ui/switch";
+import { useTheme } from "next-themes";
+import { IUser } from "./site-header";
 
-export function NavUser({
-  user,
-  isPending,
-}: {
-  user: {
-    name: string;
-    email: string;
-    image: string;
-  };
-  isPending: boolean;
-}) {
+export function NavUser({ user, isPending }: { user: IUser; isPending: boolean }) {
   const { isMobile } = useSidebar();
+  const { resolvedTheme, setTheme } = useTheme();
 
   if (isPending) {
     return (
@@ -49,9 +43,19 @@ export function NavUser({
               size="lg"
               className="w-(--radix-dropdown-menu-trigger-width) min-w-56 max-w-75 rounded-lg"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.image} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              {
+                //rounded-2xl
+              }
+              <Avatar className="h-8 w-8 border-2">
+                {user.image ? (
+                  <AvatarImage
+                    src={user.image}
+                    alt={user.name}
+                    className={resolvedTheme === "dark" ? "mask-radial-from-50%" : ""}
+                  />
+                ) : (
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                )}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -67,9 +71,20 @@ export function NavUser({
             sideOffset={4}
           >
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem
+                onClick={(event) => {
+                  event.preventDefault();
+                  setTheme(resolvedTheme === "dark" ? "light" : "dark");
+                }}
+              >
+                <SunMoon />
+                Dark Mode
+                <Switch
+                  checked={resolvedTheme === "dark"}
+                  onClick={() => {
+                    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+                  }}
+                ></Switch>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />

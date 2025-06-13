@@ -6,6 +6,8 @@ import Image from "next/image";
 import { MicrosoftButton } from "./ui/microsoft-signin-button";
 import { LogOut } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export const signInGitHub = async (callback: string) => {
   const data = await signIn.social({
@@ -31,16 +33,7 @@ export function SignInMicrosoft() {
 
   return (
     <>
-      <MicrosoftButton onClick={() => signInAzure(callbackURL)} variant={"light"}>
-        <Image
-          src="/images/ms-symbollockup_mssymbol_19.svg"
-          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-          width={21}
-          height={21}
-        />
-        Sign in with Microsoft
-      </MicrosoftButton>
-      <MicrosoftButton onClick={() => signInGitHub(callbackURL)} variant={"dark"}>
+      <MicrosoftButton onClick={() => signInAzure(callbackURL)}>
         <Image
           src="/images/ms-symbollockup_mssymbol_19.svg"
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"
