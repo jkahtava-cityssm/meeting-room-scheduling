@@ -17,6 +17,7 @@ export const auth = betterAuth({
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET as string,
       tenantId: process.env.AZURE_AD_TENANT_ID as string,
       disableProfilePhoto: false,
+      overrideUserInfoOnSignIn: true,
     },
   },
   session: {
