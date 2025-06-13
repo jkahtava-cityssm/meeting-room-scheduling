@@ -15,20 +15,23 @@ export const signInGitHub = async (callback: string) => {
   return data;
 };
 
+export const signInAzure = async (callback: string) => {
+  const data = await signIn.social({
+    provider: "microsoft",
+    callbackURL: callback,
+  });
+  return data;
+};
+
 export function SignInMicrosoft() {
   const searchParams = useSearchParams();
 
   const callbackURL =
-    searchParams.get("callbackurl") == null
-      ? "/private"
-      : (searchParams.get("callbackurl") as string);
+    searchParams.get("callbackurl") == null ? "/private" : (searchParams.get("callbackurl") as string);
 
   return (
     <>
-      <MicrosoftButton
-        onClick={() => signInGitHub(callbackURL)}
-        variant={"light"}
-      >
+      <MicrosoftButton onClick={() => signInAzure(callbackURL)} variant={"light"}>
         <Image
           src="/images/ms-symbollockup_mssymbol_19.svg"
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"
@@ -37,10 +40,7 @@ export function SignInMicrosoft() {
         />
         Sign in with Microsoft
       </MicrosoftButton>
-      <MicrosoftButton
-        onClick={() => signInGitHub(callbackURL)}
-        variant={"dark"}
-      >
+      <MicrosoftButton onClick={() => signInGitHub(callbackURL)} variant={"dark"}>
         <Image
           src="/images/ms-symbollockup_mssymbol_19.svg"
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"

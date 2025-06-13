@@ -1,6 +1,6 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import { filterEventsByRoom } from "../../lib/helpers";
 import { IAgendaProcessData, IAgendaResponseData } from "./calendar-agenda-view";

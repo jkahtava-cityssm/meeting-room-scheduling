@@ -3,7 +3,7 @@
 import { IRoom, SRoom } from "@/lib/schemas/calendar";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export function useRooms() {
   const [isLoading, setLoading] = useState(true);

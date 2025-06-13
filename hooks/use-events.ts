@@ -3,7 +3,7 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export function useEvents(startDate: Date, endDate: Date) {
   const [isLoading, setLoading] = useState(true);

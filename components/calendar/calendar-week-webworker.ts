@@ -1,6 +1,6 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../lib/helpers";
 import { IDayView, IEventBlock, IWeekProcessData, IWeekResponseData } from "./calendar-week-view";

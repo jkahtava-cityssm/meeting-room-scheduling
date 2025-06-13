@@ -17,33 +17,90 @@ import { getDurationText } from "@/lib/helpers";
 import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
 import { IEvent, IRoom, SEvent } from "@/lib/schemas/calendar";
 import { useForm } from "react-hook-form";
+import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
-interface IEventForm extends IEvent {
+export interface IEventForm extends Pick<IEvent, "roomId" | "description" | "title" | "startDate" | "endDate"> {
   duration: string;
   startTime: Date;
   endTime: Date;
 }
 
-const b = z.pick(SEvent, { roomId: true });
+const SEventForm = z
+  .object({
+    ...SEvent.pick({ roomId: true, description: true, title: true, startDate: true, endDate: true }).shape,
+    duration: z.string(),
+    startTime: z.date(),
+    endTime: z.date(),
+  })
+  .check((ctx) => {
+    const EndDate = new Date(ctx.value.endDate.toDateString());
+    const StartDate = new Date(ctx.value.startDate.toDateString());
 
-const SEventForm = z.object({
-  ...SEvent.shape,
-  test: z.string(),
-});
+    const EndTime = new Date(
+      ctx.value.startDate.setHours(ctx.value.endTime.getHours(), ctx.value.endTime.getMinutes())
+    );
+    const StartTime = new Date(
+      ctx.value.startDate.setHours(ctx.value.startTime.getHours(), ctx.value.startTime.getMinutes())
+    );
 
-export function EditEvent({ isLoading, event, rooms }: { isLoading: boolean; event?: IEvent; rooms: IRoom[] }) {
-  const form = useForm<IEvent>({
-    resolver: zodResolver(SEvent),
+    if (EndDate < StartDate) {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["startDate"],
+        message: "Start Date occurs after End Date",
+      });
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["endDate"],
+        message: "End Date occurs before Start Date",
+      });
+    }
+    console.log(EndTime < StartTime && EndDate === StartDate);
+    console.log(EndTime < StartTime);
+    console.log(EndDate.getTime() === StartDate.getTime());
+    if (EndTime < StartTime && EndDate === StartDate) {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["startTime"],
+        message: "Start Time occurs after End Time",
+      });
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["endTime"],
+        message: "End Time occurs before Start Time",
+      });
+    }
+  });
+
+export function UpdateEventForm({
+  isLoading,
+  event,
+  rooms,
+  onSubmit,
+}: {
+  isLoading: boolean;
+  event?: IEventForm;
+  rooms?: IRoom[];
+  onSubmit: (values: IEventForm) => Promise<void>;
+}) {
+  const form = useForm<IEventForm>({
+    resolver: zodResolver(SEventForm),
     reValidateMode: "onChange",
     mode: "all",
     defaultValues: {
-      roomId: 0,
-      title: "",
-      description: "",
-      startDate: new Date(),
-      endDate: new Date(),
+      roomId: event ? event.roomId : 0,
+      title: event ? event.title : "",
+      description: event ? event.description : "",
+      startDate: event ? event.startDate : new Date(),
+      endDate: event ? event.endDate : new Date(),
+      startTime: event ? event.startDate : new Date(),
+      endTime: event ? event.endDate : new Date(),
+      duration: getDurationText(new Date(), new Date(), new Date(), new Date()),
     },
   });
 
@@ -56,67 +113,68 @@ export function EditEvent({ isLoading, event, rooms }: { isLoading: boolean; eve
       <form id="event-form" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="flex flex-col md:flex-row gap-2">
           <div className="flex flex-col flex-1 gap-4 py-4">
-            {
-              <FormField
-                control={form.control}
-                name="roomId"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel id="roomLabel" htmlFor="room">
-                      Room
-                    </FormLabel>
-                    <FormControl>
-                      <Select
-                        //{...field}
-                        name={field.name}
-                        value={field.value === 0 ? "" : field.value.toString()}
-                        defaultValue={field.value === 0 ? "" : field.value.toString()}
-                        key={field.value}
-                        onValueChange={(value) => {
-                          if (value === "") {
-                            //There is a Bug with the Select Field when used with React Hook Form:
-                            //https://github.com/radix-ui/primitives/issues/2944
-                            //https://github.com/radix-ui/primitives/issues/3135
-                            //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
-                            //return;
-                          }
-                          field.onChange(Number(value));
-                        }}
-                      >
-                        <SelectTrigger id={field.name} data-invalid={fieldState.invalid}>
-                          <SelectValue placeholder="Select an option" />
-                        </SelectTrigger>
+            <FormField
+              control={form.control}
+              name="roomId"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel id="roomLabel" htmlFor="room">
+                    Room
+                  </FormLabel>
+                  <FormControl>
+                    <Select
+                      //{...field}
+                      name={field.name}
+                      value={field.value === 0 ? "" : field.value.toString()}
+                      defaultValue={field.value === 0 ? "" : field.value.toString()}
+                      key={field.value}
+                      onValueChange={(value) => {
+                        if (value === "") {
+                          //There is a Bug with the Select Field when used with React Hook Form:
+                          //https://github.com/radix-ui/primitives/issues/2944
+                          //https://github.com/radix-ui/primitives/issues/3135
+                          //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                          //return;
+                        }
+                        field.onChange(Number(value));
+                      }}
+                    >
+                      <SelectTrigger id={field.name} data-invalid={fieldState.invalid}>
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
 
-                        <SelectContent>
-                          {rooms?.map((room) => {
-                            return (
-                              <SelectItem key={room.roomId} value={room.roomId?.toString()} className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <IconColored color={room.color as TColors} showBorder={false} hideBackground={false}>
-                                    <BookKey />
-                                  </IconColored>
+                      <SelectContent>
+                        {rooms?.map((room) => {
+                          return (
+                            <SelectItem key={room.roomId} value={room.roomId?.toString()} className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <IconColored color={room.color as TColors} showBorder={false} hideBackground={false}>
+                                  <BookKey />
+                                </IconColored>
 
-                                  <p className="truncate">{room.name}</p>
-                                </div>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            }
+                                <p className="truncate">{room.name}</p>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
               name="title"
               render={({ field, fieldState }) => (
                 <FormItem className="pr-11">
-                  <FormLabel htmlFor="title">Title</FormLabel>
-
+                  {fieldState.invalid ? (
+                    <FormMessage className="leading-none font-medium" />
+                  ) : (
+                    <FormLabel htmlFor="title">Title</FormLabel>
+                  )}
                   <FormControl>
                     <Input
                       id="title"
@@ -126,8 +184,6 @@ export function EditEvent({ isLoading, event, rooms }: { isLoading: boolean; eve
                       onChange={field.onChange}
                     />
                   </FormControl>
-
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -187,6 +243,7 @@ export function EditEvent({ isLoading, event, rooms }: { isLoading: boolean; eve
                   </FormItem>
                 )}
               />
+              {form.formState.errors.startDate ? "BBBBB" : "FFFFF"}
             </div>
 
             <div className="flex items-start gap-2">
@@ -269,16 +326,22 @@ export function EditEvent({ isLoading, event, rooms }: { isLoading: boolean; eve
               name="description"
               render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <div className="flex gap-2">
+                    {fieldState.invalid ? (
+                      <FormMessage className="leading-none font-medium" />
+                    ) : (
+                      <FormLabel>Description</FormLabel>
+                    )}
+                  </div>
+
                   <FormControl>
                     <Textarea
-                      className="max-h-100 resize-none"
+                      className="max-h-83 min-h-83 resize-none"
                       {...field}
                       value={field.value}
                       data-invalid={fieldState.invalid}
                     ></Textarea>
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />

@@ -12,6 +12,12 @@ export const auth = betterAuth({
       clientId: process.env.GITHUB_ID as string,
       clientSecret: process.env.GITHUB_SECRET as string,
     },
+    microsoft: {
+      clientId: process.env.AZURE_AD_CLIENT_ID as string,
+      clientSecret: process.env.AZURE_AD_CLIENT_SECRET as string,
+      tenantId: process.env.AZURE_AD_TENANT_ID as string,
+      disableProfilePhoto: false,
+    },
   },
   session: {
     //expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -19,6 +25,7 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 3 Minutes
     updateAge: 60 * 60 * 24, // 1 Minute
   },
+
   /* GithubProvider({
               clientId: process.env.GITHUB_ID as string,
               clientSecret: process.env.GITHUB_SECRET as string
