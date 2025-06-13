@@ -2,7 +2,7 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { eachDayOfInterval, format, isSameDay, isSameMonth, isSunday, isToday, parse } from "date-fns";
 
 import { IDayView, IEventView, IMonthProcessData, IMonthResponseData, IWeekView } from "./calendar-month-view";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { uniq, uniqBy } from "lodash";
 
 import { filterEventsByRoom, getDaysInView } from "../../lib/helpers";

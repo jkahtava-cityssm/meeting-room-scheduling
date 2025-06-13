@@ -18,7 +18,7 @@ import useSWR from "swr";
 import { rrulestr } from "rrule";
 import { TVisibleHours } from "@/lib/types";
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 export function useAllDailyEvents(selectedDate: Date, visibleHours: TVisibleHours) {
   const StartOfDay = startOfDay(selectedDate);

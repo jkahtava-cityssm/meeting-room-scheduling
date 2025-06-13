@@ -319,10 +319,12 @@ export const getDurationText = (startDate: Date, startTime: Date, endDate: Date,
   const startDateTime = combineDateTime(startDate, startTime);
   const endDateTime = combineDateTime(endDate, endTime);
 
-  return formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
+  const duration = formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
     format: ["years", "months", "days", "hours", "minutes"],
     delimiter: ", ",
   });
+
+  return duration.length === 0 ? "0 Minutes" : duration;
 };
 
 export const combineDateTime = (dateField: Date, timeField: Date) => {

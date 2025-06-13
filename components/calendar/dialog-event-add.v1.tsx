@@ -35,7 +35,6 @@ import { IconColored } from "../ui/icon-colored";
 import { BookKey } from "lucide-react";
 import { TColors } from "@/lib/types";
 import { TimePicker } from "../ui/time-picker";
-import { IEventForm, UpdateEventForm } from "./dialog-event-form";
 
 export function AddEventDialog({
   children,
@@ -57,15 +56,33 @@ export function AddEventDialog({
 
   const defaultEndDateTime = addMinutes(defaultStartDateTime, 30);
 
-  const onSubmit = async (values: IEventForm) => {
-    console.log(values);
+  const form = useForm<TEventFormData>({
+    resolver: zodResolver(eventSchema),
+    reValidateMode: "onChange",
+    mode: "all",
+    defaultValues: {
+      room: 0,
+      title: "",
+      description: "",
+      startDate: defaultStartDateTime,
+      startTime: defaultStartDateTime,
+      endDate: defaultEndDateTime,
+      endTime: defaultEndDateTime,
+      duration: getDurationText(defaultStartDateTime, defaultStartDateTime, defaultEndDateTime, defaultEndDateTime),
+    },
+  });
+
+  const onSubmit = (_values: TEventFormData) => {
+    // TO DO: Create use-add-event hook
+    onClose();
+    form.reset();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onToggle}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 lg:max-h-9/12">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New Event</DialogTitle>
           <DialogDescription>
@@ -73,7 +90,7 @@ export function AddEventDialog({
             event
           </DialogDescription>
         </DialogHeader>
-        <UpdateEventForm isLoading={isRoomLoading} rooms={rooms} onSubmit={onSubmit}></UpdateEventForm>
+
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
