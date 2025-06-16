@@ -1,17 +1,10 @@
 "use client";
 
 import * as React from "react";
-import * as SwitchPrimitive from "@radix-ui/react-switch";
 
 import { cn } from "@/lib/utils";
-import { Period, TimePickerInput } from "./time-picker-input";
-import { Label } from "./label";
-import { TimePeriodSelect } from "./time-period-select";
-import { cva, VariantProps } from "class-variance-authority";
-import { Book, LucideProps } from "lucide-react";
-
-import { TColors } from "@/components/calendar/lib/types";
-import { twMerge } from "tailwind-merge";
+import { cva } from "class-variance-authority";
+import { TColors } from "@/lib/types";
 
 const IconColor = cva("", {
   variants: {

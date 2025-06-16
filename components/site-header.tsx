@@ -15,18 +15,23 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { NavUser } from "./nav-user";
 import { useSession } from "@/lib/auth-client";
 
+export interface IUser {
+  name: string | undefined;
+  email: string | undefined;
+  image: string | undefined;
+}
+
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const { data: session, isPending } = useSession();
-  console.log("SITE HEADER RE-RENDER????");
+  //console.log("SITE HEADER RE-RENDER????");
   //console.log(session?.user);
 
-  const user = {
-    name: session?.user.name == null ? "unknown" : session?.user.name,
-    email: session?.user.email == null ? "unknown" : session?.user.email,
-    image: session?.user.image == null ? "emptyImage" : session?.user.image,
+  const user: IUser = {
+    name: session?.user.name ? session.user.name : undefined,
+    email: session?.user.email ? session.user.email : undefined,
+    image: session?.user.image ? session.user.image : undefined,
   };
-
   //console.log(user);
 
   return (

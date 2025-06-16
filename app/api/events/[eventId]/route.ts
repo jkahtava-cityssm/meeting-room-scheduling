@@ -5,7 +5,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
   const { eventId } = await params;
 
   const events = await prisma.event.findMany({
-    include: { room: true },
+    include: { room: true, recurrence: true },
     where: { eventId: parseInt(eventId) },
   });
 

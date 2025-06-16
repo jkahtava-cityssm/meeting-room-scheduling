@@ -4,19 +4,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { SkeletonCalendarEventListRightPanel } from "./skeleton-calendar-day-right-panel";
+//import { SkeletonCalendarEventListRightPanel } from "./skeleton-calendar-day-right-panel";
 
 export function AgendaEventSkeleton({ selectedDate }: { selectedDate: Date }) {
   return (
-    <div className="flex">
-      <div className="flex flex-1 flex-col space-y-2">
-        <div className="sticky top-14 flex items-center gap-4 bg-accent p-2">
-          <Label className="text-md font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</Label>
-        </div>
-        <AgendaEventBlockSkeleton></AgendaEventBlockSkeleton>
-        <AgendaEventBlockSkeleton></AgendaEventBlockSkeleton>
+    <div className="flex flex-1 flex-col space-y-2">
+      <div className="sticky top-14 flex items-center gap-4 bg-accent p-2">
+        <Label className="text-md font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</Label>
       </div>
-      <SkeletonCalendarEventListRightPanel />
+      <AgendaEventBlockSkeleton></AgendaEventBlockSkeleton>
+      <AgendaEventBlockSkeleton></AgendaEventBlockSkeleton>
     </div>
   );
 }

@@ -3,13 +3,17 @@
 import { createContext, useContext, useState } from "react";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { IEvent, IRoom } from "@/components/calendar/lib/interfaces";
-import type { TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
+
+import type { TVisibleHours, TWorkingHours } from "@/lib/types";
 import { VISIBLE_HOURS } from "../lib/helpers";
 
 interface ICalendarContext {
   selectedDate: Date;
   setSelectedDate: (date: Date | undefined) => void;
+  isHeaderLoading: boolean;
+  setIsHeaderLoading: (value: boolean) => void;
+  totalEvents: number;
+  setTotalEvents: (total: number) => void;
   selectedRoomId: string;
   setSelectedRoomId: (roomId: string) => void;
   workingHours: TWorkingHours;
@@ -34,6 +38,8 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   const [visibleHours, setVisibleHours] = useState<TVisibleHours>(VISIBLE_HOURS);
   const [workingHours, setWorkingHours] = useState<TWorkingHours>(WORKING_HOURS);
 
+  const [isHeaderLoading, setIsHeaderLoading] = useState(true);
+  const [totalEvents, setTotalEvents] = useState(0);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState<string>("-1");
 
@@ -45,6 +51,10 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
   return (
     <CalendarContext.Provider
       value={{
+        isHeaderLoading,
+        setIsHeaderLoading,
+        totalEvents,
+        setTotalEvents,
         selectedDate,
         setSelectedDate: handleSelectDate,
         selectedRoomId,

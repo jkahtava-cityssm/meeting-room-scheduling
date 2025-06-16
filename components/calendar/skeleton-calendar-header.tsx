@@ -1,6 +1,6 @@
 import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react";
 
-import type { TCalendarView } from "@/components/calendar/lib/types";
+import type { TCalendarView } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 

@@ -1,5 +1,6 @@
 "use server";
-import { IEvent, IRoom } from "@/components/calendar/lib/interfaces";
+
+import { IRoom } from "@/lib/schemas/calendar";
 import { prisma } from "@/prisma";
 import { Room } from "@prisma/client";
 

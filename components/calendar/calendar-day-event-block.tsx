@@ -1,10 +1,9 @@
 import { cva } from "class-variance-authority";
-import { format, differenceInMinutes } from "date-fns";
+import { format } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
-import type { HTMLAttributes } from "react";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
-import type { VariantProps } from "class-variance-authority";
-import { TColors } from "./lib/types";
+import { TColors } from "../../lib/types";
+import { IEventBlock } from "./calendar-day-view";
+import { useRouter } from "next/navigation";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -54,25 +53,13 @@ const EventCard = cva(
   }
 );
 
-interface IProps extends HTMLAttributes<HTMLDivElement>, Omit<VariantProps<typeof EventCard>, "color"> {
-  event: IEvent;
-}
+export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventBlock; heightInPixels: number }) {
+  const { push } = useRouter();
 
-export function EventBlock({
-  event,
-  pixelSize = 96,
-  fetchData,
-}: {
-  event: IEvent;
-  pixelSize: number;
-  fetchData: () => Promise<void>;
-}) {
-  const start = event.startDate;
-  const end = event.endDate;
-  const durationInMinutes = differenceInMinutes(end, start);
-  const heightInPixels = (durationInMinutes / 60) * pixelSize - 8;
-
-  const color = event.room.color as TColors;
+  if (!eventBlock?.event) {
+    return;
+  }
+  const color = eventBlock.event.room.color as TColors;
 
   const EventCardClasses = EventCard({ color });
 
@@ -83,8 +70,14 @@ export function EventBlock({
     }
   };
 
+  const handleClick = () => {
+    push(`calendar/edit/0`, {
+      scroll: false,
+    });
+  };
+
   return (
-    <EventDetailsDialog event={event} fetchData={fetchData}>
+    <EventDetailsDialog event={eventBlock.event}>
       <div
         role="button"
         tabIndex={0}
@@ -95,11 +88,11 @@ export function EventBlock({
         onKeyDown={handleKeyDown}
       >
         <div className="flex items-center gap-1.5 ">
-          <p className="truncate font-semibold">{event.title}</p>
+          <p className="truncate font-semibold">{eventBlock.event.title}</p>
         </div>
         <div className="flex items-center gap-1.5 truncate">
           <p className="truncate">
-            {format(start, "h:mm a")} - {format(end, "h:mm a")}
+            {format(eventBlock.event.startDate, "h:mm a")} - {format(eventBlock.event.endDate, "h:mm a")}
           </p>
         </div>
         {/*durationInMinutes > 60 && <div className="flex flex-row flex-1 text-wrap truncate">{event.description}</div>*/}

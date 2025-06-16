@@ -5,40 +5,32 @@ import {
   subDays,
   subMonths,
   subWeeks,
-  isSameWeek,
   isSameDay,
-  isSameMonth,
   startOfWeek,
   startOfMonth,
   endOfMonth,
   endOfWeek,
   format,
-  parseISO,
   differenceInMinutes,
-  eachDayOfInterval,
   startOfDay,
-  differenceInDays,
   endOfYear,
   startOfYear,
   subYears,
   addYears,
-  isSameYear,
   isWithinInterval,
-  setHours,
-  formatISO,
   set,
   endOfDay,
   areIntervalsOverlapping,
-  isWeekend,
-  setDate,
   compareAsc,
+  getDaysInMonth,
+  intervalToDuration,
+  formatDuration,
 } from "date-fns";
 
-import type { ICalendarCell, IEvent } from "@/components/calendar/lib/interfaces";
-import type { TCalendarView, TRecurrencePattern, TVisibleHours, TWorkingHours } from "@/components/calendar/lib/types";
-import { start } from "repl";
-import { RECURRENCE_PATTERN, RECURRENCE_TYPE } from "@/prisma/seed-data";
-import { datetime, RRule, rrulestr } from "rrule";
+import type { ICalendarCell } from "@/lib/interfaces";
+import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/lib/types";
+
+import { IEvent } from "./schemas/calendar";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -84,144 +76,44 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
 
   return operations[view](date, 1);
 }
-/*
-export function getEventsCount(events: IEvent[], date: Date, view: TCalendarView): number {
-  const compareFns = {
-    agenda: isSameDay,
-    year: isSameYear,
-    day: isSameDay,
-    week: isSameWeek,
-    month: isSameMonth,
+
+export function navigateURL(date: Date | null, view: TCalendarView): string {
+  const path = {
+    agenda: "calendar?view=agenda",
+    year: "calendar?view=year",
+    month: "calendar?view=month",
+    week: "calendar?view=week",
+    day: "calendar?view=day",
   };
 
-  return events.filter((event) => compareFns[view](new Date(event.startDate), date)).length;
-}
+  const dateParams = {
+    agenda: "&selectedDate=",
+    year: "&selectedDate=",
+    month: "&selectedDate=",
+    week: "&selectedDate=",
+    day: "&selectedDate=",
+  };
 
-// ================ Week and day view helper functions ================ //
-
-export function getCurrentEvents(events: IEvent[]) {
-  const now = new Date();
-  return (
-    events.filter((event) =>
-      isWithinInterval(now, {
-        start: event.startDate,
-        end: event.endDate,
-      })
-    ) || null
-  );
-}
-*/
-
-export function getRecurringEvents(events: IEvent[], periodStart: Date, periodEnd: Date) {
-  const eventList: IEvent[] = [];
-
-  events.forEach((element) => {
-    if (element.recurrenceId == null) {
-      return;
+  const formatDate = (view: TCalendarView, value: Date) => {
+    switch (view) {
+      case "year":
+        return format(value, "yyyy");
+      case "month":
+        return format(value, "yyyy-MM");
+      case "week":
+        return format(value, "RRRR-II");
+      case "agenda":
+      case "day":
+      default:
+        return format(value, "yyyy-MM-dd");
     }
+  };
 
-    const currentRule = element.recurrence?.rule as string;
+  if (date === null) {
+    return path[view];
+  }
 
-    const rrule = rrulestr(currentRule);
-    const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
-
-    for (let index = 0; index < recurrenceArray.length; index++) {
-      const newEvent = { ...element, eventIsSplit: true };
-      const recurringDate = setUTCPartsToDate(recurrenceArray[index]);
-      newEvent.title = "Series - " + newEvent.title;
-      newEvent.startDate = set(newEvent.startDate, {
-        year: recurringDate.getFullYear(),
-        month: recurringDate.getMonth(),
-        date: recurringDate.getDate(),
-      });
-      newEvent.endDate = set(newEvent.endDate, {
-        year: recurringDate.getFullYear(),
-        month: recurringDate.getMonth(),
-        date: recurringDate.getDate(),
-      });
-
-      eventList.push(newEvent);
-    }
-  });
-  return eventList;
-}
-
-function setPartsToUTCDate(d: Date) {
-  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()));
-}
-
-function setUTCPartsToDate(d: Date) {
-  return new Date(
-    d.getUTCFullYear(),
-    d.getUTCMonth(),
-    d.getUTCDate(),
-    d.getUTCHours(),
-    d.getUTCMinutes(),
-    d.getUTCSeconds()
-  );
-}
-
-export function splitMultiDayEvents(events: IEvent[], periodStart: Date, periodEnd: Date, visibleHours: TVisibleHours) {
-  /* 
-    CHECK IF THE EVENT STARTS TODAY
-    
-    CHECK IF THE EVENT ENDS TODAY
-
-    IF THE EVENT STARTS AND ENDS IN THE SAME DAY IT WONT BE IN THIS LIST?
-
-    IF THE EVENT STARTED TODAY SET THE END TIME TO THE MAXIMUM VISIBLE HOUR
-
-    IF THE EVENT ENDED TODAY SET THE START TIME TO THE MINIMUM VISIBLE HOUR
-
-    IF THE EVENT STARTS AND ENDS ON A DIFFERENT DAY SET THE START AND END TIMES TO THE MIN AND MAX VISIBLE HOURS
-  */
-
-  const minStartTime = visibleHours.from;
-  const maxEndTime = visibleHours.to;
-
-  const eventList: IEvent[] = [];
-
-  events.forEach((element) => {
-    const currentStartDate = element.startDate;
-    const currentEndDate = element.endDate;
-
-    //const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
-    const totalDaysBetween = differenceInDays(currentEndDate, currentStartDate);
-
-    if (totalDaysBetween === 0) {
-      eventList.push(element);
-      return;
-    }
-
-    for (let index = 0; index < totalDaysBetween; index++) {
-      const newEvent = { ...element, eventIsSplit: true };
-
-      const newDay = set(addDays(currentStartDate, index), { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
-
-      if (!isWithinInterval(newDay, { start: periodStart, end: periodEnd })) {
-        continue;
-      }
-
-      if (index === 0) {
-        //First Day
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-        newEvent.endDate = set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
-      } else if (index === totalDaysBetween) {
-        //LAST DAY
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-        newEvent.startDate = set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
-      } else {
-        newEvent.title = "Day " + (index + 1) + " of " + (totalDaysBetween + 1) + " • " + newEvent.title;
-
-        newEvent.startDate = set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
-        newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
-        //MIDDLE DAY
-      }
-      eventList.push(newEvent);
-    }
-  });
-
-  return eventList;
+  return path[view] + dateParams[view] + formatDate(view, date);
 }
 
 export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Date) {
@@ -271,11 +163,12 @@ export function groupEvents(dayEvents: IEvent[]) {
   return groups;
 }
 
-export function getEventBlockStyle(
+export function calculateEventBlockStyle(
   event: IEvent,
   day: Date,
   groupIndex: number,
   groupSize: number,
+  hasOverlap: boolean,
   visibleHoursRange?: { from: number; to: number }
 ) {
   const startDate = event.startDate;
@@ -294,8 +187,8 @@ export function getEventBlockStyle(
     top = (startMinutes / 1440) * 100;
   }
 
-  const width = 100 / groupSize;
-  const left = groupIndex * width;
+  const width = hasOverlap ? 100 / groupSize : 100;
+  const left = hasOverlap ? groupIndex * width : 0;
 
   return { top: `${top}%`, width: `${width}%`, left: `${left}%` };
 }
@@ -351,6 +244,19 @@ export function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IE
 }
 
 // ================ Month view helper functions ================ //
+
+export function getDaysInView(selectedDate: Date) {
+  const daysInMonth = getDaysInMonth(selectedDate);
+  const firstDayOfMonth = startOfMonth(selectedDate);
+  const beforeDays = firstDayOfMonth.getDay();
+
+  const daysInLastRow = (daysInMonth + beforeDays) % 7;
+  const afterDays = daysInLastRow > 0 ? 7 - daysInLastRow : 0;
+  const firstDate = startOfDay(subDays(selectedDate, beforeDays));
+  const lastDate = endOfDay(addDays(firstDayOfMonth, daysInMonth + afterDays - 1));
+
+  return { startDate: firstDate, endDate: lastDate };
+}
 
 export function getCalendarCells(selectedDate: Date): ICalendarCell[] {
   const currentYear = selectedDate.getFullYear();
@@ -409,11 +315,27 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
     GENERIC FUNCTIONS
 ########################################################################*/
 
+export const getDurationText = (startDate: Date, startTime: Date, endDate: Date, endTime: Date): string => {
+  const startDateTime = combineDateTime(startDate, startTime);
+  const endDateTime = combineDateTime(endDate, endTime);
+
+  const duration = formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
+    format: ["years", "months", "days", "hours", "minutes"],
+    delimiter: ", ",
+  });
+
+  return duration.length === 0 ? "0 Minutes" : duration;
+};
+
+export const combineDateTime = (dateField: Date, timeField: Date) => {
+  return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
+};
+
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
-  const test = events.filter((event) => {
+  const results = events.filter((event) => {
     return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
   });
-  return test;
+  return results;
 }
 
 export function calculateMonthlyRecurrenceEndDate(startDate: Date, occurrences: number, day: number, months: number) {

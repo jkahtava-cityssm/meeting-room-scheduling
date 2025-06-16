@@ -1,72 +1,129 @@
 "use client";
 
-import { startOfWeek, addDays, isSameDay, areIntervalsOverlapping, endOfWeek } from "date-fns";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { startOfWeek, endOfWeek } from "date-fns";
+import { useCalendar } from "@/contexts/CalendarProvider";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
-import {
-  groupEvents,
-  getEventBlockStyle,
-  getVisibleHours,
-  splitMultiDayEvents,
-  filterEventsByRoom,
-  getRecurringEvents,
-} from "@/components/calendar/lib/helpers";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
 import { HourColumn } from "./calendar-day-column-hourly";
-import { ColumnDayHeader } from "./calendar-all-column-day-header";
+import { WeekViewDayHeader } from "./calendar-week-view-day-header";
 import { EventBlock } from "./calendar-day-event-block";
-import { useEffect, useMemo, useState } from "react";
-import { getEventsWeekly } from "@/services/events";
-import { CalendarHeader } from "./calendar-all-header";
+import { useEffect, useRef, useState } from "react";
+
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
-import { getRecurrencesWeekly } from "@/services/recurrence";
+import useSWR from "swr";
+import { IEvent } from "@/lib/schemas/calendar";
+import { TVisibleHours } from "@/lib/types";
 
-export function CalendarWeekView() {
-  const { selectedDate, workingHours, visibleHours, selectedRoomId } = useCalendar();
-  const [events, setEvents] = useState<IEvent[]>([]);
+export interface IWeekProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  pixelHeight: number;
+  visibleHours: TVisibleHours;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface IWeekResponseData {
+  totalEvents: number;
+  dayViews: IDayView[];
+  hours: number[];
+  //weekViews: WeekView[];
+}
+
+export interface IDayView {
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  eventBlocks: IEventBlock[];
+}
+
+export interface IEventBlock {
+  groupIndex: number;
+  eventIndex: number;
+  eventStyle: { top: string; width: string; left: string };
+  eventHeight: number;
+  event: IEvent;
+}
+
+export function CalendarWeekView({ date }: { date: Date }) {
   const [isLoading, setLoading] = useState(true);
+  const [isRefreshed, setRefreshed] = useState(false);
+  const [dayViews, setDayViews] = useState<IDayView[]>([]);
+  const [hours, setHours] = useState<number[]>([]);
 
-  const fetchEvents = async () => {
-    setLoading(true);
+  const { workingHours, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
-    const eventList = await getEventsWeekly(selectedDate);
+  const workerRef = useRef<Worker | null>(null);
 
-    if (eventList.error) {
-      setEvents([]);
-      setLoading(false);
+  const startDate: Date = startOfWeek(date);
+  const endDate: Date = endOfWeek(date);
+  const { data: events } = useSWR<IEvent[]>(
+    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+  );
+
+  useEffect(() => {
+    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+    //nextjs cache's the route so this is my temporary fix
+    setRefreshed(true);
+  }, []);
+
+  useEffect(() => {
+    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
+    //But this example will come in handy for other applications
+
+    if (workerRef.current) {
       return;
     }
 
-    const splitList = splitMultiDayEvents(
-      eventList.data,
-      startOfWeek(selectedDate),
-      endOfWeek(selectedDate),
-      visibleHours
-    );
+    const newWorker = new Worker(new URL("./calendar-week-webworker.ts", import.meta.url));
 
-    const recurrenceList = await getRecurrencesWeekly(selectedDate);
-    const repreatingList = getRecurringEvents(recurrenceList.data, startOfWeek(selectedDate), endOfWeek(selectedDate));
+    newWorker.onmessage = (event: MessageEvent<IWeekResponseData>) => {
+      setDayViews(event.data.dayViews);
+      setHours(event.data.hours);
+      setTotalEvents(event.data.totalEvents);
+      setIsHeaderLoading(false);
+      setLoading(false);
+    };
 
-    setEvents([...splitList, ...repreatingList]);
-    setLoading(false);
-  };
+    workerRef.current = newWorker;
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
+  }, [date, setIsHeaderLoading, setTotalEvents]);
 
   useEffect(() => {
-    fetchEvents();
-  }, [selectedDate]);
+    if (!events) {
+      return;
+    }
 
-  const filteredEvents = useMemo(() => filterEventsByRoom(events, selectedRoomId), [events, selectedRoomId]);
+    if (workerRef.current) {
+      const data: IWeekProcessData = {
+        events: events,
+        visibleHours: visibleHours,
+        selectedDate: date,
+        selectedRoomId: selectedRoomId,
+        multiDayEventsAtTop: true,
+        pixelHeight: 96,
+      };
+      setLoading(true);
+      setIsHeaderLoading(true);
 
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
+      workerRef.current.postMessage(data);
+    }
+  }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
-  const weekStart = startOfWeek(selectedDate);
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  if (isLoading) {
+    return <CalendarWeekViewSkeleton />;
+  }
 
   return (
     <>
-      <CalendarHeader view={"week"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
       <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
         <p>Weekly view is not available on smaller devices.</p>
         <p>Please switch to daily or monthly view.</p>
@@ -79,8 +136,13 @@ export function CalendarWeekView() {
               <CalendarWeekViewSkeleton />
             ) : (
               <>
-                <div>
-                  <ColumnDayHeader weekDays={weekDays} />
+                <div className="relative z-20 flex border-b">
+                  <div className="w-18"></div>
+                  <div className={`grid flex-1 grid-cols-${dayViews.length} divide-x border-l`}>
+                    {dayViews.map((day) => {
+                      return <WeekViewDayHeader key={day.day} dayView={day} />;
+                    })}
+                  </div>
                 </div>
                 <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
                   <div className="flex overflow-hidden">
@@ -90,47 +152,22 @@ export function CalendarWeekView() {
                     {/* Week grid */}
                     <div className="relative flex-1 border-l">
                       <div className="grid grid-cols-7 divide-x">
-                        {weekDays.map((day, dayIndex) => {
-                          const dayEvents = filteredEvents.filter((event) => isSameDay(event.startDate, day));
-
-                          const groupedEvents = groupEvents(dayEvents);
-
+                        {dayViews.map((day, dayIndex) => {
                           return (
                             <div key={dayIndex} className="relative">
-                              <DayHourlyEventDialogs hours={hours} day={day} workingHours={workingHours} />
+                              <DayHourlyEventDialogs hours={hours} day={day.dayDate} workingHours={workingHours} />
 
-                              {groupedEvents.map((group, groupIndex) =>
-                                group.map((event) => {
-                                  let style = getEventBlockStyle(event, day, groupIndex, groupedEvents.length, {
-                                    from: earliestEventHour,
-                                    to: latestEventHour,
-                                  });
-                                  const hasOverlap = groupedEvents.some(
-                                    (otherGroup, otherIndex) =>
-                                      otherIndex !== groupIndex &&
-                                      otherGroup.some((otherEvent) =>
-                                        areIntervalsOverlapping(
-                                          {
-                                            start: event.startDate,
-                                            end: event.endDate,
-                                          },
-                                          {
-                                            start: otherEvent.startDate,
-                                            end: otherEvent.endDate,
-                                          }
-                                        )
-                                      )
-                                  );
-
-                                  if (!hasOverlap) style = { ...style, width: "100%", left: "0%" };
-
-                                  return (
-                                    <div key={event.eventId} className="absolute p-1" style={style}>
-                                      <EventBlock event={event} pixelSize={96} fetchData={fetchEvents} />
-                                    </div>
-                                  );
-                                })
-                              )}
+                              {day.eventBlocks.map((block, blockIndex) => {
+                                return (
+                                  <div
+                                    key={`day-${dayIndex}-block-${blockIndex}-event-${block.event.eventId}`}
+                                    className="absolute p-1"
+                                    style={block.eventStyle}
+                                  >
+                                    <EventBlock eventBlock={block} heightInPixels={block.eventHeight} />
+                                  </div>
+                                );
+                              })}
                             </div>
                           );
                         })}
@@ -139,6 +176,7 @@ export function CalendarWeekView() {
                       <CalendarTimeline />
                     </div>
                   </div>
+                  <ScrollBar orientation="vertical" forceMount></ScrollBar>
                 </ScrollArea>
               </>
             )}
