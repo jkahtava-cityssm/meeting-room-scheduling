@@ -7,7 +7,7 @@ import { CalendarWeekView } from "./calendar-week-view";
 import { CalendarYearView } from "./calendar-year-view";
 import { CalendarAgendaView } from "./calendar-agenda-view";
 import { CalendarHeader } from "./calendar-all-header";
-import { useEffect } from "react";
+import { useMemo } from "react";
 
 import { useSearchParams } from "next/navigation";
 import { endOfWeek, parse, startOfDay, startOfMonth, startOfYear } from "date-fns";
@@ -24,7 +24,7 @@ function getViewDate(dateParam: string | null, view: string) {
     case "year":
       return dateParam === null ? startOfYear(new Date()) : startOfYear(parse(dateParam, "yyyy", new Date()));
     default:
-      return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy", new Date()));
+      return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy-MM-dd", new Date()));
   }
 }
 
@@ -34,16 +34,14 @@ function getViewDate(dateParam: string | null, view: string) {
 
 export function CalendarAllViews() {
   const searchParams = useSearchParams();
-
   const dateParam = searchParams.get("selectedDate");
   const viewParam = searchParams.get("view");
 
   const view = viewParam === null ? "day" : viewParam;
-  const dateValue = getViewDate(dateParam, view);
 
-  useEffect(() => {
-    //setIsLoading(true);
-  }, [viewParam, dateParam]);
+  const dateValue = useMemo(() => {
+    return getViewDate(dateParam, view);
+  }, [dateParam, view]);
 
   return (
     <div className="overflow-hidden rounded-xl border min-w-92">
