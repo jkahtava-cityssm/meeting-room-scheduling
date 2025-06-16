@@ -19,11 +19,13 @@ import { IEvent, IRoom, SEvent } from "@/lib/schemas/calendar";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Switch } from "../ui/switch";
 
 export interface IEventForm extends Pick<IEvent, "roomId" | "description" | "title" | "startDate" | "endDate"> {
   duration: string;
   startTime: Date;
   endTime: Date;
+  isRecurring: boolean;
 }
 
 const SEventForm = z
@@ -32,6 +34,7 @@ const SEventForm = z
     duration: z.string(),
     startTime: z.date(),
     endTime: z.date(),
+    isRecurring: z.boolean(),
   })
   .check((ctx) => {
     const EndDate = new Date(ctx.value.endDate.toDateString());
@@ -39,40 +42,48 @@ const SEventForm = z
 
     const EndTime = new Date(
       ctx.value.startDate.setHours(ctx.value.endTime.getHours(), ctx.value.endTime.getMinutes())
-    );
+    ).getTime();
     const StartTime = new Date(
       ctx.value.startDate.setHours(ctx.value.startTime.getHours(), ctx.value.startTime.getMinutes())
-    );
+    ).getTime();
 
     if (EndDate < StartDate) {
       ctx.issues.push({
         code: "custom",
         input: ctx.value,
         path: ["startDate"],
-        message: "Start Date occurs after End Date",
+        message: "Start Date exceeds End Date",
       });
       ctx.issues.push({
         code: "custom",
         input: ctx.value,
         path: ["endDate"],
-        message: "End Date occurs before Start Date",
+        message: "End Date precedes Start Date",
       });
     }
-    console.log(EndTime < StartTime && EndDate === StartDate);
-    console.log(EndTime < StartTime);
-    console.log(EndDate.getTime() === StartDate.getTime());
-    if (EndTime < StartTime && EndDate === StartDate) {
+
+    if (EndTime < StartTime && EndDate.getTime() === StartDate.getTime()) {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["startDate"],
+        message: "Start Time exceeds End Time",
+      });
       ctx.issues.push({
         code: "custom",
         input: ctx.value,
         path: ["startTime"],
-        message: "Start Time occurs after End Time",
+      });
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["endDate"],
+        message: "End Time precedes Start Time",
       });
       ctx.issues.push({
         code: "custom",
         input: ctx.value,
         path: ["endTime"],
-        message: "End Time occurs before Start Time",
       });
     }
   });
@@ -101,6 +112,7 @@ export function UpdateEventForm({
       startTime: event ? event.startDate : new Date(),
       endTime: event ? event.endDate : new Date(),
       duration: getDurationText(new Date(), new Date(), new Date(), new Date()),
+      isRecurring: false,
     },
   });
 
@@ -148,7 +160,7 @@ export function UpdateEventForm({
                           return (
                             <SelectItem key={room.roomId} value={room.roomId?.toString()} className="flex-1">
                               <div className="flex items-center gap-2">
-                                <IconColored color={room.color as TColors} showBorder={false} hideBackground={false}>
+                                <IconColored color={room.color as TColors} showBorder={false} hideBackground={true}>
                                   <BookKey />
                                 </IconColored>
 
@@ -194,7 +206,13 @@ export function UpdateEventForm({
                 name="startDate"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel htmlFor="startDate">Start Date</FormLabel>
+                    <div className="flex gap-2">
+                      {fieldState.invalid ? (
+                        <FormMessage className="leading-none font-medium" />
+                      ) : (
+                        <FormLabel htmlFor="startDate">Start Date</FormLabel>
+                      )}
+                    </div>
 
                     <FormControl>
                       <SingleDayPicker
@@ -210,10 +228,9 @@ export function UpdateEventForm({
                         }}
                         placeholder="Select a date"
                         data-invalid={fieldState.invalid}
+                        className="min-w-49"
                       />
                     </FormControl>
-
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -238,12 +255,9 @@ export function UpdateEventForm({
                         data-invalid={fieldState.invalid}
                       />
                     </FormControl>
-
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-              {form.formState.errors.startDate ? "BBBBB" : "FFFFF"}
             </div>
 
             <div className="flex items-start gap-2">
@@ -252,7 +266,14 @@ export function UpdateEventForm({
                 name="endDate"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel htmlFor="endDate">End Date</FormLabel>
+                    <div className="flex gap-2">
+                      {fieldState.invalid ? (
+                        <FormMessage className="leading-none font-medium" />
+                      ) : (
+                        <FormLabel htmlFor="endDate">End Date</FormLabel>
+                      )}
+                    </div>
+
                     <FormControl>
                       <SingleDayPicker
                         id="endDate"
@@ -267,9 +288,9 @@ export function UpdateEventForm({
                         }}
                         placeholder="Select a date"
                         data-invalid={fieldState.invalid}
+                        className="min-w-49"
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -294,7 +315,6 @@ export function UpdateEventForm({
                         data-invalid={fieldState.invalid}
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -302,20 +322,45 @@ export function UpdateEventForm({
             <FormField
               control={form.control}
               name="duration"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
-                  <FormLabel htmlFor="duration">Duration:</FormLabel>
-
+                  {fieldState.invalid ? (
+                    <FormMessage className="leading-none font-medium" />
+                  ) : (
+                    <FormLabel htmlFor="duration">Duration:</FormLabel>
+                  )}
                   <FormControl>
                     <Input
                       id="duration"
                       className="text-sm h-9 px-3 py-1 content-center"
                       {...field}
                       value={field.value}
+                      data-invalid={fieldState.invalid}
                       readOnly
                     ></Input>
                   </FormControl>
-                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isRecurring"
+              render={({ field, fieldState }) => (
+                <FormItem className="pr-11">
+                  {fieldState.invalid ? (
+                    <FormMessage className="leading-none font-medium" />
+                  ) : (
+                    <FormLabel htmlFor="isRecurring">Make Recurring</FormLabel>
+                  )}
+                  <FormControl>
+                    <Switch
+                      id="isRecurring"
+                      checked={field.value}
+                      data-invalid={fieldState.invalid}
+                      //value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

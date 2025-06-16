@@ -1,7 +1,5 @@
 import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
 
-import { Suspense } from "react";
-
 export default async function CalendarYear({
   searchParams,
 }: {
@@ -11,5 +9,9 @@ export default async function CalendarYear({
   //const dateParam = searchParams.get("selectedDate");
   //const viewParam = searchParams.get("view");
   //console.log(params);
-  return <CalendarAllViews />;
+  return (
+    <div>
+      <CalendarAllViews />
+    </div>
+  );
 }

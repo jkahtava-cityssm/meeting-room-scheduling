@@ -32,6 +32,12 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
     setSelectedRoomId(value);
   };
 
+  const handleClick = () => {
+    push(`calendar/edit/0`, {
+      scroll: false,
+    });
+  };
+
   return (
     <>
       <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
@@ -43,6 +49,7 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
             onPreviousClick={handleNavigatePrevious}
             onNextClick={handleNavigateNext}
           />
+          <Button onClick={handleClick}>TTTT</Button>
         </div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
