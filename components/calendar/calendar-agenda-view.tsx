@@ -3,163 +3,139 @@ import { endOfDay, format, startOfDay } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 
 import { AgendaEventCard } from "@/components/calendar/calendar-agenda-event-block";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { getEventsDaily } from "@/services/events";
-import { CalendarHeader } from "./calendar-all-header";
+
+import { useCalendar } from "@/contexts/CalendarProvider";
+import { useEffect, useRef, useState } from "react";
 import { Label } from "@radix-ui/react-dropdown-menu";
-import { Clock, Calendar, User, Printer } from "lucide-react";
+import { Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SingleCalendar } from "@/components/ui/single-calendar";
-import { filterEventsByRoom, splitMultiDayEvents } from "./lib/helpers";
 import { Button } from "../ui/button";
+import useSWR from "swr";
+import { IEvent } from "@/lib/schemas/calendar";
+import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 
-export function AgendaDayView() {
-  const { selectedDate, selectedRoomId, setSelectedDate, visibleHours } = useCalendar();
-  const [events, setEvents] = useState<IEvent[]>([]);
+export interface IAgendaProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface IAgendaResponseData {
+  totalEvents: number;
+  sortedEvents: IEvent[];
+}
+
+export function CalendarAgendaView({ date }: { date: Date }) {
   const [isLoading, setLoading] = useState(true);
+  const [isRefreshed, setRefreshed] = useState(false);
+  const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
 
-  const fetchEvents = async () => {
-    setLoading(true);
+  const { visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
-    const eventList = await getEventsDaily(selectedDate);
+  const workerRef = useRef<Worker | null>(null);
 
-    if (eventList.error) {
-      setEvents([]);
-      setLoading(false);
+  const startDate: Date = startOfDay(date);
+  const endDate: Date = endOfDay(date);
+  const { data: events } = useSWR<IEvent[]>(
+    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+  );
+
+  useEffect(() => {
+    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+    //nextjs cache's the route so this is my temporary fix
+    setRefreshed(true);
+  }, []);
+
+  useEffect(() => {
+    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
+    //But this example will come in handy for other applications
+
+    if (workerRef.current) {
       return;
     }
 
-    const splitList = splitMultiDayEvents(
-      eventList.data,
-      startOfDay(selectedDate),
-      endOfDay(selectedDate),
-      visibleHours
-    );
+    const newWorker = new Worker(new URL("./calendar-agenda-webworker.ts", import.meta.url));
 
-    setEvents(splitList);
-    setLoading(false);
-  };
+    newWorker.onmessage = (event: MessageEvent<IAgendaResponseData>) => {
+      setFilteredEvents(event.data.sortedEvents);
+      setTotalEvents(event.data.totalEvents);
+      setIsHeaderLoading(false);
+      setLoading(false);
+    };
+
+    workerRef.current = newWorker;
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
+  }, [date, setIsHeaderLoading, setTotalEvents]);
 
   useEffect(() => {
-    fetchEvents();
-  }, [selectedDate]);
+    if (!events) {
+      return;
+    }
 
-  const filteredEvents = useMemo(() => filterEventsByRoom(events, selectedRoomId), [events, selectedRoomId]);
+    if (workerRef.current) {
+      const data: IAgendaProcessData = {
+        events: events,
+        selectedDate: date,
+        selectedRoomId: selectedRoomId,
+        multiDayEventsAtTop: true,
+      };
+      setLoading(true);
+      setIsHeaderLoading(true);
 
-  const sortedEvents = [...filteredEvents].sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-  );
+      workerRef.current.postMessage(data);
+    }
+  }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
   const printContentRef = useRef<HTMLDivElement>(null);
   const reactPrintFunction = useReactToPrint({
     contentRef: printContentRef,
-    documentTitle: `Agenda: ${format(selectedDate, "EEEE, MMMM d, yyyy")}`,
+    documentTitle: `Agenda: ${format(date, "EEEE, MMMM d, yyyy")}`,
     pageStyle: "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
   });
 
   return (
     <>
-      <CalendarHeader view={"agenda"} selectedDate={selectedDate} events={events} isLoading={isLoading} />
-      {isLoading ? (
-        <AgendaEventSkeleton selectedDate={selectedDate}></AgendaEventSkeleton>
-      ) : (
-        <div className="flex">
+      <div className="flex">
+        {isLoading ? (
+          <AgendaEventSkeleton selectedDate={date}></AgendaEventSkeleton>
+        ) : (
           <div className="flex flex-1 flex-col space-y-2">
             <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
               <div ref={printContentRef}>
                 <div className="sticky top-0 flex items-center gap-4 bg-accent p-2">
-                  <Label className="flex-1 text-md font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</Label>
+                  <Label className="flex-1 text-md font-semibold">{format(date, "EEEE, MMMM d, yyyy")}</Label>
                   <Button className="no-print mr-2" onClick={reactPrintFunction}>
                     <Printer /> Print Agenda
                   </Button>
                 </div>
 
                 <div className="space-y-2 m-2">
-                  {sortedEvents.length > 0 &&
-                    sortedEvents.map((event, index) => (
+                  {filteredEvents.length > 0 &&
+                    filteredEvents.map((event, index) => (
                       <div key={index} className="break-inside-avoid">
-                        <AgendaEventCard key={event.eventId} event={event} fetchData={fetchEvents} />
+                        <AgendaEventCard key={event.eventId} event={event} />
                       </div>
                     ))}
                 </div>
               </div>
             </ScrollArea>
           </div>
-
-          <div className="hidden w-74 divide-y border-l md:block">
-            <SingleCalendar
-              className="mx-auto w-fit"
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              month={new Date()}
-              onMonthChange={() => {}}
-              required
-              onToday={() => {}}
-            />
-
-            <div className="flex-1 space-y-3">
-              {filteredEvents.length > 0 ? (
-                <div className="flex items-start gap-2 px-4 pt-4">
-                  <span className="relative mt-[5px] flex size-2.5">
-                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex size-2.5 rounded-full bg-green-600"></span>
-                  </span>
-
-                  <p className="text-sm font-semibold text-foreground">Happening now</p>
-                </div>
-              ) : (
-                <p className="p-4 text-center text-sm italic text-muted-foreground">
-                  No appointments or consultations at the moment
-                </p>
-              )}
-
-              {filteredEvents.length > 0 && (
-                <div className="flex">
-                  <div className="flex flex-1 flex-col">
-                    <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[40vh] px-4" type="always">
-                      {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
-                      <div className="space-y-6 pb-4">
-                        {filteredEvents.map((event, index) => {
-                          const room = false; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
-
-                          return (
-                            <div key={event.eventId + "-" + index} className="space-y-1.5">
-                              <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
-
-                              {room && (
-                                <div className="flex items-center gap-1.5 text-muted-foreground">
-                                  <User className="size-3.5" />
-                                  <span className="text-sm">{room}</span>
-                                </div>
-                              )}
-
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
-                                <Calendar className="size-3.5" />
-                                <span className="text-sm">{format(new Date(), "MMM d, yyyy")}</span>
-                              </div>
-
-                              <div className="flex items-center gap-1.5 text-muted-foreground">
-                                <Clock className="size-3.5" />
-                                <span className="text-sm">
-                                  {format(event.startDate, "h:mm a")} - {format(event.endDate, "h:mm a")}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+        <CalendarDayColumnCalendar
+          date={date}
+          isLoading={isLoading}
+          events={filteredEvents}
+          view={"agenda"}
+        ></CalendarDayColumnCalendar>
+      </div>
     </>
   );
 }

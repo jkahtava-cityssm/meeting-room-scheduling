@@ -1,164 +1,192 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
+import { useCalendar } from "@/contexts/CalendarProvider";
 
-import { MonthViewDayCell } from "@/components/calendar/calendar-month-view-day-cell";
-
-import { filterEventsByRoom, getCalendarCells, MAX_VISIBLE_EVENTS } from "@/components/calendar/lib/helpers";
-
-import type { IEvent } from "@/components/calendar/lib/interfaces";
-
-import {
-  differenceInDays,
-  eachDayOfInterval,
-  endOfMonth,
-  isSameDay,
-  parseISO,
-  parseJSON,
-  startOfDay,
-  startOfMonth,
-} from "date-fns";
-import { CalendarHeaderSkeleton } from "./skeleton-calendar-header";
-import { CalendarHeader } from "./calendar-all-header";
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
+import { IEvent } from "@/lib/schemas/calendar";
+import useSWR from "swr";
 
-import { getEventsMonthly } from "@/services/events";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import { MonthViewDayEvents } from "./calendar-month-view-day-events";
+import { MonthViewDayHeader } from "./calendar-month-view-day-header";
+import { cn } from "@/lib/utils";
+import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
+import { getDaysInView } from "@/lib/helpers";
+
+export interface IMonthProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface IMonthResponseData {
+  totalEvents: number;
+  dayViews: IDayView[];
+  weekViews: IWeekView[];
+}
+
+export interface IWeekView {
+  week: number;
+  maxDailyEvents: number;
+  dayViews: IDayView[];
+}
+
+export interface IDayView {
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  isSunday: boolean;
+  isCurrentMonth: boolean;
+  eventRecords: IEventView[];
+}
+
+export interface IEventView {
+  index: number;
+  position: "none" | "middle" | "first" | "last";
+  event: IEvent | undefined;
+}
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function CalendarMonthView() {
-  const { selectedDate, selectedRoomId } = useCalendar();
+export function CalendarMonthView({ date }: { date: Date }) {
+  //const startDate: Date = startOfMonth(date);
+  //const endDate: Date = endOfMonth(date);
 
-  const [events, setEvents] = useState<IEvent[]>([]);
+  const { startDate, endDate } = getDaysInView(date);
+  const { selectedRoomId, setTotalEvents, setIsHeaderLoading } = useCalendar();
+
+  const workerRef = useRef<Worker | null>(null);
+
+  const [weekViews, setWeekViews] = useState<IWeekView[]>([]);
 
   const [isLoading, setLoading] = useState(true);
+  const [isRefreshed, setRefreshed] = useState(false);
 
-  const fetchMonthlyEvents = async () => {
-    setLoading(true);
-
-    const eventList = await getEventsMonthly(selectedDate);
-
-    const StartOfMonth = startOfMonth(selectedDate);
-    const EndOfMonth = endOfMonth(selectedDate);
-
-    setEvents(eventList.data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchMonthlyEvents();
-  }, [selectedDate]);
-
-  const filteredEvents = useMemo(() => filterEventsByRoom(events, selectedRoomId), [events, selectedRoomId]);
-
-  const cells = useMemo(() => getCalendarCells(selectedDate), [selectedDate]);
-
-  const eventPositions = useMemo(
-    () => calculateEventPositions(filteredEvents, selectedDate),
-    [filteredEvents, selectedDate]
+  const { data: events, isLoading: isPending } = useSWR<IEvent[]>(
+    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
+  useEffect(() => {
+    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+    //nextjs cache's the route so this is my temporary fix
+    setRefreshed(true);
+  }, []);
+
+  useEffect(() => {
+    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
+    //But this example will come in handy for other applications
+
+    if (workerRef.current) {
+      return;
+    }
+
+    const newWorker = new Worker(new URL("./calendar-month-webworker.ts", import.meta.url));
+
+    newWorker.onmessage = (event: MessageEvent<IMonthResponseData>) => {
+      setWeekViews(event.data.weekViews);
+      setTotalEvents(event.data.totalEvents);
+      setIsHeaderLoading(false);
+      setLoading(false);
+    };
+
+    workerRef.current = newWorker;
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+    };
+  }, [date, setIsHeaderLoading, setTotalEvents]);
+
+  useEffect(() => {
+    if (!events) {
+      return;
+    }
+
+    if (workerRef.current) {
+      const data: IMonthProcessData = {
+        events: events,
+        selectedDate: date,
+        selectedRoomId: selectedRoomId,
+        multiDayEventsAtTop: true,
+      };
+      setLoading(true);
+      setIsHeaderLoading(true);
+
+      workerRef.current.postMessage(data);
+    }
+  }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading]);
+
+  if (isLoading || isPending) {
+    return <MonthViewDayCellSkeleton date={date} />;
+  }
+  //134
+  //24
+  //94
+  //26
+
   return (
-    <div>
-      <CalendarHeader view={"month"} selectedDate={selectedDate} events={filteredEvents} isLoading={isLoading} />
-      <div className="grid grid-cols-7 divide-x">
+    <>
+      <div
+        className="grid grid-cols-7 border-b-1"
+        //pr-[15px]
+      >
         {WEEK_DAYS.map((day) => (
-          <div key={day} className="flex items-center justify-center py-2">
+          <div
+            key={day}
+            className={cn("flex items-center justify-center py-2 border-l", day === "Sun" && "border-l-0")}
+          >
             <span className="text-xs font-medium text-muted-foreground">{day}</span>
           </div>
         ))}
       </div>
-
-      <div className="grid grid-cols-7 overflow-hidden">
-        {cells.map((cell) =>
-          isLoading ? (
-            <MonthViewDayCellSkeleton cell={cell} key={cell.date.toISOString()}></MonthViewDayCellSkeleton>
-          ) : (
-            <MonthViewDayCell
-              key={cell.date.toISOString()}
-              cell={cell}
-              events={filteredEvents}
-              eventPositions={eventPositions}
-              fetchData={fetchMonthlyEvents}
-            />
-          )
-        )}
+      <div>
+        {weekViews.map((week) => {
+          return (
+            <div key={`week-${week.week}`}>
+              <div
+                className="grid grid-cols-7 overflow-hidden "
+                //pr-[15px]
+              >
+                {week.dayViews.map((day, index) => {
+                  return <MonthViewDayHeader key={`header-${index}`} dayRecord={day} />;
+                })}
+              </div>
+              <div className="h-18 sm:h-18 lg:h-23 overflow-hidden">
+                <ScrollArea
+                  type="scroll"
+                  className="h-18.5 sm:h-18.5 lg:h-23.5"
+                  //className={`max-h-18.5 sm:max-h-18.5 lg:max-h-23.5 overflow-y-auto ${week.maxDailyEvents <= (isSmall ? 2 : 3) && "pr-[15px]"}`}
+                >
+                  <div className="grid grid-cols-7 min-h-18.5 sm:min-h-18 lg:min-h-23.5 overflow-hidden ">
+                    {week.dayViews.map((day) => {
+                      return <MonthViewDayEvents key={day.dayDate.toISOString()} dayRecord={day} />;
+                    })}
+                  </div>
+                  <ScrollBar orientation="vertical" forceMount></ScrollBar>
+                </ScrollArea>
+              </div>
+              <div
+                className="grid grid-cols-7 overflow-hidden border-b-1"
+                //pr-[15px]
+              >
+                {week.dayViews.map((day, index) => {
+                  return <MonthViewDayFooter key={`footer-${index}`} dayRecord={day} />;
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </div>
+      {/*<div className="grid grid-cols-7 overflow-hidden">
+        {dayViews.map((day) => (
+          <MonthViewDayCell key={day.dayDate.toISOString()} dayRecord={day} />
+        ))}
+      </div>*/}
+    </>
   );
-}
-
-export function calculateEventPositions(events: IEvent[], selectedDate: Date) {
-  const monthStart = startOfMonth(selectedDate);
-  const monthEnd = endOfMonth(selectedDate);
-
-  const multiDayEvents = events.filter((event: IEvent) => {
-    return !isSameDay(event.startDate, event.endDate);
-  });
-
-  const singleDayEvents = events.filter((event: IEvent) => {
-    return isSameDay(event.startDate, event.endDate);
-  });
-
-  const eventPositions: { [key: string]: number } = {};
-  const occupiedPositions: { [key: string]: boolean[] } = {};
-
-  eachDayOfInterval({ start: monthStart, end: monthEnd }).forEach((day) => {
-    occupiedPositions[day.toISOString()] = [false, false, false];
-  });
-
-  const sortedEvents = [
-    ...multiDayEvents.sort((firstEvent, secondEvent) => {
-      const aDuration = differenceInDays(firstEvent.endDate, firstEvent.startDate);
-      const bDuration = differenceInDays(secondEvent.endDate, secondEvent.startDate);
-      try {
-        const firstEventTime = parseISO(firstEvent.startDate.toUTCString()).getTime();
-        const secondEventTime = parseISO(secondEvent.startDate.toUTCString()).getTime();
-      } catch {
-        console.log(firstEvent.startDate, secondEvent.startDate);
-        console.log(parseJSON(firstEvent.startDate.toString()));
-      }
-
-      const firstEventTime = parseJSON(firstEvent.startDate.toString()).getTime();
-      const secondEventTime = parseJSON(secondEvent.startDate.toString()).getTime();
-      return bDuration - aDuration || firstEventTime - secondEventTime;
-    }),
-    ...singleDayEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
-  ];
-
-  sortedEvents.forEach((event) => {
-    const eventStart = event.startDate;
-    const eventEnd = event.endDate;
-
-    const eventDays = eachDayOfInterval({
-      start: eventStart < monthStart ? monthStart : eventStart,
-      end: eventEnd > monthEnd ? monthEnd : eventEnd,
-    });
-
-    let position = -1;
-
-    for (let i = 0; i < MAX_VISIBLE_EVENTS; i++) {
-      if (
-        eventDays.every((day) => {
-          const dayPositions = occupiedPositions[startOfDay(day).toISOString()];
-          return dayPositions && !dayPositions[i];
-        })
-      ) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position !== -1) {
-      eventDays.forEach((day) => {
-        const dayKey = startOfDay(day).toISOString();
-        occupiedPositions[dayKey][position] = true;
-      });
-      eventPositions[event.eventId] = position;
-    }
-  });
-
-  return eventPositions;
 }

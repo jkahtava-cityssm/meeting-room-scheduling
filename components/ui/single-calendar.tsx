@@ -12,6 +12,8 @@ import type { PropsSingleRequired, PropsBase, DropdownProps } from "react-day-pi
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 
+import { TCalendarView } from "@/lib/types";
+
 function SingleCalendar({
   className,
   classNames,
@@ -19,10 +21,18 @@ function SingleCalendar({
   selected,
   onToday,
   ...props
-}: PropsSingleRequired & PropsBase & { onToday: () => void }) {
+}: PropsSingleRequired & PropsBase & { onToday: () => void; view: TCalendarView }) {
+  /*const { push } = useRouter();
+
   const [currentMonth, setCurrentMonth] = React.useState<Date | undefined>(
     selected instanceof Date ? selected : undefined
   );
+
+  const handleToday = () => {
+    setCurrentMonth(new Date());
+
+    push(navigateURL(new Date(), view));
+  };*/
 
   const defaultClassNames = getDefaultClassNames();
   return (
@@ -34,8 +44,9 @@ function SingleCalendar({
           selected={selected}
           onSelect={props.onSelect}
           showOutsideDays={showOutsideDays}
-          month={currentMonth}
-          onMonthChange={setCurrentMonth}
+          //month={currentMonth}
+          //onMonthChange={setCurrentMonth}
+          //fixedWeeks={props.fixedWeeks}
           //footer={selected ? `You have selected ${selected.toLocaleDateString()}.` : "Please pick a date."}
           className={cn("pb-1", className)}
           classNames={{
@@ -61,7 +72,10 @@ function SingleCalendar({
             nav: cn("flex items-start", classNames?.nav),
             month_grid: cn("mx-auto mt-4", classNames?.month_grid),
             week: cn("mt-2 flex w-max items-start", classNames?.week),
-            day: cn("flex size-8 flex-1 items-center justify-center p-0 text-sm", classNames?.day),
+            day: cn(
+              "flex size-8 flex-1 items-center justify-center p-0 text-sm [&>button]:hover:bg-primary/50 [&>button]:hover:text-primary-foreground",
+              classNames?.day
+            ),
             day_button: cn(
               "size-8 rounded-md p-0 font-normal transition-none aria-selected:opacity-100",
               classNames?.day_button

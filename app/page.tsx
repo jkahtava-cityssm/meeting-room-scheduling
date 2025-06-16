@@ -1,7 +1,5 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import AuthProvider from "./component/AuthProvider";
-import { Button } from "@/components/ui/button";
 import { SignInMicrosoft } from "@/components/sign-in-button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";

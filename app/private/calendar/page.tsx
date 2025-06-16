@@ -1,19 +1,17 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { LoaderCircle, LoaderPinwheel } from "lucide-react";
+import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
 
-export default async function Home() {
+export default async function CalendarYear({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  //const params = await searchParams;
+  //const dateParam = searchParams.get("selectedDate");
+  //const viewParam = searchParams.get("view");
+  //console.log(params);
   return (
-    <>
-      <div className="gap-4 border-b p-4 h-22">
-        <Skeleton className="p-4 h-full flex justify-center  items-center">
-          <LoaderCircle className="animate-spin" />
-        </Skeleton>
-      </div>
-      <div className="p-4 h-[80vh]">
-        <Skeleton className="p-4 h-full  flex justify-center  items-center">
-          <LoaderCircle className="animate-spin" />
-        </Skeleton>
-      </div>
-    </>
+    <div>
+      <CalendarAllViews />
+    </div>
   );
 }

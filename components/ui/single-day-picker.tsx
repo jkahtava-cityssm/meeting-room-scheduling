@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 import type { ButtonHTMLAttributes } from "react";
-import React, { useEffect } from "react";
+import React from "react";
 
 // ================================== //
 
@@ -51,7 +51,14 @@ function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = 
       </PopoverTrigger>
 
       <PopoverContent align="center" className="w-fit p-0">
-        <SingleCalendar mode="single" selected={value} onSelect={handleSelect} required onToday={handleToday} />
+        <SingleCalendar
+          mode="single"
+          selected={value}
+          onSelect={handleSelect}
+          required
+          onToday={handleToday}
+          view={"day"}
+        />
       </PopoverContent>
     </Popover>
   );

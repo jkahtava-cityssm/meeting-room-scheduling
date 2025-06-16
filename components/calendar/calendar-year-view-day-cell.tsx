@@ -1,27 +1,20 @@
-import { isToday } from "date-fns";
+"use client";
+
 import { useRouter } from "next/navigation";
-import { useCalendar } from "@/components/calendar/contexts/calendar-context";
 import { cn } from "@/lib/utils";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
+
 import { IconDot } from "@/components/ui/icon-dot";
-import { TColors } from "./lib/types";
+import { TColors } from "../../lib/types";
+import { DayView } from "./calendar-year-view";
+import { navigateURL } from "@/lib/helpers";
 
-interface IProps {
-  day: number;
-  date: Date;
-  events: IEvent[];
-}
-
-export function YearViewDayCell({ day, date, events }: IProps) {
+const YearViewDayCell = ({ day }: { day: DayView }) => {
   const { push } = useRouter();
-  const { setSelectedDate } = useCalendar();
 
   const maxIndicators = 3;
-  const eventCount = events.length;
 
   const handleClick = () => {
-    setSelectedDate(date);
-    push("day-view");
+    push(navigateURL(day.dayDate, "day"));
   };
 
   return (
@@ -33,24 +26,33 @@ export function YearViewDayCell({ day, date, events }: IProps) {
       <div
         className={cn(
           "flex size-6 items-center justify-center rounded-full text-xs font-medium",
-          isToday(date) && "bg-primary font-semibold text-primary-foreground"
+          day.isToday && "bg-primary font-semibold text-primary-foreground"
         )}
       >
-        {day}
+        {day.day}
       </div>
-
-      {eventCount > 0 && (
+      {
         <div className="mt-0.5 flex gap-0.5">
-          {eventCount <= maxIndicators ? (
-            events.map((event) => <IconDot key={event.eventId} color={event.room.color as TColors}></IconDot>)
+          {day.dayEvents.length <= maxIndicators ? (
+            day.dayEvents.map((event, index) => (
+              <IconDot key={`day-${day.day}-${event.eventId}-${index}`} color={event.room.color as TColors}></IconDot>
+            ))
           ) : (
             <>
-              <IconDot key={events[0].eventId} color={events[0].room.color as TColors}></IconDot>
-              <span className="text-[7px] text-muted-foreground">+{eventCount - 1}</span>
+              <div className="flex justify-center items-center">
+                <IconDot
+                  key={`day-${day.day}-${day.dayEvents[0].eventId}`}
+                  color={day.dayEvents[0].room.color as TColors}
+                ></IconDot>
+              </div>
+
+              <span className="text-[0.5rem] ">+ {day.dayEvents.length - 1}</span>
             </>
           )}
         </div>
-      )}
+      }
     </button>
   );
-}
+};
+
+export default YearViewDayCell;

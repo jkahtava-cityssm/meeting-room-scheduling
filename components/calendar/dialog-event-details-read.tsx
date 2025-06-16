@@ -1,6 +1,6 @@
-import { IEvent } from "@/components/calendar/lib/interfaces";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { IEvent } from "@/lib/schemas/calendar";
 import { format, isSameDay } from "date-fns";
 import { Clock, MapPin, Text } from "lucide-react";
 import { SetStateAction } from "react";
@@ -45,6 +45,7 @@ export function ReadEvent({
         </div>
         <div className="flex items-center gap-2 pl-7">
           <Textarea
+            id="description"
             className={twMerge("max-h-80 resize-none disabled:opacity-100")}
             disabled={true}
             value={event.description}

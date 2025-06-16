@@ -1,9 +1,9 @@
 import { cva } from "class-variance-authority";
-import { differenceInDays, endOfDay, format, isSameDay, startOfDay } from "date-fns";
+import { endOfDay, format, isSameDay, startOfDay } from "date-fns";
 import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
 import { cn } from "@/lib/utils";
-import type { IEvent } from "@/components/calendar/lib/interfaces";
 import type { VariantProps } from "class-variance-authority";
+import { IEvent } from "@/lib/schemas/calendar";
 
 export const eventBadgeVariants = cva(
   "mx-1 flex size-auto h-6.5 select-none items-center justify-between gap-1.5 truncate whitespace-nowrap rounded-md border px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -67,7 +67,6 @@ interface IProps extends Omit<VariantProps<typeof eventBadgeVariants>, "color" |
   eventTotalDays?: number;
   className?: string;
   position?: "first" | "middle" | "last" | "none";
-  fetchData: () => Promise<void>;
 }
 
 export function MonthEventBadge({
@@ -77,7 +76,6 @@ export function MonthEventBadge({
   eventTotalDays,
   className,
   position: propPosition,
-  fetchData,
 }: IProps) {
   const itemStart = startOfDay(event.startDate);
   const itemEnd = endOfDay(event.endDate);
@@ -85,8 +83,6 @@ export function MonthEventBadge({
   if (cellDate < itemStart || cellDate > itemEnd) return null;
 
   let position: "first" | "middle" | "last" | "none" | undefined;
-
-  let currentDay = differenceInDays(cellDate, itemStart);
 
   if (propPosition) {
     position = propPosition;
@@ -104,7 +100,6 @@ export function MonthEventBadge({
 
   const renderBadgeText = ["first", "none"].includes(position);
   const renderDays = ["middle", "last"].includes(position);
-  const renderTitle = ["middle"].includes(position);
   const renderStartTime = ["first", "none"].includes(position);
   const renderEndTime = ["last"].includes(position);
 
@@ -120,14 +115,10 @@ export function MonthEventBadge({
   };
 
   return (
-    <EventDetailsDialog event={event} fetchData={fetchData}>
+    <EventDetailsDialog event={event}>
       <div role="button" tabIndex={0} color={event.room.color} className={eventBadgeClasses} onKeyDown={handleKeyDown}>
         <div className="flex items-center gap-1.5 truncate">
-          {renderDays && (
-            <span className="text-xs font-semibold truncate">
-              Day {currentDay + 1} - {event.title}
-            </span>
-          )}
+          {renderDays && <span className="text-xs font-semibold truncate">{event.title}</span>}
 
           {renderBadgeText && <p className="flex-1 truncate font-semibold">{event.title}</p>}
         </div>

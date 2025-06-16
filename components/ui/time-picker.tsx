@@ -1,14 +1,12 @@
 "use client";
 
 import * as React from "react";
-import * as SwitchPrimitive from "@radix-ui/react-switch";
 
-import { cn } from "@/lib/utils";
-import { display12HourValue, Period, TimePickerInput } from "./time-picker-input";
+import { Period, TimePickerInput } from "./time-picker-input";
 import { Label } from "./label";
 import { TimePeriodSelect } from "./time-period-select";
 
-function TimePicker({ className, ...props }: Omit<React.ComponentProps<typeof TimePickerInput>, "picker">) {
+function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInput>, "picker">) {
   const [period, setPeriod] = React.useState<Period>(getPeriodFromDate(props.date));
 
   const minuteRef = React.useRef<HTMLInputElement>(null);

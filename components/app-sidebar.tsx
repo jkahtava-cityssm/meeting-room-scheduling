@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
+import { navigateURL } from "@/lib/helpers";
 
 const data = {
   user: {
@@ -32,28 +33,44 @@ const data = {
     {
       title: "Bookings",
       url: "#",
+      icon: Send,
+      isActive: true,
+      items: [
+        {
+          title: "My Bookings",
+          url: "/private/bookings/user-view",
+        },
+        {
+          title: "Pending Requests",
+          url: "/private/bookings/user-view",
+        },
+      ],
+    },
+    {
+      title: "View Calendar",
+      url: "#",
       icon: Calendar,
       isActive: true,
       items: [
         {
-          title: "View Calendar - Year",
-          url: "/private/calendar/year-view",
+          title: "Calendar - Daily Agenda",
+          url: "/private/" + navigateURL(null, "agenda"),
         },
         {
-          title: "View Calendar - Month",
-          url: "/private/calendar/month-view",
+          title: "Calendar - Day",
+          url: "/private/" + navigateURL(null, "day"),
         },
         {
-          title: "View Calendar - Week",
-          url: "/private/calendar/week-view",
+          title: "Calendar - Week",
+          url: "/private/" + navigateURL(null, "week"),
         },
         {
-          title: "View Calendar - Day",
-          url: "/private/calendar/day-view",
+          title: "Calendar - Month",
+          url: "/private/" + navigateURL(null, "month"),
         },
         {
-          title: "View Calendar - Agenda",
-          url: "/private/calendar/agenda-view",
+          title: "Calendar - Year",
+          url: "/private/" + navigateURL(null, "year"),
         },
       ],
     },
