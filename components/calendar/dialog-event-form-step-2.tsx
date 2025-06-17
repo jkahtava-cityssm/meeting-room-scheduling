@@ -1,25 +1,12 @@
 "use client";
 
-import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { BookKey } from "lucide-react";
-import { SingleDayPicker } from "@/components/ui/single-day-picker";
-import { TimePicker } from "@/components/ui/time-picker";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-
-import { IconColored } from "@/components/ui/icon-colored";
-
-import { TColors } from "@/lib/types";
-
-import { getDurationText } from "@/lib/helpers";
-import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
 import { IRecurrence, SRecurrence } from "@/lib/schemas/calendar";
-import { useForm } from "react-hook-form";
+import { Control, FieldPathByValue, FieldValues, useForm, UseFormReturn } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Switch } from "../ui/switch";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import InputNumber from "../ui/input-number";
 import { Checkbox } from "../ui/checkbox";
@@ -28,28 +15,48 @@ import { Separator } from "../ui/separator";
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
   repeatingPattern: string;
-  dailyOptions: string;
-  weeklyOptions: string;
-  frequency: string;
-  duration: string;
+
+  dailyPattern: string;
+  monthlyPattern: string;
+  yearlyPattern: string;
+
+  dayValue: string;
+  monthValue: string;
+  monthDayValue: string;
+  monthPeriodValue: string;
+  monthWeekdayValue: string;
+  yearValue: string;
+  yearDayValue: string;
+  yearMonthValue: string;
+  yearPeriodValue: string;
+  yearWeekdayValue: string;
+  weekValue: string;
   weekdays: string[];
-  monthDay: string;
-  month: string;
 }
 
 const SRecurrenceForm = z.object({
   ...SRecurrence.pick({ rule: true, startDate: true, endDate: true }).shape,
   repeatingType: z.string(),
   repeatingPattern: z.string(),
-  dailyOptions: z.string(),
-  weeklyOptions: z.string(),
-  frequency: z.string(),
-  duration: z.string(),
+  dailyPattern: z.string(),
+  monthlyPattern: z.string(),
+  yearlyPattern: z.string(),
+
+  dayValue: z.string(),
+  monthValue: z.string(),
+  monthDayValue: z.string(),
+  monthPeriodValue: z.string(),
+  monthWeekdayValue: z.string(),
+  yearValue: z.string(),
+  yearDayValue: z.string(),
+  yearMonthValue: z.string(),
+  yearPeriodValue: z.string(),
+  yearWeekdayValue: z.string(),
+
+  weekValue: z.string(),
   weekdays: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one item.",
   }),
-  monthDay: z.string(),
-  month: z.string(),
 });
 
 export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boolean; recurrence?: IRecurrenceForm }) {
@@ -64,6 +71,21 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
       startDate: recurrence ? recurrence.startDate : new Date(),
       endDate: recurrence ? recurrence.endDate : new Date(),
       weekdays: [],
+
+      dailyPattern: "",
+      monthlyPattern: "",
+      yearlyPattern: "",
+
+      dayValue: "",
+      monthValue: "",
+      monthDayValue: "",
+      monthPeriodValue: "",
+      monthWeekdayValue: "",
+      yearValue: "",
+      yearDayValue: "",
+      yearMonthValue: "",
+      yearPeriodValue: "",
+      yearWeekdayValue: "",
     },
   });
 
@@ -112,18 +134,13 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
                         </SelectTrigger>
 
                         <SelectContent className={"min-w-40"}>
-                          <SelectItem key={"daily"} value={"daily"} className="flex-1">
-                            Daily
-                          </SelectItem>
-                          <SelectItem key={"weekly"} value={"weekly"} className="flex-1">
-                            Weekly
-                          </SelectItem>
-                          <SelectItem key={"monthly"} value={"monthly"} className="flex-1">
-                            Monthly
-                          </SelectItem>
-                          <SelectItem key={"yearly"} value={"yearly"} className="flex-1">
-                            Yearly
-                          </SelectItem>
+                          {repeatingPeriods.map((period) => {
+                            return (
+                              <SelectItem key={period.id} value={period.id} className="flex-1">
+                                {period.label}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -133,145 +150,64 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
               )}
             />
             {type === "daily" && (
-              <FormField
-                control={form.control}
-                name="repeatingPattern"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-2">
-                      <FormLabel id="typeLabel" htmlFor="repeatingPattern" className="min-w-15 justify-end">
-                        Pattern
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          name={field.name}
-                          value={field.value}
-                          defaultValue={field.value}
-                          key={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
-                            <SelectValue placeholder="Select an option" />
-                          </SelectTrigger>
-
-                          <SelectContent className={"min-w-40"}>
-                            <SelectItem key={"daily"} value={"daily"} className="flex-1">
-                              Every X days
-                            </SelectItem>
-                            <SelectItem key={"weekday"} value={"weekday"} className="flex-1">
-                              Every weekday
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {type === "monthly" && (
-              <FormField
-                control={form.control}
-                name="repeatingPattern"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-2">
-                      <FormLabel id="typeLabel" htmlFor="repeatingPattern" className="min-w-15 justify-end">
-                        Pattern
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          name={field.name}
-                          value={field.value}
-                          defaultValue={field.value}
-                          key={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
-                            <SelectValue placeholder="Select an option" />
-                          </SelectTrigger>
-
-                          <SelectContent className={"min-w-40"}>
-                            <SelectItem key={"monthly"} value={"monthly"} className="flex-1">
-                              Every X months on X Day
-                            </SelectItem>
-                            <SelectItem key={"monthlyPattern"} value={"monthlyPattern"} className="flex-1">
-                              Every X months on X period on X weekday
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {type === "yearly" && (
-              <FormField
-                control={form.control}
-                name="repeatingPattern"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-2">
-                      <FormLabel id="typeLabel" htmlFor="repeatingPattern" className="min-w-15 justify-end">
-                        Pattern
-                      </FormLabel>
-                      <FormControl>
-                        <Select
-                          name={field.name}
-                          value={field.value}
-                          defaultValue={field.value}
-                          key={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
-                            <SelectValue placeholder="Select an option" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem key={"yearly"} value={"yearly"} className="flex-1">
-                              Every X years on X month on X Day
-                            </SelectItem>
-                            <SelectItem key={"yearlyPattern"} value={"yearlyPattern"} className="flex-1">
-                              Every X years on X period on X weekday of X Month
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {type === "daily" && (
               <div>
                 <FormField
                   control={form.control}
-                  name="weeklyOptions"
+                  name="dailyPattern"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
                       <FormControl>
-                        <FormItem className="flex items-center gap-2">
-                          <FormLabel className="min-w-15  justify-end">Every</FormLabel>
-
-                          <FormItem className="flex items-center gap-3">
-                            <FormControl>
-                              <InputNumber
-                                type="number"
-                                className="max-w-20 text-center"
-                                max={999}
-                                min={1}
-                                placeholder="X"
-                              ></InputNumber>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex flex-col "
+                        >
+                          <FormItem className="flex items-center gap-3 ">
+                            <FormControl className="mx-5.5">
+                              <RadioGroupItem value="daily" />
                             </FormControl>
-                            <FormLabel>Days</FormLabel>
+                            {
+                              //###################################################
+                              //EVERY X DAYS
+                              //###################################################
+                              <FormField
+                                control={form.control}
+                                name="dayValue"
+                                render={({ field }) => (
+                                  <FormItem className="space-y-3">
+                                    <FormControl>
+                                      <FormItem className="flex items-center gap-2">
+                                        <FormLabel className="">Every</FormLabel>
+
+                                        <FormItem className="flex items-center gap-3">
+                                          <FormControl>
+                                            <InputNumber
+                                              type="number"
+                                              className="w-15 text-center"
+                                              max={999}
+                                              min={1}
+                                              value={field.value}
+                                              onChange={field.onChange}
+                                              placeholder="X"
+                                            ></InputNumber>
+                                          </FormControl>
+                                          <FormLabel>Days</FormLabel>
+                                        </FormItem>
+                                      </FormItem>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            }
                           </FormItem>
-                        </FormItem>
+                          <FormItem className="flex items-center gap-3">
+                            <FormControl className="mx-5.5">
+                              <RadioGroupItem value="weekdays" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Every Weekday (Mon, Tue, Wed, Thu, Fri)</FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -294,7 +230,7 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
                             <FormControl>
                               <InputNumber
                                 type="number"
-                                className="max-w-20 text-center"
+                                className="max-w-15 text-center"
                                 max={999}
                                 min={1}
                                 placeholder="X"
@@ -348,94 +284,44 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
                 />
               </div>
             )}
-            {type === "monthly" && (
-              <div className="grid gap-4">
-                <FormField
-                  control={form.control}
-                  name="weeklyOptions"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormControl>
-                        <FormItem className="flex items-center gap-2">
-                          <FormLabel className="min-w-15 justify-end">Every</FormLabel>
+            {type === "monthly" && <MonthlyForm form={form}></MonthlyForm>}
 
-                          <FormItem className="flex items-center gap-3">
-                            <FormControl>
-                              <InputNumber
-                                type="number"
-                                className="max-w-20 text-center"
-                                max={999}
-                                min={1}
-                                placeholder="X"
-                              ></InputNumber>
-                            </FormControl>
-                            <FormLabel>Months</FormLabel>
-                          </FormItem>
-                        </FormItem>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="weeklyOptions"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormControl>
-                        <FormItem className="flex items-center gap-2">
-                          <FormLabel className="min-w-15 justify-end">Every</FormLabel>
-
-                          <FormItem className="flex items-center gap-3">
-                            <FormControl>
-                              <InputNumber
-                                type="number"
-                                className="max-w-20 text-center"
-                                max={999}
-                                min={1}
-                                placeholder="X"
-                              ></InputNumber>
-                            </FormControl>
-                            <FormLabel>Day</FormLabel>
-                          </FormItem>
-                        </FormItem>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
             {type === "yearly" && (
-              <div>
-                <FormField
-                  control={form.control}
-                  name="weeklyOptions"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
+              <FormField
+                control={form.control}
+                name="repeatingPattern"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <div className="flex flex-row gap-2">
+                      <FormLabel id="typeLabel" htmlFor="repeatingPattern" className="min-w-15 justify-end">
+                        Pattern
+                      </FormLabel>
                       <FormControl>
-                        <FormItem className="flex items-center gap-2">
-                          <FormLabel className="min-w-15 justify-end">Every</FormLabel>
-
-                          <FormItem className="flex items-center gap-3">
-                            <FormControl>
-                              <InputNumber
-                                type="number"
-                                className="max-w-20 text-center"
-                                max={999}
-                                min={1}
-                                placeholder="X"
-                              ></InputNumber>
-                            </FormControl>
-                            <FormLabel>Years</FormLabel>
-                          </FormItem>
-                        </FormItem>
+                        <Select
+                          name={field.name}
+                          value={field.value}
+                          defaultValue={field.value}
+                          key={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem key={"yearly"} value={"yearly"} className="flex-1">
+                              Every X years on X month on X Day
+                            </SelectItem>
+                            <SelectItem key={"yearlyPattern"} value={"yearlyPattern"} className="flex-1">
+                              Every X years on X period on X weekday of X Month
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
             )}
           </div>
         </div>
@@ -443,6 +329,324 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
     </Form>
   );
 }
+
+function PeriodSelection<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
+  control,
+  name,
+}: {
+  control: Control<TFieldValues>;
+  name: TPath;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FormItem>
+          <div className="flex flex-row gap-2">
+            <FormControl>
+              <Select
+                name={field.name}
+                value={field.value}
+                defaultValue={field.value}
+                key={field.value}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-23"}>
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+
+                <SelectContent className={"min-w-23"}>
+                  {periods.map((period) => {
+                    return (
+                      <SelectItem key={period.id} value={period.id} className="flex-1">
+                        {period.label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </div>
+        </FormItem>
+      )}
+    />
+  );
+}
+
+function WeekDaySelection<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
+  control,
+  name,
+}: {
+  control: Control<TFieldValues>;
+  name: TPath;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FormItem>
+          <div className="flex flex-row gap-2">
+            <FormControl>
+              <Select
+                name={field.name}
+                value={field.value}
+                defaultValue={field.value}
+                key={field.value}
+                onValueChange={field.onChange}
+              >
+                <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-31"}>
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+
+                <SelectContent className={"min-w-31"}>
+                  {weekdays.map((period) => {
+                    return (
+                      <SelectItem key={period.id} value={period.id} className="flex-1">
+                        {period.label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </div>
+        </FormItem>
+      )}
+    />
+  );
+}
+
+function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, any, IRecurrenceForm> }) {
+  return (
+    <FormField
+      control={form.control}
+      name="monthlyPattern"
+      render={({ field }) => (
+        <FormItem className="space-y-3">
+          <FormControl>
+            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col ">
+              <FormItem className="flex items-center gap-3 ">
+                <FormControl className="mx-5.5">
+                  <RadioGroupItem value="dayInMonth" />
+                </FormControl>
+                {
+                  //###################################################
+                  //EVERY X DAY EVERY X MONTHS
+                  //###################################################
+                  <div className="flex flex-row gap-2">
+                    <FormField
+                      control={form.control}
+                      name="monthDayValue"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormControl>
+                            <FormItem className="flex items-center gap-2">
+                              <FormLabel className="">Day</FormLabel>
+
+                              <FormItem className="flex items-center gap-2">
+                                <FormControl>
+                                  <InputNumber
+                                    type="number"
+                                    className="w-15 text-center"
+                                    max={999}
+                                    min={1}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="X"
+                                  ></InputNumber>
+                                </FormControl>
+                                <FormLabel className="min-w-14 ">of every</FormLabel>
+                              </FormItem>
+                            </FormItem>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="monthValue"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormControl>
+                            <FormItem className="flex items-center gap-2">
+                              <FormItem className="flex items-center gap-2">
+                                <FormControl>
+                                  <InputNumber
+                                    type="number"
+                                    className="w-15 text-center"
+                                    max={999}
+                                    min={1}
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="X"
+                                  ></InputNumber>
+                                </FormControl>
+                                <FormLabel>month(s)</FormLabel>
+                              </FormItem>
+                            </FormItem>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                }
+              </FormItem>
+              <FormItem className="flex items-center gap-3">
+                <FormControl className="mx-5.5">
+                  <RadioGroupItem value="patternInMonth" />
+                </FormControl>
+                <FormLabel>On the</FormLabel>
+
+                <FormField
+                  control={form.control}
+                  name="monthPeriodValue"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-2">
+                        <FormControl>
+                          <Select
+                            //{...field}
+                            name={field.name}
+                            value={field.value}
+                            defaultValue={field.value}
+                            key={field.value}
+                            onValueChange={(value) => {
+                              if (value === "") {
+                                //There is a Bug with the Select Field when used with React Hook Form:
+                                //https://github.com/radix-ui/primitives/issues/2944
+                                //https://github.com/radix-ui/primitives/issues/3135
+                                //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                                //return;
+                              }
+                              field.onChange(value);
+                            }}
+                          >
+                            <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-23"}>
+                              <SelectValue placeholder="Select an option" />
+                            </SelectTrigger>
+
+                            <SelectContent className={"min-w-23"}>
+                              {periods.map((period) => {
+                                return (
+                                  <SelectItem key={period.id} value={period.id} className="flex-1">
+                                    {period.label}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="monthWeekdayValue"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-2">
+                        <FormControl>
+                          <Select
+                            //{...field}
+                            name={field.name}
+                            value={field.value}
+                            defaultValue={field.value}
+                            key={field.value}
+                            onValueChange={(value) => {
+                              if (value === "") {
+                                //There is a Bug with the Select Field when used with React Hook Form:
+                                //https://github.com/radix-ui/primitives/issues/2944
+                                //https://github.com/radix-ui/primitives/issues/3135
+                                //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                                //return;
+                              }
+                              field.onChange(value);
+                            }}
+                          >
+                            <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-31"}>
+                              <SelectValue placeholder="Select an option" />
+                            </SelectTrigger>
+
+                            <SelectContent className={"min-w-31"}>
+                              {weekdays.map((period) => {
+                                return (
+                                  <SelectItem key={period.id} value={period.id} className="flex-1">
+                                    {period.label}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormLabel className="min-w-14 ">of every</FormLabel>
+                <FormField
+                  control={form.control}
+                  name="monthValue"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormControl>
+                        <FormItem className="flex items-center gap-2">
+                          <FormItem className="flex items-center gap-2">
+                            <FormControl>
+                              <InputNumber
+                                type="number"
+                                className="w-15 text-center"
+                                max={999}
+                                min={1}
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="X"
+                              ></InputNumber>
+                            </FormControl>
+                          </FormItem>
+                        </FormItem>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormLabel>month(s)</FormLabel>
+              </FormItem>
+            </RadioGroup>
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+const repeatingPeriods = [
+  {
+    id: "daily",
+    label: "Daily",
+  },
+  {
+    id: "weekly",
+    label: "Weekly",
+  },
+  {
+    id: "monthly",
+    label: "Monthly",
+  },
+  {
+    id: "yearly",
+    label: "Yearly",
+  },
+];
 
 const weekdays = [
   {
@@ -523,5 +727,28 @@ const months = [
   {
     id: "december",
     label: "December",
+  },
+] as const;
+
+const periods = [
+  {
+    id: "first",
+    label: "first",
+  },
+  {
+    id: "second",
+    label: "second",
+  },
+  {
+    id: "third",
+    label: "third",
+  },
+  {
+    id: "fourth",
+    label: "fourth",
+  },
+  {
+    id: "last",
+    label: "last",
   },
 ] as const;
