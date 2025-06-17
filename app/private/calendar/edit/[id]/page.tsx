@@ -1,5 +1,5 @@
 "use client";
-import { IEventForm, UpdateEventForm } from "@/components/calendar/dialog-event-form";
+import { IEventForm, UpdateEventForm } from "@/components/calendar/dialog-event-form-step-1";
 import { useRooms } from "@/hooks/use-rooms";
 
 export default function EditEvent({ id }: { id: number }) {

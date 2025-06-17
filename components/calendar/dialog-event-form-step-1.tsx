@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Switch } from "../ui/switch";
+import { SetStateAction } from "react";
 
 export interface IEventForm extends Pick<IEvent, "roomId" | "description" | "title" | "startDate" | "endDate"> {
   duration: string;
@@ -93,11 +94,13 @@ export function UpdateEventForm({
   event,
   rooms,
   onSubmit,
+  toggleRecurrence,
 }: {
   isLoading: boolean;
   event?: IEventForm;
   rooms?: IRoom[];
   onSubmit: (values: IEventForm) => Promise<void>;
+  toggleRecurrence: (value: SetStateAction<boolean>) => void;
 }) {
   const form = useForm<IEventForm>({
     resolver: zodResolver(SEventForm),
@@ -355,10 +358,12 @@ export function UpdateEventForm({
                   <FormControl>
                     <Switch
                       id="isRecurring"
-                      checked={field.value}
+                      checked={Boolean(field.value)}
                       data-invalid={fieldState.invalid}
-                      //value={field.value}
-                      onChange={field.onChange}
+                      onCheckedChange={(value) => {
+                        field.onChange(value);
+                        toggleRecurrence(value);
+                      }}
                     />
                   </FormControl>
                 </FormItem>
