@@ -35,7 +35,10 @@ import { IconColored } from "../ui/icon-colored";
 import { BookKey } from "lucide-react";
 import { TColors } from "@/lib/types";
 import { TimePicker } from "../ui/time-picker";
-import { IEventForm, UpdateEventForm } from "./dialog-event-form";
+import { IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
+import { EventFormWizard } from "./dialog-event-form-wizard";
+import { useState } from "react";
+import { UpdateRecurrenceForm } from "./dialog-event-form-step-2";
 
 export function AddEventDialog({
   children,
@@ -47,6 +50,8 @@ export function AddEventDialog({
   startTime?: { hour: number; minute: number };
 }) {
   const { isOpen, onClose, onToggle } = useDisclosure();
+
+  const [showRecurrence, setShowRecurrence] = useState(false);
 
   const { isLoading: isRoomLoading, rooms } = useRooms();
 
@@ -73,7 +78,19 @@ export function AddEventDialog({
             event
           </DialogDescription>
         </DialogHeader>
-        <UpdateEventForm isLoading={isRoomLoading} rooms={rooms} onSubmit={onSubmit}></UpdateEventForm>
+        <EventFormWizard
+          onSubmit={function (): Promise<void> {
+            throw new Error("Function not implemented.");
+          }}
+        >
+          <UpdateEventForm
+            isLoading={isRoomLoading}
+            rooms={rooms}
+            onSubmit={onSubmit}
+            toggleRecurrence={setShowRecurrence}
+          ></UpdateEventForm>
+          {showRecurrence && <UpdateRecurrenceForm></UpdateRecurrenceForm>}
+        </EventFormWizard>
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
