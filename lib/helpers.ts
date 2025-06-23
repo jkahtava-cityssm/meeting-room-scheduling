@@ -190,7 +190,13 @@ export function calculateEventBlockStyle(
   const width = hasOverlap ? 100 / groupSize : 100;
   const left = hasOverlap ? groupIndex * width : 0;
 
-  return { top: `${top}%`, width: `${width}%`, left: `${left}%` };
+  //On occassion there are hydration errors associate with these calculations
+  //rounding to 2 decimal places should resolve it, since most errors occur at 10 decimal places
+  const roundedTop = Math.round(top * 100) / 100;
+  const roundedWidth = Math.round(width * 100) / 100;
+  const roundedLeft = Math.round(left * 100) / 100;
+
+  return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
 }
 
 export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHours) {
