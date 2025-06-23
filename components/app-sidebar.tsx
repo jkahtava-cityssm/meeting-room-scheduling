@@ -38,11 +38,11 @@ const data = {
       items: [
         {
           title: "My Bookings",
-          url: "/private/bookings/user-view",
+          url: "/bookings/user-view",
         },
         {
           title: "Pending Requests",
-          url: "/private/bookings/user-view",
+          url: "/bookings/user-requests",
         },
       ],
     },
@@ -54,23 +54,23 @@ const data = {
       items: [
         {
           title: "Calendar - Daily Agenda",
-          url: "/private/" + navigateURL(null, "agenda"),
+          url: "/" + navigateURL(null, "agenda"),
         },
         {
           title: "Calendar - Day",
-          url: "/private/" + navigateURL(null, "day"),
+          url: "/" + navigateURL(null, "day"),
         },
         {
           title: "Calendar - Week",
-          url: "/private/" + navigateURL(null, "week"),
+          url: "/" + navigateURL(null, "week"),
         },
         {
           title: "Calendar - Month",
-          url: "/private/" + navigateURL(null, "month"),
+          url: "/" + navigateURL(null, "month"),
         },
         {
           title: "Calendar - Year",
-          url: "/private/" + navigateURL(null, "year"),
+          url: "/" + navigateURL(null, "year"),
         },
       ],
     },
@@ -80,16 +80,12 @@ const data = {
       icon: Settings2,
       items: [
         {
-          title: "Add Room",
-          url: "#",
-        },
-        {
-          title: "Add User",
-          url: "#",
+          title: "Manage Rooms",
+          url: "/settings/manage-rooms",
         },
         {
           title: "Manage Permissions",
-          url: "#",
+          url: "/settings/manage-permissions",
         },
       ],
     },
@@ -110,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/private">
+              <Link href="/bookings/user-view">
                 <div className="flex aspect-square size-8 items-center justify-center">
                   <Image
                     src="/images/city-shield-wreath-cmyk.svg"

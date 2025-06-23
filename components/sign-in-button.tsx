@@ -29,7 +29,9 @@ export function SignInMicrosoft() {
   const searchParams = useSearchParams();
 
   const callbackURL =
-    searchParams.get("callbackurl") == null ? "/private" : (searchParams.get("callbackurl") as string);
+    searchParams.get("callbackurl") == null
+      ? "/private/bookings/user-view"
+      : (searchParams.get("callbackurl") as string);
 
   return (
     <>

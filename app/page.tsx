@@ -10,7 +10,7 @@ export default async function Home() {
   });
 
   if (session) {
-    redirect("/private");
+    redirect("/bookings/user-view");
   }
 
   return (
