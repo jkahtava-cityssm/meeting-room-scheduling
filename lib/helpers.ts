@@ -31,6 +31,7 @@ import type { ICalendarCell } from "@/lib/interfaces";
 import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/lib/types";
 
 import { IEvent } from "./schemas/calendar";
+import { datetime } from "rrule";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -197,6 +198,17 @@ export function calculateEventBlockStyle(
   const roundedLeft = Math.round(left * 100) / 100;
 
   return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
+}
+
+export function getRRuleDateTime(date: Date) {
+  return datetime(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    0
+  );
 }
 
 export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHours) {
