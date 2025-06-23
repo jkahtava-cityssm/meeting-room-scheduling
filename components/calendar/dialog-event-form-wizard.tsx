@@ -7,7 +7,7 @@ export function EventFormWizard({ children, onSubmit }: { children: React.ReactN
   const totalChildren: number = Children.toArray(children).length - 1;
   const totalChildren2: number = Children.count(children);
   const [step, setStep] = useState(0);
-  console.log(totalChildren, totalChildren2, step);
+  //console.log(totalChildren, totalChildren2, step);
   return (
     <>
       {React.Children.map(children, (child, index) => {

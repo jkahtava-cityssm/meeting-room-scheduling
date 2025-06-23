@@ -4,13 +4,15 @@ import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { IRecurrence, SRecurrence } from "@/lib/schemas/calendar";
-import { Control, FieldPathByValue, FieldValues, useForm, UseFormReturn } from "react-hook-form";
+import { Control, FieldPathByValue, FieldValues, useForm, UseFormReturn, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import InputNumber from "../ui/input-number";
 import { Checkbox } from "../ui/checkbox";
 import { Separator } from "../ui/separator";
+import { ByWeekday, datetime, RRule, Weekday } from "rrule";
+import { getRRuleDateTime } from "@/lib/helpers";
 
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
@@ -32,6 +34,8 @@ export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" 
   yearWeekdayValue: string;
   weekValue: string;
   weekdays: string[];
+
+  duration?: string;
 }
 
 const SRecurrenceForm = z.object({
@@ -57,7 +61,11 @@ const SRecurrenceForm = z.object({
   weekdays: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one item.",
   }),
+
+  duration: z.string().optional(),
 });
+
+let render = 0;
 
 export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boolean; recurrence?: IRecurrenceForm }) {
   const form = useForm<IRecurrenceForm>({
@@ -87,11 +95,23 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
       yearMonthValue: "",
       yearPeriodValue: "",
       yearWeekdayValue: "",
+      duration: "",
     },
   });
 
+  //const type = useWatch({ control: form.control, name: "repeatingType" });
   const type = form.watch("repeatingType");
 
+  const formValues = form.watch();
+
+  //const results = useWatch({ control: form.control, name: ["monthValue", "monthDayValue"] });
+
+  const pattern = getPatternValue(formValues);
+  const weekdayArray = getWeekdayArray(formValues, pattern);
+  const newRule = createRRule(formValues, pattern, weekdayArray, new Date());
+
+  render++;
+  console.log(render);
   if (isLoading) {
     return <>...Loading</>;
   }
@@ -100,7 +120,7 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
     <Form {...form}>
       <form id="event-form">
         <div className="flex flex-col md:flex-row gap-2">
-          <div className="flex flex-col flex-1 gap-4 py-4">
+          <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
             <FormLabel>Recurrence Pattern</FormLabel>
             <FormField
               control={form.control}
@@ -160,12 +180,211 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
   );
 }
 
+export const Calc = ({ control, setValue }) => {
+  const results = useWatch({ control, name: "test" });
+  const output = totalCal(results);
+
+  console.log(results);
+
+  setValue("total", output);
+
+  return <p>{output}</p>;
+};
+
+function getPatternValue(formValues: IRecurrenceForm) {
+  const pattern =
+    formValues.repeatingType === "daily"
+      ? formValues.dailyPattern
+      : formValues.repeatingType === "monthly"
+      ? formValues.monthlyPattern
+      : formValues.repeatingType === "yearly"
+      ? formValues.yearlyPattern
+      : formValues.repeatingType === "weekly"
+      ? "weekly"
+      : "";
+
+  return formValues.repeatingType + "-" + pattern;
+}
+
+function getWeekdayArray(formValues: IRecurrenceForm, repeatingPattern: string) {
+  const weekdayArray: ByWeekday[] = [];
+
+  switch (repeatingPattern) {
+    case "daily-weekdays":
+      weekdayArray.push(RRule.MO);
+      weekdayArray.push(RRule.TU);
+      weekdayArray.push(RRule.WE);
+      weekdayArray.push(RRule.TH);
+      weekdayArray.push(RRule.FR);
+      break;
+    case "weekly-weekly":
+      if (formValues.weekdays.includes("monday")) weekdayArray.push(RRule.MO);
+      if (formValues.weekdays.includes("tuesday")) weekdayArray.push(RRule.TU);
+      if (formValues.weekdays.includes("wednesday")) weekdayArray.push(RRule.WE);
+      if (formValues.weekdays.includes("thursday")) weekdayArray.push(RRule.TH);
+      if (formValues.weekdays.includes("friday")) weekdayArray.push(RRule.FR);
+      if (formValues.weekdays.includes("saturday")) weekdayArray.push(RRule.SA);
+      if (formValues.weekdays.includes("sunday")) weekdayArray.push(RRule.SU);
+      break;
+    case "monthly-patternInMonth":
+      if (formValues.monthWeekdayValue === "monday") weekdayArray.push(RRule.MO);
+      if (formValues.monthWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
+      if (formValues.monthWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
+      if (formValues.monthWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
+      if (formValues.monthWeekdayValue === "friday") weekdayArray.push(RRule.FR);
+      if (formValues.monthWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
+      if (formValues.monthWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
+      break;
+    case "yearly-patternInMonthInYear":
+      if (formValues.yearWeekdayValue === "monday") weekdayArray.push(RRule.MO);
+      if (formValues.yearWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
+      if (formValues.yearWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
+      if (formValues.yearWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
+      if (formValues.yearWeekdayValue === "friday") weekdayArray.push(RRule.FR);
+      if (formValues.yearWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
+      if (formValues.yearWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
+
+      break;
+  }
+  return weekdayArray;
+}
+
+function createRRule(
+  formValues: IRecurrenceForm,
+  repeatingPattern: string,
+  weekdayArray: ByWeekday[],
+  startDate: Date
+) {
+  const dayInterval = parseNumber(formValues.dayValue);
+  const weekInterval = parseNumber(formValues.weekValue);
+  const monthInterval = parseNumber(formValues.monthValue);
+  const yearInterval = parseNumber(formValues.yearValue);
+
+  const monthByMonthDay = parseNumber(formValues.monthDayValue);
+  const monthBySetPos = parseNumber(formValues.monthPeriodValue);
+
+  const yearByWeekDay = parseNumber(formValues.yearWeekdayValue);
+  const yearByMonth = parseNumber(formValues.yearMonthValue);
+  const yearBySetPos = parseNumber(formValues.yearPeriodValue);
+
+  const yearByYearDay = parseNumber(formValues.yearDayValue);
+
+  switch (repeatingPattern) {
+    case "daily-daily":
+      if (dayInterval <= 0) return;
+      break;
+    case "daily-weekdays":
+      if (dayInterval <= 0) return;
+      break;
+    case "weekly-weekly":
+      if (weekInterval <= 0) return;
+      break;
+    case "monthly-dayInMonth":
+      if (monthInterval <= 0) return;
+      if (monthByMonthDay <= 0) return;
+      break;
+    case "monthly-patternInMonth":
+      if (monthInterval <= 0) return;
+      if (monthBySetPos !== -1 && monthBySetPos <= 0) return;
+      break;
+    case "yearly-dayInMonthInYear":
+      if (yearInterval <= 0) return;
+      if (yearByMonth <= 0 || yearByYearDay <= 0) return;
+      break;
+    case "yearly-patternInMonthInYear":
+      if (yearInterval <= 0) return;
+      if (weekdayArray.length <= 0 || yearByMonth <= 0 || (yearBySetPos !== -1 && yearBySetPos <= 0)) return;
+      break;
+  }
+
+  switch (repeatingPattern) {
+    case "daily-daily":
+      return new RRule({
+        freq: RRule.DAILY,
+        interval: dayInterval,
+        byweekday: weekdayArray,
+        dtstart: getRRuleDateTime(startDate),
+        count: 10,
+        until: null,
+      });
+    case "daily-weekdays":
+      return new RRule({
+        freq: RRule.DAILY,
+        interval: Number(1),
+        byweekday: weekdayArray,
+        dtstart: getRRuleDateTime(startDate),
+        count: 10,
+        until: null,
+      });
+
+    case "weekly-weekly":
+      return new RRule({
+        freq: RRule.WEEKLY,
+        interval: weekInterval,
+        byweekday: weekdayArray,
+        dtstart: getRRuleDateTime(startDate),
+        count: 10,
+        until: null,
+      });
+      break;
+    case "monthly-dayInMonth":
+      return new RRule({
+        freq: RRule.MONTHLY,
+        interval: monthInterval,
+        bymonthday: monthByMonthDay,
+        dtstart: getRRuleDateTime(startDate),
+        count: 10,
+        until: null,
+      });
+    case "monthly-patternInMonth":
+      return new RRule({
+        freq: RRule.MONTHLY,
+        interval: monthInterval,
+        byweekday: weekdayArray,
+        bysetpos: monthBySetPos,
+        dtstart: getRRuleDateTime(startDate),
+        count: 10,
+        until: null,
+      });
+    case "yearly-dayInMonthInYear":
+      return new RRule({
+        freq: RRule.YEARLY,
+        interval: yearInterval,
+        bymonth: yearByMonth,
+        byyearday: yearByYearDay,
+        dtstart: getRRuleDateTime(startDate),
+        count: 10,
+        until: null,
+      });
+      break;
+    case "yearly-patternInMonthInYear":
+      return new RRule({
+        freq: RRule.YEARLY,
+        interval: yearInterval,
+        bysetpos: yearBySetPos,
+        byweekday: weekdayArray,
+        bymonth: yearByMonth,
+        dtstart: getRRuleDateTime(startDate),
+        count: 10,
+        until: null,
+      });
+      break;
+  }
+}
+
+function parseNumber(value: string, defaultValue: number = 0) {
+  const newValue = Number(value);
+  return isNaN(newValue) ? defaultValue : newValue;
+}
+
 function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
   control,
   name,
+  disabled = false,
 }: {
   control: Control<TFieldValues>;
   name: TPath;
+  disabled: boolean;
 }) {
   return (
     <FormField
@@ -183,7 +402,8 @@ function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPa
                   min={1}
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder="X"
+                  placeholder="#"
+                  disabled={disabled}
                 ></InputNumber>
               </FormControl>
             </FormItem>
@@ -198,9 +418,11 @@ function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPa
 function PeriodFormSelection<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
   control,
   name,
+  disabled,
 }: {
   control: Control<TFieldValues>;
   name: TPath;
+  disabled: boolean;
 }) {
   return (
     <FormField
@@ -216,6 +438,7 @@ function PeriodFormSelection<TFieldValues extends FieldValues, TPath extends Fie
                 defaultValue={field.value}
                 key={field.value}
                 onValueChange={field.onChange}
+                disabled={disabled}
               >
                 <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-23"}>
                   <SelectValue placeholder="Select an option" />
@@ -243,9 +466,11 @@ function PeriodFormSelection<TFieldValues extends FieldValues, TPath extends Fie
 function WeekDayFormSelection<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
   control,
   name,
+  disabled,
 }: {
   control: Control<TFieldValues>;
   name: TPath;
+  disabled: boolean;
 }) {
   return (
     <FormField
@@ -261,6 +486,7 @@ function WeekDayFormSelection<TFieldValues extends FieldValues, TPath extends Fi
                 defaultValue={field.value}
                 key={field.value}
                 onValueChange={field.onChange}
+                disabled={disabled}
               >
                 <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-31"}>
                   <SelectValue placeholder="Select an option" />
@@ -288,9 +514,11 @@ function WeekDayFormSelection<TFieldValues extends FieldValues, TPath extends Fi
 function MonthFormSelection<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
   control,
   name,
+  disabled,
 }: {
   control: Control<TFieldValues>;
   name: TPath;
+  disabled: boolean;
 }) {
   return (
     <FormField
@@ -306,6 +534,7 @@ function MonthFormSelection<TFieldValues extends FieldValues, TPath extends Fiel
                 defaultValue={field.value}
                 key={field.value}
                 onValueChange={field.onChange}
+                disabled={disabled}
               >
                 <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-31"}>
                   <SelectValue placeholder="Select an option" />
@@ -349,7 +578,11 @@ function DailyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceF
                   //###################################################
                 }
                 <FormLabel className="">Every</FormLabel>
-                <NumberFormInput control={form.control} name="dayValue"></NumberFormInput>
+                <NumberFormInput
+                  control={form.control}
+                  name="dayValue"
+                  disabled={field.value === "daily" ? false : true}
+                ></NumberFormInput>
                 <FormLabel>Days</FormLabel>
               </FormItem>
               <FormItem className="flex items-center gap-3">
@@ -372,7 +605,7 @@ function WeeklyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
     <div className="grid gap-8">
       <div className="flex flex-row gap-2">
         <FormLabel className="min-w-15  justify-end">Every</FormLabel>
-        <NumberFormInput control={form.control} name={"weekValue"} />
+        <NumberFormInput control={form.control} name={"weekValue"} disabled={false} />
         <FormLabel>Weeks</FormLabel>
       </div>
       <FormField
@@ -436,9 +669,17 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
                 }
                 <div className="flex flex-row gap-2">
                   <FormLabel className="">Day</FormLabel>
-                  <NumberFormInput control={form.control} name="monthDayValue"></NumberFormInput>
+                  <NumberFormInput
+                    control={form.control}
+                    name="monthDayValue"
+                    disabled={field.value === "dayInMonth" ? false : true}
+                  ></NumberFormInput>
                   <FormLabel className="min-w-14 ">of every</FormLabel>
-                  <NumberFormInput control={form.control} name="monthValue"></NumberFormInput>
+                  <NumberFormInput
+                    control={form.control}
+                    name="monthValue"
+                    disabled={field.value === "dayInMonth" ? false : true}
+                  ></NumberFormInput>
                   <FormLabel>month(s)</FormLabel>
                 </div>
               </FormItem>
@@ -451,12 +692,25 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
                   //ON THE X PERIOD X WEEKDAY OF EVERY X MONTH(S)
                   //###################################################
                 }
+
                 <div className="flex flex-row gap-2">
                   <FormLabel>On the</FormLabel>
-                  <PeriodFormSelection control={form.control} name="monthPeriodValue"></PeriodFormSelection>
-                  <WeekDayFormSelection control={form.control} name="monthWeekdayValue"></WeekDayFormSelection>
+                  <PeriodFormSelection
+                    control={form.control}
+                    name="monthPeriodValue"
+                    disabled={field.value === "patternInMonth" ? false : true}
+                  ></PeriodFormSelection>
+                  <WeekDayFormSelection
+                    control={form.control}
+                    name="monthWeekdayValue"
+                    disabled={field.value === "patternInMonth" ? false : true}
+                  ></WeekDayFormSelection>
                   <FormLabel className="min-w-14 ">of every</FormLabel>
-                  <NumberFormInput control={form.control} name="monthValue"></NumberFormInput>
+                  <NumberFormInput
+                    control={form.control}
+                    name="monthValue"
+                    disabled={field.value === "patternInMonth" ? false : true}
+                  ></NumberFormInput>
                   <FormLabel>month(s)</FormLabel>
                 </div>
               </FormItem>
@@ -474,7 +728,7 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
     <div className="flex flex-col gap-8">
       <div className="flex flex-row gap-2">
         <FormLabel className="min-w-15  justify-end">Every</FormLabel>
-        <NumberFormInput control={form.control} name={"weekValue"} />
+        <NumberFormInput control={form.control} name={"yearValue"} disabled={false} />
         <FormLabel>Year(s)</FormLabel>
       </div>
       <FormField
@@ -495,25 +749,46 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
                   }
                   <div className="flex flex-row gap-2">
                     <FormLabel className="">On</FormLabel>
-                    <MonthFormSelection control={form.control} name="yearMonthValue"></MonthFormSelection>
-                    <NumberFormInput control={form.control} name="monthDayValue"></NumberFormInput>
+                    <MonthFormSelection
+                      control={form.control}
+                      name="yearMonthValue"
+                      disabled={field.value === "dayInMonthInYear" ? false : true}
+                    ></MonthFormSelection>
+                    <NumberFormInput
+                      control={form.control}
+                      name="yearDayValue"
+                      disabled={field.value === "dayInMonthInYear" ? false : true}
+                    ></NumberFormInput>
                   </div>
                 </FormItem>
                 <FormItem className="flex items-center gap-3">
                   <FormControl className="mx-5.5">
-                    <RadioGroupItem value="patternInMonthYear" />
+                    <RadioGroupItem value="patternInMonthInYear" />
                   </FormControl>
                   {
                     //###################################################
                     //ON THE X PERIOD X WEEKDAY OF EVERY X MONTH(S)
                     //###################################################
                   }
+
                   <div className="flex flex-row gap-2">
                     <FormLabel>On the</FormLabel>
-                    <PeriodFormSelection control={form.control} name="monthPeriodValue"></PeriodFormSelection>
-                    <WeekDayFormSelection control={form.control} name="monthWeekdayValue"></WeekDayFormSelection>
+                    <PeriodFormSelection
+                      control={form.control}
+                      name="yearPeriodValue"
+                      disabled={field.value === "patternInMonthInYear" ? false : true}
+                    ></PeriodFormSelection>
+                    <WeekDayFormSelection
+                      control={form.control}
+                      name="yearWeekdayValue"
+                      disabled={field.value === "patternInMonthInYear" ? false : true}
+                    ></WeekDayFormSelection>
                     <FormLabel>of</FormLabel>
-                    <MonthFormSelection control={form.control} name="yearMonthValue"></MonthFormSelection>
+                    <MonthFormSelection
+                      control={form.control}
+                      name="yearMonthValue"
+                      disabled={field.value === "patternInMonthInYear" ? false : true}
+                    ></MonthFormSelection>
                   </div>
                 </FormItem>
               </RadioGroup>
@@ -578,74 +853,74 @@ const weekdays = [
 
 const months = [
   {
-    id: "january",
+    id: "1",
     label: "January",
   },
   {
-    id: "february",
+    id: "2",
     label: "February",
   },
   {
-    id: "march",
+    id: "3",
     label: "March",
   },
   {
-    id: "april",
+    id: "4",
     label: "April",
   },
   {
-    id: "may",
+    id: "5",
     label: "May",
   },
   {
-    id: "june",
+    id: "6",
     label: "June",
   },
   {
-    id: "july",
+    id: "7",
     label: "July",
   },
   {
-    id: "august",
+    id: "8",
     label: "August",
   },
   {
-    id: "september",
+    id: "9",
     label: "September",
   },
   {
-    id: "october",
+    id: "10",
     label: "October",
   },
   {
-    id: "november",
+    id: "11",
     label: "November",
   },
   {
-    id: "december",
+    id: "12",
     label: "December",
   },
 ] as const;
 
 const periods = [
   {
-    id: "first",
+    id: "1",
     label: "first",
   },
   {
-    id: "second",
+    id: "2",
     label: "second",
   },
   {
-    id: "third",
+    id: "3",
     label: "third",
   },
   {
-    id: "fourth",
+    id: "4",
     label: "fourth",
   },
   {
-    id: "last",
+    id: "-1",
     label: "last",
   },
 ] as const;
