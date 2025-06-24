@@ -13,6 +13,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Separator } from "../ui/separator";
 import { ByWeekday, datetime, RRule, Weekday } from "rrule";
 import { getRRuleDateTime } from "@/lib/helpers";
+import { format } from "date-fns";
 
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
@@ -102,13 +103,13 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
   //const type = useWatch({ control: form.control, name: "repeatingType" });
   const type = form.watch("repeatingType");
 
-  const formValues = form.watch();
+  //const formValues = form.watch();
 
   //const results = useWatch({ control: form.control, name: ["monthValue", "monthDayValue"] });
 
-  const pattern = getPatternValue(formValues);
-  const weekdayArray = getWeekdayArray(formValues, pattern);
-  const newRule = createRRule(formValues, pattern, weekdayArray, new Date());
+  //const pattern = getPatternValue(formValues);
+  //const weekdayArray = getWeekdayArray(formValues, pattern);
+  //const newRule = createRRule(formValues, pattern, weekdayArray, new Date());
 
   render++;
   console.log(render);
@@ -174,39 +175,41 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
             {type === "monthly" && <MonthlyForm form={form}></MonthlyForm>}
             {type === "yearly" && <YearlyForm form={form}></YearlyForm>}
           </div>
+          <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
+            <DurationCalculation form={form} />
+          </div>
         </div>
       </form>
     </Form>
   );
 }
 
-export const Calc = ({ control, setValue }) => {
-  const results = useWatch({ control, name: "test" });
-  const output = totalCal(results);
-
-  console.log(results);
-
-  setValue("total", output);
-
-  return <p>{output}</p>;
-};
-
-function getPatternValue(formValues: IRecurrenceForm) {
+function getRepeatingPatternValue(
+  repeatingType: string,
+  dailyPattern: string,
+  monthlyPattern: string,
+  yearlyPattern: string
+) {
   const pattern =
-    formValues.repeatingType === "daily"
-      ? formValues.dailyPattern
-      : formValues.repeatingType === "monthly"
-      ? formValues.monthlyPattern
-      : formValues.repeatingType === "yearly"
-      ? formValues.yearlyPattern
-      : formValues.repeatingType === "weekly"
+    repeatingType === "daily"
+      ? dailyPattern
+      : repeatingType === "monthly"
+      ? monthlyPattern
+      : repeatingType === "yearly"
+      ? yearlyPattern
+      : repeatingType === "weekly"
       ? "weekly"
       : "";
 
-  return formValues.repeatingType + "-" + pattern;
+  return repeatingType + "-" + pattern;
 }
 
-function getWeekdayArray(formValues: IRecurrenceForm, repeatingPattern: string) {
+function getWeekdayArray(
+  repeatingPattern: string,
+  weekdays: string[],
+  monthWeekdayValue: string,
+  yearWeekdayValue: string
+) {
   const weekdayArray: ByWeekday[] = [];
 
   switch (repeatingPattern) {
@@ -218,31 +221,31 @@ function getWeekdayArray(formValues: IRecurrenceForm, repeatingPattern: string) 
       weekdayArray.push(RRule.FR);
       break;
     case "weekly-weekly":
-      if (formValues.weekdays.includes("monday")) weekdayArray.push(RRule.MO);
-      if (formValues.weekdays.includes("tuesday")) weekdayArray.push(RRule.TU);
-      if (formValues.weekdays.includes("wednesday")) weekdayArray.push(RRule.WE);
-      if (formValues.weekdays.includes("thursday")) weekdayArray.push(RRule.TH);
-      if (formValues.weekdays.includes("friday")) weekdayArray.push(RRule.FR);
-      if (formValues.weekdays.includes("saturday")) weekdayArray.push(RRule.SA);
-      if (formValues.weekdays.includes("sunday")) weekdayArray.push(RRule.SU);
+      if (weekdays.includes("monday")) weekdayArray.push(RRule.MO);
+      if (weekdays.includes("tuesday")) weekdayArray.push(RRule.TU);
+      if (weekdays.includes("wednesday")) weekdayArray.push(RRule.WE);
+      if (weekdays.includes("thursday")) weekdayArray.push(RRule.TH);
+      if (weekdays.includes("friday")) weekdayArray.push(RRule.FR);
+      if (weekdays.includes("saturday")) weekdayArray.push(RRule.SA);
+      if (weekdays.includes("sunday")) weekdayArray.push(RRule.SU);
       break;
     case "monthly-patternInMonth":
-      if (formValues.monthWeekdayValue === "monday") weekdayArray.push(RRule.MO);
-      if (formValues.monthWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
-      if (formValues.monthWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
-      if (formValues.monthWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
-      if (formValues.monthWeekdayValue === "friday") weekdayArray.push(RRule.FR);
-      if (formValues.monthWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
-      if (formValues.monthWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
+      if (monthWeekdayValue === "monday") weekdayArray.push(RRule.MO);
+      if (monthWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
+      if (monthWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
+      if (monthWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
+      if (monthWeekdayValue === "friday") weekdayArray.push(RRule.FR);
+      if (monthWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
+      if (monthWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
       break;
     case "yearly-patternInMonthInYear":
-      if (formValues.yearWeekdayValue === "monday") weekdayArray.push(RRule.MO);
-      if (formValues.yearWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
-      if (formValues.yearWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
-      if (formValues.yearWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
-      if (formValues.yearWeekdayValue === "friday") weekdayArray.push(RRule.FR);
-      if (formValues.yearWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
-      if (formValues.yearWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
+      if (yearWeekdayValue === "monday") weekdayArray.push(RRule.MO);
+      if (yearWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
+      if (yearWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
+      if (yearWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
+      if (yearWeekdayValue === "friday") weekdayArray.push(RRule.FR);
+      if (yearWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
+      if (yearWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
 
       break;
   }
@@ -250,24 +253,39 @@ function getWeekdayArray(formValues: IRecurrenceForm, repeatingPattern: string) 
 }
 
 function createRRule(
-  formValues: IRecurrenceForm,
-  repeatingPattern: string,
-  weekdayArray: ByWeekday[],
-  startDate: Date
+  startDate: Date,
+  repeatingType: string,
+  weekdays: string[],
+  dailyPattern: string,
+  monthlyPattern: string,
+  yearlyPattern: string,
+  dayValue: string,
+  weekValue: string,
+  monthValue: string,
+  monthDayValue: string,
+  monthPeriodValue: string,
+  monthWeekdayValue: string,
+  yearValue: string,
+  yearDayValue: string,
+  yearMonthValue: string,
+  yearPeriodValue: string,
+  yearWeekdayValue: string
 ) {
-  const dayInterval = parseNumber(formValues.dayValue);
-  const weekInterval = parseNumber(formValues.weekValue);
-  const monthInterval = parseNumber(formValues.monthValue);
-  const yearInterval = parseNumber(formValues.yearValue);
+  const repeatingPattern = getRepeatingPatternValue(repeatingType, dailyPattern, monthlyPattern, yearlyPattern);
+  const weekdayArray = getWeekdayArray(repeatingPattern, weekdays, monthWeekdayValue, yearWeekdayValue);
 
-  const monthByMonthDay = parseNumber(formValues.monthDayValue);
-  const monthBySetPos = parseNumber(formValues.monthPeriodValue);
+  const dayInterval = parseNumber(dayValue);
+  const weekInterval = parseNumber(weekValue);
+  const monthInterval = parseNumber(monthValue);
+  const yearInterval = parseNumber(yearValue);
 
-  const yearByWeekDay = parseNumber(formValues.yearWeekdayValue);
-  const yearByMonth = parseNumber(formValues.yearMonthValue);
-  const yearBySetPos = parseNumber(formValues.yearPeriodValue);
+  const monthByMonthDay = parseNumber(monthDayValue);
+  const monthBySetPos = parseNumber(monthPeriodValue);
 
-  const yearByYearDay = parseNumber(formValues.yearDayValue);
+  const yearByMonth = parseNumber(yearMonthValue);
+  const yearBySetPos = parseNumber(yearPeriodValue);
+
+  const yearByYearDay = parseNumber(yearDayValue);
 
   switch (repeatingPattern) {
     case "daily-daily":
@@ -375,6 +393,112 @@ function createRRule(
 function parseNumber(value: string, defaultValue: number = 0) {
   const newValue = Number(value);
   return isNaN(newValue) ? defaultValue : newValue;
+}
+
+function DurationCalculation({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
+  const [
+    repeatingType,
+    weekdays,
+    dailyPattern,
+    monthlyPattern,
+    yearlyPattern,
+    dayValue,
+    weekValue,
+    monthValue,
+    monthDayValue,
+    monthPeriodValue,
+    monthWeekdayValue,
+    yearValue,
+    yearDayValue,
+    yearMonthValue,
+    yearPeriodValue,
+    yearWeekdayValue,
+  ] = useWatch({
+    control: form.control,
+    name: [
+      "repeatingType",
+      "weekdays",
+      "dailyPattern",
+      "monthlyPattern",
+      "yearlyPattern",
+      "dayValue",
+      "weekValue",
+      "monthValue",
+      "monthDayValue",
+      "monthPeriodValue",
+      "monthWeekdayValue",
+      "yearValue",
+      "yearDayValue",
+      "yearMonthValue",
+      "yearPeriodValue",
+      "yearWeekdayValue",
+    ],
+  });
+
+  const RRule = createRRule(
+    new Date(),
+    repeatingType,
+    weekdays,
+    dailyPattern,
+    monthlyPattern,
+    yearlyPattern,
+    dayValue,
+    weekValue,
+    monthValue,
+    monthDayValue,
+    monthPeriodValue,
+    monthWeekdayValue,
+    yearValue,
+    yearDayValue,
+    yearMonthValue,
+    yearPeriodValue,
+    yearWeekdayValue
+  );
+
+  form.setValue("rule", RRule ? RRule.toString() : "");
+
+  const RuleText = RRule ? RRule.toText() : "";
+
+  const ruleList = RRule
+    ? RRule?.all((date, len) => {
+        return len < 30;
+      })
+    : [];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <FormLabel>
+        Event List
+        {ruleList.length > 30
+          ? " Showing All " + ruleList.length.toString()
+          : " Showing First " + ruleList.length.toString()}
+      </FormLabel>
+      <table className="table-auto">
+        <thead style={"text-align:left"}>
+          <tr>
+            <th>#</th>
+            <th>Weekday</th>
+            <th>Month</th>
+            <th>Day</th>
+            <th>Year</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ruleList.map((value, index) => {
+            return (
+              <tr key={index}>
+                <td>{index}</td>
+                <td>{format(value, "EEEE")}</td>
+                <td>{format(value, "MMMM")}</td>
+                <td>{format(value, "do")}</td>
+                <td>{format(value, "yyyy")}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({

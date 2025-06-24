@@ -193,9 +193,9 @@ export function calculateEventBlockStyle(
 
   //On occassion there are hydration errors associate with these calculations
   //rounding to 2 decimal places should resolve it, since most errors occur at 10 decimal places
-  const roundedTop = Math.round(top * 100) / 100;
-  const roundedWidth = Math.round(width * 100) / 100;
-  const roundedLeft = Math.round(left * 100) / 100;
+  const roundedTop = roundToPrecision(top, 2); // Math.round(top * 100) / 100;
+  const roundedWidth = roundToPrecision(width, 2); // Math.round(width * 100) / 100;
+  const roundedLeft = roundToPrecision(left, 2); // Math.round(left * 100) / 100;
 
   return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
 }
@@ -209,6 +209,21 @@ export function getRRuleDateTime(date: Date) {
     date.getUTCMinutes(),
     0
   );
+}
+
+export function roundToPrecision(value: number, precision: number) {
+  if (precision < 0) precision = 0;
+
+  const padding = [
+    ...Array(precision)
+      .keys()
+      .map(() => {
+        return "0";
+      }),
+  ].join("");
+
+  const adjustment = Number("1" + padding);
+  return Math.round(value * adjustment) / adjustment;
 }
 
 export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHours) {
