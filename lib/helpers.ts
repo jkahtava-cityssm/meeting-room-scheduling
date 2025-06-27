@@ -199,15 +199,40 @@ export function calculateEventBlockStyle(
 
   return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
 }
+/**
+ * Converts Local Datetime values into RRULE UTC datetime
+ *
+ * @param date Local Datetime
+ * @returns new UTC Date
+ *
+ * * RRULE uses a UTC datetime to calculate recurrence
+ * * RRULE dates need to be converted to UTC Datetimes
+ * * see https://github.com/jkbrzt/rrule/issues/336 explains in further detail
+ */
+export function convertDateToRRuleDate(date: Date) {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds())
+  );
+}
 
-export function getRRuleDateTime(date: Date) {
-  return datetime(
+/**
+ * Converts RRule UTC Date into a Local Datetime
+
+ * @param date UTC Datetime
+ * @returns new Local Datetime
+ * 
+ * * RRULE uses a UTC datetime to calculate recurrence
+ * * RRULE dates need to be converted back to Local Datetimes
+ * * see https://github.com/jkbrzt/rrule/issues/336 explains in further detail 
+ */
+export function convertRRuleDateToDate(date: Date) {
+  return new Date(
     date.getUTCFullYear(),
     date.getUTCMonth(),
     date.getUTCDate(),
     date.getUTCHours(),
     date.getUTCMinutes(),
-    0
+    date.getUTCSeconds()
   );
 }
 

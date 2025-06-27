@@ -1,3 +1,4 @@
+import { convertDateToRRuleDate, convertRRuleDateToDate } from "@/lib/helpers";
 import { IEvent } from "@/lib/schemas/calendar";
 import { prisma } from "@/prisma";
 import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
@@ -71,11 +72,11 @@ function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, pe
     const currentRule = element.recurrence?.rule as string;
 
     const rrule = rrulestr(currentRule);
-    const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
+    const recurrenceArray = rrule.between(convertDateToRRuleDate(periodStart), convertDateToRRuleDate(periodEnd));
 
     for (let index = 0; index < recurrenceArray.length; index++) {
       const newEvent = { ...element };
-      const recurringDate = setUTCPartsToDate(recurrenceArray[index]);
+      const recurringDate = convertRRuleDateToDate(recurrenceArray[index]);
       newEvent.title = "Series - " + newEvent.title;
       newEvent.startDate = set(newEvent.startDate, {
         year: recurringDate.getFullYear(),
@@ -150,19 +151,4 @@ function generateMultiDayEventsInPeriod(events: IEvent[], periodStart: Date, per
   });
 
   return eventList;
-}
-
-function setPartsToUTCDate(d: Date) {
-  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()));
-}
-
-function setUTCPartsToDate(d: Date) {
-  return new Date(
-    d.getUTCFullYear(),
-    d.getUTCMonth(),
-    d.getUTCDate(),
-    d.getUTCHours(),
-    d.getUTCMinutes(),
-    d.getUTCSeconds()
-  );
 }
