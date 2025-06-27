@@ -11,9 +11,11 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import InputNumber from "../ui/input-number";
 import { Checkbox } from "../ui/checkbox";
 import { Separator } from "../ui/separator";
-import { ByWeekday, datetime, RRule, Weekday } from "rrule";
-import { getRRuleDateTime } from "@/lib/helpers";
+import { ByWeekday, RRule } from "rrule";
+import { convertDateToRRuleDate, convertRRuleDateToDate } from "@/lib/helpers";
 import { format } from "date-fns";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
 
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
@@ -79,7 +81,7 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
       rule: "",
       startDate: recurrence ? recurrence.startDate : new Date(),
       endDate: recurrence ? recurrence.endDate : new Date(),
-      weekdays: [],
+      weekdays: ["monday"],
 
       dailyPattern: "",
       monthlyPattern: "",
@@ -228,6 +230,7 @@ function getWeekdayArray(
       if (weekdays.includes("friday")) weekdayArray.push(RRule.FR);
       if (weekdays.includes("saturday")) weekdayArray.push(RRule.SA);
       if (weekdays.includes("sunday")) weekdayArray.push(RRule.SU);
+      if (weekdays.length === 0) weekdayArray.push(RRule.MO);
       break;
     case "monthly-patternInMonth":
       if (monthWeekdayValue === "monday") weekdayArray.push(RRule.MO);
@@ -292,7 +295,6 @@ function createRRule(
       if (dayInterval <= 0) return;
       break;
     case "daily-weekdays":
-      if (dayInterval <= 0) return;
       break;
     case "weekly-weekly":
       if (weekInterval <= 0) return;
@@ -321,7 +323,7 @@ function createRRule(
         freq: RRule.DAILY,
         interval: dayInterval,
         byweekday: weekdayArray,
-        dtstart: getRRuleDateTime(startDate),
+        dtstart: convertDateToRRuleDate(startDate),
         count: 10,
         until: null,
       });
@@ -330,7 +332,7 @@ function createRRule(
         freq: RRule.DAILY,
         interval: Number(1),
         byweekday: weekdayArray,
-        dtstart: getRRuleDateTime(startDate),
+        dtstart: convertDateToRRuleDate(startDate),
         count: 10,
         until: null,
       });
@@ -340,7 +342,7 @@ function createRRule(
         freq: RRule.WEEKLY,
         interval: weekInterval,
         byweekday: weekdayArray,
-        dtstart: getRRuleDateTime(startDate),
+        dtstart: convertDateToRRuleDate(startDate),
         count: 10,
         until: null,
       });
@@ -350,7 +352,7 @@ function createRRule(
         freq: RRule.MONTHLY,
         interval: monthInterval,
         bymonthday: monthByMonthDay,
-        dtstart: getRRuleDateTime(startDate),
+        dtstart: convertDateToRRuleDate(startDate),
         count: 10,
         until: null,
       });
@@ -360,7 +362,7 @@ function createRRule(
         interval: monthInterval,
         byweekday: weekdayArray,
         bysetpos: monthBySetPos,
-        dtstart: getRRuleDateTime(startDate),
+        dtstart: convertDateToRRuleDate(startDate),
         count: 10,
         until: null,
       });
@@ -369,8 +371,8 @@ function createRRule(
         freq: RRule.YEARLY,
         interval: yearInterval,
         bymonth: yearByMonth,
-        byyearday: yearByYearDay,
-        dtstart: getRRuleDateTime(startDate),
+        bymonthday: yearByYearDay,
+        dtstart: convertDateToRRuleDate(startDate),
         count: 10,
         until: null,
       });
@@ -382,7 +384,7 @@ function createRRule(
         bysetpos: yearBySetPos,
         byweekday: weekdayArray,
         bymonth: yearByMonth,
-        dtstart: getRRuleDateTime(startDate),
+        dtstart: convertDateToRRuleDate(startDate),
         count: 10,
         until: null,
       });
@@ -455,9 +457,12 @@ function DurationCalculation({ form }: { form: UseFormReturn<IRecurrenceForm, IR
     yearWeekdayValue
   );
 
-  form.setValue("rule", RRule ? RRule.toString() : "");
+  if (RRule) {
+    form.setValue("rule", RRule ? RRule.toString() : "");
 
-  const RuleText = RRule ? RRule.toText() : "";
+    console.log(RRule.toString());
+    const RuleText = RRule ? RRule.toText() : "";
+  }
 
   const ruleList = RRule
     ? RRule?.all((date, len) => {
@@ -465,38 +470,46 @@ function DurationCalculation({ form }: { form: UseFormReturn<IRecurrenceForm, IR
       })
     : [];
 
+  const convertedRuleList = ruleList.map(convertRRuleDateToDate);
+
   return (
     <div className="flex flex-col gap-2">
-      <FormLabel>
-        Event List
-        {ruleList.length > 30
-          ? " Showing All " + ruleList.length.toString()
-          : " Showing First " + ruleList.length.toString()}
-      </FormLabel>
-      <table className="table-auto">
-        <thead style={"text-align:left"}>
-          <tr>
-            <th>#</th>
-            <th>Weekday</th>
-            <th>Month</th>
-            <th>Day</th>
-            <th>Year</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ruleList.map((value, index) => {
-            return (
-              <tr key={index}>
-                <td>{index}</td>
-                <td>{format(value, "EEEE")}</td>
-                <td>{format(value, "MMMM")}</td>
-                <td>{format(value, "do")}</td>
-                <td>{format(value, "yyyy")}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <ScrollArea className={`min-h-80 max-h-80 ${convertedRuleList.length === 0 && "bg-secondary"}`} type="always">
+        <Table className="min-h-80">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8">#</TableHead>
+              <TableHead className="w-27">Weekday</TableHead>
+              <TableHead className="w-20">Month</TableHead>
+              <TableHead className="w-11">Day</TableHead>
+              <TableHead className="w-13">Year</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {convertedRuleList.map((value, index) => {
+              return (
+                <TableRow key={index}>
+                  <TableCell className="w-8">{index + 1}</TableCell>
+                  <TableCell className="w-27">{format(value, "EEEE")}</TableCell>
+                  <TableCell className="w-20">{format(value, "MMMM")}</TableCell>
+                  <TableCell className="w-11">{format(value, "do")}</TableCell>
+                  <TableCell className="w-13">{format(value, "yyyy")}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={5}>
+                Previewing {convertedRuleList.length <= 30 ? convertedRuleList.length : 30} of{" "}
+                {convertedRuleList.length} events in series
+              </TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
+        <ScrollBar orientation="vertical" forceMount></ScrollBar>
+      </ScrollArea>
     </div>
   );
 }
