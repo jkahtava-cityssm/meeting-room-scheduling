@@ -65,43 +65,17 @@ export function AddEventDialog({
   const onSubmit = async (values: IEventForm) => {
     console.log(values);
   };
-
+  //w-fit  sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 max-h-[calc(100%-2rem)] lg:max-h-9/12"
   return (
     <Dialog open={isOpen} onOpenChange={onToggle}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 lg:max-h-9/12">
+      <DialogContent className="min-w-90 w-[calc(100%-2rem)] h-[calc(90dvh)] sm:max-w-[calc(100%-4rem)] xl:w-9/12 xl:max-w-9/12  lg:max-h-9/12">
         <DialogHeader>
-          <DialogTitle>Add New Event</DialogTitle>
-          <DialogDescription>
-            This is just and example of how to use the form. In a real application, you would call the API to create the
-            event
-          </DialogDescription>
+          <DialogTitle>New Event</DialogTitle>
+          <DialogDescription>Create a new Calendar Event, Appointment, or Meeting</DialogDescription>
         </DialogHeader>
-        <EventFormWizard
-          onSubmit={function (): Promise<void> {
-            throw new Error("Function not implemented.");
-          }}
-        >
-          <UpdateEventForm
-            isLoading={isRoomLoading}
-            rooms={rooms}
-            onSubmit={onSubmit}
-            toggleRecurrence={setShowRecurrence}
-          ></UpdateEventForm>
-          {showRecurrence && <UpdateRecurrenceForm></UpdateRecurrenceForm>}
-        </EventFormWizard>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </DialogClose>
-
-          <Button form="event-form" type="submit">
-            Create Event
-          </Button>
-        </DialogFooter>
+        <EventFormWizard></EventFormWizard>
       </DialogContent>
     </Dialog>
   );

@@ -15,7 +15,7 @@ export const SRecurrence = z.object({
   recurrenceId: z.number(),
   recurrenceCancellationId: z.number().nullable(),
   recurrenceExceptionId: z.number().nullable(),
-  rule: z.string().min(1, "Rule is required"),
+  rule: z.string(),
   startDate: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
   endDate: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
   createdAt: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),

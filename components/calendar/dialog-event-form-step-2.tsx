@@ -16,6 +16,8 @@ import { convertDateToRRuleDate, convertRRuleDateToDate } from "@/lib/helpers";
 import { format } from "date-fns";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Button } from "../ui/button";
+import { useFormStep } from "@/hooks/use-form-steps";
 
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
@@ -70,40 +72,53 @@ const SRecurrenceForm = z.object({
 
 let render = 0;
 
+const SRecurrenceFormDefaults = {
+  repeatingType: "",
+  repeatingPattern: "",
+  rule: "",
+  startDate: new Date(),
+  endDate: new Date(),
+  weekdays: ["monday"],
+  dailyPattern: "",
+  monthlyPattern: "",
+  yearlyPattern: "",
+
+  dayValue: "",
+  weekValue: "",
+  monthValue: "",
+  monthDayValue: "",
+  monthPeriodValue: "",
+  monthWeekdayValue: "",
+  yearValue: "",
+  yearDayValue: "",
+  yearMonthValue: "",
+  yearPeriodValue: "",
+  yearWeekdayValue: "",
+  duration: "",
+};
+
 export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boolean; recurrence?: IRecurrenceForm }) {
+  const { handleNext, handleBack, getFormData } = useFormStep({
+    schema: SRecurrenceForm,
+    defaultValues: SRecurrenceFormDefaults,
+    currentStep: 2,
+  });
+
+  const previousData = getFormData();
+
   const form = useForm<IRecurrenceForm>({
     resolver: zodResolver(SRecurrenceForm),
     reValidateMode: "onChange",
     mode: "all",
-    defaultValues: {
-      repeatingType: "",
-      repeatingPattern: "",
-      rule: "",
-      startDate: recurrence ? recurrence.startDate : new Date(),
-      endDate: recurrence ? recurrence.endDate : new Date(),
-      weekdays: ["monday"],
-
-      dailyPattern: "",
-      monthlyPattern: "",
-      yearlyPattern: "",
-
-      dayValue: "",
-      weekValue: "",
-      monthValue: "",
-      monthDayValue: "",
-      monthPeriodValue: "",
-      monthWeekdayValue: "",
-      yearValue: "",
-      yearDayValue: "",
-      yearMonthValue: "",
-      yearPeriodValue: "",
-      yearWeekdayValue: "",
-      duration: "",
-    },
+    defaultValues: previousData,
   });
 
   //const type = useWatch({ control: form.control, name: "repeatingType" });
   const type = form.watch("repeatingType");
+
+  const moveBack = (data: IRecurrenceForm) => {
+    handleBack(data);
+  };
 
   //const formValues = form.watch();
 
@@ -122,64 +137,81 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
   return (
     <Form {...form}>
       <form id="event-form">
-        <div className="flex flex-col md:flex-row gap-2">
-          <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
-            <FormLabel>Recurrence Pattern</FormLabel>
-            <FormField
-              control={form.control}
-              name="repeatingType"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <div className="flex flex-row gap-2">
-                    <FormLabel id="typeLabel" htmlFor="repeatingType" className="min-w-15 justify-end">
-                      Repeats
-                    </FormLabel>
-                    <FormControl>
-                      <Select
-                        //{...field}
-                        name={field.name}
-                        value={field.value}
-                        defaultValue={field.value}
-                        key={field.value}
-                        onValueChange={(value) => {
-                          if (value === "") {
-                            //There is a Bug with the Select Field when used with React Hook Form:
-                            //https://github.com/radix-ui/primitives/issues/2944
-                            //https://github.com/radix-ui/primitives/issues/3135
-                            //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
-                            //return;
-                          }
-                          field.onChange(value);
-                        }}
-                      >
-                        <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
-                          <SelectValue placeholder="Select an option" />
-                        </SelectTrigger>
+        <ScrollArea type="always">
+          <div className="h-[calc(60dvh)] w-full">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
+                <FormLabel>Recurrence Pattern</FormLabel>
+                <FormField
+                  control={form.control}
+                  name="repeatingType"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <div className="flex flex-row gap-2">
+                        <FormLabel id="typeLabel" htmlFor="repeatingType" className="min-w-15 justify-end">
+                          Repeats
+                        </FormLabel>
+                        <FormControl>
+                          <Select
+                            //{...field}
+                            name={field.name}
+                            value={field.value}
+                            defaultValue={field.value}
+                            key={field.value}
+                            onValueChange={(value) => {
+                              if (value === "") {
+                                //There is a Bug with the Select Field when used with React Hook Form:
+                                //https://github.com/radix-ui/primitives/issues/2944
+                                //https://github.com/radix-ui/primitives/issues/3135
+                                //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                                //return;
+                              }
+                              field.onChange(value);
+                            }}
+                          >
+                            <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
+                              <SelectValue placeholder="Select an option" />
+                            </SelectTrigger>
 
-                        <SelectContent className={"min-w-40"}>
-                          {repeatingPeriods.map((period) => {
-                            return (
-                              <SelectItem key={period.id} value={period.id} className="flex-1">
-                                {period.label}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            {type === "daily" && <DailyForm form={form}></DailyForm>}
-            {type === "weekly" && <WeeklyForm form={form}></WeeklyForm>}
-            {type === "monthly" && <MonthlyForm form={form}></MonthlyForm>}
-            {type === "yearly" && <YearlyForm form={form}></YearlyForm>}
+                            <SelectContent className={"min-w-40"}>
+                              {repeatingPeriods.map((period) => {
+                                return (
+                                  <SelectItem key={period.id} value={period.id} className="flex-1">
+                                    {period.label}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                {type === "daily" && <DailyForm form={form}></DailyForm>}
+                {type === "weekly" && <WeeklyForm form={form}></WeeklyForm>}
+                {type === "monthly" && <MonthlyForm form={form}></MonthlyForm>}
+                {type === "yearly" && <YearlyForm form={form}></YearlyForm>}
+              </div>
+              <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
+                <DurationCalculation form={form} />
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
-            <DurationCalculation form={form} />
-          </div>
+          <ScrollBar orientation="vertical" forceMount></ScrollBar>
+        </ScrollArea>
+        <div className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-2 ">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              moveBack(form.getValues());
+            }}
+          >
+            Back
+          </Button>
+          <Button type="submit">Save</Button>
         </div>
       </form>
     </Form>
@@ -508,6 +540,7 @@ function DurationCalculation({ form }: { form: UseFormReturn<IRecurrenceForm, IR
             </TableRow>
           </TableFooter>
         </Table>
+
         <ScrollBar orientation="vertical" forceMount></ScrollBar>
       </ScrollArea>
     </div>

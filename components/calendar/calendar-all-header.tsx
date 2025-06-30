@@ -11,6 +11,7 @@ import type { TCalendarView } from "@/lib/types";
 import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
+import { AddEventDrawer } from "./dialog-event-add.v1";
 
 export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
   const { setSelectedRoomId } = useCalendar();
@@ -118,6 +119,12 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
               Add Event
             </Button>
           </AddEventDialog>
+          <AddEventDrawer>
+            <Button className="w-full sm:w-auto">
+              <Plus />
+              Add Event
+            </Button>
+          </AddEventDrawer>
         </div>
       </div>
     </>

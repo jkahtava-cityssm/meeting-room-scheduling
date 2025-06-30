@@ -154,6 +154,7 @@ model Role {
  * }
  */
 
+//RoleDuty as an alternative name?
 model RoleResourceAction {
   roleResourceActionId Int      @id @default(autoincrement())
   roleId               Int
