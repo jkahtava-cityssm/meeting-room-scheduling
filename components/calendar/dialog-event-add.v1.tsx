@@ -13,16 +13,6 @@ import { SingleDayPicker } from "@/components/ui/single-day-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogHeader,
-  DialogClose,
-  DialogContent,
-  DialogTrigger,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 
 import { eventSchema } from "@/lib/schemas";
 
@@ -31,12 +21,20 @@ import type { TEventFormData } from "@/lib/schemas";
 import { addMinutes, set } from "date-fns";
 import { getDurationText } from "@/lib/helpers";
 import { useRooms } from "@/hooks/use-rooms";
-import { IconColored } from "../ui/icon-colored";
-import { BookKey } from "lucide-react";
-import { TColors } from "@/lib/types";
-import { TimePicker } from "../ui/time-picker";
 
-export function AddEventDialog({
+import { EventFormWizard } from "./dialog-event-form-wizard";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../ui/sheet";
+
+export function AddEventDrawer({
   children,
   startDate,
   startTime,
@@ -79,30 +77,30 @@ export function AddEventDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onToggle}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Sheet open={isOpen} onOpenChange={onToggle}>
+      <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add New Event</DialogTitle>
-          <DialogDescription>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Add New Event</SheetTitle>
+          <SheetDescription>
             This is just and example of how to use the form. In a real application, you would call the API to create the
             event
-          </DialogDescription>
-        </DialogHeader>
-
-        <DialogFooter>
-          <DialogClose asChild>
+          </SheetDescription>
+        </SheetHeader>
+        <EventFormWizard></EventFormWizard>
+        <SheetFooter>
+          <SheetClose asChild>
             <Button type="button" variant="outline">
               Cancel
             </Button>
-          </DialogClose>
+          </SheetClose>
 
           <Button form="event-form" type="submit">
             Create Event
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
