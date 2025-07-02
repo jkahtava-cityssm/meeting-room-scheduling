@@ -19,17 +19,15 @@ import { IEvent, IRoom, SEvent } from "@/lib/schemas/calendar";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Switch } from "../ui/switch";
-import { SetStateAction } from "react";
-import { Button } from "../ui/button";
-import { Checkbox } from "../ui/checkbox";
-import { CheckboxLarge } from "../ui/checkbox-large";
+
+import { useEffect, useMemo } from "react";
+
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { useFormStep } from "@/hooks/use-form-steps";
+
 import { addMinutes } from "date-fns";
 
-import { isEmpty } from "lodash";
+import { useEventForm } from "@/contexts/EventFormProvider";
 
 export interface IEventForm extends Pick<IEvent, "roomId" | "description" | "title" | "startDate" | "endDate"> {
   duration: string;
@@ -115,38 +113,42 @@ export function UpdateEventForm({
   event,
   rooms,
   onSubmit,
-  toggleRecurrence,
 }: {
   isLoading: boolean;
   event?: IEventForm;
   rooms?: IRoom[];
-  onSubmit: (values: IEventForm) => Promise<void>;
-  toggleRecurrence: (value: SetStateAction<boolean>) => void;
+  onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
 }) {
-  const { handleNext, getFormData } = useFormStep({
-    schema: SEventForm,
-    defaultValues: SEventFormDefaults,
-    currentStep: 1,
-  });
+  const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData } = useEventForm();
 
-  const previousData = getFormData();
+  const defaultValues = useMemo(() => {
+    return getFormData(SEventForm, SEventFormDefaults);
+  }, [getFormData]);
 
   const form = useForm<IEventForm>({
     resolver: zodResolver(SEventForm),
     reValidateMode: "onChange",
     mode: "all",
-    defaultValues: previousData,
+    defaultValues: defaultValues,
   });
 
   const isRecurring = form.watch("isRecurring");
 
-  const submitForm = (data: IEventForm) => {
-    if (data.isRecurring) {
-      handleNext(data);
+  useEffect(() => {
+    setCurrentForm(form);
+    setFormId("event-form");
+  }, [form, setCurrentForm, setFormId]);
+
+  useEffect(() => {
+    if (isRecurring) {
+      console.log("ISRECURRING");
+      setNextVisible(true);
+      setBackVisible(false);
     } else {
-      handleNext(data);
+      setNextVisible(false);
+      setBackVisible(false);
     }
-  };
+  }, [isRecurring, setBackVisible, setNextVisible]);
 
   if (isLoading) {
     return <EditEventSkeleton></EditEventSkeleton>;
@@ -160,10 +162,10 @@ export function UpdateEventForm({
       }
 
       <Form {...form}>
-        <form id="event-form" onSubmit={form.handleSubmit(submitForm)}>
+        <form id="event-form">
           <ScrollArea type="always">
-            <div className="max-h-[calc(60dvh)] w-full">
-              <div className="flex flex-col md:flex-row gap-2">
+            <div className="max-h-[calc(80dvh)] w-full">
+              <div className="flex flex-col gap-2">
                 <div className="flex flex-col flex-1 gap-4 py-4">
                   <div className="flex flex-col xs:flex-row items-start gap-4">
                     <FormField
@@ -440,7 +442,7 @@ export function UpdateEventForm({
 
                         <FormControl>
                           <Textarea
-                            className="max-h-83 min-h-83 resize-none"
+                            className="max-h-70 min-h-70 resize-none"
                             {...field}
                             value={field.value}
                             data-invalid={fieldState.invalid}
@@ -454,12 +456,12 @@ export function UpdateEventForm({
             </div>
             <ScrollBar orientation="vertical" forceMount></ScrollBar>
           </ScrollArea>
-          <div className="flex gap-2 flex-col-reverse md:flex-row md:justify-end ">
+          {/* <div className="flex gap-2 flex-col-reverse md:flex-row md:justify-end ">
             <Button type="button" variant="outline">
               Cancel
             </Button>
             <Button type="submit">{isRecurring ? "Continue" : "Save"}</Button>
-          </div>
+          </div>*/}
         </form>
       </Form>
       {

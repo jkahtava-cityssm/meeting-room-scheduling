@@ -75,7 +75,9 @@ export function AddEventDialog({
           <DialogTitle>New Event</DialogTitle>
           <DialogDescription>Create a new Calendar Event, Appointment, or Meeting</DialogDescription>
         </DialogHeader>
-        <EventFormWizard></EventFormWizard>
+        {
+          //<EventFormWizard></EventFormWizard>
+        }
       </DialogContent>
     </Dialog>
   );

@@ -23,16 +23,8 @@ import { getDurationText } from "@/lib/helpers";
 import { useRooms } from "@/hooks/use-rooms";
 
 import { EventFormWizard } from "./dialog-event-form-wizard";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../ui/sheet";
+
+import { EventFormProvider, useEventForm } from "@/contexts/EventFormProvider";
 
 export function AddEventDrawer({
   children,
@@ -43,8 +35,6 @@ export function AddEventDrawer({
   startDate?: Date;
   startTime?: { hour: number; minute: number };
 }) {
-  const { isOpen, onClose, onToggle } = useDisclosure();
-
   const { isLoading: isRoomLoading, rooms } = useRooms();
 
   const defaultStartDate = startDate ? startDate : new Date();
@@ -70,37 +60,17 @@ export function AddEventDrawer({
     },
   });
 
-  const onSubmit = (_values: TEventFormData) => {
+  /*const onSubmit = (_values: TEventFormData) => {
     // TO DO: Create use-add-event hook
     onClose();
     form.reset();
-  };
+  };*/
+
+  //const { isBackVisible, isNextVisible, isSubmitVisible } = useEventForm();
 
   return (
-    <Sheet open={isOpen} onOpenChange={onToggle}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Add New Event</SheetTitle>
-          <SheetDescription>
-            This is just and example of how to use the form. In a real application, you would call the API to create the
-            event
-          </SheetDescription>
-        </SheetHeader>
-        <EventFormWizard></EventFormWizard>
-        <SheetFooter>
-          <SheetClose asChild>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
-          </SheetClose>
-
-          <Button form="event-form" type="submit">
-            Create Event
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <EventFormProvider>
+      <EventFormWizard>{children}</EventFormWizard>
+    </EventFormProvider>
   );
 }

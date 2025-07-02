@@ -5,11 +5,11 @@ type FormState = {
   currentStep: number;
   localData: object[];
   formId?: string;
-  setCurrentStep: (step: number) => void;
-  setFormData: (data: object, index: number) => void;
+  setSessionStep: (step: number) => void;
+  setSessionFormData: (data: object, index: number) => void;
   setFormId: (id: string) => void;
-  resetForm: () => void;
-  getLatestState: () => FormState;
+  resetSessionFormData: () => void;
+  getSessionState: () => FormState;
 };
 
 function getStorageData() {
@@ -26,14 +26,14 @@ export const useFormStore = create<FormState>()(
     (set, get) => ({
       currentStep: 1,
       localData: [{}],
-      setCurrentStep: (step) => set({ currentStep: step }),
-      setFormData: (data, index) =>
+      setSessionStep: (step) => set({ currentStep: step }),
+      setSessionFormData: (data, index) =>
         set((state) => ({
           localData: Object.assign([...state.localData], { [index]: data }),
         })),
       setFormId: (id) => set({ formId: id }),
-      resetForm: () => set({ currentStep: 1, localData: [{}], formId: undefined }),
-      getLatestState: () => getStorageData() || get(),
+      resetSessionFormData: () => set({ currentStep: 1, localData: [{}], formId: undefined }),
+      getSessionState: () => getStorageData() || get(),
     }),
     { name: "form-storage", storage: createJSONStorage(() => sessionStorage) }
   )
