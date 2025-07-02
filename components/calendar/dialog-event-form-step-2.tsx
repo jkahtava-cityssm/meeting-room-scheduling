@@ -18,6 +18,9 @@ import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Button } from "../ui/button";
 import { useFormStep } from "@/hooks/use-form-steps";
+import { useEventForm } from "@/contexts/EventFormProvider";
+import { useEffect } from "react";
+import { SingleDayPicker } from "../ui/single-day-picker";
 
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
@@ -40,6 +43,9 @@ export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" 
   weekValue: string;
   weekdays: string[];
 
+  durationType: string;
+  occurrences: number;
+  endDate: Date;
   duration?: string;
 }
 
@@ -67,6 +73,9 @@ const SRecurrenceForm = z.object({
     message: "You have to select at least one item.",
   }),
 
+  durationType: z.string(),
+  occurrences: z.number(),
+  endDate: z.date(),
   duration: z.string().optional(),
 });
 
@@ -97,29 +106,40 @@ const SRecurrenceFormDefaults = {
   duration: "",
 };
 
-export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boolean; recurrence?: IRecurrenceForm }) {
-  const { handleNext, handleBack, getFormData } = useFormStep({
+export function UpdateRecurrenceForm({
+  isLoading,
+  onSubmit,
+}: {
+  isLoading: boolean;
+  onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
+}) {
+  /*const { getFormData } = useFormStep({
     schema: SRecurrenceForm,
     defaultValues: SRecurrenceFormDefaults,
     currentStep: 2,
   });
 
-  const previousData = getFormData();
+  const previousData = getFormData();*/
+
+  const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData } = useEventForm();
 
   const form = useForm<IRecurrenceForm>({
     resolver: zodResolver(SRecurrenceForm),
-    reValidateMode: "onChange",
+    reValidateMode: "onSubmit",
     mode: "all",
-    defaultValues: previousData,
+    defaultValues: getFormData(SRecurrenceForm, SRecurrenceFormDefaults),
   });
+
+  useEffect(() => {
+    setCurrentForm(form);
+    setFormId("recurring-form");
+    setNextVisible(false);
+    setBackVisible(true);
+  }, [form, setBackVisible, setCurrentForm, setFormId, setNextVisible]);
 
   //const type = useWatch({ control: form.control, name: "repeatingType" });
   const type = form.watch("repeatingType");
-
-  const moveBack = (data: IRecurrenceForm) => {
-    handleBack(data);
-  };
-
+  const durationType = form.watch("durationType");
   //const formValues = form.watch();
 
   //const results = useWatch({ control: form.control, name: ["monthValue", "monthDayValue"] });
@@ -128,20 +148,77 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
   //const weekdayArray = getWeekdayArray(formValues, pattern);
   //const newRule = createRRule(formValues, pattern, weekdayArray, new Date());
 
-  render++;
-  console.log(render);
   if (isLoading) {
     return <>...Loading</>;
   }
 
   return (
     <Form {...form}>
-      <form id="event-form">
+      <form id="recurring-form">
         <ScrollArea type="always">
-          <div className="h-[calc(60dvh)] w-full">
-            <div className="flex flex-col md:flex-row gap-2">
+          <div className="h-[calc(40dvh)] w-full">
+            <div className="flex flex-col gap-2">
               <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
-                <FormLabel>Recurrence Pattern</FormLabel>
+                <div className="flex flex-row gap-2 w-100">
+                  <FormField
+                    control={form.control}
+                    name="durationType"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <div className="flex flex-row gap-2">
+                          <FormLabel id="typeLabel" htmlFor="repeatingType" className="min-w-15 justify-end">
+                            Duration
+                          </FormLabel>
+                          <FormControl>
+                            <Select
+                              //{...field}
+                              name={field.name}
+                              value={field.value}
+                              defaultValue={field.value}
+                              key={field.value}
+                              onValueChange={(value) => {
+                                if (value === "") {
+                                  //There is a Bug with the Select Field when used with React Hook Form:
+                                  //https://github.com/radix-ui/primitives/issues/2944
+                                  //https://github.com/radix-ui/primitives/issues/3135
+                                  //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                                  //return;
+                                }
+                                field.onChange(value);
+                              }}
+                            >
+                              <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
+                                <SelectValue placeholder="Select an option" />
+                              </SelectTrigger>
+
+                              <SelectContent className={"min-w-40"}>
+                                {durations.map((period) => {
+                                  return (
+                                    <SelectItem key={period.id} value={period.id} className="flex-1">
+                                      {period.label}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  {durationType === "totalInstances" && (
+                    <NumberFormInput control={form.control} name="occurrences"></NumberFormInput>
+                  )}
+                  {durationType === "endDate" && (
+                    <SingleDayPicker
+                      onSelect={function (value: Date | undefined): void {
+                        throw new Error("Function not implemented.");
+                      }}
+                      placeholder={""}
+                    />
+                  )}
+                </div>
                 <FormField
                   control={form.control}
                   name="repeatingType"
@@ -194,14 +271,19 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
                 {type === "monthly" && <MonthlyForm form={form}></MonthlyForm>}
                 {type === "yearly" && <YearlyForm form={form}></YearlyForm>}
               </div>
-              <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
-                <DurationCalculation form={form} />
-              </div>
             </div>
           </div>
           <ScrollBar orientation="vertical" forceMount></ScrollBar>
         </ScrollArea>
-        <div className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-2 ">
+
+        <ScrollArea type="always">
+          <div className=" min-h-80 max-h-80">
+            <DurationCalculation form={form} />
+          </div>
+          <ScrollBar orientation="vertical" forceMount></ScrollBar>
+        </ScrollArea>
+
+        {/*<div className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-2 ">
           <Button
             type="button"
             variant="outline"
@@ -212,7 +294,7 @@ export function UpdateRecurrenceForm({ isLoading, recurrence }: { isLoading: boo
             Back
           </Button>
           <Button type="submit">Save</Button>
-        </div>
+        </div>*/}
       </form>
     </Form>
   );
@@ -506,43 +588,45 @@ function DurationCalculation({ form }: { form: UseFormReturn<IRecurrenceForm, IR
 
   return (
     <div className="flex flex-col gap-2">
-      <ScrollArea className={`min-h-80 max-h-80 ${convertedRuleList.length === 0 && "bg-secondary"}`} type="always">
-        <Table className="min-h-80">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-8">#</TableHead>
-              <TableHead className="w-27">Weekday</TableHead>
-              <TableHead className="w-20">Month</TableHead>
-              <TableHead className="w-11">Day</TableHead>
-              <TableHead className="w-13">Year</TableHead>
-            </TableRow>
-          </TableHeader>
+      {
+        //<ScrollArea className={`min-h-80 max-h-80 ${convertedRuleList.length === 0 && "bg-secondary"}`} type="always">
+      }
+      <Table className="min-h-80">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-8">#</TableHead>
+            <TableHead className="w-27">Weekday</TableHead>
+            <TableHead className="w-20">Month</TableHead>
+            <TableHead className="w-11">Day</TableHead>
+            <TableHead className="w-13">Year</TableHead>
+          </TableRow>
+        </TableHeader>
 
-          <TableBody>
-            {convertedRuleList.map((value, index) => {
-              return (
-                <TableRow key={index}>
-                  <TableCell className="w-8">{index + 1}</TableCell>
-                  <TableCell className="w-27">{format(value, "EEEE")}</TableCell>
-                  <TableCell className="w-20">{format(value, "MMMM")}</TableCell>
-                  <TableCell className="w-11">{format(value, "do")}</TableCell>
-                  <TableCell className="w-13">{format(value, "yyyy")}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={5}>
-                Previewing {convertedRuleList.length <= 30 ? convertedRuleList.length : 30} of{" "}
-                {convertedRuleList.length} events in series
-              </TableCell>
-            </TableRow>
-          </TableFooter>
-        </Table>
+        <TableBody>
+          {convertedRuleList.map((value, index) => {
+            return (
+              <TableRow key={index}>
+                <TableCell className="w-8">{index + 1}</TableCell>
+                <TableCell className="w-27">{format(value, "EEEE")}</TableCell>
+                <TableCell className="w-20">{format(value, "MMMM")}</TableCell>
+                <TableCell className="w-11">{format(value, "do")}</TableCell>
+                <TableCell className="w-13">{format(value, "yyyy")}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={5}>
+              Previewing {convertedRuleList.length <= 30 ? convertedRuleList.length : 30} of {convertedRuleList.length}{" "}
+              events in series
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
 
-        <ScrollBar orientation="vertical" forceMount></ScrollBar>
-      </ScrollArea>
+      {/*<ScrollBar orientation="vertical" forceMount></ScrollBar>
+      </ScrollArea>*/}
     </div>
   );
 }
@@ -970,6 +1054,21 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
     </div>
   );
 }
+
+const durations = [
+  {
+    id: "forever",
+    label: "Forever",
+  },
+  {
+    id: "endDate",
+    label: "End Date",
+  },
+  {
+    id: "totalInstances",
+    label: "Total Instances",
+  },
+];
 
 const repeatingPeriods = [
   {

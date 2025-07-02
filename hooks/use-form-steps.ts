@@ -1,6 +1,8 @@
+"use client";
 import { useFormStore } from "@/lib/zustand/event-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isEmpty } from "lodash";
+import { useState } from "react";
 
 import { DefaultValues, FieldValues, useForm } from "react-hook-form";
 import { z } from "zod/v4";
