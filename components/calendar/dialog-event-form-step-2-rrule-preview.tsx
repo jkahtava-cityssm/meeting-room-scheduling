@@ -9,31 +9,13 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { format } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 
-/*
-const [
-    endDate,
-    repeatingType,
-    weekdays,
-    dailyPattern,
-    monthlyPattern,
-    yearlyPattern,
-    dayValue,
-    weekValue,
-    monthValue,
-    monthDayValue,
-    monthPeriodValue,
-    monthWeekdayValue,
-    yearValue,
-    yearDayValue,
-    yearMonthValue,
-    yearPeriodValue,
-    yearWeekdayValue,
-    occurrences,
-    durationType,
-  ]
-*/
-
-export function RRulePreview(startDate: Date, form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>) {
+export function RRulePreview({
+  startDate,
+  form,
+}: {
+  startDate: Date;
+  form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>;
+}) {
   const [rrule, setRRule] = useState<RRule>();
   const [count, setCount] = useState<number>();
   const [localDates, setLocalDates] = useState<Date[]>([]);

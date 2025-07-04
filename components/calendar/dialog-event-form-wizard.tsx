@@ -1,13 +1,10 @@
 "use client";
 
-import React, { Children, useState } from "react";
+import React from "react";
 import { Button } from "../ui/button";
-import { IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
+import { UpdateEventForm } from "./dialog-event-form-step-1";
 import { UpdateRecurrenceForm } from "./dialog-event-form-step-2";
-import { useFormStore } from "@/lib/zustand/event-store";
 import { useRooms } from "@/hooks/use-rooms";
-import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { EventFormProvider, useEventForm } from "@/contexts/EventFormProvider";
 
 import {
   Sheet,
@@ -31,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import { useEventForm } from "@/contexts/EventFormProvider";
 
 export function EventFormWizard({ children }: { children: React.ReactNode }) {
   const { isOpen, onClose, onToggle } = useDisclosure();
