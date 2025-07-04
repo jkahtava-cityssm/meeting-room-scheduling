@@ -238,6 +238,17 @@ export function UpdateEventForm({
                             <Tabs
                               defaultValue={String(field.value)}
                               onValueChange={(value) => {
+                                const startDate = form.getValues("startDate").getTime();
+                                const endDate = form.getValues("endDate").getTime();
+
+                                if (value.toLowerCase() === "true" && startDate !== endDate) {
+                                  form.setValue("endDate", form.getValues("startDate"));
+                                  form.setValue(
+                                    "duration",
+                                    getDurationText(...form.getValues(["startDate", "startTime", "endDate", "endTime"]))
+                                  );
+                                }
+
                                 if (value.toLowerCase() === "true") {
                                   field.onChange(true);
                                 } else {
@@ -302,7 +313,12 @@ export function UpdateEventForm({
                               id="startDate"
                               value={field.value}
                               onSelect={(date) => {
+                                if (isRecurring) {
+                                  form.setValue("endDate", date as Date);
+                                }
+
                                 field.onChange(date as Date);
+
                                 form.trigger(["endDate", "endTime", "startTime"]);
                                 form.setValue(
                                   "duration",
@@ -362,7 +378,11 @@ export function UpdateEventForm({
                               id="endDate"
                               value={field.value}
                               onSelect={(date) => {
+                                if (isRecurring) {
+                                  form.setValue("startDate", date as Date);
+                                }
                                 field.onChange(date as Date);
+
                                 form.trigger(["startDate", "endTime", "startTime"]);
                                 form.setValue(
                                   "duration",
@@ -389,6 +409,7 @@ export function UpdateEventForm({
                               date={field.value}
                               setDate={(date) => {
                                 field.onChange(date as Date);
+
                                 form.trigger(["startDate", "endDate", "startTime"]);
                                 form.setValue(
                                   "duration",

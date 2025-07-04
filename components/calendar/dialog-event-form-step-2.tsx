@@ -11,16 +11,13 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import InputNumber from "../ui/input-number";
 import { Checkbox } from "../ui/checkbox";
 import { Separator } from "../ui/separator";
-import { ByWeekday, RRule } from "rrule";
-import { convertDateToRRuleDate, convertRRuleDateToDate } from "@/lib/helpers";
-import { format } from "date-fns";
+import { ByWeekday } from "rrule";
+
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Button } from "../ui/button";
-import { useFormStep } from "@/hooks/use-form-steps";
 import { useEventForm } from "@/contexts/EventFormProvider";
 import { useEffect } from "react";
 import { SingleDayPicker } from "../ui/single-day-picker";
+import { RRulePreview } from "./dialog-event-form-useWebWorker";
 
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
@@ -44,7 +41,7 @@ export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" 
   weekdays: string[];
 
   durationType: string;
-  occurrences: number;
+  occurrences: string;
   endDate: Date;
   duration?: string;
 }
@@ -74,8 +71,8 @@ const SRecurrenceForm = z.object({
   }),
 
   durationType: z.string(),
-  occurrences: z.number(),
-  endDate: z.date(),
+  occurrences: z.string(),
+  endDate: z.coerce.date() as unknown as z.ZodDate,
   duration: z.string().optional(),
 });
 
@@ -104,12 +101,16 @@ const SRecurrenceFormDefaults = {
   yearPeriodValue: "",
   yearWeekdayValue: "",
   duration: "",
+  durationType: "",
+  occurrences: "",
 };
 
 export function UpdateRecurrenceForm({
+  startDate,
   isLoading,
   onSubmit,
 }: {
+  startDate: Date;
   isLoading: boolean;
   onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
 }) {
@@ -140,6 +141,8 @@ export function UpdateRecurrenceForm({
   //const type = useWatch({ control: form.control, name: "repeatingType" });
   const type = form.watch("repeatingType");
   const durationType = form.watch("durationType");
+  const monthPeriodSelected = form.watch("monthPeriodValue");
+  const yearPeriodSelected = form.watch("yearPeriodValue");
   //const formValues = form.watch();
 
   //const results = useWatch({ control: form.control, name: ["monthValue", "monthDayValue"] });
@@ -207,15 +210,34 @@ export function UpdateRecurrenceForm({
                       </FormItem>
                     )}
                   />
-                  {durationType === "totalInstances" && (
+                  {durationType === "count" && (
                     <NumberFormInput control={form.control} name="occurrences"></NumberFormInput>
                   )}
-                  {durationType === "endDate" && (
-                    <SingleDayPicker
-                      onSelect={function (value: Date | undefined): void {
-                        throw new Error("Function not implemented.");
-                      }}
-                      placeholder={""}
+                  {durationType === "until" && (
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field, fieldState }) => (
+                        <FormItem className="space-y-3">
+                          <FormControl>
+                            <FormItem className="flex items-center gap-2">
+                              <FormControl>
+                                <SingleDayPicker
+                                  id="endDate"
+                                  value={field.value}
+                                  onSelect={(date) => {
+                                    field.onChange(date as Date);
+                                  }}
+                                  placeholder="Select a date"
+                                  data-invalid={fieldState.invalid}
+                                  className="w-52"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   )}
                 </div>
@@ -276,12 +298,7 @@ export function UpdateRecurrenceForm({
           <ScrollBar orientation="vertical" forceMount></ScrollBar>
         </ScrollArea>
 
-        <ScrollArea type="always">
-          <div className=" min-h-80 max-h-80">
-            <DurationCalculation form={form} />
-          </div>
-          <ScrollBar orientation="vertical" forceMount></ScrollBar>
-        </ScrollArea>
+        <DurationCalculation startDate={startDate} form={form} />
 
         {/*<div className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-2 ">
           <Button
@@ -299,7 +316,7 @@ export function UpdateRecurrenceForm({
     </Form>
   );
 }
-
+/*
 function getRepeatingPatternValue(
   repeatingType: string,
   dailyPattern: string,
@@ -326,51 +343,45 @@ function getWeekdayArray(
   monthWeekdayValue: string,
   yearWeekdayValue: string
 ) {
+  let localWeekdays: string[] = [];
   const weekdayArray: ByWeekday[] = [];
 
   switch (repeatingPattern) {
     case "daily-weekdays":
-      weekdayArray.push(RRule.MO);
-      weekdayArray.push(RRule.TU);
-      weekdayArray.push(RRule.WE);
-      weekdayArray.push(RRule.TH);
-      weekdayArray.push(RRule.FR);
+      localWeekdays.push("weekday");
       break;
     case "weekly-weekly":
-      if (weekdays.includes("monday")) weekdayArray.push(RRule.MO);
-      if (weekdays.includes("tuesday")) weekdayArray.push(RRule.TU);
-      if (weekdays.includes("wednesday")) weekdayArray.push(RRule.WE);
-      if (weekdays.includes("thursday")) weekdayArray.push(RRule.TH);
-      if (weekdays.includes("friday")) weekdayArray.push(RRule.FR);
-      if (weekdays.includes("saturday")) weekdayArray.push(RRule.SA);
-      if (weekdays.includes("sunday")) weekdayArray.push(RRule.SU);
-      if (weekdays.length === 0) weekdayArray.push(RRule.MO);
+      if (weekdays.length > 0) localWeekdays = weekdays;
+      if (weekdays.length === 0) localWeekdays.push("monday");
+
       break;
     case "monthly-patternInMonth":
-      if (monthWeekdayValue === "monday") weekdayArray.push(RRule.MO);
-      if (monthWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
-      if (monthWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
-      if (monthWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
-      if (monthWeekdayValue === "friday") weekdayArray.push(RRule.FR);
-      if (monthWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
-      if (monthWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
+      localWeekdays.push(monthWeekdayValue);
+
       break;
     case "yearly-patternInMonthInYear":
-      if (yearWeekdayValue === "monday") weekdayArray.push(RRule.MO);
-      if (yearWeekdayValue === "tuesday") weekdayArray.push(RRule.TU);
-      if (yearWeekdayValue === "wednesday") weekdayArray.push(RRule.WE);
-      if (yearWeekdayValue === "thursday") weekdayArray.push(RRule.TH);
-      if (yearWeekdayValue === "friday") weekdayArray.push(RRule.FR);
-      if (yearWeekdayValue === "saturday") weekdayArray.push(RRule.SA);
-      if (yearWeekdayValue === "sunday") weekdayArray.push(RRule.SU);
-
+      localWeekdays.push(yearWeekdayValue);
       break;
   }
+
+  if (localWeekdays.some((weekday) => ["monday", "day", "weekday"].includes(weekday))) weekdayArray.push(RRule.MO);
+  if (localWeekdays.some((weekday) => ["tuesday", "day", "weekday"].includes(weekday))) weekdayArray.push(RRule.TU);
+  if (localWeekdays.some((weekday) => ["wednesday", "day", "weekday"].includes(weekday))) weekdayArray.push(RRule.WE);
+  if (localWeekdays.some((weekday) => ["thursday", "day", "weekday"].includes(weekday))) weekdayArray.push(RRule.TH);
+  if (localWeekdays.some((weekday) => ["friday", "day", "weekday"].includes(weekday))) weekdayArray.push(RRule.FR);
+  if (localWeekdays.some((weekday) => ["saturday", "day", "weekend"].includes(weekday))) weekdayArray.push(RRule.SA);
+  if (localWeekdays.some((weekday) => ["sunday", "day", "weekend"].includes(weekday))) weekdayArray.push(RRule.SU);
+
   return weekdayArray;
 }
+  */
 
-function createRRule(
+/*
+function CreateRRule(
+  { form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }
+  
   startDate: Date,
+  endDate: Date,
   repeatingType: string,
   weekdays: string[],
   dailyPattern: string,
@@ -386,8 +397,55 @@ function createRRule(
   yearDayValue: string,
   yearMonthValue: string,
   yearPeriodValue: string,
-  yearWeekdayValue: string
+  yearWeekdayValue: string,
+  occurrences: string,
+  durationType: string
 ) {
+  const [
+    repeatingType,
+    weekdays,
+    dailyPattern,
+    monthlyPattern,
+    yearlyPattern,
+    dayValue,
+    weekValue,
+    monthValue,
+    monthDayValue,
+    monthPeriodValue,
+    monthWeekdayValue,
+    yearValue,
+    yearDayValue,
+    yearMonthValue,
+    yearPeriodValue,
+    yearWeekdayValue,
+    endDate,
+    occurrences,
+    durationType,
+  ] = useWatch({
+    control: form.control,
+    name: [
+      "repeatingType",
+      "weekdays",
+      "dailyPattern",
+      "monthlyPattern",
+      "yearlyPattern",
+      "dayValue",
+      "weekValue",
+      "monthValue",
+      "monthDayValue",
+      "monthPeriodValue",
+      "monthWeekdayValue",
+      "yearValue",
+      "yearDayValue",
+      "yearMonthValue",
+      "yearPeriodValue",
+      "yearWeekdayValue",
+      "endDate",
+      "occurrences",
+      "durationType",
+    ],
+  });
+
   const repeatingPattern = getRepeatingPatternValue(repeatingType, dailyPattern, monthlyPattern, yearlyPattern);
   const weekdayArray = getWeekdayArray(repeatingPattern, weekdays, monthWeekdayValue, yearWeekdayValue);
 
@@ -403,6 +461,12 @@ function createRRule(
   const yearBySetPos = parseNumber(yearPeriodValue);
 
   const yearByYearDay = parseNumber(yearDayValue);
+
+  const convertedStartDate = startDate ? convertDateToRRuleDate(startDate) : convertDateToRRuleDate(new Date());
+
+  const count = durationType === "forever" || durationType === "until" ? null : parseNumber(occurrences);
+  const convertedEndDate =
+    durationType === "forever" || durationType === "count" ? null : convertDateToRRuleDate(endDate);
 
   switch (repeatingPattern) {
     case "daily-daily":
@@ -437,18 +501,18 @@ function createRRule(
         freq: RRule.DAILY,
         interval: dayInterval,
         byweekday: weekdayArray,
-        dtstart: convertDateToRRuleDate(startDate),
-        count: 10,
-        until: null,
+        dtstart: convertedStartDate,
+        count: count,
+        until: convertedEndDate,
       });
     case "daily-weekdays":
       return new RRule({
         freq: RRule.DAILY,
         interval: Number(1),
         byweekday: weekdayArray,
-        dtstart: convertDateToRRuleDate(startDate),
-        count: 10,
-        until: null,
+        dtstart: convertedStartDate,
+        count: count,
+        until: convertedEndDate,
       });
 
     case "weekly-weekly":
@@ -456,9 +520,9 @@ function createRRule(
         freq: RRule.WEEKLY,
         interval: weekInterval,
         byweekday: weekdayArray,
-        dtstart: convertDateToRRuleDate(startDate),
-        count: 10,
-        until: null,
+        dtstart: convertedStartDate,
+        count: count,
+        until: convertedEndDate,
       });
       break;
     case "monthly-dayInMonth":
@@ -466,9 +530,9 @@ function createRRule(
         freq: RRule.MONTHLY,
         interval: monthInterval,
         bymonthday: monthByMonthDay,
-        dtstart: convertDateToRRuleDate(startDate),
-        count: 10,
-        until: null,
+        dtstart: convertedStartDate,
+        count: count,
+        until: convertedEndDate,
       });
     case "monthly-patternInMonth":
       return new RRule({
@@ -476,9 +540,9 @@ function createRRule(
         interval: monthInterval,
         byweekday: weekdayArray,
         bysetpos: monthBySetPos,
-        dtstart: convertDateToRRuleDate(startDate),
-        count: 10,
-        until: null,
+        dtstart: convertedStartDate,
+        count: count,
+        until: convertedEndDate,
       });
     case "yearly-dayInMonthInYear":
       return new RRule({
@@ -486,9 +550,9 @@ function createRRule(
         interval: yearInterval,
         bymonth: yearByMonth,
         bymonthday: yearByYearDay,
-        dtstart: convertDateToRRuleDate(startDate),
-        count: 10,
-        until: null,
+        dtstart: convertedStartDate,
+        count: count,
+        until: convertedEndDate,
       });
       break;
     case "yearly-patternInMonthInYear":
@@ -498,21 +562,31 @@ function createRRule(
         bysetpos: yearBySetPos,
         byweekday: weekdayArray,
         bymonth: yearByMonth,
-        dtstart: convertDateToRRuleDate(startDate),
-        count: 10,
-        until: null,
+        dtstart: convertedStartDate,
+        count: count,
+        until: convertedEndDate,
       });
       break;
   }
 }
 
+
 function parseNumber(value: string, defaultValue: number = 0) {
   const newValue = Number(value);
   return isNaN(newValue) ? defaultValue : newValue;
 }
-
-function DurationCalculation({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
-  const [
+*/
+function DurationCalculation({
+  startDate,
+  form,
+}: {
+  startDate: Date;
+  form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>;
+}) {
+  /*
+  const RRule = createRRule(
+    new Date(),
+    endDate,
     repeatingType,
     weekdays,
     dailyPattern,
@@ -529,106 +603,78 @@ function DurationCalculation({ form }: { form: UseFormReturn<IRecurrenceForm, IR
     yearMonthValue,
     yearPeriodValue,
     yearWeekdayValue,
-  ] = useWatch({
-    control: form.control,
-    name: [
-      "repeatingType",
-      "weekdays",
-      "dailyPattern",
-      "monthlyPattern",
-      "yearlyPattern",
-      "dayValue",
-      "weekValue",
-      "monthValue",
-      "monthDayValue",
-      "monthPeriodValue",
-      "monthWeekdayValue",
-      "yearValue",
-      "yearDayValue",
-      "yearMonthValue",
-      "yearPeriodValue",
-      "yearWeekdayValue",
-    ],
-  });
-
-  const RRule = createRRule(
-    new Date(),
-    repeatingType,
-    weekdays,
-    dailyPattern,
-    monthlyPattern,
-    yearlyPattern,
-    dayValue,
-    weekValue,
-    monthValue,
-    monthDayValue,
-    monthPeriodValue,
-    monthWeekdayValue,
-    yearValue,
-    yearDayValue,
-    yearMonthValue,
-    yearPeriodValue,
-    yearWeekdayValue
+    occurrences,
+    durationType
   );
+*/
 
-  if (RRule) {
-    form.setValue("rule", RRule ? RRule.toString() : "");
+  return RRulePreview(startDate, form);
 
-    console.log(RRule.toString());
-    const RuleText = RRule ? RRule.toText() : "";
+  //console.log(count);
+  /*if (rule) {
+    form.setValue("rule", rule ? rule.toString() : "");
+
+    console.log(rule.toString());
+    const RuleText = rule ? rule.toText() : "";
   }
 
-  const ruleList = RRule
-    ? RRule?.all((date, len) => {
-        return len < 30;
+  const ruleList = rule
+    ? rule?.all((date, len) => {
+        return len < 500;
       })
     : [];
 
+  const total = count; //RRule?.count();
   const convertedRuleList = ruleList.map(convertRRuleDateToDate);
 
   return (
-    <div className="flex flex-col gap-2">
-      {
-        //<ScrollArea className={`min-h-80 max-h-80 ${convertedRuleList.length === 0 && "bg-secondary"}`} type="always">
-      }
-      <Table className="min-h-80">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-8">#</TableHead>
-            <TableHead className="w-27">Weekday</TableHead>
-            <TableHead className="w-20">Month</TableHead>
-            <TableHead className="w-11">Day</TableHead>
-            <TableHead className="w-13">Year</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {convertedRuleList.map((value, index) => {
-            return (
-              <TableRow key={index}>
-                <TableCell className="w-8">{index + 1}</TableCell>
-                <TableCell className="w-27">{format(value, "EEEE")}</TableCell>
-                <TableCell className="w-20">{format(value, "MMMM")}</TableCell>
-                <TableCell className="w-11">{format(value, "do")}</TableCell>
-                <TableCell className="w-13">{format(value, "yyyy")}</TableCell>
+    <ScrollArea key={total} className="h-80" type="always">
+      <div className=" min-h-80 max-h-80">
+        <div className="flex flex-col gap-2">
+          {
+            //<ScrollArea className={`min-h-80 max-h-80 ${convertedRuleList.length === 0 && "bg-secondary"}`} type="always">
+          }
+          <Table className="min-h-80">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-8">#</TableHead>
+                <TableHead className="w-27">Weekday</TableHead>
+                <TableHead className="w-20">Month</TableHead>
+                <TableHead className="w-11">Day</TableHead>
+                <TableHead className="w-13">Year</TableHead>
               </TableRow>
-            );
-          })}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={5}>
-              Previewing {convertedRuleList.length <= 30 ? convertedRuleList.length : 30} of {convertedRuleList.length}{" "}
-              events in series
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
+            </TableHeader>
 
-      {/*<ScrollBar orientation="vertical" forceMount></ScrollBar>
-      </ScrollArea>*/}
-    </div>
-  );
+            <TableBody>
+              {convertedRuleList.map((value, index) => {
+                return (
+                  <TableRow key={index}>
+                    <TableCell className="w-8">{index + 1}</TableCell>
+                    <TableCell className="w-27">{format(value, "EEEE")}</TableCell>
+                    <TableCell className="w-20">{format(value, "MMMM")}</TableCell>
+                    <TableCell className="w-11">{format(value, "do")}</TableCell>
+                    <TableCell className="w-13">{format(value, "yyyy")}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={5}>
+                  Previewing {convertedRuleList.length <= 500 ? convertedRuleList.length : 500} of {total} events in
+                  series
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+
+          {/*<ScrollBar orientation="vertical" forceMount></ScrollBar>
+      </ScrollArea>}
+        </div>
+      </div>
+      <ScrollBar orientation="vertical" forceMount></ScrollBar>
+    </ScrollArea>
+  );*/
 }
 
 function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
@@ -638,7 +684,7 @@ function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPa
 }: {
   control: Control<TFieldValues>;
   name: TPath;
-  disabled: boolean;
+  disabled?: boolean;
 }) {
   return (
     <FormField
@@ -721,10 +767,12 @@ function WeekDayFormSelection<TFieldValues extends FieldValues, TPath extends Fi
   control,
   name,
   disabled,
+  hideDayWeekday = true,
 }: {
   control: Control<TFieldValues>;
   name: TPath;
   disabled: boolean;
+  hideDayWeekday?: boolean;
 }) {
   return (
     <FormField
@@ -747,7 +795,11 @@ function WeekDayFormSelection<TFieldValues extends FieldValues, TPath extends Fi
                 </SelectTrigger>
 
                 <SelectContent className={"min-w-31"}>
-                  {weekdays.map((period) => {
+                  {weekdayPatterns.map((period) => {
+                    if (hideDayWeekday && (period.id === "day" || period.id === "weekday" || period.id === "weekend")) {
+                      return;
+                    }
+
                     return (
                       <SelectItem key={period.id} value={period.id} className="flex-1">
                         {period.label}
@@ -904,6 +956,11 @@ function WeeklyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
 }
 
 function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
+  const [monthPeriodValue] = useWatch({
+    control: form.control,
+    name: ["monthPeriodValue"],
+  });
+
   return (
     <FormField
       control={form.control}
@@ -958,6 +1015,7 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
                     control={form.control}
                     name="monthWeekdayValue"
                     disabled={field.value === "patternInMonth" ? false : true}
+                    hideDayWeekday={monthPeriodValue === "1" || monthPeriodValue === "-1" ? false : true}
                   ></WeekDayFormSelection>
                   <FormLabel className="min-w-14 ">of every</FormLabel>
                   <NumberFormInput
@@ -978,6 +1036,10 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
 }
 
 function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
+  const [yearPeriodValue] = useWatch({
+    control: form.control,
+    name: ["yearPeriodValue"],
+  });
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-row gap-2">
@@ -1036,6 +1098,7 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
                       control={form.control}
                       name="yearWeekdayValue"
                       disabled={field.value === "patternInMonthInYear" ? false : true}
+                      hideDayWeekday={yearPeriodValue === "1" || yearPeriodValue === "-1" ? false : true}
                     ></WeekDayFormSelection>
                     <FormLabel>of</FormLabel>
                     <MonthFormSelection
@@ -1061,11 +1124,11 @@ const durations = [
     label: "Forever",
   },
   {
-    id: "endDate",
+    id: "until",
     label: "End Date",
   },
   {
-    id: "totalInstances",
+    id: "count",
     label: "Total Instances",
   },
 ];
@@ -1117,6 +1180,49 @@ const weekdays = [
   {
     id: "sunday",
     label: "Sunday",
+  },
+] as const;
+
+const weekdayPatterns = [
+  {
+    id: "monday",
+    label: "Monday",
+  },
+  {
+    id: "tuesday",
+    label: "Tuesday",
+  },
+  {
+    id: "wednesday",
+    label: "Wednesday",
+  },
+  {
+    id: "thursday",
+    label: "Thursday",
+  },
+  {
+    id: "friday",
+    label: "Friday",
+  },
+  {
+    id: "saturday",
+    label: "Saturday",
+  },
+  {
+    id: "sunday",
+    label: "Sunday",
+  },
+  {
+    id: "day",
+    label: "Day",
+  },
+  {
+    id: "weekday",
+    label: "Weekday",
+  },
+  {
+    id: "weekend",
+    label: "Weekend",
   },
 ] as const;
 

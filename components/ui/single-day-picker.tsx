@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { addYears, format } from "date-fns";
 
 import { useDisclosure } from "@/hooks/use-disclosure";
 
@@ -15,7 +15,7 @@ import React from "react";
 
 type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"> & {
   onSelect: (value: Date | undefined) => void;
-  value?: Date | undefined;
+  value: Date;
   placeholder: string;
   labelVariant?: "P" | "PP" | "PPP";
 };
@@ -58,6 +58,8 @@ function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = 
           required
           onToday={handleToday}
           view={"day"}
+          startMonth={addYears(value, -25)}
+          endMonth={addYears(value, 25)}
         />
       </PopoverContent>
     </Popover>

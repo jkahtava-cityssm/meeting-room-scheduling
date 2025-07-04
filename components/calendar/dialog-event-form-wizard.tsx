@@ -38,7 +38,8 @@ export function EventFormWizard({ children }: { children: React.ReactNode }) {
   const { isLoading: isRoomLoading, rooms } = useRooms();
   //const currentStep = useFormStore((state) => state.currentStep);
 
-  const { isBackVisible, isNextVisible, currentForm, formId, currentStep, handleNext, handleBack } = useEventForm();
+  const { isBackVisible, isNextVisible, currentForm, formId, currentStep, handleNext, handleBack, getKeyData } =
+    useEventForm();
   //const { setCurrentStep, setFormStoreData, getLatestState } = useFormStore();
 
   const renderStep = () => {
@@ -47,7 +48,15 @@ export function EventFormWizard({ children }: { children: React.ReactNode }) {
         return <UpdateEventForm isLoading={isRoomLoading} rooms={rooms} onSubmit={onNext}></UpdateEventForm>;
 
       case 2:
-        return <UpdateRecurrenceForm isLoading={false} onSubmit={onNext} />;
+        const startDate = getKeyData(1, "startDate");
+
+        return (
+          <UpdateRecurrenceForm
+            isLoading={false}
+            onSubmit={onNext}
+            startDate={startDate ? new Date(startDate) : new Date()}
+          />
+        );
       default:
         return <div>Step {currentStep} coming soon...</div>;
     }
@@ -75,6 +84,7 @@ export function EventFormWizard({ children }: { children: React.ReactNode }) {
       //setCurrentStep(currentStep + 1);
     } else {
       console.log("FINAL SUBMIT");
+
       //currentForm.handleSubmit(currentForm.getValues);
     }
   };
