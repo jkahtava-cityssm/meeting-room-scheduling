@@ -215,6 +215,13 @@ export function convertDateToRRuleDate(date: Date) {
   );
 }
 
+export function mergeDateWithTime(date: Date, time: Date) {
+  const DateOnly = new Date(date.toDateString());
+  const DateTime = new Date(DateOnly.setHours(time.getHours(), time.getMinutes()));
+
+  return DateTime;
+}
+
 /**
  * Converts RRule UTC Date into a Local Datetime
 

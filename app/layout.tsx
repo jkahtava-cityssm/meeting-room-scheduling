@@ -18,7 +18,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          themes={["dark", "light", "theme-zinc-dark", "theme-zinc-light"]}
+          defaultTheme="light"
+          disableTransitionOnChange
+        >
           <SWRProvider>{children}</SWRProvider>
         </ThemeProvider>
       </body>

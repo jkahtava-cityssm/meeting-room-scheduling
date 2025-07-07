@@ -20,6 +20,7 @@ interface IEventFormContext {
   formId: string;
   setFormId: (value: string) => void;
   getKeyData: (step: number, key: string) => string | undefined;
+  getStepData: (step: number) => object;
   getFormData: (schema: z.ZodObject, defaultValues: object) => object;
   handleNext: (data: object) => void;
   handleBack: (data: object) => void;
@@ -60,6 +61,14 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     return sessionData[key];
   };
 
+  const getStepData = (step: number) => {
+    const state = getSessionState();
+    const sessionData = state.localData[step];
+    if (isEmpty(sessionData)) return {};
+
+    return sessionData;
+  };
+
   const handleNext = (data: object) => {
     setSessionFormData(data, currentStep);
     setSessionStep(currentStep + 1);
@@ -87,6 +96,7 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
         setFormId,
         getFormData,
         getKeyData,
+        getStepData,
         handleNext,
         handleBack,
       }}

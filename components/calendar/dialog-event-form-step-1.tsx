@@ -96,34 +96,38 @@ const SEventForm = z
     }
   });
 
-const SEventFormDefaults = {
-  roomId: 0,
-  title: "",
-  description: "",
-  startDate: new Date(),
-  endDate: new Date(),
-  startTime: new Date(),
-  endTime: addMinutes(new Date(), 30),
-  duration: getDurationText(new Date(), new Date(), new Date(), addMinutes(new Date(), 30)),
-  isRecurring: false,
-};
-
 export function UpdateEventForm({
   isLoading,
   event,
   rooms,
+  defaultStartDate,
   onSubmit,
 }: {
   isLoading: boolean;
   event?: IEventForm;
   rooms?: IRoom[];
+  defaultStartDate?: Date;
   onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
 }) {
   const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData } = useEventForm();
 
   const defaultValues = useMemo(() => {
+    const startDateTime = defaultStartDate ? defaultStartDate : new Date();
+    const endDateTime = defaultStartDate ? addMinutes(defaultStartDate, 30) : addMinutes(new Date(), 30);
+
+    const SEventFormDefaults = {
+      roomId: 0,
+      title: "",
+      description: "",
+      startDate: startDateTime,
+      startTime: startDateTime,
+      endDate: endDateTime,
+      endTime: endDateTime,
+      duration: getDurationText(startDateTime, startDateTime, endDateTime, endDateTime),
+      isRecurring: false,
+    };
     return getFormData(SEventForm, SEventFormDefaults);
-  }, [getFormData]);
+  }, [defaultStartDate, getFormData]);
 
   const form = useForm<IEventForm>({
     resolver: zodResolver(SEventForm),

@@ -8,7 +8,7 @@ import { DateNavigator } from "@/components/calendar/calendar-all-header-date-na
 import { AddEventDialog } from "@/components/calendar/dialog-event-add";
 
 import type { TCalendarView } from "@/lib/types";
-import { navigateDate, navigateURL } from "@/lib/helpers";
+import { mergeDateWithTime, navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
 import { AddEventDrawer } from "./dialog-event-add.v1";
@@ -38,6 +38,7 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
       <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <TodayButton />
+
           <DateNavigator
             view={view}
             selectedDate={selectedDate}
@@ -119,7 +120,7 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
               Add Event
             </Button>
           </AddEventDialog>
-          <AddEventDrawer>
+          <AddEventDrawer startDate={mergeDateWithTime(selectedDate, new Date())}>
             <Button className="w-full sm:w-auto">
               <Plus />
               Add Event

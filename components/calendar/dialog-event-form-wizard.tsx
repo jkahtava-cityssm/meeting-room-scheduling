@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "../ui/button";
-import { UpdateEventForm } from "./dialog-event-form-step-1";
+import { IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
 import { UpdateRecurrenceForm } from "./dialog-event-form-step-2";
 import { useRooms } from "@/hooks/use-rooms";
 
@@ -29,21 +29,56 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { useEventForm } from "@/contexts/EventFormProvider";
+import { useSWRConfig } from "swr";
+import useSWRMutation from "swr/mutation";
+import { title } from "process";
+import { description } from "@/app/(private)/layout";
 
-export function EventFormWizard({ children }: { children: React.ReactNode }) {
+async function sendEventRequest(url, { arg }) {
+  return fetch(url, {
+    method: "POST",
+    body: JSON.stringify(arg),
+  });
+}
+
+export function EventFormWizard({
+  children,
+  defaultStartDate,
+}: {
+  children: React.ReactNode;
+  defaultStartDate?: Date;
+}) {
   const { isOpen, onClose, onToggle } = useDisclosure();
 
   const { isLoading: isRoomLoading, rooms } = useRooms();
   //const currentStep = useFormStore((state) => state.currentStep);
 
-  const { isBackVisible, isNextVisible, currentForm, formId, currentStep, handleNext, handleBack, getKeyData } =
-    useEventForm();
+  const { trigger: triggerEvent } = useSWRMutation("/api/events", sendEventRequest);
+
+  const {
+    isBackVisible,
+    isNextVisible,
+    currentForm,
+    formId,
+    currentStep,
+    handleNext,
+    handleBack,
+    getKeyData,
+    getStepData,
+  } = useEventForm();
   //const { setCurrentStep, setFormStoreData, getLatestState } = useFormStore();
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <UpdateEventForm isLoading={isRoomLoading} rooms={rooms} onSubmit={onNext}></UpdateEventForm>;
+        return (
+          <UpdateEventForm
+            defaultStartDate={defaultStartDate}
+            isLoading={isRoomLoading}
+            rooms={rooms}
+            onSubmit={onNext}
+          ></UpdateEventForm>
+        );
 
       case 2:
         const startDate = getKeyData(1, "startDate");
@@ -83,6 +118,25 @@ export function EventFormWizard({ children }: { children: React.ReactNode }) {
     } else {
       console.log("FINAL SUBMIT");
 
+      console.log(data);
+
+      if (currentStep == 2) {
+        const stepOne = getStepData(1);
+        console.log(stepOne);
+        const stepTwo = getStepData(2);
+        console.log(stepTwo);
+      } else {
+        const event: IEventForm = data as IEventForm;
+
+        triggerEvent({
+          roomId: event.roomId,
+          startDate: event.startDate,
+          endDate: event.endDate,
+          title: event.title,
+          description: event.description,
+        });
+      }
+      //mutate("/api/events", {});
       //currentForm.handleSubmit(currentForm.getValues);
     }
   };

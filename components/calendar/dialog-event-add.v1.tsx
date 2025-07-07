@@ -6,6 +6,7 @@ import { EventFormProvider } from "@/contexts/EventFormProvider";
 
 export function AddEventDrawer({
   children,
+  startDate,
 }: {
   children: React.ReactNode;
   startDate?: Date;
@@ -13,7 +14,7 @@ export function AddEventDrawer({
 }) {
   return (
     <EventFormProvider>
-      <EventFormWizard>{children}</EventFormWizard>
+      <EventFormWizard defaultStartDate={startDate}>{children}</EventFormWizard>
     </EventFormProvider>
   );
 }
