@@ -4,8 +4,8 @@ import { parseISO } from "date-fns";
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-async function CreatedMessage() {
-  return NextResponse.json({ message: "Created Event" }, { status: 201 });
+async function CreatedMessage(data: object) {
+  return NextResponse.json({ message: "Created Event", data: data }, { status: 201 });
 }
 
 async function UpdatedMessage() {
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     InternalServerErrorMessage();
   }
 
-  return CreatedMessage();
+  return CreatedMessage(result);
 }
 
 export async function PUT(req: Request) {
@@ -70,7 +70,7 @@ export async function PUT(req: Request) {
     return UpdatedMessage();
   }
 
-  return CreatedMessage();
+  return CreatedMessage(result);
 }
 
 export async function GET(req: NextRequest) {
