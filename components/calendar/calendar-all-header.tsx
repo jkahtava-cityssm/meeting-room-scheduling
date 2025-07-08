@@ -114,12 +114,12 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
           <div className="w-full sm:w-auto">
             <RoomSelect onRoomChange={handleNavigateRoomChange} />
           </div>
-          <AddEventDialog>
+          {/*<AddEventDialog>
             <Button className="w-full sm:w-auto">
               <Plus />
               Add Event
             </Button>
-          </AddEventDialog>
+          </AddEventDialog>*/}
           <AddEventDrawer startDate={mergeDateWithTime(selectedDate, new Date())}>
             <Button className="w-full sm:w-auto">
               <Plus />

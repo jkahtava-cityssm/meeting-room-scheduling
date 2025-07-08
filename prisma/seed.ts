@@ -223,7 +223,7 @@ function randomToggle(chance: "75" | "50" | "25" | "10") {
 
 async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
   //IGNORE MULTI DAY EVENTS WE DONT WANT MULTI DAY RECURRING EVENTS
-  if (differenceInDays(startOfDay(startDate), endOfDay(endDate)) > 1) {
+  if (differenceInDays(endOfDay(endDate), startOfDay(startDate)) >= 1) {
     return undefined;
   }
 
@@ -294,7 +294,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
       break;
   }
 
-  const newStartDate = addDays(startDate, -Math.floor(Math.random() * 31));
+  const newStartDate = startDate; //addDays(startDate, -Math.floor(Math.random() * 31));
 
   let newRule = undefined;
 
@@ -305,13 +305,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.DAILY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(
-            newStartDate.getUTCFullYear(),
-            newStartDate.getUTCMonth(),
-            newStartDate.getUTCDate(),
-            newStartDate.getUTCHours(),
-            newStartDate.getUTCMinutes()
-          ),
+          dtstart: convertDateToRRuleDate(startDate),
           count: occurrences,
           until: null,
         });
@@ -321,13 +315,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.DAILY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(
-            newStartDate.getUTCFullYear(),
-            newStartDate.getUTCMonth(),
-            newStartDate.getUTCDate(),
-            newStartDate.getUTCHours(),
-            newStartDate.getUTCMinutes()
-          ),
+          dtstart: convertDateToRRuleDate(startDate),
           count: occurrences,
           until: null,
         });
@@ -337,13 +325,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.WEEKLY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(
-            newStartDate.getUTCFullYear(),
-            newStartDate.getUTCMonth(),
-            newStartDate.getUTCDate(),
-            newStartDate.getUTCHours(),
-            newStartDate.getUTCMinutes()
-          ),
+          dtstart: convertDateToRRuleDate(startDate),
           count: occurrences,
           until: null,
         });
@@ -352,13 +334,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           freq: RRule.WEEKLY,
           interval: interval,
           byweekday: weekdayArray,
-          dtstart: datetime(
-            newStartDate.getUTCFullYear(),
-            newStartDate.getUTCMonth(),
-            newStartDate.getUTCDate(),
-            newStartDate.getUTCHours(),
-            newStartDate.getUTCMinutes()
-          ),
+          dtstart: convertDateToRRuleDate(startDate),
           count: occurrences,
           until: null,
         });
@@ -367,13 +343,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
         newRule = new RRule({
           freq: RRule.MONTHLY,
           interval: interval,
-          dtstart: datetime(
-            newStartDate.getUTCFullYear(),
-            newStartDate.getUTCMonth(),
-            newStartDate.getUTCDate(),
-            newStartDate.getUTCHours(),
-            newStartDate.getUTCMinutes()
-          ),
+          dtstart: convertDateToRRuleDate(startDate),
           bymonthday: dayValue,
           count: occurrences,
           until: null,
@@ -383,13 +353,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
         newRule = new RRule({
           freq: RRule.YEARLY,
           interval: interval,
-          dtstart: datetime(
-            newStartDate.getUTCFullYear(),
-            newStartDate.getUTCMonth(),
-            newStartDate.getUTCDate(),
-            newStartDate.getUTCHours(),
-            newStartDate.getUTCMinutes()
-          ),
+          dtstart: convertDateToRRuleDate(startDate),
           bymonth: monthValue,
           bymonthday: dayValue,
           count: occurrences,
@@ -409,17 +373,28 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
     console.log(newRule);
     console.log(newRule.toString());
   }*/
-  //let newEndDate = parseISO(newRule.all().at(-1)?.toISOString());
+  const newEndDate = newRule.all().at(-1); //parseISO(newRule.all().at(-1)?.toISOString());
+
+  if (!newEndDate) {
+    console.log("NO END DATE");
+    return;
+  }
 
   const recurrence = await prisma.recurrence.create({
     data: {
       rule: newRule.toString(),
-      startDate: newStartDate,
-      endDate: newRule.all().at(-1) ?? "",
+      startDate: startDate,
+      endDate: newEndDate, //newRule.all().at(-1) ?? "",
     },
   });
 
   return recurrence.recurrenceId;
+}
+
+export function convertDateToRRuleDate(date: Date) {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds())
+  );
 }
 
 async function main() {

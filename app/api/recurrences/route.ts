@@ -5,10 +5,9 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { start } from "repl";
 
-async function CreatedMessage() {
-  return NextResponse.json({ message: "Created Event" }, { status: 201 });
+async function CreatedMessage(data: object) {
+  return NextResponse.json({ message: "Created Recurrence", data: data }, { status: 201 });
 }
-
 async function UpdatedMessage() {
   return NextResponse.json({ message: "Updated Event" }, { status: 200 });
 }
@@ -49,4 +48,26 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(events);
+}
+
+export async function POST(req: Request) {
+  if (!process.env.DATABASE_URL) {
+    return InternalServerErrorMessage("DATABASE_URL Missing");
+  }
+
+  const { startDate, endDate, rule } = await req.json();
+
+  if (!startDate || !endDate || !rule) {
+    return BadRequestMessage();
+  }
+
+  const result = await prisma.recurrence.create({
+    data: { startDate, endDate, rule },
+  });
+
+  if (!result) {
+    InternalServerErrorMessage();
+  }
+
+  return CreatedMessage(result);
 }

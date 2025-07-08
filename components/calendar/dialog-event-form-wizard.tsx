@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "../ui/button";
 import { IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
-import { UpdateRecurrenceForm } from "./dialog-event-form-step-2";
+import { IRecurrenceForm, UpdateRecurrenceForm } from "./dialog-event-form-step-2";
 import { useRooms } from "@/hooks/use-rooms";
 
 import {
@@ -33,8 +33,9 @@ import { useSWRConfig } from "swr";
 import useSWRMutation from "swr/mutation";
 import { title } from "process";
 import { description } from "@/app/(private)/layout";
+import { endOfDay } from "date-fns";
 
-async function sendEventRequest(url, { arg }) {
+async function sendPOSTRequest(url, { arg }) {
   return fetch(url, {
     method: "POST",
     body: JSON.stringify(arg),
@@ -53,7 +54,8 @@ export function EventFormWizard({
   const { isLoading: isRoomLoading, rooms } = useRooms();
   //const currentStep = useFormStore((state) => state.currentStep);
 
-  const { trigger: triggerEvent } = useSWRMutation("/api/events", sendEventRequest);
+  const { trigger: triggerEvent } = useSWRMutation("/api/events", sendPOSTRequest);
+  const { trigger: triggerRecurrence } = useSWRMutation("/api/recurrences", sendPOSTRequest);
 
   const {
     isBackVisible,
@@ -64,6 +66,7 @@ export function EventFormWizard({
     handleNext,
     handleBack,
     getKeyData,
+    setKeyData,
     getStepData,
   } = useEventForm();
   //const { setCurrentStep, setFormStoreData, getLatestState } = useFormStore();
@@ -82,12 +85,12 @@ export function EventFormWizard({
 
       case 2:
         const startDate = getKeyData(1, "startDate");
-
+        //setKeyData("startDate", "2000-01-01", 2);
         return (
           <UpdateRecurrenceForm
             isLoading={false}
             onSubmit={onNext}
-            startDate={startDate ? new Date(startDate) : new Date()}
+            defaultStartDate={startDate ? new Date(startDate) : new Date()}
           />
         );
       default:
@@ -121,10 +124,28 @@ export function EventFormWizard({
       console.log(data);
 
       if (currentStep == 2) {
-        const stepOne = getStepData(1);
+        const stepOne = getStepData(1) as IEventForm;
         console.log(stepOne);
-        const stepTwo = getStepData(2);
+        const stepTwo = getStepData(2) as IRecurrenceForm;
         console.log(stepTwo);
+
+        const recurrence: IRecurrenceForm = data as IRecurrenceForm;
+
+        triggerEvent({
+          roomId: stepOne.roomId,
+          startDate: stepOne.startDate,
+          endDate: stepOne.endDate,
+          title: stepOne.title,
+          description: stepOne.description,
+          rule: recurrence.rule,
+          ruleStartDate: recurrence.startDate,
+          ruleEndDate:
+            recurrence.durationType === "until"
+              ? recurrence.endDate
+              : recurrence.durationType === "count"
+              ? recurrence.lastOccurrenceDate
+              : new Date("9999-12-31"),
+        });
       } else {
         const event: IEventForm = data as IEventForm;
 

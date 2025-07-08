@@ -14,7 +14,7 @@ import { Separator } from "../ui/separator";
 
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { useEventForm } from "@/contexts/EventFormProvider";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SingleDayPicker } from "../ui/single-day-picker";
 import { RRulePreview } from "./dialog-event-form-step-2-rrule-preview";
 
@@ -43,6 +43,7 @@ export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" 
   occurrences: string;
   endDate: Date;
   duration?: string;
+  lastOccurrenceDate: Date;
 }
 
 const SRecurrenceForm = z.object({
@@ -71,46 +72,21 @@ const SRecurrenceForm = z.object({
 
   durationType: z.string(),
   occurrences: z.string(),
+  lastOccurrenceDate: z.coerce.date() as unknown as z.ZodDate,
   endDate: z.coerce.date() as unknown as z.ZodDate,
   duration: z.string().optional(),
 });
 
-const SRecurrenceFormDefaults = {
-  repeatingType: "",
-  repeatingPattern: "",
-  rule: "",
-  startDate: new Date(),
-  endDate: new Date(),
-  weekdays: ["monday"],
-  dailyPattern: "",
-  monthlyPattern: "",
-  yearlyPattern: "",
-
-  dayValue: "",
-  weekValue: "",
-  monthValue: "",
-  monthDayValue: "",
-  monthPeriodValue: "",
-  monthWeekdayValue: "",
-  yearValue: "",
-  yearDayValue: "",
-  yearMonthValue: "",
-  yearPeriodValue: "",
-  yearWeekdayValue: "",
-  duration: "",
-  durationType: "",
-  occurrences: "",
-};
-
 export function UpdateRecurrenceForm({
-  startDate,
+  defaultStartDate,
   isLoading,
   onSubmit,
 }: {
-  startDate: Date;
+  defaultStartDate: Date;
   isLoading: boolean;
   onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
 }) {
+  const [lastDate, setLastDate] = useState<Date>();
   /*const { getFormData } = useFormStep({
     schema: SRecurrenceForm,
     defaultValues: SRecurrenceFormDefaults,
@@ -121,11 +97,45 @@ export function UpdateRecurrenceForm({
 
   const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData } = useEventForm();
 
+  const defaultValues = useMemo(() => {
+    const startDateTime = defaultStartDate ? defaultStartDate : new Date();
+
+    const SRecurrenceFormDefaults = {
+      repeatingType: "",
+      repeatingPattern: "",
+      rule: "",
+      startDate: startDateTime,
+      endDate: startDateTime,
+      weekdays: ["monday"],
+      dailyPattern: "",
+      monthlyPattern: "",
+      yearlyPattern: "",
+
+      dayValue: "",
+      weekValue: "",
+      monthValue: "",
+      monthDayValue: "",
+      monthPeriodValue: "",
+      monthWeekdayValue: "",
+      yearValue: "",
+      yearDayValue: "",
+      yearMonthValue: "",
+      yearPeriodValue: "",
+      yearWeekdayValue: "",
+      duration: "",
+      durationType: "",
+      occurrences: "",
+      lastOccurrenceDate: startDateTime,
+    };
+
+    return { ...getFormData(SRecurrenceForm, SRecurrenceFormDefaults), startDate: startDateTime };
+  }, [defaultStartDate, getFormData]);
+
   const form = useForm<IRecurrenceForm>({
     resolver: zodResolver(SRecurrenceForm),
     reValidateMode: "onSubmit",
     mode: "all",
-    defaultValues: getFormData(SRecurrenceForm, SRecurrenceFormDefaults),
+    defaultValues: defaultValues,
   });
 
   useEffect(() => {
@@ -285,7 +295,7 @@ export function UpdateRecurrenceForm({
           <ScrollBar orientation="vertical" forceMount></ScrollBar>
         </ScrollArea>
 
-        <RRulePreview startDate={startDate} form={form} />
+        <RRulePreview startDate={defaultStartDate} setLastDate={setLastDate} form={form} />
       </form>
     </Form>
   );
