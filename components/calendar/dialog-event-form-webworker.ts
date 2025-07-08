@@ -11,8 +11,11 @@ self.onmessage = (response: MessageEvent<ParsedOptions>) => {
     const ruleList = rrule.all((date, len) => {
       return len < 500;
     });
+
+    const lastDate = rrule.all().at(-1);
+
     const convertedRuleList = ruleList.map(convertRRuleDateToDate);
 
-    self.postMessage({ rrule: rrule, count: total, localDates: convertedRuleList });
+    self.postMessage({ rrule: rrule, count: total, lastDate: lastDate, localDates: convertedRuleList });
   }
 };

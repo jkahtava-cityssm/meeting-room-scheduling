@@ -19,6 +19,7 @@ interface IEventFormContext {
   //setCurrentStep: (value: number) => void;
   formId: string;
   setFormId: (value: string) => void;
+  setKeyData: (key: string, value: string, step: number) => void;
   getKeyData: (step: number, key: string) => string | undefined;
   getStepData: (step: number) => object;
   getFormData: (schema: z.ZodObject, defaultValues: object) => object;
@@ -29,7 +30,7 @@ interface IEventFormContext {
 const EventFormContext = createContext({} as IEventFormContext);
 
 export function EventFormProvider({ children }: { children: React.ReactNode }) {
-  const { setSessionFormData, setSessionStep, getSessionState } = useFormStore();
+  const { setSessionFormData, setSessionStep, getSessionState, setSessionKeyData } = useFormStore();
 
   const currentStep = useFormStore((state) => state.currentStep);
 
@@ -44,7 +45,10 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     const state = getSessionState();
     const sessionData = state.localData[currentStep];
 
-    if (isEmpty(sessionData) || !schema) return defaultValues;
+    if (isEmpty(sessionData) || !schema) {
+      //setSessionFormData(defaultValues, currentStep);
+      return defaultValues;
+    }
 
     const result = schema.safeParse(sessionData);
     console.log(result.error);
@@ -59,6 +63,15 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     if (isEmpty(sessionData)) return "";
 
     return sessionData[key];
+  };
+
+  const setKeyData = (key: string, value: string, step: number) => {
+    const state = getSessionState();
+    const sessionData = state.localData[currentStep];
+
+    if (isEmpty(sessionData)) return;
+
+    setSessionKeyData(key, value, step);
   };
 
   const getStepData = (step: number) => {
@@ -94,6 +107,7 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
         //setCurrentStep,
         formId,
         setFormId,
+        setKeyData,
         getFormData,
         getKeyData,
         getStepData,

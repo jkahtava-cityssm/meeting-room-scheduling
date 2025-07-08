@@ -25,21 +25,30 @@ export async function POST(req: Request) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const { title, description, startDate, endDate, roomId } = await req.json();
+  const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate } = await req.json();
 
   if (!title || !description || !startDate || !endDate || !roomId) {
     return BadRequestMessage();
   }
 
-  const result = await prisma.event.create({
-    data: { title, description, startDate, endDate, roomId },
+  let recurrence = null;
+
+  if (rule) {
+    recurrence = await prisma.recurrence.create({
+      data: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+    });
+  }
+
+  const event = await prisma.event.create({
+    data: { title, description, startDate, endDate, roomId, recurrenceId: recurrence?.recurrenceId },
+    include: { room: true, recurrence: true },
   });
 
-  if (!result) {
+  if (!event) {
     InternalServerErrorMessage();
   }
 
-  return CreatedMessage(result);
+  return CreatedMessage(event);
 }
 
 export async function PUT(req: Request) {
@@ -92,7 +101,10 @@ export async function GET(req: NextRequest) {
   const events = await prisma.event.findMany({
     include: { room: true, recurrence: true },
     where: {
-      OR: [{ startDate: { lte: EndDate }, endDate: { gte: StartDate } }],
+      OR: [
+        { startDate: { lte: EndDate }, endDate: { gte: StartDate } },
+        { recurrence: { startDate: { lte: EndDate }, endDate: { gte: StartDate } } },
+      ],
     },
   });
 

@@ -81,7 +81,7 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
   const eventList: IEvent[] = [];
 
   events.forEach((element) => {
-    if (element.recurrenceId == null) {
+    if (element.recurrenceId === null) {
       return;
     }
 
@@ -123,6 +123,9 @@ export function generateMultiDayEventsInPeriod(
   const eventList: IEvent[] = [];
 
   events.forEach((element) => {
+    if (element.recurrenceId !== null) {
+      return;
+    }
     const currentStartDate = element.startDate;
     const currentEndDate = element.endDate;
 

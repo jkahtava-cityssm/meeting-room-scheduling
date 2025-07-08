@@ -7,6 +7,7 @@ type FormState = {
   formId?: string;
   setSessionStep: (step: number) => void;
   setSessionFormData: (data: object, index: number) => void;
+  setSessionKeyData: (key: string, value: string, index: number) => void;
   setFormId: (id: string) => void;
   resetSessionFormData: () => void;
   getSessionState: () => FormState;
@@ -30,6 +31,10 @@ export const useFormStore = create<FormState>()(
       setSessionFormData: (data, index) =>
         set((state) => ({
           localData: Object.assign([...state.localData], { [index]: data }),
+        })),
+      setSessionKeyData: (key, value, index) =>
+        set((state) => ({
+          localData: Object.assign([...state.localData], { [index]: { [key]: value } }),
         })),
       setFormId: (id) => set({ formId: id }),
       resetSessionFormData: () => set({ currentStep: 1, localData: [{}], formId: undefined }),

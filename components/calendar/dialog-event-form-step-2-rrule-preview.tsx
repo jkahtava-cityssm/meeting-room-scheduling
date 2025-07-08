@@ -12,12 +12,15 @@ import { Skeleton } from "../ui/skeleton";
 export function RRulePreview({
   startDate,
   form,
+  setLastDate,
 }: {
   startDate: Date;
   form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>;
+  setLastDate: (value: Date) => void;
 }) {
   const [rrule, setRRule] = useState<RRule>();
   const [count, setCount] = useState<number>();
+
   const [localDates, setLocalDates] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,7 +64,9 @@ export function RRulePreview({
 
     const newWorker = new Worker(new URL("./dialog-event-form-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (response: MessageEvent<{ rrule: RRule; count: number; localDates: Date[] }>) => {
+    newWorker.onmessage = (
+      response: MessageEvent<{ rrule: RRule; count: number; lastDate: Date; localDates: Date[] }>
+    ) => {
       if (response.data) {
         const strippedObject = response.data.rrule;
         const original = Object.getPrototypeOf(new RRule());
@@ -70,6 +75,8 @@ export function RRulePreview({
         setLocalDates(response.data.localDates);
         setRRule(strippedObject);
         setCount(response.data.count);
+        form.setValue("lastOccurrenceDate", response.data.lastDate);
+        //setLastDate(response.data.lastDate);
 
         setIsLoading(false);
       }
@@ -84,7 +91,7 @@ export function RRulePreview({
         workerRef.current = null;
       }
     };
-  }, [RRuleOptions]);
+  }, [RRuleOptions, setLastDate]);
 
   useEffect(() => {
     if (!RRuleOptions) {
