@@ -77,6 +77,15 @@ const SRecurrenceForm = z.object({
   duration: z.string().optional(),
 });
 
+/**
+ * TO-DO: One Day add the ability to set a truly forever pattern, it will require
+ * creating multiple sub recurrences of 100 year chunks so that thousands of years dont need to be generated
+ * this will complicate updating and will likely require adjustments to the database.
+ * it might only need a special parent key or we make the event have a 1 to many relationship.
+ * @param param0
+ * @returns
+ */
+
 export function UpdateRecurrenceForm({
   defaultStartDate,
   isLoading,
@@ -745,7 +754,7 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
 const durations = [
   {
     id: "forever",
-    label: "Forever",
+    label: "Max (200 Years)",
   },
   {
     id: "until",

@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
 import { IRecurrenceForm, UpdateRecurrenceForm } from "./dialog-event-form-step-2";
 import { useRooms } from "@/hooks/use-rooms";
+import { isEmpty } from "lodash";
 
 import {
   Sheet,
@@ -25,6 +26,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogSave,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
@@ -33,7 +35,22 @@ import { useSWRConfig } from "swr";
 import useSWRMutation from "swr/mutation";
 import { title } from "process";
 import { description } from "@/app/(private)/layout";
-import { endOfDay } from "date-fns";
+import { addYears, endOfDay } from "date-fns";
+import z from "zod/v4";
+
+const SubmitSchemaEvent = z.object({
+  roomId: z.number(),
+  description: z.string(),
+  title: z.string(),
+  startDate: z.date(),
+  endDate: z.date(),
+});
+
+const SubmitSchemaRecurrence = z.object({
+  rule: z.string(),
+  ruleStartDate: z.date(),
+  ruleEndDate: z.date(),
+});
 
 async function sendPOSTRequest(url, { arg }) {
   return fetch(url, {
@@ -50,12 +67,12 @@ export function EventFormWizard({
   defaultStartDate?: Date;
 }) {
   const { isOpen, onClose, onToggle } = useDisclosure();
+  const [showAlert, setShowAlert] = useState(false);
 
   const { isLoading: isRoomLoading, rooms } = useRooms();
   //const currentStep = useFormStore((state) => state.currentStep);
 
-  const { trigger: triggerEvent } = useSWRMutation("/api/events", sendPOSTRequest);
-  const { trigger: triggerRecurrence } = useSWRMutation("/api/recurrences", sendPOSTRequest);
+  const { data, error, trigger: triggerEvent } = useSWRMutation("/api/events", sendPOSTRequest);
 
   const {
     isBackVisible,
@@ -63,11 +80,14 @@ export function EventFormWizard({
     currentForm,
     formId,
     currentStep,
-    handleNext,
-    handleBack,
+    incrementStep,
+    decrementStep,
     getKeyData,
-    setKeyData,
+    setFormData,
     getStepData,
+    resetForm,
+    isDirtyRef,
+    isValidSchema,
   } = useEventForm();
   //const { setCurrentStep, setFormStoreData, getLatestState } = useFormStore();
 
@@ -99,127 +119,139 @@ export function EventFormWizard({
   };
 
   const onBack = (data: object) => {
-    //e.preventDefault();
-    console.log("BACK BUTTON");
     if (!currentForm) return;
-    handleBack(data);
-
-    //setFormStoreData(currentForm.getValues(), currentStep);
-    //setCurrentStep(currentStep - 1);
+    setFormData(data);
+    decrementStep();
   };
 
-  const onNext = (data: object) => {
-    //e.preventDefault();
-
+  const onNext = async (data: object) => {
     if (!currentForm) return;
+    setFormData(data);
 
     if (isNextVisible) {
-      console.log("NEXT BUTTON");
-      handleNext(data);
-      //setFormStoreData(currentForm.getValues(), currentStep);
-      //setCurrentStep(currentStep + 1);
+      incrementStep();
     } else {
-      console.log("FINAL SUBMIT");
+      const stepOne = getStepData(1) as IEventForm;
+      const eventObject = {
+        roomId: stepOne.roomId,
+        startDate: stepOne.startDate,
+        endDate: stepOne.endDate,
+        title: stepOne.title,
+        description: stepOne.description,
+      };
 
-      console.log(data);
+      if (!isValidSchema(SubmitSchemaEvent, eventObject)) return;
 
       if (currentStep == 2) {
-        const stepOne = getStepData(1) as IEventForm;
-        console.log(stepOne);
         const stepTwo = getStepData(2) as IRecurrenceForm;
-        console.log(stepTwo);
 
-        const recurrence: IRecurrenceForm = data as IRecurrenceForm;
-
-        triggerEvent({
-          roomId: stepOne.roomId,
-          startDate: stepOne.startDate,
-          endDate: stepOne.endDate,
-          title: stepOne.title,
-          description: stepOne.description,
-          rule: recurrence.rule,
-          ruleStartDate: recurrence.startDate,
+        const ruleObject = {
+          rule: stepTwo.rule,
+          ruleStartDate: stepTwo.startDate,
           ruleEndDate:
-            recurrence.durationType === "until"
-              ? recurrence.endDate
-              : recurrence.durationType === "count"
-              ? recurrence.lastOccurrenceDate
-              : new Date("9999-12-31"),
-        });
-      } else {
-        const event: IEventForm = data as IEventForm;
+            stepTwo.durationType === "until"
+              ? stepTwo.endDate
+              : stepTwo.durationType === "count"
+              ? stepTwo.lastOccurrenceDate
+              : addYears(new Date(stepOne.startDate), 200),
+        };
 
-        triggerEvent({
-          roomId: event.roomId,
-          startDate: event.startDate,
-          endDate: event.endDate,
-          title: event.title,
-          description: event.description,
-        });
+        if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
+
+        const result = await triggerEvent({ ...eventObject, ...ruleObject });
+        if (result.status === 201) {
+          resetForm();
+          onClose();
+        }
+
+        //const ruleEndDate = triggerEvent();
+      } else {
+        const result = await triggerEvent({ ...eventObject });
+        if (result.status === 201) {
+          resetForm();
+          onClose();
+        }
+
+        //triggerEvent({ ...eventObject });
       }
-      //mutate("/api/events", {});
-      //currentForm.handleSubmit(currentForm.getValues);
     }
   };
 
-  //return <>{renderStep()}</>;
+  const onOpenChange = (open: boolean) => {
+    if (open === false && (isDirtyRef.current || currentStep > 1)) {
+      setShowAlert(true);
+    } else {
+      onToggle();
+    }
+  };
 
-  console.log("RE-RENDER");
+  const onSaveReturn = (data: object) => {
+    setFormData(data);
+    onClose();
+    setShowAlert(false);
+  };
+
+  const onDiscardChanges = () => {
+    onClose();
+    setShowAlert(false);
+    resetForm();
+  };
+
+  /*useEffect(() => {
+    const value = currentForm?.formState.isDirty;
+    const test = value ? value : false;
+    setDirty(value ? value : false);
+  }, [currentForm?.formState.isDirty, setDirty]);
+*/
   return (
-    <Sheet open={isOpen} onOpenChange={onToggle}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+    <>
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetTrigger asChild>{children}</SheetTrigger>
 
-      <SheetContent className="w-full md:w-4xl p-4">
-        <SheetHeader>
-          <SheetTitle>{currentStep === 1 ? "Create Event/Appointment" : "Set Reccurrence Pattern"}</SheetTitle>
-          <SheetDescription>
-            This form will add an event/appointment to the calendar for the given room and assign it to an individual.
-          </SheetDescription>
-        </SheetHeader>
-        {renderStep()}
+        <SheetContent className="w-full md:w-4xl p-4">
+          <SheetHeader>
+            <SheetTitle>{currentStep === 1 ? "Create Event/Appointment" : "Set Reccurrence Pattern"}</SheetTitle>
+            <SheetDescription>
+              This form will add an event/appointment to the calendar for the given room and assign it to an individual.
+            </SheetDescription>
+          </SheetHeader>
+          {renderStep()}
 
-        <SheetFooter className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-6 ">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                className="border-destructive accent-destructive"
-                onClick={() => {}}
-              >
-                Cancel
+          <SheetFooter className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-6 ">
+            {isBackVisible && (
+              <Button form={formId} type="submit" variant={"outline"} onClick={currentForm?.handleSubmit(onBack)}>
+                Previous
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Do you want to discard your changes?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will delete all the content entered into this form.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Go Back</AlertDialogCancel>
-
-                <SheetClose asChild>
-                  <AlertDialogAction className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60">
-                    Discard Changes
-                  </AlertDialogAction>
-                </SheetClose>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {isBackVisible && (
-            <Button form={formId} type="submit" variant={"outline"} onClick={currentForm?.handleSubmit(onBack)}>
-              Previous
+            )}
+            <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onNext)}>
+              {isNextVisible ? "Next" : "Finish"}
             </Button>
-          )}
-          <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onNext)}>
-            {isNextVisible ? "Next" : "Finish"}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <AlertDialog open={showAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Warning: Event Cancellation </AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogSave onClick={() => onSaveReturn(currentForm?.getValues())} className="sm:mr-auto">
+              Save for later
+            </AlertDialogSave>
+            <AlertDialogAction
+              onClick={onDiscardChanges}
+              className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
+            >
+              Dismiss Form
+            </AlertDialogAction>
+
+            <AlertDialogCancel onClick={() => setShowAlert(false)}>Continue Editing</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 /*

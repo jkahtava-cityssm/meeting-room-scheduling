@@ -6,7 +6,7 @@ import { IRecurrenceForm } from "./dialog-event-form-step-2";
 import { convertDateToRRuleDate } from "@/lib/helpers";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
-import { format } from "date-fns";
+import { addYears, format } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 
 export function RRulePreview({
@@ -91,7 +91,7 @@ export function RRulePreview({
         workerRef.current = null;
       }
     };
-  }, [RRuleOptions, setLastDate]);
+  }, [RRuleOptions, form, setLastDate]);
 
   useEffect(() => {
     if (!RRuleOptions) {
@@ -210,7 +210,11 @@ function createRRule(
 
   const count = durationType === "forever" || durationType === "until" ? null : parseNumber(occurrences);
   const convertedEndDate =
-    durationType === "forever" || durationType === "count" ? null : convertDateToRRuleDate(endDate);
+    durationType === "forever"
+      ? convertDateToRRuleDate(addYears(startDate, 200))
+      : durationType === "count"
+      ? null
+      : convertDateToRRuleDate(endDate);
 
   switch (repeatingPattern) {
     case "daily-daily":

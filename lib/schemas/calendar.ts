@@ -40,7 +40,7 @@ export const SEvent = z.object({
   }) as unknown as z.ZodDate,
 
   title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string(),
   parentEventId: z.number().nullable().optional(),
   room: SRoom,
   recurrence: SRecurrence.nullish(),

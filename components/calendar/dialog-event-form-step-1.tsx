@@ -20,7 +20,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
@@ -36,7 +36,19 @@ export interface IEventForm extends Pick<IEvent, "roomId" | "description" | "tit
   isRecurring: boolean;
 }
 
-const SEventForm = z
+const SEventReloadSchema = z.object({
+  roomId: z.number(),
+  description: z.string(),
+  title: z.string(),
+  duration: z.string(),
+  startDate: z.coerce.date() as unknown as z.ZodDate,
+  endDate: z.coerce.date() as unknown as z.ZodDate,
+  startTime: z.coerce.date() as unknown as z.ZodDate,
+  endTime: z.coerce.date() as unknown as z.ZodDate,
+  isRecurring: z.boolean(),
+});
+
+const SEventResolverSchema = z
   .object({
     ...SEvent.pick({ roomId: true, description: true, title: true, startDate: true, endDate: true }).shape,
     duration: z.string(),
@@ -109,7 +121,7 @@ export function UpdateEventForm({
   defaultStartDate?: Date;
   onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
 }) {
-  const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData } = useEventForm();
+  const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData, setDirty } = useEventForm();
 
   const defaultValues = useMemo(() => {
     const startDateTime = defaultStartDate ? defaultStartDate : new Date();
@@ -126,17 +138,35 @@ export function UpdateEventForm({
       duration: getDurationText(startDateTime, startDateTime, endDateTime, endDateTime),
       isRecurring: false,
     };
-    return getFormData(SEventForm, SEventFormDefaults);
+    return getFormData(SEventReloadSchema, SEventFormDefaults);
   }, [defaultStartDate, getFormData]);
 
   const form = useForm<IEventForm>({
-    resolver: zodResolver(SEventForm),
+    resolver: zodResolver(SEventResolverSchema),
     reValidateMode: "onChange",
     mode: "all",
     defaultValues: defaultValues,
   });
 
+  /*const {
+    formState: { isDirty },
+  } = form;*/
+
   const isRecurring = form.watch("isRecurring");
+  setDirty(form.formState.isDirty);
+
+  /*const check = useCallback(
+    (e) => {
+      setDirty(form.formState.isDirty);
+    },
+    [form.formState.isDirty, setDirty]
+  );*/
+
+  /*useEffect(() => {
+    const value = form.formState.isDirty;
+    const test = value ? value : false;
+    setDirty(value ? value : false);
+  }, [form.formState.isDirty, setDirty]);*/
 
   useEffect(() => {
     setCurrentForm(form);
@@ -145,7 +175,6 @@ export function UpdateEventForm({
 
   useEffect(() => {
     if (isRecurring) {
-      console.log("ISRECURRING");
       setNextVisible(true);
       setBackVisible(false);
     } else {
@@ -468,6 +497,7 @@ export function UpdateEventForm({
                         <FormControl>
                           <Textarea
                             className="max-h-70 min-h-70 resize-none"
+                            id="description"
                             {...field}
                             value={field.value}
                             data-invalid={fieldState.invalid}

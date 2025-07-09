@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 import type { ButtonHTMLAttributes } from "react";
-import React from "react";
+import React, { useState } from "react";
 
 // ================================== //
 
@@ -22,6 +22,7 @@ type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"
 
 function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = "PPP", value, ...props }: TProps) {
   const { isOpen, onClose, onToggle } = useDisclosure();
+  const [calendarDate, setCalendarDate] = useState(value);
 
   const handleSelect = (date: Date | undefined) => {
     onSelect(date);
@@ -55,11 +56,14 @@ function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = 
           mode="single"
           selected={value}
           onSelect={handleSelect}
+          month={calendarDate}
+          onMonthChange={setCalendarDate}
           required
           onToday={handleToday}
           view={"day"}
           startMonth={addYears(value, -25)}
           endMonth={addYears(value, 25)}
+          fixedWeeks={true}
         />
       </PopoverContent>
     </Popover>
