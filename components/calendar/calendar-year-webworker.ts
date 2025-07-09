@@ -15,12 +15,12 @@ function formatYearData(yearData: IYearProcessData): IYearResponseData {
   const startDate: Date = startOfYear(yearData.selectedDate);
   const endDate: Date = endOfYear(yearData.selectedDate);
 
-  const combinedEvents: IEvent[] = [
+  /*const combinedEvents: IEvent[] = [
     ...generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, yearData.visibleHours),
     ...generateRecurringEventsInPeriod(yearData.eventList, startDate, endDate),
-  ];
+  ];*/
 
-  const filteredEvents: IEvent[] = filterEventsByRoom(combinedEvents, yearData.selectedRoomId);
+  const filteredEvents: IEvent[] = filterEventsByRoom(yearData.eventList, yearData.selectedRoomId);
   const otherList: IEvent[] = [];
   const monthData: IMonthView[] = [];
   const months: Date[] = getMonths(yearData.selectedDate);
