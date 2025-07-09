@@ -49,7 +49,7 @@ export function CalendarYearView({ date }: { date: Date }) {
   const startDate: Date = startOfYear(date);
   const endDate: Date = endOfYear(date);
 
-  console.log(formatISO(startDate, { representation: "date" }));
+  //console.log(formatISO(startDate, { representation: "date" }));
   const { data: events } = useSWR<IEvent[]>(
     `/api/events?startdate=${formatISO(startDate, { representation: "date" })}&enddate=${formatISO(endDate, {
       representation: "date",

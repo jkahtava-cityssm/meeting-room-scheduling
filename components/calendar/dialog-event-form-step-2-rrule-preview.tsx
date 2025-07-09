@@ -86,7 +86,7 @@ export function RRulePreview({
 
     return () => {
       if (workerRef.current) {
-        console.log("Terminate");
+        //console.log("Terminate");
         workerRef.current.terminate();
         workerRef.current = null;
       }

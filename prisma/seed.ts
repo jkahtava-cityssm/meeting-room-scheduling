@@ -370,13 +370,13 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
   //console.log(newRule.all().at(-1));
   /*if (!newRule.all().at(-1)) {
-    console.log(newRule);
-    console.log(newRule.toString());
+    //console.log(newRule);
+    //console.log(newRule.toString());
   }*/
   const newEndDate = newRule.all().at(-1); //parseISO(newRule.all().at(-1)?.toISOString());
 
   if (!newEndDate) {
-    console.log("NO END DATE");
+    //console.log("NO END DATE");
     return;
   }
 

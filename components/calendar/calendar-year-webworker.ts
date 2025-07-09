@@ -46,7 +46,7 @@ function formatYearData(yearData: IYearProcessData): IYearResponseData {
       otherList.push(...events);
       dayData.push({ day: day, dayDate: date, isBlank: false, isToday: today, dayEvents: events });
     });
-    console.log(monthEvents);
+    //console.log(monthEvents);
 
     monthData.push({ month: monthIndex, monthDate: month, monthName: format(month, "MMMM"), days: dayData });
   });

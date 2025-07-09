@@ -60,7 +60,7 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     }
 
     const result = schema.safeParse(sessionData);
-    console.log(result.error);
+    //console.log(result.error);
     if (result.error) return defaultValues;
 
     return result.data;
