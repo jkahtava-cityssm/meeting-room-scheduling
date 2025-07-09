@@ -37,7 +37,7 @@ export const useFormStore = create<FormState>()(
           localData: Object.assign([...state.localData], { [index]: { [key]: value } }),
         })),
       setFormId: (id) => set({ formId: id }),
-      resetSessionFormData: () => set({ currentStep: 1, localData: [{}], formId: undefined }),
+      resetSessionFormData: () => set({ currentStep: 1, localData: [{}] }),
       getSessionState: () => getStorageData() || get(),
     }),
     { name: "form-storage", storage: createJSONStorage(() => sessionStorage) }

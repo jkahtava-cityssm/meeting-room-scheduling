@@ -2,7 +2,7 @@
 
 import { useFormStore } from "@/lib/zustand/event-store";
 import { isEmpty } from "lodash";
-import { createContext, useContext, useState } from "react";
+import { createContext, RefObject, useContext, useEffect, useRef, useState } from "react";
 import { FieldValues, UseFormReturn } from "react-hook-form";
 import z from "zod/v4";
 
@@ -22,28 +22,37 @@ interface IEventFormContext {
   setKeyData: (key: string, value: string, step: number) => void;
   getKeyData: (step: number, key: string) => string | undefined;
   getStepData: (step: number) => object;
+  setFormData: (data: object, step?: number) => void;
   getFormData: (schema: z.ZodObject, defaultValues: object) => object;
-  handleNext: (data: object) => void;
-  handleBack: (data: object) => void;
+  incrementStep: (step?: number) => void;
+  decrementStep: (step?: number) => void;
+  isValidSchema: (schema: z.ZodObject, data: object) => boolean;
+  resetForm: () => void;
+  isDirtyRef: RefObject<boolean>;
+  setDirty: (value: boolean) => void;
 }
 
 const EventFormContext = createContext({} as IEventFormContext);
 
 export function EventFormProvider({ children }: { children: React.ReactNode }) {
-  const { setSessionFormData, setSessionStep, getSessionState, setSessionKeyData } = useFormStore();
+  const { setSessionFormData, setSessionStep, getSessionState, setSessionKeyData, resetSessionFormData } =
+    useFormStore();
 
   const currentStep = useFormStore((state) => state.currentStep);
 
   const [isBackVisible, setBackVisible] = useState(false);
   const [isNextVisible, setNextVisible] = useState(false);
   const [isSubmitVisible, setSubmitVisible] = useState(false);
+
+  const isDirtyRef = useRef(false);
+  //const [isDirty, setDirty] = useState(false);
   const [currentForm, setCurrentForm] = useState<UseFormReturn<FieldValues, unknown, FieldValues>>();
   //const [currentStep, setCurrentStep] = useState(storedStep);
   const [formId, setFormId] = useState("");
 
   const getFormData = (schema: z.ZodObject, defaultValues: object) => {
     const state = getSessionState();
-    const sessionData = state.localData[currentStep];
+    const sessionData = state.localData[currentStep] as { [key: string]: any };
 
     if (isEmpty(sessionData) || !schema) {
       //setSessionFormData(defaultValues, currentStep);
@@ -55,6 +64,18 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     if (result.error) return defaultValues;
 
     return result.data;
+  };
+
+  const setFormData = (data: object, step?: number) => {
+    setSessionFormData(data, step ? step : currentStep);
+  };
+
+  const isValidSchema = (schema: z.ZodObject, data: object) => {
+    const result = schema.safeParse(data);
+
+    if (result.error) return false;
+
+    return true;
   };
 
   const getKeyData = (step: number, key: string) => {
@@ -82,14 +103,20 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     return sessionData;
   };
 
-  const handleNext = (data: object) => {
-    setSessionFormData(data, currentStep);
-    setSessionStep(currentStep + 1);
+  const incrementStep = (step?: number) => {
+    setSessionStep(step ? step : currentStep + 1);
   };
 
-  const handleBack = (data: object) => {
-    setSessionFormData(data, currentStep);
-    setSessionStep(currentStep - 1);
+  const decrementStep = (step?: number) => {
+    setSessionStep(step ? step : currentStep - 1);
+  };
+
+  const resetForm = () => {
+    resetSessionFormData();
+  };
+
+  const setDirty = (value: boolean) => {
+    isDirtyRef.current = value;
   };
 
   return (
@@ -109,10 +136,15 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
         setFormId,
         setKeyData,
         getFormData,
+        setFormData,
         getKeyData,
         getStepData,
-        handleNext,
-        handleBack,
+        incrementStep,
+        decrementStep,
+        isValidSchema,
+        resetForm,
+        isDirtyRef,
+        setDirty,
       }}
     >
       {children}

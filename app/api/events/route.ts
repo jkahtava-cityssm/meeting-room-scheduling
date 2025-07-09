@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate } = await req.json();
 
-  if (!title || !description || !startDate || !endDate || !roomId) {
+  if (!title || (!description && description !== "") || !startDate || !endDate || !roomId) {
     return BadRequestMessage();
   }
 
