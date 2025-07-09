@@ -63,7 +63,7 @@ export function AddEventDialog({
   const defaultEndDateTime = addMinutes(defaultStartDateTime, 30);
 
   const onSubmit = async (values: IEventForm) => {
-    console.log(values);
+    //console.log(values);
   };
   //w-fit  sm:max-w-[calc(100%-2rem)] lg:max-w-9/12 max-h-[calc(100%-2rem)] lg:max-h-9/12"
   return (
