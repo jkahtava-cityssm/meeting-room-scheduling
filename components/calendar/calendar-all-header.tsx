@@ -37,7 +37,7 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
     <>
       <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
-          <TodayButton />
+          <TodayButton view={view} />
 
           <DateNavigator
             view={view}
