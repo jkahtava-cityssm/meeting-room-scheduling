@@ -110,9 +110,11 @@ export function EventFormWizard({
   } = useEventForm();
   //const { setCurrentStep, setFormStoreData, getLatestState } = useFormStore();
 
+  console.log(currentStep);
+
   const renderStep = (defaultevent?: IEvent) => {
     switch (currentStep) {
-      case 1:
+      case 0:
         return (
           <UpdateEventForm
             defaultStartDate={defaultStartDate}
@@ -124,8 +126,8 @@ export function EventFormWizard({
           ></UpdateEventForm>
         );
 
-      case 2:
-        const startDate = getKeyData(1, "startDate");
+      case 1:
+        const startDate = getKeyData(0, "startDate");
         //setKeyData("startDate", "2000-01-01", 2);
         return (
           <UpdateRecurrenceForm
@@ -142,7 +144,7 @@ export function EventFormWizard({
   };
 
   const onEdit = () => {
-    incrementStep(1);
+    incrementStep(0);
     setReadOnly(false);
     setLoading(true);
   };
@@ -150,20 +152,21 @@ export function EventFormWizard({
   const onBack = (data: object) => {
     if (!currentForm) return;
     //if (!isReadOnly) setFormData(data, defaultevent ? defaultevent.eventId : 0);
-    setFormData(data, defaultevent ? defaultevent.eventId : 0);
+    setFormData(data);
     decrementStep();
   };
 
   const onNext = async (data: object) => {
     if (!currentForm) return;
     //if (!isReadOnly) setFormData(data, defaultevent ? defaultevent.eventId : 0);
-    setFormData(data, defaultevent ? defaultevent.eventId : 0);
+    setFormData(data);
+
     if (isNextVisible) {
       incrementStep();
     } else {
       if (isReadOnly) onClose();
 
-      const stepOne = getStepData(1) as IEventForm;
+      const stepOne = getStepData(0) as IEventForm;
       const eventObject = {
         eventId: stepOne.eventId,
         roomId: stepOne.roomId,
@@ -176,8 +179,8 @@ export function EventFormWizard({
 
       if (!isValidSchema(SubmitSchemaEvent, eventObject)) return;
 
-      if (currentStep == 2) {
-        const stepTwo = getStepData(2) as IRecurrenceForm;
+      if (currentStep == 1) {
+        const stepTwo = getStepData(1) as IRecurrenceForm;
 
         const ruleObject = {
           rule: stepTwo.rule,
@@ -192,7 +195,7 @@ export function EventFormWizard({
 
         if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
 
-        const result = await triggerEvent({ ...eventObject, ...ruleObject });
+        const result = await triggerEvent({ ...eventObject, ...ruleObject }, { revalidate: true });
         if (result.status === 201 || result.status === 200) {
           resetForm();
           onClose();
@@ -200,7 +203,7 @@ export function EventFormWizard({
 
         //const ruleEndDate = triggerEvent();
       } else {
-        const result = await triggerEvent({ ...eventObject });
+        const result = await triggerEvent({ ...eventObject }, { revalidate: true });
         if (result.status === 201 || result.status === 200) {
           resetForm();
           onClose();
@@ -212,10 +215,10 @@ export function EventFormWizard({
   };
 
   const onOpenChange = (open: boolean) => {
-    if (open === false && (isDirtyRef.current || currentStep > 1) && !isReadOnly) {
+    if (open === false && (isDirtyRef.current || currentStep > 0) && !isReadOnly) {
       setShowAlert(true);
     } else {
-      incrementStep(1);
+      incrementStep(0);
       if (defaultevent) setReadOnly(true);
       onToggle();
     }
@@ -223,7 +226,7 @@ export function EventFormWizard({
 
   const onSaveReturn = (data: object) => {
     setFormData(data, defaultevent ? defaultevent.eventId : 0);
-    incrementStep(1);
+    incrementStep(0);
     onClose();
     setShowAlert(false);
   };
@@ -238,14 +241,16 @@ export function EventFormWizard({
   //const test = useEventDefaultValues(new Date(), loadedEvent ? loadedEvent : defaultevent);
 
   useEffect(() => {
-    if (!loadedEvent || currentStep !== 1 || !isLoading) return;
-    currentForm?.reset(getEventDefaultValues(loadedEvent?.startDate, loadedEvent), {
+    if (!loadedEvent || currentStep !== 0 || !isLoading) return;
+    const test = getEventDefaultValues(loadedEvent?.startDate, loadedEvent);
+    setFormData(test);
+    currentForm?.reset(test, {
       keepDefaultValues: false,
       keepValues: false,
     });
     setLoading(false);
     //currentForm?.reset();
-  }, [currentForm, currentStep, loadedEvent, isLoading]);
+  }, [currentForm, currentStep, loadedEvent, isLoading, setFormData]);
 
   return (
     <>
@@ -255,7 +260,7 @@ export function EventFormWizard({
         <SheetContent className="w-full md:w-4xl p-4">
           <SheetHeader>
             <SheetTitle>
-              {currentStep === 1
+              {currentStep === 0
                 ? isReadOnly
                   ? "View Event"
                   : !isReadOnly && defaultevent
