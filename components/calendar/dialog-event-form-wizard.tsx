@@ -36,9 +36,11 @@ import useSWR, { useSWRConfig } from "swr";
 import useSWRMutation from "swr/mutation";
 import { title } from "process";
 import { description } from "@/app/(private)/layout";
-import { addYears, endOfDay } from "date-fns";
+import { addYears, endOfDay, startOfDay } from "date-fns";
 import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
+import { useParams } from "next/navigation";
+import { revalidateTag } from "next/cache";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),
@@ -88,11 +90,16 @@ export function EventFormWizard({
   //console.log(defaultevent);
   const { isLoading: isRoomLoading, rooms } = useRooms();
   //const currentStep = useFormStore((state) => state.currentStep);
+  const startDate: Date = startOfDay(defaultStartDate ? defaultStartDate : new Date());
+  const endDate: Date = endOfDay(defaultStartDate ? defaultStartDate : new Date());
 
-  const { trigger: triggerEvent } = useSWRMutation("/api/events", sendPOSTRequest);
+  const { trigger: triggerEvent } = useSWRMutation(
+    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`,
+    sendPOSTRequest
+  );
   const loadedEvent = useEvent(defaultevent?.eventId, !isReadOnly && defaultevent ? true : false);
-
-  //console.log("FORM-WIZARD-RE-RENDER");
+  //const params = useParams();
+  //console.log(params);
   const {
     isBackVisible,
     isNextVisible,
@@ -110,7 +117,7 @@ export function EventFormWizard({
   } = useEventForm();
   //const { setCurrentStep, setFormStoreData, getLatestState } = useFormStore();
 
-  console.log(currentStep);
+  //console.log(currentStep);
 
   const renderStep = (defaultevent?: IEvent) => {
     switch (currentStep) {
@@ -195,7 +202,7 @@ export function EventFormWizard({
 
         if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
 
-        const result = await triggerEvent({ ...eventObject, ...ruleObject }, { revalidate: true });
+        const result = await triggerEvent({ ...eventObject, ...ruleObject }, { revalidate: false });
         if (result.status === 201 || result.status === 200) {
           resetForm();
           onClose();
@@ -203,7 +210,7 @@ export function EventFormWizard({
 
         //const ruleEndDate = triggerEvent();
       } else {
-        const result = await triggerEvent({ ...eventObject }, { revalidate: true });
+        const result = await triggerEvent({ ...eventObject }, { revalidate: false });
         if (result.status === 201 || result.status === 200) {
           resetForm();
           onClose();
@@ -348,7 +355,13 @@ export function EventFormWizard({
 */
 
 export function useEvent(eventId: number | undefined, shouldRun: boolean) {
-  const { data: event } = useSWR<IEvent[]>(shouldRun ? `/api/events/${eventId}` : null);
+  const { data: event } = useSWR<IEvent[]>(shouldRun ? `/api/events/${eventId}` : null, {
+    revalidateOnMount: true,
+    revalidateIfStale: true,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    refreshInterval: 1,
+  });
 
   if (!event) return undefined;
   const result = z.array(SEvent).safeParse(event);
