@@ -59,30 +59,42 @@ export async function PUT(req: Request) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const { eventId, title, description, startDate, endDate, roomId } = await req.json();
+  const { eventId, title, description, startDate, endDate, roomId, recurrenceId, rule, ruleStartDate, ruleEndDate } =
+    await req.json();
 
-  if (!title || !description || !startDate || !endDate || !roomId) {
+  if (!title || (!description && description !== "") || !startDate || !endDate || !roomId) {
     return BadRequestMessage();
   }
 
-  const result = await prisma.event.upsert({
-    create: { title, description, startDate, endDate, roomId },
+  let recurrence = null;
+
+  if (rule) {
+    recurrence = await prisma.recurrence.upsert({
+      create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+      where: { recurrenceId: recurrenceId },
+      update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+    });
+  }
+
+  const event = await prisma.event.upsert({
+    create: { title, description, startDate, endDate, roomId, recurrenceId: recurrence?.recurrenceId },
     where: { eventId: eventId },
-    update: { title, description, startDate, endDate, roomId },
+    update: { title, description, startDate, endDate, roomId, recurrenceId: recurrence?.recurrenceId },
+    include: { room: true, recurrence: true },
   });
 
-  if (!result) {
+  if (!event) {
     InternalServerErrorMessage();
   }
 
-  revalidateTag("EventsUpdated");
+  //revalidateTag("EventsUpdated");
   //revalidatePath("/private/calendar/month-view");
 
-  if (result.eventId === eventId) {
+  if (event.eventId === eventId) {
     return UpdatedMessage();
   }
 
-  return CreatedMessage(result);
+  return CreatedMessage(event);
 }
 
 export async function GET(req: NextRequest) {

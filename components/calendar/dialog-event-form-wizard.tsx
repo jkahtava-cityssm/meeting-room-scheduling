@@ -41,11 +41,13 @@ import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
 
 const SubmitSchemaEvent = z.object({
+  eventId: z.number(),
   roomId: z.number(),
   description: z.string(),
   title: z.string(),
   startDate: z.date(),
   endDate: z.date(),
+  recurrenceId: z.number(),
 });
 
 const SubmitSchemaRecurrence = z.object({
@@ -56,7 +58,7 @@ const SubmitSchemaRecurrence = z.object({
 
 async function sendPOSTRequest(url, { arg }) {
   return fetch(url, {
-    method: "POST",
+    method: "PUT",
     body: JSON.stringify(arg),
   });
 }
@@ -169,6 +171,7 @@ export function EventFormWizard({
         endDate: stepOne.endDate,
         title: stepOne.title,
         description: stepOne.description,
+        recurrenceId: stepOne.recurrenceId,
       };
 
       if (!isValidSchema(SubmitSchemaEvent, eventObject)) return;
@@ -189,20 +192,16 @@ export function EventFormWizard({
 
         if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
 
-        return;
-
         const result = await triggerEvent({ ...eventObject, ...ruleObject });
-        if (result.status === 201) {
+        if (result.status === 201 || result.status === 200) {
           resetForm();
           onClose();
         }
 
         //const ruleEndDate = triggerEvent();
       } else {
-        return;
-
         const result = await triggerEvent({ ...eventObject });
-        if (result.status === 201) {
+        if (result.status === 201 || result.status === 200) {
           resetForm();
           onClose();
         }
