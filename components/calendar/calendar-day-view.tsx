@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, formatISO } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -64,7 +64,9 @@ export function CalendarDayView({ date }: { date: Date }) {
   const endDate: Date = endOfDay(date);
 
   const { data: events } = useSWR<IEvent[]>(
-    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+    `/api/events?startdate=${formatISO(startDate, { representation: "date" })}&enddate=${formatISO(endDate, {
+      representation: "date",
+    })}`
   );
 
   useEffect(() => {

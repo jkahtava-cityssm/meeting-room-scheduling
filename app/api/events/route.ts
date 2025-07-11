@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
   const multiDayEvents = generateMultiDayEventsInPeriod(events, StartDate, EndDate, { from: 0, to: 24 });
 
   const combinedEvents: IEvent[] = [...recurringEvents, ...multiDayEvents];
-
+  console.log(multiDayEvents);
   if (!events) {
     return InternalServerErrorMessage();
   }
