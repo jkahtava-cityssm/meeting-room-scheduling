@@ -31,7 +31,7 @@ export const useFormStore = create<FormState>()(
       setSessionStep: (step) => set({ currentStep: step }),
       setSessionFormData: (data, index, id) =>
         set((state) => ({
-          localData: Object.assign([...state.localData], { [index]: { [id]: data } }),
+          localData: Object.assign([...state.localData], { [index]: data }),
         })),
       setSessionKeyData: (key, value, index) =>
         set((state) => ({

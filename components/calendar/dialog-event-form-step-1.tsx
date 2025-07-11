@@ -30,7 +30,7 @@ import { addMinutes } from "date-fns";
 import { useEventForm } from "@/contexts/EventFormProvider";
 
 export interface IEventForm
-  extends Pick<IEvent, "eventId" | "roomId" | "description" | "title" | "startDate" | "endDate"> {
+  extends Pick<IEvent, "eventId" | "roomId" | "description" | "title" | "startDate" | "endDate" | "recurrenceId"> {
   duration: string;
   startTime: Date;
   endTime: Date;
@@ -48,12 +48,20 @@ const SEventReloadSchema = z.object({
   startTime: z.coerce.date() as unknown as z.ZodDate,
   endTime: z.coerce.date() as unknown as z.ZodDate,
   isRecurring: z.boolean(),
+  recurrenceId: z.number(),
 });
 
 const SEventResolverSchema = z
   .object({
-    ...SEvent.pick({ eventId: true, roomId: true, description: true, title: true, startDate: true, endDate: true })
-      .shape,
+    ...SEvent.pick({
+      eventId: true,
+      roomId: true,
+      description: true,
+      title: true,
+      startDate: true,
+      endDate: true,
+      recurrenceId: true,
+    }).shape,
     duration: z.string(),
     startTime: z.coerce.date() as unknown as z.ZodDate,
     endTime: z.coerce.date() as unknown as z.ZodDate,
@@ -128,6 +136,7 @@ export const getEventDefaultValues = (defaultStartDate: Date | undefined, event:
       ? getDurationText(event.startDate, event.startDate, event.endDate, event.endDate)
       : getDurationText(startDateTime, startDateTime, endDateTime, endDateTime),
     isRecurring: event?.recurrenceId ? true : false,
+    recurrenceId: event ? event.recurrenceId : 0,
   };
 
   return SEventFormDefaults;
@@ -156,8 +165,8 @@ export function UpdateEventForm({
   const defaultValues = useMemo(() => {
     const defaultValues = getEventDefaultValues(defaultStartDate, event);
 
-    return event ? defaultValues : getFormData(SEventReloadSchema, defaultValues);
-  }, [defaultStartDate, event, getFormData]);
+    return isReadOnly ? defaultValues : getFormData(SEventReloadSchema, defaultValues);
+  }, [defaultStartDate, event, getFormData, isReadOnly]);
   /*const defaultValues = useMemo(() => {
     const startDateTime = defaultStartDate ? defaultStartDate : new Date();
     const endDateTime = defaultStartDate ? addMinutes(defaultStartDate, 30) : addMinutes(new Date(), 30);

@@ -144,7 +144,7 @@ export function UpdateRecurrenceForm({
     };
 
     return rrule ? rrule : { ...getFormData(SRecurrenceForm, SRecurrenceFormDefaults), startDate: startDateTime };
-  }, [defaultStartDate, event, getFormData]);
+  }, [defaultStartDate, event, getFormData, isReadOnly]);
 
   const form = useForm<IRecurrenceForm>({
     resolver: zodResolver(SRecurrenceForm),
