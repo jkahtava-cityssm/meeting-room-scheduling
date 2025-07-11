@@ -51,7 +51,7 @@ export function CalendarYearView({ date }: { date: Date }) {
 
   //console.log(formatISO(startDate, { representation: "date" }));
   const { data: events } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${formatISO(startDate, { representation: "date" })}&enddate=${formatISO(endDate, {
+    `/api/events?startdate=${formatISO(startDate, { representation: "date" })}&enddate=${formatISO(endDate, {
       representation: "date",
     })}`
   );

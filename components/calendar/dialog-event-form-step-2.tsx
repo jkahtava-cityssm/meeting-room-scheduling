@@ -3,7 +3,7 @@
 import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { IRecurrence, SRecurrence } from "@/lib/schemas/calendar";
+import { IEvent, IRecurrence, SRecurrence } from "@/lib/schemas/calendar";
 import { Control, FieldPathByValue, FieldValues, useForm, UseFormReturn, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,10 +17,11 @@ import { useEventForm } from "@/contexts/EventFormProvider";
 import { useEffect, useMemo, useState } from "react";
 import { SingleDayPicker } from "../ui/single-day-picker";
 import { RRulePreview } from "./dialog-event-form-step-2-rrule-preview";
+import { RRule, rrulestr } from "rrule";
+import { differenceInYears, endOfDay, startOfDay } from "date-fns";
 
 export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" | "endDate"> {
   repeatingType: string;
-  repeatingPattern: string;
 
   dailyPattern: string;
   monthlyPattern: string;
@@ -49,7 +50,6 @@ export interface IRecurrenceForm extends Pick<IRecurrence, "rule" | "startDate" 
 const SRecurrenceForm = z.object({
   ...SRecurrence.pick({ rule: true, startDate: true, endDate: true }).shape,
   repeatingType: z.string(),
-  repeatingPattern: z.string(),
   dailyPattern: z.string(),
   monthlyPattern: z.string(),
   yearlyPattern: z.string(),
@@ -90,10 +90,14 @@ export function UpdateRecurrenceForm({
   defaultStartDate,
   isLoading,
   onSubmit,
+  event,
+  isReadOnly,
 }: {
   defaultStartDate: Date;
   isLoading: boolean;
   onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
+  event?: IEvent;
+  isReadOnly: boolean;
 }) {
   const [lastDate, setLastDate] = useState<Date>();
   /*const { getFormData } = useFormStep({
@@ -109,9 +113,11 @@ export function UpdateRecurrenceForm({
   const defaultValues = useMemo(() => {
     const startDateTime = defaultStartDate ? defaultStartDate : new Date();
 
+    const rrule = event?.recurrence ? parseRRule(rrulestr(event.recurrence.rule)) : null;
+    console.log(rrule);
+
     const SRecurrenceFormDefaults = {
       repeatingType: "",
-      repeatingPattern: "",
       rule: "",
       startDate: startDateTime,
       endDate: startDateTime,
@@ -137,8 +143,8 @@ export function UpdateRecurrenceForm({
       lastOccurrenceDate: startDateTime,
     };
 
-    return { ...getFormData(SRecurrenceForm, SRecurrenceFormDefaults), startDate: startDateTime };
-  }, [defaultStartDate, getFormData]);
+    return rrule ? rrule : { ...getFormData(SRecurrenceForm, SRecurrenceFormDefaults), startDate: startDateTime };
+  }, [defaultStartDate, event, getFormData]);
 
   const form = useForm<IRecurrenceForm>({
     resolver: zodResolver(SRecurrenceForm),
@@ -175,12 +181,13 @@ export function UpdateRecurrenceForm({
                     render={({ field, fieldState }) => (
                       <FormItem>
                         <div className="flex flex-row gap-2">
-                          <FormLabel id="typeLabel" htmlFor="repeatingType" className="min-w-15 justify-end">
+                          <FormLabel id="typeLabel" htmlFor="durationType" className="min-w-15 justify-end">
                             Duration
                           </FormLabel>
                           <FormControl>
                             <Select
                               //{...field}
+                              disabled={isReadOnly}
                               name={field.name}
                               value={field.value}
                               defaultValue={field.value}
@@ -217,7 +224,7 @@ export function UpdateRecurrenceForm({
                     )}
                   />
                   {durationType === "count" && (
-                    <NumberFormInput control={form.control} name="occurrences"></NumberFormInput>
+                    <NumberFormInput control={form.control} name="occurrences" disabled={isReadOnly}></NumberFormInput>
                   )}
                   {durationType === "until" && (
                     <FormField
@@ -230,6 +237,7 @@ export function UpdateRecurrenceForm({
                               <FormControl>
                                 <SingleDayPicker
                                   id="endDate"
+                                  disabled={isReadOnly}
                                   value={field.value}
                                   onSelect={(date) => {
                                     field.onChange(date as Date);
@@ -259,6 +267,7 @@ export function UpdateRecurrenceForm({
                         <FormControl>
                           <Select
                             //{...field}
+                            disabled={isReadOnly}
                             name={field.name}
                             value={field.value}
                             defaultValue={field.value}
@@ -294,10 +303,10 @@ export function UpdateRecurrenceForm({
                     </FormItem>
                   )}
                 />
-                {type === "daily" && <DailyForm form={form}></DailyForm>}
-                {type === "weekly" && <WeeklyForm form={form}></WeeklyForm>}
-                {type === "monthly" && <MonthlyForm form={form}></MonthlyForm>}
-                {type === "yearly" && <YearlyForm form={form}></YearlyForm>}
+                {type === "daily" && <DailyForm form={form} isReadOnly={isReadOnly}></DailyForm>}
+                {type === "weekly" && <WeeklyForm form={form} isReadOnly={isReadOnly}></WeeklyForm>}
+                {type === "monthly" && <MonthlyForm form={form} isReadOnly={isReadOnly}></MonthlyForm>}
+                {type === "yearly" && <YearlyForm form={form} isReadOnly={isReadOnly}></YearlyForm>}
               </div>
             </div>
           </div>
@@ -308,6 +317,139 @@ export function UpdateRecurrenceForm({
       </form>
     </Form>
   );
+}
+
+function parseRRule(rrule: RRule) {
+  const mappedRule: {
+    repeatingType: string;
+    rule: string;
+    startDate: Date;
+    endDate: Date;
+    weekdays: string[];
+    dailyPattern: string;
+    monthlyPattern: string;
+    yearlyPattern: string;
+
+    dayValue: string;
+    weekValue: string;
+    monthValue: string;
+    monthDayValue: string;
+    monthPeriodValue: string;
+    monthWeekdayValue: string;
+    yearValue: string;
+    yearDayValue: string;
+    yearMonthValue: string;
+    yearPeriodValue: string;
+    yearWeekdayValue: string;
+    duration: string;
+    durationType: string;
+    occurrences: string;
+    lastOccurrenceDate: Date;
+  } = {
+    repeatingType: "",
+    rule: rrule.toString(),
+    startDate: rrule.options.dtstart,
+    endDate: rrule.options.until ? rrule.options.until : rrule.options.dtstart,
+    weekdays: ["monday"],
+    dailyPattern: "",
+    monthlyPattern: "",
+    yearlyPattern: "",
+
+    dayValue: "",
+    weekValue: "",
+    monthValue: "",
+    monthDayValue: "",
+    monthPeriodValue: "",
+    monthWeekdayValue: "",
+    yearValue: "",
+    yearDayValue: "",
+    yearMonthValue: "",
+    yearPeriodValue: "",
+    yearWeekdayValue: "",
+    duration: "",
+    durationType: getDurationType(rrule),
+    occurrences: String(rrule.options.count),
+    lastOccurrenceDate: rrule.options.dtstart,
+  };
+
+  const weekdays: string[] = rrule.options.byweekday
+    ? rrule.options.byweekday.map((value) => {
+        return getDayType(value);
+      })
+    : ["monday"];
+
+  if (rrule.options.freq === RRule.YEARLY) {
+    mappedRule.repeatingType = "yearly";
+    mappedRule.yearlyPattern = rrule.options.bymonthday ? "dayInMonthInYear" : "patternInMonthInYear";
+    mappedRule.yearValue = rrule.options.interval ? String(rrule.options.interval) : "";
+    mappedRule.yearDayValue = rrule.options.bymonthday ? String(rrule.options.bymonthday) : "";
+    mappedRule.yearMonthValue = rrule.options.bymonth ? String(rrule.options.bymonth) : "";
+    mappedRule.yearPeriodValue = rrule.options.bysetpos ? String(rrule.options.bysetpos) : "";
+    mappedRule.yearWeekdayValue = rrule.options.byweekday ? String(rrule.options.byweekday) : "";
+  }
+
+  if (rrule.options.freq === RRule.MONTHLY) {
+    mappedRule.repeatingType = "monthly";
+    mappedRule.monthlyPattern = rrule.options.bymonthday ? "dayInMonth" : "patternInMonth";
+    mappedRule.monthValue = rrule.options.interval ? String(rrule.options.interval) : "";
+    mappedRule.monthDayValue = rrule.options.bymonthday ? String(rrule.options.bymonthday) : "";
+    mappedRule.monthPeriodValue = rrule.options.bysetpos ? String(rrule.options.bysetpos) : "";
+    mappedRule.monthWeekdayValue = rrule.options.byweekday ? String(rrule.options.byweekday) : "";
+  }
+
+  if (rrule.options.freq === RRule.WEEKLY) {
+    mappedRule.repeatingType = "weekly";
+    mappedRule.monthlyPattern = "weekly";
+    mappedRule.weekValue = rrule.options.interval ? String(rrule.options.interval) : "";
+    mappedRule.weekdays = weekdays;
+  }
+
+  if (rrule.options.freq === RRule.DAILY) {
+    mappedRule.repeatingType = "daily";
+    mappedRule.dailyPattern = rrule.options.byweekday ? "daily" : "weekdays";
+    mappedRule.dayValue = rrule.options.interval && rrule.options.byweekday ? String(rrule.options.interval) : "";
+    mappedRule.weekdays = weekdays;
+  }
+
+  console.log(rrule);
+  return mappedRule;
+}
+
+function getDayType(value: number) {
+  switch (value) {
+    case 1:
+      return "monday";
+    case 2:
+      return "tuesday";
+    case 3:
+      return "wednesday";
+    case 4:
+      return "thursday";
+    case 5:
+      return "friday";
+    case 6:
+      return "saturday";
+    case 7:
+      return "sunday";
+    default:
+      return "";
+  }
+}
+
+function getDurationType(rrule: RRule) {
+  if (rrule.options.count) {
+    return "count";
+  }
+
+  const endDate: Date = rrule.options.until ? new Date("9999-12-31") : rrule.options.until;
+  const startDate: Date = rrule.options.dtstart;
+  const difference = differenceInYears(endOfDay(endDate), startOfDay(startDate));
+
+  if (difference >= 200) {
+    return "forever";
+  }
+
+  return "until";
 }
 
 function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
@@ -498,7 +640,13 @@ function MonthFormSelection<TFieldValues extends FieldValues, TPath extends Fiel
   );
 }
 
-function DailyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
+function DailyForm({
+  form,
+  isReadOnly,
+}: {
+  form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>;
+  isReadOnly: boolean;
+}) {
   return (
     <FormField
       control={form.control}
@@ -506,7 +654,12 @@ function DailyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceF
       render={({ field }) => (
         <FormItem className="space-y-3">
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col ">
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="flex flex-col "
+              disabled={isReadOnly}
+            >
               <FormItem className="flex items-center gap-3 ">
                 <FormControl className="mx-5.5">
                   <RadioGroupItem value="daily" />
@@ -520,7 +673,7 @@ function DailyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceF
                 <NumberFormInput
                   control={form.control}
                   name="dayValue"
-                  disabled={field.value === "daily" ? false : true}
+                  disabled={field.value === "daily" && !isReadOnly ? false : true}
                 ></NumberFormInput>
                 <FormLabel>Days</FormLabel>
               </FormItem>
@@ -539,12 +692,18 @@ function DailyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceF
   );
 }
 
-function WeeklyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
+function WeeklyForm({
+  form,
+  isReadOnly,
+}: {
+  form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>;
+  isReadOnly: boolean;
+}) {
   return (
     <div className="grid gap-8">
       <div className="flex flex-row gap-2">
         <FormLabel className="min-w-15  justify-end">Every</FormLabel>
-        <NumberFormInput control={form.control} name={"weekValue"} disabled={false} />
+        <NumberFormInput control={form.control} name={"weekValue"} disabled={isReadOnly} />
         <FormLabel>Weeks</FormLabel>
       </div>
       <FormField
@@ -565,6 +724,7 @@ function WeeklyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
                       <FormItem key={weekday.id} className="flex flex-row items-center gap-2">
                         <FormControl>
                           <Checkbox
+                            disabled={isReadOnly}
                             checked={field.value?.includes(weekday.id)}
                             onCheckedChange={(checked) => {
                               return checked
@@ -588,7 +748,13 @@ function WeeklyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
   );
 }
 
-function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
+function MonthlyForm({
+  form,
+  isReadOnly,
+}: {
+  form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>;
+  isReadOnly: boolean;
+}) {
   const [monthPeriodValue] = useWatch({
     control: form.control,
     name: ["monthPeriodValue"],
@@ -601,7 +767,12 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
       render={({ field }) => (
         <FormItem className="space-y-3">
           <FormControl>
-            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col ">
+            <RadioGroup
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              className="flex flex-col "
+              disabled={isReadOnly}
+            >
               <FormItem className="flex items-center gap-3 ">
                 <FormControl className="mx-5.5">
                   <RadioGroupItem value="dayInMonth" />
@@ -616,13 +787,13 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
                   <NumberFormInput
                     control={form.control}
                     name="monthDayValue"
-                    disabled={field.value === "dayInMonth" ? false : true}
+                    disabled={field.value === "dayInMonth" && !isReadOnly ? false : true}
                   ></NumberFormInput>
                   <FormLabel className="min-w-14 ">of every</FormLabel>
                   <NumberFormInput
                     control={form.control}
                     name="monthValue"
-                    disabled={field.value === "dayInMonth" ? false : true}
+                    disabled={field.value === "dayInMonth" && !isReadOnly ? false : true}
                   ></NumberFormInput>
                   <FormLabel>month(s)</FormLabel>
                 </div>
@@ -642,19 +813,19 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
                   <PeriodFormSelection
                     control={form.control}
                     name="monthPeriodValue"
-                    disabled={field.value === "patternInMonth" ? false : true}
+                    disabled={field.value === "patternInMonth" && !isReadOnly ? false : true}
                   ></PeriodFormSelection>
                   <WeekDayFormSelection
                     control={form.control}
                     name="monthWeekdayValue"
-                    disabled={field.value === "patternInMonth" ? false : true}
+                    disabled={field.value === "patternInMonth" && !isReadOnly ? false : true}
                     hideDayWeekday={monthPeriodValue === "1" || monthPeriodValue === "-1" ? false : true}
                   ></WeekDayFormSelection>
                   <FormLabel className="min-w-14 ">of every</FormLabel>
                   <NumberFormInput
                     control={form.control}
                     name="monthValue"
-                    disabled={field.value === "patternInMonth" ? false : true}
+                    disabled={field.value === "patternInMonth" && !isReadOnly ? false : true}
                   ></NumberFormInput>
                   <FormLabel>month(s)</FormLabel>
                 </div>
@@ -668,7 +839,13 @@ function MonthlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenc
   );
 }
 
-function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrenceForm> }) {
+function YearlyForm({
+  form,
+  isReadOnly,
+}: {
+  form: UseFormReturn<IRecurrenceForm, IRecurrenceForm>;
+  isReadOnly: boolean;
+}) {
   const [yearPeriodValue] = useWatch({
     control: form.control,
     name: ["yearPeriodValue"],
@@ -677,7 +854,7 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
     <div className="flex flex-col gap-8">
       <div className="flex flex-row gap-2">
         <FormLabel className="min-w-15  justify-end">Every</FormLabel>
-        <NumberFormInput control={form.control} name={"yearValue"} disabled={false} />
+        <NumberFormInput control={form.control} name={"yearValue"} disabled={isReadOnly} />
         <FormLabel>Year(s)</FormLabel>
       </div>
       <FormField
@@ -686,7 +863,12 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
         render={({ field }) => (
           <FormItem className="space-y-3">
             <FormControl>
-              <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col ">
+              <RadioGroup
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                className="flex flex-col "
+                disabled={isReadOnly}
+              >
                 <FormItem className="flex items-center gap-3 ">
                   <FormControl className="mx-5.5">
                     <RadioGroupItem value="dayInMonthInYear" />
@@ -701,12 +883,12 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
                     <MonthFormSelection
                       control={form.control}
                       name="yearMonthValue"
-                      disabled={field.value === "dayInMonthInYear" ? false : true}
+                      disabled={field.value === "dayInMonthInYear" && !isReadOnly ? false : true}
                     ></MonthFormSelection>
                     <NumberFormInput
                       control={form.control}
                       name="yearDayValue"
-                      disabled={field.value === "dayInMonthInYear" ? false : true}
+                      disabled={field.value === "dayInMonthInYear" && !isReadOnly ? false : true}
                     ></NumberFormInput>
                   </div>
                 </FormItem>
@@ -725,19 +907,19 @@ function YearlyForm({ form }: { form: UseFormReturn<IRecurrenceForm, IRecurrence
                     <PeriodFormSelection
                       control={form.control}
                       name="yearPeriodValue"
-                      disabled={field.value === "patternInMonthInYear" ? false : true}
+                      disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
                     ></PeriodFormSelection>
                     <WeekDayFormSelection
                       control={form.control}
                       name="yearWeekdayValue"
-                      disabled={field.value === "patternInMonthInYear" ? false : true}
+                      disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
                       hideDayWeekday={yearPeriodValue === "1" || yearPeriodValue === "-1" ? false : true}
                     ></WeekDayFormSelection>
                     <FormLabel>of</FormLabel>
                     <MonthFormSelection
                       control={form.control}
                       name="yearMonthValue"
-                      disabled={field.value === "patternInMonthInYear" ? false : true}
+                      disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
                     ></MonthFormSelection>
                   </div>
                 </FormItem>

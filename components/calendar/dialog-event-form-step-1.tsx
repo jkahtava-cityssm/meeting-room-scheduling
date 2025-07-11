@@ -29,7 +29,8 @@ import { addMinutes } from "date-fns";
 
 import { useEventForm } from "@/contexts/EventFormProvider";
 
-export interface IEventForm extends Pick<IEvent, "roomId" | "description" | "title" | "startDate" | "endDate"> {
+export interface IEventForm
+  extends Pick<IEvent, "eventId" | "roomId" | "description" | "title" | "startDate" | "endDate"> {
   duration: string;
   startTime: Date;
   endTime: Date;
@@ -37,6 +38,7 @@ export interface IEventForm extends Pick<IEvent, "roomId" | "description" | "tit
 }
 
 const SEventReloadSchema = z.object({
+  eventId: z.number(),
   roomId: z.number(),
   description: z.string(),
   title: z.string(),
@@ -50,7 +52,8 @@ const SEventReloadSchema = z.object({
 
 const SEventResolverSchema = z
   .object({
-    ...SEvent.pick({ roomId: true, description: true, title: true, startDate: true, endDate: true }).shape,
+    ...SEvent.pick({ eventId: true, roomId: true, description: true, title: true, startDate: true, endDate: true })
+      .shape,
     duration: z.string(),
     startTime: z.coerce.date() as unknown as z.ZodDate,
     endTime: z.coerce.date() as unknown as z.ZodDate,
@@ -108,39 +111,75 @@ const SEventResolverSchema = z
     }
   });
 
+export const getEventDefaultValues = (defaultStartDate: Date | undefined, event: IEvent | undefined) => {
+  const startDateTime = defaultStartDate ? defaultStartDate : new Date();
+  const endDateTime = defaultStartDate ? addMinutes(defaultStartDate, 30) : addMinutes(new Date(), 30);
+
+  const SEventFormDefaults = {
+    eventId: event ? event.eventId : 0,
+    roomId: event ? event.roomId : 0,
+    title: event ? event.title : "",
+    description: event ? event.description : "",
+    startDate: event ? event.startDate : startDateTime,
+    startTime: event ? event.startDate : startDateTime,
+    endDate: event ? event.endDate : endDateTime,
+    endTime: event ? event.endDate : endDateTime,
+    duration: event
+      ? getDurationText(event.startDate, event.startDate, event.endDate, event.endDate)
+      : getDurationText(startDateTime, startDateTime, endDateTime, endDateTime),
+    isRecurring: event?.recurrenceId ? true : false,
+  };
+
+  return SEventFormDefaults;
+};
+
 export function UpdateEventForm({
   isLoading,
   event,
   rooms,
   defaultStartDate,
+  isReadOnly,
   onSubmit,
-}: {
+}: //getDefaultValues,
+{
   isLoading: boolean;
-  event?: IEventForm;
+  event?: IEvent;
   rooms?: IRoom[];
   defaultStartDate?: Date;
+  isReadOnly: boolean;
   onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
+  //getDefaultValues: (event: IEvent) => typeof SEventReloadSchema;
 }) {
   const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData, setDirty } = useEventForm();
+  //const defaultValues = useEventDefaultValues(defaultStartDate, event);
 
   const defaultValues = useMemo(() => {
+    const defaultValues = getEventDefaultValues(defaultStartDate, event);
+
+    return event ? defaultValues : getFormData(SEventReloadSchema, defaultValues);
+  }, [defaultStartDate, event, getFormData]);
+  /*const defaultValues = useMemo(() => {
     const startDateTime = defaultStartDate ? defaultStartDate : new Date();
     const endDateTime = defaultStartDate ? addMinutes(defaultStartDate, 30) : addMinutes(new Date(), 30);
 
     const SEventFormDefaults = {
-      roomId: 0,
-      title: "",
-      description: "",
-      startDate: startDateTime,
-      startTime: startDateTime,
-      endDate: endDateTime,
-      endTime: endDateTime,
-      duration: getDurationText(startDateTime, startDateTime, endDateTime, endDateTime),
-      isRecurring: false,
+      eventId: event ? event.eventId : 0,
+      roomId: event ? event.roomId : 0,
+      title: event ? event.title : "",
+      description: event ? event.description : "",
+      startDate: event ? event.startDate : startDateTime,
+      startTime: event ? event.startDate : startDateTime,
+      endDate: event ? event.endDate : endDateTime,
+      endTime: event ? event.endDate : endDateTime,
+      duration: event
+        ? getDurationText(event.startDate, event.startDate, event.endDate, event.endDate)
+        : getDurationText(startDateTime, startDateTime, endDateTime, endDateTime),
+      isRecurring: event?.recurrenceId ? true : false,
     };
-    return getFormData(SEventReloadSchema, SEventFormDefaults);
-  }, [defaultStartDate, getFormData]);
 
+    return event ? SEventFormDefaults : getFormData(SEventReloadSchema, SEventFormDefaults);
+  }, [defaultStartDate, event, getFormData]);
+*/
   const form = useForm<IEventForm>({
     resolver: zodResolver(SEventResolverSchema),
     reValidateMode: "onChange",
@@ -211,6 +250,7 @@ export function UpdateEventForm({
                           </FormLabel>
                           <FormControl>
                             <Select
+                              disabled={isReadOnly}
                               //{...field}
                               name={field.name}
                               value={field.value === 0 ? "" : field.value.toString()}
@@ -294,8 +334,12 @@ export function UpdateEventForm({
                                 data-invalid={fieldState.invalid}
                                 aria-invalid={fieldState.invalid}
                               >
-                                <TabsTrigger value="false">One Time</TabsTrigger>
-                                <TabsTrigger value="true">Multiple/Recurring</TabsTrigger>
+                                <TabsTrigger value="false" disabled={isReadOnly}>
+                                  One Time
+                                </TabsTrigger>
+                                <TabsTrigger value="true" disabled={isReadOnly}>
+                                  Multiple/Recurring
+                                </TabsTrigger>
                               </TabsList>
                             </Tabs>
                           </FormControl>
@@ -317,6 +361,7 @@ export function UpdateEventForm({
                         <FormControl>
                           <Input
                             id="title"
+                            disabled={isReadOnly}
                             placeholder="Enter a title"
                             data-invalid={fieldState.invalid}
                             value={field.value}
@@ -344,6 +389,7 @@ export function UpdateEventForm({
                           <FormControl>
                             <SingleDayPicker
                               id="startDate"
+                              disabled={isReadOnly}
                               value={field.value}
                               onSelect={(date) => {
                                 if (isRecurring) {
@@ -375,6 +421,7 @@ export function UpdateEventForm({
                           <FormControl>
                             <TimePicker
                               id="startTime"
+                              disabled={isReadOnly}
                               date={field.value}
                               setDate={(date) => {
                                 field.onChange(date as Date);
@@ -409,6 +456,7 @@ export function UpdateEventForm({
                           <FormControl>
                             <SingleDayPicker
                               id="endDate"
+                              disabled={isReadOnly}
                               value={field.value}
                               onSelect={(date) => {
                                 if (isRecurring) {
@@ -439,6 +487,7 @@ export function UpdateEventForm({
                           <FormControl>
                             <TimePicker
                               id="endTime"
+                              disabled={isReadOnly}
                               date={field.value}
                               setDate={(date) => {
                                 field.onChange(date as Date);
@@ -469,6 +518,7 @@ export function UpdateEventForm({
                         <FormControl>
                           <Input
                             id="duration"
+                            disabled={isReadOnly}
                             className="text-sm h-9 px-3 py-1 content-center"
                             {...field}
                             value={field.value}
@@ -498,6 +548,7 @@ export function UpdateEventForm({
                           <Textarea
                             className="max-h-70 min-h-70 resize-none"
                             id="description"
+                            disabled={isReadOnly}
                             {...field}
                             value={field.value}
                             data-invalid={fieldState.invalid}

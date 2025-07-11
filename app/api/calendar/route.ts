@@ -68,12 +68,7 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
     const currentRule = element.recurrence?.rule as string;
 
     const rrule = rrulestr(currentRule, { cache: true });
-    /*console.time("ALL");
-    const t = rrule.all();
-    console.timeEnd("ALL");*/
-    console.time("BETWEEN");
     const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
-    console.timeEnd("BETWEEN");
 
     for (let index = 0; index < recurrenceArray.length; index++) {
       const newEvent = { ...element };

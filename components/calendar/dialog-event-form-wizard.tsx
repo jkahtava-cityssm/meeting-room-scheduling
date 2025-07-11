@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
+import { getEventDefaultValues, IEventForm, UpdateEventForm, useEventDefaultValues } from "./dialog-event-form-step-1";
 import { IRecurrenceForm, UpdateRecurrenceForm } from "./dialog-event-form-step-2";
 import { useRooms } from "@/hooks/use-rooms";
 import { isEmpty } from "lodash";
+import { SEvent } from "@/lib/schemas/calendar";
 
 import {
   Sheet,
@@ -31,12 +32,13 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { useEventForm } from "@/contexts/EventFormProvider";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import useSWRMutation from "swr/mutation";
 import { title } from "process";
 import { description } from "@/app/(private)/layout";
 import { addYears, endOfDay } from "date-fns";
 import z from "zod/v4";
+import { IEvent } from "@/lib/schemas/calendar";
 
 const SubmitSchemaEvent = z.object({
   roomId: z.number(),
@@ -58,22 +60,37 @@ async function sendPOSTRequest(url, { arg }) {
     body: JSON.stringify(arg),
   });
 }
-
+/**
+ * TODO: I BELIEVE THE ZUSTAND STORE IS CAUSING THIS AND ALL RELATED FORMS TO RE-RENDER
+ * I NEED TO MOVE THE STEP COUNTER INTO THE CONTEXT PROVIDER
+ * I MIGHT ALSO NEED TO RE-WORK HOW IT STORES THE DATA BETWEEN PAGES AND MAYBE THE CONTEXT PROVIDER CAN HOLD IT TEMPORARILY
+ * AND THEN EXPORT IT TO LOCAL STORAGE WHEN THE SAVE BUTTON IS CLICKED
+ *
+ * @param param0
+ * @returns
+ */
 export function EventFormWizard({
   children,
   defaultStartDate,
+  defaultevent,
 }: {
   children: React.ReactNode;
   defaultStartDate?: Date;
+  defaultevent?: IEvent;
 }) {
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [showAlert, setShowAlert] = useState(false);
+  const [isReadOnly, setReadOnly] = useState(defaultevent ? true : false);
+  const [isLoading, setLoading] = useState(false);
 
+  //console.log(defaultevent);
   const { isLoading: isRoomLoading, rooms } = useRooms();
   //const currentStep = useFormStore((state) => state.currentStep);
 
-  const { data, error, trigger: triggerEvent } = useSWRMutation("/api/events", sendPOSTRequest);
+  const { trigger: triggerEvent } = useSWRMutation("/api/events", sendPOSTRequest);
+  const loadedEvent = useEvent(defaultevent?.eventId, !isReadOnly && defaultevent ? true : false);
 
+  //console.log("FORM-WIZARD-RE-RENDER");
   const {
     isBackVisible,
     isNextVisible,
@@ -91,7 +108,7 @@ export function EventFormWizard({
   } = useEventForm();
   //const { setCurrentStep, setFormStoreData, getLatestState } = useFormStore();
 
-  const renderStep = () => {
+  const renderStep = (defaultevent?: IEvent) => {
     switch (currentStep) {
       case 1:
         return (
@@ -100,6 +117,8 @@ export function EventFormWizard({
             isLoading={isRoomLoading}
             rooms={rooms}
             onSubmit={onNext}
+            event={defaultevent}
+            isReadOnly={isReadOnly && !isLoading}
           ></UpdateEventForm>
         );
 
@@ -111,6 +130,8 @@ export function EventFormWizard({
             isLoading={false}
             onSubmit={onNext}
             defaultStartDate={startDate ? new Date(startDate) : new Date()}
+            event={defaultevent}
+            isReadOnly={isReadOnly && !isLoading}
           />
         );
       default:
@@ -118,21 +139,31 @@ export function EventFormWizard({
     }
   };
 
+  const onEdit = () => {
+    incrementStep(1);
+    setReadOnly(false);
+    setLoading(true);
+  };
+
   const onBack = (data: object) => {
     if (!currentForm) return;
-    setFormData(data);
+    //if (!isReadOnly) setFormData(data, defaultevent ? defaultevent.eventId : 0);
+    setFormData(data, defaultevent ? defaultevent.eventId : 0);
     decrementStep();
   };
 
   const onNext = async (data: object) => {
     if (!currentForm) return;
-    setFormData(data);
-
+    //if (!isReadOnly) setFormData(data, defaultevent ? defaultevent.eventId : 0);
+    setFormData(data, defaultevent ? defaultevent.eventId : 0);
     if (isNextVisible) {
       incrementStep();
     } else {
+      if (isReadOnly) onClose();
+
       const stepOne = getStepData(1) as IEventForm;
       const eventObject = {
+        eventId: stepOne.eventId,
         roomId: stepOne.roomId,
         startDate: stepOne.startDate,
         endDate: stepOne.endDate,
@@ -158,6 +189,8 @@ export function EventFormWizard({
 
         if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
 
+        return;
+
         const result = await triggerEvent({ ...eventObject, ...ruleObject });
         if (result.status === 201) {
           resetForm();
@@ -166,6 +199,8 @@ export function EventFormWizard({
 
         //const ruleEndDate = triggerEvent();
       } else {
+        return;
+
         const result = await triggerEvent({ ...eventObject });
         if (result.status === 201) {
           resetForm();
@@ -178,15 +213,18 @@ export function EventFormWizard({
   };
 
   const onOpenChange = (open: boolean) => {
-    if (open === false && (isDirtyRef.current || currentStep > 1)) {
+    if (open === false && (isDirtyRef.current || currentStep > 1) && !isReadOnly) {
       setShowAlert(true);
     } else {
+      incrementStep(1);
+      if (defaultevent) setReadOnly(true);
       onToggle();
     }
   };
 
   const onSaveReturn = (data: object) => {
-    setFormData(data);
+    setFormData(data, defaultevent ? defaultevent.eventId : 0);
+    incrementStep(1);
     onClose();
     setShowAlert(false);
   };
@@ -194,15 +232,22 @@ export function EventFormWizard({
   const onDiscardChanges = () => {
     onClose();
     setShowAlert(false);
+    if (defaultevent) setReadOnly(true);
     resetForm();
   };
 
-  /*useEffect(() => {
-    const value = currentForm?.formState.isDirty;
-    const test = value ? value : false;
-    setDirty(value ? value : false);
-  }, [currentForm?.formState.isDirty, setDirty]);
-*/
+  //const test = useEventDefaultValues(new Date(), loadedEvent ? loadedEvent : defaultevent);
+
+  useEffect(() => {
+    if (!loadedEvent || currentStep !== 1 || !isLoading) return;
+    currentForm?.reset(getEventDefaultValues(loadedEvent?.startDate, loadedEvent), {
+      keepDefaultValues: false,
+      keepValues: false,
+    });
+    setLoading(false);
+    //currentForm?.reset();
+  }, [currentForm, currentStep, loadedEvent, isLoading]);
+
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -210,21 +255,54 @@ export function EventFormWizard({
 
         <SheetContent className="w-full md:w-4xl p-4">
           <SheetHeader>
-            <SheetTitle>{currentStep === 1 ? "Create Event/Appointment" : "Set Reccurrence Pattern"}</SheetTitle>
+            <SheetTitle>
+              {currentStep === 1
+                ? isReadOnly
+                  ? "View Event"
+                  : !isReadOnly && defaultevent
+                  ? "Edit Event"
+                  : "Create Event"
+                : isReadOnly
+                ? "View Recurrence"
+                : "Edit Reccurrence"}
+            </SheetTitle>
             <SheetDescription>
               This form will add an event/appointment to the calendar for the given room and assign it to an individual.
             </SheetDescription>
           </SheetHeader>
-          {renderStep()}
+          {loadedEvent ? renderStep(loadedEvent) : renderStep(defaultevent)}
 
           <SheetFooter className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-6 ">
+            {isReadOnly && (
+              <Button
+                form={formId}
+                variant={"link"}
+                onClick={() => {
+                  onEdit();
+                }}
+              >
+                Edit
+              </Button>
+            )}
             {isBackVisible && (
-              <Button form={formId} type="submit" variant={"outline"} onClick={currentForm?.handleSubmit(onBack)}>
+              <Button
+                form={formId}
+                variant={"outline"}
+                onClick={() => {
+                  onBack(currentForm?.getValues());
+                }}
+              >
                 Previous
               </Button>
             )}
             <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onNext)}>
-              {isNextVisible ? "Next" : "Finish"}
+              {isNextVisible
+                ? "Next"
+                : isReadOnly
+                ? "Close"
+                : !isReadOnly && defaultevent
+                ? "Save Changes"
+                : "Create Event"}
             </Button>
           </SheetFooter>
         </SheetContent>
@@ -237,9 +315,11 @@ export function EventFormWizard({
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogSave onClick={() => onSaveReturn(currentForm?.getValues())} className="sm:mr-auto">
-              Save for later
-            </AlertDialogSave>
+            {!defaultevent && (
+              <AlertDialogSave onClick={() => onSaveReturn(currentForm?.getValues())} className="sm:mr-auto">
+                Save for later
+              </AlertDialogSave>
+            )}
             <AlertDialogAction
               onClick={onDiscardChanges}
               className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
@@ -262,3 +342,12 @@ export function EventFormWizard({
         <Button type="submit">Continue</Button>
       </div>
 */
+
+export function useEvent(eventId: number | undefined, shouldRun: boolean) {
+  const { data: event } = useSWR<IEvent[]>(shouldRun ? `/api/events/${eventId}` : null);
+
+  if (!event) return undefined;
+  const result = z.array(SEvent).safeParse(event);
+
+  if (result.success) return result.data[0];
+}

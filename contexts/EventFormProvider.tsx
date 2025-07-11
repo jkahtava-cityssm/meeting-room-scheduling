@@ -2,7 +2,7 @@
 
 import { useFormStore } from "@/lib/zustand/event-store";
 import { isEmpty } from "lodash";
-import { createContext, RefObject, useContext, useEffect, useRef, useState } from "react";
+import { createContext, RefObject, useContext, useRef, useState } from "react";
 import { FieldValues, UseFormReturn } from "react-hook-form";
 import z from "zod/v4";
 
@@ -11,8 +11,8 @@ interface IEventFormContext {
   setBackVisible: (value: boolean) => void;
   isNextVisible: boolean;
   setNextVisible: (value: boolean) => void;
-  isSubmitVisible: boolean;
-  setSubmitVisible: (value: boolean) => void;
+  isReadOnly: boolean;
+  setReadOnly: (value: boolean) => void;
   currentForm: UseFormReturn<any, any, any> | undefined;
   setCurrentForm: (value: UseFormReturn<any, any, any>) => void;
   currentStep: number;
@@ -22,7 +22,7 @@ interface IEventFormContext {
   setKeyData: (key: string, value: string, step: number) => void;
   getKeyData: (step: number, key: string) => string | undefined;
   getStepData: (step: number) => object;
-  setFormData: (data: object, step?: number) => void;
+  setFormData: (data: object, id: number, step?: number) => void;
   getFormData: (schema: z.ZodObject, defaultValues: object) => object;
   incrementStep: (step?: number) => void;
   decrementStep: (step?: number) => void;
@@ -42,7 +42,7 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
 
   const [isBackVisible, setBackVisible] = useState(false);
   const [isNextVisible, setNextVisible] = useState(false);
-  const [isSubmitVisible, setSubmitVisible] = useState(false);
+  const [isReadOnly, setReadOnly] = useState(false);
 
   const isDirtyRef = useRef(false);
   //const [isDirty, setDirty] = useState(false);
@@ -66,8 +66,8 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     return result.data;
   };
 
-  const setFormData = (data: object, step?: number) => {
-    setSessionFormData(data, step ? step : currentStep);
+  const setFormData = (data: object, id: number, step?: number) => {
+    setSessionFormData(data, step ? step : currentStep, id);
   };
 
   const isValidSchema = (schema: z.ZodObject, data: object) => {
@@ -126,8 +126,8 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
         setBackVisible,
         isNextVisible,
         setNextVisible,
-        isSubmitVisible,
-        setSubmitVisible,
+        isReadOnly,
+        setReadOnly,
         currentForm,
         setCurrentForm,
         currentStep,
