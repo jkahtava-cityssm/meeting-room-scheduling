@@ -114,7 +114,7 @@ export function UpdateRecurrenceForm({
     const startDateTime = defaultStartDate ? defaultStartDate : new Date();
 
     const rrule = event?.recurrence ? parseRRule(rrulestr(event.recurrence.rule)) : null;
-    console.log(rrule);
+    //console.log(rrule);
 
     const SRecurrenceFormDefaults = {
       repeatingType: "",
