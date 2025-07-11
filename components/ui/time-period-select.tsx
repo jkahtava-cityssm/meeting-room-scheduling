@@ -39,6 +39,7 @@ export const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelect
         <Select name={props.id} value={period} onValueChange={(value: Period) => handleValueChange(value)}>
           <SelectTrigger
             id={props.id}
+            disabled={props.disabled}
             aria-invalid={props["aria-invalid"]}
             ref={ref}
             className=" focus:bg-accent focus:text-accent-foreground"

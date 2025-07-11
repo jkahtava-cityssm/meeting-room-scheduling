@@ -66,7 +66,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
   const [isRefreshed, setRefreshed] = useState(false);
 
   const { data: events, isLoading: isPending } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
   useEffect(() => {

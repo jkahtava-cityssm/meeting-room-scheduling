@@ -60,7 +60,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
   const startDate: Date = startOfWeek(date);
   const endDate: Date = endOfWeek(date);
   const { data: events } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
   useEffect(() => {

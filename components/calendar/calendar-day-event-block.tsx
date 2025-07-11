@@ -4,6 +4,7 @@ import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-c
 import { TColors } from "../../lib/types";
 import { IEventBlock } from "./calendar-day-view";
 import { useRouter } from "next/navigation";
+import { AddEventDrawer } from "./dialog-event-add.v1";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -77,7 +78,7 @@ export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventB
   };
 
   return (
-    <EventDetailsDialog event={eventBlock.event}>
+    <AddEventDrawer event={eventBlock.event}>
       <div
         role="button"
         tabIndex={0}
@@ -105,6 +106,6 @@ export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventB
           style={{ height: `${(durationInMinutes / 60) * pixelSize}` }}
         )*/}
       </div>
-    </EventDetailsDialog>
+    </AddEventDrawer>
   );
 }

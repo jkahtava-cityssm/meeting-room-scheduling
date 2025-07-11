@@ -10,7 +10,7 @@ export function useEvents(startDate: Date, endDate: Date) {
   const [events, setEvents] = useState<IEvent[]>();
 
   const { data } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
   useEffect(() => {

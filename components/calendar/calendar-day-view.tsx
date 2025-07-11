@@ -63,7 +63,7 @@ export function CalendarDayView({ date }: { date: Date }) {
   const startDate: Date = startOfDay(date);
   const endDate: Date = endOfDay(date);
   const { data: events } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );
 
   useEffect(() => {

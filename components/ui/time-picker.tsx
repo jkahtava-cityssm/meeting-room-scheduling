@@ -25,6 +25,7 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
         </Label>
         <TimePickerInput
           id={props.id + "HourInput"}
+          disabled={props.disabled}
           aria-invalid={props["aria-invalid"]}
           picker="12hours"
           period={period}
@@ -40,6 +41,7 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
         </Label>
         <TimePickerInput
           id={props.id + "MinuteInput"}
+          disabled={props.disabled}
           aria-invalid={props["aria-invalid"]}
           picker="minutes"
           date={props.date}
@@ -55,6 +57,7 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
         </Label>
         <TimePeriodSelect
           id={props.id + "PeriodSelect"}
+          disabled={props.disabled}
           aria-invalid={props["aria-invalid"]}
           period={period}
           setPeriod={setPeriod}
