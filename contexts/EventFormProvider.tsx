@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormStore } from "@/lib/zustand/event-store";
+import { useFormStore } from "@/lib/zustand/new-event-store";
 import { isEmpty } from "lodash";
 import { createContext, RefObject, useContext, useRef, useState } from "react";
 import { FieldValues, UseFormReturn } from "react-hook-form";

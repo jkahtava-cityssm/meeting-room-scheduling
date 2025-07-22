@@ -41,6 +41,7 @@ import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useParams } from "next/navigation";
 import { revalidateTag } from "next/cache";
+import { useQuery } from "@tanstack/react-query";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),
@@ -355,12 +356,25 @@ export function EventFormWizard({
 */
 
 export function useEvent(eventId: number | undefined, shouldRun: boolean) {
-  const { data: event } = useSWR<IEvent[]>(shouldRun ? `/api/events/${eventId}` : null, {
+  /*const { data: event } = useSWR<IEvent[]>(shouldRun ? `/api/events/${eventId}` : null, {
     revalidateOnMount: true,
     revalidateIfStale: true,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
     refreshInterval: 1,
+  });*/
+
+  const {
+    isPending,
+    error,
+    data: event,
+    isFetching,
+  } = useQuery({
+    queryKey: ["event", eventId],
+    queryFn: async () => {
+      const response = await fetch(`/api/events/${eventId}`);
+      return await response.json();
+    },
   });
 
   if (!event) return undefined;
