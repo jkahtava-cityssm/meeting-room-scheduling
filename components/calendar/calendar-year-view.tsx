@@ -9,6 +9,7 @@ import { IEvent } from "@/lib/schemas/calendar";
 import useSWR from "swr";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
 
 export interface IMonthView {
   month: number;
@@ -50,11 +51,24 @@ export function CalendarYearView({ date }: { date: Date }) {
   const endDate: Date = endOfYear(date);
 
   //console.log(formatISO(startDate, { representation: "date" }));
-  const { data: events } = useSWR<IEvent[]>(
+  /*const { data: events } = useSWR<IEvent[]>(
     `/api/events?startdate=${formatISO(startDate, { representation: "date" })}&enddate=${formatISO(endDate, {
       representation: "date",
     })}`
-  );
+  );*/
+
+  const {
+    isPending,
+    error,
+    data: events,
+    isFetching,
+  } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
+      return await response.json();
+    },
+  });
 
   /*const { data: recurringEvents } = useSWR<IEvent[]>(
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`

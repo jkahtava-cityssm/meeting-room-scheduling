@@ -19,6 +19,7 @@ import { rrulestr } from "rrule";
 import { TVisibleHours } from "@/lib/types";
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { z } from "zod/v4";
+import { useQuery } from "@tanstack/react-query";
 
 export function useAllDailyEvents(selectedDate: Date, visibleHours: TVisibleHours) {
   const StartOfDay = startOfDay(selectedDate);
@@ -187,9 +188,22 @@ export function useEvents(
   startDate: Date,
   endDate: Date
 ): { events: IEvent[] | undefined; isLoading: boolean; isError: any } {
-  const { data, error, isLoading } = useSWR<IEvent[]>(
+  /*const { data, error, isLoading } = useSWR<IEvent[]>(
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  );*/
+
+  const {
+    isPending: isLoading,
+    error,
+    data,
+    isFetching,
+  } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
+      return await response.json();
+    },
+  });
 
   return {
     events: data ? z.array(SEvent).parse(data) : undefined,
@@ -202,10 +216,24 @@ export function useRecurrence(
   startDate: Date,
   endDate: Date
 ): { events: IEvent[] | undefined; isLoading: boolean; isError: any } {
-  const { data, error, isLoading } = useSWR<IEvent[]>(
+  /*const { data, error, isLoading } = useSWR<IEvent[]>(
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  );*/
 
+  const {
+    isPending: isLoading,
+    error,
+    data,
+    isFetching,
+  } = useQuery({
+    queryKey: ["recurrences"],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+      );
+      return await response.json();
+    },
+  });
   return {
     events: data ? z.array(SEvent).parse(data) : undefined,
     isLoading,

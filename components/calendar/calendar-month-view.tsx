@@ -14,6 +14,7 @@ import { MonthViewDayHeader } from "./calendar-month-view-day-header";
 import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
+import { useQuery } from "@tanstack/react-query";
 
 export interface IMonthProcessData {
   events: IEvent[];
@@ -65,9 +66,22 @@ export function CalendarMonthView({ date }: { date: Date }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
 
-  const { data: events, isLoading: isPending } = useSWR<IEvent[]>(
+  /*const { data: events, isLoading: isPending } = useSWR<IEvent[]>(
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  );*/
+
+  const {
+    isPending,
+    error,
+    data: events,
+    isFetching,
+  } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
+      return await response.json();
+    },
+  });
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

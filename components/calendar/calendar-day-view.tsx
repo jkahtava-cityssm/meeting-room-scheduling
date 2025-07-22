@@ -17,6 +17,7 @@ import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 import useSWR from "swr";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
+import { useQuery } from "@tanstack/react-query";
 
 export interface IDayProcessData {
   events: IEvent[];
@@ -63,11 +64,24 @@ export function CalendarDayView({ date }: { date: Date }) {
   const startDate: Date = startOfDay(date);
   const endDate: Date = endOfDay(date);
 
-  const { data: events } = useSWR<IEvent[]>(
+  /* const { data: events } = useSWR<IEvent[]>(
     `/api/events?startdate=${formatISO(startDate, { representation: "date" })}&enddate=${formatISO(endDate, {
       representation: "date",
     })}`
-  );
+  );*/
+
+  const {
+    isPending,
+    error,
+    data: events,
+    isFetching,
+  } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
+      return await response.json();
+    },
+  });
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

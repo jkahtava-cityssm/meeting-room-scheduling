@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import useSWR from "swr";
 import { IRoom } from "@/lib/schemas/calendar";
+import { useQuery } from "@tanstack/react-query";
 
 export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => void }) {
   const { selectedRoomId } = useCalendar();
@@ -17,7 +18,15 @@ export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => 
   const [isLoading, setIsLoading] = useState(true);
   const [rooms, setRooms] = useState<IRoom[]>([]);
 
-  const { data } = useSWR<IRoom[]>(`/api/rooms`);
+  //const { data } = useSWR<IRoom[]>(`/api/rooms`);
+
+  const { isPending, error, data, isFetching } = useQuery({
+    queryKey: ["events"],
+    queryFn: async () => {
+      const response = await fetch(`/api/rooms`);
+      return await response.json();
+    },
+  });
 
   useEffect(() => {
     if (data) {
