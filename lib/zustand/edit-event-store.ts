@@ -14,7 +14,7 @@ type FormState = {
 };
 
 function getStorageData() {
-  const storageData = localStorage.getItem("form-storage");
+  const storageData = localStorage.getItem("edit-event-storage");
   if (!storageData) return null;
 
   const parsedData = JSON.parse(storageData);
@@ -41,6 +41,6 @@ export const useFormStore = create<FormState>()(
       resetSessionFormData: () => set({ currentStep: 1, localData: [{}] }),
       getSessionState: () => getStorageData() || get(),
     }),
-    { name: "form-storage", storage: createJSONStorage(() => sessionStorage) }
+    { name: "edit-event-storage", storage: createJSONStorage(() => sessionStorage) }
   )
 );
