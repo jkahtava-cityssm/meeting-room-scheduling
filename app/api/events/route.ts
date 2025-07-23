@@ -3,16 +3,16 @@ import { TVisibleHours } from "@/lib/types";
 import { prisma } from "@/prisma";
 import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
 
-import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { rrulestr } from "rrule";
+import { UTCDate } from "@date-fns/utc";
 
 async function CreatedMessage(data: object) {
   return NextResponse.json({ message: "Created Event", data: data }, { status: 201 });
 }
 
-async function UpdatedMessage() {
-  return NextResponse.json({ message: "Updated Event" }, { status: 200 });
+async function UpdatedMessage(data: object) {
+  return NextResponse.json({ message: "Updated Event", data: data }, { status: 200 });
 }
 
 async function InternalServerErrorMessage(details?: string) {
@@ -59,12 +59,32 @@ export async function PUT(req: Request) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const { eventId, title, description, startDate, endDate, roomId, recurrenceId, rule, ruleStartDate, ruleEndDate } =
-    await req.json();
+  /*const { eventId, title, description, startDate, endDate, roomId, recurrenceId, rule, ruleStartDate, ruleEndDate } =
+    await req.json();*/
 
-  if (!title || (!description && description !== "") || !startDate || !endDate || !roomId) {
+  const { eventData, ruleData } = await req.json();
+
+  if (!eventData) {
     return BadRequestMessage();
   }
+
+  if (
+    eventData.title === undefined ||
+    eventData.startDate === undefined ||
+    eventData.endDate === undefined ||
+    eventData.roomId === undefined
+  ) {
+    return BadRequestMessage();
+  }
+
+  if (
+    ruleData &&
+    (ruleData.rule === undefined || ruleData.ruleStartDate === undefined || ruleData.ruleEndDate === undefined)
+  ) {
+    return BadRequestMessage();
+  }
+  const { eventId, title, description, startDate, endDate, roomId, recurrenceId } = eventData;
+  const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
 
   let recurrence = null;
 
@@ -87,11 +107,16 @@ export async function PUT(req: Request) {
     InternalServerErrorMessage();
   }
 
-  //revalidateTag("EventsUpdated");
-  //revalidatePath("/private/calendar/month-view");
+  //Collect the Recurring Events first, since a Recurring Event can also be a Multi Day event that happens many times.
+  //This probably needs to be adjusted a bit.
+  //const recurringEvents = generateRecurringEventsInPeriod([event], StartDate, EndDate);
+  //const multiRecurringEvents = generateMultiDayEventsInPeriod(recurringEvents, StartDate, EndDate);
+  //const multiDayEvents = generateMultiDayEventsInPeriod([event], StartDate, EndDate, { from: 0, to: 24 });
+
+  //const combinedEvents: IEvent[] = [...recurringEvents, ...multiDayEvents];
 
   if (event.eventId === eventId) {
-    return UpdatedMessage();
+    return UpdatedMessage(event);
   }
 
   return CreatedMessage(event);
@@ -110,8 +135,8 @@ export async function GET(req: NextRequest) {
     return BadRequestMessage();
   }
 
-  const StartDate: Date = parseISO(startDateParam);
-  const EndDate: Date = parseISO(endDateParam);
+  const StartDate: UTCDate = new UTCDate(startDateParam);
+  const EndDate: UTCDate = new UTCDate(endDateParam);
 
   const events = await prisma.event.findMany({
     include: { room: true, recurrence: true },
@@ -130,7 +155,7 @@ export async function GET(req: NextRequest) {
   const multiDayEvents = generateMultiDayEventsInPeriod(events, StartDate, EndDate, { from: 0, to: 24 });
 
   const combinedEvents: IEvent[] = [...recurringEvents, ...multiDayEvents];
-  console.log(multiDayEvents);
+  //console.log(multiDayEvents);
   if (!events) {
     return InternalServerErrorMessage();
   }
@@ -138,7 +163,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(combinedEvents);
 }
 
-export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
+export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: UTCDate, periodEnd: UTCDate) {
   const eventList: IEvent[] = [];
 
   events.forEach((element) => {
@@ -149,7 +174,7 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
     const currentRule = element.recurrence?.rule as string;
 
     const rrule = rrulestr(currentRule, { cache: true });
-    const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
+    const recurrenceArray = rrule.between(periodStart, periodEnd);
 
     for (let index = 0; index < recurrenceArray.length; index++) {
       const newEvent = { ...element };

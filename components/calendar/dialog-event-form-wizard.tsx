@@ -2,22 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { getEventDefaultValues, IEventForm, UpdateEventForm, useEventDefaultValues } from "./dialog-event-form-step-1";
+import { getEventDefaultValues, IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
 import { IRecurrenceForm, UpdateRecurrenceForm } from "./dialog-event-form-step-2";
 import { useRooms } from "@/hooks/use-rooms";
-import { isEmpty } from "lodash";
+
 import { SEvent } from "@/lib/schemas/calendar";
 
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "../ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import {
   AlertDialog,
@@ -29,18 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogSave,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { useEventForm } from "@/contexts/EventFormProvider";
-import useSWR, { useSWRConfig } from "swr";
-import useSWRMutation from "swr/mutation";
-import { title } from "process";
-import { description } from "@/app/(private)/layout";
+
 import { addYears, endOfDay, startOfDay } from "date-fns";
 import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
-import { useParams } from "next/navigation";
-import { revalidateTag } from "next/cache";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEventsMutation } from "@/services/events";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),
@@ -58,12 +45,6 @@ const SubmitSchemaRecurrence = z.object({
   ruleEndDate: z.date(),
 });
 
-async function sendPOSTRequest(url, { arg }) {
-  return fetch(url, {
-    method: "PUT",
-    body: JSON.stringify(arg),
-  });
-}
 /**
  * TODO: I BELIEVE THE ZUSTAND STORE IS CAUSING THIS AND ALL RELATED FORMS TO RE-RENDER
  * I NEED TO MOVE THE STEP COUNTER INTO THE CONTEXT PROVIDER
@@ -82,9 +63,11 @@ export function EventFormWizard({
   defaultStartDate?: Date;
   defaultevent?: IEvent;
 }) {
+  const isEditable = defaultevent ? true : false && defaultevent?.eventId !== undefined;
+
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [showAlert, setShowAlert] = useState(false);
-  const [isReadOnly, setReadOnly] = useState(defaultevent ? true : false);
+  const [isReadOnly, setReadOnly] = useState(isEditable);
   const [isLoading, setLoading] = useState(false);
 
   //console.log(defaultevent);
@@ -93,11 +76,48 @@ export function EventFormWizard({
   const startDate: Date = startOfDay(defaultStartDate ? defaultStartDate : new Date());
   const endDate: Date = endOfDay(defaultStartDate ? defaultStartDate : new Date());
 
-  const { trigger: triggerEvent } = useSWRMutation(
+  /*const { trigger: triggerEvent } = useSWRMutation(
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`,
     sendPOSTRequest
-  );
-  const loadedEvent = useEvent(defaultevent?.eventId, !isReadOnly && defaultevent ? true : false);
+  );*/
+
+  //const loadedEvent = useEvent(defaultevent?.eventId, !isReadOnly && defaultevent ? true : false);
+
+  const {
+    isPending,
+    error,
+    data: loadedEvent,
+    isFetching,
+  } = useQuery({
+    queryKey: ["event", defaultevent?.eventId],
+    queryFn: async () => {
+      console.log("Fetching event data for ID:", defaultevent?.eventId);
+
+      const response = await fetch(`/api/events/${defaultevent?.eventId}`);
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const event = await response.json();
+
+      const result = z.array(SEvent).safeParse(event);
+
+      if (result.success) {
+        return result.data[0];
+      } else {
+        throw new Error("Invalid event data");
+      }
+    },
+    staleTime: 2000,
+    //enabled: !isReadOnly,
+    //gcTime: 0,
+    enabled: !isReadOnly && isEditable,
+  });
+
+  //console.log("isEditable", isEditable);
+  //console.log("loadedEvent", loadedEvent);
+  //console.log("isReadOnly", isReadOnly);
   //const params = useParams();
   //console.log(params);
   const {
@@ -127,9 +147,9 @@ export function EventFormWizard({
             defaultStartDate={defaultStartDate}
             isLoading={isRoomLoading}
             rooms={rooms}
-            onSubmit={onNext}
+            onSubmit={onNextPage}
             event={defaultevent}
-            isReadOnly={isReadOnly && !isLoading}
+            isReadOnly={isReadOnly}
           ></UpdateEventForm>
         );
 
@@ -139,10 +159,10 @@ export function EventFormWizard({
         return (
           <UpdateRecurrenceForm
             isLoading={false}
-            onSubmit={onNext}
+            onSubmit={onNextPage}
             defaultStartDate={startDate ? new Date(startDate) : new Date()}
             event={defaultevent}
-            isReadOnly={isReadOnly && !isLoading}
+            isReadOnly={isReadOnly}
           />
         );
       default:
@@ -150,76 +170,118 @@ export function EventFormWizard({
     }
   };
 
-  const onEdit = () => {
+  const onEditForm = () => {
     incrementStep(0);
     setReadOnly(false);
     setLoading(true);
   };
 
-  const onBack = (data: object) => {
+  const onBackPage = (data: object) => {
     if (!currentForm) return;
-    //if (!isReadOnly) setFormData(data, defaultevent ? defaultevent.eventId : 0);
+
     setFormData(data);
     decrementStep();
   };
 
-  const onNext = async (data: object) => {
+  const onNextPage = async (data: object) => {
+    if (!currentForm) return;
+
+    setFormData(data);
+    incrementStep();
+  };
+
+  const queryClient = useQueryClient();
+
+  const mutation = useEventsMutation();
+  /*useMutation({
+    mutationFn: async (data: object) => {
+      const response = await fetch("/api/events", {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
+      return await response.json();
+    },
+    onSuccess: (response) => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
+    },
+  });*/
+
+  const onSaveForm = async (data: object) => {
     if (!currentForm) return;
     //if (!isReadOnly) setFormData(data, defaultevent ? defaultevent.eventId : 0);
     setFormData(data);
 
-    if (isNextVisible) {
-      incrementStep();
-    } else {
-      if (isReadOnly) onClose();
+    const stepOne = getStepData(0) as IEventForm;
+    const eventObject = {
+      eventId: stepOne.eventId,
+      roomId: stepOne.roomId,
+      startDate: stepOne.startDate,
+      endDate: stepOne.endDate,
+      title: stepOne.title,
+      description: stepOne.description,
+      recurrenceId: stepOne.recurrenceId,
+    };
 
-      const stepOne = getStepData(0) as IEventForm;
-      const eventObject = {
-        eventId: stepOne.eventId,
-        roomId: stepOne.roomId,
-        startDate: stepOne.startDate,
-        endDate: stepOne.endDate,
-        title: stepOne.title,
-        description: stepOne.description,
-        recurrenceId: stepOne.recurrenceId,
+    if (!isValidSchema(SubmitSchemaEvent, eventObject)) return;
+
+    if (currentStep == 1) {
+      const stepTwo = getStepData(1) as IRecurrenceForm;
+
+      const ruleObject = {
+        rule: stepTwo.rule,
+        ruleStartDate: stepTwo.startDate,
+        ruleEndDate:
+          stepTwo.durationType === "until"
+            ? stepTwo.endDate
+            : stepTwo.durationType === "count"
+            ? stepTwo.lastOccurrenceDate
+            : addYears(new Date(stepOne.startDate), 200),
       };
 
-      if (!isValidSchema(SubmitSchemaEvent, eventObject)) return;
+      if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
 
-      if (currentStep == 1) {
-        const stepTwo = getStepData(1) as IRecurrenceForm;
-
-        const ruleObject = {
-          rule: stepTwo.rule,
-          ruleStartDate: stepTwo.startDate,
-          ruleEndDate:
-            stepTwo.durationType === "until"
-              ? stepTwo.endDate
-              : stepTwo.durationType === "count"
-              ? stepTwo.lastOccurrenceDate
-              : addYears(new Date(stepOne.startDate), 200),
-        };
-
-        if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
-
-        const result = await triggerEvent({ ...eventObject, ...ruleObject }, { revalidate: false });
-        if (result.status === 201 || result.status === 200) {
-          resetForm();
-          onClose();
+      mutation.mutate(
+        { eventData: eventObject, ruleData: ruleObject },
+        {
+          onSuccess: () => {
+            resetForm();
+            onClose();
+          },
         }
+      );
 
-        //const ruleEndDate = triggerEvent();
-      } else {
-        const result = await triggerEvent({ ...eventObject }, { revalidate: false });
-        if (result.status === 201 || result.status === 200) {
-          resetForm();
-          onClose();
+      /*const result = { status: null }; //await triggerEvent({ ...eventObject, ...ruleObject }, { revalidate: false });
+      if (result.status === 201 || result.status === 200) {
+        resetForm();
+        onClose();
+      }*/
+
+      //const ruleEndDate = triggerEvent();
+    } else {
+      mutation.mutate(
+        { eventData: eventObject, ruleData: null },
+        {
+          onSuccess: () => {
+            resetForm();
+            onClose();
+          },
         }
+      );
 
-        //triggerEvent({ ...eventObject });
-      }
+      /*const result = { status: null }; //await triggerEvent({ ...eventObject }, { revalidate: false });
+      if (result.status === 201 || result.status === 200) {
+        resetForm();
+        onClose();
+      }*/
+
+      //triggerEvent({ ...eventObject });
     }
   };
+
+  //const onCloseForm = async (data: object) => {};
 
   const onOpenChange = (open: boolean) => {
     if (open === false && (isDirtyRef.current || currentStep > 0) && !isReadOnly) {
@@ -255,6 +317,7 @@ export function EventFormWizard({
       keepDefaultValues: false,
       keepValues: false,
     });
+    setReadOnly(false);
     setLoading(false);
     //currentForm?.reset();
   }, [currentForm, currentStep, loadedEvent, isLoading, setFormData]);
@@ -281,7 +344,7 @@ export function EventFormWizard({
               This form will add an event/appointment to the calendar for the given room and assign it to an individual.
             </SheetDescription>
           </SheetHeader>
-          {loadedEvent ? renderStep(loadedEvent) : renderStep(defaultevent)}
+          {loadedEvent && !isReadOnly ? renderStep(loadedEvent) : renderStep(defaultevent)}
 
           <SheetFooter className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-6 ">
             {isReadOnly && (
@@ -289,7 +352,7 @@ export function EventFormWizard({
                 form={formId}
                 variant={"link"}
                 onClick={() => {
-                  onEdit();
+                  onEditForm();
                 }}
               >
                 Edit
@@ -300,21 +363,30 @@ export function EventFormWizard({
                 form={formId}
                 variant={"outline"}
                 onClick={() => {
-                  onBack(currentForm?.getValues());
+                  onBackPage(currentForm?.getValues());
                 }}
               >
                 Previous
               </Button>
             )}
-            <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onNext)}>
-              {isNextVisible
-                ? "Next"
-                : isReadOnly
-                ? "Close"
-                : !isReadOnly && defaultevent
-                ? "Save Changes"
-                : "Create Event"}
-            </Button>
+
+            {isNextVisible ? (
+              <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onNextPage)}>
+                Next
+              </Button>
+            ) : isReadOnly ? (
+              <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onClose)}>
+                Close
+              </Button>
+            ) : !isReadOnly && defaultevent ? (
+              <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onSaveForm)}>
+                Save Changes
+              </Button>
+            ) : (
+              <Button form={formId} type="submit" onClick={currentForm?.handleSubmit(onSaveForm)}>
+                Create Event
+              </Button>
+            )}
           </SheetFooter>
         </SheetContent>
       </Sheet>
@@ -355,12 +427,26 @@ export function EventFormWizard({
 */
 
 export function useEvent(eventId: number | undefined, shouldRun: boolean) {
-  const { data: event } = useSWR<IEvent[]>(shouldRun ? `/api/events/${eventId}` : null, {
+  /*const { data: event } = useSWR<IEvent[]>(shouldRun ? `/api/events/${eventId}` : null, {
     revalidateOnMount: true,
     revalidateIfStale: true,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
     refreshInterval: 1,
+  });*/
+
+  const {
+    isPending,
+    error,
+    data: event,
+    isFetching,
+  } = useQuery({
+    queryKey: ["event", eventId],
+    queryFn: async () => {
+      const response = await fetch(`/api/events/${eventId}`);
+      return await response.json();
+    },
+    enabled: shouldRun && eventId !== undefined,
   });
 
   if (!event) return undefined;
