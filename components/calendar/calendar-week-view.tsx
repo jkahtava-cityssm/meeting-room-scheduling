@@ -12,10 +12,9 @@ import { EventBlock } from "./calendar-day-event-block";
 import { useEffect, useRef, useState } from "react";
 
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
-import useSWR from "swr";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
-import { useQuery } from "@tanstack/react-query";
+import { useEventsQuery } from "@/services/events";
 
 export interface IWeekProcessData {
   events: IEvent[];
@@ -60,22 +59,8 @@ export function CalendarWeekView({ date }: { date: Date }) {
 
   const startDate: Date = startOfWeek(date);
   const endDate: Date = endOfWeek(date);
-  /* const { data: events } = useSWR<IEvent[]>(
-    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );*/
 
-  const {
-    isPending,
-    error,
-    data: events,
-    isFetching,
-  } = useQuery({
-    queryKey: ["events"],
-    queryFn: async () => {
-      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
-      return await response.json();
-    },
-  });
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

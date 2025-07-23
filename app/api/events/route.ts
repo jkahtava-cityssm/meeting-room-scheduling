@@ -3,7 +3,6 @@ import { TVisibleHours } from "@/lib/types";
 import { prisma } from "@/prisma";
 import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
 
-import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { rrulestr } from "rrule";
 
@@ -11,8 +10,8 @@ async function CreatedMessage(data: object) {
   return NextResponse.json({ message: "Created Event", data: data }, { status: 201 });
 }
 
-async function UpdatedMessage() {
-  return NextResponse.json({ message: "Updated Event" }, { status: 200 });
+async function UpdatedMessage(data: object) {
+  return NextResponse.json({ message: "Updated Event", data: data }, { status: 200 });
 }
 
 async function InternalServerErrorMessage(details?: string) {
@@ -87,11 +86,16 @@ export async function PUT(req: Request) {
     InternalServerErrorMessage();
   }
 
-  //revalidateTag("EventsUpdated");
-  //revalidatePath("/private/calendar/month-view");
+  //Collect the Recurring Events first, since a Recurring Event can also be a Multi Day event that happens many times.
+  //This probably needs to be adjusted a bit.
+  //const recurringEvents = generateRecurringEventsInPeriod([event], StartDate, EndDate);
+  //const multiRecurringEvents = generateMultiDayEventsInPeriod(recurringEvents, StartDate, EndDate);
+  //const multiDayEvents = generateMultiDayEventsInPeriod([event], StartDate, EndDate, { from: 0, to: 24 });
+
+  //const combinedEvents: IEvent[] = [...recurringEvents, ...multiDayEvents];
 
   if (event.eventId === eventId) {
-    return UpdatedMessage();
+    return UpdatedMessage(event);
   }
 
   return CreatedMessage(event);
@@ -130,7 +134,7 @@ export async function GET(req: NextRequest) {
   const multiDayEvents = generateMultiDayEventsInPeriod(events, StartDate, EndDate, { from: 0, to: 24 });
 
   const combinedEvents: IEvent[] = [...recurringEvents, ...multiDayEvents];
-  console.log(multiDayEvents);
+  //console.log(multiDayEvents);
   if (!events) {
     return InternalServerErrorMessage();
   }

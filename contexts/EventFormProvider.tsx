@@ -13,8 +13,8 @@ interface IEventFormContext {
   setNextVisible: (value: boolean) => void;
   isReadOnly: boolean;
   setReadOnly: (value: boolean) => void;
-  currentForm: UseFormReturn<any, any, any> | undefined;
-  setCurrentForm: (value: UseFormReturn<any, any, any>) => void;
+  currentForm: UseFormReturn<FieldValues, unknown, FieldValues> | undefined;
+  setCurrentForm: (value: UseFormReturn<FieldValues, unknown, FieldValues>) => void;
   defaultValues: object[];
   setFormDefaultData: (data: object, step?: number) => void;
   currentStep: number;
@@ -37,8 +37,7 @@ interface IEventFormContext {
 const EventFormContext = createContext({} as IEventFormContext);
 
 export function EventFormProvider({ children }: { children: React.ReactNode }) {
-  const { setSessionFormData, setSessionStep, getSessionState, setSessionKeyData, resetSessionFormData } =
-    useFormStore();
+  const { getSessionState, setSessionKeyData } = useFormStore();
 
   //const currentStep = useFormStore((state) => state.currentStep);
 
@@ -124,7 +123,7 @@ export function EventFormProvider({ children }: { children: React.ReactNode }) {
     if (isEmpty(sessionData)) return "";
 
     return sessionData[key];*/
-    if (formValues.current.length - 1 !== step) return null;
+    if (formValues.current.length - 1 !== step) return undefined;
 
     const data = formValues.current[step] as { [key: string]: string | undefined };
     return data[key];

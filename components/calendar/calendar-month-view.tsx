@@ -6,7 +6,6 @@ import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 import { IEvent } from "@/lib/schemas/calendar";
-import useSWR from "swr";
 
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { MonthViewDayEvents } from "./calendar-month-view-day-events";
@@ -14,7 +13,7 @@ import { MonthViewDayHeader } from "./calendar-month-view-day-header";
 import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
-import { useQuery } from "@tanstack/react-query";
+import { useEventsQuery } from "@/services/events";
 
 export interface IMonthProcessData {
   events: IEvent[];
@@ -70,18 +69,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );*/
 
-  const {
-    isPending,
-    error,
-    data: events,
-    isFetching,
-  } = useQuery({
-    queryKey: ["events"],
-    queryFn: async () => {
-      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
-      return await response.json();
-    },
-  });
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
