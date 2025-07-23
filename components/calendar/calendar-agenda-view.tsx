@@ -13,8 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "../ui/button";
 import { IEvent } from "@/lib/schemas/calendar";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
-
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { useEventsQuery } from "@/services/events";
 
 export interface IAgendaProcessData {
   events: IEvent[];
@@ -41,18 +40,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
   const endDate: Date = endOfDay(date);
   //const { data: events } = useSWR<IEvent[]>();
 
-  const {
-    isPending,
-    error,
-    data: events,
-    isFetching,
-  } = useQuery({
-    queryKey: ["events"],
-    queryFn: async () => {
-      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
-      return await response.json();
-    },
-  });
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

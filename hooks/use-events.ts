@@ -3,16 +3,12 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
+
 import { z } from "zod/v4";
 
 export function useEvents(startDate: Date, endDate: Date) {
   const [isLoading, setLoading] = useState(true);
   const [events, setEvents] = useState<IEvent[]>();
-
-  /*const { data } = useSWR<IEvent[]>(
-    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );*/
 
   const { isPending, error, data, isFetching } = useQuery({
     queryKey: ["events"],

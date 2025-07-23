@@ -31,7 +31,6 @@ import type { ICalendarCell } from "@/lib/interfaces";
 import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/lib/types";
 
 import { IEvent } from "./schemas/calendar";
-import { datetime } from "rrule";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -437,3 +436,8 @@ export function calculateYearlyRecurrenceEndDate(
 
   return addYears(firstYear, years * iterations);
 }
+
+/**
+ *
+ *
+ */

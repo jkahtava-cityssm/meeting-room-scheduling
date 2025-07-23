@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { endOfYear, formatISO, startOfYear } from "date-fns";
+import { endOfYear, startOfYear } from "date-fns";
 
 import { useCalendar } from "@/contexts/CalendarProvider";
 import YearViewMonth from "./calendar-year-view-month";
 import { IEvent } from "@/lib/schemas/calendar";
-import useSWR from "swr";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";
-import { useQuery } from "@tanstack/react-query";
+import { useEventsQuery } from "@/services/events";
 
 export interface IMonthView {
   month: number;
@@ -57,18 +56,7 @@ export function CalendarYearView({ date }: { date: Date }) {
     })}`
   );*/
 
-  const {
-    isPending,
-    error,
-    data: events,
-    isFetching,
-  } = useQuery({
-    queryKey: ["events"],
-    queryFn: async () => {
-      const response = await fetch(`/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`);
-      return await response.json();
-    },
-  });
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
 
   /*const { data: recurringEvents } = useSWR<IEvent[]>(
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`

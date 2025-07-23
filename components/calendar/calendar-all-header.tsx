@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { RoomSelect } from "@/components/calendar/calendar-all-header-room-select";
 import { TodayButton } from "@/components/calendar/calendar-all-header-today-button";
 import { DateNavigator } from "@/components/calendar/calendar-all-header-date-navigator";
-import { AddEventDialog } from "@/components/calendar/dialog-event-add";
 
 import type { TCalendarView } from "@/lib/types";
 import { mergeDateWithTime, navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
-import { AddEventDrawer } from "./dialog-event-add.v1";
+import { AddEventDrawer } from "./dialog-event-add";
 
 export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
   const { setSelectedRoomId } = useCalendar();

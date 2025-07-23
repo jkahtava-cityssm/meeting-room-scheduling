@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Asterisk, BookKey } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
-import useSWR from "swr";
 import { IRoom } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
 
@@ -18,10 +17,8 @@ export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => 
   const [isLoading, setIsLoading] = useState(true);
   const [rooms, setRooms] = useState<IRoom[]>([]);
 
-  //const { data } = useSWR<IRoom[]>(`/api/rooms`);
-
   const { isPending, error, data, isFetching } = useQuery({
-    queryKey: ["events"],
+    queryKey: ["rooms"],
     queryFn: async () => {
       const response = await fetch(`/api/rooms`);
       return await response.json();
