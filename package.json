@@ -12,6 +12,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@date-fns/tz": "^1.2.0",
+    "@date-fns/utc": "^2.1.0",
     "@hookform/resolvers": "^5.1.0",
     "@prisma/client": "^6.6.0",
     "@radix-ui/react-accordion": "^1.2.8",
