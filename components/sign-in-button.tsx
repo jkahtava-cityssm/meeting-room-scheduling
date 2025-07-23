@@ -1,13 +1,9 @@
 "use client";
 
 import { signIn } from "@/lib/auth-client";
-import { Button } from "./ui/button";
 import Image from "next/image";
 import { MicrosoftButton } from "./ui/microsoft-signin-button";
-import { LogOut } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 export const signInGitHub = async (callback: string) => {
   const data = await signIn.social({

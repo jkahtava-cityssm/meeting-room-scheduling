@@ -11,9 +11,9 @@ import { Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "../ui/button";
-import useSWR from "swr";
 import { IEvent } from "@/lib/schemas/calendar";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
+import { useEventsQuery } from "@/services/events";
 
 export interface IAgendaProcessData {
   events: IEvent[];
@@ -38,9 +38,9 @@ export function CalendarAgendaView({ date }: { date: Date }) {
 
   const startDate: Date = startOfDay(date);
   const endDate: Date = endOfDay(date);
-  const { data: events } = useSWR<IEvent[]>(
-    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  //const { data: events } = useSWR<IEvent[]>();
+
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

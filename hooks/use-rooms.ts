@@ -1,15 +1,21 @@
 "use client";
 
 import { IRoom, SRoom } from "@/lib/schemas/calendar";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 import { z } from "zod/v4";
 
 export function useRooms() {
   const [isLoading, setLoading] = useState(true);
   const [rooms, setRooms] = useState<IRoom[]>();
 
-  const { data } = useSWR<IRoom[]>(`/api/rooms/`);
+  const { isPending, error, data, isFetching } = useQuery({
+    queryKey: ["rooms"],
+    queryFn: async () => {
+      const response = await fetch(`/api/rooms/`);
+      return await response.json();
+    },
+  });
 
   useEffect(() => {
     if (data) {

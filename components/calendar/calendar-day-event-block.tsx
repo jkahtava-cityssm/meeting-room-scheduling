@@ -4,7 +4,7 @@ import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-c
 import { TColors } from "../../lib/types";
 import { IEventBlock } from "./calendar-day-view";
 import { useRouter } from "next/navigation";
-import { AddEventDrawer } from "./dialog-event-add.v1";
+import { AddEventDrawer } from "./dialog-event-add";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
