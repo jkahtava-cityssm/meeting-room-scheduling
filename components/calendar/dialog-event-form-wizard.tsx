@@ -27,6 +27,7 @@ import { addYears, endOfDay, startOfDay } from "date-fns";
 import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEventsMutation } from "@/services/events";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),
@@ -191,7 +192,8 @@ export function EventFormWizard({
 
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
+  const mutation = useEventsMutation();
+  /*useMutation({
     mutationFn: async (data: object) => {
       const response = await fetch("/api/events", {
         method: "PUT",
@@ -205,7 +207,7 @@ export function EventFormWizard({
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
     },
-  });
+  });*/
 
   const onSaveForm = async (data: object) => {
     if (!currentForm) return;
@@ -242,7 +244,7 @@ export function EventFormWizard({
       if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
 
       mutation.mutate(
-        { ...eventObject, ...ruleObject },
+        { eventData: eventObject, ruleData: ruleObject },
         {
           onSuccess: () => {
             resetForm();
@@ -260,7 +262,7 @@ export function EventFormWizard({
       //const ruleEndDate = triggerEvent();
     } else {
       mutation.mutate(
-        { ...eventObject },
+        { eventData: eventObject, ruleData: null },
         {
           onSuccess: () => {
             resetForm();
