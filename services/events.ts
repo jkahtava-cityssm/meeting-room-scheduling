@@ -2,6 +2,8 @@ import { formatISO } from "date-fns";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFetch, putFetch } from "@/lib/fetch";
+import z from "zod/v4";
+import { SEvent } from "@/lib/schemas/calendar";
 
 //const queryClient = new QueryClient();
 
@@ -18,6 +20,21 @@ export const useEventsQuery = (startDate: Date, endDate: Date) =>
 const formatDate = (date: Date) => {
   return formatISO(date);
 };
+
+export const useEventQuery = (eventId: number | undefined, enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["event", eventId],
+    queryFn: async () =>
+      getFetch(`/api/events/${eventId}`).then((data) => {
+        const result = z.array(SEvent).safeParse(data);
+
+        if (!result.success) throw new Error("Invalid event data");
+
+        return result.data[0];
+      }),
+    enabled: enabled && eventId !== undefined,
+    staleTime: 2000,
+  });
 
 type eventObject = {
   eventId: number;

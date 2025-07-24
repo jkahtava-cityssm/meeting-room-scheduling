@@ -260,6 +260,7 @@ export function UpdateEventForm({
                           <FormControl>
                             <Select
                               disabled={isReadOnly}
+                              //readonly={isReadOnly}
                               //{...field}
                               name={field.name}
                               value={field.value === 0 ? "" : field.value.toString()}

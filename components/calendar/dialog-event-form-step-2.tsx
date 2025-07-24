@@ -417,19 +417,19 @@ function parseRRule(rrule: RRule) {
 
 function getDayType(value: number) {
   switch (value) {
-    case 1:
+    case 0:
       return "monday";
-    case 2:
+    case 1:
       return "tuesday";
-    case 3:
+    case 2:
       return "wednesday";
-    case 4:
+    case 3:
       return "thursday";
-    case 5:
+    case 4:
       return "friday";
-    case 6:
+    case 5:
       return "saturday";
-    case 7:
+    case 6:
       return "sunday";
     default:
       return "";

@@ -27,7 +27,7 @@ import { addYears, endOfDay, startOfDay } from "date-fns";
 import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEventsMutation } from "@/services/events";
+import { useEventQuery, useEventsMutation } from "@/services/events";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),
@@ -88,33 +88,10 @@ export function EventFormWizard({
     error,
     data: loadedEvent,
     isFetching,
-  } = useQuery({
-    queryKey: ["event", defaultevent?.eventId],
-    queryFn: async () => {
-      console.log("Fetching event data for ID:", defaultevent?.eventId);
+  } = useEventQuery(defaultevent?.eventId, !isReadOnly && isEditable);
 
-      const response = await fetch(`/api/events/${defaultevent?.eventId}`);
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const event = await response.json();
-
-      const result = z.array(SEvent).safeParse(event);
-
-      if (result.success) {
-        return result.data[0];
-      } else {
-        throw new Error("Invalid event data");
-      }
-    },
-    staleTime: 2000,
-    //enabled: !isReadOnly,
-    //gcTime: 0,
-    enabled: !isReadOnly && isEditable,
-  });
-
+  console.log(isFetching);
+  console.log(isPending);
   //console.log("isEditable", isEditable);
   //console.log("loadedEvent", loadedEvent);
   //console.log("isReadOnly", isReadOnly);
@@ -190,24 +167,7 @@ export function EventFormWizard({
     incrementStep();
   };
 
-  const queryClient = useQueryClient();
-
   const mutation = useEventsMutation();
-  /*useMutation({
-    mutationFn: async (data: object) => {
-      const response = await fetch("/api/events", {
-        method: "PUT",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
-      return await response.json();
-    },
-    onSuccess: (response) => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
-    },
-  });*/
 
   const onSaveForm = async (data: object) => {
     if (!currentForm) return;
