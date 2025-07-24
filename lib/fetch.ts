@@ -10,7 +10,11 @@ export function getFetch(url: string, params: object = {}) {
     headers: {
       "Content-Type": "application/json",
     },
-  }).then((res) => res.json());
+  }).then((res) => {
+    if (!res.ok) throw new Error("Network Response Error");
+
+    return res.json();
+  });
 }
 
 export function putFetch(url: string, data: object) {
@@ -18,5 +22,9 @@ export function putFetch(url: string, data: object) {
     method: "PUT",
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
-  }).then((res) => res.json());
+  }).then((res) => {
+    if (!res.ok) throw new Error("Network Response Error");
+
+    return res.json();
+  });
 }
