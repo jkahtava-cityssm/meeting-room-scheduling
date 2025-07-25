@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, format } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -73,6 +73,10 @@ export function CalendarDayView({ date }: { date: Date }) {
   }, []);
 
   useEffect(() => {
+    setLoading(true);
+  }, [date]);
+
+  useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
     //But this example will come in handy for other applications
 
@@ -115,7 +119,7 @@ export function CalendarDayView({ date }: { date: Date }) {
         multiDayEventsAtTop: true,
         pixelHeight: 96,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
@@ -141,10 +145,13 @@ export function CalendarDayView({ date }: { date: Date }) {
                   <div className="relative">
                     <DayHourlyEventDialogs hours={hours} day={dayViews[0].dayDate} workingHours={workingHours} />
 
-                    {dayViews[0].eventBlocks.map((block, blockIndex) => {
+                    {dayViews[0].eventBlocks.map((block) => {
                       return (
                         <div
-                          key={`day-${dayViews[0].day}-block-${blockIndex}-event-${block.event.eventId}`}
+                          key={`day-${dayViews[0].day}-block-${format(
+                            block.event.startDate,
+                            "yyyy-MM-dd-HH-mm"
+                          )}-event-${block.event.eventId}`}
                           className="absolute p-1"
                           style={block.eventStyle}
                         >

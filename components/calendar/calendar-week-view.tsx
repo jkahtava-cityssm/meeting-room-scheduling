@@ -69,6 +69,10 @@ export function CalendarWeekView({ date }: { date: Date }) {
   }, []);
 
   useEffect(() => {
+    setLoading(true);
+  }, [date]);
+
+  useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
     //But this example will come in handy for other applications
 
@@ -110,7 +114,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
         multiDayEventsAtTop: true,
         pixelHeight: 96,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
