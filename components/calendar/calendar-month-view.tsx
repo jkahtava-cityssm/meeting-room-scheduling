@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
 import { useEventsQuery } from "@/services/events";
+import { startOfMonth } from "date-fns";
 
 export interface IMonthProcessData {
   events: IEvent[];

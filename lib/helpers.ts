@@ -86,7 +86,7 @@ export function navigateURL(date: Date | null, view: TCalendarView): string {
     day: "calendar?view=day",
   };
 
-  const dateParams = {
+  /*const dateParams = {
     agenda: "&selectedDate=",
     year: "&selectedDate=",
     month: "&selectedDate=",
@@ -107,13 +107,13 @@ export function navigateURL(date: Date | null, view: TCalendarView): string {
       default:
         return format(value, "yyyy-MM-dd");
     }
-  };
+  };*/
 
   if (date === null) {
     return path[view];
   }
 
-  return path[view] + dateParams[view] + formatDate(view, date);
+  return path[view] + "&selectedDate=" + format(date, "yyyy-MM-dd");
 }
 
 export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Date) {
@@ -316,7 +316,7 @@ export function getDaysInView(selectedDate: Date) {
 
   const daysInLastRow = (daysInMonth + beforeDays) % 7;
   const afterDays = daysInLastRow > 0 ? 7 - daysInLastRow : 0;
-  const firstDate = startOfDay(subDays(selectedDate, beforeDays));
+  const firstDate = startOfDay(subDays(firstDayOfMonth, beforeDays));
   const lastDate = endOfDay(addDays(firstDayOfMonth, daysInMonth + afterDays - 1));
 
   return { startDate: firstDate, endDate: lastDate };

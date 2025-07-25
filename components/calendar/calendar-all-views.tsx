@@ -10,19 +10,20 @@ import { CalendarHeader } from "./calendar-all-header";
 import { useMemo } from "react";
 
 import { useSearchParams } from "next/navigation";
-import { endOfWeek, parse, startOfDay, startOfMonth, startOfYear } from "date-fns";
+import { endOfWeek, parse, startOfDay, startOfMonth, startOfWeek, startOfYear } from "date-fns";
 
 function getViewDate(dateParam: string | null, view: string) {
+  return dateParam === null ? new Date() : parse(dateParam, "yyyy-MM-dd", new Date());
   switch (view) {
     case "agenda":
     case "day":
       return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy-MM-dd", new Date()));
     case "week":
-      return dateParam === null ? endOfWeek(new Date()) : endOfWeek(parse(dateParam, "RRRR-II", new Date()));
+      return dateParam === null ? startOfWeek(new Date()) : startOfWeek(parse(dateParam, "yyyy-MM-dd", new Date()));
     case "month":
-      return dateParam === null ? startOfMonth(new Date()) : startOfMonth(parse(dateParam, "yyyy-MM", new Date()));
+      return dateParam === null ? startOfMonth(new Date()) : startOfMonth(parse(dateParam, "yyyy-MM-dd", new Date()));
     case "year":
-      return dateParam === null ? startOfYear(new Date()) : startOfYear(parse(dateParam, "yyyy", new Date()));
+      return dateParam === null ? startOfYear(new Date()) : startOfYear(parse(dateParam, "yyyy-MM-dd", new Date()));
     default:
       return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy-MM-dd", new Date()));
   }
