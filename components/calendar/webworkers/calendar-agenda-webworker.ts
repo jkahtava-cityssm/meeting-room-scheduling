@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 
 import { filterEventsByRoom } from "../../../lib/helpers";
 import { IAgendaProcessData, IAgendaResponseData } from "../calendar-agenda-view";
-import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 import { endOfDay, startOfDay } from "date-fns";
 
 self.onmessage = (event: MessageEvent<IAgendaProcessData>) => {

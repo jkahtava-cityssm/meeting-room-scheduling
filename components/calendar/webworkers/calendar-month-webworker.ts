@@ -6,7 +6,7 @@ import { z } from "zod/v4";
 import { uniq, uniqBy } from "lodash";
 
 import { filterEventsByRoom, getDaysInView } from "../../../lib/helpers";
-import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
 self.onmessage = (event: MessageEvent<IMonthProcessData>) => {
   if (event.data) {

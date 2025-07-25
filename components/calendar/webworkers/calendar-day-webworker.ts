@@ -6,7 +6,7 @@ import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEve
 
 import { areIntervalsOverlapping, differenceInMinutes, endOfDay, isSameDay, isToday, startOfDay } from "date-fns";
 import { IDayProcessData, IDayResponseData, IDayView, IEventBlock } from "../calendar-day-view";
-import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
 self.onmessage = (event: MessageEvent<IDayProcessData>) => {
   if (event.data) {

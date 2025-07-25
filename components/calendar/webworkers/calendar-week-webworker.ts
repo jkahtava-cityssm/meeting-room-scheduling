@@ -13,7 +13,7 @@ import {
   isToday,
   startOfWeek,
 } from "date-fns";
-import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
 self.onmessage = (event: MessageEvent<IWeekProcessData>) => {
   if (event.data) {
