@@ -36,7 +36,7 @@ function formatYearData(yearData: IYearProcessData): IYearResponseData {
     const monthValue = month.getMonth();
 
     const dayData: IDayView[] = [];
-    let monthEvents = 0;
+    //let monthEvents = 0;
 
     days.forEach((day) => {
       if (day <= 0) {
@@ -47,7 +47,7 @@ function formatYearData(yearData: IYearProcessData): IYearResponseData {
       const date: Date = new Date(yearValue, monthValue, day);
       const today: boolean = isToday(date);
       const events: IEvent[] = filteredEvents.filter((event) => isSameDay(event.startDate, date));
-      monthEvents += events.length;
+      //monthEvents += events.length;
       otherList.push(...events);
       dayData.push({ day: day, dayDate: date, isBlank: false, isToday: today, dayEvents: events });
     });

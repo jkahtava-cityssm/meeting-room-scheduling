@@ -75,7 +75,7 @@ export const useEventsMutationDelete = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (eventId: number) => fetchDELETE(`/api/events/${eventId}`),
-    onSuccess: (response) => {
+    onSuccess: () => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["events"] });
       //queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
