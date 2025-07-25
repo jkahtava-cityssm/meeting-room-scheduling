@@ -80,7 +80,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-week-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-week-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IWeekResponseData>) => {
       setDayViews(event.data.dayViews);

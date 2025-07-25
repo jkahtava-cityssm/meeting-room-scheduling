@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(combinedEvents);
 }
 
-export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
+function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
   const eventList: IEvent[] = [];
 
   events.forEach((element) => {
@@ -91,7 +91,7 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
   return eventList;
 }
 
-export function generateMultiDayEventsInPeriod(
+function generateMultiDayEventsInPeriod(
   events: IEvent[],
   periodStart: Date,
   periodEnd: Date,

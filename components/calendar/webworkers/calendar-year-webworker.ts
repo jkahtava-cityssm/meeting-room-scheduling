@@ -1,8 +1,11 @@
-import { IEvent } from "@/lib/schemas/calendar";
-import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/services/events";
+import { IEvent, SEvent } from "@/lib/schemas/calendar";
+
 import { addMonths, endOfYear, format, getDaysInMonth, isSameDay, isToday, startOfMonth, startOfYear } from "date-fns";
-import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "./calendar-year-view";
-import { filterEventsByRoom } from "../../lib/helpers";
+import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "../calendar-year-view";
+import { filterEventsByRoom } from "../../../lib/helpers";
+
+import z from "zod/v4";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
 
 self.onmessage = (event: MessageEvent<IYearProcessData>) => {
   if (event.data) {
@@ -15,12 +18,14 @@ function formatYearData(yearData: IYearProcessData): IYearResponseData {
   const startDate: Date = startOfYear(yearData.selectedDate);
   const endDate: Date = endOfYear(yearData.selectedDate);
 
-  /*const combinedEvents: IEvent[] = [
-    ...generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, yearData.visibleHours),
+  const combinedEvents: IEvent[] = [
+    ...generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, { from: 0, to: 24 }),
     ...generateRecurringEventsInPeriod(yearData.eventList, startDate, endDate),
-  ];*/
+  ];
 
-  const filteredEvents: IEvent[] = filterEventsByRoom(yearData.eventList, yearData.selectedRoomId);
+  const events = z.array(SEvent).parse(combinedEvents);
+
+  const filteredEvents: IEvent[] = filterEventsByRoom(events, yearData.selectedRoomId);
   const otherList: IEvent[] = [];
   const monthData: IMonthView[] = [];
   const months: Date[] = getMonths(yearData.selectedDate);
