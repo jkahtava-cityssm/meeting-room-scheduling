@@ -130,6 +130,19 @@ async function FindCreateRooms(name: string, color: TColors, icon: string) {
   return record;
 }
 
+async function FindCreateEventStatus(name: string) {
+  let record = await prisma.status.findFirst({
+    where: { name: name },
+  });
+
+  if (!record) {
+    record = await prisma.status.create({
+      data: { name: name },
+    });
+  }
+  return record;
+}
+
 function FindRoomID(
   roomName: string,
   rooms: { name: string; createdAt: Date; updatedAt: Date; roomId: number; color: string; icon: string | null }[]
@@ -198,6 +211,8 @@ async function CreateRandomEvents(
         title: EVENTS[eventIndex],
         description: getRandomDescription(),
         recurrenceId: await CreateRandomRecurrence(startDate, endDate),
+        statusId: 1,
+        memberId: 1,
       },
     });
   }
@@ -453,6 +468,11 @@ async function main() {
   roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey"));
   roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey"));
   roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey"));
+
+  await FindCreateEventStatus("Created");
+  await FindCreateEventStatus("Pending Review");
+  await FindCreateEventStatus("Confirmed");
+  await FindCreateEventStatus("Cancelled");
 
   await prisma.event.deleteMany();
   await prisma.recurrence.deleteMany();
