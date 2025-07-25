@@ -1,7 +1,7 @@
 "use client";
 
 import { IEvent } from "@/lib/schemas/calendar";
-import { EventFormWizard } from "./dialog-event-form-wizard";
+import { EventFormWizard } from "../event-drawer/dialog-event-form-wizard";
 
 import { EventFormProvider } from "@/contexts/EventFormProvider";
 

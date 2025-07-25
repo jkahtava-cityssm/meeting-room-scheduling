@@ -14,7 +14,7 @@ import { IconColored } from "@/components/ui/icon-colored";
 import { TColors } from "@/lib/types";
 
 import { getDurationText } from "@/lib/helpers";
-import { EditEventSkeleton } from "./skeleton-dialog-edit-event";
+import { EditEventSkeleton } from "../calendar/skeleton-dialog-edit-event";
 import { IEvent, IRoom, SEvent } from "@/lib/schemas/calendar";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";

@@ -49,6 +49,10 @@ export function CalendarAgendaView({ date }: { date: Date }) {
   }, []);
 
   useEffect(() => {
+    setLoading(true);
+  }, [date]);
+
+  useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
     //But this example will come in handy for other applications
 
@@ -87,7 +91,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
         selectedRoomId: selectedRoomId,
         multiDayEventsAtTop: true,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
@@ -119,9 +123,15 @@ export function CalendarAgendaView({ date }: { date: Date }) {
 
                 <div className="space-y-2 m-2">
                   {filteredEvents.length > 0 &&
-                    filteredEvents.map((event, index) => (
-                      <div key={index} className="break-inside-avoid">
-                        <AgendaEventCard key={event.eventId} event={event} />
+                    filteredEvents.map((event) => (
+                      <div
+                        key={`break-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                        className="break-inside-avoid"
+                      >
+                        <AgendaEventCard
+                          key={`agenda-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                          event={event}
+                        />
                       </div>
                     ))}
                 </div>

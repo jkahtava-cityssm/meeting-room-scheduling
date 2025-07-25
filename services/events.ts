@@ -1,20 +1,21 @@
 import { formatISO } from "date-fns";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getFetch, putFetch } from "@/lib/fetch";
+import { fetchPUT, fetchGET, fetchDELETE } from "@/lib/fetch";
 import z from "zod/v4";
 import { SEvent } from "@/lib/schemas/calendar";
 
 //const queryClient = new QueryClient();
 
-export const useEventsQuery = (startDate: Date, endDate: Date) =>
+export const useEventsQuery = (startDate: Date, endDate: Date, enabled: boolean = true) =>
   useQuery({
     queryKey: ["events", formatDate(startDate), formatDate(endDate)],
     queryFn: async () =>
-      getFetch("/api/events", {
+      fetchGET("/api/events", {
         startdate: formatDate(startDate),
         enddate: formatDate(endDate),
       }),
+    enabled: enabled,
   });
 
 const formatDate = (date: Date) => {
@@ -25,7 +26,7 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
   useQuery({
     queryKey: ["event", eventId],
     queryFn: async () =>
-      getFetch(`/api/events/${eventId}`).then((data) => {
+      fetchGET(`/api/events/${eventId}`).then((data) => {
         const result = z.array(SEvent).safeParse(data);
 
         if (!result.success) throw new Error("Invalid event data");
@@ -33,7 +34,8 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
         return result.data[0];
       }),
     enabled: enabled && eventId !== undefined,
-    staleTime: 2000,
+    gcTime: 0,
+    staleTime: 0,
   });
 
 type eventObject = {
@@ -57,14 +59,26 @@ export type mutationObject = {
   ruleData: ruleObject | null;
 };
 
-export const useEventsMutation = () => {
+export const useEventsMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: mutationObject) => putFetch(`/api/events`, data),
+    mutationFn: async (data: mutationObject) => fetchPUT(`/api/events`, data),
     onSuccess: (response) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["events"] });
       queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
+    },
+  });
+};
+
+export const useEventsMutationDelete = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (eventId: number) => fetchDELETE(`/api/events/${eventId}`),
+    onSuccess: (response) => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      //queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
     },
   });
 };

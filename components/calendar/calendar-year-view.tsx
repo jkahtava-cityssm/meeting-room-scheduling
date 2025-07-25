@@ -69,6 +69,10 @@ export function CalendarYearView({ date }: { date: Date }) {
   }, []);
 
   useEffect(() => {
+    setLoading(true);
+  }, [date]);
+
+  useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
     //But this example will come in handy for other applications
     const newWorker = new Worker(new URL("./calendar-year-webworker.ts", import.meta.url));
@@ -103,7 +107,7 @@ export function CalendarYearView({ date }: { date: Date }) {
 
         visibleHours: visibleHours,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);

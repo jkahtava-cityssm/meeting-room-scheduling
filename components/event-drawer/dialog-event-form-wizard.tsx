@@ -27,7 +27,9 @@ import { addYears, endOfDay, startOfDay } from "date-fns";
 import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEventQuery, useEventsMutation } from "@/services/events";
+import { useEventQuery, useEventsMutation, useEventsMutationDelete, useEventsMutationUpsert } from "@/services/events";
+import { ReadEventForm } from "../event-drawer copy/dialog-read-event-form";
+import { Trash } from "lucide-react";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),
@@ -90,8 +92,11 @@ export function EventFormWizard({
     isFetching,
   } = useEventQuery(defaultevent?.eventId, !isReadOnly && isEditable);
 
-  console.log(isFetching);
-  console.log(isPending);
+  const mutationUpsert = useEventsMutationUpsert();
+  const mutationDelete = useEventsMutationDelete();
+
+  //console.log(isFetching);
+  //console.log(isPending);
   //console.log("isEditable", isEditable);
   //console.log("loadedEvent", loadedEvent);
   //console.log("isReadOnly", isReadOnly);
@@ -133,6 +138,7 @@ export function EventFormWizard({
       case 1:
         const startDate = getKeyData(0, "startDate");
         //setKeyData("startDate", "2000-01-01", 2);
+        //return <ReadEventForm event={defaultevent} rooms={rooms}></ReadEventForm>;
         return (
           <UpdateRecurrenceForm
             isLoading={false}
@@ -166,8 +172,6 @@ export function EventFormWizard({
     setFormData(data);
     incrementStep();
   };
-
-  const mutation = useEventsMutation();
 
   const onSaveForm = async (data: object) => {
     if (!currentForm) return;
@@ -203,7 +207,7 @@ export function EventFormWizard({
 
       if (!isValidSchema(SubmitSchemaRecurrence, ruleObject)) return;
 
-      mutation.mutate(
+      mutationUpsert.mutate(
         { eventData: eventObject, ruleData: ruleObject },
         {
           onSuccess: () => {
@@ -221,7 +225,7 @@ export function EventFormWizard({
 
       //const ruleEndDate = triggerEvent();
     } else {
-      mutation.mutate(
+      mutationUpsert.mutate(
         { eventData: eventObject, ruleData: null },
         {
           onSuccess: () => {
@@ -267,6 +271,15 @@ export function EventFormWizard({
     resetForm();
   };
 
+  const onDeleteEvent = (eventId: number) => {
+    mutationDelete.mutate(eventId, {
+      onSuccess: () => {
+        resetForm();
+        onClose();
+      },
+    });
+  };
+
   //const test = useEventDefaultValues(new Date(), loadedEvent ? loadedEvent : defaultevent);
 
   useEffect(() => {
@@ -304,9 +317,22 @@ export function EventFormWizard({
               This form will add an event/appointment to the calendar for the given room and assign it to an individual.
             </SheetDescription>
           </SheetHeader>
+
           {loadedEvent && !isReadOnly ? renderStep(loadedEvent) : renderStep(defaultevent)}
 
           <SheetFooter className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-6 ">
+            {!isReadOnly && defaultevent && (
+              <Button
+                variant={"destructive"}
+                className="mr-auto"
+                onClick={() => {
+                  onDeleteEvent(loadedEvent && !isReadOnly ? loadedEvent.eventId : defaultevent?.eventId);
+                }}
+              >
+                <Trash></Trash>
+                Delete
+              </Button>
+            )}
             {isReadOnly && (
               <Button
                 form={formId}
