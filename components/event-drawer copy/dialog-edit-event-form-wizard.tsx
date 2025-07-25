@@ -4,9 +4,6 @@ import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { getEventDefaultValues, IEventForm, UpdateEventForm } from "./dialog-edit-event-form";
 import { IRecurrenceForm, UpdateRecurrenceForm } from "./dialog-edit-recurrence-form";
-import { useRooms } from "@/hooks/use-rooms";
-
-import { SEvent } from "@/lib/schemas/calendar";
 
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
@@ -27,7 +24,7 @@ import { addYears, endOfDay, startOfDay } from "date-fns";
 import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
 
-import { useEventQuery, useEventsMutation } from "@/services/events";
+import { useEventQuery } from "@/services/events";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),

@@ -1,8 +1,7 @@
-"use server";
-
-import { IRoom } from "@/lib/schemas/calendar";
-import { prisma } from "@/prisma";
-import { Room } from "@prisma/client";
+import { fetchGET } from "@/lib/fetch";
+import { IRoom, SRoom } from "@/lib/schemas/calendar";
+import { useQuery } from "@tanstack/react-query";
+import { z } from "zod/v4";
 
 const AllRooms: IRoom = {
   roomId: -1,
@@ -13,22 +12,21 @@ const AllRooms: IRoom = {
   icon: "Asterisk",
 };
 
-export async function getRooms(): Promise<{ data: IRoom[]; error: string | undefined }> {
-  const res = await fetch(`${process.env.NEXTAPP_URL}/api/rooms`, {
-    cache: "force-cache",
-    next: { tags: ["RoomsUpdated"], revalidate: 30 },
+export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["rooms"],
+    queryFn: async () =>
+      fetchGET("/api/rooms").then((data) => {
+        if (includeAllOption) {
+          data.unshift(AllRooms);
+        }
+
+        const result = z.array(SRoom).safeParse(data);
+
+        if (!result.success) throw new Error("Invalid event data");
+
+        return result.data;
+      }),
+    enabled: enabled,
+    staleTime: 1000 * 60 * 60, // 1 hour
   });
-  const data = await res.json();
-
-  if (res.status !== 200) {
-    return { data: [], error: data.error };
-  }
-
-  return { data: data, error: data.error };
-}
-
-export async function getRoomsWithAll() {
-  const roomList = await getRooms();
-  roomList.data.unshift(AllRooms);
-  return roomList;
-}

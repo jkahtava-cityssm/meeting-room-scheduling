@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { getEventDefaultValues, IEventForm, UpdateEventForm } from "./dialog-event-form-step-1";
 import { IRecurrenceForm, UpdateRecurrenceForm } from "./dialog-event-form-step-2";
-import { useRooms } from "@/hooks/use-rooms";
 
 import { SEvent } from "@/lib/schemas/calendar";
 
@@ -26,10 +25,11 @@ import { useEventForm } from "@/contexts/EventFormProvider";
 import { addYears, endOfDay, startOfDay } from "date-fns";
 import z from "zod/v4";
 import { IEvent } from "@/lib/schemas/calendar";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEventQuery, useEventsMutation, useEventsMutationDelete, useEventsMutationUpsert } from "@/services/events";
-import { ReadEventForm } from "../event-drawer copy/dialog-read-event-form";
+import { useQuery } from "@tanstack/react-query";
+import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/services/events";
+
 import { Trash } from "lucide-react";
+import { useRoomsQuery } from "@/services/rooms";
 
 const SubmitSchemaEvent = z.object({
   eventId: z.number(),
@@ -73,10 +73,10 @@ export function EventFormWizard({
   const [isLoading, setLoading] = useState(false);
 
   //console.log(defaultevent);
-  const { isLoading: isRoomLoading, rooms } = useRooms();
+  const { isPending: isRoomLoading, data: rooms } = useRoomsQuery();
   //const currentStep = useFormStore((state) => state.currentStep);
-  const startDate: Date = startOfDay(defaultStartDate ? defaultStartDate : new Date());
-  const endDate: Date = endOfDay(defaultStartDate ? defaultStartDate : new Date());
+  //const startDate: Date = startOfDay(defaultStartDate ? defaultStartDate : new Date());
+  //const endDate: Date = endOfDay(defaultStartDate ? defaultStartDate : new Date());
 
   /*const { trigger: triggerEvent } = useSWRMutation(
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`,
