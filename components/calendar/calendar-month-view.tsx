@@ -89,7 +89,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-month-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-month-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IMonthResponseData>) => {
       setWeekViews(event.data.weekViews);

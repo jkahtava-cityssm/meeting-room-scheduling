@@ -1,11 +1,12 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { eachDayOfInterval, format, isSameDay, isSameMonth, isSunday, isToday, parse } from "date-fns";
 
-import { IDayView, IEventView, IMonthProcessData, IMonthResponseData, IWeekView } from "./calendar-month-view";
+import { IDayView, IEventView, IMonthProcessData, IMonthResponseData, IWeekView } from "../calendar-month-view";
 import { z } from "zod/v4";
 import { uniq, uniqBy } from "lodash";
 
-import { filterEventsByRoom, getDaysInView } from "../../lib/helpers";
+import { filterEventsByRoom, getDaysInView } from "../../../lib/helpers";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
 
 self.onmessage = (event: MessageEvent<IMonthProcessData>) => {
   if (event.data) {
@@ -17,7 +18,12 @@ self.onmessage = (event: MessageEvent<IMonthProcessData>) => {
 function processMonthEvents(monthData: IMonthProcessData): IMonthResponseData {
   const { startDate: monthStart, endDate: monthEnd } = getDaysInView(monthData.selectedDate);
 
-  const events = z.array(SEvent).parse(monthData.events);
+  const combinedEvents: IEvent[] = [
+    ...generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, { from: 0, to: 24 }),
+    ...generateRecurringEventsInPeriod(monthData.events, monthStart, monthEnd),
+  ];
+
+  const events = z.array(SEvent).parse(combinedEvents);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, monthData.selectedRoomId);
 

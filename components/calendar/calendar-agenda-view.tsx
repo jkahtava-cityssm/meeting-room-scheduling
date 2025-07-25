@@ -60,7 +60,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-agenda-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-agenda-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IAgendaResponseData>) => {
       setFilteredEvents(event.data.sortedEvents);

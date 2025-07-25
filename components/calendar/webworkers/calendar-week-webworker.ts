@@ -2,9 +2,18 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { z } from "zod/v4";
 
-import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../lib/helpers";
-import { IDayView, IEventBlock, IWeekProcessData, IWeekResponseData } from "./calendar-week-view";
-import { addDays, areIntervalsOverlapping, differenceInMinutes, isSameDay, isToday, startOfWeek } from "date-fns";
+import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../../lib/helpers";
+import { IDayView, IEventBlock, IWeekProcessData, IWeekResponseData } from "../calendar-week-view";
+import {
+  addDays,
+  areIntervalsOverlapping,
+  differenceInMinutes,
+  endOfWeek,
+  isSameDay,
+  isToday,
+  startOfWeek,
+} from "date-fns";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
 
 self.onmessage = (event: MessageEvent<IWeekProcessData>) => {
   if (event.data) {
@@ -14,7 +23,15 @@ self.onmessage = (event: MessageEvent<IWeekProcessData>) => {
 };
 
 function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
-  const events = z.array(SEvent).parse(weekData.events);
+  const startDate: Date = startOfWeek(weekData.selectedDate);
+  const endDate: Date = endOfWeek(weekData.selectedDate);
+
+  const combinedEvents: IEvent[] = [
+    ...generateMultiDayEventsInPeriod(weekData.events, startDate, endDate, { from: 0, to: 24 }),
+    ...generateRecurringEventsInPeriod(weekData.events, startDate, endDate),
+  ];
+
+  const events = z.array(SEvent).parse(combinedEvents);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, weekData.selectedRoomId);
 

@@ -84,7 +84,7 @@ export function CalendarDayView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-day-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-day-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IDayResponseData>) => {
       setDayViews(event.data.dayViews);
