@@ -1,6 +1,6 @@
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
-import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from "../../lib/status-codes";
+import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 
 export async function GET(request: Request, { params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;

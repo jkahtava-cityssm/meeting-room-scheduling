@@ -1,8 +1,7 @@
 import { TVisibleHours } from "@/lib/types";
 import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
 import { rrulestr } from "rrule";
-import { UTCDate } from "@date-fns/utc";
-import { IEvent } from "../schemas/calendar";
+import { IEvent } from "./schemas/calendar";
 
 export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
   const eventList: IEvent[] = [];

@@ -2,10 +2,10 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { addMonths, endOfYear, format, getDaysInMonth, isSameDay, isToday, startOfMonth, startOfYear } from "date-fns";
 import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "../calendar-year-view";
-import { filterEventsByRoom } from "../../../lib/helpers";
+import { filterEventsByRoom } from "@/lib/helpers";
 
 import z from "zod/v4";
-import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/app/api/lib/event-helpers";
+import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
 self.onmessage = (event: MessageEvent<IYearProcessData>) => {
   if (event.data) {
