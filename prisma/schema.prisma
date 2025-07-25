@@ -92,6 +92,7 @@ model Member {
 
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   MemberRole MemberRole[]
+  Event      Event[]
 
   @@map("member")
 }
@@ -244,21 +245,39 @@ model RecurrenceException {
 }
 
 model Event {
-  eventId      Int      @id @default(autoincrement())
-  roomId       Int
-  startDate    DateTime
-  endDate      DateTime
-  title        String
-  description  String
+  eventId  Int  @id @default(autoincrement())
+  roomId   Int
+  statusId Int //e.g. "confirmed", "tentative", "cancelled"
+  memberId Int?
+
+  startDate   DateTime
+  endDate     DateTime
+  title       String
+  description String
+
   recurrenceId Int?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: Cascade)
 
-  room Room @relation(fields: [roomId], references: [roomId])
+  member Member? @relation(fields: [memberId], references: [memberId])
+
+  room   Room    @relation(fields: [roomId], references: [roomId])
+  Status Status? @relation(fields: [statusId], references: [statusId])
 
   @@map("event")
+}
+
+model Status {
+  statusId  Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Event Event[]
+
+  @@map("status")
 }
 
 /**

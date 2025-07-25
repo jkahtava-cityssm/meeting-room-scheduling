@@ -1,6 +1,7 @@
 import { prisma } from "@/prisma";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+
 import { headers } from "next/headers";
 
 export const auth = betterAuth({
@@ -26,7 +27,17 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 3 Minutes
     updateAge: 60 * 60 * 24, // 1 Minute
   },
-
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user, ctx) => {
+          await prisma.member.create({
+            data: { userId: user.id, theme: "none", timeFormat: "12hour" },
+          });
+        },
+      },
+    },
+  },
   /* GithubProvider({
               clientId: process.env.GITHUB_ID as string,
               clientSecret: process.env.GITHUB_SECRET as string
