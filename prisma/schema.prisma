@@ -18,7 +18,7 @@ model User {
 
   accounts Account[]
   sessions Session[]
-  Member   Member[]
+  member   Member[]
 
   @@map("user")
 }
@@ -79,7 +79,7 @@ model Room {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Event Event[]
+  event Event[]
 
   @@map("room")
 }
@@ -91,8 +91,8 @@ model Member {
   timeFormat String //12hour or 24 hour
 
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  MemberRole MemberRole[]
-  Event      Event[]
+  memberRole MemberRole[]
+  event      Event[]
 
   @@map("member")
 }
@@ -118,8 +118,8 @@ model Role {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  MemberRole         MemberRole[]
-  RoleResourceAction RoleResourceAction[]
+  memberRole         MemberRole[]
+  roleResourceAction RoleResourceAction[]
   // RolePermission     RolePermission[]
 
   @@map("role")
@@ -180,7 +180,7 @@ model Resource {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  RoleResourceAction RoleResourceAction[]
+  roleResourceAction RoleResourceAction[]
 
   @@map("resource")
 }
@@ -191,7 +191,7 @@ model Action {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  RoleResourceAction RoleResourceAction[]
+  roleResourceAction RoleResourceAction[]
 
   @@map("action")
 }
@@ -211,11 +211,12 @@ model Recurrence {
   startDate                DateTime
   endDate                  DateTime
 
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  Event                  Event[]
-  RecurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
-  RecurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event                  Event[]
+  recurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
+  recurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
 
   @@map("recurrence")
 }
@@ -225,9 +226,10 @@ model RecurrenceCancellation {
   recurrenceDate           DateTime
   cancellationDate         DateTime
 
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  Recurrence Recurrence[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recurrence Recurrence[]
 
   @@map("recurrence_cancellation")
 }
@@ -237,9 +239,10 @@ model RecurrenceException {
   recurrenceDate        DateTime
   rescheduledDate       DateTime
 
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  Recurrence Recurrence[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recurrence Recurrence[]
 
   @@map("recurrence_exception")
 }
@@ -264,7 +267,7 @@ model Event {
   member Member? @relation(fields: [memberId], references: [memberId])
 
   room   Room    @relation(fields: [roomId], references: [roomId])
-  Status Status? @relation(fields: [statusId], references: [statusId])
+  status Status? @relation(fields: [statusId], references: [statusId])
 
   @@map("event")
 }
@@ -275,7 +278,7 @@ model Status {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Event Event[]
+  event Event[]
 
   @@map("status")
 }
