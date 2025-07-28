@@ -31,7 +31,7 @@ export const SEvent = z.object({
   eventId: z.number(),
   roomId: z.number().gt(0, "Room is required"),
   memberId: z.number().nullable().optional(),
-  statusId: z.string(),
+  statusId: z.number(),
   recurrenceId: z.number().nullable(),
   startDate: z.coerce.date({
     error: (issue) => (issue.input === undefined ? "Start date is required" : "Not a valid Start Date"),
