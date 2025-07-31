@@ -6,6 +6,16 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { headers } from "next/headers";
 import { fetchGET } from "./fetch";
 
+type Role = {
+  permissions: Permission[];
+};
+
+type Permission = {
+  permit: boolean;
+  resource: string;
+  action: string;
+};
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -52,8 +62,8 @@ export const auth = betterAuth({
       return {
         user: {
           ...user,
-          memberId: member?.data.memberId,
-          roles: member?.data.roles,
+          memberId: member?.data.memberId as string | undefined | null,
+          roles: member?.data.roles as Role[] | undefined | null,
         },
         session,
       };
@@ -78,3 +88,29 @@ export getServerSession()
     return session
 }
 */
+
+type User = {
+  memberId: string | undefined | null;
+  roles: Role[] | undefined | null;
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  image?: string | null | undefined;
+};
+
+export function hasPermission(user: User, resource: string, action: string) {
+  const permission = user?.roles?.some((role) => {
+    return role.permissions.some((permission) => {
+      return (
+        permission.permit === true &&
+        permission.resource.toLowerCase() === resource.toLowerCase() &&
+        permission.action.toLowerCase() === action.toLowerCase()
+      );
+    });
+  });
+
+  return permission;
+}

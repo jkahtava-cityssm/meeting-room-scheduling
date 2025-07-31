@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
       return {
         name: member.role.name,
         roleId: member.role.roleId,
-        actions: member.role.roleResourceAction.map((permission) => {
+        permissions: member.role.roleResourceAction.map((permission) => {
           return { permit: permission.permit, action: permission.action.name, resource: permission.resource.name };
         }),
       };
