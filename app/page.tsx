@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { SignInMicrosoft } from "@/components/sign-in-button";
-import { auth } from "@/lib/auth";
+import { auth, hasPermission } from "@/lib/auth";
 import { headers } from "next/headers";
 
 export default async function Home() {
@@ -10,6 +10,7 @@ export default async function Home() {
   });
 
   if (session) {
+    hasPermission(session.user, "Event", "read");
     redirect("/bookings/user-view");
   }
 

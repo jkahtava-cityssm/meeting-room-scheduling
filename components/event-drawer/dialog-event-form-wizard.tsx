@@ -121,38 +121,6 @@ export function EventFormWizard({
 
   //console.log(currentStep);
 
-  const renderStep = (defaultevent?: IEvent) => {
-    switch (currentStep) {
-      case 0:
-        return (
-          <UpdateEventForm
-            defaultStartDate={defaultStartDate}
-            isLoading={isRoomLoading}
-            rooms={rooms}
-            onSubmit={onNextPage}
-            event={defaultevent}
-            isReadOnly={isReadOnly}
-          ></UpdateEventForm>
-        );
-
-      case 1:
-        const startDate = getKeyData(0, "startDate");
-        //setKeyData("startDate", "2000-01-01", 2);
-        //return <ReadEventForm event={defaultevent} rooms={rooms}></ReadEventForm>;
-        return (
-          <UpdateRecurrenceForm
-            isLoading={false}
-            onSubmit={onNextPage}
-            defaultStartDate={startDate ? new Date(startDate) : new Date()}
-            event={defaultevent}
-            isReadOnly={isReadOnly}
-          />
-        );
-      default:
-        return <div>Step {currentStep} coming soon...</div>;
-    }
-  };
-
   const onEditForm = () => {
     incrementStep(0);
     setReadOnly(false);
@@ -294,6 +262,56 @@ export function EventFormWizard({
     setLoading(false);
     //currentForm?.reset();
   }, [currentForm, currentStep, loadedEvent, isLoading, setFormData]);
+
+  const renderStep = (defaultevent: IEvent, action: "new" | "edit" | "read") => {
+    switch (currentStep) {
+      case 0:
+        return action === "read" ? (
+          <UpdateEventForm
+            defaultStartDate={defaultStartDate}
+            isLoading={isRoomLoading}
+            rooms={rooms}
+            onSubmit={onNextPage}
+            event={defaultevent}
+            isReadOnly={true}
+          ></UpdateEventForm>
+        ) : action === "new" ? (
+          <UpdateEventForm
+            defaultStartDate={defaultStartDate}
+            isLoading={isRoomLoading}
+            rooms={rooms}
+            onSubmit={onNextPage}
+            event={defaultevent}
+            isReadOnly={false}
+          ></UpdateEventForm>
+        ) : (
+          <UpdateEventForm
+            defaultStartDate={defaultStartDate}
+            isLoading={isRoomLoading}
+            rooms={rooms}
+            onSubmit={onNextPage}
+            event={defaultevent}
+            isReadOnly={false}
+          ></UpdateEventForm>
+        );
+
+      case 1:
+        const startDate = getKeyData(0, "startDate");
+        //setKeyData("startDate", "2000-01-01", 2);
+        //return <ReadEventForm event={defaultevent} rooms={rooms}></ReadEventForm>;
+        return (
+          <UpdateRecurrenceForm
+            isLoading={false}
+            onSubmit={onNextPage}
+            defaultStartDate={startDate ? new Date(startDate) : new Date()}
+            event={defaultevent}
+            isReadOnly={isReadOnly}
+          />
+        );
+      default:
+        return <div>Step {currentStep} coming soon...</div>;
+    }
+  };
 
   return (
     <>
