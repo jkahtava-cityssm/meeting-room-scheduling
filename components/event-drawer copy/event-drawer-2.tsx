@@ -1,20 +1,10 @@
 import { HomeIcon, UserIcon } from "lucide-react";
-import { FormStep } from "./types";
+import { FieldKeys, FormStep } from "./types";
 import { Step1 } from "./step1";
 import { step1Schema, step2Schema } from "./event-flow.validator";
 import { MultiStepForm } from "./stepped-form";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "../ui/sheet";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "@radix-ui/react-alert-dialog";
-import { Button } from "react-day-picker";
-import { AlertDialogHeader, AlertDialogFooter, AlertDialogSave } from "../ui/alert-dialog";
-import { useDisclosure } from "@/hooks/use-disclosure";
+
+//type FieldKeys = keyof typeof step1Schema.shape;
 
 export const checkoutSteps: FormStep[] = [
   {
@@ -23,7 +13,20 @@ export const checkoutSteps: FormStep[] = [
     icon: UserIcon,
     position: 1,
     validationSchema: step1Schema,
-    fields: ["email", "firstName", "lastName"],
+    //fields: Object.keys(step1Schema.shape) as FieldKeys[],
+    fields: [
+      "eventId",
+      "roomId",
+      "description",
+      "title",
+      "startDate",
+      "endDate",
+      "recurrenceId",
+      "duration",
+      "startTime",
+      "endTime",
+      "isRecurring",
+    ],
   },
   {
     title: "Step 2: Address Details",
@@ -36,6 +39,7 @@ export const checkoutSteps: FormStep[] = [
 ];
 
 export default function EventDrawer2({ children }: { children: React.ReactNode }) {
+  //console.log(Object.keys(step1Schema.shape));
   return (
     <>
       <MultiStepForm steps={checkoutSteps}>{children}</MultiStepForm>
