@@ -26,12 +26,15 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
   useQuery({
     queryKey: ["event", eventId],
     queryFn: async () =>
-      fetchGET(`/api/events/${eventId}`).then((data) => {
-        const result = z.array(SEvent).safeParse(data);
+      fetchGET(`/api/events/${eventId}`).then((result) => {
+        console.log(result.data);
+        const parsedResult = z.array(SEvent).safeParse(result.data);
+        //const test = z.parse(SEvent, data[0]);
+        console.log(parsedResult.error?.issues);
 
-        if (!result.success) throw new Error("Invalid event data");
+        if (!parsedResult.success) throw new Error("Invalid event data");
 
-        return result.data[0];
+        return parsedResult.data[0];
       }),
     enabled: enabled && eventId !== undefined,
     gcTime: 0,

@@ -69,9 +69,13 @@ export function EventFormWizard({
 
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [showAlert, setShowAlert] = useState(false);
-  const [isReadOnly, setReadOnly] = useState(isEditable);
+  const [isReadOnly, setReadOnly] = useState(false);
   const [isLoading, setLoading] = useState(false);
 
+  const [fetchEnabled, setFetchEnabled] = useState(false);
+
+  const [event, setEvent] = useState<IEvent>();
+  //console.log(event);
   //console.log(defaultevent);
   const { isPending: isRoomLoading, data: rooms } = useRoomsQuery();
   //const currentStep = useFormStore((state) => state.currentStep);
@@ -85,12 +89,7 @@ export function EventFormWizard({
 
   //const loadedEvent = useEvent(defaultevent?.eventId, !isReadOnly && defaultevent ? true : false);
 
-  const {
-    isPending,
-    error,
-    data: loadedEvent,
-    isFetching,
-  } = useEventQuery(defaultevent?.eventId, !isReadOnly && isEditable);
+  const { isPending, error, data: loadedEvent, isFetching } = useEventQuery(defaultevent?.eventId, fetchEnabled);
 
   const mutationUpsert = useEventsMutationUpsert();
   const mutationDelete = useEventsMutationDelete();
@@ -123,7 +122,8 @@ export function EventFormWizard({
 
   const onEditForm = () => {
     incrementStep(0);
-    setReadOnly(false);
+    setFetchEnabled(true);
+    //setReadOnly(false);
     setLoading(true);
   };
 
@@ -251,37 +251,44 @@ export function EventFormWizard({
   //const test = useEventDefaultValues(new Date(), loadedEvent ? loadedEvent : defaultevent);
 
   useEffect(() => {
-    if (!loadedEvent || currentStep !== 0 || !isLoading) return;
+    if (!fetchEnabled || !loadedEvent || currentStep !== 0) return;
+
+    setEvent(loadedEvent);
+
     const test = getEventDefaultValues(loadedEvent?.startDate, loadedEvent);
-    setFormData(test);
+    /*setFormData(test);
     currentForm?.reset(test, {
       keepDefaultValues: false,
       keepValues: false,
-    });
+    });*/
     setReadOnly(false);
     setLoading(false);
-    //currentForm?.reset();
-  }, [currentForm, currentStep, loadedEvent, isLoading, setFormData]);
 
-  const renderStep = (defaultevent: IEvent, action: "new" | "edit" | "read") => {
+    setFetchEnabled(false);
+    //currentForm?.reset();
+  }, [currentForm, currentStep, loadedEvent, isLoading, setFormData, fetchEnabled]);
+
+  const renderStep = (event: IEvent, action: "new" | "edit" | "read") => {
     switch (currentStep) {
       case 0:
         return action === "read" ? (
           <UpdateEventForm
+            key={`${event?.eventId}-read`}
             defaultStartDate={defaultStartDate}
             isLoading={isRoomLoading}
             rooms={rooms}
             onSubmit={onNextPage}
-            event={defaultevent}
+            event={event}
             isReadOnly={true}
           ></UpdateEventForm>
         ) : action === "new" ? (
           <UpdateEventForm
+            key={`${event.eventId}-edit`}
             defaultStartDate={defaultStartDate}
             isLoading={isRoomLoading}
             rooms={rooms}
             onSubmit={onNextPage}
-            event={defaultevent}
+            event={event}
             isReadOnly={false}
           ></UpdateEventForm>
         ) : (
@@ -336,7 +343,7 @@ export function EventFormWizard({
             </SheetDescription>
           </SheetHeader>
 
-          {loadedEvent && !isReadOnly ? renderStep(loadedEvent) : renderStep(defaultevent)}
+          {event ? renderStep(event, "edit") : renderStep(defaultevent, "read")}
 
           <SheetFooter className="flex sm:flex-col-reverse md:flex-row md:justify-end gap-6 ">
             {!isReadOnly && defaultevent && (

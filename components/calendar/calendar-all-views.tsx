@@ -9,8 +9,10 @@ import { CalendarAgendaView } from "./calendar-agenda-view";
 import { CalendarHeader } from "./calendar-all-header";
 import { useMemo } from "react";
 
-import { useSearchParams } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { endOfWeek, parse, startOfDay, startOfMonth, startOfWeek, startOfYear } from "date-fns";
+import { useSession, hasPermission } from "@/lib/auth-client";
+//import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null, view: string) {
   return dateParam === null ? new Date() : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -43,6 +45,16 @@ export function CalendarAllViews() {
   const dateValue = useMemo(() => {
     return getViewDate(dateParam, view);
   }, [dateParam, view]);
+
+  const { data: session } = useSession();
+
+  if (!session) {
+    redirect("/");
+  }
+
+  /*if (!hasPermission(session?.user, "calendar", "view")) {
+    return <>UNAUTHORIZED</>;
+  }*/
 
   return (
     <div className="overflow-hidden rounded-xl border min-w-92">

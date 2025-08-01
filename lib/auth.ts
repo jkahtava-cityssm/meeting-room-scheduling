@@ -5,12 +5,25 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { headers } from "next/headers";
 import { fetchGET } from "./fetch";
+import { Session } from "./auth-client";
 
-type Role = {
+export type User = {
+  memberId: string | undefined | null;
+  roles: Role[] | undefined | null;
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  image?: string | null | undefined;
+};
+
+export type Role = {
   permissions: Permission[];
 };
 
-type Permission = {
+export type Permission = {
   permit: boolean;
   resource: string;
   action: string;
@@ -55,6 +68,12 @@ export const auth = betterAuth({
       },
     },
   },
+  /*user: {
+    additionalFields: {
+      memberId: { type: "string", required:true, defaultValue: null },
+      roles: { type: "number[]"},
+    },
+  },*/
   plugins: [
     customSession(async ({ user, session }) => {
       const member = await fetchGET(`http://localhost:3000/api/members/${user.id}`, {}, 3600, [user.id]);
@@ -89,20 +108,10 @@ export getServerSession()
 }
 */
 
-type User = {
-  memberId: string | undefined | null;
-  roles: Role[] | undefined | null;
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  image?: string | null | undefined;
-};
+export function hasServerPermission(session: Session | undefined | null, resource: string, action: string) {
+  if (!session || !session.user || !session.user.roles) return false;
 
-export function hasPermission(user: User, resource: string, action: string) {
-  const permission = user?.roles?.some((role) => {
+  const permission = session.user.roles.some((role) => {
     return role.permissions.some((permission) => {
       return (
         permission.permit === true &&
