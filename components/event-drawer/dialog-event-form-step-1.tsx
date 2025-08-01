@@ -156,7 +156,7 @@ export function UpdateEventForm({
   rooms?: IRoom[];
   defaultStartDate?: Date;
   isReadOnly: boolean;
-  onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
+  //onSubmit: (e: React.SyntheticEvent<EventTarget>) => void;
   //getDefaultValues: (event: IEvent) => typeof SEventReloadSchema;
 }) {
   const { setNextVisible, setBackVisible, setCurrentForm, setFormId, getFormData, setDirty } = useEventForm();
@@ -218,7 +218,7 @@ export function UpdateEventForm({
 
   useEffect(() => {
     setCurrentForm(form);
-    setFormId("event-form");
+    //setFormId("event-form");
   }, [form, setCurrentForm, setFormId]);
 
   useEffect(() => {
@@ -429,7 +429,8 @@ export function UpdateEventForm({
                       render={({ field, fieldState }) => (
                         <FormItem className="flex-1">
                           <FormControl>
-                            <TimePicker
+                            {/*
+                              <TimePicker
                               id="startTime"
                               disabled={isReadOnly}
                               date={field.value}
@@ -442,7 +443,7 @@ export function UpdateEventForm({
                                 );
                               }}
                               data-invalid={fieldState.invalid}
-                            />
+                            />*/}
                           </FormControl>
                         </FormItem>
                       )}
@@ -495,7 +496,8 @@ export function UpdateEventForm({
                       render={({ field, fieldState }) => (
                         <FormItem className="flex-1">
                           <FormControl>
-                            <TimePicker
+                            {/*
+                              <TimePicker
                               id="endTime"
                               disabled={isReadOnly}
                               date={field.value}
@@ -509,7 +511,7 @@ export function UpdateEventForm({
                                 );
                               }}
                               data-invalid={fieldState.invalid}
-                            />
+                            />*/}
                           </FormControl>
                         </FormItem>
                       )}

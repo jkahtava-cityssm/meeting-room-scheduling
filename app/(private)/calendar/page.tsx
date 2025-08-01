@@ -1,6 +1,6 @@
 import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
 
-export default async function CalendarYear({
+export default async function Calendar({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
