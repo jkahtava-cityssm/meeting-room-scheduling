@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { createContext, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { Form, FormProvider, useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -26,7 +26,16 @@ export const MultiStepForm = ({ steps, children }: { steps: FormStep[]; children
 
   // Navigation functions
   const nextStep = async () => {
-    const isValid = await methods.trigger(currentStep.fields as (keyof z.infer<typeof CombinedCheckoutSchema>)[]);
+    const isLastStep = !(currentStepIndex < steps.length - 1);
+
+    let isValid = false;
+
+    if (isLastStep) {
+      isValid = await methods.trigger(currentStep.fields as (keyof z.infer<typeof CombinedCheckoutSchema>)[]);
+    } else {
+      isValid = await methods.trigger(currentStep.fields as (keyof z.infer<typeof currentStep.validationSchema>)[]);
+    }
+    //const isValid = await methods.trigger(currentStep.fields as (keyof z.infer<typeof CombinedCheckoutSchema>)[]);
 
     if (!isValid) {
       return; // Stop progression if validation fails
@@ -43,7 +52,7 @@ export const MultiStepForm = ({ steps, children }: { steps: FormStep[]; children
       const validationResult = currentStep.validationSchema.safeParse(formValues);
 
       if (!validationResult.success) {
-        validationResult.error.errors.forEach((err) => {
+        validationResult.error.issues.forEach((err) => {
           methods.setError(err.path.join(".") as keyof z.infer<typeof CombinedCheckoutSchema>, {
             type: "manual",
             message: err.message,
@@ -108,10 +117,11 @@ export const MultiStepForm = ({ steps, children }: { steps: FormStep[]; children
         <MultiStepFormContext.Provider value={value}>
           <FormProvider {...methods}>
             <div className="w-[550px] mx-auto">
-              <form onSubmit={methods.handleSubmit(submitSteppedForm)}>
+              <Form>
                 {currentStep.component}
                 <PrevButton />
-              </form>
+                <NextButton onClick={() => nextStep()} />
+              </Form>
             </div>
           </FormProvider>
         </MultiStepFormContext.Provider>
@@ -126,6 +136,7 @@ import { useContext } from "react";
 import PrevButton from "./prevbutton";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, Sheet, SheetTrigger } from "../ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
+import { NextButton } from "./nextbutton";
 
 export const useMultiStepForm = () => {
   const context = useContext(MultiStepFormContext);

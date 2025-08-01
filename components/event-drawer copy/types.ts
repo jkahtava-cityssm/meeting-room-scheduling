@@ -1,9 +1,9 @@
-import { ZodType } from "zod";
+import { ZodType } from "zod/v4";
 
 import { LucideIcon } from "lucide-react";
 import { CombinedCheckoutType } from "./event-flow.validator";
 
-type FieldKeys = keyof CombinedCheckoutType;
+export type FieldKeys = keyof CombinedCheckoutType;
 
 export type FormStep = {
   title: string;
