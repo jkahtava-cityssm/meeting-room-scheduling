@@ -12,6 +12,7 @@ export type FormStep = {
   component: React.ReactElement;
   icon: LucideIcon;
   fields: FieldKeys[];
+  //defaultValues: object;
 };
 
 export interface MultiStepFormContextProps {
@@ -19,6 +20,8 @@ export interface MultiStepFormContextProps {
   currentStepIndex: number;
   isFirstStep: boolean;
   isLastStep: boolean;
+  ignoreLastStep: boolean;
+  setIgnoreLastStep: (value: boolean) => void;
   nextStep: () => void;
   previousStep: () => void;
   goToStep: (step: number) => void;
