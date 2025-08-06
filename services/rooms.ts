@@ -14,7 +14,7 @@ const AllRooms: IRoom = {
 
 export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["rooms"],
+    queryKey: ["rooms", includeAllOption ? "all" : "existing"],
     queryFn: async () =>
       fetchGET("/api/rooms").then((data) => {
         if (includeAllOption) {

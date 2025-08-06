@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "radix-ui"],
+  },
 };
 
 export default nextConfig;

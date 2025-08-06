@@ -13,8 +13,8 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
   const hourRef = React.useRef<HTMLInputElement>(null);
   const periodRef = React.useRef<HTMLButtonElement>(null);
   return (
-    <div className="flex gap-2 ">
-      <div className="grid gap-2 justify-items-center">
+    <div className="grid grid-cols-3 ">
+      <div className="grid col-span-1 gap-2 justify-items-center">
         <Label
           id={props.id + "HourLabel"}
           data-error={props["aria-invalid"]}
@@ -35,7 +35,7 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
           onRightFocus={() => minuteRef.current?.focus()}
         />
       </div>
-      <div className="grid gap-2 justify-items-center">
+      <div className="grid col-span-1 gap-2 justify-items-center">
         <Label id={props.id + "MinuteLabel"} data-error={props["aria-invalid"]} htmlFor={props.id + "MinuteInput"}>
           Minutes
         </Label>
@@ -51,7 +51,7 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
           onRightFocus={() => periodRef.current?.focus()}
         />
       </div>
-      <div className="grid gap-2 justify-items-center">
+      <div className="grid col-span-1 gap-2 justify-items-center">
         <Label id={props.id + "PeriodLabel"} data-error={props["aria-invalid"]} htmlFor={props.id + "PeriodSelect"}>
           Period
         </Label>
