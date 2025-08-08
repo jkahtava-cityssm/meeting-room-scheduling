@@ -27,10 +27,7 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
     queryKey: ["event", eventId],
     queryFn: async () =>
       fetchGET(`/api/events/${eventId}`).then((result) => {
-        console.log(result.data);
         const parsedResult = z.array(SEvent).safeParse(result.data);
-        //const test = z.parse(SEvent, data[0]);
-        console.log(parsedResult.error?.issues);
 
         if (!parsedResult.success) throw new Error("Invalid event data");
 

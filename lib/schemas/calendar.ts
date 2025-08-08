@@ -23,6 +23,12 @@ export const SRecurrence = z.object({
   updatedAt: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
 });
 
+export const SMember = z.object({
+  memberId: z.number(),
+  name: z.string(),
+  email: z.string(),
+});
+
 export const SMultiDay = z.object({
   position: z.enum(["first", "last", "middle"]),
 });

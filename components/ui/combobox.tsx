@@ -36,7 +36,7 @@ export function ComboBox({
   const [open, setOpen] = useState(false);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
@@ -45,7 +45,14 @@ export function ComboBox({
             <CommandEmpty>{noResultText}</CommandEmpty>
             <CommandGroup>
               {list?.map((item) => (
-                <CommandItem value={item.value} key={item.key} onSelect={onSelect}>
+                <CommandItem
+                  value={item.value}
+                  key={item.key}
+                  onSelect={(value) => {
+                    onSelect(value);
+                    setOpen(false);
+                  }}
+                >
                   {item.label}
                   <Check className={cn("ml-auto", value === item.value ? "opacity-100" : "opacity-0")} />
                 </CommandItem>
@@ -63,12 +70,14 @@ export function ComboBoxTrigger({
   list,
   placeholderText,
   className,
+  disabled,
   ...props
 }: {
   value: string;
   list: list[];
   placeholderText: string;
   className?: string;
+  disabled?: boolean;
   props?: React.ComponentProps<typeof Slot>;
 }) {
   return (
@@ -79,6 +88,7 @@ export function ComboBoxTrigger({
         "w-[200px] justify-between data-[placeholder]:text-muted-foreground text-sm font-normal",
         className
       )}
+      disabled={disabled}
       data-placeholder={value && value !== "" ? null : ""}
       {...props}
     >

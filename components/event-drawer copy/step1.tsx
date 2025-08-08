@@ -30,8 +30,10 @@ import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { ComboBox, ComboBoxContent, ComboBoxItem, ComboBoxList, ComboBoxTrigger, ComboBoxValue } from "../ui/combobox";
+import { FormStatus } from "./types";
+import { useMembersQuery } from "@/services/members";
 
-export const Step1 = ({ defaultValues }: { defaultValues: z.infer<typeof step1Schema> }) => {
+export const Step1 = ({ status }: { status: FormStatus }) => {
   const {
     control,
     getValues,
@@ -49,18 +51,38 @@ export const Step1 = ({ defaultValues }: { defaultValues: z.infer<typeof step1Sc
     });
   }, []);*/
 
-  const members = [
+  /*const members = [
     { key: "1", label: "Option 1", value: "1" },
     { key: "2", label: "Option 2", value: "2" },
-  ];
+    { key: "3", label: "Option 2", value: "3" },
+    { key: "4", label: "Option 2", value: "4" },
+    { key: "5", label: "Option 2", value: "5" },
+    { key: "6", label: "Option 2", value: "6" },
+    { key: "7", label: "Option 2", value: "7" },
+    { key: "8", label: "Option 2", value: "8" },
+    { key: "9", label: "Option 2", value: "9" },
+    { key: "10", label: "Option 2", value: "10" },
+    { key: "11", label: "Option 2", value: "11" },
+    { key: "12", label: "Option 2", value: "12" },
+    { key: "13", label: "Option 2", value: "13" },
+    { key: "14", label: "Option 2", value: "14" },
+    { key: "15", label: "Option 2", value: "15" },
+  ];*/
 
-  const { ignoreLastStep, setIgnoreLastStep } = useMultiStepForm();
+  const { setIgnoreLastStep } = useMultiStepForm();
 
   const { data: rooms } = useRoomsQuery(false);
+  const { data: members } = useMembersQuery();
 
-  const isReadOnly = false;
+  const memberList = members
+    ? members.map((member) => {
+        return { key: String(member.memberId), label: member.name, value: String(member.memberId) };
+      })
+    : [];
+
+  const isReadOnly = status === "Read" || status === "Loading";
   const isRecurring = watch("isRecurring");
-  console.log(isRecurring);
+
   return (
     <ScrollArea type="always">
       <div className="max-h-[calc(80dvh)] w-full">
@@ -70,51 +92,51 @@ export const Step1 = ({ defaultValues }: { defaultValues: z.infer<typeof step1Sc
             name="roomId"
             render={({ field, fieldState }) => (
               <FormItem className="col-span-1">
-                <FormLabel id="roomLabel" htmlFor="room">
-                  Room
-                </FormLabel>
-                <FormControl>
-                  <Select
-                    disabled={isReadOnly}
-                    //readonly={isReadOnly}
-                    //{...field}
-                    name={field.name}
-                    value={field.value}
-                    defaultValue={field.value}
-                    key={field.value}
-                    onValueChange={(value: string) => {
-                      if (value === "") {
-                        //There is a Bug with the Select Field when used with React Hook Form:
-                        //https://github.com/radix-ui/primitives/issues/2944
-                        //https://github.com/radix-ui/primitives/issues/3135
-                        //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
-                        //return;
-                      }
-                      field.onChange(value);
-                    }}
-                  >
+                {fieldState.invalid ? (
+                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+                ) : (
+                  <FormLabel htmlFor="roomId">Room</FormLabel>
+                )}
+                <Select
+                  disabled={isReadOnly}
+                  //readonly={isReadOnly}
+                  //{...field}
+                  name={field.name}
+                  value={field.value}
+                  defaultValue={field.value}
+                  key={field.value}
+                  onValueChange={(value: string) => {
+                    if (value === "") {
+                      //There is a Bug with the Select Field when used with React Hook Form:
+                      //https://github.com/radix-ui/primitives/issues/2944
+                      //https://github.com/radix-ui/primitives/issues/3135
+                      //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                      //return;
+                    }
+                    field.onChange(value);
+                  }}
+                >
+                  <FormControl>
                     <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className="min-w-52">
                       <SelectValue placeholder="Select an option" />
                     </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="min-w-52">
+                    {rooms?.map((room) => {
+                      return (
+                        <SelectItem key={room.roomId} value={room.roomId?.toString()} className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <IconColored color={room.color as TColors} showBorder={false} hideBackground={true}>
+                              <BookKey />
+                            </IconColored>
 
-                    <SelectContent className="min-w-52">
-                      {rooms?.map((room) => {
-                        return (
-                          <SelectItem key={room.roomId} value={room.roomId?.toString()} className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <IconColored color={room.color as TColors} showBorder={false} hideBackground={true}>
-                                <BookKey />
-                              </IconColored>
-
-                              <p className="truncate">{room.name}</p>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
+                            <p className="truncate">{room.name}</p>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </FormItem>
             )}
           />
@@ -161,89 +183,34 @@ export const Step1 = ({ defaultValues }: { defaultValues: z.infer<typeof step1Sc
               </FormItem>
             )}
           />
-          {/*
+
           <FormField
             control={control}
             name="memberId"
             render={({ field, fieldState }) => (
-              <FormItem className="col-span-1">
-                <FormLabel id="memberLabel" htmlFor="memberId">
-                  Requestor
-                </FormLabel>
-                <ComboBox
-                  //name={field.name}
-                  value={field.value}
-                  defaultValue={field.value}
-                  onValueChange={(value) => console.log(value)}
-                >
-                  <ComboBoxTrigger asChild>
-                    <FormControl>
-                      <ComboBoxValue
-                        placeholder="Select Room"
-                        value={rooms?.find((room) => room.name === field.value)?.name}
-                      ></ComboBoxValue>
-                    </FormControl>
-                  </ComboBoxTrigger>
-                  <ComboBoxContent className="w-[200px] p-0">
-                    <ComboBoxList className="h-9" searchPlaceholder="Search rooms..." searchEmptyText="No room found.">
-                      {rooms?.map((room) => (
-                        <ComboBoxItem
-                          key={room.roomId}
-                          value={room.roomId?.toString()}
-                          onValueChange={(value) => {
-                            console.log(value);
-                            setValue("memberId", room.name);
-                          }}
-                        >
-                          {room.name}
-                        </ComboBoxItem>
-                      ))}
-                      {rooms?.map((room) => (
-                        <CommandItem
-                          value={room.name}
-                          key={room.roomId}
-                          onSelect={(value) => {
-                            field.onChange(value);
-                            //setValue("memberId", room.name);
-                          }}
-                        >
-                          {room.name}
-                          <Check className={cn("ml-auto", room.name === field.value ? "opacity-100" : "opacity-0")} />
-                        </CommandItem>
-                      ))}
-                    </ComboBoxList>
-                  </ComboBoxContent>
-                </ComboBox>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          */}
-          <FormField
-            control={control}
-            name="memberId"
-            render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Language</FormLabel>
+                {fieldState.invalid ? (
+                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+                ) : (
+                  <FormLabel htmlFor="memberId">Requesting Member</FormLabel>
+                )}
                 <ComboBox
                   value={field.value}
                   defaultValue={field.value}
-                  list={members}
+                  list={memberList}
                   noResultText={"No Member Found"}
                   searchText={"Search Member"}
                   onSelect={(value: string) => field.onChange(value)}
                 >
                   <FormControl>
                     <ComboBoxTrigger
+                      disabled={isReadOnly}
                       value={field.value}
-                      list={members}
+                      list={memberList}
                       placeholderText={"Select Member"}
                     ></ComboBoxTrigger>
                   </FormControl>
                 </ComboBox>
-
-                <FormDescription>This is the language that will be used in the dashboard.</FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />

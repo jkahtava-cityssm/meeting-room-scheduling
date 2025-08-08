@@ -30,6 +30,7 @@ import { differenceInYears, endOfDay, format, startOfDay } from "date-fns";
 import { step2Schema } from "./event-flow.validator";
 import { useMultiStepForm } from "./stepped-form";
 import { RRulePreview } from "./step2-rrule-preview";
+import { FormStatus } from "./types";
 
 /**
  * TO-DO: One Day add the ability to set a truly forever pattern, it will require
@@ -40,7 +41,7 @@ import { RRulePreview } from "./step2-rrule-preview";
  * @returns
  */
 
-export function Step2({ resetValues }: { resetValues?: z.infer<typeof step2Schema> }) {
+export function Step2({ status, resetValues }: { status: FormStatus; resetValues?: z.infer<typeof step2Schema> }) {
   const [lastDate, setLastDate] = useState<Date>();
 
   const {
@@ -65,7 +66,7 @@ export function Step2({ resetValues }: { resetValues?: z.infer<typeof step2Schem
 
   const type = watch("repeatingType");
   const durationType = watch("durationType");
-  const isReadOnly = false;
+  const isReadOnly = status === "Read" || status === "Loading";
 
   return (
     <>
@@ -215,137 +216,6 @@ export function Step2({ resetValues }: { resetValues?: z.infer<typeof step2Schem
       <RRulePreview startDate={format(new Date(), "yyyy-MM-dd")} setLastDate={setLastDate} control={control} />
     </>
   );
-}
-
-function parseRRule(rrule: RRule) {
-  const mappedRule: {
-    repeatingType: string;
-    rule: string;
-    startDate: Date;
-    endDate: Date;
-    weekdays: string[];
-    dailyPattern: string;
-    monthlyPattern: string;
-    yearlyPattern: string;
-
-    dayValue: string;
-    weekValue: string;
-    monthValue: string;
-    monthDayValue: string;
-    monthPeriodValue: string;
-    monthWeekdayValue: string;
-    yearValue: string;
-    yearDayValue: string;
-    yearMonthValue: string;
-    yearPeriodValue: string;
-    yearWeekdayValue: string;
-    durationType: string;
-    occurrences: string;
-    lastOccurrenceDate: Date;
-  } = {
-    repeatingType: "",
-    rule: rrule.toString(),
-    startDate: rrule.options.dtstart,
-    endDate: rrule.options.until ? rrule.options.until : rrule.options.dtstart,
-    weekdays: ["monday"],
-    dailyPattern: "",
-    monthlyPattern: "",
-    yearlyPattern: "",
-
-    dayValue: "",
-    weekValue: "",
-    monthValue: "",
-    monthDayValue: "",
-    monthPeriodValue: "",
-    monthWeekdayValue: "",
-    yearValue: "",
-    yearDayValue: "",
-    yearMonthValue: "",
-    yearPeriodValue: "",
-    yearWeekdayValue: "",
-    durationType: getDurationType(rrule),
-    occurrences: String(rrule.options.count),
-    lastOccurrenceDate: rrule.options.dtstart,
-  };
-
-  const weekdays: string[] = rrule.options.byweekday
-    ? rrule.options.byweekday.map((value) => {
-        return getDayType(value);
-      })
-    : ["monday"];
-
-  if (rrule.options.freq === RRule.YEARLY) {
-    mappedRule.repeatingType = "yearly";
-    mappedRule.yearlyPattern = rrule.options.bymonthday ? "dayInMonthInYear" : "patternInMonthInYear";
-    mappedRule.yearValue = rrule.options.interval ? String(rrule.options.interval) : "";
-    mappedRule.yearDayValue = rrule.options.bymonthday ? String(rrule.options.bymonthday) : "";
-    mappedRule.yearMonthValue = rrule.options.bymonth ? String(rrule.options.bymonth) : "";
-    mappedRule.yearPeriodValue = rrule.options.bysetpos ? String(rrule.options.bysetpos) : "";
-    mappedRule.yearWeekdayValue = rrule.options.byweekday ? String(rrule.options.byweekday) : "";
-  }
-
-  if (rrule.options.freq === RRule.MONTHLY) {
-    mappedRule.repeatingType = "monthly";
-    mappedRule.monthlyPattern = rrule.options.bymonthday ? "dayInMonth" : "patternInMonth";
-    mappedRule.monthValue = rrule.options.interval ? String(rrule.options.interval) : "";
-    mappedRule.monthDayValue = rrule.options.bymonthday ? String(rrule.options.bymonthday) : "";
-    mappedRule.monthPeriodValue = rrule.options.bysetpos ? String(rrule.options.bysetpos) : "";
-    mappedRule.monthWeekdayValue = rrule.options.byweekday ? String(rrule.options.byweekday) : "";
-  }
-
-  if (rrule.options.freq === RRule.WEEKLY) {
-    mappedRule.repeatingType = "weekly";
-    mappedRule.monthlyPattern = "weekly";
-    mappedRule.weekValue = rrule.options.interval ? String(rrule.options.interval) : "";
-    mappedRule.weekdays = weekdays;
-  }
-
-  if (rrule.options.freq === RRule.DAILY) {
-    mappedRule.repeatingType = "daily";
-    mappedRule.dailyPattern = rrule.options.byweekday ? "daily" : "weekdays";
-    mappedRule.dayValue = rrule.options.interval && rrule.options.byweekday ? String(rrule.options.interval) : "";
-    mappedRule.weekdays = weekdays;
-  }
-
-  console.log(rrule);
-  return mappedRule;
-}
-
-function getDayType(value: number) {
-  switch (value) {
-    case 0:
-      return "monday";
-    case 1:
-      return "tuesday";
-    case 2:
-      return "wednesday";
-    case 3:
-      return "thursday";
-    case 4:
-      return "friday";
-    case 5:
-      return "saturday";
-    case 6:
-      return "sunday";
-    default:
-      return "";
-  }
-}
-
-function getDurationType(rrule: RRule) {
-  if (rrule.options.count) {
-    return "count";
-  }
-
-  const endDate: Date = rrule.options.until ? new Date("9999-12-31") : rrule.options.until;
-  const startDate: Date = rrule.options.dtstart;
-  const difference = differenceInYears(endOfDay(endDate), startOfDay(startDate));
-
-  if (difference >= 200) {
-    return "forever";
-  }
-
-  return "until";
 }
 
 function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPathByValue<TFieldValues, string>>({
