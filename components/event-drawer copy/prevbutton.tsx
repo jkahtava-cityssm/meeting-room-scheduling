@@ -5,8 +5,8 @@ export const PrevButton = () => {
   const { isFirstStep, previousStep } = useMultiStepForm();
 
   return (
-    <Button variant="outline" type="button" onClick={previousStep} hidden={isFirstStep}>
-      Previous
+    <Button variant="outline" type="button" onClick={previousStep} disabled={isFirstStep}>
+      Back
     </Button>
   );
 };

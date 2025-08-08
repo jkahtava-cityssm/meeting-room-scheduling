@@ -1,15 +1,15 @@
 import { ZodType } from "zod/v4";
 
 import { LucideIcon } from "lucide-react";
-import { CombinedCheckoutType } from "./event-flow.validator";
+import { CombinedSchema } from "./event-flow.validator";
 
-export type FieldKeys = keyof CombinedCheckoutType;
+export type FieldKeys = keyof CombinedSchema;
 
 export type FormStep = {
   title: string;
   position: number;
   validationSchema: ZodType<unknown>;
-  component: React.ReactElement;
+  component: React.FC<{ status: FormStatus }>;
   icon: LucideIcon;
   fields: FieldKeys[];
   //defaultValues: object;
@@ -27,3 +27,5 @@ export interface MultiStepFormContextProps {
   goToStep: (step: number) => void;
   steps: FormStep[];
 }
+
+export type FormStatus = "New" | "Read" | "Edit" | "Loading";

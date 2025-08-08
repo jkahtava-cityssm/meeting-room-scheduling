@@ -5,8 +5,8 @@ export const NextButton = ({ onClick, type, ...rest }: React.ButtonHTMLAttribute
   const { isLastStep } = useMultiStepForm();
 
   return (
-    <Button type={type ?? "button"} onClick={onClick} {...rest}>
-      {isLastStep ? "Submit" : "Continue"}
+    <Button variant={isLastStep ? "beneficial" : "default"} type={type ?? "button"} onClick={onClick} {...rest}>
+      {isLastStep ? "Create Event" : "Next"}
     </Button>
   );
 };
