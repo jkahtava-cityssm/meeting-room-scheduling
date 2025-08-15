@@ -50,7 +50,7 @@ export default function EventDrawer2({ event, children }: { event?: IEvent; chil
 
   return (
     <>
-      <MultiStepForm steps={checkoutSteps} event={event}>
+      <MultiStepForm formSteps={checkoutSteps} event={event}>
         {children}
       </MultiStepForm>
     </>

@@ -129,7 +129,7 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
                 {durationType === "until" && (
                   <FormField
                     control={control}
-                    name="endDate"
+                    name="ruleEndDate"
                     render={({ field, fieldState }) => (
                       <FormItem className="space-y-3">
                         <FormControl>
@@ -213,7 +213,12 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
         <ScrollBar orientation="vertical" forceMount></ScrollBar>
       </ScrollArea>
 
-      <RRulePreview startDate={format(new Date(), "yyyy-MM-dd")} setLastDate={setLastDate} control={control} />
+      <RRulePreview
+        defaultValue={getValues()}
+        startDate={format(new Date(), "yyyy-MM-dd")}
+        setLastDate={setLastDate}
+        control={control}
+      />
     </>
   );
 }

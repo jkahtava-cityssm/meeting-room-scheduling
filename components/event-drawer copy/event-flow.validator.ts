@@ -1,8 +1,9 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
-import { addMinutes, addYears, format, set } from "date-fns";
+import { addMinutes, addYears, differenceInYears, endOfDay, format, set, startOfDay } from "date-fns";
 import { z, ZodObject, ZodRawShape } from "zod/v4";
 import { getDurationText } from "./step1";
 import { RRule, rrulestr } from "rrule";
+import { combineDateTime } from "@/lib/helpers";
 
 /*export const step1Schema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -12,8 +13,8 @@ import { RRule, rrulestr } from "rrule";
 
 export const step2Schema = z.object({
   rule: z.string(),
-  startDate: z.string(),
-  endDate: z.string(),
+  ruleStartDate: z.string(),
+  ruleEndDate: z.string(),
   repeatingType: z.string(),
   dailyPattern: z.string(),
   monthlyPattern: z.string(),
@@ -61,20 +62,22 @@ export const step1Schema = z
     ),
     description: z.string().optional(),
     title: z.string().min(1),
-    startDate: z.string(),
-    endDate: z.string(),
+    startDate: z.date(),
+    startDateText: z.string(),
+    startTimeText: z.string(),
+    endDate: z.date(),
+    endDateText: z.string(),
+    endTimeText: z.string(),
     recurrenceId: z.string().optional(),
     duration: z.string(),
-    startTime: z.string(),
-    endTime: z.string(),
     isRecurring: z.string(),
   })
   .check((ctx) => {
-    const EndDate = new Date(ctx.value.endDate);
-    const StartDate = new Date(ctx.value.startDate);
+    const EndDate = new Date(ctx.value.endDateText);
+    const StartDate = new Date(ctx.value.startDateText);
 
-    const EndDateTime = new Date(ctx.value.endTime);
-    const StartDateTime = new Date(ctx.value.startTime);
+    const EndDateTime = new Date(ctx.value.endTimeText);
+    const StartDateTime = new Date(ctx.value.startTimeText);
 
     const EndTime = new Date(
       new Date(ctx.value.startDate).setHours(EndDateTime.getHours(), EndDateTime.getMinutes())
@@ -124,9 +127,41 @@ export const step1Schema = z
     }
   });
 
+export const eventObject = z.object({
+  eventId: z
+    .string()
+    .transform((val) => Number(val))
+    .optional(),
+  roomId: z.string().transform((val) => Number(val)),
+  memberId: z.string().transform((val) => Number(val)),
+  startDate: z.date(),
+  endDate: z.date(),
+  title: z.string(),
+  description: z.string(),
+  recurrenceId: z
+    .string()
+    .transform((val) => Number(val))
+    .optional(),
+});
+
+export const ruleObject = z.object({
+  rule: z.string(),
+  ruleStartDate: z.string().transform((val) => new Date(val)),
+  ruleEndDate: z.string().transform((val) => new Date(val)),
+});
+
+const mutateEvent = z.object({
+  eventData: eventObject,
+  ruleData: ruleObject.optional(),
+});
+
+export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
+
+export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
+
 export const defaultValues = (): CombinedSchema => {
-  const startDateTime = format(new Date(), "yyyy-MM-dd hh:mm");
-  const endDateTime = format(addMinutes(new Date(), 30), "yyyy-MM-dd hh:mm");
+  const startDateTime = new Date();
+  const endDateTime = addMinutes(new Date(), 30);
 
   const SEventFormDefaults = {
     eventId: "0",
@@ -134,19 +169,26 @@ export const defaultValues = (): CombinedSchema => {
     memberId: "",
     title: "",
     description: "",
-    startDate: format(startDateTime, "yyyy-MM-dd"),
-    startTime: format(startDateTime, "yyyy-MM-dd hh:mm"),
-    endDate: format(endDateTime, "yyyy-MM-dd"),
-    endTime: format(endDateTime, "yyyy-MM-dd hh:mm"),
-    duration: getDurationText(startDateTime, startDateTime, endDateTime, endDateTime),
+    startDate: combineDateTime(startDateTime, startDateTime),
+    startDateText: startDateTime.toISOString(),
+    startTimeText: startDateTime.toISOString(),
+    endDate: combineDateTime(endDateTime, endDateTime),
+    endDateText: endDateTime.toISOString(),
+    endTimeText: endDateTime.toISOString(),
+    duration: getDurationText(
+      startDateTime.toISOString(),
+      startDateTime.toISOString(),
+      endDateTime.toISOString(),
+      endDateTime.toISOString()
+    ),
     isRecurring: "false",
     recurrenceId: "",
   };
 
   const SRecurrenceDefaults = {
     rule: "",
-    startDate: format(startDateTime, "yyyy-MM-dd"),
-    endDate: "",
+    ruleStartDate: format(startDateTime, "yyyy-MM-dd"),
+    ruleEndDate: "",
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",
@@ -180,10 +222,12 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
     memberId: event.memberId ? String(event.memberId) : "",
     title: event.title,
     description: event.description ? event.description : "",
-    startDate: format(event.startDate, "yyyy-MM-dd"),
-    startTime: format(event.startDate, "yyyy-MM-dd HH:mm:ss"),
-    endDate: format(event.endDate, "yyyy-MM-dd"),
-    endTime: format(event.endDate, "yyyy-MM-dd HH:mm:ss"),
+    startDate: combineDateTime(event.startDate, event.startDate),
+    startDateText: event.startDate.toISOString(),
+    startTimeText: event.startDate.toISOString(),
+    endDate: combineDateTime(event.endDate, event.endDate),
+    endDateText: event.endDate.toISOString(),
+    endTimeText: event.endDate.toISOString(),
     duration: getDurationText(
       event.startDate.toISOString(),
       event.startDate.toISOString(),
@@ -196,8 +240,8 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
 
   const SRecurrenceDefaults: z.infer<typeof step2Schema> = {
     rule: "",
-    startDate: "",
-    endDate: "",
+    ruleStartDate: "",
+    ruleEndDate: "",
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",
@@ -230,8 +274,8 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
 
 function parseRRule(rrule: RRule, SRecurrenceDefaults: z.infer<typeof step2Schema>) {
   SRecurrenceDefaults.rule = rrule.toString();
-  SRecurrenceDefaults.startDate = format(rrule.options.dtstart, "yyyy-MM-dd HH:mm:ss");
-  SRecurrenceDefaults.endDate = format(getEndDate(rrule), "yyyy-MM-dd HH:mm:ss");
+  SRecurrenceDefaults.ruleStartDate = format(rrule.options.dtstart, "yyyy-MM-dd HH:mm:ss");
+  SRecurrenceDefaults.ruleEndDate = format(getEndDate(rrule), "yyyy-MM-dd HH:mm:ss");
   SRecurrenceDefaults.weekdays = getWeekdays(rrule);
   SRecurrenceDefaults.durationType = getDurationType(rrule);
   SRecurrenceDefaults.occurrences = String(rrule.options.count);
@@ -321,7 +365,3 @@ function getDurationType(rrule: RRule) {
 
   return "until";
 }
-
-export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
-
-export type CombinedSchema = z.infer<typeof CombinedEventSchema>;

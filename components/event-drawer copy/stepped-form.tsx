@@ -5,7 +5,16 @@ import { Form, FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { FormStatus, FormStep, MultiStepFormContextProps } from "./types";
-import { CombinedEventSchema, CombinedSchema, defaultValues, getEventValues } from "./event-flow.validator";
+import {
+  CombinedEventSchema,
+  CombinedSchema,
+  step1Schema,
+  step2Schema,
+  eventObject,
+  ruleObject,
+  defaultValues,
+  getEventValues,
+} from "./event-flow.validator";
 import { useContext } from "react";
 import PrevButton from "./prevbutton";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, Sheet, SheetTrigger } from "../ui/sheet";
@@ -27,6 +36,7 @@ import {
   AlertDialogSave,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import { eventSchema } from "@/lib/schemas";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -54,11 +64,11 @@ function getDefaults<Schema extends z.ZodObject>(schema: Schema) {
 */
 
 export const MultiStepForm = ({
-  steps,
+  formSteps,
   event,
   children,
 }: {
-  steps: FormStep[];
+  formSteps: FormStep[];
   event?: IEvent;
   children: React.ReactNode;
 }) => {
@@ -68,23 +78,8 @@ export const MultiStepForm = ({
     resolver: zodResolver(CombinedEventSchema),
     defaultValues: defaultFormValues,
   });
-
-  const { isOpen, onToggle, onClose } = useDisclosure();
-
-  const onOpenChange = () => {
-    if (methods.formState.isDirty) {
-      setShowAlert(true);
-      return;
-    }
-
-    onDiscardChanges();
-  };
-
-  const onDiscardChanges = () => {
-    setStatus(defaultFormValues["eventId"] === "0" ? "New" : "Read");
-    methods.reset(defaultFormValues);
-    onToggle();
-  };
+  console.log(defaultFormValues);
+  const { isOpen, onClose, onOpen } = useDisclosure();
 
   //const default = defaultValues();
   // Form state
@@ -93,7 +88,7 @@ export const MultiStepForm = ({
   //const [isEditable, setEditable] = useState(false);
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
   const [showAlert, setShowAlert] = useState(false);
-  const currentStep = steps[currentStepIndex];
+  const currentStep = formSteps[currentStepIndex];
 
   const { error, data: collectedEvent } = useEventQuery(Number(defaultFormValues["eventId"]), status === "Loading");
   const saveButtonEnabled =
@@ -110,9 +105,6 @@ export const MultiStepForm = ({
         methods.resetField(fieldName);
       });*/
       const parsedData = getEventValues(collectedEvent);
-      console.log(parsedData);
-      console.log(data);
-      console.log(collectedEvent);
 
       methods.reset(parsedData);
 
@@ -123,7 +115,7 @@ export const MultiStepForm = ({
   }, [status, collectedEvent]);
 
   const isFormValid = async (): Promise<boolean> => {
-    const isLastStep = !(currentStepIndex < steps.length - 1);
+    const isLastStep = !(currentStepIndex < formSteps.length - 1);
 
     let isValid = false;
 
@@ -169,7 +161,7 @@ export const MultiStepForm = ({
     const isValid = await isFormValid();
     if (!isValid) return;
 
-    if (currentStepIndex < steps.length - 1 && !ignoreLastStep) {
+    if (currentStepIndex < formSteps.length - 1 && !ignoreLastStep) {
       // Move to the next step if not at the last step
       setCurrentStepIndex(currentStepIndex + 1);
     }
@@ -182,7 +174,7 @@ export const MultiStepForm = ({
   };
 
   const goToStep = (position: number) => {
-    if (position >= 0 && position - 1 < steps.length) {
+    if (position >= 0 && position - 1 < formSteps.length) {
       setCurrentStepIndex(position - 1);
       //saveFormState(position - 1);
     }
@@ -202,32 +194,74 @@ export const MultiStepForm = ({
     if (!isValid) return;
 
     const allData = methods.getValues();
-    const step1Data = getFormValues(0);
-    const step2Data = getFormValues(1);
+    const step1Data = getFormValues<typeof step1Schema>(0);
+    const step2Data = getFormValues<typeof step2Schema>(1);
 
-    if (allData.isRecurring === "true") {
+    const b = z.safeParse(eventObject, step1Data);
+    const c = z.safeParse(ruleObject, step2Data);
+
+    if (allData.isRecurring === "true" && b.success && c.success) {
       mutationUpsert.mutate(
-        { eventData: getFormValues(0), ruleData: getFormValues(0) },
+        { eventData: b.data, ruleData: c.data },
         {
           onSuccess: () => {
+            resetForm();
             onClose();
           },
         }
       );
+    } else if (b.success) {
+      mutationUpsert.mutate(
+        { eventData: b.data, ruleData: null },
+        {
+          onSuccess: () => {
+            resetForm();
+            onClose();
+          },
+          onError: () => {},
+        }
+      );
     }
 
-    console.log(allData);
+    //console.log(allData);
 
-    setStatus("Read");
+    //setStatus("Read");
   };
 
-  const getFormValues = (step: number) => {
-    const currentStepValues = methods.getValues(steps[step].fields as (keyof CombinedSchema)[]);
+  const onOpenChange = (open: boolean) => {
+    if (open) {
+      onOpenDrawer();
+    } else {
+      onCloseDrawer();
+    }
+  };
+
+  const onCloseDrawer = () => {
+    if (methods.formState.isDirty) {
+      setShowAlert(true);
+      return;
+    }
+    resetForm();
+    onClose();
+  };
+
+  const onOpenDrawer = () => {
+    resetForm();
+    onOpen();
+  };
+
+  const resetForm = () => {
+    setStatus(defaultFormValues["eventId"] === "0" ? "New" : "Read");
+    methods.reset(defaultFormValues);
+  };
+
+  const getFormValues = <T,>(step: number) => {
+    const currentStepValues = methods.getValues(formSteps[step].fields as (keyof CombinedSchema)[]);
     const formValues = Object.fromEntries(
-      currentStep.fields.map((field, index) => [field, currentStepValues[index] || ""])
+      formSteps[step].fields.map((field, index) => [field, currentStepValues[index] || ""])
     );
 
-    return formValues;
+    return formValues as T;
   };
 
   /* Form submission function */
@@ -242,16 +276,16 @@ export const MultiStepForm = ({
 
   // Context value
   const value: MultiStepFormContextProps = {
-    currentStep: steps[currentStepIndex],
+    currentStep: formSteps[currentStepIndex],
     currentStepIndex,
     isFirstStep: currentStepIndex === 0,
-    isLastStep: currentStepIndex === steps.length - 1 || ignoreLastStep,
+    isLastStep: currentStepIndex === formSteps.length - 1 || ignoreLastStep,
     ignoreLastStep,
     setIgnoreLastStep,
     goToStep,
     nextStep,
     previousStep,
-    steps,
+    formSteps,
   };
 
   return (
@@ -303,7 +337,7 @@ export const MultiStepForm = ({
                 Edit
               </Button>
             )}
-            <Button variant={"outline"} className="md:w-24" onClick={() => onOpenChange()}>
+            <Button variant={"outline"} className="md:w-24" onClick={() => onOpenChange(false)}>
               <CircleX />
               Cancel
             </Button>
@@ -320,7 +354,7 @@ export const MultiStepForm = ({
               </Button>
               <Button
                 variant={"outline"}
-                disabled={currentStepIndex === steps.length - 1 || ignoreLastStep}
+                disabled={currentStepIndex === formSteps.length - 1 || ignoreLastStep}
                 onClick={() => nextStep()}
                 className="basis-[48%] ml-auto md:basis-24 md:ml-0"
               >
@@ -361,7 +395,8 @@ export const MultiStepForm = ({
             <AlertDialogAction
               onClick={() => {
                 setShowAlert(false);
-                onDiscardChanges();
+                resetForm();
+                onClose();
               }}
               className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
             >
@@ -375,6 +410,19 @@ export const MultiStepForm = ({
     </MultiStepFormContext.Provider>
   );
 };
+
+function filterObjectByShape<T>(obj: any): T {
+  const newObj: Partial<T> = {}; // Start with an empty object with a partial type
+  for (const key in typeDef) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      // Check if the property exists in the original object
+      // and if its type matches the desired type (optional, but good for runtime validation)
+      // For a more robust check, you might compare `typeof obj[key]` with the expected type.
+      newObj[key] = obj[key];
+    }
+  }
+  return newObj as T; // Cast the new object to the desired type
+}
 
 export const useMultiStepForm = () => {
   const context = useContext(MultiStepFormContext);
