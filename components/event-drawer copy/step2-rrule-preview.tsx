@@ -14,10 +14,12 @@ import { step2Schema } from "./event-flow.validator";
 export function RRulePreview({
   startDate,
   control,
+  defaultValue,
   setLastDate,
 }: {
   startDate: string;
   control: Control<z.infer<typeof step2Schema>>;
+  defaultValue: z.infer<typeof step2Schema>;
   setLastDate: (value: Date) => void;
 }) {
   const [rrule, setRRule] = useState<RRule>();
@@ -29,8 +31,9 @@ export function RRulePreview({
   const workerRef = useRef<Worker | null>(null);
   const fieldValues = useWatch({
     control: control,
+    defaultValue: defaultValue,
     name: [
-      "endDate",
+      "ruleEndDate",
       "repeatingType",
       "weekdays",
       "dailyPattern",
@@ -172,8 +175,8 @@ export function RRulePreview({
 }
 
 function createRRule(
-  startDate: string,
-  endDate: string,
+  ruleStartDate: string,
+  ruleEndDate: string,
   repeatingType: string,
   weekdays: string[],
   dailyPattern: string,
@@ -209,8 +212,8 @@ function createRRule(
 
   const yearByYearDay = parseNumber(yearDayValue);
 
-  const parsedStartDate = parse(startDate, "yyyy-MM-dd", new Date());
-  const parsedEndDate = parse(endDate, "yyyy-MM-dd", new Date());
+  const parsedStartDate = parse(ruleStartDate, "yyyy-MM-dd", new Date());
+  const parsedEndDate = parse(ruleEndDate, "yyyy-MM-dd", new Date());
 
   const convertedStartDate = convertDateToRRuleDate(parsedStartDate);
 

@@ -39,13 +39,13 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
   });
 
 type eventObject = {
-  eventId: number;
+  eventId?: number;
   roomId: number;
   startDate: Date;
   endDate: Date;
   title: string;
-  description: string;
-  recurrenceId: number | null;
+  description?: string;
+  recurrenceId?: number;
 };
 
 type ruleObject = {
@@ -54,7 +54,7 @@ type ruleObject = {
   ruleEndDate: Date;
 };
 
-export type mutationObject = {
+type mutationObject = {
   eventData: eventObject;
   ruleData: ruleObject | null;
 };

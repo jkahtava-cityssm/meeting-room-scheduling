@@ -34,8 +34,15 @@ function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = 
     onClose();
   };
 
+  const onOpenChange = (open: boolean) => {
+    if (value !== calendarDate && open) {
+      setCalendarDate(value);
+    }
+    onToggle();
+  };
+
   return (
-    <Popover open={isOpen} onOpenChange={onToggle} modal>
+    <Popover open={isOpen} onOpenChange={onOpenChange} modal>
       <PopoverTrigger asChild>
         <Button
           id={id}

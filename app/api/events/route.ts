@@ -55,7 +55,8 @@ export async function PUT(req: Request) {
     eventData.title === undefined ||
     eventData.startDate === undefined ||
     eventData.endDate === undefined ||
-    eventData.roomId === undefined
+    eventData.roomId === undefined ||
+    eventData.memberId === undefined
   ) {
     return BadRequestMessage();
   }
@@ -66,7 +67,7 @@ export async function PUT(req: Request) {
   ) {
     return BadRequestMessage();
   }
-  const { eventId, title, description, startDate, endDate, roomId, recurrenceId } = eventData;
+  const { eventId, title, description, startDate, endDate, roomId, recurrenceId, memberId } = eventData;
   const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
 
   let recurrence = null;
@@ -80,9 +81,27 @@ export async function PUT(req: Request) {
   }
 
   const event = await prisma.event.upsert({
-    create: { title, description, startDate, endDate, roomId, recurrenceId: recurrence?.recurrenceId },
+    create: {
+      title,
+      description,
+      startDate,
+      endDate,
+      roomId,
+      recurrenceId: recurrence ? recurrence.recurrenceId : null,
+      statusId: 1,
+      memberId,
+    },
     where: { eventId: eventId },
-    update: { title, description, startDate, endDate, roomId, recurrenceId: recurrence?.recurrenceId },
+    update: {
+      title,
+      description,
+      startDate,
+      endDate,
+      roomId,
+      recurrenceId: recurrence ? recurrence.recurrenceId : null,
+      statusId: 1,
+      memberId,
+    },
     include: { room: true, recurrence: true },
   });
 
