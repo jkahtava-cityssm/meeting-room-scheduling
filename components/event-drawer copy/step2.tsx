@@ -84,41 +84,40 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
                         <FormLabel id="typeLabel" htmlFor="durationType" className="min-w-15 justify-end">
                           Duration
                         </FormLabel>
-                        <FormControl>
-                          <Select
-                            //{...field}
-                            disabled={isReadOnly}
-                            name={field.name}
-                            value={field.value}
-                            defaultValue={field.value}
-                            key={field.value}
-                            onValueChange={(value) => {
-                              if (value === "") {
-                                //There is a Bug with the Select Field when used with React Hook Form:
-                                //https://github.com/radix-ui/primitives/issues/2944
-                                //https://github.com/radix-ui/primitives/issues/3135
-                                //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
-                                //return;
-                              }
-                              field.onChange(value);
-                            }}
-                          >
+
+                        <Select
+                          //{...field}
+                          disabled={isReadOnly}
+                          name={field.name}
+                          value={field.value}
+                          defaultValue={field.value}
+                          key={field.value}
+                          onValueChange={(value) => {
+                            if (value === "") {
+                              //There is a Bug with the Select Field when used with React Hook Form:
+                              //https://github.com/radix-ui/primitives/issues/2944
+                              //https://github.com/radix-ui/primitives/issues/3135
+                              //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                              //return;
+                            }
+                            field.onChange(value);
+                          }}
+                        >
+                          <FormControl>
                             <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
                               <SelectValue placeholder="Select an option" />
                             </SelectTrigger>
-
-                            <SelectContent className={"min-w-40"}>
-                              {durations.map((period) => {
-                                return (
-                                  <SelectItem key={period.id} value={period.id} className="flex-1">
-                                    {period.label}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
+                          </FormControl>
+                          <SelectContent className={"min-w-40"}>
+                            {durations.map((period) => {
+                              return (
+                                <SelectItem key={period.id} value={period.id} className="flex-1">
+                                  {period.label}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </FormItem>
                   )}
@@ -140,7 +139,7 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
                                 disabled={isReadOnly}
                                 value={field.value ? new Date(field.value) : new Date()}
                                 onSelect={(date) => {
-                                  field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                                  field.onChange(date ? date.toISOString() : "");
                                 }}
                                 placeholder="Select a date"
                                 data-invalid={fieldState.invalid}
@@ -149,7 +148,6 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
                             </FormControl>
                           </FormItem>
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -164,41 +162,40 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
                       <FormLabel id="typeLabel" htmlFor="repeatingType" className="min-w-15 justify-end">
                         Repeats
                       </FormLabel>
-                      <FormControl>
-                        <Select
-                          //{...field}
-                          disabled={isReadOnly}
-                          name={field.name}
-                          value={field.value}
-                          defaultValue={field.value}
-                          key={field.value}
-                          onValueChange={(value) => {
-                            if (value === "") {
-                              //There is a Bug with the Select Field when used with React Hook Form:
-                              //https://github.com/radix-ui/primitives/issues/2944
-                              //https://github.com/radix-ui/primitives/issues/3135
-                              //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
-                              //return;
-                            }
-                            field.onChange(value);
-                          }}
-                        >
+
+                      <Select
+                        //{...field}
+                        disabled={isReadOnly}
+                        name={field.name}
+                        value={field.value}
+                        defaultValue={field.value}
+                        key={field.value}
+                        onValueChange={(value) => {
+                          if (value === "") {
+                            //There is a Bug with the Select Field when used with React Hook Form:
+                            //https://github.com/radix-ui/primitives/issues/2944
+                            //https://github.com/radix-ui/primitives/issues/3135
+                            //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                            //return;
+                          }
+                          field.onChange(value);
+                        }}
+                      >
+                        <FormControl>
                           <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-40"}>
                             <SelectValue placeholder="Select an option" />
                           </SelectTrigger>
-
-                          <SelectContent className={"min-w-40"}>
-                            {repeatingPeriods.map((period) => {
-                              return (
-                                <SelectItem key={period.id} value={period.id} className="flex-1">
-                                  {period.label}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
+                        </FormControl>
+                        <SelectContent className={"min-w-40"}>
+                          {repeatingPeriods.map((period) => {
+                            return (
+                              <SelectItem key={period.id} value={period.id} className="flex-1">
+                                {period.label}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </FormItem>
                 )}
@@ -227,16 +224,18 @@ function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPa
   control,
   name,
   disabled = false,
+  showError = true,
 }: {
   control: Control<TFieldValues>;
   name: TPath;
   disabled?: boolean;
+  showError?: boolean;
 }) {
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
+      render={({ field, fieldState }) => (
         <FormItem className="space-y-3">
           <FormControl>
             <FormItem className="flex items-center gap-2">
@@ -250,11 +249,15 @@ function NumberFormInput<TFieldValues extends FieldValues, TPath extends FieldPa
                   onChange={field.onChange}
                   placeholder="#"
                   disabled={disabled}
+                  data-invalid={fieldState.invalid && showError}
+                  aria-invalid={fieldState.invalid && showError}
                 ></InputNumber>
               </FormControl>
             </FormItem>
           </FormControl>
-          <FormMessage />
+          {
+            //
+          }
         </FormItem>
       )}
     />
@@ -277,31 +280,28 @@ function PeriodFormSelection<TFieldValues extends FieldValues, TPath extends Fie
       render={({ field, fieldState }) => (
         <FormItem>
           <div className="flex flex-row gap-2">
-            <FormControl>
-              <Select
-                name={field.name}
-                value={field.value}
-                defaultValue={field.value}
-                key={field.value}
-                onValueChange={field.onChange}
-                disabled={disabled}
-              >
+            <Select
+              name={field.name}
+              value={field.value}
+              key={field.value}
+              onValueChange={field.onChange}
+              disabled={disabled}
+            >
+              <FormControl>
                 <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-23"}>
-                  <SelectValue placeholder="Select an option" />
+                  <SelectValue placeholder="Select a period" />
                 </SelectTrigger>
-
-                <SelectContent className={"min-w-23"}>
-                  {periods.map((period) => {
-                    return (
-                      <SelectItem key={period.id} value={period.id} className="flex-1">
-                        {period.label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
+              </FormControl>
+              <SelectContent className={"min-w-23"}>
+                {periods.map((period) => {
+                  return (
+                    <SelectItem key={period.id} value={period.id} className="flex-1">
+                      {period.label}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         </FormItem>
       )}
@@ -327,35 +327,33 @@ function WeekDayFormSelection<TFieldValues extends FieldValues, TPath extends Fi
       render={({ field, fieldState }) => (
         <FormItem>
           <div className="flex flex-row gap-2">
-            <FormControl>
-              <Select
-                name={field.name}
-                value={field.value}
-                defaultValue={field.value}
-                key={field.value}
-                onValueChange={field.onChange}
-                disabled={disabled}
-              >
+            <Select
+              name={field.name}
+              value={field.value}
+              defaultValue={field.value}
+              key={field.value}
+              onValueChange={field.onChange}
+              disabled={disabled}
+            >
+              <FormControl>
                 <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-31"}>
-                  <SelectValue placeholder="Select an option" />
+                  <SelectValue placeholder="Select a weekday" />
                 </SelectTrigger>
+              </FormControl>
+              <SelectContent className={"min-w-31"}>
+                {weekdayPatterns.map((period) => {
+                  if (hideDayWeekday && (period.id === "day" || period.id === "weekday" || period.id === "weekend")) {
+                    return;
+                  }
 
-                <SelectContent className={"min-w-31"}>
-                  {weekdayPatterns.map((period) => {
-                    if (hideDayWeekday && (period.id === "day" || period.id === "weekday" || period.id === "weekend")) {
-                      return;
-                    }
-
-                    return (
-                      <SelectItem key={period.id} value={period.id} className="flex-1">
-                        {period.label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
+                  return (
+                    <SelectItem key={period.id} value={period.id} className="flex-1">
+                      {period.label}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         </FormItem>
       )}
@@ -367,10 +365,12 @@ function MonthFormSelection<TFieldValues extends FieldValues, TPath extends Fiel
   control,
   name,
   disabled,
+  showError = true,
 }: {
   control: Control<TFieldValues>;
   name: TPath;
   disabled: boolean;
+  showError?: boolean;
 }) {
   return (
     <FormField
@@ -379,31 +379,34 @@ function MonthFormSelection<TFieldValues extends FieldValues, TPath extends Fiel
       render={({ field, fieldState }) => (
         <FormItem>
           <div className="flex flex-row gap-2">
-            <FormControl>
-              <Select
-                name={field.name}
-                value={field.value}
-                defaultValue={field.value}
-                key={field.value}
-                onValueChange={field.onChange}
-                disabled={disabled}
-              >
-                <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-31"}>
-                  <SelectValue placeholder="Select an option" />
+            <Select
+              name={field.name}
+              value={field.value}
+              defaultValue={field.value}
+              key={field.value}
+              onValueChange={field.onChange}
+              disabled={disabled}
+            >
+              <FormControl>
+                <SelectTrigger
+                  id={field.name}
+                  data-invalid={fieldState.invalid && showError}
+                  aria-invalid={fieldState.invalid && showError}
+                  className={"min-w-31"}
+                >
+                  <SelectValue placeholder="Select a month" />
                 </SelectTrigger>
-
-                <SelectContent className={"min-w-31"}>
-                  {months.map((period) => {
-                    return (
-                      <SelectItem key={period.id} value={period.id} className="flex-1">
-                        {period.label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
+              </FormControl>
+              <SelectContent className={"min-w-31"}>
+                {months.map((period) => {
+                  return (
+                    <SelectItem key={period.id} value={period.id} className="flex-1">
+                      {period.label}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         </FormItem>
       )}
@@ -450,7 +453,6 @@ function DailyForm({ control, isReadOnly }: { control: Control<z.infer<typeof st
               </FormItem>
             </RadioGroup>
           </FormControl>
-          <FormMessage />
         </FormItem>
       )}
     />
@@ -499,7 +501,6 @@ function WeeklyForm({ control, isReadOnly }: { control: Control<z.infer<typeof s
                 />
               ))}
             </div>
-            <FormMessage />
           </FormItem>
         )}
       />
@@ -547,6 +548,7 @@ function MonthlyForm({ control, isReadOnly }: { control: Control<z.infer<typeof 
                     control={control}
                     name="monthValue"
                     disabled={field.value === "dayInMonth" && !isReadOnly ? false : true}
+                    showError={field.value === "dayInMonth" ? true : false}
                   ></NumberFormInput>
                   <FormLabel>month(s)</FormLabel>
                 </div>
@@ -579,13 +581,13 @@ function MonthlyForm({ control, isReadOnly }: { control: Control<z.infer<typeof 
                     control={control}
                     name="monthValue"
                     disabled={field.value === "patternInMonth" && !isReadOnly ? false : true}
+                    showError={field.value === "patternInMonth" ? true : false}
                   ></NumberFormInput>
                   <FormLabel>month(s)</FormLabel>
                 </div>
               </FormItem>
             </RadioGroup>
           </FormControl>
-          <FormMessage />
         </FormItem>
       )}
     />
@@ -599,84 +601,115 @@ function YearlyForm({ control, isReadOnly }: { control: Control<z.infer<typeof s
   });
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-row gap-2">
-        <FormLabel className="min-w-15  justify-end">Every</FormLabel>
-        <NumberFormInput control={control} name={"yearValue"} disabled={isReadOnly} />
-        <FormLabel>Year(s)</FormLabel>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row gap-2">
+          <FormLabel className="min-w-15  justify-end">Every</FormLabel>
+          <NumberFormInput control={control} name={"yearValue"} disabled={isReadOnly} />
+          <FormLabel>Year(s)</FormLabel>
+        </div>
       </div>
-      <FormField
-        control={control}
-        name="yearlyPattern"
-        render={({ field }) => (
-          <FormItem className="space-y-3">
-            <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className="flex flex-col "
-                disabled={isReadOnly}
-              >
-                <FormItem className="flex items-center gap-3 ">
-                  <FormControl className="mx-5.5">
-                    <RadioGroupItem value="dayInMonthInYear" />
-                  </FormControl>
-                  {
-                    //###################################################
-                    //EVERY X DAY EVERY X MONTHS
-                    //###################################################
-                  }
-                  <div className="flex flex-row gap-2">
-                    <FormLabel className="">On</FormLabel>
-                    <MonthFormSelection
-                      control={control}
-                      name="yearMonthValue"
-                      disabled={field.value === "dayInMonthInYear" && !isReadOnly ? false : true}
-                    ></MonthFormSelection>
-                    <NumberFormInput
-                      control={control}
-                      name="yearDayValue"
-                      disabled={field.value === "dayInMonthInYear" && !isReadOnly ? false : true}
-                    ></NumberFormInput>
-                  </div>
-                </FormItem>
-                <FormItem className="flex items-center gap-3">
-                  <FormControl className="mx-5.5">
-                    <RadioGroupItem value="patternInMonthInYear" />
-                  </FormControl>
-                  {
-                    //###################################################
-                    //ON THE X PERIOD X WEEKDAY OF EVERY X MONTH(S)
-                    //###################################################
-                  }
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row gap-2">
+          <FormField
+            control={control}
+            name="yearlyPattern"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex flex-col "
+                    disabled={isReadOnly}
+                  >
+                    <FormItem className="flex items-center gap-3 ">
+                      <FormControl className="mx-5.5">
+                        <RadioGroupItem value="dayInMonthInYear" />
+                      </FormControl>
+                      {
+                        //###################################################
+                        //EVERY X DAY EVERY X MONTHS
+                        //###################################################
+                      }
+                      <div className="flex flex-row gap-2">
+                        <FormLabel className="">On</FormLabel>
+                        <MonthFormSelection
+                          control={control}
+                          name="yearMonthValue"
+                          disabled={field.value === "dayInMonthInYear" && !isReadOnly ? false : true}
+                          showError={field.value === "dayInMonthInYear" ? true : false}
+                        ></MonthFormSelection>
+                        <NumberFormInput
+                          control={control}
+                          name="yearDayValue"
+                          disabled={field.value === "dayInMonthInYear" && !isReadOnly ? false : true}
+                        ></NumberFormInput>
+                      </div>
+                    </FormItem>
+                    <FormItem className="flex items-center gap-3">
+                      <FormControl className="mx-5.5">
+                        <RadioGroupItem value="patternInMonthInYear" />
+                      </FormControl>
+                      {
+                        //###################################################
+                        //ON THE X PERIOD X WEEKDAY OF EVERY X MONTH(S)
+                        //###################################################
+                      }
 
-                  <div className="flex flex-row gap-2">
-                    <FormLabel>On the</FormLabel>
-                    <PeriodFormSelection
-                      control={control}
-                      name="yearPeriodValue"
-                      disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
-                    ></PeriodFormSelection>
-                    <WeekDayFormSelection
-                      control={control}
-                      name="yearWeekdayValue"
-                      disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
-                      hideDayWeekday={yearPeriodValue === "1" || yearPeriodValue === "-1" ? false : true}
-                    ></WeekDayFormSelection>
-                    <FormLabel>of</FormLabel>
-                    <MonthFormSelection
-                      control={control}
-                      name="yearMonthValue"
-                      disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
-                    ></MonthFormSelection>
-                  </div>
-                </FormItem>
-              </RadioGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+                      <div className="flex flex-row gap-2">
+                        <FormLabel>On the</FormLabel>
+                        <PeriodFormSelection
+                          control={control}
+                          name="yearPeriodValue"
+                          disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
+                        ></PeriodFormSelection>
+                        <WeekDayFormSelection
+                          control={control}
+                          name="yearWeekdayValue"
+                          disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
+                          hideDayWeekday={yearPeriodValue === "1" || yearPeriodValue === "-1" ? false : true}
+                        ></WeekDayFormSelection>
+                        <FormLabel>of</FormLabel>
+                        <MonthFormSelection
+                          control={control}
+                          name="yearMonthValue"
+                          disabled={field.value === "patternInMonthInYear" && !isReadOnly ? false : true}
+                          showError={field.value === "patternInMonthInYear" ? true : false}
+                        ></MonthFormSelection>
+                      </div>
+                    </FormItem>
+                  </RadioGroup>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <ErrorMessage control={control} fieldName="ruleEndDate" />
+          <ErrorMessage control={control} fieldName="yearValue" />
+          <ErrorMessage control={control} fieldName="yearlyPattern" />
+          <ErrorMessage control={control} fieldName="yearDayValue" />
+          <ErrorMessage control={control} fieldName="yearPeriodValue" />
+          <ErrorMessage control={control} fieldName="yearWeekdayValue" />
+          <ErrorMessage control={control} fieldName="yearMonthValue" />
+        </div>
+      </div>
     </div>
+  );
+}
+
+function ErrorMessage({
+  control,
+  fieldName,
+}: {
+  control: Control<z.infer<typeof step2Schema>>;
+  fieldName: keyof z.infer<typeof step2Schema>;
+}) {
+  return (
+    control.getFieldState(fieldName).error && (
+      <span className="text-destructive text-sm">{control.getFieldState(fieldName).error?.message}</span>
+    )
   );
 }
 

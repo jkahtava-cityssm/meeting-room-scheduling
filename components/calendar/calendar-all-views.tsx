@@ -11,11 +11,11 @@ import { useMemo } from "react";
 
 import { redirect, useSearchParams } from "next/navigation";
 import { endOfWeek, parse, startOfDay, startOfMonth, startOfWeek, startOfYear } from "date-fns";
-import { useSession, hasPermission } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 //import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null, view: string) {
-  return dateParam === null ? new Date() : parse(dateParam, "yyyy-MM-dd", new Date());
+  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
   switch (view) {
     case "agenda":
     case "day":
@@ -29,6 +29,10 @@ function getViewDate(dateParam: string | null, view: string) {
     default:
       return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy-MM-dd", new Date()));
   }
+}
+
+function removeTimeFromDate(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 /*function isView(value: unknown): value is TCalendarView {
@@ -46,25 +50,28 @@ export function CalendarAllViews() {
     return getViewDate(dateParam, view);
   }, [dateParam, view]);
 
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
+    return <div>Verifying Access</div>;
+  }
 
   if (!session) {
+    console.log("Calendar-All-Views No session, redirecting to login");
     redirect("/");
   }
 
-  /*if (!hasPermission(session?.user, "calendar", "view")) {
-    return <>UNAUTHORIZED</>;
-  }*/
+  if (session) {
+    return (
+      <div className="overflow-hidden rounded-xl border min-w-92">
+        <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} />
 
-  return (
-    <div className="overflow-hidden rounded-xl border min-w-92">
-      <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} />
-
-      {view === "day" && <CalendarDayView date={dateValue} />}
-      {view === "month" && <CalendarMonthView date={dateValue} />}
-      {view === "week" && <CalendarWeekView date={dateValue} />}
-      {view === "year" && <CalendarYearView date={dateValue} />}
-      {view === "agenda" && <CalendarAgendaView date={dateValue} />}
-    </div>
-  );
+        {view === "day" && <CalendarDayView date={dateValue} />}
+        {view === "month" && <CalendarMonthView date={dateValue} />}
+        {view === "week" && <CalendarWeekView date={dateValue} />}
+        {view === "year" && <CalendarYearView date={dateValue} />}
+        {view === "agenda" && <CalendarAgendaView date={dateValue} />}
+      </div>
+    );
+  }
 }

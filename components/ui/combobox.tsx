@@ -18,7 +18,6 @@ interface list {
 
 export function ComboBox({
   value,
-  defaultValue,
   children,
   list,
   noResultText,
@@ -26,7 +25,6 @@ export function ComboBox({
   onSelect,
 }: {
   value: string;
-  defaultValue: string;
   children: React.ReactNode;
   list: list[];
   noResultText: string;
@@ -89,7 +87,7 @@ export function ComboBoxTrigger({
         className
       )}
       disabled={disabled}
-      data-placeholder={value && value !== "" ? null : ""}
+      data-placeholder={value && value !== "" ? null : true}
       {...props}
     >
       {value ? list?.find((item) => item.value === value)?.label : placeholderText}

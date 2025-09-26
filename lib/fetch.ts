@@ -1,3 +1,11 @@
+/**
+ *
+ * @param url the URL to fetch
+ * @param params optional query parameters as object
+ * @param revalidate default 0 - no caching, set to > 0 to enable caching with revalidation time in seconds
+ * @param tags optional tags for cache invalidation
+ * @returns fetched data as JSON
+ */
 export async function fetchGET(url: string, params: object = {}, revalidate: number = 0, tags: string[] = []) {
   const queryString = Object.entries(params)
     .map((param) => {

@@ -15,7 +15,7 @@ import { hasClientPermission, useSession } from "@/lib/auth-client";
 import EventDrawer2 from "../event-drawer copy/event-drawer-2";
 
 export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
 
   const { setSelectedRoomId } = useCalendar();
   const { push } = useRouter();
@@ -124,7 +124,7 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
             </Button>
           </AddEventDialog>*/}
 
-          {!hasClientPermission(session, "event", "create") && (
+          {!hasClientPermission(session, "event", "create") && !isPending && (
             <AddEventDrawer startDate={mergeDateWithTime(selectedDate, new Date())}>
               <Button className="w-full sm:w-auto">
                 <Plus />

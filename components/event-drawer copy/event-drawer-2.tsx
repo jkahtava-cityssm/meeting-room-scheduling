@@ -31,7 +31,7 @@ export default function EventDrawer2({ event, children }: { event?: IEvent; chil
 
   const checkoutSteps: FormStep[] = [
     {
-      title: "Step 1: Personal Information",
+      title: "Step 1: Event Details",
       component: Step1,
       icon: UserIcon,
       position: 1,
@@ -39,7 +39,7 @@ export default function EventDrawer2({ event, children }: { event?: IEvent; chil
       fields: Object.keys(step1Schema.shape) as FieldKeys[],
     },
     {
-      title: "Step 2: Address Details",
+      title: "Step 2: Recurrence",
       component: Step2,
       icon: HomeIcon,
       position: 2,
