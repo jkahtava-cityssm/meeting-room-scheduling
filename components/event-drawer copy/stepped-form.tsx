@@ -77,7 +77,7 @@ export const MultiStepForm = ({
     defaultValues: defaultFormValues,
     mode: "onChange",
   });
-  console.log(defaultFormValues);
+  //console.log(defaultFormValues);
   const { isOpen, onClose, onOpen } = useDisclosure();
 
   //const default = defaultValues();

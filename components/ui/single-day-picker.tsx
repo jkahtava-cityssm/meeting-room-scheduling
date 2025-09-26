@@ -23,7 +23,7 @@ type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"
 function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = "PPP", value, ...props }: TProps) {
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [calendarDate, setCalendarDate] = useState(value);
-  console.log(value);
+  //console.log(value);
   const handleSelect = (date: Date | undefined) => {
     onSelect(date);
     onClose();
