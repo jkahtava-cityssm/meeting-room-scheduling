@@ -11,35 +11,220 @@ import { combineDateTime } from "@/lib/helpers";
   lastName: z.string().min(3, "Last name must be at least 3 characters"),
 });*/
 
-export const step2Schema = z.object({
-  rule: z.string(),
-  ruleStartDate: z.string(),
-  ruleEndDate: z.string(),
-  repeatingType: z.string(),
-  dailyPattern: z.string(),
-  monthlyPattern: z.string(),
-  yearlyPattern: z.string(),
+export const step2Schema = z
+  .object({
+    rule: z.string().min(1, "Please define a recurrence rule"),
+    ruleStartDate: z.string(),
+    ruleEndDate: z.string(),
+    repeatingType: z.string().min(1, "Please select a repeating type"),
+    dailyPattern: z.string(),
+    monthlyPattern: z.string(),
+    yearlyPattern: z.string(),
 
-  dayValue: z.string(),
-  monthValue: z.string(),
-  monthDayValue: z.string(),
-  monthPeriodValue: z.string(),
-  monthWeekdayValue: z.string(),
-  yearValue: z.string(),
-  yearDayValue: z.string(),
-  yearMonthValue: z.string(),
-  yearPeriodValue: z.string(),
-  yearWeekdayValue: z.string(),
+    dayValue: z.string(),
+    monthValue: z.string(),
+    monthDayValue: z.string(),
+    monthPeriodValue: z.string(),
+    monthWeekdayValue: z.string(),
+    yearValue: z.string(),
+    yearDayValue: z.string(),
+    yearMonthValue: z.string(),
+    yearPeriodValue: z.string(),
+    yearWeekdayValue: z.string(),
 
-  weekValue: z.string(),
-  weekdays: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: "You have to select at least one item.",
-  }),
+    weekValue: z.string(),
+    weekdays: z.array(z.string()).refine((value) => value.some((item) => item), {
+      message: "You have to select at least one item.",
+    }),
 
-  durationType: z.string(),
-  occurrences: z.string(),
-  duration: z.string().optional(),
-});
+    durationType: z.string().min(1, "Please select a duration type"),
+    occurrences: z.string(),
+    duration: z.string().optional(),
+  })
+  .check((ctx) => {
+    if (ctx.value.durationType === "until" && ctx.value.ruleEndDate === "") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["ruleEndDate"],
+        message: "Please Specify an End Date",
+      });
+    } else if (ctx.value.durationType === "forever") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["ruleEndDate"],
+        message: "Please Specify an End Date",
+      });
+    } else if (ctx.value.durationType === "count" && (ctx.value.occurrences === "" || ctx.value.occurrences === "0")) {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["occurrences"],
+        message: "Please enter the number of occurrences",
+      });
+    }
+
+    if (ctx.value.repeatingType === "daily") {
+      if (ctx.value.dailyPattern === "") {
+        ctx.issues.push({
+          code: "custom",
+          input: ctx.value,
+          path: ["dailyPattern"],
+          message: "You must choose an option",
+        });
+      }
+      if (ctx.value.dailyPattern === "daily") {
+        if (ctx.value.dayValue === "" || ctx.value.dayValue === "0") {
+          ctx.issues.push({
+            code: "custom",
+            input: ctx.value,
+            path: ["dayValue"],
+            message: "Indicate how often the event repeats",
+          });
+        }
+      }
+    } else if (ctx.value.repeatingType === "weekly") {
+      if (ctx.value.weekValue === "" || ctx.value.weekValue === "0") {
+        ctx.issues.push({
+          code: "custom",
+          input: ctx.value,
+          path: ["weekValue"],
+          message: "Indicate how often the event repeats",
+        });
+      }
+      if (ctx.value.weekdays.length === 0) {
+        ctx.issues.push({
+          code: "custom",
+          input: ctx.value,
+          path: ["weekdays"],
+          message: "Please select atleast one weekday",
+        });
+      }
+      //weekValue
+      //weekdays
+    } else if (ctx.value.repeatingType === "monthly") {
+      verifyMonthlyPattern(ctx);
+    } else if (ctx.value.repeatingType === "yearly") {
+      verifyYearlyPattern(ctx);
+    }
+  });
+
+const verifyMonthlyPattern = (ctx: any) => {
+  if (ctx.value.monthlyPattern === "") {
+    ctx.issues.push({
+      code: "custom",
+      input: ctx.value,
+      path: ["monthlyPattern"],
+      message: "Pick a repeating pattern from the available options",
+    });
+  }
+
+  if (ctx.value.monthValue === "" || ctx.value.monthValue === "0") {
+    ctx.issues.push({
+      code: "custom",
+      input: ctx.value,
+      path: ["monthValue"],
+      message: "Indicate how often the event repeats",
+    });
+  }
+
+  if (ctx.value.monthlyPattern === "dayInMonth") {
+    if (ctx.value.monthDayValue === "" || ctx.value.monthDayValue === "0") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["monthDayValue"],
+        message: "You must pick a day",
+      });
+    }
+  }
+
+  if (ctx.value.monthlyPattern === "patternInMonth") {
+    if (ctx.value.monthPeriodValue === "") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["monthPeriodValue"],
+        message: "You must pick a period",
+      });
+    }
+    if (ctx.value.monthWeekdayValue === "") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["monthWeekdayValue"],
+        message: "You must select a weekday",
+      });
+    }
+  }
+};
+
+const verifyYearlyPattern = (ctx: any) => {
+  if (ctx.value.yearlyPattern === "") {
+    ctx.issues.push({
+      code: "custom",
+      input: ctx.value,
+      path: ["yearlyPattern"],
+      message: "Pick a repeating pattern from the available options",
+    });
+  }
+
+  if (ctx.value.yearValue === "" || ctx.value.yearValue === "0") {
+    ctx.issues.push({
+      code: "custom",
+      input: ctx.value,
+      path: ["yearValue"],
+      message: "Indicate how often the event repeats",
+    });
+  }
+
+  if (ctx.value.yearlyPattern === "dayInMonthInYear") {
+    if (ctx.value.yearDayValue === "" || ctx.value.yearDayValue === "0") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["yearDayValue"],
+        message: "You must pick a day",
+      });
+    }
+    if (ctx.value.yearMonthValue === "") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["yearMonthValue"],
+        message: "You must select a month",
+      });
+    }
+  }
+
+  if (ctx.value.yearlyPattern === "patternInMonthInYear") {
+    if (ctx.value.yearPeriodValue === "") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["yearPeriodValue"],
+        message: "You must pick a period",
+      });
+    }
+    if (ctx.value.yearWeekdayValue === "") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["yearWeekdayValue"],
+        message: "You must select a weekday",
+      });
+    }
+    if (ctx.value.yearMonthValue === "") {
+      ctx.issues.push({
+        code: "custom",
+        input: ctx.value,
+        path: ["yearMonthValue"],
+        message: "You must select a month",
+      });
+    }
+  }
+};
 
 export const step1Schema = z
   .object({
@@ -145,7 +330,7 @@ export const eventObject = z.object({
 });
 
 export const ruleObject = z.object({
-  rule: z.string(),
+  rule: z.string().min(1, "Please define a recurrence rule"),
   ruleStartDate: z.string().transform((val) => new Date(val)),
   ruleEndDate: z.string().transform((val) => new Date(val)),
 });
@@ -187,8 +372,8 @@ export const defaultValues = (): CombinedSchema => {
 
   const SRecurrenceDefaults = {
     rule: "",
-    ruleStartDate: format(startDateTime, "yyyy-MM-dd"),
-    ruleEndDate: "",
+    ruleStartDate: startDateTime.toISOString(),
+    ruleEndDate: startDateTime.toISOString(),
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",

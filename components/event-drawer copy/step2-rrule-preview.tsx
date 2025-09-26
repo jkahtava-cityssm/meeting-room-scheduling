@@ -213,7 +213,7 @@ function createRRule(
   const yearByYearDay = parseNumber(yearDayValue);
 
   const parsedStartDate = parse(ruleStartDate, "yyyy-MM-dd", new Date());
-  const parsedEndDate = parse(ruleEndDate, "yyyy-MM-dd", new Date());
+  const parsedEndDate = new Date(ruleEndDate); //parse(ruleEndDate, "yyyy-MM-dd", new Date(ruleEndDate));
 
   const convertedStartDate = convertDateToRRuleDate(parsedStartDate);
 

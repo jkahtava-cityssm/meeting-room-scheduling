@@ -71,8 +71,10 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
       if (e.key === "ArrowRight") onRightFocus?.();
       if (e.key === "ArrowLeft") onLeftFocus?.();
       if (["ArrowUp", "ArrowDown"].includes(e.key)) {
-        const step = e.key === "ArrowUp" ? 1 : -1;
+        const step = e.key === "ArrowUp" ? (picker === "minutes" ? 15 : 1) : picker === "minutes" ? -15 : -1;
+        //const minuteStep = roundToNearestQuarter(calculatedValue, step);
         const newValue = getArrowByType(calculatedValue, step, picker);
+
         if (flag) setFlag(false);
         const tempDate = new Date(date);
         setDate(setDateByType(tempDate, newValue, picker, period));
@@ -83,6 +85,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         const newValue = calculateNewValue(e.key);
         if (flag) onRightFocus?.();
         setFlag((prev) => !prev);
+        console.log("Test");
         const tempDate = new Date(date);
         setDate(setDateByType(tempDate, newValue, picker, period));
       }
@@ -181,9 +184,20 @@ export function getValidArrowNumber(value: string, { min, max, step }: GetValidA
   let numericValue = parseInt(value, 10);
   if (!isNaN(numericValue)) {
     numericValue += step;
+    numericValue = roundToNearestQuarter(numericValue);
     return getValidNumber(String(numericValue), { min, max, loop: true });
   }
   return "00";
+}
+
+function roundToNearestQuarter(value: number) {
+  if (value >= 53) return 0;
+  if (value < 0) return 45;
+
+  const remainder = value % 15;
+  const base = value - remainder;
+
+  return remainder >= 8 ? base + 15 : base;
 }
 
 export function getValidArrowHour(value: string, step: number) {

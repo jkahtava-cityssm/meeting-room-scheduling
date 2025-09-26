@@ -103,7 +103,7 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
                   //{...field}
                   name={field.name}
                   value={field.value}
-                  defaultValue={field.value}
+                  //defaultValue={field.value}
                   key={field.value}
                   onValueChange={(value: string) => {
                     if (value === "") {
@@ -172,7 +172,12 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
                       setIgnoreLastStep(value === "false" ? true : false);
                     }}
                   >
-                    <TabsList className="gap-2" data-invalid={fieldState.invalid} aria-invalid={fieldState.invalid}>
+                    <TabsList
+                      className="gap-2"
+                      aria-disabled={isReadOnly}
+                      data-invalid={fieldState.invalid}
+                      aria-invalid={fieldState.invalid}
+                    >
                       <TabsTrigger value="false" disabled={isReadOnly}>
                         Single
                       </TabsTrigger>
@@ -198,7 +203,6 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
                 )}
                 <ComboBox
                   value={field.value}
-                  defaultValue={field.value}
                   list={memberList}
                   noResultText={"No Member Found"}
                   searchText={"Search Member"}
@@ -404,7 +408,7 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
                     id="duration"
                     disabled={isReadOnly}
                     className="text-sm h-9 px-3 py-1 content-center"
-                    defaultValue={field.value}
+                    //defaultValue={field.value}
                     value={field.value}
                     data-invalid={fieldState.invalid}
                     readOnly

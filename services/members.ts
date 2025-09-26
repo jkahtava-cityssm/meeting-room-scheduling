@@ -7,7 +7,7 @@ export const useMembersQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: ["members"],
     queryFn: async () =>
-      fetchGET(`/api/members`).then((result) => {
+      fetchGET(`/api/members`, undefined, 180).then((result) => {
         const parsedResult = z.array(SMember).safeParse(result.data);
 
         if (!parsedResult.success) throw new Error("Invalid member data");

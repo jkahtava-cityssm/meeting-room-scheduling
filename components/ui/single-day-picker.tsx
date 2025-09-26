@@ -23,7 +23,7 @@ type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"
 function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = "PPP", value, ...props }: TProps) {
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [calendarDate, setCalendarDate] = useState(value);
-
+  console.log(value);
   const handleSelect = (date: Date | undefined) => {
     onSelect(date);
     onClose();
@@ -48,7 +48,7 @@ function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = 
           id={id}
           variant="outline"
           className={cn(
-            "group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit",
+            "group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit disabled:opacity-75",
             className
           )}
           {...props}
