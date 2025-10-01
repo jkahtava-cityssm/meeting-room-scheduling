@@ -3,7 +3,7 @@
 import { ForwardRefExoticComponent, RefAttributes, useState } from "react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronDownIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormControl } from "./form";
 import { Button } from "./button";
@@ -91,7 +91,7 @@ export function ComboBoxTrigger({
       {...props}
     >
       {value ? list?.find((item) => item.value === value)?.label : placeholderText}
-      <ChevronsUpDown className="opacity-50" />
+      <ChevronDownIcon className="opacity-50" />
     </Button>
   );
 }

@@ -344,9 +344,9 @@ export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
 
 export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
 
-export const defaultValues = (): CombinedSchema => {
-  const startDateTime = new Date();
-  const endDateTime = addMinutes(new Date(), 30);
+export const defaultValues = (creationDate?: Date): CombinedSchema => {
+  const startDateTime = creationDate ? creationDate : new Date();
+  const endDateTime = creationDate ? addMinutes(creationDate, 30) : addMinutes(new Date(), 30);
 
   const SEventFormDefaults = {
     eventId: "0",

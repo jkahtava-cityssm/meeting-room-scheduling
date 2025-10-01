@@ -80,6 +80,13 @@ export async function PUT(req: Request) {
     });
   }
 
+  if (ruleData === null && recurrenceId !== null) {
+    // Delete recurrence if ruleData is null and recurrenceId exists
+    await prisma.recurrence.delete({
+      where: { recurrenceId: recurrenceId },
+    });
+  }
+
   const event = await prisma.event.upsert({
     create: {
       title,

@@ -10,9 +10,9 @@ import type { TCalendarView } from "@/lib/types";
 import { mergeDateWithTime, navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
-import { AddEventDrawer } from "./dialog-event-add";
+
 import { hasClientPermission, useSession } from "@/lib/auth-client";
-import EventDrawer2 from "../event-drawer copy/event-drawer-2";
+import EventDrawer from "../event-drawer/event-drawer";
 
 export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
   const { data: session, isPending } = useSession();
@@ -125,19 +125,13 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
           </AddEventDialog>*/}
 
           {!hasClientPermission(session, "event", "create") && !isPending && (
-            <AddEventDrawer startDate={mergeDateWithTime(selectedDate, new Date())}>
+            <EventDrawer>
               <Button className="w-full sm:w-auto">
                 <Plus />
                 Add Event
               </Button>
-            </AddEventDrawer>
+            </EventDrawer>
           )}
-          <EventDrawer2>
-            <Button className="w-full sm:w-auto">
-              <Plus />
-              Add Event 2
-            </Button>
-          </EventDrawer2>
         </div>
       </div>
     </>

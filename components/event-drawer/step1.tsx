@@ -1,6 +1,5 @@
 import { useFormContext } from "react-hook-form";
 import { Input } from "../ui/input";
-import { NextButton } from "./nextbutton";
 import { z } from "zod/v4";
 import { useMultiStepForm } from "./stepped-form";
 import { step1Schema } from "./event-flow.validator";
@@ -9,9 +8,9 @@ import { TColors } from "@/lib/types";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import { BookKey, Check, ChevronsUpDown } from "lucide-react";
+import { BookKey } from "lucide-react";
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "../ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../ui/form";
 import { IconColored } from "../ui/icon-colored";
 import { ScrollBar } from "../ui/scroll-area";
 import { SingleDayPicker } from "../ui/single-day-picker";
@@ -19,17 +18,10 @@ import { Textarea } from "../ui/textarea";
 import { useRoomsQuery } from "@/services/rooms";
 import { TimePicker } from "../ui/time-picker";
 import { Select } from "../ui/select";
-import { useEffect, useImperativeHandle } from "react";
 
-import { ForwardedRef } from "react";
 import { combineDateTime } from "@/lib/helpers";
-import { format, formatDuration, intervalToDuration, parse } from "date-fns";
-import { IEvent } from "@/lib/schemas/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
-import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
-import { ComboBox, ComboBoxContent, ComboBoxItem, ComboBoxList, ComboBoxTrigger, ComboBoxValue } from "../ui/combobox";
+import { formatDuration, intervalToDuration } from "date-fns";
+import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { FormStatus } from "./types";
 import { useMembersQuery } from "@/services/members";
 

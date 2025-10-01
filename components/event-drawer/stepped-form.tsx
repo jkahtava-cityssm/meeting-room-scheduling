@@ -34,7 +34,6 @@ import {
   AlertDialogSave,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { cn } from "@/lib/utils";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -63,14 +62,16 @@ function getDefaults<Schema extends z.ZodObject>(schema: Schema) {
 
 export const MultiStepForm = ({
   formSteps,
+  creationDate,
   event,
   children,
 }: {
   formSteps: FormStep[];
+  creationDate?: Date;
   event?: IEvent;
   children: React.ReactNode;
 }) => {
-  const defaultFormValues = event ? getEventValues(event) : defaultValues();
+  const defaultFormValues = event ? getEventValues(event) : defaultValues(creationDate);
 
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedEventSchema),
@@ -277,10 +278,13 @@ export const MultiStepForm = ({
 
   const onDelete = () => {
     if (defaultFormValues["eventId"] === "0") {
-      currentStep.fields.forEach((fieldName) => {
-        methods.resetField(fieldName);
+      resetForm();
+    } else {
+      mutationDelete.mutate(Number(defaultFormValues["eventId"]), {
+        onSuccess: () => {
+          onClose();
+        },
       });
-      //methods.resetField(currentStep.fields,);
     }
   };
 
