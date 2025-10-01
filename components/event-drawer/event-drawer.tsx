@@ -26,7 +26,15 @@ const getDefaultValues = (object: object | undefined, schema: ZodObject<ZodRawSh
   return defaultValues;
 };
 
-export default function EventDrawer2({ event, children }: { event?: IEvent; children: React.ReactNode }) {
+export default function EventDrawer({
+  creationDate,
+  event,
+  children,
+}: {
+  creationDate?: Date;
+  event?: IEvent;
+  children: React.ReactNode;
+}) {
   //console.log(Object.keys(step1Schema.shape));
 
   const checkoutSteps: FormStep[] = [
@@ -48,9 +56,11 @@ export default function EventDrawer2({ event, children }: { event?: IEvent; chil
     },
   ];
 
+  console.log(creationDate);
+
   return (
     <>
-      <MultiStepForm formSteps={checkoutSteps} event={event}>
+      <MultiStepForm creationDate={creationDate} formSteps={checkoutSteps} event={event}>
         {children}
       </MultiStepForm>
     </>
