@@ -4,36 +4,34 @@ import { rrulestr } from "rrule";
 import { IEvent } from "./schemas/calendar";
 
 export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
+  console.time("generateRecurringEventsInPeriod");
   const eventList: IEvent[] = [];
 
-  events.forEach((element) => {
-    if (element.recurrenceId === null) {
-      return;
-    }
+  const startUTC = setPartsToUTCDate(periodStart);
+  const endUTC = setPartsToUTCDate(periodEnd);
 
-    const currentRule = element.recurrence?.rule as string;
+  for (const event of events) {
+    if (!event.recurrenceId || !event.recurrence?.rule) continue;
 
-    const rrule = rrulestr(currentRule, { cache: true });
-    const recurrenceArray = rrule.between(setPartsToUTCDate(periodStart), setPartsToUTCDate(periodEnd));
+    const rrule = rrulestr(event.recurrence.rule, { cache: true });
+    const recurrenceDates = rrule.between(startUTC, endUTC);
 
-    for (let index = 0; index < recurrenceArray.length; index++) {
-      const newEvent = { ...element };
-      const recurringDate = setUTCPartsToDate(recurrenceArray[index]);
-      newEvent.title = "Series - " + newEvent.title;
-      newEvent.startDate = set(newEvent.startDate, {
-        year: recurringDate.getFullYear(),
-        month: recurringDate.getMonth(),
-        date: recurringDate.getDate(),
+    for (const recurrenceDate of recurrenceDates) {
+      const recurringUTC = setUTCPartsToDate(recurrenceDate);
+
+      const year = recurringUTC.getFullYear();
+      const month = recurringUTC.getMonth();
+      const date = recurringUTC.getDate();
+
+      eventList.push({
+        ...event,
+        title: `Series - ${event.title}`,
+        startDate: set(event.startDate, { year, month, date }),
+        endDate: set(event.endDate, { year, month, date }),
       });
-      newEvent.endDate = set(newEvent.endDate, {
-        year: recurringDate.getFullYear(),
-        month: recurringDate.getMonth(),
-        date: recurringDate.getDate(),
-      });
-
-      eventList.push(newEvent);
     }
-  });
+  }
+  console.timeEnd("generateRecurringEventsInPeriod");
   return eventList;
 }
 
