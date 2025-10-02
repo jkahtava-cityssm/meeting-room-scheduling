@@ -33,6 +33,9 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+  advanced: {
+    database: { useNumberId: true, generateId: false },
+  },
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_ID as string,
@@ -57,13 +60,13 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user, ctx) => {
-          const member = await prisma.member.create({
-            data: { userId: user.id, theme: "none", timeFormat: "12hour" },
-          });
+          const role = await prisma.role.findFirst({ where: { name: "User" } });
 
-          const memberRole = await prisma.memberRole.create({
-            data: { memberId: member.memberId, roleId: 1 },
-          });
+          if (role) {
+            const userRole = await prisma.userRole.create({
+              data: { userId: Number(user.id), roleId: role.roleId },
+            });
+          }
         },
       },
     },

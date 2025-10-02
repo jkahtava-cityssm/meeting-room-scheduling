@@ -89,28 +89,14 @@ async function FindCreatePermissionSet(
   return { resourceActionEventCreate, resourceActionEventRead, resourceActionEventUpdate, resourceActionEventDelete };
 }
 
-async function FindCreateMember(userId: string, theme: string) {
-  let record = await prisma.member.findFirst({
-    where: { userId: userId },
+async function FindCreateUserRole(roleId: number, memberId: number) {
+  let record = await prisma.userRole.findFirst({
+    where: { roleId: roleId, userId: memberId },
   });
 
   if (!record) {
-    record = await prisma.member.create({
-      data: { userId: userId, theme: theme, timeFormat: "12hour" },
-    });
-  }
-
-  return record;
-}
-
-async function FindCreateMemberRole(roleId: number, memberId: number) {
-  let record = await prisma.memberRole.findFirst({
-    where: { roleId: roleId, memberId: memberId },
-  });
-
-  if (!record) {
-    record = await prisma.memberRole.create({
-      data: { roleId: roleId, memberId: memberId },
+    record = await prisma.userRole.create({
+      data: { roleId: roleId, userId: memberId },
     });
   }
 
@@ -212,7 +198,7 @@ async function CreateRandomEvents(
         description: getRandomDescription(),
         recurrenceId: await CreateRandomRecurrence(startDate, endDate),
         statusId: 1,
-        memberId: 1,
+        userId: 1,
       },
     });
   }
@@ -474,6 +460,12 @@ async function main() {
   await FindCreateEventStatus("Confirmed");
   await FindCreateEventStatus("Cancelled");
 
+  const user = await prisma.user.findFirst({ where: { email: "j.kahtava@cityssm.on.ca" } });
+  if (!user) {
+    console.log("No users found, cannot continue seeding");
+    return;
+  }
+
   await prisma.event.deleteMany();
   await prisma.recurrence.deleteMany();
 
@@ -481,14 +473,7 @@ async function main() {
 
   CreateRandomEvents(roomList, 2000, 1825);
 
-  const user = await prisma.user.findFirst({ where: { email: "j.kahtava@cityssm.on.ca" } });
-  if (!user) {
-    return;
-  }
-
-  const member = await FindCreateMember(user?.id, "dark");
-
-  const memberRole = FindCreateMemberRole(roleAdmin.roleId, member.memberId);
+  const memberRole = FindCreateUserRole(roleAdmin.roleId, user?.id);
 
   /*
   const JordanKMember = await prisma.member.upsert({
