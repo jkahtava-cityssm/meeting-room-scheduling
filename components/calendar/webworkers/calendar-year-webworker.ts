@@ -26,34 +26,40 @@ function formatYearData(yearData: IYearProcessData): IYearResponseData {
   const events = z.array(SEvent).parse(combinedEvents);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, yearData.selectedRoomId);
-  const otherList: IEvent[] = [];
-  const monthData: IMonthView[] = [];
+
+  const eventsByDate = new Map<string, IEvent[]>();
+  filteredEvents.forEach((event) => {
+    const key = format(event.startDate, "yyyy-MM-dd");
+    if (!eventsByDate.has(key)) eventsByDate.set(key, []);
+    eventsByDate.get(key)!.push(event);
+  });
+
   const months: Date[] = getMonths(yearData.selectedDate);
 
-  months.forEach((month, monthIndex) => {
+  const monthData: IMonthView[] = months.map((month, monthIndex) => {
     const days: number[] = getDays(month);
     const yearValue = month.getFullYear();
     const monthValue = month.getMonth();
 
-    const dayData: IDayView[] = [];
-    //let monthEvents = 0;
-
-    days.forEach((day) => {
+    const dayData: IDayView[] = days.map((day) => {
       if (day <= 0) {
-        dayData.push({ day: day, dayDate: new Date(0), isBlank: true, isToday: false, dayEvents: [] });
-        return;
+        return { day, dayDate: new Date(0), isBlank: true, isToday: false, dayEvents: [] };
       }
 
-      const date: Date = new Date(yearValue, monthValue, day);
-      const today: boolean = isToday(date);
-      const events: IEvent[] = filteredEvents.filter((event) => isSameDay(event.startDate, date));
-      //monthEvents += events.length;
-      otherList.push(...events);
-      dayData.push({ day: day, dayDate: date, isBlank: false, isToday: today, dayEvents: events });
-    });
-    //console.log(monthEvents);
+      const date = new Date(yearValue, monthValue, day);
+      const key = format(date, "yyyy-MM-dd");
+      const events = eventsByDate.get(key) || [];
 
-    monthData.push({ month: monthIndex, monthDate: month, monthName: format(month, "MMMM"), days: dayData });
+      return {
+        day,
+        dayDate: date,
+        isBlank: false,
+        isToday: isToday(date),
+        dayEvents: events,
+      };
+    });
+
+    return { month: monthIndex, monthDate: month, monthName: format(month, "MMMM"), days: dayData };
   });
 
   return { totalEvents: filteredEvents.length, monthsViews: monthData };
