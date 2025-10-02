@@ -8,7 +8,7 @@ import { fetchGET } from "./fetch";
 import { Session } from "./auth-client";
 
 export type User = {
-  memberId: string | undefined | null;
+  userId: string | undefined | null;
   roles: Role[] | undefined | null;
   id: string;
   email: string;
@@ -73,19 +73,18 @@ export const auth = betterAuth({
   },
   /*user: {
     additionalFields: {
-      memberId: { type: "string", required:true, defaultValue: null },
+      userId: { type: "string", required:true, defaultValue: null },
       roles: { type: "number[]"},
     },
   },*/
   plugins: [
     customSession(async ({ user, session }) => {
-      const member = await fetchGET(`http://localhost:3000/api/members/${user.id}`, {}, 3600, [user.id]);
+      const userData = await fetchGET(`http://localhost:3000/api/users/${user.id}`, {}, 3600, [user.id]);
 
       return {
         user: {
           ...user,
-          memberId: member?.data.memberId as string | undefined | null,
-          roles: member?.data.roles as Role[] | undefined | null,
+          roles: userData?.data.roles as Role[] | undefined | null,
         },
         session,
       };

@@ -89,14 +89,14 @@ async function FindCreatePermissionSet(
   return { resourceActionEventCreate, resourceActionEventRead, resourceActionEventUpdate, resourceActionEventDelete };
 }
 
-async function FindCreateUserRole(roleId: number, memberId: number) {
+async function FindCreateUserRole(roleId: number, userId: number) {
   let record = await prisma.userRole.findFirst({
-    where: { roleId: roleId, userId: memberId },
+    where: { roleId: roleId, userId: userId },
   });
 
   if (!record) {
     record = await prisma.userRole.create({
-      data: { roleId: roleId, userId: memberId },
+      data: { roleId: roleId, userId: userId },
     });
   }
 
@@ -481,7 +481,7 @@ async function main() {
     update: {},
     create: { userId: user?.id, 
       theme: "dark",
-      memberId: 1
+      userId: 1
      },
   });*/
   /*

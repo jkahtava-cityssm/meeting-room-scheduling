@@ -11,9 +11,9 @@ export async function POST(req: Request) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate } = await req.json();
+  const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate, userId } = await req.json();
 
-  if (!title || (!description && description !== "") || !startDate || !endDate || !roomId) {
+  if (!title || (!description && description !== "") || !startDate || !endDate || !roomId || !userId) {
     return BadRequestMessage();
   }
 
@@ -26,7 +26,16 @@ export async function POST(req: Request) {
   }
 
   const event = await prisma.event.create({
-    data: { title, description, startDate, endDate, roomId, recurrenceId: recurrence?.recurrenceId },
+    data: {
+      title,
+      description,
+      startDate,
+      endDate,
+      roomId,
+      recurrenceId: recurrence ? recurrence.recurrenceId : null,
+      statusId: 1,
+      userId,
+    },
     include: { room: true, recurrence: true },
   });
 
@@ -56,7 +65,7 @@ export async function PUT(req: Request) {
     eventData.startDate === undefined ||
     eventData.endDate === undefined ||
     eventData.roomId === undefined ||
-    eventData.memberId === undefined
+    eventData.userId === undefined
   ) {
     return BadRequestMessage();
   }
@@ -67,7 +76,7 @@ export async function PUT(req: Request) {
   ) {
     return BadRequestMessage();
   }
-  const { eventId, title, description, startDate, endDate, roomId, recurrenceId, memberId } = eventData;
+  const { eventId, title, description, startDate, endDate, roomId, recurrenceId, userId } = eventData;
   const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
 
   let recurrence = null;
@@ -96,7 +105,7 @@ export async function PUT(req: Request) {
       roomId,
       recurrenceId: recurrence ? recurrence.recurrenceId : null,
       statusId: 1,
-      memberId,
+      userId,
     },
     where: { eventId: eventId },
     update: {
@@ -107,7 +116,7 @@ export async function PUT(req: Request) {
       roomId,
       recurrenceId: recurrence ? recurrence.recurrenceId : null,
       statusId: 1,
-      memberId,
+      userId,
     },
     include: { room: true, recurrence: true },
   });

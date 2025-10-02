@@ -56,8 +56,6 @@ export default function EventDrawer({
     },
   ];
 
-  console.log(creationDate);
-
   return (
     <>
       <MultiStepForm creationDate={creationDate} formSteps={checkoutSteps} event={event}>
