@@ -1,20 +1,14 @@
 "use client";
-import { IEventForm, UpdateEventForm } from "@/components/event-drawer/dialog-event-form-step-1";
-import { useRooms } from "@/hooks/use-rooms";
+
+import { useRoomsQuery } from "@/services/rooms";
 
 export default function EditEvent({ id }: { id: number }) {
   const event = 0;
-  const { isLoading: isRoomLoading, rooms } = useRooms();
+  const { isPending, error, data, isFetching } = useRoomsQuery(true);
 
   return (
     <div>
-      <UpdateEventForm
-        isLoading={isRoomLoading}
-        rooms={rooms}
-        onSubmit={function (values: IEventForm): Promise<void> {
-          throw new Error("Function not implemented.");
-        }}
-      ></UpdateEventForm>
+      <div> NOT IMPLEMENTED </div>
     </div>
   );
 }
