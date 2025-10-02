@@ -23,8 +23,8 @@ export const SRecurrence = z.object({
   updatedAt: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
 });
 
-export const SMember = z.object({
-  memberId: z.number(),
+export const SUser = z.object({
+  userId: z.number(),
   name: z.string(),
   email: z.string(),
 });
@@ -36,7 +36,7 @@ export const SMultiDay = z.object({
 export const SEvent = z.object({
   eventId: z.number(),
   roomId: z.number().gt(0, "Room is required"),
-  memberId: z.number().nullable().optional(),
+  userId: z.number().nullable().optional(),
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
   startDate: z.coerce.date({

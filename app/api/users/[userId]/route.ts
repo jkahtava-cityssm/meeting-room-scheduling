@@ -1,8 +1,6 @@
 import { prisma } from "@/prisma";
 
-import { NextRequest, NextResponse } from "next/server";
-
-import { UTCDate } from "@date-fns/utc";
+import { NextRequest } from "next/server";
 
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 
@@ -17,9 +15,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
     return BadRequestMessage();
   }
 
-  const member = await prisma.member.findFirst({
+  const user = await prisma.user.findFirst({
     include: {
-      memberRole: {
+      userRole: {
         include: {
           role: {
             include: { roleResourceAction: { include: { resource: true, action: true } } },
@@ -27,23 +25,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
         },
       },
     },
-    where: { userId: userId },
+    where: { id: Number(userId) },
   });
 
   const roles =
-    member?.memberRole.map((member) => {
+    user?.userRole.map((userRole) => {
       return {
-        name: member.role.name,
-        roleId: member.role.roleId,
-        permissions: member.role.roleResourceAction.map((permission) => {
+        name: userRole.role.name,
+        roleId: userRole.role.roleId,
+        permissions: userRole.role.roleResourceAction.map((permission) => {
           return { permit: permission.permit, action: permission.action.name, resource: permission.resource.name };
         }),
       };
     }) || [];
 
-  if (!member) {
+  if (!user) {
     return InternalServerErrorMessage();
   }
 
-  return SuccessMessage("Member Found", { memberId: member.memberId, roles: roles });
+  return SuccessMessage("User Found", { userId: user.id, roles: roles });
 }

@@ -23,7 +23,7 @@ import { combineDateTime } from "@/lib/helpers";
 import { formatDuration, intervalToDuration } from "date-fns";
 import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { FormStatus } from "./types";
-import { useMembersQuery } from "@/services/members";
+import { useUsersQuery } from "@/services/users";
 
 export const Step1 = ({ status }: { status: FormStatus }) => {
   const {
@@ -64,11 +64,11 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
   const { setIgnoreLastStep } = useMultiStepForm();
 
   const { data: rooms } = useRoomsQuery(false);
-  const { data: members } = useMembersQuery();
+  const { data: users } = useUsersQuery();
 
-  const memberList = members
-    ? members.map((member) => {
-        return { key: String(member.memberId), label: member.name, value: String(member.memberId) };
+  const userList = users
+    ? users.map((user) => {
+        return { key: String(user.userId), label: user.name, value: String(user.userId) };
       })
     : [];
 
@@ -185,26 +185,26 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
 
           <FormField
             control={control}
-            name="memberId"
+            name="userId"
             render={({ field, fieldState }) => (
               <FormItem className="flex flex-col">
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="memberId">Requesting Member</FormLabel>
+                  <FormLabel htmlFor="userId">Requesting User</FormLabel>
                 )}
                 <ComboBox
                   value={field.value}
-                  list={memberList}
-                  noResultText={"No Member Found"}
-                  searchText={"Search Member"}
+                  list={userList}
+                  noResultText={"No User Found"}
+                  searchText={"Search User"}
                   onSelect={(value: string) => field.onChange(value)}
                 >
                   <FormControl>
                     <ComboBoxTrigger
                       disabled={isReadOnly}
                       value={field.value}
-                      list={memberList}
+                      list={userList}
                       placeholderText={"Select Member"}
                     ></ComboBoxTrigger>
                   </FormControl>

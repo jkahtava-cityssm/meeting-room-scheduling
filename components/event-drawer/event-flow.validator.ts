@@ -237,7 +237,7 @@ export const step1Schema = z
         message: "Please select a Room",
       }
     ),
-    memberId: z.string().refine(
+    userId: z.string().refine(
       (value) => {
         return value !== "" && !isNaN(Number(value)) && Number(value) > 0;
       },
@@ -318,7 +318,7 @@ export const eventObject = z.object({
     .transform((val) => Number(val))
     .optional(),
   roomId: z.string().transform((val) => Number(val)),
-  memberId: z.string().transform((val) => Number(val)),
+  userId: z.string().transform((val) => Number(val)),
   startDate: z.date(),
   endDate: z.date(),
   title: z.string(),
@@ -351,7 +351,7 @@ export const defaultValues = (creationDate?: Date): CombinedSchema => {
   const SEventFormDefaults = {
     eventId: "0",
     roomId: "",
-    memberId: "",
+    userId: "",
     title: "",
     description: "",
     startDate: combineDateTime(startDateTime, startDateTime),
@@ -404,7 +404,7 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
   const SEventFormDefaults: z.infer<typeof step1Schema> = {
     eventId: String(event.eventId),
     roomId: String(event.roomId),
-    memberId: event.memberId ? String(event.memberId) : "",
+    userId: event.userId ? String(event.userId) : "",
     title: event.title,
     description: event.description ? event.description : "",
     startDate: combineDateTime(event.startDate, event.startDate),
