@@ -7,21 +7,23 @@ import { filterEventsByRoom } from "@/lib/helpers";
 import z from "zod/v4";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
-self.onmessage = (event: MessageEvent<IYearProcessData>) => {
+self.onmessage = async (event: MessageEvent<IYearProcessData>) => {
   if (event.data) {
-    const result = formatYearData(event.data);
+    const result = await formatYearData(event.data);
     self.postMessage(result);
   }
 };
 
-function formatYearData(yearData: IYearProcessData): IYearResponseData {
+async function formatYearData(yearData: IYearProcessData): Promise<IYearResponseData> {
   const startDate: Date = startOfYear(yearData.selectedDate);
   const endDate: Date = endOfYear(yearData.selectedDate);
 
-  const combinedEvents: IEvent[] = [
-    ...generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, { from: 0, to: 24 }),
-    ...generateRecurringEventsInPeriod(yearData.eventList, startDate, endDate),
-  ];
+  const [multiDayEvents, recurringEvents] = await Promise.all([
+    Promise.resolve(generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, { from: 0, to: 24 })),
+    Promise.resolve(generateRecurringEventsInPeriod(yearData.eventList, startDate, endDate)),
+  ]);
+
+  const combinedEvents: IEvent[] = [...multiDayEvents, ...recurringEvents];
 
   const events = z.array(SEvent).parse(combinedEvents);
 

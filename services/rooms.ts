@@ -16,17 +16,18 @@ export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolea
   useQuery({
     queryKey: ["rooms", includeAllOption ? "all" : "existing"],
     queryFn: async () =>
-      fetchGET("/api/rooms").then((data) => {
+      fetchGET("/api/rooms").then((result) => {
         if (includeAllOption) {
-          data.unshift(AllRooms);
+          result.data.unshift(AllRooms);
         }
 
-        const result = z.array(SRoom).safeParse(data);
+        const parsedResult = z.array(SRoom).safeParse(result.data);
 
-        if (!result.success) throw new Error("Invalid event data");
+        if (!parsedResult.success) throw new Error("Invalid event data");
 
-        return result.data;
+        return parsedResult.data;
       }),
     enabled: enabled,
+    //staleTime: 0,
     staleTime: 1000 * 60 * 60, // 1 hour
   });

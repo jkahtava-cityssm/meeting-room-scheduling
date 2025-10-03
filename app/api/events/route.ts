@@ -1,6 +1,6 @@
 import { prisma } from "@/prisma";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { UTCDate } from "@date-fns/utc";
 
@@ -162,5 +162,5 @@ export async function GET(req: NextRequest) {
     return InternalServerErrorMessage();
   }
 
-  return NextResponse.json(events);
+  return SuccessMessage("Collected Events", events);
 }

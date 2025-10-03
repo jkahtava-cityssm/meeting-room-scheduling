@@ -1,24 +1,8 @@
+import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { prisma } from "@/prisma";
-import { endOfYear, formatDate, parseISO, startOfYear } from "date-fns";
-import { Star } from "lucide-react";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { NextRequest, NextResponse } from "next/server";
-import { start } from "repl";
+import { parseISO } from "date-fns";
 
-async function CreatedMessage(data: object) {
-  return NextResponse.json({ message: "Created Recurrence", data: data }, { status: 201 });
-}
-async function UpdatedMessage() {
-  return NextResponse.json({ message: "Updated Event" }, { status: 200 });
-}
-
-async function InternalServerErrorMessage(details?: string) {
-  return NextResponse.json({ error: "Internal Server Error" + details && ": " + details }, { status: 500 });
-}
-
-async function BadRequestMessage() {
-  return NextResponse.json({ error: "Bad Request" }, { status: 400 });
-}
+import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   if (!process.env.DATABASE_URL) {
@@ -47,7 +31,7 @@ export async function GET(req: NextRequest) {
     return InternalServerErrorMessage();
   }
 
-  return NextResponse.json(events);
+  return SuccessMessage("Collected Events", events);
 }
 
 export async function POST(req: Request) {
@@ -69,5 +53,5 @@ export async function POST(req: Request) {
     InternalServerErrorMessage();
   }
 
-  return CreatedMessage(result);
+  return CreatedMessage("Created Reccurrence", result);
 }
