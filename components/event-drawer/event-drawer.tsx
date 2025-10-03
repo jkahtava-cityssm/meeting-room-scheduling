@@ -7,7 +7,7 @@ import { Step2 } from "./step2";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEventQuery } from "@/services/events";
 import z, { ZodType, ZodObject, ZodRawShape } from "zod/v4";
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 //type FieldKeys = keyof typeof step1Schema.shape;
 
@@ -56,9 +56,15 @@ export default function EventDrawer({
     },
   ];
 
+  //const events = z.array(SEvent).parse(event);
+
   return (
     <>
-      <MultiStepForm creationDate={creationDate} formSteps={checkoutSteps} event={event}>
+      <MultiStepForm
+        creationDate={creationDate}
+        formSteps={checkoutSteps}
+        event={event ? SEvent.parse(event) : undefined}
+      >
         {children}
       </MultiStepForm>
     </>

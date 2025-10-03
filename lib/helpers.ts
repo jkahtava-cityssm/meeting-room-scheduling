@@ -25,6 +25,7 @@ import {
   getDaysInMonth,
   intervalToDuration,
   formatDuration,
+  isDate,
 } from "date-fns";
 
 import type { ICalendarCell } from "@/lib/interfaces";
@@ -258,7 +259,8 @@ export function roundToPrecision(value: number, precision: number) {
 }
 
 export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHours) {
-  const dayIndex = day.getDay() as keyof typeof workingHours;
+  const parsedDay = isDate(day) ? day : new Date(day);
+  const dayIndex = parsedDay.getDay() as keyof typeof workingHours;
   const dayHours = workingHours[dayIndex];
   return hour >= dayHours.from && hour < dayHours.to;
 }
@@ -392,7 +394,9 @@ export const getDurationText = (startDate: Date, startTime: Date, endDate: Date,
 };
 
 export const combineDateTime = (dateField: Date, timeField: Date) => {
-  return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
+  const checkDate = isDate(dateField) ? dateField : new Date(dateField);
+  const checkTime = isDate(timeField) ? timeField : new Date(timeField);
+  return new Date(checkDate.setHours(checkTime.getHours(), checkTime.getMinutes()));
 };
 
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
