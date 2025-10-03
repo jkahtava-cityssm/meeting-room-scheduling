@@ -3,12 +3,15 @@ CREATE TABLE "user" (
     "user_id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "email_verified" BOOLEAN NOT NULL,
+    "email_verified" BOOLEAN NOT NULL DEFAULT FALSE,
     "image" TEXT,
+    "employee_number" TEXT,
+    "employee_active" BOOLEAN NOT NULL DEFAULT TRUE,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "user_pkey" PRIMARY KEY ("user_id")
+    CONSTRAINT "user_pkey" PRIMARY KEY ("user_id"),
+    CONSTRAINT "email" UNIQUE ("email")
 );
 
 -- CreateTable

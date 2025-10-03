@@ -9,26 +9,35 @@ import {
   areIntervalsOverlapping,
   differenceInMinutes,
   endOfWeek,
+  format,
   isSameDay,
   isToday,
   startOfWeek,
 } from "date-fns";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
+//event: MessageEvent<IWeekProcessData>
+self.onmessage = async (e) => {
+  if (e.data) {
+    const buffer = e.data;
+    const decoder = new TextDecoder();
+    const json = decoder.decode(buffer);
+    const data = JSON.parse(json);
 
-self.onmessage = (event: MessageEvent<IWeekProcessData>) => {
-  if (event.data) {
-    const result = processWeekEvents(event.data);
+    //const result = processWeekEvents(event.data);
+    const result = await processWeekEvents_2(data);
+
     self.postMessage(result);
   }
 };
 
 function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
-  const startDate: Date = startOfWeek(weekData.selectedDate);
-  const endDate: Date = endOfWeek(weekData.selectedDate);
+  console.time("processWeekEvents");
+  const weekStart: Date = startOfWeek(weekData.selectedDate);
+  const weekEnd: Date = endOfWeek(weekData.selectedDate);
 
   const combinedEvents: IEvent[] = [
-    ...generateMultiDayEventsInPeriod(weekData.events, startDate, endDate, { from: 0, to: 24 }),
-    ...generateRecurringEventsInPeriod(weekData.events, startDate, endDate),
+    ...generateMultiDayEventsInPeriod(weekData.events, weekStart, weekEnd, { from: 0, to: 24 }),
+    ...generateRecurringEventsInPeriod(weekData.events, weekStart, weekEnd),
   ];
 
   const events = z.array(SEvent).parse(combinedEvents);
@@ -37,7 +46,6 @@ function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
 
   filteredEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
-  const weekStart = startOfWeek(weekData.selectedDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(weekData.visibleHours, filteredEvents);
@@ -105,6 +113,89 @@ function processWeekEvents(weekData: IWeekProcessData): IWeekResponseData {
 
     dayViews.push(newDay);
   });
+  console.timeEnd("processWeekEvents");
+  return { dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours };
+}
 
+async function processWeekEvents_2(weekData: IWeekProcessData): Promise<IWeekResponseData> {
+  console.time("processWeekEvents_2");
+  const weekStart: Date = startOfWeek(weekData.selectedDate);
+  const weekEnd: Date = endOfWeek(weekData.selectedDate);
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  const [multiDayEvents, recurringEvents] = await Promise.all([
+    Promise.resolve(generateMultiDayEventsInPeriod(weekData.events, weekStart, weekEnd, { from: 0, to: 24 })),
+    Promise.resolve(generateRecurringEventsInPeriod(weekData.events, weekStart, weekEnd)),
+  ]);
+
+  const combinedEvents: IEvent[] = [...multiDayEvents, ...recurringEvents];
+
+  const events = z.array(SEvent).parse(combinedEvents);
+
+  const filteredEvents: IEvent[] = filterEventsByRoom(events, weekData.selectedRoomId).sort(
+    (a, b) => a.startDate.getTime() - b.startDate.getTime()
+  );
+
+  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(weekData.visibleHours, filteredEvents);
+
+  const eventsByDate = filteredEvents.reduce((acc, event) => {
+    const key = format(event.startDate, "yyyy-MM-dd");
+    if (!acc.has(key)) acc.set(key, []);
+    acc.get(key)!.push(event);
+    return acc;
+  }, new Map<string, IEvent[]>());
+
+  const dayViews: IDayView[] = weekDays.map((currentDate) => {
+    const key = format(currentDate, "yyyy-MM-dd");
+    const dailyEvents = eventsByDate.get(key) || [];
+
+    const groupedEvents = groupEvents(dailyEvents);
+
+    const eventBlocks: IEventBlock[] = groupedEvents.flatMap((group, groupIndex) =>
+      group.map((event, eventIndex) => {
+        const hasOverlap = groupedEvents.some(
+          (otherGroup, otherIndex) =>
+            otherIndex !== groupIndex &&
+            otherGroup.some((otherEvent) =>
+              areIntervalsOverlapping(
+                {
+                  start: event.startDate,
+                  end: event.endDate,
+                },
+                {
+                  start: otherEvent.startDate,
+                  end: otherEvent.endDate,
+                }
+              )
+            )
+        );
+
+        const blockStyle = calculateEventBlockStyle(event, currentDate, groupIndex, groupedEvents.length, hasOverlap, {
+          from: earliestEventHour,
+          to: latestEventHour,
+        });
+
+        const durationInMinutes = differenceInMinutes(event.endDate, event.startDate);
+        const heightInPixels = (durationInMinutes / 60) * weekData.pixelHeight - 8;
+
+        return {
+          groupIndex: groupIndex,
+          eventIndex: eventIndex,
+          eventStyle: blockStyle,
+          eventHeight: heightInPixels,
+          event: event,
+        };
+      })
+    );
+
+    return {
+      day: currentDate.getDate(),
+      dayDate: currentDate,
+      isToday: isToday(currentDate),
+      eventBlocks: eventBlocks,
+    };
+  });
+
+  console.timeEnd("processWeekEvents_2");
   return { dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours };
 }

@@ -83,11 +83,13 @@ export function CalendarWeekView({ date }: { date: Date }) {
     const newWorker = new Worker(new URL("./webworkers/calendar-week-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IWeekResponseData>) => {
+      console.timeEnd("worker");
       setDayViews(event.data.dayViews);
       setHours(event.data.hours);
       setTotalEvents(event.data.totalEvents);
       setIsHeaderLoading(false);
       setLoading(false);
+      //console.timeEnd("worker");
     };
 
     workerRef.current = newWorker;
@@ -116,8 +118,14 @@ export function CalendarWeekView({ date }: { date: Date }) {
       };
       //setLoading(true);
       setIsHeaderLoading(true);
+      //console.time("worker");
 
-      workerRef.current.postMessage(data);
+      const encoder = new TextEncoder();
+      const serialized = encoder.encode(JSON.stringify(data)); // weekDataResult is the output of processWeekEvents_2
+      const buffer = serialized.buffer;
+
+      workerRef.current.postMessage(buffer, [buffer]);
+      //workerRef.current.postMessage(data);
     }
   }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
