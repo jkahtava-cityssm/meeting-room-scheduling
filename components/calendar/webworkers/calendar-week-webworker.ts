@@ -1,3 +1,4 @@
+/// <reference lib="webworker" />
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { z } from "zod/v4";
@@ -16,9 +17,9 @@ import {
 } from "date-fns";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 //event: MessageEvent<IWeekProcessData>
-self.onmessage = async (e) => {
-  if (e.data) {
-    const buffer = e.data;
+self.onmessage = async (event) => {
+  if (event.data) {
+    const buffer = event.data;
     const decoder = new TextDecoder();
     const json = decoder.decode(buffer);
     const data = JSON.parse(json);
@@ -26,7 +27,10 @@ self.onmessage = async (e) => {
     //const result = processWeekEvents(event.data);
     const result = await processWeekEvents_2(data);
 
-    self.postMessage(result);
+    const encoder = new TextEncoder();
+    const resultBuffer = encoder.encode(JSON.stringify(result)).buffer;
+
+    self.postMessage(resultBuffer, [resultBuffer]);
   }
 };
 
