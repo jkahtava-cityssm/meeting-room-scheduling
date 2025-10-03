@@ -8,6 +8,7 @@ export async function GET() {
 
   const users = await prisma.user.findMany({
     select: { id: true, name: true, email: true },
+    where: { employeeActive: true },
   });
 
   if (!users) {

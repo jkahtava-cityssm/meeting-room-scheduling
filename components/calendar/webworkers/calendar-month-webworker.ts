@@ -8,26 +8,28 @@ import { uniq, uniqBy } from "lodash";
 import { filterEventsByRoom, getDaysInView } from "../../../lib/helpers";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
-self.onmessage = (event: MessageEvent<IMonthProcessData>) => {
+self.onmessage = async (event: MessageEvent<IMonthProcessData>) => {
   if (event.data) {
-    const result = processMonthEvents(event.data);
+    const result = await processMonthEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function processMonthEvents(monthData: IMonthProcessData): IMonthResponseData {
+async function processMonthEvents(monthData: IMonthProcessData): Promise<IMonthResponseData> {
   const { startDate: monthStart, endDate: monthEnd } = getDaysInView(monthData.selectedDate);
 
-  const combinedEvents: IEvent[] = [
-    ...generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, { from: 0, to: 24 }),
-    ...generateRecurringEventsInPeriod(monthData.events, monthStart, monthEnd),
-  ];
+  const [multiDayEvents, recurringEvents] = await Promise.all([
+    generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, { from: 0, to: 24 }),
+    generateRecurringEventsInPeriod(monthData.events, monthStart, monthEnd),
+  ]);
+
+  const combinedEvents: IEvent[] = [...multiDayEvents, ...recurringEvents];
 
   const events = z.array(SEvent).parse(combinedEvents);
 
-  const filteredEvents: IEvent[] = filterEventsByRoom(events, monthData.selectedRoomId);
-
-  filteredEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const filteredEvents: IEvent[] = filterEventsByRoom(events, monthData.selectedRoomId).sort(
+    (a, b) => a.startDate.getTime() - b.startDate.getTime()
+  );
 
   const packedEvents = packEvents(filteredEvents, monthStart, monthEnd, monthData.multiDayEventsAtTop);
 

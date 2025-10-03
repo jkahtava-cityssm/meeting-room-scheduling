@@ -8,21 +8,23 @@ import { areIntervalsOverlapping, differenceInMinutes, endOfDay, isSameDay, isTo
 import { IDayProcessData, IDayResponseData, IDayView, IEventBlock } from "../calendar-day-view";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
-self.onmessage = (event: MessageEvent<IDayProcessData>) => {
+self.onmessage = async (event: MessageEvent<IDayProcessData>) => {
   if (event.data) {
-    const result = processDayEvents(event.data);
+    const result = await processDayEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function processDayEvents(dayData: IDayProcessData): IDayResponseData {
+async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseData> {
   const startDate: Date = startOfDay(dayData.selectedDate);
   const endDate: Date = endOfDay(dayData.selectedDate);
 
-  const combinedEvents: IEvent[] = [
-    ...generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, { from: 0, to: 24 }),
-    ...generateRecurringEventsInPeriod(dayData.events, startDate, endDate),
-  ];
+  const [multiDayEvents, recurringEvents] = await Promise.all([
+    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, { from: 0, to: 24 })),
+    Promise.resolve(generateRecurringEventsInPeriod(dayData.events, startDate, endDate)),
+  ]);
+
+  const combinedEvents: IEvent[] = [...multiDayEvents, ...recurringEvents];
 
   const events = z.array(SEvent).parse(combinedEvents);
 

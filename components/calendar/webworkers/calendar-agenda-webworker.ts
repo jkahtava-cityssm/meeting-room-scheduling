@@ -7,22 +7,23 @@ import { IAgendaProcessData, IAgendaResponseData } from "../calendar-agenda-view
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 import { endOfDay, startOfDay } from "date-fns";
 
-self.onmessage = (event: MessageEvent<IAgendaProcessData>) => {
+self.onmessage = async (event: MessageEvent<IAgendaProcessData>) => {
   if (event.data) {
-    const result = processAgendaEvents(event.data);
+    const result = await processAgendaEvents(event.data);
     self.postMessage(result);
   }
 };
 
-function processAgendaEvents(dayData: IAgendaProcessData): IAgendaResponseData {
+async function processAgendaEvents(dayData: IAgendaProcessData): Promise<IAgendaResponseData> {
   const startDate: Date = startOfDay(dayData.selectedDate);
   const endDate: Date = endOfDay(dayData.selectedDate);
 
-  const combinedEvents: IEvent[] = [
-    ...generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, { from: 0, to: 24 }),
-    ...generateRecurringEventsInPeriod(dayData.events, startDate, endDate),
-  ];
+  const [multiDayEvents, recurringEvents] = await Promise.all([
+    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, { from: 0, to: 24 })),
+    Promise.resolve(generateRecurringEventsInPeriod(dayData.events, startDate, endDate)),
+  ]);
 
+  const combinedEvents: IEvent[] = [...multiDayEvents, ...recurringEvents];
   const events = z.array(SEvent).parse(combinedEvents);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, dayData.selectedRoomId);

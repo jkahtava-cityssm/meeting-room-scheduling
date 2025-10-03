@@ -14,6 +14,12 @@ export const useEventsQuery = (startDate: Date, endDate: Date, enabled: boolean 
       fetchGET("/api/events", {
         startdate: formatDate(startDate),
         enddate: formatDate(endDate),
+      }).then((result) => {
+        const parsedResult = z.array(SEvent).safeParse(result.data);
+
+        if (!parsedResult.success) throw new Error("Invalid event data");
+
+        return parsedResult.data;
       }),
     enabled: enabled,
   });
