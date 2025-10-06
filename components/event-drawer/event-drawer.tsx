@@ -1,8 +1,8 @@
 import { HomeIcon, UserIcon } from "lucide-react";
 import { FieldKeys, FormStep } from "./types";
 import { Step1 } from "./step1";
-import { CombinedSchema, step1Schema, step2Schema } from "./event-flow.validator";
-import { MultiStepForm } from "./stepped-form";
+import { CombinedSchema, step1Schema, step2Schema } from "./event-drawer.validator";
+import { MultiStepForm } from "./multi-step-form";
 import { Step2 } from "./step2";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEventQuery } from "@/services/events";
@@ -29,10 +29,12 @@ const getDefaultValues = (object: object | undefined, schema: ZodObject<ZodRawSh
 export default function EventDrawer({
   creationDate,
   event,
+  userId,
   children,
 }: {
   creationDate?: Date;
   event?: IEvent;
+  userId?: string;
   children: React.ReactNode;
 }) {
   //console.log(Object.keys(step1Schema.shape));
@@ -64,6 +66,7 @@ export default function EventDrawer({
         creationDate={creationDate}
         formSteps={checkoutSteps}
         event={event ? SEvent.parse(event) : undefined}
+        userId={userId}
       >
         {children}
       </MultiStepForm>

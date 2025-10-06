@@ -27,9 +27,9 @@ import { SingleDayPicker } from "../ui/single-day-picker";
 
 import { RRule, rrulestr } from "rrule";
 import { differenceInYears, endOfDay, format, startOfDay } from "date-fns";
-import { step2Schema } from "./event-flow.validator";
-import { useMultiStepForm } from "./stepped-form";
-import { RRulePreview } from "./step2-rrule-preview";
+import { step2Schema } from "./event-drawer.validator";
+import { useMultiStepForm } from "./multi-step-form";
+import { RRulePreview } from "./rrule-preview";
 import { FormStatus } from "./types";
 
 /**

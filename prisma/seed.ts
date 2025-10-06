@@ -434,7 +434,8 @@ async function createLinkedServer() {
 
   await prismaAdmin.$executeRawUnsafe(`CREATE FOREIGN TABLE IF NOT EXISTS public.avanti_z_ex_emp_pers (
                                                     employee_number text,
-                                                    employee_name text,
+                                                    first_name text,
+                                                    last_name text,
                                                     work_email text,
                                                     avanti_user_id text
                                                   )
@@ -465,7 +466,7 @@ async function createLinkedServer() {
     AS $BODY$
     INSERT INTO public.user
     (name, email, image, employee_number,employee_active,created_at, updated_at)
-    SELECT employee_name,
+    SELECT employee_full_name,
         work_email,
         image,
         employee_number,
@@ -474,17 +475,17 @@ async function createLinkedServer() {
         updated_at
     FROM
     (
-    SELECT 	employee_name,
+    SELECT 	employee_full_name,
         work_email,
         image,
         employee_number,
         created_at,
         updated_at,
         CASE WHEN active = 'Yes' THEN true ELSE false END AS employee_active,
-        ROW_NUMBER() OVER (PARTITION BY work_email ORDER BY employee_name,active DESC) AS RANK
+        ROW_NUMBER() OVER (PARTITION BY work_email ORDER BY employee_full_name,active DESC) AS RANK
     FROM
     (
-      SELECT  avanti_z_ex_emp_pers.employee_name,
+      SELECT  INITCAP(avanti_z_ex_emp_pers.last_name) || ', ' || INITCAP(avanti_z_ex_emp_pers.first_name) AS employee_full_name,
         CASE WHEN lower(avanti_z_ex_emp_pers.avanti_user_id) || '@cityssm.on.ca' <> avanti_z_ex_emp_pers.work_email THEN lower(avanti_z_ex_emp_pers.avanti_user_id) || '@cityssm.on.ca'
         ELSE avanti_z_ex_emp_pers.work_email
         END AS work_email,
@@ -531,26 +532,42 @@ async function main() {
   const roleAdmin = await FindCreateRole("Admin");
 
   const resourceEvent = await FindCreateResource("Event");
+  const resourceAPI = await FindCreateResource("API");
+  const resourceImpersonate = await FindCreateResource("Impersonate");
 
-  const userPermissionSet = await FindCreatePermissionSet(roleUser, actions, resourceEvent, {
+  await FindCreatePermissionSet(roleUser, actions, resourceEvent, {
     create: false,
     read: true,
     update: false,
     delete: false,
   });
 
-  const clerkPermissionSet = await FindCreatePermissionSet(roleClerk, actions, resourceEvent, {
+  await FindCreatePermissionSet(roleClerk, actions, resourceEvent, {
     create: false,
     read: true,
     update: false,
     delete: false,
   });
 
-  const adminPermissionSet = await FindCreatePermissionSet(roleAdmin, actions, resourceEvent, {
-    create: false,
+  await FindCreatePermissionSet(roleAdmin, actions, resourceEvent, {
+    create: true,
     read: true,
-    update: false,
-    delete: false,
+    update: true,
+    delete: true,
+  });
+
+  await FindCreatePermissionSet(roleAdmin, actions, resourceAPI, {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
+  });
+
+  await FindCreatePermissionSet(roleAdmin, actions, resourceImpersonate, {
+    create: true,
+    read: true,
+    update: true,
+    delete: true,
   });
 
   const roomList: {

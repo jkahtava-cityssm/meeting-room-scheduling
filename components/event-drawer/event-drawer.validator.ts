@@ -1,6 +1,6 @@
-import { IEvent, SEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas/calendar";
 import { addMinutes, addYears, differenceInYears, endOfDay, format, set, startOfDay } from "date-fns";
-import { z, ZodObject, ZodRawShape } from "zod/v4";
+import { z } from "zod/v4";
 import { getDurationText } from "./step1";
 import { RRule, rrulestr } from "rrule";
 import { combineDateTime } from "@/lib/helpers";
@@ -344,14 +344,14 @@ export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
 
 export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
 
-export const defaultValues = (creationDate?: Date): CombinedSchema => {
+export const defaultValues = (creationDate?: Date, userId?: string): CombinedSchema => {
   const startDateTime = creationDate ? creationDate : new Date();
   const endDateTime = creationDate ? addMinutes(creationDate, 30) : addMinutes(new Date(), 30);
 
   const SEventFormDefaults = {
     eventId: "0",
     roomId: "",
-    userId: "",
+    userId: userId ? userId : "",
     title: "",
     description: "",
     startDate: combineDateTime(startDateTime, startDateTime),

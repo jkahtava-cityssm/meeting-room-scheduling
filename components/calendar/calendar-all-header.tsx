@@ -11,11 +11,19 @@ import { mergeDateWithTime, navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
 
-import { hasClientPermission, useSession } from "@/lib/auth-client";
 import EventDrawer from "../event-drawer/event-drawer";
+import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
 
-export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
-  const { data: session, isPending } = useSession();
+export function CalendarHeader({
+  view,
+  selectedDate,
+  userId,
+}: {
+  view: TCalendarView;
+  selectedDate: Date;
+  userId?: string;
+}) {
+  const { session, isPending } = useClientSession();
 
   const { setSelectedRoomId } = useCalendar();
   const { push } = useRouter();
@@ -124,8 +132,8 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
             </Button>
           </AddEventDialog>*/}
 
-          {!hasClientPermission(session, "event", "create") && !isPending && (
-            <EventDrawer>
+          {!useClientPermission("event", "create") && !isPending && (
+            <EventDrawer userId={userId}>
               <Button className="w-full sm:w-auto">
                 <Plus />
                 Add Event

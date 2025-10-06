@@ -1,7 +1,7 @@
 import { ZodType } from "zod/v4";
 
 import { LucideIcon } from "lucide-react";
-import { CombinedSchema } from "./event-flow.validator";
+import { CombinedSchema } from "./event-drawer.validator";
 
 export type FieldKeys = keyof CombinedSchema;
 
@@ -21,6 +21,7 @@ export interface MultiStepFormContextProps {
   isFirstStep: boolean;
   isLastStep: boolean;
   ignoreLastStep: boolean;
+  userId?: string;
   setIgnoreLastStep: (value: boolean) => void;
   nextStep: () => void;
   previousStep: () => void;

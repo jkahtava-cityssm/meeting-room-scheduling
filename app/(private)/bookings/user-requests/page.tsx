@@ -4,7 +4,7 @@ import { EventBlock } from "@/components/calendar/calendar-day-event-block";
 import { IEventBlock } from "@/components/calendar/calendar-day-view";
 import { CalendarDayViewSkeleton } from "@/components/calendar/skeleton-calendar-day-view";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSession } from "@/lib/auth-client";
+import { useClientSession } from "@/hooks/use-client-auth";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useEventsQuery } from "@/services/events";
 import { useUserEventsQuery } from "@/services/users";
@@ -22,7 +22,7 @@ export default function Home() {
     eventHeight: 100,
   };
 
-  const { data: session, isPending } = useSession();
+  const { session, isPending } = useClientSession();
 
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
   const { data: events } = useUserEventsQuery(session?.user.id);

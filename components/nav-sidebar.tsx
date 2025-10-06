@@ -6,10 +6,9 @@ import Image from "next/image";
 
 import { Calendar, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavMain } from "@/components/nav-sidebar-contents";
+import { NavSecondary } from "@/components/nav-sidebar-footer";
+import { NavUser } from "@/components/nav-header-user";
 import {
   Sidebar,
   SidebarContent,
@@ -19,9 +18,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import { navigateURL } from "@/lib/helpers";
+import { Skeleton } from "./ui/skeleton";
+import { useClientSession } from "@/hooks/use-client-auth";
 
 const data = {
   user: {
@@ -54,23 +54,23 @@ const data = {
       items: [
         {
           title: "Calendar - Daily Agenda",
-          url: "/" + navigateURL(null, "agenda"),
+          url: "/calendar" + navigateURL(null, "agenda"),
         },
         {
           title: "Calendar - Day",
-          url: "/" + navigateURL(null, "day"),
+          url: "/calendar" + navigateURL(null, "day"),
         },
         {
           title: "Calendar - Week",
-          url: "/" + navigateURL(null, "week"),
+          url: "/calendar" + navigateURL(null, "week"),
         },
         {
           title: "Calendar - Month",
-          url: "/" + navigateURL(null, "month"),
+          url: "/calendar" + navigateURL(null, "month"),
         },
         {
           title: "Calendar - Year",
-          url: "/" + navigateURL(null, "year"),
+          url: "/calendar" + navigateURL(null, "year"),
         },
       ],
     },
@@ -100,6 +100,44 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { session, isPending } = useClientSession();
+  //32
+  //48 total + 8 = 64
+  //255
+  if (isPending) {
+    return (
+      <div className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
+        <div className="flex flex-col bg-sidebar border-r h-full w-full ">
+          <div className="flex min-h-0 flex-1 flex-col ">
+            <div className="flex flex-col gap-2 p-2 h-16 w-64">
+              <Skeleton className="h-full"></Skeleton>
+            </div>
+            <div className="relative flex w-full min-w-0 flex-col p-2">
+              <div className="pr-2 py-2">
+                <Skeleton className="h-4" />
+              </div>
+
+              <div className="pr-2 mb-1">
+                <Skeleton className="h-8" />
+              </div>
+              <div className="flex flex-col px-2.5 py-0.5 mx-3.5 border-l gap-1">
+                <Skeleton className="h-7" />
+                <Skeleton className="h-7" />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 p-2 h-16 w-64">
+            <Skeleton className="h-full "></Skeleton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    console.log("No session, redirecting to login");
+  }
+
   return (
     <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
       <SidebarHeader>

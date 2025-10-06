@@ -6,9 +6,10 @@
  * @param tags optional tags for cache invalidation
  * @returns fetched data as JSON
  */
-export async function fetchGET(url: string, params: object = {}, revalidate: number = 0, tags: string[] = []) {
+export async function fetchGET(url: string, params: object = {}, revalidate: number = 0, tags?: string[]) {
   const queryString = Object.entries(params)
     .map((param) => {
+      if (!param[1]) return;
       return `${param[0]}=${encodeURIComponent(param[1])}`;
     })
     .join("&");
@@ -18,7 +19,7 @@ export async function fetchGET(url: string, params: object = {}, revalidate: num
     headers: {
       "Content-Type": "application/json",
     },
-    cache: revalidate === 0 ? "no-store" : "force-cache", // Disable caching
+    //cache: revalidate === 0 ? "no-store" : "force-cache", // Disable caching
     next: {
       revalidate: revalidate, // Revalidate every 60 seconds
       tags: tags,

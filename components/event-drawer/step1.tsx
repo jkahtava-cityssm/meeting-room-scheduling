@@ -1,8 +1,8 @@
 import { useFormContext } from "react-hook-form";
 import { Input } from "../ui/input";
 import { z } from "zod/v4";
-import { useMultiStepForm } from "./stepped-form";
-import { step1Schema } from "./event-flow.validator";
+import { useMultiStepForm } from "./multi-step-form";
+import { step1Schema } from "./event-drawer.validator";
 
 import { TColors } from "@/lib/types";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
@@ -61,7 +61,7 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
     { key: "15", label: "Option 2", value: "15" },
   ];*/
 
-  const { setIgnoreLastStep } = useMultiStepForm();
+  const { setIgnoreLastStep, userId } = useMultiStepForm();
 
   const { data: rooms } = useRoomsQuery(false);
   const { data: users } = useUsersQuery();
@@ -193,16 +193,17 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
                 ) : (
                   <FormLabel htmlFor="userId">Requesting User</FormLabel>
                 )}
+
                 <ComboBox
                   value={field.value}
                   list={userList}
                   noResultText={"No User Found"}
                   searchText={"Search User"}
-                  onSelect={(value: string) => field.onChange(value)}
+                  onSelect={(value: string, key: string) => field.onChange(value)}
                 >
                   <FormControl>
                     <ComboBoxTrigger
-                      disabled={isReadOnly}
+                      disabled={isReadOnly || userId ? true : false}
                       value={field.value}
                       list={userList}
                       placeholderText={"Select Member"}

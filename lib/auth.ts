@@ -20,6 +20,7 @@ export type User = {
 };
 
 export type Role = {
+  name: string;
   permissions: Permission[];
 };
 
@@ -124,4 +125,11 @@ export function hasServerPermission(session: Session | undefined | null, resourc
   });
 
   return permission;
+}
+
+export function hasServerRole(session: Session | undefined | null, role: string) {
+  if (!session || !session.user || !session.user.roles) return false;
+  return session.user.roles.some((item) => {
+    return item.name.toLowerCase() === role.toLowerCase();
+  });
 }

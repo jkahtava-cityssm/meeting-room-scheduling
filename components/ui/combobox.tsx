@@ -36,7 +36,7 @@ export function ComboBox({
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[300px] p-0">
         <Command>
           <CommandInput placeholder={searchText} className="h-9" />
           <CommandList>
@@ -44,10 +44,10 @@ export function ComboBox({
             <CommandGroup>
               {list?.map((item) => (
                 <CommandItem
-                  value={item.value}
+                  value={item.label}
                   key={item.key}
-                  onSelect={(value) => {
-                    onSelect(value);
+                  onSelect={() => {
+                    onSelect(item.value);
                     setOpen(false);
                   }}
                 >

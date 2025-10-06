@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { addYears, format, parse } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import z from "zod/v4";
-import { step2Schema } from "./event-flow.validator";
+import { step2Schema } from "./event-drawer.validator";
 
 export function RRulePreview({
   startDate,
@@ -67,7 +67,7 @@ export function RRulePreview({
       return;
     }
 
-    const newWorker = new Worker(new URL("../event-drawer/dialog-event-form-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./rrule-preview-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (
       response: MessageEvent<{ rrule: RRule; count: number; lastDate: Date; localDates: Date[] }>

@@ -80,11 +80,11 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
 
 export function navigateURL(date: Date | null, view: TCalendarView): string {
   const path = {
-    agenda: "calendar?view=agenda",
-    year: "calendar?view=year",
-    month: "calendar?view=month",
-    week: "calendar?view=week",
-    day: "calendar?view=day",
+    agenda: "?view=agenda",
+    year: "?view=year",
+    month: "?view=month",
+    week: "?view=week",
+    day: "?view=day",
   };
 
   /*const dateParams = {
