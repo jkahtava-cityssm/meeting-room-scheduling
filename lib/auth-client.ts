@@ -27,3 +27,10 @@ export function hasClientPermission(session: Session | undefined | null, resourc
 
   return permission;
 }
+
+export function hasClientRole(session: Session | undefined | null, role: string) {
+  if (!session || !session.user || !session.user.roles) return false;
+  return session.user.roles.some((item) => {
+    return item.name.toLowerCase() === role.toLowerCase();
+  });
+}

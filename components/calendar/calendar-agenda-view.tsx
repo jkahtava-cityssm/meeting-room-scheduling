@@ -27,7 +27,7 @@ export interface IAgendaResponseData {
   sortedEvents: IEvent[];
 }
 
-export function CalendarAgendaView({ date }: { date: Date }) {
+export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
@@ -40,7 +40,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
   const endDate: Date = endOfDay(date);
   //const { data: events } = useSWR<IEvent[]>();
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

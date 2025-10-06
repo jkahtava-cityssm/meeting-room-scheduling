@@ -52,7 +52,7 @@ export interface IEventView {
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function CalendarMonthView({ date }: { date: Date }) {
+export function CalendarMonthView({ date, userId }: { date: Date; userId?: string }) {
   //const startDate: Date = startOfMonth(date);
   //const endDate: Date = endOfMonth(date);
 
@@ -70,7 +70,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );*/
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

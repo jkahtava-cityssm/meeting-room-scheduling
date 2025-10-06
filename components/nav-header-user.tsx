@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronDown, CreditCard, SunMoon } from "lucide-react";
+import { Bell, ChevronDown, CreditCard, RefreshCw, SunMoon } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,11 +16,22 @@ import { SignOutMenuItem } from "./sign-out-button";
 import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
 import { useTheme } from "next-themes";
-import { IUser } from "./site-header";
+import { IUser } from "./nav-header";
+import { Session } from "@/lib/auth-client";
+import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
+import { useClientPermission } from "@/hooks/use-client-auth";
 
-export function NavUser({ user, isPending }: { user: IUser; isPending: boolean }) {
+export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
   const { isMobile } = useSidebar();
   const { resolvedTheme, setTheme } = useTheme();
+
+  const user: IUser = {
+    name: session?.user.name ? session.user.name : undefined,
+    email: session?.user.email ? session.user.email : undefined,
+    image: session?.user.image ? session.user.image : undefined,
+  };
+
+  const canRefreshAPI = useClientPermission("API", "update");
 
   if (isPending) {
     return (
@@ -86,14 +97,7 @@ export function NavUser({ user, isPending }: { user: IUser; isPending: boolean }
                   }}
                 ></Switch>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
+              {canRefreshAPI && <RefreshMenuItem />}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
@@ -101,5 +105,25 @@ export function NavUser({ user, isPending }: { user: IUser; isPending: boolean }
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+  );
+}
+
+export default function RefreshMenuItem() {
+  const { revalidateAndInvalidate } = useRevalidateAndInvalidate();
+
+  const handleClick = async () => {
+    const result = await revalidateAndInvalidate();
+    if (result.success) {
+      console.log("Revalidated and invalidated successfully");
+    } else {
+      console.error("Error:", result.error);
+    }
+  };
+
+  return (
+    <DropdownMenuItem onClick={handleClick}>
+      <RefreshCw />
+      Refresh API Routes
+    </DropdownMenuItem>
   );
 }

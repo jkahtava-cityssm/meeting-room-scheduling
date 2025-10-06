@@ -2,12 +2,11 @@
 
 import { signOut } from "@/lib/auth-client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
 
 export function SignOutMenuItem() {
-  const router = useRouter();
   const pathname = usePathname();
   //console.log(pathname);
 
@@ -15,7 +14,7 @@ export function SignOutMenuItem() {
     signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/?callbackurl=" + pathname); // redirect to login page
+          redirect("/?callbackurl=" + pathname); // redirect to login page
         },
       },
     });

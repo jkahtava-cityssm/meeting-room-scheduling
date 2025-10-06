@@ -37,7 +37,7 @@ export interface IYearResponseData {
   monthsViews: IMonthView[];
 }
 
-export function CalendarYearView({ date }: { date: Date }) {
+export function CalendarYearView({ date, userId }: { date: Date; userId?: string }) {
   const { selectedRoomId, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
   const workerRef = useRef<Worker | null>(null);
@@ -56,7 +56,7 @@ export function CalendarYearView({ date }: { date: Date }) {
     })}`
   );*/
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
 
   /*const { data: recurringEvents } = useSWR<IEvent[]>(
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`

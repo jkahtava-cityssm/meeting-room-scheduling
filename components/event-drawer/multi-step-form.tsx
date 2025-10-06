@@ -14,7 +14,7 @@ import {
   ruleObject,
   defaultValues,
   getEventValues,
-} from "./event-flow.validator";
+} from "./event-drawer.validator";
 import { useContext } from "react";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, Sheet, SheetTrigger } from "../ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
@@ -37,47 +37,30 @@ import {
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
-/*const getDefaultValues = (schema: ZodObject<ZodRawShape>) => {
-  const schemaKeys = Object.keys(schema.shape);
-  const defaultValues: { [key: string]: string } = {};
-
-  for (const key of schemaKeys) {
-    defaultValues[key] = "";
-  }
-  type User = z.infer<typeof CombinedSchema>;
-
-  return defaultValues;
-};
-
-function getDefaults<Schema extends z.ZodObject>(schema: Schema) {
-  const t = Object.fromEntries(
-    Object.entries(schema.shape).map(([key, value]) => {
-      if (value instanceof z.ZodDefault) return [key, value.default()];
-      return [key, undefined];
-    })
-  );
-  return t;
-}
-*/
-
 export const MultiStepForm = ({
   formSteps,
   creationDate,
   event,
+  userId,
   children,
 }: {
   formSteps: FormStep[];
   creationDate?: Date;
   event?: IEvent;
+  userId?: string;
   children: React.ReactNode;
 }) => {
-  const defaultFormValues = event ? getEventValues(event) : defaultValues(creationDate);
+  const defaultFormValues = event ? getEventValues(event) : defaultValues(creationDate, userId);
 
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedEventSchema),
     defaultValues: defaultFormValues,
     mode: "onChange",
   });
+
+  //https://react-hook-form.com/docs/useform
+  //const { reset, trigger, setError, getValues } = methods;
+
   //console.log(defaultFormValues);
   const { isOpen, onClose, onOpen } = useDisclosure();
 
@@ -92,7 +75,7 @@ export const MultiStepForm = ({
   const [nextButtonDestructive, setNextButtonDestructive] = useState(false);
   const [backButtonDestructive, setBackButtonDestructive] = useState(false);
 
-  const { error, data: collectedEvent } = useEventQuery(Number(defaultFormValues["eventId"]), status === "Loading");
+  const { data: collectedEvent } = useEventQuery(Number(defaultFormValues["eventId"]), status === "Loading");
   const saveButtonEnabled =
     status === "Edit" || status === "New" || (ignoreLastStep && status !== "Read" && status !== "Loading");
   const editButtonEnabled = status === "Read" || status === "Loading";
@@ -102,18 +85,15 @@ export const MultiStepForm = ({
 
   useEffect(() => {
     if (status === "Loading" && collectedEvent) {
-      const data = methods.getValues();
-      /*currentStep.fields.forEach((fieldName) => {
-        methods.resetField(fieldName);
-      });*/
       const parsedData = getEventValues(collectedEvent);
-
       methods.reset(parsedData);
 
       setTimeout(() => {
         setStatus("Edit");
       }, 100);
     }
+    //Complains about methods.reset but it is a function and should not be included
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, collectedEvent]);
 
   const isStepValid = async (formStep: FormStep): Promise<boolean> => {
@@ -160,46 +140,6 @@ export const MultiStepForm = ({
 
       isValid = false;
     }
-    /*const isLastStep = !(currentStepIndex < formSteps.length - 1);
-
-    let isValid = false;
-
-    //if (isLastStep) {
-    //  isValid = await methods.trigger(currentStep.fields as (keyof CombinedSchema)[]);
-    //} else {
-    isValid = await methods.trigger(currentStep.fields as (keyof z.infer<typeof currentStep.validationSchema>)[]);
-    //}
-    //const isValid = await methods.trigger(currentStep.fields as (keyof z.infer<typeof CombinedSchema>)[]);
-
-    if (!isValid) {
-      return false; // Stop progression if validation fails
-    }*/
-
-    // grab values in current step and transform array to object
-    //const formValues = getFormValues<CombinedSchema>(currentStepIndex);
-
-    /* const currentStepValues = methods.getValues(currentStep.fields as (keyof CombinedSchema)[]);
-    const formValues = Object.fromEntries(
-      currentStep.fields.map((field, index) => [field, currentStepValues[index] || ""])
-    );*/
-
-    // Validate the form state against the current step's schema
-    /*if (currentStep.validationSchema) {
-      const validationResult = currentStep.validationSchema.safeParse(formValues);
-
-      if (!validationResult.success) {
-        validationResult.error.issues.forEach((err) => {
-          methods.setError(err.path.join(".") as keyof CombinedSchema, {
-            type: "manual",
-            message: err.message,
-          });
-          const property = err.path.join(".") as keyof CombinedSchema;
-          delete formValues[property];
-        });
-        methods.clearErrors(Object.keys(formValues) as (keyof CombinedSchema)[]);
-        return false; // Stop progression if schema validation fails
-      }
-    }*/
 
     return isValid;
   };
@@ -226,26 +166,7 @@ export const MultiStepForm = ({
       if (formSteps.length - 1 === currentStepIndex + 1) {
         setNextButtonDestructive(false);
       }
-
-      /*if (!isNextStepValid) {
-        setNextButtonDestructive(true);
-      } else if (nextButtonDestructive === true) {
-        setNextButtonDestructive(false);
-      }*/
-      //const isNextStepValid = await isStepValid(formSteps[currentStepIndex]);
     }
-
-    /*if (step > currentStepIndex) {
-        setNextButtonDestructive(true);
-      } else if (nextButtonDestructive === true) {
-        setNextButtonDestructive(false);
-      }
-      if (step < currentStepIndex) {
-        setBackButtonDestructive(true);
-      } else if (backButtonDestructive === true) {
-        setBackButtonDestructive(false);
-      }
-    const isValid = await isStepValid(formSteps[currentStepIndex + 1]);*/
   };
 
   const previousStep = async () => {
@@ -384,6 +305,7 @@ export const MultiStepForm = ({
     isFirstStep: currentStepIndex === 0,
     isLastStep: currentStepIndex === formSteps.length - 1 || ignoreLastStep,
     ignoreLastStep,
+    userId,
     setIgnoreLastStep,
     goToStep,
     nextStep,

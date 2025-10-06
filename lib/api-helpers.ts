@@ -9,7 +9,7 @@ export async function SuccessMessage(message: string, data: object) {
 }
 
 export async function NoContentMessage(message: string = "No Content") {
-  return NextResponse.json({ message: message }, { status: 204 }); // No Content
+  return NextResponse.json({ status: 204 }); // No Content
 }
 
 export async function DeleteMessage() {

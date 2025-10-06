@@ -7,13 +7,14 @@ import { SEvent } from "@/lib/schemas/calendar";
 
 //const queryClient = new QueryClient();
 
-export const useEventsQuery = (startDate: Date, endDate: Date, enabled: boolean = true) =>
+export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["events", formatDate(startDate), formatDate(endDate)],
+    queryKey: ["events", formatDate(startDate), formatDate(endDate), userId],
     queryFn: async () =>
       fetchGET("/api/events", {
         startdate: formatDate(startDate),
         enddate: formatDate(endDate),
+        userId: userId,
       }).then((result) => {
         const parsedResult = z.array(SEvent).safeParse(result.data);
 

@@ -1,10 +1,12 @@
 "use client";
+import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
 import { CalendarDayColumnCalendar } from "@/components/calendar/calendar-day-column-calendar";
 import { EventBlock } from "@/components/calendar/calendar-day-event-block";
 import { IEventBlock } from "@/components/calendar/calendar-day-view";
 import { CalendarDayViewSkeleton } from "@/components/calendar/skeleton-calendar-day-view";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSession } from "@/lib/auth-client";
+import { useClientSession } from "@/hooks/use-client-auth";
+
 import { IEvent } from "@/lib/schemas/calendar";
 import { useEventsQuery } from "@/services/events";
 import { useUserEventsQuery } from "@/services/users";
@@ -22,18 +24,7 @@ export default function Home() {
     eventHeight: 100,
   };
 
-  const { data: session, isPending } = useSession();
-
-  const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
-  const { data: events } = useUserEventsQuery(session?.user.id);
-
-  useEffect(() => {
-    if (!events) {
-      return;
-    }
-
-    setFilteredEvents(events);
-  }, [events]);
+  const { session, isPending } = useClientSession();
 
   if (isPending) {
     return <div>Verifying Access</div>;
@@ -45,7 +36,13 @@ export default function Home() {
   }
 
   return (
-    <>
+    <div>
+      <CalendarAllViews userId={session?.user.id} />
+    </div>
+  );
+}
+
+/*<div className="overflow-hidden rounded-xl border min-w-92">
       <div>EVERY STAFF MEMBER WILL SEE THIS PAGE SO THEY CAN REQUEST ADJUSTMENTS OR CANCELLATIONS</div>
       <div className="flex">
         {isLoading ? (
@@ -54,29 +51,31 @@ export default function Home() {
           <div className="flex flex-1 flex-col">
             <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
               <div className="flex border-l">
-                {/* Day grid */}
                 <div className="relative flex-1 border-b">
                   <div className="relative">
                     {filteredEvents &&
                       filteredEvents.map((event) => {
                         return (
-                          <div
-                            key={`day-${dayViews[0].day}-block-${format(new Date(), "yyyy-MM-dd-HH-mm")}-event-${
-                              block.event.eventId
-                            }`}
-                            className="absolute p-1"
-                            style={block.eventStyle}
-                          >
-                            <EventBlock
-                              eventBlock={{
-                                event: event,
-                                eventStyle: { top: "1px", width: "10px", left: "110px" },
-                                eventHeight: 100,
-                                groupIndex: 1,
-                                eventIndex: 1,
+                          <div key={`${event.eventId}`}>
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              className={
+                                "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300 [&_.event-dot]:fill-red-600"
+                              }
+                              style={{
+                                height: `150px`,
                               }}
-                              heightInPixels={block.eventHeight}
-                            />
+                            >
+                              <div className="flex items-center gap-1.5 ">
+                                <p className="truncate font-semibold">{event.title}</p>
+                              </div>
+                              <div className="flex items-center gap-1.5 truncate">
+                                <p className="truncate">
+                                  {format(event.startDate, "h:mm a")} - {format(event.endDate, "h:mm a")}
+                                </p>
+                              </div>
+                            </div>
                           </div>
                         );
                       })}
@@ -93,6 +92,6 @@ export default function Home() {
           view={"day"}
         ></CalendarDayColumnCalendar>
       </div>
-    </>
+    </div>
   );
-}
+  */

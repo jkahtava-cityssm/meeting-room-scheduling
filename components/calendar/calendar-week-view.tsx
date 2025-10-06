@@ -47,7 +47,7 @@ export interface IEventBlock {
   event: IEvent;
 }
 
-export function CalendarWeekView({ date }: { date: Date }) {
+export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
   const [dayViews, setDayViews] = useState<IDayView[]>([]);
@@ -60,7 +60,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
   const startDate: Date = startOfWeek(date);
   const endDate: Date = endOfWeek(date);
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate);
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.

@@ -7,7 +7,7 @@ export const useUsersQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: ["users"],
     queryFn: async () =>
-      fetchGET(`/api/users`, undefined, 180).then((result) => {
+      fetchGET(`/api/users`, undefined, 180, ["users"]).then((result) => {
         const parsedResult = z.array(SUser).safeParse(result.data);
 
         if (!parsedResult.success) throw new Error("Invalid user data");

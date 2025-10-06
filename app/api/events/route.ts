@@ -140,6 +140,7 @@ export async function GET(req: NextRequest) {
 
   const startDateParam = searchParams.get("startdate");
   const endDateParam = searchParams.get("enddate");
+  const userId = searchParams.get("userId");
 
   if (!startDateParam || !endDateParam) {
     return BadRequestMessage();
@@ -148,14 +149,28 @@ export async function GET(req: NextRequest) {
   const StartDate: UTCDate = new UTCDate(startDateParam);
   const EndDate: UTCDate = new UTCDate(endDateParam);
 
+  const whereClause: any = {
+    OR: [
+      {
+        startDate: { lte: EndDate },
+        endDate: { gte: StartDate },
+      },
+      {
+        recurrence: {
+          startDate: { lte: EndDate },
+          endDate: { gte: StartDate },
+        },
+      },
+    ],
+  };
+
+  if (userId) {
+    whereClause.AND = [{ userId: { equals: Number(userId) } }];
+  }
+
   const events = await prisma.event.findMany({
     include: { room: true, recurrence: true },
-    where: {
-      OR: [
-        { startDate: { lte: EndDate }, endDate: { gte: StartDate } },
-        { recurrence: { startDate: { lte: EndDate }, endDate: { gte: StartDate } } },
-      ],
-    },
+    where: whereClause,
   });
 
   if (!events) {
