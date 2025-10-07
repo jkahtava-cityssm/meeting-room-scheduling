@@ -8,7 +8,7 @@ import { TColors } from "@/lib/types";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import { BookKey } from "lucide-react";
+import { BookKey, Loader2Icon } from "lucide-react";
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../ui/form";
 import { IconColored } from "../ui/icon-colored";
@@ -24,8 +24,10 @@ import { formatDuration, intervalToDuration } from "date-fns";
 import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/services/users";
+import { Button } from "../ui/button";
+import { useStatusQuery } from "@/services/references";
 
-export const Step1 = ({ status }: { status: FormStatus }) => {
+export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
   const {
     control,
     getValues,
@@ -65,6 +67,7 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
 
   const { data: rooms } = useRoomsQuery(false);
   const { data: users } = useUsersQuery();
+  const { data: status } = useStatusQuery();
 
   const userList = users
     ? users.map((user) => {
@@ -72,7 +75,13 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
       })
     : [];
 
-  const isReadOnly = status === "Read" || status === "Loading";
+  const statusList = status
+    ? status.map((status) => {
+        return { key: String(status.statusId), label: status.name, value: String(status.statusId) };
+      })
+    : [];
+
+  const isReadOnly = formStatus === "Read" || formStatus === "Loading";
   const isRecurring = watch("isRecurring");
 
   return (
@@ -199,17 +208,30 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
                   list={userList}
                   noResultText={"No User Found"}
                   searchText={"Search User"}
-                  onSelect={(value: string, key: string) => field.onChange(value)}
+                  onSelect={(value: string) => field.onChange(value)}
                 >
-                  <FormControl>
-                    <ComboBoxTrigger
-                      disabled={isReadOnly || userId ? true : false}
-                      value={field.value}
-                      list={userList}
-                      placeholderText={"Select Member"}
-                    ></ComboBoxTrigger>
-                  </FormControl>
+                  {users && !userId && (
+                    <FormControl>
+                      <ComboBoxTrigger
+                        disabled={isReadOnly}
+                        value={field.value}
+                        list={userList}
+                        placeholderText={"Select Member"}
+                      ></ComboBoxTrigger>
+                    </FormControl>
+                  )}
                 </ComboBox>
+                {!users && (
+                  <Button variant={"outline"} disabled>
+                    <Loader2Icon className="animate-spin" />
+                    Collecting Users
+                  </Button>
+                )}
+                {userId && users && (
+                  <Button variant={"outline"} disabled>
+                    {users?.find((user) => String(user.userId) === field.value)?.name}
+                  </Button>
+                )}
               </FormItem>
             )}
           />
@@ -234,6 +256,62 @@ export const Step1 = ({ status }: { status: FormStatus }) => {
                     onChange={field.onChange}
                   />
                 </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="statusId"
+            render={({ field, fieldState }) => (
+              <FormItem className="col-span-1 row-2">
+                {fieldState.invalid ? (
+                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+                ) : (
+                  <FormLabel htmlFor="statusId">Status</FormLabel>
+                )}
+                {!userId && (
+                  <Select
+                    disabled={isReadOnly}
+                    //readonly={isReadOnly}
+                    //{...field}
+                    name={field.name}
+                    value={field.value}
+                    //defaultValue={field.value}
+                    key={field.value}
+                    onValueChange={(value: string) => {
+                      if (value === "") {
+                        //There is a Bug with the Select Field when used with React Hook Form:
+                        //https://github.com/radix-ui/primitives/issues/2944
+                        //https://github.com/radix-ui/primitives/issues/3135
+                        //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                        //return;
+                      }
+                      field.onChange(value);
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className="min-w-52">
+                        <SelectValue placeholder="Change Status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="min-w-52">
+                      {status?.map((status) => {
+                        return (
+                          <SelectItem key={String(status.statusId)} value={String(status.statusId)} className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate">{status.name}</p>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
+                {userId && (
+                  <Button variant={"outline"} disabled>
+                    {status?.find((status) => String(status.statusId) === field.value)?.name}
+                  </Button>
+                )}
               </FormItem>
             )}
           />

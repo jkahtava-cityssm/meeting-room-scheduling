@@ -592,7 +592,7 @@ async function main() {
   roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey"));
   roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey"));
 
-  await FindCreateEventStatus("Created");
+  //await FindCreateEventStatus("Created");
   await FindCreateEventStatus("Pending Review");
   await FindCreateEventStatus("Confirmed");
   await FindCreateEventStatus("Cancelled");

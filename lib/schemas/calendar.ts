@@ -58,6 +58,13 @@ export const SEvent = z.object({
   multiDay: SMultiDay.optional(),
 });
 
+export const SStatus = z.object({
+  statusId: z.number(),
+  name: z.string(),
+});
+
+export type IStatus = z.infer<typeof SStatus>;
+
 export type IEvent = z.infer<typeof SEvent>;
 export type IRecurrence = z.infer<typeof SRecurrence>;
 export type IRoom = z.infer<typeof SRoom>;
