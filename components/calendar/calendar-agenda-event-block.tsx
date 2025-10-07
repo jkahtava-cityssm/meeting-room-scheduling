@@ -56,7 +56,7 @@ const agendaEventCardVariants = cva(
   }
 );
 
-export function AgendaEventCard({ event }: { event: IEvent }) {
+export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: string }) {
   //const { badgeVariant } = useCalendar();
 
   const startDate = event.startDate;
@@ -77,7 +77,7 @@ export function AgendaEventCard({ event }: { event: IEvent }) {
   };
 
   return (
-    <EventDrawer event={event}>
+    <EventDrawer event={event} userId={userId}>
       <div
         role="button"
         tabIndex={0}

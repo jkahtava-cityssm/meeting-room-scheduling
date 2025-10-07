@@ -40,7 +40,7 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
   const endDate: Date = endOfDay(date);
   //const { data: events } = useSWR<IEvent[]>();
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
+  const { data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -131,6 +131,7 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
                         <AgendaEventCard
                           key={`agenda-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
                           event={event}
+                          userId={userId}
                         />
                       </div>
                     ))}

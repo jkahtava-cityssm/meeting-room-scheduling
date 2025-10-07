@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 import { IDayView } from "./calendar-month-view";
 
-export function MonthViewDayEvents({ dayRecord }: { dayRecord: IDayView }) {
+export function MonthViewDayEvents({ dayRecord, userId }: { dayRecord: IDayView; userId?: string }) {
   return (
     <div
       className={cn(
@@ -29,6 +29,7 @@ export function MonthViewDayEvents({ dayRecord }: { dayRecord: IDayView }) {
                     event={record.event}
                     cellDate={startOfDay(dayRecord.dayDate)}
                     position={record.position}
+                    userId={userId}
                   />
                 )}
               </div>

@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
 import { useEventsQuery } from "@/services/events";
-import { startOfMonth } from "date-fns";
 
 export interface IMonthProcessData {
   events: IEvent[];
@@ -70,7 +69,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
     `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
   );*/
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
+  const { isPending, data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -164,14 +163,10 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
                 })}
               </div>
               <div className="h-18 sm:h-18 lg:h-23 overflow-hidden">
-                <ScrollArea
-                  type="scroll"
-                  className="h-18.5 sm:h-18.5 lg:h-23.5"
-                  //className={`max-h-18.5 sm:max-h-18.5 lg:max-h-23.5 overflow-y-auto ${week.maxDailyEvents <= (isSmall ? 2 : 3) && "pr-[15px]"}`}
-                >
+                <ScrollArea type="scroll" className="h-18.5 sm:h-18.5 lg:h-23.5">
                   <div className="grid grid-cols-7 min-h-18.5 sm:min-h-18 lg:min-h-23.5 overflow-hidden ">
                     {week.dayViews.map((day) => {
-                      return <MonthViewDayEvents key={day.dayDate.toISOString()} dayRecord={day} />;
+                      return <MonthViewDayEvents key={day.dayDate.toISOString()} dayRecord={day} userId={userId} />;
                     })}
                   </div>
                   <ScrollBar orientation="vertical" forceMount></ScrollBar>
@@ -189,11 +184,6 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
           );
         })}
       </div>
-      {/*<div className="grid grid-cols-7 overflow-hidden">
-        {dayViews.map((day) => (
-          <MonthViewDayCell key={day.dayDate.toISOString()} dayRecord={day} />
-        ))}
-      </div>*/}
     </>
   );
 }

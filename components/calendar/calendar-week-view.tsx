@@ -60,7 +60,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
   const startDate: Date = startOfWeek(date);
   const endDate: Date = endOfWeek(date);
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
+  const { data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -170,7 +170,12 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                         {dayViews.map((day, dayIndex) => {
                           return (
                             <div key={dayIndex} className="relative">
-                              <DayHourlyEventDialogs hours={hours} day={day.dayDate} workingHours={workingHours} />
+                              <DayHourlyEventDialogs
+                                hours={hours}
+                                day={day.dayDate}
+                                workingHours={workingHours}
+                                userId={userId}
+                              />
 
                               {day.eventBlocks.map((block, blockIndex) => {
                                 return (
@@ -179,7 +184,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                                     className="absolute p-1"
                                     style={block.eventStyle}
                                   >
-                                    <EventBlock eventBlock={block} heightInPixels={block.eventHeight} />
+                                    <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
                                   </div>
                                 );
                               })}
