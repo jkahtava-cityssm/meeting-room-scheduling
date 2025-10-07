@@ -64,7 +64,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
   const startDate: Date = startOfDay(date);
   const endDate: Date = endOfDay(date);
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
+  const { data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -143,7 +143,12 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
                 {/* Day grid */}
                 <div className="relative flex-1 border-b">
                   <div className="relative">
-                    <DayHourlyEventDialogs hours={hours} day={dayViews[0].dayDate} workingHours={workingHours} />
+                    <DayHourlyEventDialogs
+                      hours={hours}
+                      day={dayViews[0].dayDate}
+                      workingHours={workingHours}
+                      userId={userId}
+                    />
 
                     {dayViews[0].eventBlocks.map((block) => {
                       return (
@@ -155,7 +160,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
                           className="absolute p-1"
                           style={block.eventStyle}
                         >
-                          <EventBlock eventBlock={block} heightInPixels={block.eventHeight} />
+                          <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
                         </div>
                       );
                     })}

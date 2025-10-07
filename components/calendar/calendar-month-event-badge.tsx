@@ -68,6 +68,7 @@ interface IProps extends Omit<VariantProps<typeof eventBadgeVariants>, "color" |
   eventTotalDays?: number;
   className?: string;
   position?: "first" | "middle" | "last" | "none";
+  userId?: string;
 }
 
 export function MonthEventBadge({
@@ -77,6 +78,7 @@ export function MonthEventBadge({
   eventTotalDays,
   className,
   position: propPosition,
+  userId,
 }: IProps) {
   const itemStart = startOfDay(event.startDate);
   const itemEnd = endOfDay(event.endDate);
@@ -116,7 +118,7 @@ export function MonthEventBadge({
   };
 
   return (
-    <EventDrawer event={event}>
+    <EventDrawer event={event} userId={userId}>
       <div role="button" tabIndex={0} color={event.room.color} className={eventBadgeClasses} onKeyDown={handleKeyDown}>
         <div className="flex items-center gap-1.5 truncate">
           {renderDays && <span className="text-xs font-semibold truncate">{event.title}</span>}
