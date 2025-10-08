@@ -12,12 +12,17 @@ export async function POST(req: NextRequest) {
     return BadRequestMessage("Not Authorized");
   }
 
-  const { paths } = await req.json();
+  const { paths, tags } = await req.json();
 
   for (const path of paths) {
     revalidatePath(path, "page");
+    revalidatePath(path, "layout");
+    revalidatePath(path);
   }
 
-  revalidateTag("users");
+  for (const tag of tags) {
+    revalidateTag(tag);
+  }
+
   return NoContentMessage();
 }

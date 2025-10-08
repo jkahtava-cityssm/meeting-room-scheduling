@@ -3,11 +3,18 @@ import { prisma } from "@/prisma";
 import { NextRequest } from "next/server";
 
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { getServerSession, hasServerPermission } from "@/lib/auth";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
+
+  //const session = await getServerSession();
+
+  /*if (!session) {
+    return BadRequestMessage("Not Authorized");
+  }*/
 
   const { userId } = await params;
 
@@ -27,6 +34,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
     },
     where: { id: Number(userId) },
   });
+
+  if (!user?.userRole) {
+  }
 
   const roles =
     user?.userRole.map((userRole) => {

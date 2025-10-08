@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Control, UseFormReturn, useWatch } from "react-hook-form";
+import { Control, useController, useFormContext, UseFormReturn, UseFormSetValue, useWatch } from "react-hook-form";
 import { RRule } from "rrule";
 import { ByWeekday } from "rrule/dist/esm/types";
 import { IRecurrenceForm } from "./dialog-event-form-step-2";
@@ -12,23 +12,33 @@ import z from "zod/v4";
 import { step2Schema } from "./event-drawer.validator";
 
 export function RRulePreview({
+  name,
   startDate,
   control,
   defaultValue,
-  setLastDate,
 }: {
+  name: keyof z.infer<typeof step2Schema>;
   startDate: string;
   control: Control<z.infer<typeof step2Schema>>;
   defaultValue: z.infer<typeof step2Schema>;
-  setLastDate: (value: Date) => void;
 }) {
-  const [rrule, setRRule] = useState<RRule>();
-  const [count, setCount] = useState<number>();
+  const { setValue } = useFormContext();
 
+  /*const {
+    field: { value },
+    fieldState: { error },
+  } = useController({
+    name,
+    control,
+    defaultValue,
+  });*/
+
+  const [count, setCount] = useState<number>();
   const [localDates, setLocalDates] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const workerRef = useRef<Worker | null>(null);
+  const lastRuleStringRef = useRef<string | undefined>("");
+
   const fieldValues = useWatch({
     control: control,
     defaultValue: defaultValue,
@@ -63,6 +73,17 @@ export function RRulePreview({
   }, [fieldValues, startDate]);
 
   useEffect(() => {
+    if (name) {
+      const ruleInstance = RRuleOptions ? new RRule(RRuleOptions) : undefined;
+      const ruleString = ruleInstance ? ruleInstance.toString() : "";
+      if (ruleString !== lastRuleStringRef.current) {
+        lastRuleStringRef.current = ruleString;
+        setValue(name, ruleString);
+      }
+    }
+  }, [RRuleOptions, name, setValue]);
+
+  useEffect(() => {
     if (workerRef.current) {
       return;
     }
@@ -78,7 +99,8 @@ export function RRulePreview({
         Object.setPrototypeOf(strippedObject, original);
 
         setLocalDates(response.data.localDates);
-        setRRule(strippedObject);
+        //setValue(name, strippedObject.toString());
+        //setValue("rule", strippedObject.toString());
         setCount(response.data.count);
 
         //setValue("lastOccurrenceDate", response.data.lastDate);
@@ -97,7 +119,7 @@ export function RRulePreview({
         workerRef.current = null;
       }
     };
-  }, [RRuleOptions]);
+  }, [RRuleOptions, name, setValue]);
 
   useEffect(() => {
     if (!RRuleOptions) {

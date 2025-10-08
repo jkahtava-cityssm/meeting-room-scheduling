@@ -409,7 +409,7 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
     userId: event.userId ? String(event.userId) : "",
     title: event.title,
     description: event.description ? event.description : "",
-    statusId: event.statusId,
+    statusId: event.statusId ? String(event.statusId) : "1",
     startDate: combineDateTime(event.startDate, event.startDate),
     startDateText: event.startDate.toISOString(),
     startTimeText: event.startDate.toISOString(),

@@ -36,32 +36,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
     setError,
     formState: { errors },
     watch,
-    reset,
   } = useFormContext<z.infer<typeof step1Schema>>();
-
-  /*useEffect(() => {
-    reset({
-      ...defaultValues,
-    });
-  }, []);*/
-
-  /*const members = [
-    { key: "1", label: "Option 1", value: "1" },
-    { key: "2", label: "Option 2", value: "2" },
-    { key: "3", label: "Option 2", value: "3" },
-    { key: "4", label: "Option 2", value: "4" },
-    { key: "5", label: "Option 2", value: "5" },
-    { key: "6", label: "Option 2", value: "6" },
-    { key: "7", label: "Option 2", value: "7" },
-    { key: "8", label: "Option 2", value: "8" },
-    { key: "9", label: "Option 2", value: "9" },
-    { key: "10", label: "Option 2", value: "10" },
-    { key: "11", label: "Option 2", value: "11" },
-    { key: "12", label: "Option 2", value: "12" },
-    { key: "13", label: "Option 2", value: "13" },
-    { key: "14", label: "Option 2", value: "14" },
-    { key: "15", label: "Option 2", value: "15" },
-  ];*/
 
   const { setIgnoreLastStep, userId } = useMultiStepForm();
 
@@ -72,12 +47,6 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
   const userList = users
     ? users.map((user) => {
         return { key: String(user.userId), label: user.name, value: String(user.userId) };
-      })
-    : [];
-
-  const statusList = status
-    ? status.map((status) => {
-        return { key: String(status.statusId), label: status.name, value: String(status.statusId) };
       })
     : [];
 

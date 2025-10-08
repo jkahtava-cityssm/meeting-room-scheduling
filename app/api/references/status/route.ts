@@ -1,10 +1,17 @@
-import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/prisma";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
+  }
+
+  const session = await getServerSession();
+
+  if (!session) {
+    return BadRequestMessage("Not Authorized");
   }
 
   const status = await prisma.status.findMany({

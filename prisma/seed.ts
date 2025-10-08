@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { TColors } from "@/lib/types";
+import { DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors } from "../lib/types";
 import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import { EVENTDESCRIPTIONS, EVENTS, RECURRENCE_PATTERN, RECURRENCE_TYPE } from "./seed-data";
 import { ByWeekday, datetime, RRule } from "rrule";
@@ -527,13 +527,29 @@ async function main() {
 
   const actions = { actionCreate, actionRead, actionUpdate, actionDelete };
 
-  const roleUser = await FindCreateRole("User");
+  for (const role of DEFAULT_USER_ROLES) {
+    const dbRole = await FindCreateRole(role);
+
+    for (const resource of DEFAULT_RESOURCES) {
+      const defaultPermission = {
+        create: (resource === "Event" && role === "User") || role === "Admin" || role === "Clerk" ? true : false,
+        read: true,
+        update: role === "Admin" || role === "Clerk" ? true : false,
+        delete: role === "Admin" || role === "Clerk" ? true : false,
+      };
+      const dbResource = await FindCreateResource(resource);
+      await FindCreatePermissionSet(dbRole, actions, dbResource, defaultPermission);
+    }
+  }
+
+  /*const roleUser = await FindCreateRole("User");
   const roleClerk = await FindCreateRole("Clerk");
   const roleAdmin = await FindCreateRole("Admin");
 
   const resourceEvent = await FindCreateResource("Event");
   const resourceAPI = await FindCreateResource("API");
   const resourceImpersonate = await FindCreateResource("Impersonate");
+  
 
   await FindCreatePermissionSet(roleUser, actions, resourceEvent, {
     create: false,
@@ -569,7 +585,7 @@ async function main() {
     update: true,
     delete: true,
   });
-
+*/
   const roomList: {
     name: string;
     createdAt: Date;
@@ -595,7 +611,8 @@ async function main() {
   //await FindCreateEventStatus("Created");
   await FindCreateEventStatus("Pending Review");
   await FindCreateEventStatus("Confirmed");
-  await FindCreateEventStatus("Cancelled");
+  await FindCreateEventStatus("Rejected");
+  await FindCreateEventStatus("Additional Info Required");
 
   const user = await prisma.user.findFirst({ where: { email: "j.kahtava@cityssm.on.ca" } });
   if (!user) {
@@ -610,7 +627,7 @@ async function main() {
 
   CreateRandomEvents(roomList, 2000, 1825);
 
-  const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
+  //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
 
   /*
   const JordanKMember = await prisma.member.upsert({

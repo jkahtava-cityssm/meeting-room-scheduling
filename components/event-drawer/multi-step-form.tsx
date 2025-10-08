@@ -19,7 +19,16 @@ import { useContext } from "react";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, Sheet, SheetTrigger } from "../ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
 import { Button } from "../ui/button";
-import { ArrowLeftCircle, ArrowRightCircle, CircleX, Loader2Icon, PenBoxIcon, SaveIcon, Trash2 } from "lucide-react";
+import {
+  ArrowLeftCircle,
+  ArrowRightCircle,
+  CalendarPlus,
+  CircleX,
+  Loader2Icon,
+  PenBoxIcon,
+  SaveIcon,
+  Trash2,
+} from "lucide-react";
 import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/services/events";
 import React from "react";
 import { IEvent } from "@/lib/schemas/calendar";
@@ -34,6 +43,8 @@ import {
   AlertDialogSave,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import { hasClientPermission } from "@/lib/auth-client";
+import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -50,6 +61,8 @@ export const MultiStepForm = ({
   userId?: string;
   children: React.ReactNode;
 }) => {
+  const { session } = useClientSession();
+
   const defaultFormValues = event ? getEventValues(event) : defaultValues(creationDate, userId);
 
   const methods = useForm<CombinedSchema>({
@@ -99,11 +112,11 @@ export const MultiStepForm = ({
   const isStepValid = async (formStep: FormStep): Promise<boolean> => {
     let isValid = false;
 
-    isValid = await methods.trigger(formStep.fields as (keyof z.infer<typeof formStep.validationSchema>)[]);
+    /*isValid = await methods.trigger(formStep.fields as (keyof z.infer<typeof formStep.validationSchema>)[]);
 
     if (!isValid) {
       return false; // Stop progression if validation fails
-    }
+    }*/
 
     // grab values in current step and transform array to object
     const formValues = getFormValues(formStep.position - 1);
@@ -328,7 +341,7 @@ export const MultiStepForm = ({
 
           <FormProvider {...methods}>
             <Form>
-              <currentStep.component status={status}></currentStep.component>
+              <currentStep.component formStatus={status}></currentStep.component>
             </Form>
           </FormProvider>
 
@@ -344,11 +357,18 @@ export const MultiStepForm = ({
                   onSave();
                 }}
                 className="md:w-24"
+                disabled={
+                  (status === "Edit" && !hasClientPermission(session, "Event", "Update")) ||
+                  (status === "New" && !hasClientPermission(session, "Event", "Create") && !userId)
+                }
               >
-                <SaveIcon />
-                Save
+                {status === "Edit" && <SaveIcon />}
+                {status === "New" && <CalendarPlus />}
+                {status === "Edit" && "Save"}
+                {status === "New" && "Create"}
               </Button>
             )}
+
             {editButtonEnabled && (
               <Button
                 variant={"default"}
@@ -356,7 +376,7 @@ export const MultiStepForm = ({
                   setStatus("Loading");
                 }}
                 className="md:w-24"
-                disabled={status === "Loading"}
+                disabled={status === "Loading" || !hasClientPermission(session, "Event", "Update")}
               >
                 {status === "Loading" ? <Loader2Icon className="animate-spin" /> : <PenBoxIcon />}
                 Edit

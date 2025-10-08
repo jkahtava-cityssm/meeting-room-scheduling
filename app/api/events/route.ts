@@ -5,10 +5,17 @@ import { NextRequest } from "next/server";
 import { UTCDate } from "@date-fns/utc";
 
 import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { getServerSession, hasServerPermission } from "@/lib/auth";
 
 export async function POST(req: Request) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
+  }
+
+  const session = await getServerSession();
+
+  if (!session || !hasServerPermission(session, "Event", "Create")) {
+    return BadRequestMessage("Not Authorized");
   }
 
   const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate, userId } = await req.json();
@@ -49,6 +56,12 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
+  }
+
+  const session = await getServerSession();
+
+  if (!session || !hasServerPermission(session, "Event", "Update")) {
+    return BadRequestMessage("Not Authorized");
   }
 
   /*const { eventId, title, description, startDate, endDate, roomId, recurrenceId, rule, ruleStartDate, ruleEndDate } =
@@ -136,6 +149,13 @@ export async function GET(req: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
+
+  const session = await getServerSession();
+
+  if (!session || !hasServerPermission(session, "Event", "Read")) {
+    return BadRequestMessage("Not Authorized");
+  }
+
   const searchParams = req.nextUrl.searchParams;
 
   const startDateParam = searchParams.get("startdate");

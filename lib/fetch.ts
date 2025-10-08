@@ -25,7 +25,7 @@ export async function fetchGET(url: string, params: object = {}, revalidate: num
       tags: tags,
     },
   }).then((res) => {
-    if (!res.ok) throw Error(`Network Response Error: ${res.status}, Details: ${res.statusText}, URL: ${url}`);
+    //if (!res.ok) throw Error(`Network Response Error: ${res.status}, Details: ${res.statusText}, URL: ${url}`);
 
     return res.json();
   });
@@ -37,7 +37,7 @@ export function fetchPUT(url: string, data: object) {
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
   }).then((res) => {
-    if (!res.ok) throw Error("Network Response Error");
+    //if (!res.ok) throw Error("Network Response Error");
 
     return res.json();
   });
@@ -48,7 +48,7 @@ export function fetchDELETE(url: string) {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
   }).then((res) => {
-    if (!res.ok) throw Error("Network Response Error");
+    //if (!res.ok) throw Error("Network Response Error");
 
     return res.json();
   });
@@ -60,7 +60,7 @@ export function fetchPOST(url: string, data: object) {
     body: JSON.stringify(data),
     headers: { "Content-Type": "application/json" },
   }).then((res) => {
-    if (!res.ok) throw new Error("Network Response Error");
+    //if (!res.ok) throw new Error("Network Response Error");
 
     return res.json();
   });
