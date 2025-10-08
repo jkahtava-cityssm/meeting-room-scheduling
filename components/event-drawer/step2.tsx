@@ -50,6 +50,8 @@ export function Step2({
 }) {
   //const [lastDate, setLastDate] = useState<Date>();
 
+  const { startDate } = useMultiStepForm();
+
   const {
     control,
     getValues,
@@ -74,6 +76,7 @@ export function Step2({
   const durationType = watch("durationType");
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
 
+  console.log(startDate);
   return (
     <>
       <ScrollArea type="always">
@@ -219,7 +222,8 @@ export function Step2({
       <RRulePreview
         name="rule"
         defaultValue={getValues()}
-        startDate={format(new Date(), "yyyy-MM-dd")}
+        startDate={startDate}
+        //format(new Date(), "yyyy-MM-dd")
         //setLastDate={setLastDate}
         control={control}
         //setValue={setValue}

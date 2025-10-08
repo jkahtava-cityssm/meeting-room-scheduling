@@ -45,6 +45,7 @@ import {
 } from "../ui/alert-dialog";
 import { hasClientPermission } from "@/lib/auth-client";
 import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
+import { format } from "date-fns";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -81,6 +82,9 @@ export const MultiStepForm = ({
   // Form state
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues["isRecurring"] === "false" ? true : false);
+  const [startDate, setStartDate] = useState(
+    defaultFormValues.isRecurring ? defaultFormValues.ruleStartDate : format(defaultFormValues.startDate, "yyyy-MM-dd")
+  );
   //const [isEditable, setEditable] = useState(false);
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
   const [showAlert, setShowAlert] = useState(false);
@@ -323,7 +327,9 @@ export const MultiStepForm = ({
     goToStep,
     nextStep,
     previousStep,
-    formSteps,
+    steps: formSteps,
+    startDate: startDate,
+    setStartDate,
   };
 
   return (
@@ -455,19 +461,6 @@ export const MultiStepForm = ({
     </MultiStepFormContext.Provider>
   );
 };
-
-function filterObjectByShape<T>(obj: any): T {
-  const newObj: Partial<T> = {}; // Start with an empty object with a partial type
-  for (const key in typeDef) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      // Check if the property exists in the original object
-      // and if its type matches the desired type (optional, but good for runtime validation)
-      // For a more robust check, you might compare `typeof obj[key]` with the expected type.
-      newObj[key] = obj[key];
-    }
-  }
-  return newObj as T; // Cast the new object to the desired type
-}
 
 export const useMultiStepForm = () => {
   const context = useContext(MultiStepFormContext);
