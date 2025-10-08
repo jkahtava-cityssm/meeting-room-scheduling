@@ -41,8 +41,14 @@ import { FormStatus } from "./types";
  * @returns
  */
 
-export function Step2({ status, resetValues }: { status: FormStatus; resetValues?: z.infer<typeof step2Schema> }) {
-  const [lastDate, setLastDate] = useState<Date>();
+export function Step2({
+  formStatus,
+  resetValues,
+}: {
+  formStatus: FormStatus;
+  resetValues?: z.infer<typeof step2Schema>;
+}) {
+  //const [lastDate, setLastDate] = useState<Date>();
 
   const {
     control,
@@ -66,7 +72,7 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
 
   const type = watch("repeatingType");
   const durationType = watch("durationType");
-  const isReadOnly = status === "Read" || status === "Loading";
+  const isReadOnly = formStatus === "Read" || formStatus === "Loading";
 
   return (
     <>
@@ -211,10 +217,12 @@ export function Step2({ status, resetValues }: { status: FormStatus; resetValues
       </ScrollArea>
 
       <RRulePreview
+        name="rule"
         defaultValue={getValues()}
         startDate={format(new Date(), "yyyy-MM-dd")}
-        setLastDate={setLastDate}
+        //setLastDate={setLastDate}
         control={control}
+        //setValue={setValue}
       />
     </>
   );

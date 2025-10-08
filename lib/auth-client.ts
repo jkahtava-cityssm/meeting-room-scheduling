@@ -1,6 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 import { customSessionClient } from "better-auth/client/plugins";
 import type { auth } from "@/lib/auth";
+import { SessionAction, SessionResource, SessionRole } from "./types";
 
 export const authClient = createAuthClient({
   /** The base URL of the server (optional if you're using the same domain) */
@@ -12,7 +13,11 @@ export type Session = typeof authClient.$Infer.Session;
 
 export const { signIn, signOut, useSession } = authClient;
 
-export function hasClientPermission(session: Session | undefined | null, resource: string, action: string) {
+export function hasClientPermission(
+  session: Session | undefined | null,
+  resource: SessionResource,
+  action: SessionAction
+) {
   if (!session || !session.user || !session.user.roles) return false;
 
   const permission = session.user.roles.some((role) => {
@@ -28,7 +33,7 @@ export function hasClientPermission(session: Session | undefined | null, resourc
   return permission;
 }
 
-export function hasClientRole(session: Session | undefined | null, role: string) {
+export function hasClientRole(session: Session | undefined | null, role: SessionRole) {
   if (!session || !session.user || !session.user.roles) return false;
   return session.user.roles.some((item) => {
     return item.name.toLowerCase() === role.toLowerCase();

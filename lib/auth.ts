@@ -6,6 +6,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { headers } from "next/headers";
 import { fetchGET } from "./fetch";
 import { Session } from "./auth-client";
+import { SessionAction, SessionResource, SessionRole } from "./types";
 
 export type User = {
   userId: string | undefined | null;
@@ -59,12 +60,26 @@ export const auth = betterAuth({
   },
   databaseHooks: {
     user: {
-      create: {
-        after: async (user, ctx) => {
+      update: {
+        after: async (user) => {
+          const userRole = await prisma.userRole.count({ where: { userId: Number(user.id) } });
+          if (userRole > 0) return;
+
           const role = await prisma.role.findFirst({ where: { name: "User" } });
 
           if (role) {
-            const userRole = await prisma.userRole.create({
+            await prisma.userRole.create({
+              data: { userId: Number(user.id), roleId: role.roleId },
+            });
+          }
+        },
+      },
+      create: {
+        after: async (user) => {
+          const role = await prisma.role.findFirst({ where: { name: "User" } });
+
+          if (role) {
+            await prisma.userRole.create({
               data: { userId: Number(user.id), roleId: role.roleId },
             });
           }
@@ -85,7 +100,7 @@ export const auth = betterAuth({
       return {
         user: {
           ...user,
-          roles: userData?.data.roles as Role[] | undefined | null,
+          roles: userData.data ? (userData.data.roles as Role[] | undefined | null) : undefined,
         },
         session,
       };
@@ -111,7 +126,11 @@ export getServerSession()
 }
 */
 
-export function hasServerPermission(session: Session | undefined | null, resource: string, action: string) {
+export function hasServerPermission(
+  session: Session | undefined | null,
+  resource: SessionResource,
+  action: SessionAction
+) {
   if (!session || !session.user || !session.user.roles) return false;
 
   const permission = session.user.roles.some((role) => {
@@ -127,7 +146,7 @@ export function hasServerPermission(session: Session | undefined | null, resourc
   return permission;
 }
 
-export function hasServerRole(session: Session | undefined | null, role: string) {
+export function hasServerRole(session: Session | undefined | null, role: SessionRole) {
   if (!session || !session.user || !session.user.roles) return false;
   return session.user.roles.some((item) => {
     return item.name.toLowerCase() === role.toLowerCase();

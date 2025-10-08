@@ -1,4 +1,5 @@
 import { hasClientPermission, hasClientRole, useSession } from "@/lib/auth-client";
+import { SessionAction, SessionResource, SessionRole } from "@/lib/types";
 import { redirect } from "next/navigation";
 
 export function useClientSession() {
@@ -11,7 +12,7 @@ export function useClientSession() {
   return { session, isPending };
 }
 
-export function useClientPermission(resource: string, action: string) {
+export function useClientPermission(resource: SessionResource, action: SessionAction) {
   const { session } = useClientSession();
 
   if (session) {
@@ -21,7 +22,7 @@ export function useClientPermission(resource: string, action: string) {
   return false;
 }
 
-export function useClientRole(role: string) {
+export function useClientRole(role: SessionRole) {
   const { session } = useClientSession();
 
   if (session) {
