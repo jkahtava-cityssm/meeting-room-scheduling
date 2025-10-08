@@ -27,6 +27,8 @@ export interface MultiStepFormContextProps {
   previousStep: () => void;
   goToStep: (step: number) => void;
   steps: FormStep[];
+  startDate: string;
+  setStartDate: (value: string) => void;
 }
 
 export type FormStatus = "New" | "Read" | "Edit" | "Loading";

@@ -20,7 +20,7 @@ import { TimePicker } from "../ui/time-picker";
 import { Select } from "../ui/select";
 
 import { combineDateTime } from "@/lib/helpers";
-import { formatDuration, intervalToDuration } from "date-fns";
+import { format, formatDuration, intervalToDuration } from "date-fns";
 import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/services/users";
@@ -38,7 +38,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
     watch,
   } = useFormContext<z.infer<typeof step1Schema>>();
 
-  const { setIgnoreLastStep, userId } = useMultiStepForm();
+  const { setIgnoreLastStep, setStartDate, userId } = useMultiStepForm();
 
   const { data: rooms } = useRoomsQuery(false);
   const { data: users } = useUsersQuery();
@@ -306,6 +306,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                     onSelect={(date) => {
                       if (isRecurring === "true") {
                         setValue("endDateText", date ? date.toISOString() : "");
+                        setStartDate(date ? format(date, "yyyy-MM-dd") : "");
                       }
 
                       field.onChange(date ? date.toISOString() : "");

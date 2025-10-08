@@ -428,8 +428,8 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
 
   const SRecurrenceDefaults: z.infer<typeof step2Schema> = {
     rule: "",
-    ruleStartDate: "",
-    ruleEndDate: "",
+    ruleStartDate: event.recurrence ? format(event.startDate, "yyyy-MM-dd") : format(event.startDate, "yyyy-MM-dd"),
+    ruleEndDate: event.recurrence ? format(event.endDate, "yyyy-MM-dd") : format(event.endDate, "yyyy-MM-dd"),
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",
@@ -462,8 +462,8 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
 
 function parseRRule(rrule: RRule, SRecurrenceDefaults: z.infer<typeof step2Schema>) {
   SRecurrenceDefaults.rule = rrule.toString();
-  SRecurrenceDefaults.ruleStartDate = format(rrule.options.dtstart, "yyyy-MM-dd HH:mm:ss");
-  SRecurrenceDefaults.ruleEndDate = format(getEndDate(rrule), "yyyy-MM-dd HH:mm:ss");
+  SRecurrenceDefaults.ruleStartDate = format(rrule.options.dtstart, "yyyy-MM-dd");
+  SRecurrenceDefaults.ruleEndDate = format(getEndDate(rrule), "yyyy-MM-dd");
   SRecurrenceDefaults.weekdays = getWeekdays(rrule);
   SRecurrenceDefaults.durationType = getDurationType(rrule);
   SRecurrenceDefaults.occurrences = String(rrule.options.count);
@@ -496,9 +496,9 @@ function parseRRule(rrule: RRule, SRecurrenceDefaults: z.infer<typeof step2Schem
 
   if (rrule.options.freq === RRule.DAILY) {
     SRecurrenceDefaults.repeatingType = "daily";
-    SRecurrenceDefaults.dailyPattern = rrule.options.byweekday ? "daily" : "weekdays";
+    SRecurrenceDefaults.dailyPattern = rrule.options.byweekday ? "weekdays" : "daily";
     SRecurrenceDefaults.dayValue =
-      rrule.options.interval && rrule.options.byweekday ? String(rrule.options.interval) : "";
+      rrule.options.interval && !rrule.options.byweekday ? String(rrule.options.interval) : "";
     //mappedRule.weekdays = weekdays;
   }
 
