@@ -8,13 +8,19 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
 
   const startUTC = setPartsToUTCDate(periodStart);
   const endUTC = setPartsToUTCDate(periodEnd);
-
+  //let testA;
+  //let testB;
+  //let con;
   for (const event of events) {
     if (!event.recurrenceId || !event.recurrence?.rule) continue;
 
     const rrule = rrulestr(event.recurrence.rule, { cache: true });
-    const recurrenceDates = rrule.between(startUTC, endUTC);
+    //con = rrule.all()[0];
+    //const recurrenceDates2 = rrule.between(periodStart, periodEnd, true);
+    const recurrenceDates = rrule.between(startUTC, endUTC, true);
 
+    //testA = recurrenceDates2;
+    //testB = recurrenceDates;
     for (const recurrenceDate of recurrenceDates) {
       const recurringUTC = setUTCPartsToDate(recurrenceDate);
 
