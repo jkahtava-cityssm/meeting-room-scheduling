@@ -46,6 +46,7 @@ import {
 import { hasClientPermission } from "@/lib/auth-client";
 import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
+import { useEventStore } from "@/lib/zustand/new-event-store";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -63,8 +64,15 @@ export const MultiStepForm = ({
   children: React.ReactNode;
 }) => {
   const { session } = useClientSession();
+  const { setEvent, resetEvent, getEventState } = useEventStore();
 
-  const defaultFormValues = event ? getEventValues(event) : defaultValues(creationDate, userId);
+  const storedEvent = getEventState().event;
+
+  const defaultFormValues = event
+    ? getEventValues(event)
+    : storedEvent
+    ? storedEvent
+    : defaultValues(creationDate, userId);
 
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedEventSchema),
@@ -433,7 +441,11 @@ export const MultiStepForm = ({
           <AlertDialogFooter>
             {defaultFormValues["eventId"] === "0" && (
               <AlertDialogSave
-                onClick={() => /*onSaveReturn(currentForm?.getValues())*/ console.log("SAVE")}
+                onClick={() => {
+                  setEvent(methods.getValues());
+                  setShowAlert(false);
+                  onClose();
+                }}
                 className="sm:mr-auto"
               >
                 Save for later
@@ -442,6 +454,7 @@ export const MultiStepForm = ({
             <AlertDialogAction
               onClick={() => {
                 setShowAlert(false);
+                resetEvent();
                 resetForm();
                 onClose();
               }}

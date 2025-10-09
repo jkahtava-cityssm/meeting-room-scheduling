@@ -1,46 +1,36 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { CombinedSchema } from "@/components/event-drawer/event-drawer.validator";
 
-type FormState = {
-  currentStep: number;
-  localData: object[];
-  formId?: string;
-  setSessionStep: (step: number) => void;
-  setSessionFormData: (data: object, index: number, id: number) => void;
-  setSessionKeyData: (key: string, value: string, index: number) => void;
-  setFormId: (id: string) => void;
-  resetSessionFormData: () => void;
-  getSessionState: () => FormState;
+type EventStore = {
+  event: CombinedSchema | null;
+  setEvent: (event: CombinedSchema) => void;
+  resetEvent: () => void;
+  getEventState: () => EventStore;
+  hasEvent: () => boolean;
 };
 
-function getStorageData() {
+function getStorageData(): EventStore | null {
   const storageData = localStorage.getItem("new-event-storage");
   if (!storageData) return null;
 
   const parsedData = JSON.parse(storageData);
-
-  return parsedData.state as FormState;
+  return parsedData.state as EventStore;
 }
 
-export const useFormStore = create<FormState>()(
+export const useEventStore = create<EventStore>()(
   persist(
     (set, get) => ({
-      currentStep: 1,
-      localData: [{}],
+      event: null,
 
-      setSessionStep: (step) => set({ currentStep: step }),
-      setSessionFormData: (data, index, id) =>
-        set((state) => ({
-          localData: Object.assign([...state.localData], { [index]: data }),
-        })),
-      setSessionKeyData: (key, value, index) =>
-        set((state) => ({
-          localData: Object.assign([...state.localData], { [index]: { [key]: value } }),
-        })),
-      setFormId: (id) => set({ formId: id }),
-      resetSessionFormData: () => set({ currentStep: 1, localData: [{}] }),
-      getSessionState: () => getStorageData() || get(),
+      setEvent: (event) => set({ event }),
+      resetEvent: () => set({ event: null }),
+      getEventState: () => getStorageData() || get(),
+      hasEvent: () => get().event !== null,
     }),
-    { name: "new-event-storage", storage: createJSONStorage(() => sessionStorage) }
+    {
+      name: "new-event-storage",
+      storage: createJSONStorage(() => sessionStorage),
+    }
   )
 );
