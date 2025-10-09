@@ -1,36 +1,25 @@
 "use client";
 
-import { Form, FormField, FormLabel, FormItem, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormLabel, FormItem, FormControl } from "@/components/ui/form";
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { IEvent, IRecurrence, SRecurrence } from "@/lib/schemas/calendar";
-import {
-  Control,
-  FieldPathByValue,
-  FieldValues,
-  useForm,
-  useFormContext,
-  UseFormReturn,
-  useWatch,
-} from "react-hook-form";
+import { Control, FieldPathByValue, FieldValues, useFormContext, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
-import { zodResolver } from "@hookform/resolvers/zod";
+
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import InputNumber from "../ui/input-number";
 import { Checkbox } from "../ui/checkbox";
 import { Separator } from "../ui/separator";
 
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { useEventForm } from "@/contexts/EventFormProvider";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SingleDayPicker } from "../ui/single-day-picker";
 
-import { RRule, rrulestr } from "rrule";
-import { differenceInYears, endOfDay, format, startOfDay } from "date-fns";
 import { step2Schema } from "./event-drawer.validator";
 import { useMultiStepForm } from "./multi-step-form";
-import { RRulePreview } from "./rrule-preview";
 import { FormStatus } from "./types";
+import { getRRuleDataWithCallback } from "./rrule-preview-helper";
+import { RRulePreview } from "./rrule-preview";
 
 /**
  * TO-DO: One Day add the ability to set a truly forever pattern, it will require
@@ -52,16 +41,15 @@ export function Step2({
 
   const { startDate } = useMultiStepForm();
 
-  const {
-    control,
-    getValues,
-    setValue,
-    trigger,
-    setError,
-    formState: { errors },
-    watch,
-    reset,
-  } = useFormContext<z.infer<typeof step2Schema>>();
+  const lastRuleRef = useRef<string | undefined>("");
+  const lastDateRef = useRef<string | undefined>("");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [count, setCount] = useState<number | undefined>(0);
+  const [localDates, setLocalDates] = useState<Date[] | undefined>([]);
+  const [isCalculating, setCalculating] = useState<boolean>(true);
+
+  const { control, getValues, setValue, watch, reset } = useFormContext<z.infer<typeof step2Schema>>();
 
   useEffect(() => {
     if (!resetValues) return;
@@ -71,6 +59,74 @@ export function Step2({
     });
   }, [resetValues]);
   //React Hook forms indicates that
+
+  //const [rruleData, setRRuleData] = useState(null);
+
+  const fieldValues = useWatch({
+    control: control,
+    defaultValue: getValues(),
+    name: [
+      "ruleEndDate",
+      "repeatingType",
+      "weekdays",
+      "dailyPattern",
+      "monthlyPattern",
+      "yearlyPattern",
+      "dayValue",
+      "weekValue",
+      "monthValue",
+      "monthDayValue",
+      "monthPeriodValue",
+      "monthWeekdayValue",
+      "yearValue",
+      "yearDayValue",
+      "yearMonthValue",
+      "yearPeriodValue",
+      "yearWeekdayValue",
+      "occurrences",
+      "durationType",
+    ],
+  });
+
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setCalculating(true);
+
+    debounceTimerRef.current = setTimeout(() => {
+      getRRuleDataWithCallback({
+        startDate,
+        fieldValues,
+        onComplete: (data) => {
+          console.log(data);
+
+          if (data.ruleString && data.ruleString !== lastRuleRef.current) {
+            lastRuleRef.current = data.ruleString;
+            setValue("rule", data.ruleString);
+          }
+
+          if (data.lastDate && data.lastDate !== lastDateRef.current) {
+            lastDateRef.current = data.lastDate;
+            setValue("ruleEndDate", data.lastDate);
+          }
+
+          setLocalDates(data.localDates);
+          setCount(data.count);
+          setCalculating(false);
+        },
+        onError: (err) => {
+          console.error("RRULE worker error:", err);
+        },
+      });
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [startDate, fieldValues]);
 
   const type = watch("repeatingType");
   const durationType = watch("durationType");
@@ -216,18 +272,9 @@ export function Step2({
             </div>
           </div>
         </div>
+        <RRulePreview localDates={localDates} totalRules={count} isLoading={isCalculating} />
         <ScrollBar orientation="vertical" forceMount></ScrollBar>
       </ScrollArea>
-
-      <RRulePreview
-        name="rule"
-        defaultValue={getValues()}
-        startDate={startDate}
-        //format(new Date(), "yyyy-MM-dd")
-        //setLastDate={setLastDate}
-        control={control}
-        //setValue={setValue}
-      />
     </>
   );
 }
