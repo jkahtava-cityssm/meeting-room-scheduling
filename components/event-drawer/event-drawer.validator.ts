@@ -452,14 +452,14 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
     durationType: "",
     occurrences: "",
   };
-  console.log(event.recurrence?.startDate);
-  console.log(SRecurrenceDefaults.ruleStartDate);
+  //console.log(event.recurrence?.startDate);
+  //console.log(SRecurrenceDefaults.ruleStartDate);
 
   if (event.recurrence) {
     parseRRule(event.recurrence.rule, SRecurrenceDefaults);
   }
 
-  console.log(SRecurrenceDefaults.ruleStartDate);
+  //console.log(SRecurrenceDefaults.ruleStartDate);
 
   return { ...SEventFormDefaults, ...SRecurrenceDefaults };
 };

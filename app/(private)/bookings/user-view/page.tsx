@@ -31,7 +31,7 @@ export default function Home() {
   }
 
   if (!session) {
-    console.log("User Requests No session, redirecting to login");
+    //console.log("User Requests No session, redirecting to login");
     redirect("/");
   }
 

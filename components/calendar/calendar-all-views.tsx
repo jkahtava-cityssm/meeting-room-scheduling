@@ -47,7 +47,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   }
 
   if (!session) {
-    console.log("Calendar-All-Views No session, redirecting to login");
+    //console.log("Calendar-All-Views No session, redirecting to login");
     redirect("/");
   }
 

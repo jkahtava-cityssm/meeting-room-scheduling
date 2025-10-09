@@ -153,8 +153,8 @@ export const MultiStepForm = ({
 
     for (let step = 0; step <= totalSteps; step++) {
       const stepValid = await isStepValid(formSteps[step]);
-      console.log("Step ", step, " valid: ", stepValid);
-      console.log(getFormValues(step));
+      //console.log("Step ", step, " valid: ", stepValid);
+      //console.log(getFormValues(step));
       if (stepValid) {
         continue;
       }
@@ -310,16 +310,6 @@ export const MultiStepForm = ({
 
     return formValues as T;
   };
-
-  /* Form submission function */
-  async function submitSteppedForm(data: CombinedSchema) {
-    try {
-      // Perform your form submission logic here
-      console.log("data", data);
-    } catch (error) {
-      console.error("Form submission error:", error);
-    }
-  }
 
   // Context value
   const value: MultiStepFormContextProps = {

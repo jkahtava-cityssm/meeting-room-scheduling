@@ -113,8 +113,8 @@ export function RRulePreview({
           lastRuleStringRef.current = ruleString;
           setValue("rule", strippedObject.toString());
           setValue("ruleEndDate", response.data.lastDate.toISOString());
-          console.log(ruleString);
-          console.log(response.data.lastDate.toISOString());
+          //console.log(ruleString);
+          //console.log(response.data.lastDate.toISOString());
         }
 
         setIsLoading(false);
