@@ -11,6 +11,12 @@ import { Skeleton } from "../ui/skeleton";
 import z from "zod/v4";
 import { step2Schema } from "./event-drawer.validator";
 
+/**
+ *
+ * @todo REFACTOR, when on the first page if the date is changed we need to revalidate the reccurrence rule it needs to be split out so it can be called seperately and
+ * then maybe we can pass the props down to visualize the changes.
+ * so recalculate on submit is probably best
+ */
 export function RRulePreview({
   startDate,
   control,

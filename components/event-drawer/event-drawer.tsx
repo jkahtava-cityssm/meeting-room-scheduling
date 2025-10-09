@@ -8,23 +8,7 @@ import { useDisclosure } from "@/hooks/use-disclosure";
 import { useEventQuery } from "@/services/events";
 import z, { ZodType, ZodObject, ZodRawShape } from "zod/v4";
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
-
-//type FieldKeys = keyof typeof step1Schema.shape;
-
-const getDefaultValues = (object: object | undefined, schema: ZodObject<ZodRawShape>) => {
-  const schemaKeys = Object.keys(schema.shape);
-  const defaultValues: { [key: string]: string } = {};
-
-  for (const key of schemaKeys) {
-    if (object && Object.prototype.hasOwnProperty.call(object, key)) {
-      const value = object[key as keyof typeof object];
-      defaultValues[key] = value !== undefined && value !== null ? String(value) : "";
-    } else {
-      defaultValues[key] = "";
-    }
-  }
-  return defaultValues;
-};
+import { useEventStore } from "@/lib/zustand/new-event-store";
 
 export default function EventDrawer({
   creationDate,
