@@ -1,9 +1,0 @@
-import AuthProvider from "../component/AuthProvider";
-
-export default async function Home() {
-  return (
-    <AuthProvider>
-      <div>HOME - PRIVATE</div>
-    </AuthProvider>
-  );
-}

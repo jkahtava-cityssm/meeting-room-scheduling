@@ -13,8 +13,8 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
   const hourRef = React.useRef<HTMLInputElement>(null);
   const periodRef = React.useRef<HTMLButtonElement>(null);
   return (
-    <div className="flex gap-2 ">
-      <div className="grid gap-2 justify-items-center">
+    <div className="grid grid-cols-3 ">
+      <div className="grid col-span-1 gap-2 justify-items-center">
         <Label
           id={props.id + "HourLabel"}
           data-error={props["aria-invalid"]}
@@ -25,6 +25,7 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
         </Label>
         <TimePickerInput
           id={props.id + "HourInput"}
+          disabled={props.disabled}
           aria-invalid={props["aria-invalid"]}
           picker="12hours"
           period={period}
@@ -34,12 +35,13 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
           onRightFocus={() => minuteRef.current?.focus()}
         />
       </div>
-      <div className="grid gap-2 justify-items-center">
+      <div className="grid col-span-1 gap-2 justify-items-center">
         <Label id={props.id + "MinuteLabel"} data-error={props["aria-invalid"]} htmlFor={props.id + "MinuteInput"}>
           Minutes
         </Label>
         <TimePickerInput
           id={props.id + "MinuteInput"}
+          disabled={props.disabled}
           aria-invalid={props["aria-invalid"]}
           picker="minutes"
           date={props.date}
@@ -49,12 +51,13 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
           onRightFocus={() => periodRef.current?.focus()}
         />
       </div>
-      <div className="grid gap-2 justify-items-center">
+      <div className="grid col-span-1 gap-2 justify-items-center">
         <Label id={props.id + "PeriodLabel"} data-error={props["aria-invalid"]} htmlFor={props.id + "PeriodSelect"}>
           Period
         </Label>
         <TimePeriodSelect
           id={props.id + "PeriodSelect"}
+          disabled={props.disabled}
           aria-invalid={props["aria-invalid"]}
           period={period}
           setPeriod={setPeriod}

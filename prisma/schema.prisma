@@ -8,117 +8,108 @@ generator client {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             Int      @id @default(autoincrement()) @map("user_id")
+  name           String
+  email          String   @unique
+  emailVerified  Boolean  @default(false) @map("email_verified")
+  image          String?
+  employeeNumber String?  @map("employee_number")
+  employeeActive Boolean  @default(true) @map("employee_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   accounts Account[]
   sessions Session[]
-  Member   Member[]
+  userRole UserRole[]
+  event    Event[]
 
   @@map("user")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
+  id        Int      @id @default(autoincrement()) @map("user_session_id")
+  userId    Int      @map("user_id")
   token     String   @unique
-  expiresAt DateTime
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("session")
+  @@map("user_session")
 }
 
 model Account {
-  id                    String    @id @default(cuid())
-  userId                String
-  accountId             String
-  providerId            String
-  accessToken           String?
-  refreshToken          String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
+  id                    Int       @id @default(autoincrement()) @map("user_account_id")
+  userId                Int       @map("user_id")
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
   scope                 String?
-  idToken               String?
+  idToken               String?   @map("id_token")
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("account")
+  @@map("user_account")
 }
 
 //@@id([provider, providerAccountId])
 
 model Verification {
-  id         String   @id @default(cuid())
+  id         Int      @id @default(autoincrement()) @map("user_verification_id")
   identifier String
   value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  @@map("verification")
+  @@map("user_verification")
 }
 
 model Room {
-  roomId    Int      @id @default(autoincrement())
+  roomId    Int      @id @default(autoincrement()) @map("room_id")
   name      String
   color     String
   icon      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  Event Event[]
+  event Event[]
 
   @@map("room")
 }
 
-model Member {
-  memberId   Int    @id @default(autoincrement())
-  userId     String
-  theme      String
-  timeFormat String //12hour or 24 hour
-
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  MemberRole MemberRole[]
-
-  @@map("member")
-}
-
 //Member 1 or Many Roles, MemberRole
 
-model MemberRole {
-  memberRoleId Int      @id @default(autoincrement())
-  memberId     Int
-  roleId       Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model UserRole {
+  userRoleId Int      @id @default(autoincrement()) @map("user_role_id")
+  userId     Int      @map("user_id")
+  roleId     Int      @map("role_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  member Member @relation(fields: [memberId], references: [memberId], onDelete: Cascade)
-  role   Role   @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
 
-  @@map("member_role")
+  @@map("user_role")
 }
 
 model Role {
-  roleId    Int      @id @default(autoincrement())
+  roleId    Int      @id @default(autoincrement()) @map("role_id")
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  MemberRole         MemberRole[]
-  RoleResourceAction RoleResourceAction[]
+  userRole           UserRole[]
+  roleResourceAction RoleResourceAction[]
   // RolePermission     RolePermission[]
 
   @@map("role")
@@ -154,14 +145,15 @@ model Role {
  * }
  */
 
+//RoleDuty as an alternative name?
 model RoleResourceAction {
-  roleResourceActionId Int      @id @default(autoincrement())
-  roleId               Int
-  resourceId           Int
-  actionId             Int
+  roleResourceActionId Int      @id @default(autoincrement()) @map("role_resource_action_id")
+  roleId               Int      @map("role_id")
+  resourceId           Int      @map("resource_id")
+  actionId             Int      @map("action_id")
   permit               Boolean
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   role     Role     @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
   resource Resource @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
@@ -173,12 +165,12 @@ model RoleResourceAction {
 
 //Events, Rooms, etc...
 model Resource {
-  resourceId Int      @id @default(autoincrement())
+  resourceId Int      @id @default(autoincrement()) @map("resource_id")
   name       String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  RoleResourceAction RoleResourceAction[]
+  roleResourceAction RoleResourceAction[]
 
   @@map("resource")
 }
@@ -186,10 +178,10 @@ model Resource {
 model Action {
   actionId  Int      @id @default(autoincrement())
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  RoleResourceAction RoleResourceAction[]
+  roleResourceAction RoleResourceAction[]
 
   @@map("action")
 }
@@ -202,62 +194,83 @@ model Action {
  */
 
 model Recurrence {
-  recurrenceId             Int      @id @default(autoincrement())
-  recurrenceCancellationId Int?
-  recurrenceExceptionId    Int?
+  recurrenceId             Int      @id @default(autoincrement()) @map("recurrence_id")
+  recurrenceCancellationId Int?     @map("recurrence_cancellation_id")
+  recurrenceExceptionId    Int?     @map("recurrence_exception_id")
   rule                     String
-  startDate                DateTime
-  endDate                  DateTime
+  startDate                DateTime @map("start_date")
+  endDate                  DateTime @map("end_date")
 
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  Event                  Event[]
-  RecurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
-  RecurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  event                  Event[]
+  recurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
+  recurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
 
   @@map("recurrence")
 }
 
 model RecurrenceCancellation {
-  recurrenceCancellationId Int      @id @default(autoincrement())
-  recurrenceDate           DateTime
-  cancellationDate         DateTime
+  recurrenceCancellationId Int      @id @default(autoincrement()) @map("recurrence_cancellation_id")
+  recurrenceDate           DateTime @map("recurrence_date")
+  cancellationDate         DateTime @map("cancellation_date")
 
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  Recurrence Recurrence[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  recurrence Recurrence[]
 
   @@map("recurrence_cancellation")
 }
 
 model RecurrenceException {
-  recurrenceExceptionId Int      @id @default(autoincrement())
-  recurrenceDate        DateTime
-  rescheduledDate       DateTime
+  recurrenceExceptionId Int      @id @default(autoincrement()) @map("recurrence_exception_id")
+  recurrenceDate        DateTime @map("recurrence_date")
+  rescheduledDate       DateTime @map("rescheduled_date")
 
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  Recurrence Recurrence[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  recurrence Recurrence[]
 
   @@map("recurrence_exception")
 }
 
 model Event {
-  eventId      Int      @id @default(autoincrement())
-  roomId       Int
-  startDate    DateTime
-  endDate      DateTime
-  title        String
-  description  String
-  recurrenceId Int?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  eventId  Int  @id @default(autoincrement()) @map("event_id")
+  roomId   Int  @map("room_id")
+  statusId Int  @map("status_id") //e.g. "confirmed", "tentative", "cancelled"
+  userId   Int? @map("user_id") //who booked the event
+
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  title       String
+  description String
+
+  recurrenceId Int?     @map("recurrence_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: Cascade)
 
-  room Room @relation(fields: [roomId], references: [roomId])
+  user User? @relation(fields: [userId], references: [id])
+
+  room   Room    @relation(fields: [roomId], references: [roomId])
+  status Status? @relation(fields: [statusId], references: [statusId])
 
   @@map("event")
+}
+
+model Status {
+  statusId  Int      @id @default(autoincrement()) @map("status_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  event Event[]
+
+  @@map("status")
 }
 
 /**

@@ -13,10 +13,10 @@ export default async function AuthProvider({
     headers: await headers(),
   });
 
-  console.log(session);
+  //console.log(session);
 
   if (!session) {
-    console.log("AUTH PROVIDER REDIRECT");
+    //console.log("AUTH PROVIDER REDIRECT");
     redirect("/");
   }
   /*else

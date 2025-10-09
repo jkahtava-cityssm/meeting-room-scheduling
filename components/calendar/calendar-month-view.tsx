@@ -6,7 +6,6 @@ import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 import { IEvent } from "@/lib/schemas/calendar";
-import useSWR from "swr";
 
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { MonthViewDayEvents } from "./calendar-month-view-day-events";
@@ -14,6 +13,7 @@ import { MonthViewDayHeader } from "./calendar-month-view-day-header";
 import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
+import { useEventsQuery } from "@/services/events";
 
 export interface IMonthProcessData {
   events: IEvent[];
@@ -51,7 +51,7 @@ export interface IEventView {
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function CalendarMonthView({ date }: { date: Date }) {
+export function CalendarMonthView({ date, userId }: { date: Date; userId?: string }) {
   //const startDate: Date = startOfMonth(date);
   //const endDate: Date = endOfMonth(date);
 
@@ -65,15 +65,21 @@ export function CalendarMonthView({ date }: { date: Date }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
 
-  const { data: events, isLoading: isPending } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  /*const { data: events, isLoading: isPending } = useSWR<IEvent[]>(
+    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
+  );*/
+
+  const { isPending, data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
     //nextjs cache's the route so this is my temporary fix
     setRefreshed(true);
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+  }, [date]);
 
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
@@ -83,7 +89,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-month-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-month-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IMonthResponseData>) => {
       setWeekViews(event.data.weekViews);
@@ -114,7 +120,7 @@ export function CalendarMonthView({ date }: { date: Date }) {
         selectedRoomId: selectedRoomId,
         multiDayEventsAtTop: true,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
@@ -157,14 +163,10 @@ export function CalendarMonthView({ date }: { date: Date }) {
                 })}
               </div>
               <div className="h-18 sm:h-18 lg:h-23 overflow-hidden">
-                <ScrollArea
-                  type="scroll"
-                  className="h-18.5 sm:h-18.5 lg:h-23.5"
-                  //className={`max-h-18.5 sm:max-h-18.5 lg:max-h-23.5 overflow-y-auto ${week.maxDailyEvents <= (isSmall ? 2 : 3) && "pr-[15px]"}`}
-                >
+                <ScrollArea type="scroll" className="h-18.5 sm:h-18.5 lg:h-23.5">
                   <div className="grid grid-cols-7 min-h-18.5 sm:min-h-18 lg:min-h-23.5 overflow-hidden ">
                     {week.dayViews.map((day) => {
-                      return <MonthViewDayEvents key={day.dayDate.toISOString()} dayRecord={day} />;
+                      return <MonthViewDayEvents key={day.dayDate.toISOString()} dayRecord={day} userId={userId} />;
                     })}
                   </div>
                   <ScrollBar orientation="vertical" forceMount></ScrollBar>
@@ -182,11 +184,6 @@ export function CalendarMonthView({ date }: { date: Date }) {
           );
         })}
       </div>
-      {/*<div className="grid grid-cols-7 overflow-hidden">
-        {dayViews.map((day) => (
-          <MonthViewDayCell key={day.dayDate.toISOString()} dayRecord={day} />
-        ))}
-      </div>*/}
     </>
   );
 }

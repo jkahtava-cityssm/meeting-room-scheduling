@@ -5,14 +5,27 @@ import { Button } from "@/components/ui/button";
 import { RoomSelect } from "@/components/calendar/calendar-all-header-room-select";
 import { TodayButton } from "@/components/calendar/calendar-all-header-today-button";
 import { DateNavigator } from "@/components/calendar/calendar-all-header-date-navigator";
-import { AddEventDialog } from "@/components/calendar/dialog-event-add";
 
 import type { TCalendarView } from "@/lib/types";
-import { navigateDate, navigateURL } from "@/lib/helpers";
+import { mergeDateWithTime, navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
 
-export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; selectedDate: Date }) {
+import EventDrawer from "../event-drawer/event-drawer";
+import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
+import { hasClientPermission } from "@/lib/auth-client";
+
+export function CalendarHeader({
+  view,
+  selectedDate,
+  userId,
+}: {
+  view: TCalendarView;
+  selectedDate: Date;
+  userId?: string;
+}) {
+  const { session, isPending } = useClientSession();
+
   const { setSelectedRoomId } = useCalendar();
   const { push } = useRouter();
 
@@ -36,7 +49,8 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
     <>
       <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
-          <TodayButton />
+          <TodayButton view={view} />
+
           <DateNavigator
             view={view}
             selectedDate={selectedDate}
@@ -112,12 +126,24 @@ export function CalendarHeader({ view, selectedDate }: { view: TCalendarView; se
           <div className="w-full sm:w-auto">
             <RoomSelect onRoomChange={handleNavigateRoomChange} />
           </div>
-          <AddEventDialog>
+          {/*<AddEventDialog>
             <Button className="w-full sm:w-auto">
               <Plus />
               Add Event
             </Button>
-          </AddEventDialog>
+          </AddEventDialog>*/}
+
+          {!isPending && (
+            <EventDrawer userId={userId}>
+              <Button
+                className="w-full sm:w-auto"
+                disabled={!hasClientPermission(session, "Event", "Create") && !userId}
+              >
+                <Plus />
+                Add Event
+              </Button>
+            </EventDrawer>
+          )}
         </div>
       </div>
     </>

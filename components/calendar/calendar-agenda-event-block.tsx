@@ -3,9 +3,10 @@
 import { format } from "date-fns";
 import { cva } from "class-variance-authority";
 import { Clock, MapPin, Text } from "lucide-react";
-import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
+
 import { TColors } from "@/lib/types";
 import { IEvent } from "@/lib/schemas/calendar";
+import EventDrawer from "../event-drawer/event-drawer";
 
 const agendaEventCardVariants = cva(
   "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -55,7 +56,7 @@ const agendaEventCardVariants = cva(
   }
 );
 
-export function AgendaEventCard({ event }: { event: IEvent }) {
+export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: string }) {
   //const { badgeVariant } = useCalendar();
 
   const startDate = event.startDate;
@@ -76,7 +77,7 @@ export function AgendaEventCard({ event }: { event: IEvent }) {
   };
 
   return (
-    <EventDetailsDialog event={event}>
+    <EventDrawer event={event} userId={userId}>
       <div
         role="button"
         tabIndex={0}
@@ -114,6 +115,6 @@ export function AgendaEventCard({ event }: { event: IEvent }) {
           </div>
         </div>
       </div>
-    </EventDetailsDialog>
+    </EventDrawer>
   );
 }

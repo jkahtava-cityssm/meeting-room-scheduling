@@ -1,45 +1,56 @@
 import { prisma } from "@/prisma";
-import { parseISO } from "date-fns";
 
-import { revalidateTag } from "next/cache";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-async function CreatedMessage() {
-  return NextResponse.json({ message: "Created Event" }, { status: 201 });
-}
+import { UTCDate } from "@date-fns/utc";
 
-async function UpdatedMessage() {
-  return NextResponse.json({ message: "Updated Event" }, { status: 200 });
-}
-
-async function InternalServerErrorMessage(details?: string) {
-  return NextResponse.json({ error: "Internal Server Error" + details && ": " + details }, { status: 500 });
-}
-
-async function BadRequestMessage() {
-  return NextResponse.json({ error: "Bad Request" }, { status: 400 });
-}
+import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { getServerSession, hasServerPermission } from "@/lib/auth";
 
 export async function POST(req: Request) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const { title, description, startDate, endDate, roomId } = await req.json();
+  const session = await getServerSession();
 
-  if (!title || !description || !startDate || !endDate || !roomId) {
+  if (!session || !hasServerPermission(session, "Event", "Create")) {
+    return BadRequestMessage("Not Authorized");
+  }
+
+  const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate, userId } = await req.json();
+
+  if (!title || (!description && description !== "") || !startDate || !endDate || !roomId || !userId) {
     return BadRequestMessage();
   }
 
-  const result = await prisma.event.create({
-    data: { title, description, startDate, endDate, roomId },
+  let recurrence = null;
+
+  if (rule) {
+    recurrence = await prisma.recurrence.create({
+      data: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+    });
+  }
+
+  const event = await prisma.event.create({
+    data: {
+      title,
+      description,
+      startDate,
+      endDate,
+      roomId,
+      recurrenceId: recurrence ? recurrence.recurrenceId : null,
+      statusId: 1,
+      userId,
+    },
+    include: { room: true, recurrence: true },
   });
 
-  if (!result) {
+  if (!event) {
     InternalServerErrorMessage();
   }
 
-  return CreatedMessage();
+  return CreatedMessage("Created Event", event);
 }
 
 export async function PUT(req: Request) {
@@ -47,58 +58,144 @@ export async function PUT(req: Request) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const { eventId, title, description, startDate, endDate, roomId } = await req.json();
+  const session = await getServerSession();
 
-  if (!title || !description || !startDate || !endDate || !roomId) {
+  if (!session || !hasServerPermission(session, "Event", "Update")) {
+    return BadRequestMessage("Not Authorized");
+  }
+
+  /*const { eventId, title, description, startDate, endDate, roomId, recurrenceId, rule, ruleStartDate, ruleEndDate } =
+    await req.json();*/
+
+  const { eventData, ruleData } = await req.json();
+
+  if (!eventData) {
     return BadRequestMessage();
   }
 
-  const result = await prisma.event.upsert({
-    create: { title, description, startDate, endDate, roomId },
+  if (
+    eventData.title === undefined ||
+    eventData.startDate === undefined ||
+    eventData.endDate === undefined ||
+    eventData.roomId === undefined ||
+    eventData.userId === undefined
+  ) {
+    return BadRequestMessage();
+  }
+
+  if (
+    ruleData &&
+    (ruleData.rule === undefined || ruleData.ruleStartDate === undefined || ruleData.ruleEndDate === undefined)
+  ) {
+    return BadRequestMessage();
+  }
+  const { eventId, title, description, startDate, endDate, roomId, recurrenceId, userId } = eventData;
+  const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
+
+  let recurrence = null;
+
+  if (rule) {
+    recurrence = await prisma.recurrence.upsert({
+      create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+      where: { recurrenceId: recurrenceId },
+      update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+    });
+  }
+
+  if (ruleData === null && recurrenceId !== null) {
+    // Delete recurrence if ruleData is null and recurrenceId exists
+    await prisma.recurrence.delete({
+      where: { recurrenceId: recurrenceId },
+    });
+  }
+
+  const event = await prisma.event.upsert({
+    create: {
+      title,
+      description,
+      startDate,
+      endDate,
+      roomId,
+      recurrenceId: recurrence ? recurrence.recurrenceId : null,
+      statusId: 1,
+      userId,
+    },
     where: { eventId: eventId },
-    update: { title, description, startDate, endDate, roomId },
+    update: {
+      title,
+      description,
+      startDate,
+      endDate,
+      roomId,
+      recurrenceId: recurrence ? recurrence.recurrenceId : null,
+      statusId: 1,
+      userId,
+    },
+    include: { room: true, recurrence: true },
   });
 
-  if (!result) {
+  if (!event) {
     InternalServerErrorMessage();
   }
 
-  revalidateTag("EventsUpdated");
-  //revalidatePath("/private/calendar/month-view");
-
-  if (result.eventId === eventId) {
-    return UpdatedMessage();
+  if (event.eventId === eventId) {
+    return SuccessMessage("Updated Event", event);
   }
 
-  return CreatedMessage();
+  return CreatedMessage("Created Event", event);
 }
 
 export async function GET(req: NextRequest) {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
+
+  const session = await getServerSession();
+
+  if (!session || !hasServerPermission(session, "Event", "Read")) {
+    return BadRequestMessage("Not Authorized");
+  }
+
   const searchParams = req.nextUrl.searchParams;
 
   const startDateParam = searchParams.get("startdate");
   const endDateParam = searchParams.get("enddate");
+  const userId = searchParams.get("userId");
 
   if (!startDateParam || !endDateParam) {
     return BadRequestMessage();
   }
 
-  const StartDate: Date = parseISO(startDateParam);
-  const EndDate: Date = parseISO(endDateParam);
+  const StartDate: UTCDate = new UTCDate(startDateParam);
+  const EndDate: UTCDate = new UTCDate(endDateParam);
+
+  const whereClause: any = {
+    OR: [
+      {
+        startDate: { lte: EndDate },
+        endDate: { gte: StartDate },
+      },
+      {
+        recurrence: {
+          startDate: { lte: EndDate },
+          endDate: { gte: StartDate },
+        },
+      },
+    ],
+  };
+
+  if (userId) {
+    whereClause.AND = [{ userId: { equals: Number(userId) } }];
+  }
 
   const events = await prisma.event.findMany({
     include: { room: true, recurrence: true },
-    where: {
-      OR: [{ startDate: { lte: EndDate }, endDate: { gte: StartDate } }],
-    },
+    where: whereClause,
   });
 
   if (!events) {
     return InternalServerErrorMessage();
   }
 
-  return NextResponse.json(events);
+  return SuccessMessage("Collected Events", events);
 }

@@ -1,13 +1,9 @@
 "use client";
 
 import { signIn } from "@/lib/auth-client";
-import { Button } from "./ui/button";
 import Image from "next/image";
 import { MicrosoftButton } from "./ui/microsoft-signin-button";
-import { LogOut } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 export const signInGitHub = async (callback: string) => {
   const data = await signIn.social({
@@ -21,6 +17,7 @@ export const signInAzure = async (callback: string) => {
   const data = await signIn.social({
     provider: "microsoft",
     callbackURL: callback,
+    scopes: ["email", "openid", "profile", "offline_access", "User.Read"],
   });
   return data;
 };
@@ -29,7 +26,7 @@ export function SignInMicrosoft() {
   const searchParams = useSearchParams();
 
   const callbackURL =
-    searchParams.get("callbackurl") == null ? "/private" : (searchParams.get("callbackurl") as string);
+    searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
 
   return (
     <>

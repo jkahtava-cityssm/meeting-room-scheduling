@@ -11,9 +11,9 @@ import { Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "../ui/button";
-import useSWR from "swr";
 import { IEvent } from "@/lib/schemas/calendar";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
+import { useEventsQuery } from "@/services/events";
 
 export interface IAgendaProcessData {
   events: IEvent[];
@@ -27,7 +27,7 @@ export interface IAgendaResponseData {
   sortedEvents: IEvent[];
 }
 
-export function CalendarAgendaView({ date }: { date: Date }) {
+export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
@@ -38,15 +38,19 @@ export function CalendarAgendaView({ date }: { date: Date }) {
 
   const startDate: Date = startOfDay(date);
   const endDate: Date = endOfDay(date);
-  const { data: events } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  //const { data: events } = useSWR<IEvent[]>();
+
+  const { data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
     //nextjs cache's the route so this is my temporary fix
     setRefreshed(true);
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+  }, [date]);
 
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
@@ -56,7 +60,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-agenda-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-agenda-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IAgendaResponseData>) => {
       setFilteredEvents(event.data.sortedEvents);
@@ -87,7 +91,7 @@ export function CalendarAgendaView({ date }: { date: Date }) {
         selectedRoomId: selectedRoomId,
         multiDayEventsAtTop: true,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
@@ -119,9 +123,16 @@ export function CalendarAgendaView({ date }: { date: Date }) {
 
                 <div className="space-y-2 m-2">
                   {filteredEvents.length > 0 &&
-                    filteredEvents.map((event, index) => (
-                      <div key={index} className="break-inside-avoid">
-                        <AgendaEventCard key={event.eventId} event={event} />
+                    filteredEvents.map((event) => (
+                      <div
+                        key={`break-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                        className="break-inside-avoid"
+                      >
+                        <AgendaEventCard
+                          key={`agenda-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                          event={event}
+                          userId={userId}
+                        />
                       </div>
                     ))}
                 </div>

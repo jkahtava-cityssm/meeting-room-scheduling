@@ -9,30 +9,27 @@ import { CalendarAgendaView } from "./calendar-agenda-view";
 import { CalendarHeader } from "./calendar-all-header";
 import { useMemo } from "react";
 
-import { useSearchParams } from "next/navigation";
-import { endOfWeek, parse, startOfDay, startOfMonth, startOfYear } from "date-fns";
+import { redirect, useSearchParams } from "next/navigation";
+import { endOfDay, endOfWeek, parse, startOfDay, startOfMonth, startOfWeek, startOfYear } from "date-fns";
+
+import { useEventsQuery } from "@/services/events";
+import { useUserEventsQuery } from "@/services/users";
+import { useClientSession } from "@/hooks/use-client-auth";
+//import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null, view: string) {
-  switch (view) {
-    case "agenda":
-    case "day":
-      return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy-MM-dd", new Date()));
-    case "week":
-      return dateParam === null ? endOfWeek(new Date()) : endOfWeek(parse(dateParam, "RRRR-II", new Date()));
-    case "month":
-      return dateParam === null ? startOfMonth(new Date()) : startOfMonth(parse(dateParam, "yyyy-MM", new Date()));
-    case "year":
-      return dateParam === null ? startOfYear(new Date()) : startOfYear(parse(dateParam, "yyyy", new Date()));
-    default:
-      return dateParam === null ? startOfDay(new Date()) : startOfDay(parse(dateParam, "yyyy-MM-dd", new Date()));
-  }
+  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
+}
+
+function removeTimeFromDate(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 /*function isView(value: unknown): value is TCalendarView {
   return typeof value === "string" && TCalendarView.includes(value);
 }*/
 
-export function CalendarAllViews() {
+export function CalendarAllViews({ userId }: { userId?: string }) {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("selectedDate");
   const viewParam = searchParams.get("view");
@@ -43,15 +40,45 @@ export function CalendarAllViews() {
     return getViewDate(dateParam, view);
   }, [dateParam, view]);
 
-  return (
-    <div className="overflow-hidden rounded-xl border min-w-92">
-      <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} />
+  const { session, isPending } = useClientSession();
 
-      {view === "day" && <CalendarDayView date={dateValue} />}
-      {view === "month" && <CalendarMonthView date={dateValue} />}
-      {view === "week" && <CalendarWeekView date={dateValue} />}
-      {view === "year" && <CalendarYearView date={dateValue} />}
-      {view === "agenda" && <CalendarAgendaView date={dateValue} />}
-    </div>
-  );
+  if (isPending) {
+    return <div>Verifying Access</div>;
+  }
+
+  if (!session) {
+    //console.log("Calendar-All-Views No session, redirecting to login");
+    redirect("/");
+  }
+
+  if (session) {
+    return (
+      <div className="overflow-hidden rounded-xl border min-w-92">
+        <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} userId={userId} />
+
+        {view === "day" && <CalendarDayView date={dateValue} userId={userId} />}
+        {view === "month" && <CalendarMonthView date={dateValue} userId={userId} />}
+        {view === "week" && <CalendarWeekView date={dateValue} userId={userId} />}
+        {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
+        {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
+      </div>
+    );
+  }
 }
+
+/*function CalendarDayViewWithAllEvents({ date }: { date: Date }) {
+  const startDate: Date = startOfDay(date);
+  const endDate: Date = endOfDay(date);
+
+  const { data: events } = useEventsQuery(startDate, endDate);
+  return <CalendarDayView date={date} events={events} />;
+}
+
+function CalendarDayViewWithUserEvents({ date }: { date: Date }) {
+  const startDate: Date = startOfDay(date);
+  const endDate: Date = endOfDay(date);
+
+  const { data: events } = useUserEventsQuery("201");
+  return <CalendarDayView date={date} events={events} />;
+}
+*/

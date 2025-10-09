@@ -35,23 +35,22 @@ export const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelect
     };
 
     return (
-      <div className="flex items-center">
-        <Select name={props.id} value={period} onValueChange={(value: Period) => handleValueChange(value)}>
-          <SelectTrigger
-            id={props.id}
-            aria-invalid={props["aria-invalid"]}
-            ref={ref}
-            className=" focus:bg-accent focus:text-accent-foreground"
-            onKeyDown={handleKeyDown}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="AM">AM</SelectItem>
-            <SelectItem value="PM">PM</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Select name={props.id} value={period} onValueChange={(value: Period) => handleValueChange(value)}>
+        <SelectTrigger
+          id={props.id}
+          disabled={props.disabled}
+          aria-invalid={props["aria-invalid"]}
+          ref={ref}
+          className="flex items-center focus:bg-accent focus:text-accent-foreground"
+          onKeyDown={handleKeyDown}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="AM">AM</SelectItem>
+          <SelectItem value="PM">PM</SelectItem>
+        </SelectContent>
+      </Select>
     );
   }
 );

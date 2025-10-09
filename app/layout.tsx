@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import SWRProvider from "@/contexts/SWRProvider";
+
 import { ThemeProvider } from "next-themes";
+import { ReactQueryProvider } from "@/contexts/ReactQueryProvider";
 
 export const metadata: Metadata = {
   title: "Board Room Bookings",
@@ -18,8 +19,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
-          <SWRProvider>{children}</SWRProvider>
+        <ThemeProvider
+          attribute="class"
+          themes={["dark", "light", "theme-zinc-dark", "theme-zinc-light"]}
+          defaultTheme="light"
+          disableTransitionOnChange
+        >
+          <ReactQueryProvider>{children}</ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

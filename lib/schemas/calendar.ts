@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { z } from "zod/v4";
 
 //const coerceDate = z.coerce.date() as unknown as z.ZodDate
@@ -15,11 +16,17 @@ export const SRecurrence = z.object({
   recurrenceId: z.number(),
   recurrenceCancellationId: z.number().nullable(),
   recurrenceExceptionId: z.number().nullable(),
-  rule: z.string().min(1, "Rule is required"),
+  rule: z.string(),
   startDate: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
   endDate: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
   createdAt: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
   updatedAt: z.coerce.date() as unknown as z.ZodDate, //z.string().transform((value) => new Date(value)),
+});
+
+export const SUser = z.object({
+  userId: z.number(),
+  name: z.string(),
+  email: z.string(),
 });
 
 export const SMultiDay = z.object({
@@ -28,7 +35,9 @@ export const SMultiDay = z.object({
 
 export const SEvent = z.object({
   eventId: z.number(),
-  roomId: z.number(),
+  roomId: z.number().gt(0, "Room is required"),
+  userId: z.number().nullable().optional(),
+  statusId: z.number(),
   recurrenceId: z.number().nullable(),
   startDate: z.coerce.date({
     error: (issue) => (issue.input === undefined ? "Start date is required" : "Not a valid Start Date"),
@@ -40,7 +49,7 @@ export const SEvent = z.object({
   }) as unknown as z.ZodDate,
 
   title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string(),
   parentEventId: z.number().nullable().optional(),
   room: SRoom,
   recurrence: SRecurrence.nullish(),
@@ -48,6 +57,13 @@ export const SEvent = z.object({
   updatedAt: z.coerce.date() as unknown as z.ZodDate,
   multiDay: SMultiDay.optional(),
 });
+
+export const SStatus = z.object({
+  statusId: z.number(),
+  name: z.string(),
+});
+
+export type IStatus = z.infer<typeof SStatus>;
 
 export type IEvent = z.infer<typeof SEvent>;
 export type IRecurrence = z.infer<typeof SRecurrence>;

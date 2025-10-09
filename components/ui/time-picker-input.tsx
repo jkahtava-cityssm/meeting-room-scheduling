@@ -10,7 +10,22 @@ export interface TimePickerInputProps extends React.InputHTMLAttributes<HTMLInpu
   period?: Period;
   onRightFocus?: () => void;
   onLeftFocus?: () => void;
+  minuteStepData?: {
+    stepValues: number[];
+    wrapForward: { value: number; substitute: number };
+    wrapBackward: { value: number; substitute: number };
+  };
 }
+
+const MINUTE_STEP_DATA: {
+  stepValues: number[];
+  wrapForward: { value: number; substitute: number };
+  wrapBackward: { value: number; substitute: number };
+} = {
+  stepValues: [-15, 0, 15, 30, 45, 60],
+  wrapForward: { value: 60, substitute: 15 },
+  wrapBackward: { value: -15, substitute: 45 },
+};
 
 const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>(
   (
@@ -32,38 +47,18 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
     },
     ref
   ) => {
-    const [flag, setFlag] = React.useState<boolean>(false);
-    const [prevIntKey, setPrevIntKey] = React.useState<string>("0");
+    const inputBufferRef = React.useRef<string>("");
+    const roundingTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    /**
-     * allow the user to enter the second digit within 2 seconds
-     * otherwise start again with entering first digit
-     */
     React.useEffect(() => {
-      if (flag) {
-        const timer = setTimeout(() => {
-          setFlag(false);
-        }, 2000);
-
-        return () => clearTimeout(timer);
-      }
-    }, [flag]);
+      return () => {
+        if (roundingTimerRef.current) clearTimeout(roundingTimerRef.current);
+      };
+    }, []);
 
     const calculatedValue = React.useMemo(() => {
       return getDateByType(date, picker);
     }, [date, picker]);
-
-    const calculateNewValue = (key: string) => {
-      /*
-       * If picker is '12hours' and the first digit is 0, then the second digit is automatically set to 1.
-       * The second entered digit will break the condition and the value will be set to 10-12.
-       */
-      if (picker === "12hours") {
-        if (flag && calculatedValue.slice(1, 2) === "1" && prevIntKey === "0") return "0" + key;
-      }
-
-      return !flag ? "0" + key : calculatedValue.slice(1, 2) + key;
-    };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Tab") return;
@@ -71,20 +66,33 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
       if (e.key === "ArrowRight") onRightFocus?.();
       if (e.key === "ArrowLeft") onLeftFocus?.();
       if (["ArrowUp", "ArrowDown"].includes(e.key)) {
-        const step = e.key === "ArrowUp" ? 1 : -1;
+        const step = e.key === "ArrowUp" ? (picker === "minutes" ? 15 : 1) : picker === "minutes" ? -15 : -1;
+
         const newValue = getArrowByType(calculatedValue, step, picker);
-        if (flag) setFlag(false);
+
+        if (roundingTimerRef.current) clearTimeout(roundingTimerRef.current);
+
         const tempDate = new Date(date);
         setDate(setDateByType(tempDate, newValue, picker, period));
       }
       if (e.key >= "0" && e.key <= "9") {
-        if (picker === "12hours") setPrevIntKey(e.key);
+        const newBuffer = inputBufferRef.current + e.key;
+        inputBufferRef.current = newBuffer;
 
-        const newValue = calculateNewValue(e.key);
-        if (flag) onRightFocus?.();
-        setFlag((prev) => !prev);
+        if (inputBufferRef.current.length === 2) onRightFocus?.();
+
         const tempDate = new Date(date);
-        setDate(setDateByType(tempDate, newValue, picker, period));
+        setDate(setDateByType(tempDate, newBuffer, picker, period));
+
+        if (inputBufferRef.current.length === 2) inputBufferRef.current = "";
+
+        if (inputBufferRef.current.length === 1) {
+          if (roundingTimerRef.current) clearTimeout(roundingTimerRef.current);
+
+          roundingTimerRef.current = setTimeout(() => {
+            inputBufferRef.current = "";
+          }, 2000);
+        }
       }
     };
 
@@ -167,8 +175,20 @@ export function getValid12Hour(value: string) {
 }
 
 export function getValidMinuteOrSecond(value: string) {
-  if (isValidMinuteOrSecond(value)) return value;
-  return getValidNumber(value, { max: 59 });
+  const numericValue = parseInt(value, 10);
+  if (isNaN(numericValue)) return "00";
+
+  const closest = MINUTE_STEP_DATA.stepValues.reduce((prev, curr) =>
+    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev
+  );
+
+  return normalizeMinuteValue(closest).toString().padStart(2, "0");
+}
+
+function normalizeMinuteValue(value: number): number {
+  if (value === MINUTE_STEP_DATA.wrapForward.value) return MINUTE_STEP_DATA.wrapForward.substitute;
+  if (value === MINUTE_STEP_DATA.wrapBackward.value) return MINUTE_STEP_DATA.wrapBackward.substitute;
+  return value;
 }
 
 type GetValidArrowNumberConfig = {
@@ -195,7 +215,31 @@ export function getValidArrow12Hour(value: string, step: number) {
 }
 
 export function getValidArrowMinuteOrSecond(value: string, step: number) {
-  return getValidArrowNumber(value, { min: 0, max: 59, step });
+  const numericValue = parseInt(value, 10);
+  if (isNaN(numericValue)) return "00";
+
+  // List the available snap points
+  const multiples = [0, 15, 30, 45];
+
+  const closest = multiples.reduce((prev, curr) =>
+    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev
+  );
+
+  // Apply step and wrap
+  const index = multiples.indexOf(closest);
+  /*
+  ChatGPT - created this and it works like so:
+  1. Determine if the step is positive or negative.
+     - if positive move forward one index
+     - if negative move back one index
+  2. Add the length of the array to the new index to ensure it's non-negative.
+  3. Use modulo operation to wrap around the array if the new index exceeds the array bounds.
+    - For example, if index = 0 and step = -1, then:
+      (0 + (-1) + 4) % 4 = 3
+  */
+  const newIndex = (index + (step > 0 ? 1 : -1) + multiples.length) % multiples.length;
+
+  return multiples[newIndex].toString().padStart(2, "0");
 }
 
 export function setMinutes(date: Date, value: string) {
