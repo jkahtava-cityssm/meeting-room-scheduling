@@ -13,8 +13,8 @@ export async function middleware(request: NextRequest) {
   });
 
   if (!session) {
-    console.log(request.nextUrl.pathname);
-    console.log(session);
+    //console.log(request.nextUrl.pathname);
+    //console.log(session);
     //console.log("MIDDLEWARE REDIRECT")
     return NextResponse.redirect(new URL("/?callbackurl=" + request.nextUrl.pathname, request.url));
   }

@@ -114,7 +114,7 @@ export default function RefreshMenuItem() {
   const handleClick = async () => {
     const result = await revalidateAndInvalidate();
     if (result.success) {
-      console.log("Revalidated and invalidated successfully");
+      //console.log("Revalidated and invalidated successfully");
     } else {
       console.error("Error:", result.error);
     }
