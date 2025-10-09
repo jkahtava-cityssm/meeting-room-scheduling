@@ -12,9 +12,9 @@ import { EventBlock } from "./calendar-day-event-block";
 import { useEffect, useRef, useState } from "react";
 
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
-import useSWR from "swr";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
+import { useEventsQuery } from "@/services/events";
 
 export interface IWeekProcessData {
   events: IEvent[];
@@ -47,7 +47,7 @@ export interface IEventBlock {
   event: IEvent;
 }
 
-export function CalendarWeekView({ date }: { date: Date }) {
+export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
   const [dayViews, setDayViews] = useState<IDayView[]>([]);
@@ -59,15 +59,18 @@ export function CalendarWeekView({ date }: { date: Date }) {
 
   const startDate: Date = startOfWeek(date);
   const endDate: Date = endOfWeek(date);
-  const { data: events } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+
+  const { data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
     //nextjs cache's the route so this is my temporary fix
     setRefreshed(true);
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+  }, [date]);
 
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
@@ -77,12 +80,18 @@ export function CalendarWeekView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-week-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-week-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (event: MessageEvent<IWeekResponseData>) => {
-      setDayViews(event.data.dayViews);
-      setHours(event.data.hours);
-      setTotalEvents(event.data.totalEvents);
+    newWorker.onmessage = (e) => {
+      const buffer = e.data;
+      const decoder = new TextDecoder();
+      const json = decoder.decode(buffer);
+      const result = JSON.parse(json);
+
+      console.timeEnd("worker");
+      setDayViews(result.dayViews);
+      setHours(result.hours);
+      setTotalEvents(result.totalEvents);
       setIsHeaderLoading(false);
       setLoading(false);
     };
@@ -111,10 +120,16 @@ export function CalendarWeekView({ date }: { date: Date }) {
         multiDayEventsAtTop: true,
         pixelHeight: 96,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
+      console.time("worker");
 
-      workerRef.current.postMessage(data);
+      const encoder = new TextEncoder();
+      const serialized = encoder.encode(JSON.stringify(data)); // weekDataResult is the output of processWeekEvents_2
+      const buffer = serialized.buffer;
+
+      workerRef.current.postMessage(buffer, [buffer]);
+      //workerRef.current.postMessage(data);
     }
   }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
@@ -155,7 +170,12 @@ export function CalendarWeekView({ date }: { date: Date }) {
                         {dayViews.map((day, dayIndex) => {
                           return (
                             <div key={dayIndex} className="relative">
-                              <DayHourlyEventDialogs hours={hours} day={day.dayDate} workingHours={workingHours} />
+                              <DayHourlyEventDialogs
+                                hours={hours}
+                                day={day.dayDate}
+                                workingHours={workingHours}
+                                userId={userId}
+                              />
 
                               {day.eventBlocks.map((block, blockIndex) => {
                                 return (
@@ -164,7 +184,7 @@ export function CalendarWeekView({ date }: { date: Date }) {
                                     className="absolute p-1"
                                     style={block.eventStyle}
                                   >
-                                    <EventBlock eventBlock={block} heightInPixels={block.eventHeight} />
+                                    <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
                                   </div>
                                 );
                               })}

@@ -1,9 +1,10 @@
 import { cva } from "class-variance-authority";
 import { endOfDay, format, isSameDay, startOfDay } from "date-fns";
-import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
+
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { IEvent } from "@/lib/schemas/calendar";
+import EventDrawer from "../event-drawer/event-drawer";
 
 export const eventBadgeVariants = cva(
   "mx-1 flex size-auto h-6.5 select-none items-center justify-between gap-1.5 truncate whitespace-nowrap rounded-md border px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -67,6 +68,7 @@ interface IProps extends Omit<VariantProps<typeof eventBadgeVariants>, "color" |
   eventTotalDays?: number;
   className?: string;
   position?: "first" | "middle" | "last" | "none";
+  userId?: string;
 }
 
 export function MonthEventBadge({
@@ -76,6 +78,7 @@ export function MonthEventBadge({
   eventTotalDays,
   className,
   position: propPosition,
+  userId,
 }: IProps) {
   const itemStart = startOfDay(event.startDate);
   const itemEnd = endOfDay(event.endDate);
@@ -115,7 +118,7 @@ export function MonthEventBadge({
   };
 
   return (
-    <EventDetailsDialog event={event}>
+    <EventDrawer event={event} userId={userId}>
       <div role="button" tabIndex={0} color={event.room.color} className={eventBadgeClasses} onKeyDown={handleKeyDown}>
         <div className="flex items-center gap-1.5 truncate">
           {renderDays && <span className="text-xs font-semibold truncate">{event.title}</span>}
@@ -125,6 +128,6 @@ export function MonthEventBadge({
         {renderStartTime && <span className="hidden lg:block">{format(new Date(event.startDate), "h:mm a")}</span>}
         {renderEndTime && <span className="hidden lg:block">{format(new Date(event.endDate), "h:mm a")}</span>}
       </div>
-    </EventDetailsDialog>
+    </EventDrawer>
   );
 }

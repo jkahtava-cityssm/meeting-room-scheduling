@@ -6,9 +6,9 @@ import { endOfYear, startOfYear } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import YearViewMonth from "./calendar-year-view-month";
 import { IEvent } from "@/lib/schemas/calendar";
-import useSWR from "swr";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";
+import { useEventsQuery } from "@/services/events";
 
 export interface IMonthView {
   month: number;
@@ -27,7 +27,6 @@ export interface IDayView {
 
 export interface IYearProcessData {
   eventList: IEvent[];
-  recurringEventList: IEvent[];
   selectedDate: Date;
   selectedRoomId: string;
   visibleHours: TVisibleHours;
@@ -38,7 +37,7 @@ export interface IYearResponseData {
   monthsViews: IMonthView[];
 }
 
-export function CalendarYearView({ date }: { date: Date }) {
+export function CalendarYearView({ date, userId }: { date: Date; userId?: string }) {
   const { selectedRoomId, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
   const workerRef = useRef<Worker | null>(null);
@@ -50,13 +49,18 @@ export function CalendarYearView({ date }: { date: Date }) {
   const startDate: Date = startOfYear(date);
   const endDate: Date = endOfYear(date);
 
-  const { data: events } = useSWR<IEvent[]>(
-    `/api/events?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  //console.log(formatISO(startDate, { representation: "date" }));
+  /*const { data: events } = useSWR<IEvent[]>(
+    `/api/events?startdate=${formatISO(startDate, { representation: "date" })}&enddate=${formatISO(endDate, {
+      representation: "date",
+    })}`
+  );*/
 
-  const { data: recurringEvents } = useSWR<IEvent[]>(
+  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
+
+  /*const { data: recurringEvents } = useSWR<IEvent[]>(
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+  );*/
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -65,9 +69,13 @@ export function CalendarYearView({ date }: { date: Date }) {
   }, []);
 
   useEffect(() => {
+    setLoading(true);
+  }, [date]);
+
+  useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
     //But this example will come in handy for other applications
-    const newWorker = new Worker(new URL("./calendar-year-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-year-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IYearResponseData>) => {
       setMonthViews(event.data.monthsViews);
@@ -87,25 +95,24 @@ export function CalendarYearView({ date }: { date: Date }) {
   }, [date, setIsHeaderLoading, setTotalEvents]);
 
   useEffect(() => {
-    if (!events || !recurringEvents) {
+    if (!events) {
       return;
     }
 
     if (workerRef.current) {
       const data: IYearProcessData = {
         eventList: events,
-        recurringEventList: recurringEvents,
         selectedDate: date,
         selectedRoomId: selectedRoomId,
 
         visibleHours: visibleHours,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
     }
-  }, [events, recurringEvents, date, selectedRoomId, visibleHours, isRefreshed, setIsHeaderLoading]);
+  }, [events, date, selectedRoomId, visibleHours, isRefreshed, setIsHeaderLoading]);
 
   if (isLoading) {
     return <YearViewSkeleton date={date}></YearViewSkeleton>;

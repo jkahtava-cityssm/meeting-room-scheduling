@@ -25,6 +25,7 @@ import {
   getDaysInMonth,
   intervalToDuration,
   formatDuration,
+  isDate,
 } from "date-fns";
 
 import type { ICalendarCell } from "@/lib/interfaces";
@@ -79,14 +80,14 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
 
 export function navigateURL(date: Date | null, view: TCalendarView): string {
   const path = {
-    agenda: "calendar?view=agenda",
-    year: "calendar?view=year",
-    month: "calendar?view=month",
-    week: "calendar?view=week",
-    day: "calendar?view=day",
+    agenda: "?view=agenda",
+    year: "?view=year",
+    month: "?view=month",
+    week: "?view=week",
+    day: "?view=day",
   };
 
-  const dateParams = {
+  /*const dateParams = {
     agenda: "&selectedDate=",
     year: "&selectedDate=",
     month: "&selectedDate=",
@@ -107,13 +108,13 @@ export function navigateURL(date: Date | null, view: TCalendarView): string {
       default:
         return format(value, "yyyy-MM-dd");
     }
-  };
+  };*/
 
   if (date === null) {
     return path[view];
   }
 
-  return path[view] + dateParams[view] + formatDate(view, date);
+  return path[view] + "&selectedDate=" + format(date, "yyyy-MM-dd");
 }
 
 export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Date) {
@@ -190,11 +191,77 @@ export function calculateEventBlockStyle(
   const width = hasOverlap ? 100 / groupSize : 100;
   const left = hasOverlap ? groupIndex * width : 0;
 
-  return { top: `${top}%`, width: `${width}%`, left: `${left}%` };
+  //On occassion there are hydration errors associate with these calculations
+  //rounding to 2 decimal places should resolve it, since most errors occur at 10 decimal places
+  const roundedTop = roundToPrecision(top, 2); // Math.round(top * 100) / 100;
+  const roundedWidth = roundToPrecision(width, 2); // Math.round(width * 100) / 100;
+  const roundedLeft = roundToPrecision(left, 2); // Math.round(left * 100) / 100;
+
+  return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
+}
+
+export function mergeDateWithTime(date: Date, time: Date) {
+  const DateOnly = new Date(date.toDateString());
+  const DateTime = new Date(DateOnly.setHours(time.getHours(), time.getMinutes()));
+
+  return DateTime;
+}
+
+/**
+ * Converts Local Datetime values into RRULE UTC datetime
+ *
+ * @param date Local Datetime
+ * @returns new UTC Date
+ *
+ * * RRULE uses a UTC datetime to calculate recurrence
+ * * RRULE dates need to be converted to UTC Datetimes
+ * * see https://github.com/jkbrzt/rrule/issues/336 explains in further detail
+ */
+export function convertDateToRRuleDate(date: Date) {
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds())
+  );
+}
+
+/**
+ * Converts RRule UTC Date into a Local Datetime
+
+ * @param date UTC Datetime
+ * @returns new Local Datetime
+ * 
+ * * RRULE uses a UTC datetime to calculate recurrence
+ * * RRULE dates need to be converted back to Local Datetimes
+ * * see https://github.com/jkbrzt/rrule/issues/336 explains in further detail 
+ */
+export function convertRRuleDateToDate(date: Date) {
+  return new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds()
+  );
+}
+
+export function roundToPrecision(value: number, precision: number) {
+  if (precision < 0) precision = 0;
+
+  const padding = [
+    ...Array(precision)
+      .keys()
+      .map(() => {
+        return "0";
+      }),
+  ].join("");
+
+  const adjustment = Number("1" + padding);
+  return Math.round(value * adjustment) / adjustment;
 }
 
 export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHours) {
-  const dayIndex = day.getDay() as keyof typeof workingHours;
+  const parsedDay = isDate(day) ? day : new Date(day);
+  const dayIndex = parsedDay.getDay() as keyof typeof workingHours;
   const dayHours = workingHours[dayIndex];
   return hour >= dayHours.from && hour < dayHours.to;
 }
@@ -252,7 +319,7 @@ export function getDaysInView(selectedDate: Date) {
 
   const daysInLastRow = (daysInMonth + beforeDays) % 7;
   const afterDays = daysInLastRow > 0 ? 7 - daysInLastRow : 0;
-  const firstDate = startOfDay(subDays(selectedDate, beforeDays));
+  const firstDate = startOfDay(subDays(firstDayOfMonth, beforeDays));
   const lastDate = endOfDay(addDays(firstDayOfMonth, daysInMonth + afterDays - 1));
 
   return { startDate: firstDate, endDate: lastDate };
@@ -328,7 +395,9 @@ export const getDurationText = (startDate: Date, startTime: Date, endDate: Date,
 };
 
 export const combineDateTime = (dateField: Date, timeField: Date) => {
-  return new Date(dateField.setHours(timeField.getHours(), timeField.getMinutes()));
+  const checkDate = isDate(dateField) ? dateField : new Date(dateField);
+  const checkTime = isDate(timeField) ? timeField : new Date(timeField);
+  return new Date(checkDate.setHours(checkTime.getHours(), checkTime.getMinutes()));
 };
 
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
@@ -372,3 +441,8 @@ export function calculateYearlyRecurrenceEndDate(
 
   return addYears(firstYear, years * iterations);
 }
+
+/**
+ *
+ *
+ */

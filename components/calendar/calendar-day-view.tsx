@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, format } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -15,8 +15,9 @@ import { useEffect, useRef, useState } from "react";
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
-import useSWR from "swr";
+
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
+import { useEventsQuery } from "@/services/events";
 
 export interface IDayProcessData {
   events: IEvent[];
@@ -49,7 +50,7 @@ export interface IEventBlock {
   event: IEvent;
 }
 
-export function CalendarDayView({ date }: { date: Date }) {
+export function CalendarDayView({ date, userId }: { date: Date; userId?: string }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
   const [dayViews, setDayViews] = useState<IDayView[]>([]);
@@ -62,15 +63,18 @@ export function CalendarDayView({ date }: { date: Date }) {
 
   const startDate: Date = startOfDay(date);
   const endDate: Date = endOfDay(date);
-  const { data: events } = useSWR<IEvent[]>(
-    `/api/calendar?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`
-  );
+
+  const { data: events } = useEventsQuery(startDate, endDate, userId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
     //nextjs cache's the route so this is my temporary fix
     setRefreshed(true);
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+  }, [date]);
 
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
@@ -80,7 +84,7 @@ export function CalendarDayView({ date }: { date: Date }) {
       return;
     }
 
-    const newWorker = new Worker(new URL("./calendar-day-webworker.ts", import.meta.url));
+    const newWorker = new Worker(new URL("./webworkers/calendar-day-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IDayResponseData>) => {
       setDayViews(event.data.dayViews);
@@ -115,7 +119,7 @@ export function CalendarDayView({ date }: { date: Date }) {
         multiDayEventsAtTop: true,
         pixelHeight: 96,
       };
-      setLoading(true);
+      //setLoading(true);
       setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
@@ -139,16 +143,24 @@ export function CalendarDayView({ date }: { date: Date }) {
                 {/* Day grid */}
                 <div className="relative flex-1 border-b">
                   <div className="relative">
-                    <DayHourlyEventDialogs hours={hours} day={dayViews[0].dayDate} workingHours={workingHours} />
+                    <DayHourlyEventDialogs
+                      hours={hours}
+                      day={dayViews[0].dayDate}
+                      workingHours={workingHours}
+                      userId={userId}
+                    />
 
-                    {dayViews[0].eventBlocks.map((block, blockIndex) => {
+                    {dayViews[0].eventBlocks.map((block) => {
                       return (
                         <div
-                          key={`day-${dayViews[0].day}-block-${blockIndex}-event-${block.event.eventId}`}
+                          key={`day-${dayViews[0].day}-block-${format(
+                            block.event.startDate,
+                            "yyyy-MM-dd-HH-mm"
+                          )}-event-${block.event.eventId}`}
                           className="absolute p-1"
                           style={block.eventStyle}
                         >
-                          <EventBlock eventBlock={block} heightInPixels={block.eventHeight} />
+                          <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
                         </div>
                       );
                     })}

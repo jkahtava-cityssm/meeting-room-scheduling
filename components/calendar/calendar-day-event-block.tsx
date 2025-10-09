@@ -1,9 +1,10 @@
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
-import { EventDetailsDialog } from "@/components/calendar/dialog-event-details-container";
+
 import { TColors } from "../../lib/types";
 import { IEventBlock } from "./calendar-day-view";
-import { useRouter } from "next/navigation";
+
+import EventDrawer from "../event-drawer/event-drawer";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -53,9 +54,15 @@ const EventCard = cva(
   }
 );
 
-export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventBlock; heightInPixels: number }) {
-  const { push } = useRouter();
-
+export function EventBlock({
+  eventBlock,
+  heightInPixels,
+  userId,
+}: {
+  eventBlock: IEventBlock;
+  heightInPixels: number;
+  userId?: string;
+}) {
   if (!eventBlock?.event) {
     return;
   }
@@ -70,14 +77,8 @@ export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventB
     }
   };
 
-  const handleClick = () => {
-    push(`calendar/edit/0`, {
-      scroll: false,
-    });
-  };
-
   return (
-    <EventDetailsDialog event={eventBlock.event}>
+    <EventDrawer event={eventBlock.event} userId={userId}>
       <div
         role="button"
         tabIndex={0}
@@ -95,16 +96,7 @@ export function EventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventB
             {format(eventBlock.event.startDate, "h:mm a")} - {format(eventBlock.event.endDate, "h:mm a")}
           </p>
         </div>
-        {/*durationInMinutes > 60 && <div className="flex flex-row flex-1 text-wrap truncate">{event.description}</div>*/}
-
-        {/*durationInMinutes > 30 && pixelSize <= 96 && (
-          <p className={durationInMinutes <= 30 ? "text-xs" : "text-md"}>
-            {format(start, "h:mm a")} - {format(end, "h:mm a")}
-          </p>
-
-          style={{ height: `${(durationInMinutes / 60) * pixelSize}` }}
-        )*/}
       </div>
-    </EventDetailsDialog>
+    </EventDrawer>
   );
 }

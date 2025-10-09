@@ -34,3 +34,13 @@ export type TRecurrencePattern =
   | "Every X Weeks on Every Selected Day"
   | "Every X Months on X Day"
   | "Every X Year on X Month on X Day";
+
+export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin"] as const;
+
+export const DEFAULT_RESOURCES = ["Event", "Room", "User", "Calendar"] as const;
+
+export const DEFAULT_ACTIONS = ["Create", "Read", "Update", "Delete"] as const;
+
+export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
+export type SessionResource = (typeof DEFAULT_RESOURCES)[number];
+export type SessionAction = (typeof DEFAULT_ACTIONS)[number];
