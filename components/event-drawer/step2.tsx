@@ -76,7 +76,7 @@ export function Step2({
   const durationType = watch("durationType");
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
 
-  console.log(startDate);
+  //console.log(startDate);
   return (
     <>
       <ScrollArea type="always">

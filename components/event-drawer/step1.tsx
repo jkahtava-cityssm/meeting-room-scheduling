@@ -306,7 +306,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                     onSelect={(date) => {
                       if (isRecurring === "true") {
                         setValue("endDateText", date ? date.toISOString() : "");
-                        setStartDate(date ? format(date, "yyyy-MM-dd") : "");
+                        setStartDate(date ? date.toISOString() : "");
                       }
 
                       field.onChange(date ? date.toISOString() : "");

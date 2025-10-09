@@ -16,6 +16,11 @@ self.onmessage = (response: MessageEvent<ParsedOptions>) => {
 
     const convertedRuleList = ruleList.map(convertRRuleDateToDate);
 
-    self.postMessage({ rrule: rrule, count: total, lastDate: lastDate, localDates: convertedRuleList });
+    self.postMessage({
+      rrule: rrule,
+      count: total,
+      lastDate: lastDate ? convertRRuleDateToDate(lastDate) : undefined,
+      localDates: convertedRuleList,
+    });
   }
 };

@@ -12,12 +12,10 @@ import z from "zod/v4";
 import { step2Schema } from "./event-drawer.validator";
 
 export function RRulePreview({
-  name,
   startDate,
   control,
   defaultValue,
 }: {
-  name: keyof z.infer<typeof step2Schema>;
   startDate: string;
   control: Control<z.infer<typeof step2Schema>>;
   defaultValue: z.infer<typeof step2Schema>;
@@ -38,6 +36,8 @@ export function RRulePreview({
   const [isLoading, setIsLoading] = useState(true);
   const workerRef = useRef<Worker | null>(null);
   const lastRuleStringRef = useRef<string | undefined>("");
+  //const lastDate = useRef<string | undefined>(undefined);
+  const [lastDate, setLastDate] = useState<string | undefined>();
 
   const fieldValues = useWatch({
     control: control,
@@ -72,16 +72,17 @@ export function RRulePreview({
     return { RRuleText: text, RRuleOptions: options };
   }, [fieldValues, startDate]);
 
-  useEffect(() => {
-    if (name) {
-      const ruleInstance = RRuleOptions ? new RRule(RRuleOptions) : undefined;
-      const ruleString = ruleInstance ? ruleInstance.toString() : "";
-      if (ruleString !== lastRuleStringRef.current) {
-        lastRuleStringRef.current = ruleString;
-        setValue(name, ruleString);
-      }
+  /*useEffect(() => {
+    const ruleInstance = RRuleOptions ? new RRule(RRuleOptions) : undefined;
+    const ruleString = ruleInstance ? ruleInstance.toString() : "";
+    if (ruleString !== lastRuleStringRef.current) {
+      lastRuleStringRef.current = ruleString;
+      setValue("rule", ruleString);
+      setValue("ruleEndDate", lastDate);
+      console.log(ruleString);
+      console.log(lastDate);
     }
-  }, [RRuleOptions, name, setValue]);
+  }, [RRuleOptions, lastDate, setValue]);*/
 
   useEffect(() => {
     if (workerRef.current) {
@@ -101,10 +102,20 @@ export function RRulePreview({
         setLocalDates(response.data.localDates);
         //setValue(name, strippedObject.toString());
         //setValue("rule", strippedObject.toString());
+
         setCount(response.data.count);
 
         //setValue("lastOccurrenceDate", response.data.lastDate);
-        //setLastDate(response.data.lastDate);
+        //setLastDate(format(response.data.lastDate, "yyyy-MM-dd"));
+        const ruleString = strippedObject ? strippedObject.toString() : "";
+
+        if (ruleString !== lastRuleStringRef.current) {
+          lastRuleStringRef.current = ruleString;
+          setValue("rule", strippedObject.toString());
+          setValue("ruleEndDate", response.data.lastDate.toISOString());
+          console.log(ruleString);
+          console.log(response.data.lastDate.toISOString());
+        }
 
         setIsLoading(false);
       }
@@ -119,7 +130,7 @@ export function RRulePreview({
         workerRef.current = null;
       }
     };
-  }, [RRuleOptions, name, setValue]);
+  }, [RRuleOptions, setValue]);
 
   useEffect(() => {
     if (!RRuleOptions) {
@@ -234,10 +245,10 @@ function createRRule(
 
   const yearByYearDay = parseNumber(yearDayValue);
 
-  const parsedStartDate = parse(ruleStartDate, "yyyy-MM-dd", new Date());
+  const parsedStartDate = new Date(ruleStartDate); // parse(ruleStartDate, "yyyy-MM-dd", new Date());
   const parsedEndDate = new Date(ruleEndDate); //parse(ruleEndDate, "yyyy-MM-dd", new Date(ruleEndDate));
 
-  const convertedStartDate = convertDateToRRuleDate(parsedStartDate);
+  const convertedStartDate = parsedStartDate; // convertDateToRRuleDate(parsedStartDate);
 
   const count = durationType === "forever" || durationType === "until" ? null : parseNumber(occurrences);
   const convertedEndDate =

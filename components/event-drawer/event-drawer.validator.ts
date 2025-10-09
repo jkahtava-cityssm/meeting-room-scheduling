@@ -3,7 +3,7 @@ import { addMinutes, addYears, differenceInYears, endOfDay, format, set, startOf
 import { z } from "zod/v4";
 import { getDurationText } from "./step1";
 import { RRule, rrulestr } from "rrule";
-import { combineDateTime } from "@/lib/helpers";
+import { combineDateTime, convertDateToRRuleDate, convertRRuleDateToDate } from "@/lib/helpers";
 
 /*export const step1Schema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -427,9 +427,9 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
   };
 
   const SRecurrenceDefaults: z.infer<typeof step2Schema> = {
-    rule: "",
-    ruleStartDate: event.recurrence ? format(event.startDate, "yyyy-MM-dd") : format(event.startDate, "yyyy-MM-dd"),
-    ruleEndDate: event.recurrence ? format(event.endDate, "yyyy-MM-dd") : format(event.endDate, "yyyy-MM-dd"),
+    rule: event.recurrence ? event.recurrence.rule : "",
+    ruleStartDate: event.recurrence ? event.recurrence.startDate.toISOString() : event.startDate.toISOString(),
+    ruleEndDate: event.recurrence ? event.recurrence.endDate.toISOString() : event.endDate.toISOString(),
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",
@@ -452,18 +452,24 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
     durationType: "",
     occurrences: "",
   };
+  console.log(event.recurrence?.startDate);
+  console.log(SRecurrenceDefaults.ruleStartDate);
 
   if (event.recurrence) {
-    parseRRule(rrulestr(event.recurrence.rule), SRecurrenceDefaults);
+    parseRRule(event.recurrence.rule, SRecurrenceDefaults);
   }
+
+  console.log(SRecurrenceDefaults.ruleStartDate);
 
   return { ...SEventFormDefaults, ...SRecurrenceDefaults };
 };
 
-function parseRRule(rrule: RRule, SRecurrenceDefaults: z.infer<typeof step2Schema>) {
-  SRecurrenceDefaults.rule = rrule.toString();
-  SRecurrenceDefaults.ruleStartDate = format(rrule.options.dtstart, "yyyy-MM-dd");
-  SRecurrenceDefaults.ruleEndDate = format(getEndDate(rrule), "yyyy-MM-dd");
+function parseRRule(value: string, SRecurrenceDefaults: z.infer<typeof step2Schema>) {
+  const rrule: RRule = rrulestr(value);
+  const test = rrule.toString();
+  //SRecurrenceDefaults.rule = rrule.toString();
+  //SRecurrenceDefaults.ruleStartDate = format(convertRRuleDateToDate(rrule.options.dtstart), "yyyy-MM-dd");
+  //SRecurrenceDefaults.ruleEndDate = format(convertRRuleDateToDate(getEndDate(rrule)), "yyyy-MM-dd");
   SRecurrenceDefaults.weekdays = getWeekdays(rrule);
   SRecurrenceDefaults.durationType = getDurationType(rrule);
   SRecurrenceDefaults.occurrences = String(rrule.options.count);
