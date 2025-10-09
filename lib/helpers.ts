@@ -199,6 +199,14 @@ export function calculateEventBlockStyle(
 
   return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
 }
+
+export function mergeDateWithTime(date: Date, time: Date) {
+  const DateOnly = new Date(date.toDateString());
+  const DateTime = new Date(DateOnly.setHours(time.getHours(), time.getMinutes()));
+
+  return DateTime;
+}
+
 /**
  * Converts Local Datetime values into RRULE UTC datetime
  *
@@ -213,13 +221,6 @@ export function convertDateToRRuleDate(date: Date) {
   return new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds())
   );
-}
-
-export function mergeDateWithTime(date: Date, time: Date) {
-  const DateOnly = new Date(date.toDateString());
-  const DateTime = new Date(DateOnly.setHours(time.getHours(), time.getMinutes()));
-
-  return DateTime;
 }
 
 /**

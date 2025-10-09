@@ -83,8 +83,12 @@ export const MultiStepForm = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues["isRecurring"] === "false" ? true : false);
   const [startDate, setStartDate] = useState(
-    defaultFormValues.isRecurring ? defaultFormValues.ruleStartDate : format(defaultFormValues.startDate, "yyyy-MM-dd")
+    defaultFormValues.isRecurring === "true"
+      ? defaultFormValues.ruleStartDate
+      : defaultFormValues.startDate.toISOString()
   );
+  //console.log("RULE_STARTDATE", defaultFormValues.ruleStartDate);
+  //console.log("EVENT_STARTDATE", format(defaultFormValues.startDate, "yyyy-MM-dd"));
   //const [isEditable, setEditable] = useState(false);
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
   const [showAlert, setShowAlert] = useState(false);
@@ -150,13 +154,15 @@ export const MultiStepForm = ({
     for (let step = 0; step <= totalSteps; step++) {
       const stepValid = await isStepValid(formSteps[step]);
       console.log("Step ", step, " valid: ", stepValid);
-
+      console.log(getFormValues(step));
       if (stepValid) {
         continue;
       }
 
       isValid = false;
     }
+    //console.log(getFormValues(1));
+    //return false;
 
     return isValid;
   };
