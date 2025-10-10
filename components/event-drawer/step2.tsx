@@ -66,7 +66,7 @@ export function Step2({
     control: control,
     defaultValue: getValues(),
     name: [
-      "ruleEndDate",
+      "untilDate",
       "repeatingType",
       "weekdays",
       "dailyPattern",
@@ -110,6 +110,7 @@ export function Step2({
 
           if (data.lastDate && data.lastDate !== lastDateRef.current) {
             lastDateRef.current = data.lastDate;
+            setValue("ruleStartDate", startDate);
             setValue("ruleEndDate", data.lastDate);
           }
 
@@ -200,14 +201,14 @@ export function Step2({
                 {durationType === "until" && (
                   <FormField
                     control={control}
-                    name="ruleEndDate"
+                    name="untilDate"
                     render={({ field, fieldState }) => (
                       <FormItem className="space-y-3">
                         <FormControl>
                           <FormItem className="flex items-center gap-2">
                             <FormControl>
                               <SingleDayPicker
-                                id="endDate"
+                                id="untilDate"
                                 disabled={isReadOnly}
                                 value={field.value ? new Date(field.value) : new Date()}
                                 onSelect={(date) => {

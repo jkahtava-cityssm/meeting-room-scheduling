@@ -81,24 +81,16 @@ export const MultiStepForm = ({
     mode: "onChange",
   });
 
-  //https://react-hook-form.com/docs/useform
-  //const { reset, trigger, setError, getValues } = methods;
-
-  //console.log(defaultFormValues);
   const { isOpen, onClose, onOpen } = useDisclosure();
 
-  //const default = defaultValues();
   // Form state
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues["isRecurring"] === "false" ? true : false);
+  const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues["isRecurring"] === "false");
   const [startDate, setStartDate] = useState(
     defaultFormValues.isRecurring === "true"
       ? defaultFormValues.ruleStartDate
       : defaultFormValues.startDate.toISOString()
   );
-  //console.log("RULE_STARTDATE", defaultFormValues.ruleStartDate);
-  //console.log("EVENT_STARTDATE", format(defaultFormValues.startDate, "yyyy-MM-dd"));
-  //const [isEditable, setEditable] = useState(false);
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
   const [showAlert, setShowAlert] = useState(false);
   const currentStep = formSteps[currentStepIndex];
@@ -127,14 +119,6 @@ export const MultiStepForm = ({
   }, [status, collectedEvent]);
 
   const isStepValid = async (formStep: FormStep): Promise<boolean> => {
-    let isValid = false;
-
-    /*isValid = await methods.trigger(formStep.fields as (keyof z.infer<typeof formStep.validationSchema>)[]);
-
-    if (!isValid) {
-      return false; // Stop progression if validation fails
-    }*/
-
     // grab values in current step and transform array to object
     const formValues = getFormValues(formStep.position - 1);
 
@@ -162,32 +146,23 @@ export const MultiStepForm = ({
 
     for (let step = 0; step <= totalSteps; step++) {
       const stepValid = await isStepValid(formSteps[step]);
-      //console.log("Step ", step, " valid: ", stepValid);
-      //console.log(getFormValues(step));
       if (stepValid) {
         continue;
       }
 
       isValid = false;
     }
-    //console.log(getFormValues(1));
-    //return false;
 
     return isValid;
   };
 
   // Navigation functions
   const nextStep = async () => {
-    //const isValid = await isStepValid(currentStep);
-
-    //if (!isValid) return;
-
     if (currentStepIndex < formSteps.length - 1 && !ignoreLastStep) {
       // Move to the next step if not at the last step
       setCurrentStepIndex(currentStepIndex + 1);
 
       const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex]);
-      //const isNextStepValid = await isStepValid(formSteps[currentStepIndex + 1]);
 
       if (!isCurrentStepValid) {
         setBackButtonDestructive(true);
@@ -202,13 +177,10 @@ export const MultiStepForm = ({
   };
 
   const previousStep = async () => {
-    //if (!isValid) return;
-
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1);
 
       const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex]);
-      //const isPreviousStepValid = await isStepValid(formSteps[currentStepIndex - 1]);
 
       if (!isCurrentStepValid) {
         setNextButtonDestructive(true);
@@ -225,7 +197,6 @@ export const MultiStepForm = ({
   const goToStep = (position: number) => {
     if (position >= 0 && position - 1 < formSteps.length) {
       setCurrentStepIndex(position - 1);
-      //saveFormState(position - 1);
     }
   };
 
@@ -249,13 +220,15 @@ export const MultiStepForm = ({
     const step1Data = getFormValues<z.infer<typeof step1Schema>>(0);
     let step2Data = getFormValues<z.infer<typeof step2Schema>>(1);
 
-    const g = methods.getValues(formSteps[1].fields as (keyof CombinedSchema)[]);
-    if (allData.isRecurring === "true") {
+    if (allData.isRecurring === "true" && step1Data.startDateText !== step2Data.ruleStartDate) {
       const data = await getRRuleData({ startDate, fieldValues: getFieldValuesArray(allData) });
+
+      if (data.ruleString === undefined || data.lastDate === undefined) {
+        return;
+      }
+
       step2Data = { ...step2Data, rule: data.ruleString, ruleEndDate: data.lastDate, ruleStartDate: startDate };
     }
-
-    return;
 
     const b = z.safeParse(eventObject, step1Data);
     const c = z.safeParse(ruleObject, step2Data);
@@ -282,10 +255,6 @@ export const MultiStepForm = ({
         }
       );
     }
-
-    //console.log(allData);
-
-    //setStatus("Read");
   };
 
   const onOpenChange = (open: boolean) => {

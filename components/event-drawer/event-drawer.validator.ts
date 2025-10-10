@@ -16,6 +16,7 @@ export const step2Schema = z
     rule: z.string().min(1, "Please define a recurrence rule"),
     ruleStartDate: z.string(),
     ruleEndDate: z.string(),
+    untilDate: z.string(),
     repeatingType: z.string().min(1, "Please select a repeating type"),
     dailyPattern: z.string(),
     monthlyPattern: z.string(),
@@ -49,7 +50,7 @@ export const step2Schema = z
         path: ["ruleEndDate"],
         message: "Please Specify an End Date",
       });
-    } else if (ctx.value.durationType === "forever") {
+    } else if (ctx.value.durationType === "forever" && ctx.value.ruleEndDate === "") {
       ctx.issues.push({
         code: "custom",
         input: ctx.value,
@@ -336,11 +337,6 @@ export const ruleObject = z.object({
   ruleEndDate: z.string().transform((val) => new Date(val)),
 });
 
-const mutateEvent = z.object({
-  eventData: eventObject,
-  ruleData: ruleObject.optional(),
-});
-
 export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
 
 export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
@@ -376,6 +372,8 @@ export const defaultValues = (creationDate?: Date, userId?: string): CombinedSch
     rule: "",
     ruleStartDate: startDateTime.toISOString(),
     ruleEndDate: startDateTime.toISOString(),
+
+    untilDate: startDateTime.toISOString(),
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",
@@ -430,6 +428,7 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
     rule: event.recurrence ? event.recurrence.rule : "",
     ruleStartDate: event.recurrence ? event.recurrence.startDate.toISOString() : event.startDate.toISOString(),
     ruleEndDate: event.recurrence ? event.recurrence.endDate.toISOString() : event.endDate.toISOString(),
+    untilDate: event.recurrence ? event.recurrence.endDate.toISOString() : event.endDate.toISOString(),
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",
