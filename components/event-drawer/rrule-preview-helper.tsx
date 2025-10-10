@@ -2,6 +2,66 @@ import { convertDateToRRuleDate } from "@/lib/helpers";
 import { addYears } from "date-fns";
 import { ByWeekday, RRule } from "rrule";
 
+export function getRRuleData({
+  startDate,
+  fieldValues,
+}: {
+  startDate: string;
+  fieldValues: RRuleFieldValues;
+}): Promise<{
+  RRuleText: string;
+  ruleString?: string;
+  lastDate?: string;
+  count?: number;
+  localDates?: Date[];
+}> {
+  const rule = createRRule(startDate, ...fieldValues);
+  const RRuleText = rule ? rule.toText() : "Incomplete Recurrence Pattern";
+  const RRuleOptions = rule?.options;
+
+  if (!RRuleOptions) {
+    return Promise.resolve({ RRuleText });
+  }
+
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL("./rrule-preview-webworker.ts", import.meta.url));
+
+    worker.onmessage = (
+      response: MessageEvent<{ rrule: RRule; count: number; lastDate: Date; localDates: Date[] }>
+    ) => {
+      try {
+        const strippedObject = response.data.rrule;
+        const original = Object.getPrototypeOf(new RRule());
+        Object.setPrototypeOf(strippedObject, original);
+
+        const ruleString = strippedObject.toString();
+        const lastDate = response.data.lastDate.toISOString();
+        const count = response.data.count;
+        const localDates = response.data.localDates;
+
+        resolve({
+          RRuleText,
+          ruleString,
+          lastDate,
+          count,
+          localDates,
+        });
+      } catch (err) {
+        reject(err);
+      } finally {
+        worker.terminate();
+      }
+    };
+
+    worker.onerror = (err) => {
+      reject(err);
+      worker.terminate();
+    };
+
+    worker.postMessage(RRuleOptions);
+  });
+}
+/*
 export function getRRuleDataWithCallback({
   startDate,
   fieldValues,
@@ -61,7 +121,7 @@ export function getRRuleDataWithCallback({
   };
 
   worker.postMessage(RRuleOptions);
-}
+}*/
 
 function createRRule(
   ruleStartDate: string,
