@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SingleDayPicker } from "./single-day-picker";
 import { TimePicker } from "./time-picker";
 import { Label } from "./label";
@@ -7,7 +7,7 @@ type CombinedDateTimePickerProps = {
   id: string;
   disabled?: boolean;
   value?: string; // ISO string
-  onChange: (value: string) => void;
+  onChange: (value: string, changeType?: "date" | "time" | "both") => void;
   placeholder: string;
   className?: string;
   "data-invalid"?: boolean;
@@ -24,39 +24,46 @@ export function DateTimePicker({
   ...props
 }: CombinedDateTimePickerProps) {
   const initialDate = value ? new Date(value) : new Date();
-  const [date, setDate] = useState<Date>(initialDate);
+  const [day, setDay] = useState<Date>(initialDate);
+  const [time, setTime] = useState<Date>(initialDate);
 
-  const updateDate = (newDate: Date) => {
-    newDate.setSeconds(0);
-    newDate.setMilliseconds(0);
+  // Sync external value
+  useEffect(() => {
+    if (value) {
+      const newDate = new Date(value);
+      setDay(newDate);
+      setTime(newDate);
+    }
+  }, [value]);
 
-    setDate(newDate);
-    onChange(newDate.toISOString());
+  const updateCombinedDate = (newDay: Date, newTime: Date, changeType: "date" | "time" | "both") => {
+    const combined = new Date(newDay);
+    combined.setHours(newTime.getHours());
+    combined.setMinutes(newTime.getMinutes());
+    combined.setSeconds(0);
+    combined.setMilliseconds(0);
+    onChange(combined.toISOString(), changeType);
   };
 
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="col-span-1">
         <div className="grid col-span-1 gap-2">
-          <Label
-            id={id + "DayPickerLabel"}
-            data-error={props["data-invalid"]}
-            htmlFor={id + "DayPickerLabel"}
-            //className="text-center"
-          >
+          <Label id={id + "DayPickerLabel"} data-error={props["data-invalid"]} htmlFor={id + "DayPickerLabel"}>
             {label ? label : "\u00A0"}
           </Label>
           <SingleDayPicker
             id={`${id}Date`}
             disabled={disabled}
-            value={date}
+            value={day}
             onSelect={(selectedDate) => {
               if (!selectedDate) return;
-              const updated = new Date(date);
-              updated.setFullYear(selectedDate.getFullYear());
-              updated.setMonth(selectedDate.getMonth());
-              updated.setDate(selectedDate.getDate());
-              updateDate(updated);
+              const updatedDay = new Date(day);
+              updatedDay.setFullYear(selectedDate.getFullYear());
+              updatedDay.setMonth(selectedDate.getMonth());
+              updatedDay.setDate(selectedDate.getDate());
+              setDay(updatedDay);
+              updateCombinedDate(updatedDay, time, "date");
             }}
             placeholder={placeholder}
             className="min-w-52"
@@ -68,9 +75,11 @@ export function DateTimePicker({
         <TimePicker
           id={`${id}Time`}
           disabled={disabled}
-          date={date}
-          setDate={(updatedDate) => {
-            if (updatedDate) updateDate(updatedDate);
+          date={time}
+          setDate={(updatedTime) => {
+            if (!updatedTime) return;
+            setTime(updatedTime);
+            updateCombinedDate(day, updatedTime, "time");
           }}
           data-invalid={props["data-invalid"]}
         />
