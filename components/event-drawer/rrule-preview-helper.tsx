@@ -1,5 +1,5 @@
 import { convertDateToRRuleDate } from "@/lib/helpers";
-import { addYears } from "date-fns";
+import { addYears, differenceInYears } from "date-fns";
 import { ByWeekday, RRule } from "rrule";
 
 export function getRRuleData({
@@ -123,9 +123,23 @@ export function getRRuleDataWithCallback({
   worker.postMessage(RRuleOptions);
 }*/
 
+function IsDateLessThenEqual(firstDate: Date, secondDate: Date | null) {
+  if (!secondDate) {
+    return true;
+  }
+  if (
+    firstDate.getFullYear() >= secondDate.getFullYear() &&
+    firstDate.getMonth() >= secondDate.getMonth() &&
+    firstDate.getDate() >= secondDate.getDate()
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function createRRule(
   ruleStartDate: string,
-  ruleEndDate: string,
+  untilDate: string,
   repeatingType: string,
   weekdays: string[],
   dailyPattern: string,
@@ -162,17 +176,22 @@ function createRRule(
   const yearByYearDay = parseNumber(yearDayValue);
 
   const parsedStartDate = new Date(ruleStartDate); // parse(ruleStartDate, "yyyy-MM-dd", new Date());
-  const parsedEndDate = new Date(ruleEndDate); //parse(ruleEndDate, "yyyy-MM-dd", new Date(ruleEndDate));
-
-  const convertedStartDate = parsedStartDate; // convertDateToRRuleDate(parsedStartDate);
+  //const parsedEndDate = new Date(ruleEndDate); //parse(ruleEndDate, "yyyy-MM-dd", new Date(ruleEndDate));
 
   const count = durationType === "forever" || durationType === "until" ? null : parseNumber(occurrences);
   const convertedEndDate =
     durationType === "forever"
-      ? convertDateToRRuleDate(addYears(parsedStartDate, 200))
+      ? addYears(parsedStartDate, 200) //convertDateToRRuleDate(addYears(parsedStartDate, 200))
       : durationType === "count"
       ? null
-      : convertDateToRRuleDate(parsedEndDate);
+      : new Date(untilDate); //convertDateToRRuleDate(parsedEndDate);
+
+  if (
+    (durationType === "count" && count === 0) ||
+    (durationType === "until" && IsDateLessThenEqual(parsedStartDate, convertedEndDate))
+  ) {
+    return;
+  }
 
   switch (repeatingPattern) {
     case "daily-daily":
@@ -207,7 +226,7 @@ function createRRule(
         freq: RRule.DAILY,
         interval: dayInterval,
         byweekday: weekdayArray,
-        dtstart: convertedStartDate,
+        dtstart: parsedStartDate,
         count: count,
         until: convertedEndDate,
       });
@@ -216,7 +235,7 @@ function createRRule(
         freq: RRule.DAILY,
         interval: Number(1),
         byweekday: weekdayArray,
-        dtstart: convertedStartDate,
+        dtstart: parsedStartDate,
         count: count,
         until: convertedEndDate,
       });
@@ -226,7 +245,7 @@ function createRRule(
         freq: RRule.WEEKLY,
         interval: weekInterval,
         byweekday: weekdayArray,
-        dtstart: convertedStartDate,
+        dtstart: parsedStartDate,
         count: count,
         until: convertedEndDate,
       });
@@ -236,7 +255,7 @@ function createRRule(
         freq: RRule.MONTHLY,
         interval: monthInterval,
         bymonthday: monthByMonthDay,
-        dtstart: convertedStartDate,
+        dtstart: parsedStartDate,
         count: count,
         until: convertedEndDate,
       });
@@ -246,7 +265,7 @@ function createRRule(
         interval: monthInterval,
         byweekday: weekdayArray,
         bysetpos: monthBySetPos,
-        dtstart: convertedStartDate,
+        dtstart: parsedStartDate,
         count: count,
         until: convertedEndDate,
       });
@@ -256,7 +275,7 @@ function createRRule(
         interval: yearInterval,
         bymonth: yearByMonth,
         bymonthday: yearByYearDay,
-        dtstart: convertedStartDate,
+        dtstart: parsedStartDate,
         count: count,
         until: convertedEndDate,
       });
@@ -268,7 +287,7 @@ function createRRule(
         bysetpos: yearBySetPos,
         byweekday: weekdayArray,
         bymonth: yearByMonth,
-        dtstart: convertedStartDate,
+        dtstart: parsedStartDate,
         count: count,
         until: convertedEndDate,
       });
@@ -340,7 +359,7 @@ function getWeekdayArray(
 }
 
 export type RRuleFieldValues = [
-  string, // ruleEndDate
+  string, // untilDate
   string, // repeatingType
   string[], // weekdays
   string, // dailyPattern
@@ -363,7 +382,7 @@ export type RRuleFieldValues = [
 
 export function getFieldValuesArray(formValues: Record<string, any>): RRuleFieldValues {
   const fieldNames = [
-    "ruleEndDate",
+    "untilDate",
     "repeatingType",
     "weekdays",
     "dailyPattern",
