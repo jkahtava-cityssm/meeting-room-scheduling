@@ -18,7 +18,7 @@ import { SingleDayPicker } from "../ui/single-day-picker";
 import { step2Schema } from "./event-drawer.validator";
 import { useMultiStepForm } from "./multi-step-form";
 import { FormStatus } from "./types";
-import { getRRuleDataWithCallback } from "./rrule-preview-helper";
+import { getRRuleData, getRRuleDataWithCallback } from "./rrule-preview-helper";
 import { RRulePreview } from "./rrule-preview";
 
 /**
@@ -92,14 +92,16 @@ export function Step2({
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
+
+    let isCancelled = false;
     setCalculating(true);
 
     debounceTimerRef.current = setTimeout(() => {
-      getRRuleDataWithCallback({
-        startDate,
-        fieldValues,
-        onComplete: (data) => {
-          console.log(data);
+      const fetchData = async () => {
+        try {
+          const data = await getRRuleData({ startDate, fieldValues });
+
+          if (isCancelled) return;
 
           if (data.ruleString && data.ruleString !== lastRuleRef.current) {
             lastRuleRef.current = data.ruleString;
@@ -111,17 +113,22 @@ export function Step2({
             setValue("ruleEndDate", data.lastDate);
           }
 
-          setLocalDates(data.localDates);
-          setCount(data.count);
-          setCalculating(false);
-        },
-        onError: (err) => {
+          setLocalDates(data.localDates ?? []);
+          setCount(data.count ?? 0);
+        } catch (err) {
           console.error("RRULE worker error:", err);
-        },
-      });
+        } finally {
+          if (!isCancelled) {
+            setCalculating(false);
+          }
+        }
+      };
+
+      fetchData();
     }, 300);
 
     return () => {
+      isCancelled = true;
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }

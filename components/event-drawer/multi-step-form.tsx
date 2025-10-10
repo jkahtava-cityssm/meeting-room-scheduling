@@ -47,6 +47,7 @@ import { hasClientPermission } from "@/lib/auth-client";
 import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
 import { format } from "date-fns";
 import { useEventStore } from "@/lib/zustand/new-event-store";
+import { getFieldValuesArray, getRRuleData, getRRuleDataWithCallback } from "./rrule-preview-helper";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -245,8 +246,16 @@ export const MultiStepForm = ({
     if (!isValid) return;
 
     const allData = methods.getValues();
-    const step1Data = getFormValues<typeof step1Schema>(0);
-    const step2Data = getFormValues<typeof step2Schema>(1);
+    const step1Data = getFormValues<z.infer<typeof step1Schema>>(0);
+    let step2Data = getFormValues<z.infer<typeof step2Schema>>(1);
+
+    const g = methods.getValues(formSteps[1].fields as (keyof CombinedSchema)[]);
+    if (allData.isRecurring === "true") {
+      const data = await getRRuleData({ startDate, fieldValues: getFieldValuesArray(allData) });
+      step2Data = { ...step2Data, rule: data.ruleString, ruleEndDate: data.lastDate, ruleStartDate: startDate };
+    }
+
+    return;
 
     const b = z.safeParse(eventObject, step1Data);
     const c = z.safeParse(ruleObject, step2Data);
