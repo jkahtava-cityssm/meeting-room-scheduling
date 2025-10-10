@@ -16,38 +16,18 @@ import {
   getEventValues,
 } from "./event-drawer.validator";
 import { useContext } from "react";
-import { SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, Sheet, SheetTrigger } from "../ui/sheet";
+import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from "../ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
-import { Button } from "../ui/button";
-import {
-  ArrowLeftCircle,
-  ArrowRightCircle,
-  CalendarPlus,
-  CircleX,
-  Loader2Icon,
-  PenBoxIcon,
-  SaveIcon,
-  Trash2,
-} from "lucide-react";
+
 import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/services/events";
 import React from "react";
 import { IEvent } from "@/lib/schemas/calendar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogSave,
-  AlertDialogTitle,
-} from "../ui/alert-dialog";
-import { hasClientPermission } from "@/lib/auth-client";
-import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
-import { format } from "date-fns";
 import { useEventStore } from "@/lib/zustand/new-event-store";
-import { getFieldValuesArray, getRRuleData, getRRuleDataWithCallback } from "./rrule-preview-helper";
+import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
+import FormFooter from "./multi-step-form-footer";
+import UnsavedChangesDialog from "./multi-step-form-unsaved-changes";
+import { useClientSession } from "@/hooks/use-client-auth";
+import { getFormValues, isFormValid, isStepValid, updateRRuleIfNecessary } from "./multi-step-form-helper";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -87,9 +67,7 @@ export const MultiStepForm = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues["isRecurring"] === "false");
   const [startDate, setStartDate] = useState(
-    defaultFormValues.isRecurring === "true"
-      ? defaultFormValues.ruleStartDate
-      : defaultFormValues.startDate.toISOString()
+    defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate
   );
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
   const [showAlert, setShowAlert] = useState(false);
@@ -118,51 +96,13 @@ export const MultiStepForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, collectedEvent]);
 
-  const isStepValid = async (formStep: FormStep): Promise<boolean> => {
-    // grab values in current step and transform array to object
-    const formValues = getFormValues(formStep.position - 1);
-
-    // Validate the form state against the current step's schema
-    if (formStep.validationSchema) {
-      const validationResult = formStep.validationSchema.safeParse(formValues);
-
-      if (!validationResult.success) {
-        validationResult.error.issues.forEach((err) => {
-          methods.setError(err.path.join(".") as keyof CombinedSchema, {
-            type: "manual",
-            message: err.message,
-          });
-        });
-        return false; // Stop progression if schema validation fails
-      }
-    }
-
-    return true;
-  };
-
-  const isFormValid = async (): Promise<boolean> => {
-    const totalSteps = formSteps.length - 1;
-    let isValid = true;
-
-    for (let step = 0; step <= totalSteps; step++) {
-      const stepValid = await isStepValid(formSteps[step]);
-      if (stepValid) {
-        continue;
-      }
-
-      isValid = false;
-    }
-
-    return isValid;
-  };
-
   // Navigation functions
   const nextStep = async () => {
     if (currentStepIndex < formSteps.length - 1 && !ignoreLastStep) {
       // Move to the next step if not at the last step
       setCurrentStepIndex(currentStepIndex + 1);
 
-      const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex]);
+      const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex], methods);
 
       if (!isCurrentStepValid) {
         setBackButtonDestructive(true);
@@ -180,7 +120,7 @@ export const MultiStepForm = ({
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1);
 
-      const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex]);
+      const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex], methods);
 
       if (!isCurrentStepValid) {
         setNextButtonDestructive(true);
@@ -213,45 +153,29 @@ export const MultiStepForm = ({
   };
 
   const onSave = async () => {
-    const isValid = await isFormValid();
+    const isValid = await isFormValid(formSteps, methods);
     if (!isValid) return;
 
-    const allData = methods.getValues();
-    const step1Data = getFormValues<z.infer<typeof step1Schema>>(0);
-    let step2Data = getFormValues<z.infer<typeof step2Schema>>(1);
+    const allData = await updateRRuleIfNecessary(methods.getValues());
 
-    if (allData.isRecurring === "true" && step1Data.startDateText !== step2Data.ruleStartDate) {
-      const data = await getRRuleData({ startDate, fieldValues: getFieldValuesArray(allData) });
+    if (!allData) return;
 
-      if (data.ruleString === undefined || data.lastDate === undefined) {
-        return;
-      }
+    const eventParse = z.safeParse(eventObject, allData);
+    const ruleParse = z.safeParse(ruleObject, allData);
+    const isRecurring = allData.isRecurring === "true";
 
-      step2Data = { ...step2Data, rule: data.ruleString, ruleEndDate: data.lastDate, ruleStartDate: startDate };
-    }
-
-    const b = z.safeParse(eventObject, step1Data);
-    const c = z.safeParse(ruleObject, step2Data);
-
-    if (allData.isRecurring === "true" && b.success && c.success) {
+    if (eventParse.success && (isRecurring ? ruleParse.success : true)) {
       mutationUpsert.mutate(
-        { eventData: b.data, ruleData: c.data },
+        {
+          eventData: eventParse.data,
+          ruleData: isRecurring && ruleParse.data ? ruleParse.data : null,
+        },
         {
           onSuccess: () => {
             resetForm();
             onClose();
           },
-        }
-      );
-    } else if (allData.isRecurring === "false" && b.success) {
-      mutationUpsert.mutate(
-        { eventData: b.data, ruleData: null },
-        {
-          onSuccess: () => {
-            resetForm();
-            onClose();
-          },
-          onError: () => {},
+          onError: () => {}, // Optional: handle error
         }
       );
     }
@@ -286,15 +210,6 @@ export const MultiStepForm = ({
     setNextButtonDestructive(false);
     setBackButtonDestructive(false);
     methods.reset(defaultFormValues);
-  };
-
-  const getFormValues = <T,>(step: number) => {
-    const currentStepValues = methods.getValues(formSteps[step].fields as (keyof CombinedSchema)[]);
-    const formValues = Object.fromEntries(
-      formSteps[step].fields.map((field, index) => [field, currentStepValues[index] || ""])
-    );
-
-    return formValues as T;
   };
 
   // Context value
@@ -332,119 +247,36 @@ export const MultiStepForm = ({
               <currentStep.component formStatus={status}></currentStep.component>
             </Form>
           </FormProvider>
-
-          <SheetFooter className="flex  md:flex-row  gap-6 ">
-            {/*
-            <PrevButton />
-            <NextButton className="mr-auto" onClick={() => nextStep()} />*/}
-
-            {saveButtonEnabled && (
-              <Button
-                variant={"default"}
-                onClick={() => {
-                  onSave();
-                }}
-                className="md:w-24"
-                disabled={
-                  (status === "Edit" && !hasClientPermission(session, "Event", "Update")) ||
-                  (status === "New" && !hasClientPermission(session, "Event", "Create") && !userId)
-                }
-              >
-                {status === "Edit" && <SaveIcon />}
-                {status === "New" && <CalendarPlus />}
-                {status === "Edit" && "Save"}
-                {status === "New" && "Create"}
-              </Button>
-            )}
-
-            {editButtonEnabled && (
-              <Button
-                variant={"default"}
-                onClick={() => {
-                  setStatus("Loading");
-                }}
-                className="md:w-24"
-                disabled={status === "Loading" || !hasClientPermission(session, "Event", "Update")}
-              >
-                {status === "Loading" ? <Loader2Icon className="animate-spin" /> : <PenBoxIcon />}
-                Edit
-              </Button>
-            )}
-            <Button variant={"outline"} className="md:w-24" onClick={() => onOpenChange(false)}>
-              <CircleX />
-              Cancel
-            </Button>
-
-            <div className="flex flex-row md:gap-6 md:grow md:justify-center">
-              <Button
-                variant={backButtonDestructive ? "outline_destructive" : "outline"}
-                className="basis-[48%]  mr-auto md:basis-24 md:mr-0"
-                disabled={currentStepIndex === 0}
-                onClick={() => previousStep()}
-              >
-                <ArrowLeftCircle />
-                Back
-              </Button>
-              <Button
-                variant={nextButtonDestructive ? "outline_destructive" : "outline"}
-                disabled={currentStepIndex === formSteps.length - 1 || ignoreLastStep}
-                onClick={() => nextStep()}
-                className={"basis-[48%] ml-auto md:basis-24 md:ml-0"}
-              >
-                Next
-                <ArrowRightCircle />
-              </Button>
-            </div>
-            <div className="flex flex-row h-9 md:w-24">
-              <Button
-                variant={"outline_destructive"}
-                className="grow md:w-24"
-                onClick={onDelete}
-                hidden={status !== "Edit"}
-              >
-                <Trash2 />
-                Delete
-              </Button>
-            </div>
-          </SheetFooter>
+          <FormFooter
+            saveButtonEnabled={saveButtonEnabled}
+            editButtonEnabled={editButtonEnabled}
+            status={status}
+            session={session}
+            userId={userId}
+            onSave={onSave}
+            onOpenChange={onOpenChange}
+            currentStepIndex={currentStepIndex}
+            formSteps={formSteps}
+            ignoreLastStep={ignoreLastStep}
+            previousStep={previousStep}
+            nextStep={nextStep}
+            backButtonDestructive={backButtonDestructive}
+            nextButtonDestructive={nextButtonDestructive}
+            onDelete={onDelete}
+            setStatus={setStatus}
+          ></FormFooter>
         </SheetContent>
       </Sheet>
-      <AlertDialog open={showAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Warning: Event Cancellation </AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <AlertDialogFooter>
-            {defaultFormValues["eventId"] === "0" && (
-              <AlertDialogSave
-                onClick={() => {
-                  setEvent(methods.getValues());
-                  setShowAlert(false);
-                  onClose();
-                }}
-                className="sm:mr-auto"
-              >
-                Save for later
-              </AlertDialogSave>
-            )}
-            <AlertDialogAction
-              onClick={() => {
-                setShowAlert(false);
-                resetEvent();
-                resetForm();
-                onClose();
-              }}
-              className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
-            >
-              Dismiss Form
-            </AlertDialogAction>
-
-            <AlertDialogCancel onClick={() => setShowAlert(false)}>Continue Editing</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnsavedChangesDialog
+        showAlert={showAlert}
+        defaultFormValues={defaultFormValues}
+        setEvent={setEvent}
+        resetEvent={resetEvent}
+        resetForm={resetForm}
+        onClose={onClose}
+        setShowAlert={setShowAlert}
+        methods={methods}
+      ></UnsavedChangesDialog>
     </MultiStepFormContext.Provider>
   );
 };

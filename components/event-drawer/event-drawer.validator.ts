@@ -3,7 +3,7 @@ import { addMinutes, addYears, differenceInYears, endOfDay, format, set, startOf
 import { z } from "zod/v4";
 import { getDurationText } from "./step1";
 import { RRule, rrulestr } from "rrule";
-import { combineDateTime, convertDateToRRuleDate, convertRRuleDateToDate } from "@/lib/helpers";
+import { getValidMinuteAndRolledHour } from "./multi-step-form-helper";
 
 /*export const step1Schema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -249,29 +249,15 @@ export const step1Schema = z
     description: z.string().optional(),
     title: z.string().min(1),
     statusId: z.string(),
-    startDate: z.date(),
-    startDateText: z.string(),
-    startTimeText: z.string(),
-    endDate: z.date(),
-    endDateText: z.string(),
-    endTimeText: z.string(),
+    startDate: z.string(),
+    endDate: z.string(),
     recurrenceId: z.string().optional(),
     duration: z.string(),
     isRecurring: z.string(),
   })
   .check((ctx) => {
-    const EndDate = new Date(ctx.value.endDateText);
-    const StartDate = new Date(ctx.value.startDateText);
-
-    const EndDateTime = new Date(ctx.value.endTimeText);
-    const StartDateTime = new Date(ctx.value.startTimeText);
-
-    const EndTime = new Date(
-      new Date(ctx.value.startDate).setHours(EndDateTime.getHours(), EndDateTime.getMinutes())
-    ).getTime();
-    const StartTime = new Date(
-      new Date(ctx.value.startDate).setHours(StartDateTime.getHours(), StartDateTime.getMinutes())
-    ).getTime();
+    const EndDate = new Date(ctx.value.startDate);
+    const StartDate = new Date(ctx.value.endDate);
 
     if (EndDate < StartDate) {
       ctx.issues.push({
@@ -288,7 +274,7 @@ export const step1Schema = z
       });
     }
 
-    if (EndTime < StartTime && EndDate.getTime() === StartDate.getTime()) {
+    if (EndDate.getTime() < StartDate.getTime()) {
       ctx.issues.push({
         code: "custom",
         input: ctx.value,
@@ -342,8 +328,9 @@ export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
 export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
 
 export const defaultValues = (creationDate?: Date, userId?: string): CombinedSchema => {
-  const startDateTime = creationDate ? creationDate : new Date();
-  const endDateTime = creationDate ? addMinutes(creationDate, 30) : addMinutes(new Date(), 30);
+  const startDateTime = getValidMinuteAndRolledHour(creationDate ? creationDate : new Date());
+
+  const endDateTime = addMinutes(startDateTime, 30);
 
   const SEventFormDefaults = {
     eventId: "0",
@@ -352,18 +339,9 @@ export const defaultValues = (creationDate?: Date, userId?: string): CombinedSch
     title: "",
     description: "",
     statusId: "1",
-    startDate: combineDateTime(startDateTime, startDateTime),
-    startDateText: startDateTime.toISOString(),
-    startTimeText: startDateTime.toISOString(),
-    endDate: combineDateTime(endDateTime, endDateTime),
-    endDateText: endDateTime.toISOString(),
-    endTimeText: endDateTime.toISOString(),
-    duration: getDurationText(
-      startDateTime.toISOString(),
-      startDateTime.toISOString(),
-      endDateTime.toISOString(),
-      endDateTime.toISOString()
-    ),
+    startDate: startDateTime.toISOString(),
+    endDate: endDateTime.toISOString(),
+    duration: getDurationText(startDateTime.toISOString(), endDateTime.toISOString()),
     isRecurring: "false",
     recurrenceId: "",
   };
@@ -408,18 +386,9 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
     title: event.title,
     description: event.description ? event.description : "",
     statusId: event.statusId ? String(event.statusId) : "1",
-    startDate: combineDateTime(event.startDate, event.startDate),
-    startDateText: event.startDate.toISOString(),
-    startTimeText: event.startDate.toISOString(),
-    endDate: combineDateTime(event.endDate, event.endDate),
-    endDateText: event.endDate.toISOString(),
-    endTimeText: event.endDate.toISOString(),
-    duration: getDurationText(
-      event.startDate.toISOString(),
-      event.startDate.toISOString(),
-      event.endDate.toISOString(),
-      event.endDate.toISOString()
-    ),
+    startDate: event.startDate.toISOString(),
+    endDate: event.endDate.toISOString(),
+    duration: getDurationText(event.startDate.toISOString(), event.endDate.toISOString()),
     isRecurring: event.recurrenceId ? "true" : "false",
     recurrenceId: event.recurrenceId ? String(event.recurrenceId) : "",
   };
