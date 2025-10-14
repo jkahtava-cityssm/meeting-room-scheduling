@@ -26,7 +26,8 @@ import { FormStatus } from "./types";
 import { useUsersQuery } from "@/services/users";
 import { Button } from "../ui/button";
 import { useStatusQuery } from "@/services/references";
-import { DateTimePicker } from "../ui/datetimepicker";
+import { DateTimePicker, DateTimePickerRef } from "../ui/datetimepicker";
+import { useRef } from "react";
 
 export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
   const {
@@ -44,6 +45,8 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
   const { data: rooms } = useRoomsQuery(false);
   const { data: users } = useUsersQuery();
   const { data: status } = useStatusQuery();
+
+  const endDatePickerRef = useRef<DateTimePickerRef>(null);
 
   const userList = users
     ? users.map((user) => {
@@ -130,7 +133,8 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                       const endDate = getValues("endDate");
 
                       if (value === "true" && startDate !== endDate) {
-                        setValue("endDate", getValues("startDate"));
+                        endDatePickerRef.current?.updateDate(startDate);
+                        //setValue("endDate", getValues("startDate"));
                         setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                       }
                       field.onChange(value);
@@ -297,7 +301,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                     value={field.value}
                     onChange={(isoString) => {
                       if (isRecurring === "true") {
-                        setValue("endDate", isoString);
+                        endDatePickerRef.current?.updateDate(isoString);
                         setStartDate(isoString);
                       }
                       field.onChange(isoString);
@@ -313,91 +317,31 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
             )}
           />
 
-          {isRecurring === "false" && (
-            <FormField
-              control={control}
-              name="endDate"
-              render={({ field, fieldState }) => (
-                <FormItem className="col-span-2 row-4">
-                  <div className="flex gap-2">
-                    {fieldState.invalid && <FormMessage className="leading-none font-medium" />}
-                  </div>
-
-                  <FormControl>
-                    <DateTimePicker
-                      id="endDate"
-                      disabled={isReadOnly}
-                      value={field.value}
-                      onChange={(isoString) => {
-                        if (isRecurring === "false") {
-                          setValue("endDate", isoString);
-                          setStartDate(isoString);
-                        }
-                        field.onChange(isoString);
-                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
-                      }}
-                      placeholder="Select a date"
-                      data-invalid={fieldState.invalid}
-                      className="min-w-52"
-                      label={"End Date"}
-                    ></DateTimePicker>
-
-                    {/*<SingleDayPicker
-                      id="endDate"
-                      disabled={isReadOnly}
-                      value={field.value ? new Date(field.value) : new Date()}
-                      onSelect={(date) => {
-                        if (isRecurring !== "false") {
-                          setValue("startDate", date ? date.toISOString() : "");
-                        }
-                        field.onChange(date ? date.toISOString() : "");
-
-                        trigger(["startDate", "endTimeText", "startTimeText"]);
-                        setValue(
-                          "duration",
-                          getDurationText(
-                            ...getValues(["startDate", "startTimeText", "endDate", "endTimeText"])
-                          )
-                        );
-                        setValue(
-                          "endDate",
-                          combineDateTime(date ? date : new Date(), new Date(getValues("endTimeText")))
-                        );
-                      }}
-                      placeholder="Select a date"
-                      data-invalid={fieldState.invalid}
-                      className="min-w-52"
-                    />*/}
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          )}
           <FormField
             control={control}
-            name="endTimeText"
+            name="endDate"
             render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-4">
-                <FormControl>
-                  {/*<TimePicker
-                    id="endTimeText"
-                    disabled={isReadOnly}
-                    date={field.value ? new Date(field.value) : new Date()}
-                    setDate={(date) => {
-                      field.onChange(date ? date.toISOString() : "");
+              <FormItem className="col-span-2 row-4">
+                <div className="flex gap-2">
+                  {fieldState.invalid && <FormMessage className="leading-none font-medium" />}
+                </div>
 
-                      trigger(["startDate", "endDate", "startTimeText"]);
-                      setValue(
-                        "duration",
-                        getDurationText(...getValues(["startDate", "startTimeText", "endDate", "endTimeText"]))
-                      );
-                      setValue(
-                        "endDate",
-                        combineDateTime(new Date(getValues("endDate")), date ? date : new Date())
-                      );
+                <FormControl>
+                  <DateTimePicker
+                    id="endDate"
+                    ref={endDatePickerRef}
+                    disabled={isReadOnly}
+                    value={field.value}
+                    onChange={(isoString) => {
+                      field.onChange(isoString);
+                      setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                     }}
+                    placeholder="Select a date"
                     data-invalid={fieldState.invalid}
-                  />*/}
+                    className="min-w-52"
+                    label={"End Date"}
+                    hideDate={isRecurring === "true"}
+                  ></DateTimePicker>
                 </FormControl>
               </FormItem>
             )}
