@@ -11,15 +11,16 @@ import {
   AlertDialogSave,
 } from "@/components/ui/alert-dialog";
 
+import { CombinedSchema } from "./event-drawer.validator";
+
 interface UnsavedChangesDialogProps {
   showAlert: boolean;
-  defaultFormValues: { [key: string]: any };
-  setEvent: (event: any) => void;
+  defaultFormValues: CombinedSchema;
+  setEvent: () => void;
   resetEvent: () => void;
   resetForm: () => void;
   onClose: () => void;
   setShowAlert: (show: boolean) => void;
-  methods: { getValues: () => any };
 }
 
 const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
@@ -30,7 +31,6 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
   resetForm,
   onClose,
   setShowAlert,
-  methods,
 }) => (
   <AlertDialog open={showAlert}>
     <AlertDialogContent>
@@ -43,7 +43,7 @@ const UnsavedChangesDialog: React.FC<UnsavedChangesDialogProps> = ({
         {defaultFormValues["eventId"] === "0" && (
           <AlertDialogSave
             onClick={() => {
-              setEvent(methods.getValues());
+              setEvent();
               setShowAlert(false);
               onClose();
             }}

@@ -8,17 +8,17 @@ export function RRulePreview({
   totalRules,
   isLoading,
 }: {
-  localDates: Date[];
+  localDates: Date[] | undefined;
   totalRules: number | undefined;
   isLoading: boolean;
 }) {
-  if (isLoading || localDates.length === 0) {
+  if (isLoading || !localDates) {
     return (
       <div className="flex flex-col gap-1">
         <Skeleton className="h-9"></Skeleton>
         <Skeleton className="h-60">
           <div className="flex flex-1 justify-center items-center h-60">
-            {localDates.length !== 0 && isLoading ? "Generating" : "Invalid Reccurrence Rule"}
+            {localDates && localDates.length !== 0 && isLoading ? "Generating" : "Invalid Reccurrence Rule"}
           </div>
         </Skeleton>
         <Skeleton className="h-9"></Skeleton>

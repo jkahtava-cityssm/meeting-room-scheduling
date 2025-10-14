@@ -1,5 +1,5 @@
 import { IEvent } from "@/lib/schemas/calendar";
-import { addMinutes, addYears, differenceInYears, endOfDay, format, set, startOfDay } from "date-fns";
+import { addMinutes, differenceInYears, endOfDay, startOfDay } from "date-fns";
 import { z } from "zod/v4";
 import { getDurationText } from "./step1";
 import { RRule, rrulestr } from "rrule";
@@ -111,7 +111,7 @@ export const step2Schema = z
     }
   });
 
-const verifyMonthlyPattern = (ctx: any) => {
+const verifyMonthlyPattern = (ctx: z.core.ParsePayload<z.infer<typeof step2Schema>>) => {
   if (ctx.value.monthlyPattern === "") {
     ctx.issues.push({
       code: "custom",
@@ -161,7 +161,7 @@ const verifyMonthlyPattern = (ctx: any) => {
   }
 };
 
-const verifyYearlyPattern = (ctx: any) => {
+const verifyYearlyPattern = (ctx: z.core.ParsePayload<z.infer<typeof step2Schema>>) => {
   if (ctx.value.yearlyPattern === "") {
     ctx.issues.push({
       code: "custom",
@@ -256,8 +256,8 @@ export const step1Schema = z
     isRecurring: z.string(),
   })
   .check((ctx) => {
-    const EndDate = new Date(ctx.value.startDate);
-    const StartDate = new Date(ctx.value.endDate);
+    const StartDate = new Date(ctx.value.startDate);
+    const EndDate = new Date(ctx.value.endDate);
 
     if (EndDate < StartDate) {
       ctx.issues.push({
@@ -434,10 +434,6 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
 
 function parseRRule(value: string, SRecurrenceDefaults: z.infer<typeof step2Schema>) {
   const rrule: RRule = rrulestr(value);
-  const test = rrule.toString();
-  //SRecurrenceDefaults.rule = rrule.toString();
-  //SRecurrenceDefaults.ruleStartDate = format(convertRRuleDateToDate(rrule.options.dtstart), "yyyy-MM-dd");
-  //SRecurrenceDefaults.ruleEndDate = format(convertRRuleDateToDate(getEndDate(rrule)), "yyyy-MM-dd");
   SRecurrenceDefaults.weekdays = getWeekdays(rrule);
   SRecurrenceDefaults.durationType = getDurationType(rrule);
   SRecurrenceDefaults.occurrences = String(rrule.options.count);
@@ -506,10 +502,6 @@ function getWeekdays(rrule: RRule) {
         return getDayType(value);
       })
     : ["monday"];
-}
-
-function getEndDate(rrule: RRule) {
-  return rrule.options.until ? rrule.options.until : addYears(rrule.options.dtstart, 200);
 }
 
 function getDurationType(rrule: RRule) {

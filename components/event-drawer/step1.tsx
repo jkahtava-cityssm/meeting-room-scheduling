@@ -13,14 +13,12 @@ import { BookKey, Loader2Icon } from "lucide-react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../ui/form";
 import { IconColored } from "../ui/icon-colored";
 import { ScrollBar } from "../ui/scroll-area";
-import { SingleDayPicker } from "../ui/single-day-picker";
+
 import { Textarea } from "../ui/textarea";
 import { useRoomsQuery } from "@/services/rooms";
-import { TimePicker } from "../ui/time-picker";
 import { Select } from "../ui/select";
 
-import { combineDateTime } from "@/lib/helpers";
-import { format, formatDuration, intervalToDuration } from "date-fns";
+import { formatDuration, intervalToDuration } from "date-fns";
 import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/services/users";
@@ -30,15 +28,7 @@ import { DateTimePicker, DateTimePickerRef } from "../ui/datetimepicker";
 import { useRef } from "react";
 
 export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
-  const {
-    control,
-    getValues,
-    setValue,
-    trigger,
-    setError,
-    formState: { errors },
-    watch,
-  } = useFormContext<z.infer<typeof step1Schema>>();
+  const { control, getValues, setValue, watch } = useFormContext<z.infer<typeof step1Schema>>();
 
   const { setIgnoreLastStep, setStartDate, userId } = useMultiStepForm();
 
@@ -87,6 +77,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                       //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
                       //return;
                     }
+
                     field.onChange(value);
                   }}
                 >

@@ -18,7 +18,7 @@ import { SingleDayPicker } from "../ui/single-day-picker";
 import { step2Schema } from "./event-drawer.validator";
 import { useMultiStepForm } from "./multi-step-form";
 import { FormStatus } from "./types";
-import { getRRuleData, getRRuleDataWithCallback } from "./rrule-preview-helper";
+import { getRRuleData } from "./rrule-preview-helper";
 import { RRulePreview } from "./rrule-preview";
 
 /**

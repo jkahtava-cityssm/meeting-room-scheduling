@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { hasClientPermission, Session } from "@/lib/auth-client";
-import { FormStatus } from "./types";
+import { FormStatus, FormStep } from "./types";
 
 type FormFooterProps = {
   saveButtonEnabled: boolean;
@@ -23,7 +23,7 @@ type FormFooterProps = {
   onSave: () => void;
   onOpenChange: (open: boolean) => void;
   currentStepIndex: number;
-  formSteps: any[];
+  formSteps: FormStep[];
   ignoreLastStep: boolean;
   previousStep: () => void;
   nextStep: () => void;
