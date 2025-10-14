@@ -4,7 +4,7 @@ export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = React.useState(false);
   React.useEffect(() => {
     const matchQueryList = window.matchMedia(query);
-    function handleChange(e) {
+    function handleChange(e: { matches: boolean | ((prevState: boolean) => boolean) }) {
       setMatches(e.matches);
     }
     matchQueryList.addEventListener("change", handleChange);

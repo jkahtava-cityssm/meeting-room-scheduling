@@ -1,5 +1,5 @@
 import { TVisibleHours } from "@/lib/types";
-import { addDays, differenceInDays, endOfDay, isWithinInterval, parseISO, set, startOfDay } from "date-fns";
+import { addDays, differenceInDays, endOfDay, isWithinInterval, set, startOfDay } from "date-fns";
 import { rrulestr } from "rrule";
 import { IEvent } from "./schemas/calendar";
 
@@ -31,8 +31,8 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
       eventList.push({
         ...event,
         title: `Series - ${event.title}`,
-        startDate: set(event.startDate, { year, month, date }),
-        endDate: set(event.endDate, { year, month, date }),
+        startDate: set(event.startDate, { year, month, date }).toISOString(),
+        endDate: set(event.endDate, { year, month, date }).toISOString(),
       });
     }
   }
@@ -78,16 +78,31 @@ export function generateMultiDayEventsInPeriod(
 
       if (dayIndex === 0) {
         //First Day
-        newEvent.endDate = set(currentStartDate, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
+        newEvent.endDate = set(currentStartDate, {
+          hours: maxEndTime,
+          minutes: 0,
+          seconds: 0,
+          milliseconds: 0,
+        }).toISOString();
         newEvent.multiDay = { position: "first" };
       } else if (dayIndex === totalDaysBetween) {
         //LAST DAY
-        newEvent.startDate = set(currentEndDate, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
+        newEvent.startDate = set(currentEndDate, {
+          hours: minStartTime,
+          minutes: 0,
+          seconds: 0,
+          milliseconds: 0,
+        }).toISOString();
 
         newEvent.multiDay = { position: "last" };
       } else {
-        newEvent.startDate = set(newDay, { hours: minStartTime, minutes: 0, seconds: 0, milliseconds: 0 });
-        newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 });
+        newEvent.startDate = set(newDay, {
+          hours: minStartTime,
+          minutes: 0,
+          seconds: 0,
+          milliseconds: 0,
+        }).toISOString();
+        newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }).toISOString();
         newEvent.multiDay = { position: "middle" };
         //MIDDLE DAY
       }

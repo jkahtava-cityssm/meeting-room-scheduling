@@ -23,9 +23,17 @@ export const isStepValid = async (formStep: FormStep, methods: UseFormReturn<Com
   return true;
 };
 
-export const isFormValid = async (formSteps: FormStep[], methods: UseFormReturn<CombinedSchema>): Promise<boolean> => {
+export const isFormValid = async (
+  formSteps: FormStep[],
+  methods: UseFormReturn<CombinedSchema>,
+  skipSteps: number[] = []
+): Promise<boolean> => {
   let isValid = true;
   for (let step = 0; step < formSteps.length; step++) {
+    if (skipSteps.includes(step)) {
+      continue;
+    }
+
     const stepValid = await isStepValid(formSteps[step], methods);
     if (!stepValid) isValid = false;
   }

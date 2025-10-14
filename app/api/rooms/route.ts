@@ -1,10 +1,8 @@
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { getServerSession, hasServerPermission } from "@/lib/auth";
 import { prisma } from "@/prisma";
-import { unstable_cache } from "next/cache";
-import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }

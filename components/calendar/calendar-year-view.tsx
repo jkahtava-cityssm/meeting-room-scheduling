@@ -56,7 +56,7 @@ export function CalendarYearView({ date, userId }: { date: Date; userId?: string
     })}`
   );*/
 
-  const { isPending, error, data: events, isFetching } = useEventsQuery(startDate, endDate, userId);
+  const { data: events } = useEventsQuery(startDate, endDate, userId);
 
   /*const { data: recurringEvents } = useSWR<IEvent[]>(
     `/api/recurrences?startdate=${startDate.toISOString()}&enddate=${endDate.toISOString()}`

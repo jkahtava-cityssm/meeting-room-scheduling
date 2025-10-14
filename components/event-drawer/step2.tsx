@@ -57,6 +57,7 @@ export function Step2({
     reset({
       ...resetValues,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetValues]);
   //React Hook forms indicates that
 
@@ -134,6 +135,7 @@ export function Step2({
         clearTimeout(debounceTimerRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, fieldValues]);
 
   const type = watch("repeatingType");

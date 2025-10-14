@@ -95,7 +95,9 @@ export const auth = betterAuth({
   },*/
   plugins: [
     customSession(async ({ user, session }) => {
-      const userData = await fetchGET(`http://localhost:3000/api/users/${user.id}`, {}, 3600, [user.id]);
+      const userData = await fetchGET(`http://localhost:3000/api/users/${user.id}`, { token: session.token }, 3600, [
+        user.id,
+      ]);
 
       return {
         user: {

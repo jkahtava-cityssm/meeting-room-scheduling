@@ -169,7 +169,7 @@ export async function GET(req: NextRequest) {
   const StartDate: UTCDate = new UTCDate(startDateParam);
   const EndDate: UTCDate = new UTCDate(endDateParam);
 
-  const whereClause: any = {
+  const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
     OR: [
       {
         startDate: { lte: EndDate },

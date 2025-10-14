@@ -7,12 +7,12 @@ import { TodayButton } from "@/components/calendar/calendar-all-header-today-but
 import { DateNavigator } from "@/components/calendar/calendar-all-header-date-navigator";
 
 import type { TCalendarView } from "@/lib/types";
-import { mergeDateWithTime, navigateDate, navigateURL } from "@/lib/helpers";
+import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
 
 import EventDrawer from "../event-drawer/event-drawer";
-import { useClientPermission, useClientSession } from "@/hooks/use-client-auth";
+import { useClientSession } from "@/hooks/use-client-auth";
 import { hasClientPermission } from "@/lib/auth-client";
 
 export function CalendarHeader({

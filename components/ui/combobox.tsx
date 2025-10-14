@@ -1,14 +1,13 @@
 "use client";
 
-import { ForwardRefExoticComponent, RefAttributes, useState } from "react";
+import { useState } from "react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Check, ChevronDownIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FormControl } from "./form";
+
 import { Button } from "./button";
-import { Slot, SlotProps } from "@radix-ui/react-slot";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { Slot } from "@radix-ui/react-slot";
 
 interface list {
   key: string;
