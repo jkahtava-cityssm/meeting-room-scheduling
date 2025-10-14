@@ -1,7 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
-import { CombinedSchema, step2Schema } from "./event-drawer.validator";
+import { CombinedSchema } from "./event-drawer.validator";
 import { FormStep } from "./types";
-import z from "zod/v4";
 import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
 
 export const isStepValid = async (formStep: FormStep, methods: UseFormReturn<CombinedSchema>): Promise<boolean> => {
@@ -41,14 +40,14 @@ export const getFormValues = <T>(formStep: FormStep, methods: UseFormReturn<Comb
 };
 
 export const updateRRuleIfNecessary = async (allData: CombinedSchema): Promise<CombinedSchema | null> => {
-  const needsRRuleUpdate = allData.isRecurring === "true" && allData.startDateText !== allData.ruleStartDate;
+  const needsRRuleUpdate = allData.isRecurring === "true" && allData.startDate !== allData.ruleStartDate;
 
   if (!needsRRuleUpdate) {
     return allData;
   }
 
   const rruleData = await getRRuleData({
-    startDate: allData.startDateText,
+    startDate: allData.startDate,
     fieldValues: getFieldValuesArray(allData),
   });
 
@@ -60,7 +59,7 @@ export const updateRRuleIfNecessary = async (allData: CombinedSchema): Promise<C
     ...allData,
     rule: rruleData.ruleString,
     ruleEndDate: rruleData.lastDate,
-    ruleStartDate: allData.startDateText,
+    ruleStartDate: allData.startDate,
   };
 };
 

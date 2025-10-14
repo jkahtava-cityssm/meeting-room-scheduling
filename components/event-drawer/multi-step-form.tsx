@@ -8,8 +8,6 @@ import { FormStatus, FormStep, MultiStepFormContextProps } from "./types";
 import {
   CombinedEventSchema,
   CombinedSchema,
-  step1Schema,
-  step2Schema,
   eventObject,
   ruleObject,
   defaultValues,
@@ -23,11 +21,11 @@ import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from 
 import React from "react";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useEventStore } from "@/lib/zustand/new-event-store";
-import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
+
 import FormFooter from "./multi-step-form-footer";
 import UnsavedChangesDialog from "./multi-step-form-unsaved-changes";
 import { useClientSession } from "@/hooks/use-client-auth";
-import { getFormValues, isFormValid, isStepValid, updateRRuleIfNecessary } from "./multi-step-form-helper";
+import { isFormValid, isStepValid, updateRRuleIfNecessary } from "./multi-step-form-helper";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -270,12 +268,11 @@ export const MultiStepForm = ({
       <UnsavedChangesDialog
         showAlert={showAlert}
         defaultFormValues={defaultFormValues}
-        setEvent={setEvent}
+        setEvent={() => setEvent(methods.getValues())}
         resetEvent={resetEvent}
         resetForm={resetForm}
         onClose={onClose}
         setShowAlert={setShowAlert}
-        methods={methods}
       ></UnsavedChangesDialog>
     </MultiStepFormContext.Provider>
   );

@@ -1,6 +1,6 @@
-import { convertDateToRRuleDate } from "@/lib/helpers";
-import { addYears, differenceInYears } from "date-fns";
+import { addYears } from "date-fns";
 import { ByWeekday, RRule } from "rrule";
+import { CombinedSchema } from "./event-drawer.validator";
 
 export function getRRuleData({
   startDate,
@@ -380,7 +380,7 @@ export type RRuleFieldValues = [
   string // durationType
 ];
 
-export function getFieldValuesArray(formValues: Record<string, any>): RRuleFieldValues {
+export function getFieldValuesArray(formValues: CombinedSchema): RRuleFieldValues {
   const fieldNames = [
     "untilDate",
     "repeatingType",
@@ -403,5 +403,5 @@ export function getFieldValuesArray(formValues: Record<string, any>): RRuleField
     "durationType",
   ];
 
-  return fieldNames.map((key) => formValues[key]) as RRuleFieldValues;
+  return fieldNames.map((key) => formValues[key as keyof CombinedSchema]) as RRuleFieldValues;
 }
