@@ -1,11 +1,6 @@
 "use client";
 
-import { useRoomsQuery } from "@/services/rooms";
-
-export default function EditEvent({ id }: { id: number }) {
-  const event = 0;
-  const { isPending, error, data, isFetching } = useRoomsQuery(true);
-
+export default function EditEvent() {
   return (
     <div>
       <div> NOT IMPLEMENTED </div>

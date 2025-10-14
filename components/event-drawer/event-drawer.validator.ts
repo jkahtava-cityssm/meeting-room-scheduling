@@ -307,8 +307,8 @@ export const eventObject = z.object({
     .optional(),
   roomId: z.string().transform((val) => Number(val)),
   userId: z.string().transform((val) => Number(val)),
-  startDate: z.date(),
-  endDate: z.date(),
+  startDate: z.string(),
+  endDate: z.string(),
   title: z.string(),
   description: z.string(),
   recurrenceId: z
@@ -319,8 +319,8 @@ export const eventObject = z.object({
 
 export const ruleObject = z.object({
   rule: z.string().min(1, "Please define a recurrence rule"),
-  ruleStartDate: z.string().transform((val) => new Date(val)),
-  ruleEndDate: z.string().transform((val) => new Date(val)),
+  ruleStartDate: z.string(),
+  ruleEndDate: z.string(),
 });
 
 export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
@@ -386,18 +386,18 @@ export const getEventValues = (event: IEvent): CombinedSchema => {
     title: event.title,
     description: event.description ? event.description : "",
     statusId: event.statusId ? String(event.statusId) : "1",
-    startDate: event.startDate.toISOString(),
-    endDate: event.endDate.toISOString(),
-    duration: getDurationText(event.startDate.toISOString(), event.endDate.toISOString()),
+    startDate: event.startDate,
+    endDate: event.endDate,
+    duration: getDurationText(event.startDate, event.endDate),
     isRecurring: event.recurrenceId ? "true" : "false",
     recurrenceId: event.recurrenceId ? String(event.recurrenceId) : "",
   };
 
   const SRecurrenceDefaults: z.infer<typeof step2Schema> = {
     rule: event.recurrence ? event.recurrence.rule : "",
-    ruleStartDate: event.recurrence ? event.recurrence.startDate.toISOString() : event.startDate.toISOString(),
-    ruleEndDate: event.recurrence ? event.recurrence.endDate.toISOString() : event.endDate.toISOString(),
-    untilDate: event.recurrence ? event.recurrence.endDate.toISOString() : event.endDate.toISOString(),
+    ruleStartDate: event.recurrence ? event.recurrence.startDate : event.startDate,
+    ruleEndDate: event.recurrence ? event.recurrence.endDate : event.endDate,
+    untilDate: event.recurrence ? event.recurrence.endDate : event.endDate,
     repeatingType: "",
     dailyPattern: "",
     monthlyPattern: "",

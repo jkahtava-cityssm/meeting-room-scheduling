@@ -10,24 +10,18 @@ import { CalendarHeader } from "./calendar-all-header";
 import { useMemo } from "react";
 
 import { redirect, useSearchParams } from "next/navigation";
-import { endOfDay, endOfWeek, parse, startOfDay, startOfMonth, startOfWeek, startOfYear } from "date-fns";
+import { parse } from "date-fns";
 
-import { useEventsQuery } from "@/services/events";
-import { useUserEventsQuery } from "@/services/users";
 import { useClientSession } from "@/hooks/use-client-auth";
 //import { hasPermission } from "@/lib/auth";
 
-function getViewDate(dateParam: string | null, view: string) {
+function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
 }
 
 function removeTimeFromDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
-
-/*function isView(value: unknown): value is TCalendarView {
-  return typeof value === "string" && TCalendarView.includes(value);
-}*/
 
 export function CalendarAllViews({ userId }: { userId?: string }) {
   const searchParams = useSearchParams();
@@ -37,8 +31,8 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   const view = viewParam === null ? "day" : viewParam;
 
   const dateValue = useMemo(() => {
-    return getViewDate(dateParam, view);
-  }, [dateParam, view]);
+    return getViewDate(dateParam);
+  }, [dateParam]);
 
   const { session, isPending } = useClientSession();
 

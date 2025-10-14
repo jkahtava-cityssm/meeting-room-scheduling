@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth, getServerSession } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 
 export default async function AuthProvider({
   children,

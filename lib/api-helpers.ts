@@ -8,7 +8,7 @@ export async function SuccessMessage(message: string, data: object) {
   return NextResponse.json({ message: message, data: data }, { status: 200 }); // OK
 }
 
-export async function NoContentMessage(message: string = "No Content") {
+export async function NoContentMessage() {
   return NextResponse.json({ status: 204 }); // No Content
 }
 
@@ -35,6 +35,7 @@ export async function NotFoundMessage(message: string = "Requested Resource was 
  * @param {{[String]: any}} include
  * @param {String?} parentKey
  */
+/*
 const flattenPrismaIncludeResult = (queryResult, includeObj, parentKey = null) => {
   if (!queryResult) return queryResult;
   const qrIsArray = Array.isArray(queryResult);
@@ -80,3 +81,4 @@ const flattenPrismaIncludeResult = (queryResult, includeObj, parentKey = null) =
   const result = qrIsArray ? newResultSet : newResultSet[0];
   return result;
 };
+*/

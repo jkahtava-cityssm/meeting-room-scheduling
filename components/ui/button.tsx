@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const darkInvalidBorderStyles = "dark:aria-invalid:border-destructive dark:aria-invalid:ring-destructive/40";
 
-const darkInvalidHoverStyles = "dark:aria-invalid:hover:bg-destructive/10";
+//const darkInvalidHoverStyles = "dark:aria-invalid:hover:bg-destructive/10";
 
 const ariaInvalidStyles =
   "aria-invalid:text-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive aria-invalid:hover:bg-destructive/10 aria-invalid:hover:border-destructive/50 aria-invalid:hover:text-destructive dark:aria-invalid:hover:bg-destructive/10";

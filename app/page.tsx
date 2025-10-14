@@ -10,7 +10,7 @@ export default async function Home() {
   });
 
   if (session) {
-    hasServerPermission(session, "Event", "read");
+    hasServerPermission(session, "Event", "Read");
     redirect("/bookings/user-view");
   }
 

@@ -3,12 +3,12 @@ import YearViewDayCell from "@/components/calendar/calendar-year-view-day-cell";
 
 import React from "react";
 
-import { MonthView } from "./calendar-year-view";
+import { IMonthView } from "./calendar-year-view";
 import { navigateURL } from "@/lib/helpers";
 
 //const YearViewDayCell = React.lazy(() => import("@/components/calendar/calendar-year-view-day-cell"));
 
-export default function YearViewMonth({ month }: { month: MonthView }) {
+export default function YearViewMonth({ month }: { month: IMonthView }) {
   const { push } = useRouter();
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

@@ -130,7 +130,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
     <>
       <div className="flex">
         {isLoading ? (
-          <CalendarDayViewSkeleton date={date} />
+          <CalendarDayViewSkeleton />
         ) : (
           <div className="flex flex-1 flex-col">
             <DayViewDayHeader key={dayViews[0].day} dayView={dayViews[0]} />

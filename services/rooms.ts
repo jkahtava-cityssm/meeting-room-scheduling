@@ -7,8 +7,8 @@ const AllRooms: IRoom = {
   roomId: -1,
   name: "All Rooms",
   color: "zinc",
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
   icon: "Asterisk",
 };
 

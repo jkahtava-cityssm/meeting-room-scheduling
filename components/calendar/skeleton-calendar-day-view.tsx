@@ -1,11 +1,9 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
 import { cn } from "@/lib/utils";
 import { HourColumn } from "./calendar-day-column-hourly";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ColumnDayHeaderSkeleton } from "./skeleton-calendar-day-column-header";
 
-export function CalendarDayViewSkeleton({ date }: { date: Date }) {
+export function CalendarDayViewSkeleton() {
   //const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));
   const hours = [...Array(24).keys()];
 

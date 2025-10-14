@@ -151,16 +151,20 @@ export const MultiStepForm = ({
   };
 
   const onSave = async () => {
-    const isValid = await isFormValid(formSteps, methods);
+    const formData = methods.getValues();
+
+    const isRecurring = formData.isRecurring === "true";
+    const skipStep = isRecurring ? [] : [1];
+
+    const isValid = await isFormValid(formSteps, methods, skipStep);
     if (!isValid) return;
 
-    const allData = await updateRRuleIfNecessary(methods.getValues());
+    const allData = await updateRRuleIfNecessary(formData);
 
     if (!allData) return;
 
     const eventParse = z.safeParse(eventObject, allData);
     const ruleParse = z.safeParse(ruleObject, allData);
-    const isRecurring = allData.isRecurring === "true";
 
     if (eventParse.success && (isRecurring ? ruleParse.success : true)) {
       mutationUpsert.mutate(
