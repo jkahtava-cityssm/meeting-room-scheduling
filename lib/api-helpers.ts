@@ -96,58 +96,71 @@ export async function VerifyToken(token: string): Promise<{ message: string; dat
   }
 }
 
-type PermissionRequirement = {
-  resource: SessionResource;
-  action: SessionAction;
-};
+type PermissionRequirement =
+  | { type: "permission"; resource: SessionResource; action: SessionAction }
+  | { type: "role"; role: SessionRole }
+  | { type: "function"; check: (roles: Role[] | undefined) => boolean | Promise<boolean> };
 
-export async function withChecks(
+export async function guardRoute(
   req: NextRequest,
   permissions: PermissionRequirement[],
-  handler: (session: any) => Promise<Response>
+  handler: (userId: number) => Promise<Response>
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const authHeader = req.headers.get("authorization");
-  const token = (authHeader || "").split("Bearer ").at(1);
-  let roles: Role[] | undefined = undefined;
+  const userId = await getUserIdFromRequest(req);
 
-  if (token) {
-    const tokenResponse = await VerifyToken(token);
-
-    if (!tokenResponse.data) {
-      return BadRequestMessage("Not Authorized");
-    } else {
-      const userId = await prisma.account.findFirst({
-        select: { userId: true },
-        where: { accountId: tokenResponse.data.sub },
-      });
-      if (!userId) {
-        return BadRequestMessage("Not Authorized");
-      }
-
-      roles = await GetUserPermissions(Number(userId));
-    }
-  } else {
-    const session = await getServerSession();
-
-    if (!session) {
-      return BadRequestMessage("Not Authorized");
-    }
-
-    roles = session.user.roles;
+  if (!userId) {
+    return BadRequestMessage("Not Authorized");
   }
 
-  const allPermissionsGranted = permissions.every(({ resource, action }) => hasPermission(roles, resource, action));
+  const roles = await GetUserPermissions(userId);
+
+  const results = await Promise.all(permissions.map((permission) => isRequirementMet(roles, permission)));
+  const allPermissionsGranted = results.every(Boolean);
 
   if (!allPermissionsGranted) {
     return BadRequestMessage("Not Authorized");
   }
 
-  return handler(undefined);
-  return handler(session);
+  return handler(userId);
+}
+
+async function isRequirementMet(roles: Role[] | undefined, requirement: PermissionRequirement): Promise<boolean> {
+  if (!roles) return false;
+
+  switch (requirement.type) {
+    case "permission":
+      return hasPermission(roles, requirement.resource, requirement.action);
+    case "role":
+      return hasRole(roles, requirement.role);
+    case "function":
+      return await Promise.resolve(requirement.check(roles));
+    default:
+      return false;
+  }
+}
+
+async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {
+  const authHeader = req.headers.get("authorization");
+  const token = (authHeader || "").split("Bearer ").at(1);
+  if (token) {
+    const tokenResponse = await VerifyToken(token);
+    const accountId = tokenResponse.data?.sub;
+    if (!accountId) return null;
+
+    const account = await prisma.account.findFirst({
+      select: { userId: true },
+      where: { accountId },
+    });
+
+    return account?.userId ?? null;
+  }
+
+  const session = await getServerSession();
+  return session ? Number(session.user.id) : null;
 }
 
 export async function GetUserPermissions(userId: number): Promise<Role[]> {

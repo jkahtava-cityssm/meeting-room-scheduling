@@ -1,9 +1,18 @@
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { getServerSession, hasServerPermission } from "@/lib/auth";
+import { guardRoute, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { prisma } from "@/prisma";
+import { NextRequest } from "next/server";
 
-export async function GET() {
-  if (!process.env.DATABASE_URL) {
+export async function GET(req: NextRequest) {
+  return guardRoute(req, [{ type: "permission", resource: "Room", action: "Read" }], async () => {
+    const rooms = await prisma.room.findMany();
+
+    if (!rooms) {
+      return InternalServerErrorMessage();
+    }
+
+    return SuccessMessage("Collected Rooms", rooms);
+  });
+  /*if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
@@ -19,5 +28,5 @@ export async function GET() {
     return InternalServerErrorMessage();
   }
 
-  return SuccessMessage("Collected Rooms", rooms);
+  return SuccessMessage("Collected Rooms", rooms);*/
 }
