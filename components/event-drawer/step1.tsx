@@ -59,7 +59,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="roomId">Room</FormLabel>
+                  <FormLabel>Room</FormLabel>
                 )}
                 <Select
                   disabled={isReadOnly}
@@ -114,7 +114,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="isRecurring">Event Type</FormLabel>
+                  <FormLabel>Event Type</FormLabel>
                 )}
                 <FormControl>
                   <Tabs
@@ -160,7 +160,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="userId">Requesting User</FormLabel>
+                  <FormLabel htmlFor={undefined}>Requesting User</FormLabel>
                 )}
 
                 <ComboBox
@@ -204,7 +204,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium" />
                 ) : (
-                  <FormLabel htmlFor="title">Title</FormLabel>
+                  <FormLabel>Title</FormLabel>
                 )}
                 <FormControl>
                   <Input
@@ -227,9 +227,10 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="statusId">Status</FormLabel>
+                  <FormLabel>Status</FormLabel>
                 )}
-                {!userId && (
+
+                {status && !userId && (
                   <Select
                     disabled={isReadOnly}
                     //readonly={isReadOnly}
@@ -267,7 +268,13 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                     </SelectContent>
                   </Select>
                 )}
-                {userId && (
+                {!status && (
+                  <Button variant={"outline"} disabled>
+                    <Loader2Icon className="animate-spin" />
+                    Collecting Status
+                  </Button>
+                )}
+                {userId && status && (
                   <Button variant={"outline"} disabled>
                     {status?.find((status) => String(status.statusId) === field.value)?.name}
                   </Button>
@@ -346,7 +353,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium" />
                 ) : (
-                  <FormLabel htmlFor="duration">Duration:</FormLabel>
+                  <FormLabel>Duration:</FormLabel>
                 )}
                 <FormControl>
                   <Input

@@ -5,8 +5,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { headers } from "next/headers";
 import { fetchGET } from "./fetch";
-import { Session } from "./auth-client";
-import { SessionAction, SessionResource, SessionRole } from "./types";
 
 export type User = {
   userId: string | undefined | null;

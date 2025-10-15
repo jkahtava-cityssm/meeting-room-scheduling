@@ -156,7 +156,7 @@ export function Step2({
                   render={({ field, fieldState }) => (
                     <FormItem>
                       <div className="flex flex-row gap-2">
-                        <FormLabel id="typeLabel" htmlFor="durationType" className="min-w-15 justify-end">
+                        <FormLabel id="typeLabel" className="min-w-15 justify-end">
                           Duration
                         </FormLabel>
 
@@ -234,7 +234,7 @@ export function Step2({
                 render={({ field, fieldState }) => (
                   <FormItem>
                     <div className="flex flex-row gap-2">
-                      <FormLabel id="typeLabel" htmlFor="repeatingType" className="min-w-15 justify-end">
+                      <FormLabel id="typeLabel" className="min-w-15 justify-end">
                         Repeats
                       </FormLabel>
 

@@ -5,7 +5,6 @@ import { NextRequest } from "next/server";
 import { UTCDate } from "@date-fns/utc";
 
 import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { getServerSession } from "@/lib/auth";
 import { guardRoute } from "@/lib/api-guard";
 
 export async function POST(request: NextRequest) {
