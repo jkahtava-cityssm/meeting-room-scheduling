@@ -2,7 +2,7 @@ import { prisma } from "@/prisma";
 
 import { NextRequest } from "next/server";
 
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { BadRequestMessage, GetUserPermissions, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   if (!process.env.DATABASE_URL) {
@@ -11,42 +11,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
 
   const { userId } = await params;
 
-  const token = req.nextUrl.searchParams.get("token");
+  const sessionToken = req.nextUrl.searchParams.get("token");
 
-  if (!userId || !token) {
+  if (!userId || !sessionToken) {
     return BadRequestMessage();
   }
 
-  const user = await prisma.user.findFirst({
-    include: {
-      userRole: {
-        include: {
-          role: {
-            include: { roleResourceAction: { include: { resource: true, action: true } } },
-          },
-        },
-      },
-    },
-    where: { id: Number(userId) },
+  const session = await prisma.session.findFirst({
+    select: { userId: true, expiresAt: true },
+    where: { AND: { userId: Number(userId), token: sessionToken } },
   });
 
-  if (!user?.userRole) {
+  if (!session || session?.expiresAt < new Date() || session.userId != Number(userId)) {
+    return BadRequestMessage("Not Authorized");
   }
+  const roles = await GetUserPermissions(Number(userId));
 
-  const roles =
-    user?.userRole.map((userRole) => {
-      return {
-        name: userRole.role.name,
-        roleId: userRole.role.roleId,
-        permissions: userRole.role.roleResourceAction.map((permission) => {
-          return { permit: permission.permit, action: permission.action.name, resource: permission.resource.name };
-        }),
-      };
-    }) || [];
-
-  if (!user) {
+  if (!roles) {
     return InternalServerErrorMessage();
   }
 
-  return SuccessMessage("User Found", { userId: user.id, roles: roles });
+  return SuccessMessage("User Found", { userId: Number(userId), roles: roles });
 }

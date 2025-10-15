@@ -1,6 +1,6 @@
 import { prisma } from "@/prisma";
 import { betterAuth } from "better-auth";
-import { customSession } from "better-auth/plugins"; // Update this path if 'customSession' is exported from a different module
+import { customSession } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { headers } from "next/headers";
@@ -10,7 +10,7 @@ import { SessionAction, SessionResource, SessionRole } from "./types";
 
 export type User = {
   userId: string | undefined | null;
-  roles: Role[] | undefined | null;
+  roles: Role[] | undefined;
   id: string;
   email: string;
   emailVerified: boolean;
@@ -95,14 +95,17 @@ export const auth = betterAuth({
   },*/
   plugins: [
     customSession(async ({ user, session }) => {
-      const userData = await fetchGET(`http://localhost:3000/api/users/${user.id}`, { token: session.token }, 3600, [
-        user.id,
-      ]);
+      const userData = await fetchGET(
+        `${process.env.NEXTAPP_URL}/api/users/${user.id}`,
+        { token: session.token },
+        3600,
+        [user.id]
+      );
 
       return {
         user: {
           ...user,
-          roles: userData.data ? (userData.data.roles as Role[] | undefined | null) : undefined,
+          roles: userData.data ? (userData.data.roles as Role[] | undefined) : undefined,
         },
         session,
       };
