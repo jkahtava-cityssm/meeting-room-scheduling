@@ -1,9 +1,9 @@
 "use client";
 
-import { signIn } from "@/lib/auth-client";
 import Image from "next/image";
 import { MicrosoftButton } from "./ui/microsoft-signin-button";
 import { useSearchParams } from "next/navigation";
+import { signIn } from "@/lib/auth-client";
 
 export const signInGitHub = async (callback: string) => {
   const data = await signIn.social({

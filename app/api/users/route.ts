@@ -1,35 +1,35 @@
-import { BadRequestMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
-import { getServerSession, hasServerPermission } from "@/lib/auth";
+import { guardRoute } from "@/lib/api-guard";
+import { NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
 import { prisma } from "@/prisma";
+import { NextRequest } from "next/server";
 
-export async function GET() {
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage("DATABASE_URL Missing");
-  }
+export async function GET(request: NextRequest) {
+  return guardRoute(
+    request,
+    [
+      { type: "permission", resource: "User", action: "Read" },
+      { type: "role", role: "Admin" },
+    ],
+    async () => {
+      const users = await prisma.user.findMany({
+        select: { id: true, name: true, email: true },
+        where: { employeeActive: true },
+      });
 
-  const session = await getServerSession();
+      if (!users) {
+        return NotFoundMessage();
+      }
 
-  if (!session || !hasServerPermission(session, "User", "Read")) {
-    return BadRequestMessage("Not Authorized");
-  }
+      const flatUsers =
+        users.map((user) => {
+          return {
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+          };
+        }) || [];
 
-  const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true },
-    where: { employeeActive: true },
-  });
-
-  if (!users) {
-    return NotFoundMessage();
-  }
-
-  const flatUsers =
-    users.map((user) => {
-      return {
-        userId: user.id,
-        name: user.name,
-        email: user.email,
-      };
-    }) || [];
-
-  return SuccessMessage("Collected Users", flatUsers);
+      return SuccessMessage("Collected Users", flatUsers);
+    }
+  );
 }

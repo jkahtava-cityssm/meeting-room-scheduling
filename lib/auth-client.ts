@@ -14,7 +14,7 @@ export type Session = typeof authClient.$Infer.Session;
 
 export const { signIn, signOut, useSession } = authClient;
 
-export function hasClientPermission(
+export function checkSessionPermission(
   session: Session | undefined | null,
   resource: SessionResource,
   action: SessionAction
@@ -34,7 +34,7 @@ export function hasClientPermission(
   return permission;
 }
 
-export function hasClientRole(session: Session | undefined | null, role: SessionRole) {
+export function checkSessionRole(session: Session | undefined | null, role: SessionRole) {
   if (!session || !session.user || !session.user.roles) return false;
   return session.user.roles.some((item) => {
     return item.name.toLowerCase() === role.toLowerCase();

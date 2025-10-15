@@ -2,7 +2,8 @@ import { prisma } from "@/prisma";
 
 import { NextRequest } from "next/server";
 
-import { BadRequestMessage, GetUserPermissions, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { GetUserPermissions } from "@/lib/api-guard";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   if (!process.env.DATABASE_URL) {

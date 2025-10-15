@@ -25,7 +25,7 @@ export async function fetchGET(url: string, params: object = {}, revalidate: num
       tags: tags,
     },
   }).then((res) => {
-    //if (!res.ok) throw Error(`Network Response Error: ${res.status}, Details: ${res.statusText}, URL: ${url}`);
+    if (!res.ok) throw Error(`Network Response Error: ${res.status}, Details: ${res.statusText}, URL: ${url}`);
 
     return res.json();
   });
