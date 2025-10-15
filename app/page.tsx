@@ -1,8 +1,9 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { SignInMicrosoft } from "@/components/sign-in-button";
-import { auth, hasServerPermission } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { checkSessionPermission } from "@/lib/auth-client";
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -10,7 +11,7 @@ export default async function Home() {
   });
 
   if (session) {
-    hasServerPermission(session, "Event", "Read");
+    checkSessionPermission(session, "Event", "Read");
     redirect("/bookings/user-view");
   }
 

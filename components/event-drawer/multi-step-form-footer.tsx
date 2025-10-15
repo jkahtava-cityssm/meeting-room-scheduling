@@ -11,7 +11,7 @@ import {
   ArrowRightCircle,
   Trash2,
 } from "lucide-react";
-import { hasClientPermission, Session } from "@/lib/auth-client";
+import { checkSessionPermission, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
 
 type FormFooterProps = {
@@ -52,13 +52,13 @@ const FormFooter: React.FC<FormFooterProps> = ({
   setStatus,
 }) => {
   const isSaveDisabled = useMemo(() => {
-    if (status === "Edit") return !hasClientPermission(session, "Event", "Update");
-    if (status === "New") return !hasClientPermission(session, "Event", "Create") || !userId;
+    if (status === "Edit") return !checkSessionPermission(session, "Event", "Update");
+    if (status === "New") return !checkSessionPermission(session, "Event", "Create") || !userId;
     return false;
   }, [status, session, userId]);
 
   const isEditDisabled = useMemo(() => {
-    return status === "Loading" || !hasClientPermission(session, "Event", "Update");
+    return status === "Loading" || !checkSessionPermission(session, "Event", "Update");
   }, [status, session]);
 
   return (

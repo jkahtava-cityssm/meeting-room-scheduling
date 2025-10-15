@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 
 import EventDrawer from "../event-drawer/event-drawer";
 import { useClientSession } from "@/hooks/use-client-auth";
-import { hasClientPermission } from "@/lib/auth-client";
+import { checkSessionPermission } from "@/lib/auth-client";
 
 export function CalendarHeader({
   view,
@@ -137,7 +137,7 @@ export function CalendarHeader({
             <EventDrawer userId={userId}>
               <Button
                 className="w-full sm:w-auto"
-                disabled={!hasClientPermission(session, "Event", "Create") && !userId}
+                disabled={!checkSessionPermission(session, "Event", "Create") && !userId}
               >
                 <Plus />
                 Add Event
