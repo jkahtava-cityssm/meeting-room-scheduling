@@ -12,13 +12,13 @@ export function RRulePreview({
   totalRules: number | undefined;
   isLoading: boolean;
 }) {
-  if (isLoading || !localDates) {
+  if (isLoading || !localDates || localDates.length === 0) {
     return (
       <div className="flex flex-col gap-1">
         <Skeleton className="h-9"></Skeleton>
         <Skeleton className="h-60">
           <div className="flex flex-1 justify-center items-center h-60">
-            {localDates && localDates.length !== 0 && isLoading ? "Generating" : "Invalid Reccurrence Rule"}
+            {isLoading ? "Generating" : "Invalid Reccurrence Rule"}
           </div>
         </Skeleton>
         <Skeleton className="h-9"></Skeleton>
