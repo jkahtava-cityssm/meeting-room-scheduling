@@ -1,16 +1,14 @@
 import { prisma } from "@/prisma";
 import { betterAuth } from "better-auth";
-import { customSession } from "better-auth/plugins"; // Update this path if 'customSession' is exported from a different module
+import { customSession } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { headers } from "next/headers";
 import { fetchGET } from "./fetch";
-import { Session } from "./auth-client";
-import { SessionAction, SessionResource, SessionRole } from "./types";
 
 export type User = {
   userId: string | undefined | null;
-  roles: Role[] | undefined | null;
+  roles: Role[] | undefined;
   id: string;
   email: string;
   emailVerified: boolean;
@@ -52,11 +50,13 @@ export const auth = betterAuth({
     },
   },
   session: {
-    //expiresIn: 60 * 60 * 24 * 7, // 7 days
-    //updateAge: 60 * 60 * 24, // 1 day
-    expiresIn: 60 * 60 * 24 * 7, // 3 Minutes
-    updateAge: 60 * 60 * 24, // 1 Minute
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
     additionalFields: {},
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 Minutes
+    },
   },
   databaseHooks: {
     user: {
@@ -95,12 +95,17 @@ export const auth = betterAuth({
   },*/
   plugins: [
     customSession(async ({ user, session }) => {
-      const userData = await fetchGET(`http://localhost:3000/api/users/${user.id}`, {}, 3600, [user.id]);
+      const userData = await fetchGET(
+        `${process.env.NEXTAPP_URL}/api/users/${user.id}`,
+        { token: session.token },
+        3600,
+        [user.id]
+      );
 
       return {
         user: {
           ...user,
-          roles: userData.data ? (userData.data.roles as Role[] | undefined | null) : undefined,
+          roles: userData.data ? (userData.data.roles as Role[] | undefined) : undefined,
         },
         session,
       };
@@ -114,41 +119,4 @@ export async function getServerSession() {
   });
 
   return session;
-}
-
-/*
-export getServerSession()
-{
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-    return session
-}
-*/
-
-export function hasServerPermission(
-  session: Session | undefined | null,
-  resource: SessionResource,
-  action: SessionAction
-) {
-  if (!session || !session.user || !session.user.roles) return false;
-
-  const permission = session.user.roles.some((role) => {
-    return role.permissions.some((permission) => {
-      return (
-        permission.permit === true &&
-        permission.resource.toLowerCase() === resource.toLowerCase() &&
-        permission.action.toLowerCase() === action.toLowerCase()
-      );
-    });
-  });
-
-  return permission;
-}
-
-export function hasServerRole(session: Session | undefined | null, role: SessionRole) {
-  if (!session || !session.user || !session.user.roles) return false;
-  return session.user.roles.some((item) => {
-    return item.name.toLowerCase() === role.toLowerCase();
-  });
 }

@@ -18,6 +18,9 @@ import { TVisibleHours } from "@/lib/types";
 
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { useEventsQuery } from "@/services/events";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Terminal } from "lucide-react";
+import { Button } from "../ui/button";
 
 export interface IDayProcessData {
   events: IEvent[];
@@ -53,7 +56,7 @@ export interface IEventBlock {
 export function CalendarDayView({ date, userId }: { date: Date; userId?: string }) {
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
-  const [dayViews, setDayViews] = useState<IDayView[]>([]);
+  const [dayViews, setDayViews] = useState<IDayView | undefined>(undefined);
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
   const [hours, setHours] = useState<number[]>([]);
 
@@ -64,7 +67,14 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
   const startDate: Date = startOfDay(date);
   const endDate: Date = endOfDay(date);
 
-  const { data: events } = useEventsQuery(startDate, endDate, userId);
+  const { data: events, error } = useEventsQuery(startDate, endDate, userId);
+
+  useEffect(() => {
+    if (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  }, [error]);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -87,7 +97,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
     const newWorker = new Worker(new URL("./webworkers/calendar-day-webworker.ts", import.meta.url));
 
     newWorker.onmessage = (event: MessageEvent<IDayResponseData>) => {
-      setDayViews(event.data.dayViews);
+      setDayViews(event.data.dayViews[0]);
       setHours(event.data.hours);
       setTotalEvents(event.data.totalEvents);
       setFilteredEvents(event.data.filteredEvents);
@@ -126,52 +136,91 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
     }
   }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
+  if (isLoading) {
+    return (
+      <div className="flex">
+        <CalendarDayViewSkeleton />
+        <CalendarDayColumnCalendar
+          date={date}
+          isLoading={isLoading}
+          events={filteredEvents}
+          view={"day"}
+        ></CalendarDayColumnCalendar>
+      </div>
+    );
+  }
+
+  if (!dayViews || error) {
+    return (
+      <div className="flex">
+        <div className="flex flex-1 flex-col">
+          <Button variant={"link"} size={"sm"}>
+            <span className="py-2 text-center text-xs font-medium text-muted-foreground">
+              ERROR <span className="ml-1 font-semibold text-foreground">Error</span>
+            </span>
+          </Button>
+          <div className="flex h-full border-l">
+            <div className="w-18 border-r"></div>
+            <div className="relative flex-1 border-b p-4">
+              <Alert variant="destructive" className="mt-4 ">
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>An error has occurred</AlertTitle>
+                <AlertDescription>You do not have permission to view these events.</AlertDescription>
+              </Alert>
+            </div>
+          </div>
+        </div>
+        <CalendarDayColumnCalendar
+          date={date}
+          isLoading={isLoading}
+          events={filteredEvents}
+          view={"day"}
+        ></CalendarDayColumnCalendar>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex">
-        {isLoading ? (
-          <CalendarDayViewSkeleton date={date} />
-        ) : (
-          <div className="flex flex-1 flex-col">
-            <DayViewDayHeader key={dayViews[0].day} dayView={dayViews[0]} />
+        <div className="flex flex-1 flex-col">
+          <DayViewDayHeader key={dayViews.day} dayView={dayViews} />
 
-            <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
-              <div className="flex border-l">
-                {/* Hours column   h-[500px]  */}
-                <HourColumn hours={hours} />
+          <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
+            <div className="flex border-l">
+              {/* Hours column   h-[500px]  */}
+              <HourColumn hours={hours} />
 
-                {/* Day grid */}
-                <div className="relative flex-1 border-b">
-                  <div className="relative">
-                    <DayHourlyEventDialogs
-                      hours={hours}
-                      day={dayViews[0].dayDate}
-                      workingHours={workingHours}
-                      userId={userId}
-                    />
+              {/* Day grid */}
+              <div className="relative flex-1 border-b">
+                <div className="relative">
+                  <DayHourlyEventDialogs
+                    hours={hours}
+                    day={dayViews.dayDate}
+                    workingHours={workingHours}
+                    userId={userId}
+                  />
 
-                    {dayViews[0].eventBlocks.map((block) => {
-                      return (
-                        <div
-                          key={`day-${dayViews[0].day}-block-${format(
-                            block.event.startDate,
-                            "yyyy-MM-dd-HH-mm"
-                          )}-event-${block.event.eventId}`}
-                          className="absolute p-1"
-                          style={block.eventStyle}
-                        >
-                          <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <CalendarTimeline />
+                  {dayViews.eventBlocks.map((block) => {
+                    return (
+                      <div
+                        key={`day-${dayViews.day}-block-${format(block.event.startDate, "yyyy-MM-dd-HH-mm")}-event-${
+                          block.event.eventId
+                        }`}
+                        className="absolute p-1"
+                        style={block.eventStyle}
+                      >
+                        <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
+                      </div>
+                    );
+                  })}
                 </div>
+
+                <CalendarTimeline />
               </div>
-            </ScrollArea>
-          </div>
-        )}
+            </div>
+          </ScrollArea>
+        </div>
         <CalendarDayColumnCalendar
           date={date}
           isLoading={isLoading}

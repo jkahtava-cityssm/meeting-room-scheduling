@@ -1,14 +1,11 @@
 import { HomeIcon, UserIcon } from "lucide-react";
 import { FieldKeys, FormStep } from "./types";
 import { Step1 } from "./step1";
-import { CombinedSchema, step1Schema, step2Schema } from "./event-drawer.validator";
+import { step1Schema, step2Schema } from "./event-drawer.validator";
 import { MultiStepForm } from "./multi-step-form";
 import { Step2 } from "./step2";
-import { useDisclosure } from "@/hooks/use-disclosure";
-import { useEventQuery } from "@/services/events";
-import z, { ZodType, ZodObject, ZodRawShape } from "zod/v4";
+
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
-import { useEventStore } from "@/lib/zustand/new-event-store";
 
 export default function EventDrawer({
   creationDate,

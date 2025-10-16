@@ -28,9 +28,9 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
 
   const events = z.array(SEvent).parse(combinedEvents);
 
-  const filteredEvents: IEvent[] = filterEventsByRoom(events, dayData.selectedRoomId);
-
-  filteredEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const filteredEvents: IEvent[] = filterEventsByRoom(events, dayData.selectedRoomId).sort(
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  );
 
   const currentDate = dayData.selectedDate;
 

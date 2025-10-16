@@ -11,26 +11,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ModalConfirmation } from "./modal-confirmation";
 import { Button } from "./button";
 
 export function Modal({ children }: { children: React.ReactNode }) {
-  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+  /*const [showExitConfirmation, setShowExitConfirmation] = useState(false);
   const router = useRouter();
 
   const closeModal = () => {
     router.back();
   };
+*/
 
   const handleOpenChange = () => {
-    const isUserFormModified = localStorage.getItem("userFormModified");
+    /*const isUserFormModified = localStorage.getItem("userFormModified");
     if (isUserFormModified && JSON.parse(isUserFormModified)) {
       setShowExitConfirmation(true);
     } else {
       router.back();
-    }
+    }*/
   };
 
   return (

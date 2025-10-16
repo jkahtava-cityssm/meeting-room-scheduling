@@ -122,8 +122,8 @@ export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Dat
   const dayEnd = endOfDay(selectedDate);
 
   return events.filter((event) => {
-    const eventStart = event.startDate;
-    const eventEnd = event.endDate;
+    const eventStart = new Date(event.startDate);
+    const eventEnd = new Date(event.endDate);
 
     const isOverlapping =
       isWithinInterval(dayStart, { start: eventStart, end: eventEnd }) ||
@@ -140,7 +140,7 @@ export function getOverlappingMultiDayEvents(events: IEvent[], selectedDate: Dat
 }
 
 export function groupEvents(dayEvents: IEvent[]) {
-  const sortedEvents = dayEvents.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const sortedEvents = dayEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   const groups: IEvent[][] = [];
 
   for (const event of sortedEvents) {
@@ -172,7 +172,7 @@ export function calculateEventBlockStyle(
   hasOverlap: boolean,
   visibleHoursRange?: { from: number; to: number }
 ) {
-  const startDate = event.startDate;
+  const startDate = new Date(event.startDate);
   const dayStart = new Date(day.setHours(0, 0, 0, 0));
   const eventStart = startDate < dayStart ? dayStart : startDate;
   const startMinutes = differenceInMinutes(eventStart, dayStart);
@@ -296,8 +296,8 @@ export function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IE
   let latestEventHour = visibleHours.to;
 
   singleDayEvents.forEach((event) => {
-    const startHour = event.startDate.getHours();
-    const endTime = event.endDate;
+    const startHour = new Date(event.startDate).getHours();
+    const endTime = new Date(event.endDate);
     const endHour = endTime.getHours() + (endTime.getMinutes() > 0 ? 1 : 0);
     if (startHour < earliestEventHour) earliestEventHour = startHour;
     if (endHour > latestEventHour) latestEventHour = endHour;
@@ -360,8 +360,8 @@ export function getCalendarCells(selectedDate: Date): ICalendarCell[] {
 
 export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions: Record<string, number>) {
   const eventsForDate = events.filter((event) => {
-    const eventStart = event.startDate;
-    const eventEnd = event.endDate;
+    const eventStart = new Date(event.startDate);
+    const eventEnd = new Date(event.endDate);
     return (date >= eventStart && date <= eventEnd) || isSameDay(date, eventStart) || isSameDay(date, eventEnd);
   });
 

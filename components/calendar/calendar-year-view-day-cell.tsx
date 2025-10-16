@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 
 import { IconDot } from "@/components/ui/icon-dot";
 import { TColors } from "../../lib/types";
-import { DayView } from "./calendar-year-view";
+import { IDayView } from "./calendar-year-view";
 import { navigateURL } from "@/lib/helpers";
 
-const YearViewDayCell = ({ day }: { day: DayView }) => {
+const YearViewDayCell = ({ day }: { day: IDayView }) => {
   const { push } = useRouter();
 
   const maxIndicators = 3;

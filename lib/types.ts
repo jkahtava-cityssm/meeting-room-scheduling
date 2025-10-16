@@ -37,7 +37,7 @@ export type TRecurrencePattern =
 
 export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin"] as const;
 
-export const DEFAULT_RESOURCES = ["Event", "Room", "User", "Calendar"] as const;
+export const DEFAULT_RESOURCES = ["Event", "Room", "User", "ReservationCalendar"] as const;
 
 export const DEFAULT_ACTIONS = ["Create", "Read", "Update", "Delete"] as const;
 

@@ -13,7 +13,7 @@ import { useRoomsQuery } from "@/services/rooms";
 export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => void }) {
   const { selectedRoomId } = useCalendar();
 
-  const { isPending, error, data, isFetching } = useRoomsQuery(true);
+  const { isPending, data } = useRoomsQuery(true);
 
   /*useEffect(() => {
     if (data) {

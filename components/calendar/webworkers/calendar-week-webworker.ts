@@ -11,7 +11,6 @@ import {
   differenceInMinutes,
   endOfWeek,
   format,
-  isSameDay,
   isToday,
   startOfWeek,
 } from "date-fns";
@@ -49,7 +48,7 @@ async function processWeekEvents(weekData: IWeekProcessData): Promise<IWeekRespo
   const events = z.array(SEvent).parse(combinedEvents);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, weekData.selectedRoomId).sort(
-    (a, b) => a.startDate.getTime() - b.startDate.getTime()
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
   );
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(weekData.visibleHours, filteredEvents);

@@ -1,6 +1,6 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
-import { addMonths, endOfYear, format, getDaysInMonth, isSameDay, isToday, startOfMonth, startOfYear } from "date-fns";
+import { addMonths, endOfYear, format, getDaysInMonth, isToday, startOfMonth, startOfYear } from "date-fns";
 import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "../calendar-year-view";
 import { filterEventsByRoom } from "@/lib/helpers";
 
@@ -27,7 +27,9 @@ async function formatYearData(yearData: IYearProcessData): Promise<IYearResponse
 
   const events = z.array(SEvent).parse(combinedEvents);
 
-  const filteredEvents: IEvent[] = filterEventsByRoom(events, yearData.selectedRoomId);
+  const filteredEvents: IEvent[] = filterEventsByRoom(events, yearData.selectedRoomId).sort(
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  );
 
   const eventsByDate = new Map<string, IEvent[]>();
   filteredEvents.forEach((event) => {

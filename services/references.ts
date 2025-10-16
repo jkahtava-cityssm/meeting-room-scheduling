@@ -7,7 +7,7 @@ export const useStatusQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: ["status"],
     queryFn: async () =>
-      fetchGET(`/api/references/status`).then((result) => {
+      fetchGET(`/api/references/status`, undefined, 180, ["status"]).then((result) => {
         const parsedResult = z.array(SStatus).safeParse(result.data);
 
         if (!parsedResult.success) throw new Error("Invalid status data");
@@ -15,6 +15,4 @@ export const useStatusQuery = (enabled: boolean = true) =>
         return parsedResult.data;
       }),
     enabled: enabled,
-    gcTime: 0,
-    staleTime: 0,
   });

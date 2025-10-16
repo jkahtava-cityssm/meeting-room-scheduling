@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronDown, CreditCard, RefreshCw, SunMoon } from "lucide-react";
+import { ChevronDown, RefreshCw, SunMoon } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,9 +17,8 @@ import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
 import { useTheme } from "next-themes";
 import { IUser } from "./nav-header";
-import { Session } from "@/lib/auth-client";
+import { checkSessionRole, Session } from "@/lib/auth-client";
 import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
-import { useClientPermission } from "@/hooks/use-client-auth";
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
   const { isMobile } = useSidebar();
@@ -31,7 +30,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
     image: session?.user.image ? session.user.image : undefined,
   };
 
-  const canRefreshAPI = useClientPermission("API", "update");
+  const canRefreshAPI = checkSessionRole(session, "Admin");
 
   if (isPending) {
     return (
