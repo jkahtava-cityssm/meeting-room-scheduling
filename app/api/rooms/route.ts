@@ -6,10 +6,9 @@ import { NextRequest } from "next/server";
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
-    [
-      { type: "permission", resource: "Room", action: "Read" },
-      { type: "role", role: "Admin" },
-    ],
+
+    { type: "permission", resource: "Room", action: "Read" },
+
     async () => {
       const rooms = await prisma.room.findMany();
 

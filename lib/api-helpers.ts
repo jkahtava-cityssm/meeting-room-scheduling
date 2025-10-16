@@ -95,6 +95,51 @@ export async function VerifyToken(token: string): Promise<{ message: string; dat
   }
 }
 
+export type PermissionRequirement =
+  | { type: "permission"; resource: SessionResource; action: SessionAction }
+  | { type: "role"; role: SessionRole }
+  | { type: "function"; check: (roles: Role[] | undefined) => boolean | Promise<boolean> }
+  | { type: "and"; requirements: PermissionRequirement[] }
+  | { type: "or"; requirements: PermissionRequirement[] };
+
+export async function isRequirementMet(
+  roles: Role[] | undefined,
+  requirement: PermissionRequirement
+): Promise<boolean> {
+  if (!roles && requirement.type !== "function") return false;
+
+  const isAdmin = roles?.some((role) => role.name.toLowerCase() === "admin");
+  if (isAdmin) return true;
+
+  switch (requirement.type) {
+    case "permission":
+      return hasPermission(roles, requirement.resource, requirement.action);
+
+    case "role":
+      return hasRole(roles, requirement.role);
+
+    case "function":
+      return await Promise.resolve(requirement.check(roles));
+
+    case "and":
+      for (const req of requirement.requirements) {
+        const result = await isRequirementMet(roles, req);
+        if (!result) return false; // short-circuit on first failure
+      }
+      return true;
+
+    case "or":
+      for (const req of requirement.requirements) {
+        const result = await isRequirementMet(roles, req);
+        if (result) return true; // short-circuit on first success
+      }
+      return false;
+
+    default:
+      return false;
+  }
+}
+
 export function hasPermission(roles: Role[] | undefined, resource: SessionResource, action: SessionAction) {
   if (!roles) return false;
 

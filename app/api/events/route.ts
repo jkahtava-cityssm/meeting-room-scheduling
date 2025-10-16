@@ -10,10 +10,8 @@ import { guardRoute } from "@/lib/api-guard";
 export async function POST(request: NextRequest) {
   return guardRoute(
     request,
-    [
-      { type: "permission", resource: "Event", action: "Create" },
-      { type: "role", role: "Admin" },
-    ],
+    { type: "permission", resource: "Event", action: "Create" },
+
     async () => {
       const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate, userId } =
         await request.json();
@@ -56,10 +54,13 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   return guardRoute(
     request,
-    [
-      { type: "permission", resource: "Event", action: "Update" },
-      { type: "role", role: "Admin" },
-    ],
+    {
+      type: "or",
+      requirements: [
+        { type: "role", role: "Admin" },
+        { type: "permission", resource: "Event", action: "Update" },
+      ],
+    },
     async () => {
       const { eventData, ruleData } = await request.json();
 
@@ -144,10 +145,8 @@ export async function PUT(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    [
-      { type: "permission", resource: "Event", action: "Read" },
-      { type: "role", role: "Admin" },
-    ],
+    { type: "permission", resource: "Event", action: "Read" },
+
     async () => {
       const searchParams = request.nextUrl.searchParams;
 

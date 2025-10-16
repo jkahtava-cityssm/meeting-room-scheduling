@@ -115,37 +115,6 @@ model Role {
   @@map("role")
 }
 
-/**
- * ROLES
- * {
- * ADMIN - ROLE MANY RESOURCES
- * {
- * Event - RESOURCE ACTIONS
- * {
- * Create - ACTION
- * {
- * TRUE/FALSE - PERMISSION
- * }
- * }
- * }
- * }
- */
-
-//Role 1 or Many Resources, RoleResource
-/**
- * model RolePermission {
- * rolePermissionId     Int      @id @default(autoincrement())
- * roleId               Int
- * roleResourceActionId Int
- * createdAt            DateTime @default(now())
- * updatedAt            DateTime @updatedAt
- * role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
- * roleResourceAction RoleResourceAction @relation(fields: [roleResourceActionId], references: [roleResourceActionId], onDelete: Cascade)
- * @@map("role_resource")
- * }
- */
-
-//RoleDuty as an alternative name?
 model RoleResourceAction {
   roleResourceActionId Int      @id @default(autoincrement()) @map("role_resource_action_id")
   roleId               Int      @map("role_id")
