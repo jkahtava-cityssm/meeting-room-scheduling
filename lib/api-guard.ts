@@ -2,16 +2,19 @@ import { NextRequest } from "next/server";
 import { getServerSession, Role } from "./auth";
 import { SessionAction, SessionResource, SessionRole } from "./types";
 import { prisma } from "@/prisma";
-import { BadRequestMessage, hasPermission, hasRole, InternalServerErrorMessage, VerifyToken } from "./api-helpers";
-
-type PermissionRequirement =
-  | { type: "permission"; resource: SessionResource; action: SessionAction }
-  | { type: "role"; role: SessionRole }
-  | { type: "function"; check: (roles: Role[] | undefined) => boolean | Promise<boolean> };
+import {
+  BadRequestMessage,
+  hasPermission,
+  hasRole,
+  InternalServerErrorMessage,
+  isRequirementMet,
+  PermissionRequirement,
+  VerifyToken,
+} from "./api-helpers";
 
 export async function guardRoute(
   req: NextRequest,
-  permissions: PermissionRequirement[],
+  requirement: PermissionRequirement,
   handler: (userId: number) => Promise<Response>
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
@@ -26,29 +29,13 @@ export async function guardRoute(
 
   const roles = await GetUserPermissions(userId);
 
-  const results = await Promise.all(permissions.map((permission) => isRequirementMet(roles, permission)));
-  const anyPermissionGranted = results.some(Boolean);
+  const isAuthorized = await isRequirementMet(roles, requirement);
 
-  if (!anyPermissionGranted) {
+  if (!isAuthorized) {
     return BadRequestMessage("Not Authorized");
   }
 
   return handler(userId);
-}
-
-async function isRequirementMet(roles: Role[] | undefined, requirement: PermissionRequirement): Promise<boolean> {
-  if (!roles) return false;
-
-  switch (requirement.type) {
-    case "permission":
-      return hasPermission(roles, requirement.resource, requirement.action);
-    case "role":
-      return hasRole(roles, requirement.role);
-    case "function":
-      return await Promise.resolve(requirement.check(roles));
-    default:
-      return false;
-  }
 }
 
 async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {

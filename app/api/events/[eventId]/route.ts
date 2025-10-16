@@ -4,39 +4,30 @@ import { guardRoute } from "@/lib/api-guard";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
-  return guardRoute(
-    request,
-    [
-      { type: "permission", resource: "Event", action: "Read" },
-      { type: "role", role: "Admin" },
-    ],
-    async () => {
-      const { eventId } = await params;
-      if (!eventId || isNaN(Number(eventId))) {
-        return BadRequestMessage();
-      }
-
-      const events = await prisma.event.findMany({
-        include: { room: true, recurrence: true },
-        where: { eventId: parseInt(eventId) },
-      });
-
-      if (!events) {
-        return InternalServerErrorMessage();
-      }
-
-      return SuccessMessage("Collected Events", events);
+  return guardRoute(request, { type: "permission", resource: "Event", action: "Read" }, async () => {
+    const { eventId } = await params;
+    if (!eventId || isNaN(Number(eventId))) {
+      return BadRequestMessage();
     }
-  );
+
+    const events = await prisma.event.findMany({
+      include: { room: true, recurrence: true },
+      where: { eventId: parseInt(eventId) },
+    });
+
+    if (!events) {
+      return InternalServerErrorMessage();
+    }
+
+    return SuccessMessage("Collected Events", events);
+  });
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
   return guardRoute(
     request,
-    [
-      { type: "permission", resource: "Event", action: "Delete" },
-      { type: "role", role: "Admin" },
-    ],
+    { type: "permission", resource: "Event", action: "Delete" },
+
     async () => {
       const { eventId } = await params;
       if (!eventId || isNaN(Number(eventId))) {
