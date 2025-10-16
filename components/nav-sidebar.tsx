@@ -4,11 +4,10 @@ import * as React from "react";
 
 import Image from "next/image";
 
-import { Calendar, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal } from "lucide-react";
+import { Calendar, LifeBuoy, Send, Settings2 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-sidebar-contents";
 import { NavSecondary } from "@/components/nav-sidebar-footer";
-import { NavUser } from "@/components/nav-header-user";
 import {
   Sidebar,
   SidebarContent,

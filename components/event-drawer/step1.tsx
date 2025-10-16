@@ -13,36 +13,31 @@ import { BookKey, Loader2Icon } from "lucide-react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../ui/form";
 import { IconColored } from "../ui/icon-colored";
 import { ScrollBar } from "../ui/scroll-area";
-import { SingleDayPicker } from "../ui/single-day-picker";
+
 import { Textarea } from "../ui/textarea";
 import { useRoomsQuery } from "@/services/rooms";
-import { TimePicker } from "../ui/time-picker";
 import { Select } from "../ui/select";
 
-import { combineDateTime } from "@/lib/helpers";
-import { format, formatDuration, intervalToDuration } from "date-fns";
+import { formatDuration, intervalToDuration } from "date-fns";
 import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/services/users";
 import { Button } from "../ui/button";
 import { useStatusQuery } from "@/services/references";
+import { DateTimePicker, DateTimePickerRef } from "../ui/datetimepicker";
+import { useRef } from "react";
+import { Session } from "@/lib/auth-client";
 
-export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
-  const {
-    control,
-    getValues,
-    setValue,
-    trigger,
-    setError,
-    formState: { errors },
-    watch,
-  } = useFormContext<z.infer<typeof step1Schema>>();
+export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
+  const { control, getValues, setValue, watch } = useFormContext<z.infer<typeof step1Schema>>();
 
   const { setIgnoreLastStep, setStartDate, userId } = useMultiStepForm();
 
   const { data: rooms } = useRoomsQuery(false);
   const { data: users } = useUsersQuery();
   const { data: status } = useStatusQuery();
+
+  const endDatePickerRef = useRef<DateTimePickerRef>(null);
 
   const userList = users
     ? users.map((user) => {
@@ -65,7 +60,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="roomId">Room</FormLabel>
+                  <FormLabel>Room</FormLabel>
                 )}
                 <Select
                   disabled={isReadOnly}
@@ -83,6 +78,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                       //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
                       //return;
                     }
+
                     field.onChange(value);
                   }}
                 >
@@ -119,23 +115,19 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="isRecurring">Event Type</FormLabel>
+                  <FormLabel>Event Type</FormLabel>
                 )}
                 <FormControl>
                   <Tabs
                     defaultValue={field.value}
                     onValueChange={(value) => {
-                      const startDate = getValues("startDateText");
-                      const endDate = getValues("endDateText");
+                      const startDate = getValues("startDate");
+                      const endDate = getValues("endDate");
 
                       if (value === "true" && startDate !== endDate) {
-                        setValue("endDateText", getValues("startDateText"));
-                        setValue(
-                          "duration",
-                          getDurationText(
-                            ...getValues(["startDateText", "startTimeText", "endDateText", "endTimeText"])
-                          )
-                        );
+                        endDatePickerRef.current?.updateDate(startDate);
+                        //setValue("endDate", getValues("startDate"));
+                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                       }
                       field.onChange(value);
 
@@ -169,7 +161,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="userId">Requesting User</FormLabel>
+                  <FormLabel htmlFor={undefined}>Requesting User</FormLabel>
                 )}
 
                 <ComboBox
@@ -213,7 +205,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium" />
                 ) : (
-                  <FormLabel htmlFor="title">Title</FormLabel>
+                  <FormLabel>Title</FormLabel>
                 )}
                 <FormControl>
                   <Input
@@ -236,9 +228,10 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor="statusId">Status</FormLabel>
+                  <FormLabel>Status</FormLabel>
                 )}
-                {!userId && (
+
+                {status && !userId && (
                   <Select
                     disabled={isReadOnly}
                     //readonly={isReadOnly}
@@ -276,7 +269,13 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                     </SelectContent>
                   </Select>
                 )}
-                {userId && (
+                {!status && (
+                  <Button variant={"outline"} disabled>
+                    <Loader2Icon className="animate-spin" />
+                    Collecting Status
+                  </Button>
+                )}
+                {userId && status && (
                   <Button variant={"outline"} disabled>
                     {status?.find((status) => String(status.statusId) === field.value)?.name}
                   </Button>
@@ -287,44 +286,31 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
 
           <FormField
             control={control}
-            name="startDateText"
+            name="startDate"
             render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-3">
+              <FormItem className="col-span-2 row-3">
                 <div className="flex gap-2  justify-items-center">
-                  {fieldState.invalid ? (
-                    <FormMessage className="leading-none font-medium" />
-                  ) : (
-                    <FormLabel htmlFor="startDateText">Start Date</FormLabel>
-                  )}
+                  {fieldState.invalid && <FormMessage className="leading-none font-medium" />}
                 </div>
 
                 <FormControl>
-                  <SingleDayPicker
-                    id="startDateText"
+                  <DateTimePicker
+                    id="startDate"
                     disabled={isReadOnly}
-                    value={field.value ? new Date(field.value) : new Date()}
-                    onSelect={(date) => {
+                    value={field.value}
+                    onChange={(isoString) => {
                       if (isRecurring === "true") {
-                        setValue("endDateText", date ? date.toISOString() : "");
-                        setStartDate(date ? date.toISOString() : "");
+                        endDatePickerRef.current?.updateDate(isoString);
+                        setStartDate(isoString);
                       }
-
-                      field.onChange(date ? date.toISOString() : "");
-
-                      trigger(["endDateText", "endTimeText", "startTimeText"]);
-                      setValue(
-                        "duration",
-                        getDurationText(...getValues(["startDateText", "startTimeText", "endDateText", "endTimeText"]))
-                      );
-                      setValue(
-                        "startDate",
-                        combineDateTime(date ? date : new Date(), new Date(getValues("startTimeText")))
-                      );
+                      field.onChange(isoString);
+                      setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                     }}
                     placeholder="Select a date"
                     data-invalid={fieldState.invalid}
                     className="min-w-52"
-                  />
+                    label={"Start Date"}
+                  ></DateTimePicker>
                 </FormControl>
               </FormItem>
             )}
@@ -332,103 +318,29 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
 
           <FormField
             control={control}
-            name="startTimeText"
+            name="endDate"
             render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-3">
+              <FormItem className="col-span-2 row-4">
+                <div className="flex gap-2">
+                  {fieldState.invalid && <FormMessage className="leading-none font-medium" />}
+                </div>
+
                 <FormControl>
-                  <TimePicker
-                    id="startTimeText"
+                  <DateTimePicker
+                    id="endDate"
+                    ref={endDatePickerRef}
                     disabled={isReadOnly}
-                    date={field.value ? new Date(field.value) : new Date()}
-                    setDate={(date) => {
-                      field.onChange(date ? date.toISOString() : "");
-                      trigger(["startDateText", "endDateText", "endTimeText"]);
-                      setValue(
-                        "duration",
-                        getDurationText(...getValues(["startDateText", "startTimeText", "endDateText", "endTimeText"]))
-                      );
-                      setValue(
-                        "startDate",
-                        combineDateTime(new Date(getValues("startDateText")), date ? date : new Date())
-                      );
+                    value={field.value}
+                    onChange={(isoString) => {
+                      field.onChange(isoString);
+                      setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                     }}
+                    placeholder="Select a date"
                     data-invalid={fieldState.invalid}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          {isRecurring === "false" && (
-            <FormField
-              control={control}
-              name="endDateText"
-              render={({ field, fieldState }) => (
-                <FormItem className="col-span-1 row-4">
-                  <div className="flex gap-2">
-                    {fieldState.invalid ? (
-                      <FormMessage className="leading-none font-medium" />
-                    ) : (
-                      <FormLabel htmlFor="endDateText">End Date</FormLabel>
-                    )}
-                  </div>
-
-                  <FormControl>
-                    <SingleDayPicker
-                      id="endDateText"
-                      disabled={isReadOnly}
-                      value={field.value ? new Date(field.value) : new Date()}
-                      onSelect={(date) => {
-                        if (isRecurring !== "false") {
-                          setValue("startDateText", date ? date.toISOString() : "");
-                        }
-                        field.onChange(date ? date.toISOString() : "");
-
-                        trigger(["startDateText", "endTimeText", "startTimeText"]);
-                        setValue(
-                          "duration",
-                          getDurationText(
-                            ...getValues(["startDateText", "startTimeText", "endDateText", "endTimeText"])
-                          )
-                        );
-                        setValue(
-                          "endDate",
-                          combineDateTime(date ? date : new Date(), new Date(getValues("endTimeText")))
-                        );
-                      }}
-                      placeholder="Select a date"
-                      data-invalid={fieldState.invalid}
-                      className="min-w-52"
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          )}
-          <FormField
-            control={control}
-            name="endTimeText"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 col-start-2 row-4">
-                <FormControl>
-                  <TimePicker
-                    id="endTimeText"
-                    disabled={isReadOnly}
-                    date={field.value ? new Date(field.value) : new Date()}
-                    setDate={(date) => {
-                      field.onChange(date ? date.toISOString() : "");
-
-                      trigger(["startDateText", "endDateText", "startTimeText"]);
-                      setValue(
-                        "duration",
-                        getDurationText(...getValues(["startDateText", "startTimeText", "endDateText", "endTimeText"]))
-                      );
-                      setValue(
-                        "endDate",
-                        combineDateTime(new Date(getValues("endDateText")), date ? date : new Date())
-                      );
-                    }}
-                    data-invalid={fieldState.invalid}
-                  />
+                    className="min-w-52"
+                    label={"End Date"}
+                    hideDate={isRecurring === "true"}
+                  ></DateTimePicker>
                 </FormControl>
               </FormItem>
             )}
@@ -442,7 +354,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium" />
                 ) : (
-                  <FormLabel htmlFor="duration">Duration:</FormLabel>
+                  <FormLabel>Duration:</FormLabel>
                 )}
                 <FormControl>
                   <Input
@@ -493,11 +405,11 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
   );
 };
 
-export const getDurationText = (startDate: string, startTime: string, endDate: string, endTime: string): string => {
-  const startDateTime = combineDateTime(new Date(startDate), new Date(startTime));
-  const endDateTime = combineDateTime(new Date(endDate), new Date(endTime));
+export const getDurationText = (startDateTime: string, endDateTime: string): string => {
+  //const startDateTime = combineDateTime(new Date(startDate), new Date(startTime));
+  //const endDateTime = combineDateTime(new Date(endDate), new Date(endTime));
 
-  const duration = formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
+  const duration = formatDuration(intervalToDuration({ start: new Date(startDateTime), end: new Date(endDateTime) }), {
     format: ["years", "months", "days", "hours", "minutes"],
     delimiter: ", ",
   });

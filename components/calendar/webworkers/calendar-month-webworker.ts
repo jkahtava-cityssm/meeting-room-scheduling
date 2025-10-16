@@ -28,7 +28,7 @@ async function processMonthEvents(monthData: IMonthProcessData): Promise<IMonthR
   const events = z.array(SEvent).parse(combinedEvents);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, monthData.selectedRoomId).sort(
-    (a, b) => a.startDate.getTime() - b.startDate.getTime()
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
   );
 
   const packedEvents = packEvents(filteredEvents, monthStart, monthEnd, monthData.multiDayEventsAtTop);

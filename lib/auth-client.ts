@@ -10,15 +10,20 @@ export const authClient = createAuthClient({
 });
 
 export type Session = typeof authClient.$Infer.Session;
+//export type User = typeof authClient.$Infer.Session.user;
 
 export const { signIn, signOut, useSession } = authClient;
 
-export function hasClientPermission(
+export function checkSessionPermission(
   session: Session | undefined | null,
   resource: SessionResource,
   action: SessionAction
 ) {
   if (!session || !session.user || !session.user.roles) return false;
+
+  if (checkSessionRole(session, "Admin")) {
+    return true;
+  }
 
   const permission = session.user.roles.some((role) => {
     return role.permissions.some((permission) => {
@@ -33,7 +38,7 @@ export function hasClientPermission(
   return permission;
 }
 
-export function hasClientRole(session: Session | undefined | null, role: SessionRole) {
+export function checkSessionRole(session: Session | undefined | null, role: SessionRole) {
   if (!session || !session.user || !session.user.roles) return false;
   return session.user.roles.some((item) => {
     return item.name.toLowerCase() === role.toLowerCase();

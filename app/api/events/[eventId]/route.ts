@@ -1,60 +1,48 @@
 import { prisma } from "@/prisma";
 import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { getServerSession, hasServerPermission } from "@/lib/auth";
+import { guardRoute } from "@/lib/api-guard";
+import { NextRequest } from "next/server";
 
-export async function GET(request: Request, { params }: { params: Promise<{ eventId: string }> }) {
-  const { eventId } = await params;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
+  return guardRoute(request, { type: "permission", resource: "Event", action: "Read" }, async () => {
+    const { eventId } = await params;
+    if (!eventId || isNaN(Number(eventId))) {
+      return BadRequestMessage();
+    }
 
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage("DATABASE_URL Missing");
-  }
+    const events = await prisma.event.findMany({
+      include: { room: true, recurrence: true },
+      where: { eventId: parseInt(eventId) },
+    });
 
-  const session = await getServerSession();
+    if (!events) {
+      return InternalServerErrorMessage();
+    }
 
-  if (!session || !hasServerPermission(session, "Event", "Read")) {
-    return BadRequestMessage("Not Authorized");
-  }
-
-  if (!eventId || isNaN(Number(eventId))) {
-    return BadRequestMessage();
-  }
-
-  const events = await prisma.event.findMany({
-    include: { room: true, recurrence: true },
-    where: { eventId: parseInt(eventId) },
+    return SuccessMessage("Collected Events", events);
   });
-
-  if (!events) {
-    return InternalServerErrorMessage();
-  }
-
-  return SuccessMessage("Collected Events", events);
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ eventId: string }> }) {
-  const { eventId } = await params;
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
+  return guardRoute(
+    request,
+    { type: "permission", resource: "Event", action: "Delete" },
 
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage("DATABASE_URL Missing");
-  }
+    async () => {
+      const { eventId } = await params;
+      if (!eventId || isNaN(Number(eventId))) {
+        return BadRequestMessage();
+      }
 
-  const session = await getServerSession();
+      const totalDeleted = await prisma.event.deleteMany({
+        where: { eventId: parseInt(eventId) },
+      });
 
-  if (!session || !hasServerPermission(session, "Event", "Delete")) {
-    return BadRequestMessage("Not Authorized");
-  }
+      if (!totalDeleted) {
+        return InternalServerErrorMessage();
+      }
 
-  if (!eventId || isNaN(Number(eventId))) {
-    return BadRequestMessage();
-  }
-
-  const totalDeleted = await prisma.event.deleteMany({
-    where: { eventId: parseInt(eventId) },
-  });
-
-  if (!totalDeleted) {
-    return InternalServerErrorMessage();
-  }
-
-  return DeleteMessage();
+      return DeleteMessage();
+    }
+  );
 }

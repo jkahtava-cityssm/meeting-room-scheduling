@@ -1,29 +1,11 @@
 "use client";
 import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
-import { CalendarDayColumnCalendar } from "@/components/calendar/calendar-day-column-calendar";
-import { EventBlock } from "@/components/calendar/calendar-day-event-block";
-import { IEventBlock } from "@/components/calendar/calendar-day-view";
-import { CalendarDayViewSkeleton } from "@/components/calendar/skeleton-calendar-day-view";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { useClientSession } from "@/hooks/use-client-auth";
 
-import { IEvent } from "@/lib/schemas/calendar";
-import { useEventsQuery } from "@/services/events";
-import { useUserEventsQuery } from "@/services/users";
-import { format } from "date-fns";
 import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function Home() {
-  const isLoading = false;
-  const date = new Date();
-  const dayViews: { day: string }[] = [{ day: "test" }];
-  const block: IEventBlock = {
-    event: { eventId: 1 },
-    eventStyle: { top: "1px", width: "10px", left: "110px" },
-    eventHeight: 100,
-  };
-
   const { session, isPending } = useClientSession();
 
   if (isPending) {

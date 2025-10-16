@@ -1,14 +1,7 @@
 "use client";
 
 import { SidebarIcon } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -53,7 +46,7 @@ export function SiteHeader() {
           </BreadcrumbList>
         </Breadcrumb>*/}
         <div className="w-full sm:ml-auto sm:w-auto">
-          <NavUser isPending={isPending} session={session} />
+          {session && <NavUser isPending={isPending} session={session} />}
         </div>
       </div>
     </header>
