@@ -35,7 +35,7 @@ export function getRRuleData({
         Object.setPrototypeOf(strippedObject, original);
 
         const ruleString = strippedObject.toString();
-        const lastDate = response.data.lastDate.toISOString();
+        const lastDate = response.data.lastDate?.toISOString();
         const count = response.data.count;
         const localDates = response.data.localDates;
 

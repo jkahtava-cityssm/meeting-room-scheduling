@@ -26,8 +26,9 @@ import { Button } from "../ui/button";
 import { useStatusQuery } from "@/services/references";
 import { DateTimePicker, DateTimePickerRef } from "../ui/datetimepicker";
 import { useRef } from "react";
+import { Session } from "@/lib/auth-client";
 
-export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
+export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch } = useFormContext<z.infer<typeof step1Schema>>();
 
   const { setIgnoreLastStep, setStartDate, userId } = useMultiStepForm();

@@ -21,6 +21,10 @@ export function checkSessionPermission(
 ) {
   if (!session || !session.user || !session.user.roles) return false;
 
+  if (checkSessionRole(session, "Admin")) {
+    return true;
+  }
+
   const permission = session.user.roles.some((role) => {
     return role.permissions.some((permission) => {
       return (

@@ -20,6 +20,8 @@ import { useMultiStepForm } from "./multi-step-form";
 import { FormStatus } from "./types";
 import { getRRuleData } from "./rrule-preview-helper";
 import { RRulePreview } from "./rrule-preview";
+import { endOfDay } from "date-fns";
+import { Session } from "@/lib/auth-client";
 
 /**
  * TO-DO: One Day add the ability to set a truly forever pattern, it will require
@@ -30,13 +32,7 @@ import { RRulePreview } from "./rrule-preview";
  * @returns
  */
 
-export function Step2({
-  formStatus,
-  resetValues,
-}: {
-  formStatus: FormStatus;
-  resetValues?: z.infer<typeof step2Schema>;
-}) {
+export function Step2({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) {
   //const [lastDate, setLastDate] = useState<Date>();
 
   const { startDate } = useMultiStepForm();
@@ -49,17 +45,7 @@ export function Step2({
   const [localDates, setLocalDates] = useState<Date[] | undefined>([]);
   const [isCalculating, setCalculating] = useState<boolean>(true);
 
-  const { control, getValues, setValue, watch, reset } = useFormContext<z.infer<typeof step2Schema>>();
-
-  useEffect(() => {
-    if (!resetValues) return;
-
-    reset({
-      ...resetValues,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetValues]);
-  //React Hook forms indicates that
+  const { control, getValues, setValue, watch } = useFormContext<z.infer<typeof step2Schema>>();
 
   //const [rruleData, setRRuleData] = useState(null);
 
@@ -212,9 +198,9 @@ export function Step2({
                               <SingleDayPicker
                                 id="untilDate"
                                 disabled={isReadOnly}
-                                value={field.value ? new Date(field.value) : new Date()}
+                                value={field.value ? endOfDay(new Date(field.value)) : new Date()}
                                 onSelect={(date) => {
-                                  field.onChange(date ? date.toISOString() : "");
+                                  field.onChange(date ? endOfDay(date).toISOString() : "");
                                 }}
                                 placeholder="Select a date"
                                 data-invalid={fieldState.invalid}

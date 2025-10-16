@@ -67,6 +67,7 @@ export const MultiStepForm = ({
   const [startDate, setStartDate] = useState(
     defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate
   );
+
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
   const [showAlert, setShowAlert] = useState(false);
   const currentStep = formSteps[currentStepIndex];
@@ -246,7 +247,7 @@ export const MultiStepForm = ({
 
           <FormProvider {...methods}>
             <Form>
-              <currentStep.component formStatus={status}></currentStep.component>
+              <currentStep.component formStatus={status} session={session}></currentStep.component>
             </Form>
           </FormProvider>
           <FormFooter

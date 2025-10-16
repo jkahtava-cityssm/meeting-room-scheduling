@@ -2,6 +2,7 @@ import { ZodType } from "zod/v4";
 
 import { LucideIcon } from "lucide-react";
 import { CombinedSchema } from "./event-drawer.validator";
+import { Session } from "@/lib/auth-client";
 
 export type FieldKeys = keyof CombinedSchema;
 
@@ -9,7 +10,7 @@ export type FormStep = {
   title: string;
   position: number;
   validationSchema: ZodType<unknown>;
-  component: React.FC<{ formStatus: FormStatus }>;
+  component: React.FC<{ formStatus: FormStatus; session: Session | null }>;
   icon: LucideIcon;
   fields: FieldKeys[];
   //defaultValues: object;
