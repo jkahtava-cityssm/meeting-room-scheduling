@@ -4,7 +4,7 @@ import * as React from "react";
 
 import Image from "next/image";
 
-import { Calendar, LifeBuoy, Send, Settings2 } from "lucide-react";
+import { Calendar, LifeBuoy, Send, Settings2, Notebook } from "lucide-react";
 
 import { NavMain } from "@/components/nav-sidebar-contents";
 import { NavSecondary } from "@/components/nav-sidebar-footer";
@@ -29,6 +29,11 @@ const data = {
     image: "/avatars/shadcn.jpg",
   },
   navMain: [
+    {
+      title: "Availability",
+      url: "/availability",
+      icon: Notebook,
+    },
     {
       title: "Bookings",
       url: "#",
