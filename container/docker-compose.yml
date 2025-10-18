@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: container-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
+      POSTGRES_DB: meeting_room_scheduling
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  prisma-migrate:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.prisma-migrate
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
+    entrypoint: >
+      sh -c "
+        until  nc -z postgres 5432;
+        do echo 'Waiting for Postgres...'; sleep 1; done;
+        npx prisma migrate dev &&
+        npx prisma db seed &&
+        echo 'Migration complete.'"
+
+
+  nextjs-app:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.nextjs-app
+    expose:
+      - "3000"
+    environment:
+      BETTER_AUTH_URL: https://${DUCKDNS_DOMAIN}
+      NEXTAPP_URL: https://${DUCKDNS_DOMAIN}
+      # other env vars from .env
+    depends_on:
+      - postgres
+    command: >
+      sh -c "
+        until pg_isready -U ${DATABASE_USER_USERNAME} -d meeting_room_scheduling;
+        do echo 'Waiting for Postgres...'; sleep 1; done;
+        npx prisma generate &&
+        node .next/standalone/server.js
+      "
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DUCKDNS_DOMAIN: ${DUCKDNS_DOMAIN}
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: /etc/nginx/startup.sh
+    depends_on:
+      - nextjs-app
+
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: /bin/sh -c
+    command: >
+      "trap exit TERM;
+      while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h;
+      done"
+
+  duckdns-updater:
+    image: alpine:latest
+    volumes:
+      - ./duckdns:/scripts
+    entrypoint: /bin/sh
+    command: -c "while true; do sh /scripts/update.sh; sleep 300; done"
+
+volumes:
+  postgres_data:

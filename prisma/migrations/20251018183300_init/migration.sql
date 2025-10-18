@@ -3,15 +3,14 @@ CREATE TABLE "user" (
     "user_id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "email_verified" BOOLEAN NOT NULL DEFAULT FALSE,
+    "email_verified" BOOLEAN NOT NULL DEFAULT false,
     "image" TEXT,
     "employee_number" TEXT,
-    "employee_active" BOOLEAN NOT NULL DEFAULT TRUE,
+    "employee_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "user_pkey" PRIMARY KEY ("user_id"),
-    CONSTRAINT "email" UNIQUE ("email")
+    CONSTRAINT "user_pkey" PRIMARY KEY ("user_id")
 );
 
 -- CreateTable
@@ -187,6 +186,9 @@ CREATE TABLE "status" (
 
     CONSTRAINT "status_pkey" PRIMARY KEY ("status_id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "user_session_token_key" ON "user_session"("token");
