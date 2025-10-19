@@ -50,6 +50,7 @@ cert-init:
 		-v $(CERTBOT_VOLUME)/conf:/etc/letsencrypt \
 		certbot/certbot certonly \
 		--webroot -w /var/www/certbot \
+		--keep-until-expiring \
 		--email ${EMAIL} \
 		--agree-tos \
 		--no-eff-email \
