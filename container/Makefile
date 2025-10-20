@@ -8,8 +8,11 @@ DUCKDNS_SCRIPT=./duckdns/update.sh
 #  First-time setup
 #init: setup build up wait-postgres migrate wait-nginx cert-init restart-app restart-nginx
 #init: setup up wait-postgres migrate build restart-app wait-nginx cert-init restart-nginx
-#init: setup up-db wait-postgres migrate build up-app wait-nginx cert-init restart-nginx
-init: build up-app wait-nginx cert-init restart-nginx
+#init: setup up-db wait-postgres build up-app seed wait-nginx cert-init restart-nginx
+init: build up cert-init restart-nginx
+start: up cert-init restart-nginx
+#build
+#init: build up-app wait-nginx cert-init restart-nginx
 #init: wait-nginx  cert-init restart-nginx
 #  Reset everything (containers + volumes)
 reset:
@@ -97,7 +100,7 @@ duckdns-update:
 
 #  Prisma seed manually
 seed:
-	docker exec -it container_nextjs-app_1 sh -c "npx prisma generate && npx prisma db seed"
+	docker exec -it container_nextjs-app sh -c "npx prisma generate && npx prisma db seed"
 
 #  Restart Next.js app only
 restart-app:

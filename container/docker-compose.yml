@@ -13,21 +13,26 @@ services:
       - webnet
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  prisma-migrate:
-    build:
-      context: ..
-      dockerfile: container/Dockerfile.prisma-migrate
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
-    entrypoint: >
-      sh -c "
-        until  nc -z postgres 5432;
-        do echo 'Waiting for Postgres...'; sleep 1; done;
-        npx prisma migrate dev &&
-        npx prisma db seed &&
-        echo 'Migration complete.'"
+  #prisma-migrate:
+  #  build:
+  #    context: ..
+  #    dockerfile: container/Dockerfile.prisma-migrate
+  #  environment:
+  #    DATABASE_URL: ${DATABASE_URL}
+  #    DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
+  #  entrypoint: >
+  #    sh -c "
+  #      until  nc -z postgres 5432;
+  #      do echo 'Waiting for Postgres...'; sleep 1; done;
+  #      npx prisma migrate dev &&
+  #      npx prisma db seed &&
+  #      echo 'Migration complete.'"
 
 
   nextjs-app:
@@ -45,6 +50,13 @@ services:
       - postgres
     networks:
       - webnet
+    extra_hosts:
+      - "${DUCKDNS_DOMAIN}:host-gateway"
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost:3000"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 5
 
   nginx:
     build:
@@ -61,10 +73,16 @@ services:
       - ./certbot/conf:/etc/letsencrypt
     entrypoint: /etc/nginx/startup.sh
     depends_on:
-      - nextjs-app
+      - nextjs-app #:
+        #condition: service_healthy
     networks:
       - webnet
-      
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 5
+        
 
 
   certbot:
