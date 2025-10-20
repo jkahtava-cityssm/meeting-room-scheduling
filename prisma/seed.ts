@@ -518,7 +518,11 @@ async function createLinkedServer() {
 }
 
 async function main() {
-  await createLinkedServer();
+
+  if(process.env.LINKED_SERVER === '1')
+  {
+    await createLinkedServer();
+  }
 
   const actionCreate = await FindCreateAction("Create");
   const actionRead = await FindCreateAction("Read");

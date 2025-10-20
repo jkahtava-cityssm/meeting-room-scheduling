@@ -1,0 +1,2 @@
+cd container
+make init

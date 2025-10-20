@@ -25,6 +25,11 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "radix-ui"],
   },
+  
 };
+
+module.exports = {
+  output: 'standalone',
+}
 
 export default nextConfig;
