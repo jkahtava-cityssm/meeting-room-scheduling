@@ -101,7 +101,7 @@ export const auth = betterAuth({
         3600,
         [user.id]
       );
-
+      console.log("SESSION GET");
       return {
         user: {
           ...user,
