@@ -111,6 +111,19 @@ async function FindCreateUserRole(roleId: number, userId: number) {
   return record;
 }
 
+async function FindCreateRoomScope(name: string) {
+  let record = await prisma.roomScope.findFirst({
+    where: { name: name },
+  });
+
+  if (!record) {
+    record = await prisma.roomScope.create({
+      data: { name: name },
+    });
+  }
+  return record;
+}
+
 async function FindCreateRooms(name: string, color: TColors, icon: string) {
   let record = await prisma.room.findFirst({
     where: { name: name },
@@ -118,7 +131,7 @@ async function FindCreateRooms(name: string, color: TColors, icon: string) {
 
   if (!record) {
     record = await prisma.room.create({
-      data: { name: name, color: color, icon: icon },
+      data: { name: name, color: color, icon: icon, roomScopeId: 1 },
     });
   }
   return record;
@@ -518,9 +531,7 @@ async function createLinkedServer() {
 }
 
 async function main() {
-
-  if(process.env.LINKED_SERVER === '1')
-  {
+  if (process.env.LINKED_SERVER === "1") {
     await createLinkedServer();
   }
 
@@ -598,6 +609,9 @@ async function main() {
     color: string;
     icon: string | null;
   }[] = [];
+
+  await FindCreateRoomScope("Public");
+  await FindCreateRoomScope("Private");
 
   //await FindCreateRooms("All", "zinc", "Asterisk");
   roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey"));

@@ -4,7 +4,7 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "windows", "linux-musl-openssl-3.0.x"]
 }
 
@@ -76,16 +76,29 @@ model Verification {
 }
 
 model Room {
-  roomId    Int      @id @default(autoincrement()) @map("room_id")
-  name      String
-  color     String
-  icon      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  roomId      Int      @id @default(autoincrement()) @map("room_id")
+  name        String
+  color       String
+  icon        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  roomScopeId Int      @default(1) @map("room_scope_id")
 
-  event Event[]
+  roomScope RoomScope @relation(fields: [roomScopeId], references: [roomScopeId])
+  Event     Event[]
 
   @@map("room")
+}
+
+model RoomScope {
+  roomScopeId Int      @id @default(autoincrement()) @map("room_scope_id")
+  name        String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  roomScope   Int      @default(1) @map("access_level")
+  room        Room[]
+
+  @@map("room_scope")
 }
 
 //Member 1 or Many Roles, MemberRole

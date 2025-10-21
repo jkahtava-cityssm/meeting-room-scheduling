@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
     //console.log(request.nextUrl.pathname);
     //console.log(session);
     //console.log("MIDDLEWARE REDIRECT")
-    return NextResponse.redirect(new URL("/?callbackurl=" + request.nextUrl.pathname, request.url));
+    return NextResponse.redirect(new URL("/login/?callbackurl=" + request.nextUrl.pathname, request.url));
   }
 
   //console.log(session)

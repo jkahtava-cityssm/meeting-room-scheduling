@@ -45,12 +45,7 @@ export function PublicHeader({ left, title, right, children }: HeaderProps) {
         </div>
       </header>
 
-      <div
-        className="flex flex-col items-center justify-center gap-6 bg-background p-6 md:p-10"
-        style={{ minHeight: "calc(100vh - var(--header-height) - 1px)" }}
-      >
-        {children}
-      </div>
+      {children}
     </>
   );
 }
