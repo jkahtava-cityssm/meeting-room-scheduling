@@ -206,7 +206,8 @@ async function CreateRandomEvents(
     const eventIndex = Math.floor(Math.random() * EVENTS.length);
     const userIndex = Math.floor(Math.random() * userList.length);
 
-    await prisma.event.create({
+
+    const b = await prisma.event.create({
       data: {
         roomId: rooms[Math.floor(Math.random() * rooms.length)].roomId,
         startDate: startDate.toISOString(),
@@ -382,8 +383,9 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
   } else if (TypeValue === "Between") {
   }
 
+  
   if (!newRule) {
-    return;
+    return null;
   }
 
   //console.log(newRule.all().at(-1));
@@ -395,7 +397,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
   if (!newEndDate) {
     //console.log("NO END DATE");
-    return;
+    return null;
   }
 
   const recurrence = await prisma.recurrence.create({
@@ -523,6 +525,20 @@ async function main() {
   {
     await createLinkedServer();
   }
+  else
+  {
+     await prisma.user.upsert({
+    where: { email: "Default@Default.com" },
+    update: {},
+    create: { name: "Default", 
+              email: "Default@Default.com",
+              emailVerified: false, 
+              image: null, 
+              employeeNumber: "0", 
+              employeeActive: true
+     },
+  })
+  }
 
   const actionCreate = await FindCreateAction("Create");
   const actionRead = await FindCreateAction("Read");
@@ -627,7 +643,7 @@ async function main() {
   await prisma.event.deleteMany();
   await prisma.recurrence.deleteMany();
 
-  CreateRandomEvents(roomList, 200);
+  //CreateRandomEvents(roomList, 200);
 
   CreateRandomEvents(roomList, 2000, 1825);
 

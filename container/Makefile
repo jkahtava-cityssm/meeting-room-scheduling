@@ -2,6 +2,7 @@ include ../.env
 export
 
 COMPOSE=docker-compose -f docker-compose.yml
+MIGRATE_COMPOSE=docker-compose -f docker-compose.migrate.yml
 CERTBOT_VOLUME=./certbot
 DUCKDNS_SCRIPT=./duckdns/update.sh
 
@@ -15,6 +16,25 @@ start: up cert-init restart-nginx
 #init: build up-app wait-nginx cert-init restart-nginx
 #init: wait-nginx  cert-init restart-nginx
 #  Reset everything (containers + volumes)
+
+test: 
+	docker-compose build prisma-migrate
+#	$(COMPOSE) up prisma-migrate
+# \
+#	sh -c "npx prisma migrate dev"
+#	docker build -f Dockerfile.prisma-migrate -t temp-migrate ..
+#	docker run --rm \
+#        -e DATABASE_URL=$(DATABASE_URL) \
+#        temp-migrate \
+#        sh -c "npx prisma migrate deploy"
+#	docker image rm temp-migrate
+	    
+up-migrate:
+	docker compose run --rm prisma-migrate /bin/sh -c "npx prisma migrate deploy"
+
+up-seed:
+	docker compose run --rm prisma-migrate /bin/sh -c "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+
 reset:
 	$(COMPOSE) down -v --remove-orphans
 	rm -rf $(CERTBOT_VOLUME)/conf
@@ -100,7 +120,7 @@ duckdns-update:
 
 #  Prisma seed manually
 seed:
-	docker exec -it container_nextjs-app sh -c "npx prisma generate && npx prisma db seed"
+	docker exec -it container-prisma-migrate-1 sh -c " npx prisma db seed"
 
 #  Restart Next.js app only
 restart-app:
