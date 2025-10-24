@@ -1,30 +1,45 @@
+"use client";
 import { PUBLIC_IROOM } from "@/services/public";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
 
-const RoomCategoryLayout = ({ rooms }: { rooms: PUBLIC_IROOM[] }) => {
-  // Memoize rooms grouped by category
-  const roomsByCategory = useMemo(() => {
-    const map: Record<string, PUBLIC_IROOM[]> = {};
+const RoomCategoryLayout = ({
+  rooms,
+  onCheckedRoomsChange,
+}: {
+  rooms: PUBLIC_IROOM[];
+  onCheckedRoomsChange?: (checkedRoomIds: number[]) => void;
+}) => {
+  const [checkedRooms, setCheckedRooms] = useState<Set<number>>(new Set());
+
+  const toggleRoom = (roomId: number) => {
+    setCheckedRooms((prev: Set<number>) => {
+      const newSet = new Set(prev);
+      if (newSet.has(roomId)) {
+        newSet.delete(roomId);
+      } else {
+        newSet.add(roomId);
+      }
+
+      return newSet;
+    });
+  };
+
+  const { roomsByCategory, rows } = useMemo(() => {
+    const roomsByCategory: Record<string, PUBLIC_IROOM[]> = {};
+    const categoryCounts: Record<string, number> = {};
+
     for (const room of rooms) {
       const category = room.roomCategory.name;
-      if (!map[category]) map[category] = [];
-      map[category].push(room);
-    }
-    return map;
-  }, [rooms]);
-
-  // Memoize sorted category counts
-  const rows = useMemo(() => {
-    const categoryCounts: Record<string, number> = {};
-    for (const category in roomsByCategory) {
-      categoryCounts[category] = roomsByCategory[category].length;
+      if (!roomsByCategory[category]) roomsByCategory[category] = [];
+      roomsByCategory[category].push(room);
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
     }
 
     const sortedCategories = Object.entries(categoryCounts).sort(([, countA], [, countB]) => countB - countA);
 
-    const result: { left: string; right: string[] }[] = [];
+    const rows: { left: string; right: string[] }[] = [];
 
     while (sortedCategories.length > 0) {
       const shifted = sortedCategories.shift();
@@ -51,14 +66,14 @@ const RoomCategoryLayout = ({ rooms }: { rooms: PUBLIC_IROOM[] }) => {
         rightCategories.pop();
       }
 
-      result.push({
+      rows.push({
         left: leftCategory,
         right: rightCategories.map(([cat]) => cat),
       });
     }
 
-    return result;
-  }, [roomsByCategory]);
+    return { roomsByCategory, rows };
+  }, [rooms]);
 
   return (
     <div className="space-y-6">
@@ -70,7 +85,11 @@ const RoomCategoryLayout = ({ rooms }: { rooms: PUBLIC_IROOM[] }) => {
             <div className="flex flex-col gap-2 mt-2">
               {roomsByCategory[row.left]?.map((room) => (
                 <div key={room.roomId} className="flex items-center gap-2">
-                  <Checkbox id={`room-${room.roomId}`} />
+                  <Checkbox
+                    id={`room-${room.roomId}`}
+                    checked={checkedRooms.has(room.roomId)}
+                    onCheckedChange={() => toggleRoom(room.roomId)}
+                  />
                   <Label htmlFor={`room-${room.roomId}`} className="text-sm font-medium">
                     {room.name}
                   </Label>
@@ -87,7 +106,11 @@ const RoomCategoryLayout = ({ rooms }: { rooms: PUBLIC_IROOM[] }) => {
                 <div className="flex flex-col gap-2 mt-2">
                   {roomsByCategory[category]?.map((room) => (
                     <div key={room.roomId} className="flex items-center gap-2">
-                      <Checkbox id={`room-${room.roomId}`} />
+                      <Checkbox
+                        id={`room-${room.roomId}`}
+                        checked={checkedRooms.has(room.roomId)}
+                        onCheckedChange={() => toggleRoom(room.roomId)}
+                      />
                       <Label htmlFor={`room-${room.roomId}`} className="text-sm font-medium">
                         {room.name}
                       </Label>

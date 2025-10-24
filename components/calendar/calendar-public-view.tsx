@@ -92,6 +92,8 @@ export function CalendarPublicView() {
 
   const { data: rooms } = usePublicRoomsQuery();
 
+  const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
+
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
     //nextjs cache's the route so this is my temporary fix
@@ -160,7 +162,10 @@ export function CalendarPublicView() {
     <div>...</div>;
   }
 
-  const roomCategories = Array.from(new Set(rooms.map((room) => room.roomCategory.name.toString())));
+  const handleCheckedRoomsChange = (checkedIds: number[]) => {
+    setSelectedRoomIds(checkedIds);
+    // You can also trigger other side effects here
+  };
 
   return (
     <>
@@ -172,7 +177,7 @@ export function CalendarPublicView() {
         <div className="flex">
           <div className="mr-4 w-[500px]">
             <p className="text-sm text-muted-foreground">This is your calendar overview or instructions.</p>
-            <RoomCategoryLayout rooms={rooms}></RoomCategoryLayout>
+            <RoomCategoryLayout rooms={rooms} onCheckedRoomsChange={handleCheckedRoomsChange}></RoomCategoryLayout>
           </div>
 
           <div className="flex-1 overflow-hidden w-150 h-150">
