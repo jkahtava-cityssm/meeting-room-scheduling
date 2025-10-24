@@ -19,21 +19,13 @@ export const PublicEventCard = cva(
   }
 );
 
-export function PublicEventBlock({
-  eventBlock,
-  heightInPixels,
-  colour,
-}: {
-  eventBlock: IEventBlock;
-  heightInPixels: number;
-  colour?: TColors;
-}) {
+export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventBlock; heightInPixels: number }) {
   if (!eventBlock?.event) {
     return;
   }
   const color = eventBlock.event.room.color as TColors;
 
-  const EventCardClasses = PublicEventCard({ color: colour as TColors });
+  const EventCardClasses = PublicEventCard({ color: color as TColors });
 
   const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;
   return (

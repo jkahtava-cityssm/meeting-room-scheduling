@@ -7,13 +7,14 @@ import { Clock, MapPin, Text } from "lucide-react";
 import { TColors } from "@/lib/types";
 import { IEvent } from "@/lib/schemas/calendar";
 import EventDrawer from "../event-drawer/event-drawer";
+import { sharedColorVariants } from "../ui/eventCardVariants";
 
 const agendaEventCardVariants = cva(
   "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
   {
     variants: {
-      color: {
-        // Colored variants
+      color: sharedColorVariants,
+      /*{
         red: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300 [&_.event-dot]:fill-red-600",
         orange:
           "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300 [&_.event-dot]:fill-orange-600",
@@ -48,7 +49,7 @@ const agendaEventCardVariants = cva(
           "border-neutral-200 bg-neutral-50 text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 [&_.event-dot]:fill-neutral-600",
         stone:
           "border-stone-200 bg-stone-50 text-stone-700 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 [&_.event-dot]:fill-stone-600",
-      },
+      },*/
     },
     defaultVariants: {
       color: "blue",

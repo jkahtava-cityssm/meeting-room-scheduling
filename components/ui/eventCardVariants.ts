@@ -49,4 +49,5 @@ export const sharedColorVariants = {
     "border-viola-200 bg-viola-50 text-viola-700 dark:border-viola-800 dark:bg-viola-950 dark:text-viola-300 [&_.event-dot]:fill-viola-600",
   razzmatazz:
     "border-razzmatazz-200 bg-razzmatazz-50 text-razzmatazz-700 dark:border-razzmatazz-800 dark:bg-razzmatazz-950 dark:text-razzmatazz-300 [&_.event-dot]:fill-razzmatazz-600",
+  invisible: "border-none",
 };

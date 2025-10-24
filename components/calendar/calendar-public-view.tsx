@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { colorOptions, TColors, TVisibleHours } from "@/lib/types";
-import { usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
+import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
 import { useSearchParams } from "next/navigation";
 import { useRoomsQuery } from "@/services/rooms";
 import { Button } from "../ui/button";
@@ -24,9 +24,10 @@ import { Label } from "../ui/label";
 import { getVisibleHours } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 import { PublicEventBlock, PublicEventCard } from "./calendar-public-event-block";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export interface IPublicProcessData {
-  events: IEvent[];
+  events: PUBLIC_IEVENT[];
   selectedDate: Date;
   roomIdList: string[];
   pixelHeight: number;
@@ -64,27 +65,6 @@ function removeTimeFromDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-const ColorCycler = ({ setColor }: { setColor: (color: TColors) => void }) => {
-  const [index, setIndex] = useState(0);
-
-  const handleClick = () => {
-    const nextIndex = (index + 1) % colorOptions.length;
-    setIndex(nextIndex);
-    setColor(colorOptions[nextIndex]);
-  };
-
-  const currentColor: TColors = colorOptions[index];
-
-  return (
-    <div>
-      <p>
-        Current color: <strong>{currentColor}</strong>
-      </p>
-      <button onClick={handleClick}>Next Color</button>
-    </div>
-  );
-};
-
 export function CalendarPublicView() {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("selectedDate");
@@ -98,8 +78,6 @@ export function CalendarPublicView() {
   const [dayViews, setDayViews] = useState<IDayView[]>([]);
   const [data, setData] = useState([]);
   const [hours, setHours] = useState<number[]>([]);
-
-  const [colour, setColour] = useState<TColors>("blue");
 
   const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
@@ -180,6 +158,8 @@ export function CalendarPublicView() {
     <div>...</div>;
   }
 
+  const roomCategories = Array.from(new Set(rooms.map((room) => room.roomCategory.name.toString())));
+
   return (
     <>
       <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
@@ -188,26 +168,21 @@ export function CalendarPublicView() {
       </div>
       <div className="hidden flex-col sm:flex">
         <div className="flex">
-          <div className="mr-4 w-[400px] flex-shrink-0">
+          <div className="mr-4 w-[400px] shrink-0">
             <p className="text-sm text-muted-foreground">This is your calendar overview or instructions.</p>
-            <ColorCycler setColor={setColour}></ColorCycler>
-            <div className="grid grid-cols-12">
-              {colorOptions.map((color) => {
-                const EventCardClasses = PublicEventCard({ color });
-                return (
-                  <div
-                    key={color}
-                    role="button"
-                    tabIndex={0}
-                    className={EventCardClasses}
-                    style={{
-                      height: `32px`,
-                      width: `32px`,
-                    }}
-                  ></div>
-                );
-              })}
-            </div>
+            {roomCategories.map((category, index) => (
+              <div key={index} className="mt-2 flex items-center gap-2">
+                {category}
+
+                {rooms
+                  .filter((room) => room.roomCategory.name === category)
+                  .map((room) => (
+                    <div key={room.roomId} className="mt-2 flex items-center gap-2">
+                      {room.name}
+                    </div>
+                  ))}
+              </div>
+            ))}
           </div>
           <div className="flex-1 overflow-hidden w-150 h-150">
             <ScrollArea className="w-140 h-140" type="always">
@@ -219,6 +194,7 @@ export function CalendarPublicView() {
                       <span className="ml-1 font-semibold text-foreground">Time</span>
                     </span>
                   </div>
+
                   {rooms.map((room) => (
                     <div key={room.roomId} className="w-45 border-r-2 flex items-center  justify-center">
                       <span key={room.roomId} className="py-2 text-center text-xs font-medium text-muted-foreground">
@@ -242,7 +218,7 @@ export function CalendarPublicView() {
                   <div className="flex w-full border-b-2">
                     {rooms.map((room) => (
                       <div key={room.roomId}>
-                        <div className="w-45 relative border-r-1 border-dashed">
+                        <div className="w-45 relative border-r border-dashed">
                           {hours.map((hour, index) => (
                             <div
                               key={hour}
@@ -252,11 +228,11 @@ export function CalendarPublicView() {
                               {index !== 0 && (
                                 <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />
                               )}
-                              <div className="absolute inset-x-0 top-0 h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                              <div className="absolute inset-x-0 top-[24px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                              <div className="absolute inset-x-0 top-0 h-6 cursor-pointer transition-colors hover:bg-accent" />
+                              <div className="absolute inset-x-0 top-6 h-6 cursor-pointer transition-colors hover:bg-accent" />
                               <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed" />
-                              <div className="absolute inset-x-0 top-[48px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                              <div className="absolute inset-x-0 top-[72px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                              <div className="absolute inset-x-0 top-12 h-6 cursor-pointer transition-colors hover:bg-accent" />
+                              <div className="absolute inset-x-0 top-[72px] h-6 cursor-pointer transition-colors hover:bg-accent" />
                             </div>
                           ))}
                           {Array.from(dayViews[0].eventBlocks.entries()).flatMap(([roomId, blocks]) =>
@@ -274,7 +250,6 @@ export function CalendarPublicView() {
                                   <PublicEventBlock
                                     eventBlock={block}
                                     heightInPixels={block.eventHeight}
-                                    colour={colour}
                                   ></PublicEventBlock>
                                 </div>
                               );
@@ -370,7 +345,7 @@ export function CalendarPublicView() {
                           >
                             {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />}
                             <div className="absolute inset-x-0 top-0 h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                            <div className="absolute inset-x-0 top-[24px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                            <div className="absolute inset-x-0 top-6 h-[24px] cursor-pointer transition-colors hover:bg-accent" />
                             <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed" />
                             <div className="absolute inset-x-0 top-[48px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
                             <div className="absolute inset-x-0 top-[72px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />

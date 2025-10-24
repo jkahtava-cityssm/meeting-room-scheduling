@@ -145,14 +145,33 @@ async function FindCreateRoomScope(name: string) {
   return record;
 }
 
-async function FindCreateRooms(name: string, color: TColors, icon: string, tag: string, roomScopeId: number = 1) {
+async function FindCreateRoomCategory(name: string) {
+  let record = await prisma.roomCategory.findFirst({
+    where: { name: name },
+  });
+
+  if (!record) {
+    record = await prisma.roomCategory.create({
+      data: { name: name },
+    });
+  }
+  return record;
+}
+
+async function FindCreateRooms(
+  name: string,
+  color: TColors,
+  icon: string,
+  roomCategoryId: number = 1,
+  roomScopeId: number = 1
+) {
   let record = await prisma.room.findFirst({
     where: { name: name },
   });
 
   if (!record) {
     record = await prisma.room.create({
-      data: { name: name, color: color, icon: icon, roomScopeId: roomScopeId, roomTag: tag },
+      data: { name: name, color: color, icon: icon, roomScopeId: roomScopeId, roomCategoryId: roomCategoryId },
     });
   }
   return record;
@@ -712,24 +731,29 @@ async function main() {
   await FindCreateRoomScope("Public");
   await FindCreateRoomScope("Private");
 
+  const { roomCategoryId: category_none } = await FindCreateRoomCategory("None");
+  const { roomCategoryId: category_small } = await FindCreateRoomCategory("Small");
+  const { roomCategoryId: category_large } = await FindCreateRoomCategory("Large");
+  const { roomCategoryId: category_special } = await FindCreateRoomCategory("Special");
+
   //await FindCreateRooms("All", "zinc", "Asterisk");
 
-  roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey", "Large"));
-  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey", "Large"));
-  roomList.push(await FindCreateRooms("Russ Ramsay", "gray", "BookKey", "Large"));
-  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "BookKey", "Large"));
-  roomList.push(await FindCreateRooms("IT Training Room", "pink", "BookKey", "Large"));
+  roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("IT Training Room", "pink", "BookKey", category_large));
 
-  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "BookKey", "Special"));
-  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "BookKey", "Special"));
+  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "BookKey", category_special));
+  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "BookKey", category_special));
 
-  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey", "Special", 2));
-  roomList.push(await FindCreateRooms("Cafeteria", "amber", "BookKey", "Special", 2));
-  roomList.push(await FindCreateRooms("Penthouse", "violet", "BookKey", "Special", 2));
+  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey", category_special, 2));
+  roomList.push(await FindCreateRooms("Cafeteria", "amber", "BookKey", category_special, 2));
+  roomList.push(await FindCreateRooms("Penthouse", "violet", "BookKey", category_special, 2));
 
-  roomList.push(await FindCreateRooms("Korah Room", "green", "BookKey", "Small"));
-  roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey", "Small"));
-  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey", "Small"));
+  roomList.push(await FindCreateRooms("Korah Room", "green", "BookKey", category_small));
+  roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey", category_small));
+  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey", category_small));
 
   //await FindCreateEventStatus("Created");
   await FindCreateEventStatus("Pending Review");

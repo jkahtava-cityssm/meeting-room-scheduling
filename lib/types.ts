@@ -13,7 +13,6 @@ export const colorOptions = [
   "harvestGold",
   "lime",
   "sulu",
-
   "malachite",
   "camarone",
   "green",

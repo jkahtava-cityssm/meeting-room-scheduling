@@ -5,12 +5,14 @@ import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { IEvent } from "@/lib/schemas/calendar";
 import EventDrawer from "../event-drawer/event-drawer";
+import { sharedColorVariants } from "../ui/eventCardVariants";
 
 export const eventBadgeVariants = cva(
   "mx-1 flex size-auto h-6.5 select-none items-center justify-between gap-1.5 truncate whitespace-nowrap rounded-md border px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
   {
     variants: {
-      color: {
+      color: sharedColorVariants,
+      /*color: {
         // Colored and mixed variants
         red: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300 [&_.event-dot]:fill-red-600",
         orange:
@@ -47,7 +49,7 @@ export const eventBadgeVariants = cva(
         stone:
           "border-stone-200 bg-stone-50 text-stone-700 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 [&_.event-dot]:fill-stone-600",
         invisible: "border-none",
-      },
+      },*/
       multiDayPosition: {
         first: "relative z-10 mr-0 w-[calc(100%_-_3px)] rounded-r-none border-r-0 [&>span]:mr-2.5",
         middle: "relative z-10 mx-0 w-[calc(100%_+_1px)] rounded-none border-x-0",

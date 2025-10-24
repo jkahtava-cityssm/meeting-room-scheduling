@@ -1,14 +1,41 @@
 import { z } from "zod/v4";
 
-//const coerceDate = z.coerce.date() as unknown as z.ZodDate
-
-export const SRoom = z.object({
-  roomId: z.number(),
-  color: z.string().min(1, "Colour is required"),
+export const SRoomScope = z.object({
+  room_scope_id: z.number(),
   name: z.string().min(1, "Name is required"),
   createdAt: z.string(),
   updatedAt: z.string(),
+  access_level: z.number(),
+});
+
+export const SRoomCategory = z.object({
+  roomCategoryId: z.number(),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const SRoomProperty = z.object({
+  room_property_id: z.number(),
+  room_id: z.number(),
+  name: z.string().min(1, "Name is required"),
+  value: z.string().min(1, "Value is required"),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const SRoom = z.object({
+  roomId: z.number(),
+  name: z.string().min(1, "Name is required"),
+  color: z.string().min(1, "Colour is required"),
   icon: z.string().nullable(),
+  roomScopeId: z.number(),
+  roomScope: SRoomScope,
+  roomCategoryId: z.number(),
+  roomCategory: SRoomCategory,
+  RoomProperty: z.array(SRoomProperty).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 export const SRecurrence = z.object({

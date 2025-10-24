@@ -76,19 +76,31 @@ model Verification {
 }
 
 model Room {
-  roomId       Int            @id @default(autoincrement()) @map("room_id")
-  name         String
-  color        String
-  icon         String?
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
-  roomScopeId  Int            @default(1) @map("room_scope_id")
-  roomTag      String?        @map("room_tag")
+  roomId         Int      @id @default(autoincrement()) @map("room_id")
+  name           String
+  color          String
+  icon           String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  roomScopeId    Int      @default(1) @map("room_scope_id")
+  roomCategoryId Int      @default(1) @map("room_category_id")
+
+  roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
   roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
   Event        Event[]
   RoomProperty RoomProperty[]
 
   @@map("room")
+}
+
+model RoomCategory {
+  roomCategoryId Int      @id @default(autoincrement()) @map("room_category_id")
+  name           String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  room           Room[]
+
+  @@map("room_category")
 }
 
 model RoomProperty {

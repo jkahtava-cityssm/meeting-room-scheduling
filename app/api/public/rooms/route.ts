@@ -6,7 +6,13 @@ import { UTCDate } from "@date-fns/utc";
 
 export async function GET(req: NextRequest) {
   const rooms = await prisma.room.findMany({
-    select: { roomId: true, name: true, color: true },
+    select: {
+      roomId: true,
+      name: true,
+      color: true,
+      roomCategory: { select: { roomCategoryId: true, name: true } },
+      RoomProperty: { select: { name: true, value: true } },
+    },
     where: { roomScope: { name: "Public" } },
   });
 

@@ -5,12 +5,14 @@ import { TColors } from "../../lib/types";
 import { IEventBlock } from "./calendar-day-view";
 
 import EventDrawer from "../event-drawer/event-drawer";
+import { sharedColorVariants } from "../ui/eventCardVariants";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
   {
     variants: {
-      color: {
+      color: sharedColorVariants,
+      /*color: {
         // Colored and mixed variants
         red: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300 [&_.event-dot]:fill-red-600",
         orange:
@@ -46,7 +48,7 @@ const EventCard = cva(
           "border-neutral-200 bg-neutral-50 text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 [&_.event-dot]:fill-neutral-600",
         stone:
           "border-stone-200 bg-stone-50 text-stone-700 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 [&_.event-dot]:fill-stone-600",
-      },
+      },*/
     },
     defaultVariants: {
       color: "blue",

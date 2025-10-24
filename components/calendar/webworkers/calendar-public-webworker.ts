@@ -21,8 +21,10 @@ async function processDayEvents(dayData: IPublicProcessData): Promise<IPublicRes
   const endDate: Date = endOfDay(dayData.selectedDate);
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, dayData.visibleHours)),
-    Promise.resolve(generateRecurringEventsInPeriod(dayData.events, startDate, endDate)),
+    Promise.resolve(
+      generateMultiDayEventsInPeriod(dayData.events as IEvent[], startDate, endDate, dayData.visibleHours)
+    ),
+    Promise.resolve(generateRecurringEventsInPeriod(dayData.events as IEvent[], startDate, endDate)),
   ]);
   const currentDate = dayData.selectedDate;
 
