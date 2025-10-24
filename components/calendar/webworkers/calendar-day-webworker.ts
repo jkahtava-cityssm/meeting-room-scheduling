@@ -20,7 +20,7 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
   const endDate: Date = endOfDay(dayData.selectedDate);
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, { from: 0, to: 24 })),
+    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, dayData.visibleHours)),
     Promise.resolve(generateRecurringEventsInPeriod(dayData.events, startDate, endDate)),
   ]);
 

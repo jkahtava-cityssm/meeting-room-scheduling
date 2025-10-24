@@ -6,6 +6,7 @@ import type { Dispatch, SetStateAction } from "react";
 
 import type { TVisibleHours, TWorkingHours } from "@/lib/types";
 import { VISIBLE_HOURS } from "../lib/helpers";
+import { usePublicConfigurationsQuery } from "@/services/public";
 
 interface ICalendarContext {
   selectedDate: Date;
@@ -19,7 +20,7 @@ interface ICalendarContext {
   workingHours: TWorkingHours;
   setWorkingHours: Dispatch<SetStateAction<TWorkingHours>>;
   visibleHours: TVisibleHours;
-  setVisibleHours: Dispatch<SetStateAction<TVisibleHours>>;
+  //setVisibleHours: Dispatch<SetStateAction<TVisibleHours>>;
 }
 
 const CalendarContext = createContext({} as ICalendarContext);
@@ -35,8 +36,10 @@ const WORKING_HOURS = {
 };
 
 export function CalendarProvider({ children }: { children: React.ReactNode }) {
-  const [visibleHours, setVisibleHours] = useState<TVisibleHours>(VISIBLE_HOURS);
+  //const [visibleHours, setVisibleHours] = useState<TVisibleHours>(VISIBLE_HOURS);
   const [workingHours, setWorkingHours] = useState<TWorkingHours>(WORKING_HOURS);
+
+  const { data: visibleHours } = usePublicConfigurationsQuery();
 
   const [isHeaderLoading, setIsHeaderLoading] = useState(true);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -60,7 +63,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
         selectedRoomId,
         setSelectedRoomId,
         visibleHours,
-        setVisibleHours,
+        //setVisibleHours,
         workingHours,
         setWorkingHours,
       }}

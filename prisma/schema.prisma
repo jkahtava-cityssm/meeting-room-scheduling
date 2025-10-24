@@ -76,18 +76,32 @@ model Verification {
 }
 
 model Room {
-  roomId      Int      @id @default(autoincrement()) @map("room_id")
-  name        String
-  color       String
-  icon        String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  roomScopeId Int      @default(1) @map("room_scope_id")
-
-  roomScope RoomScope @relation(fields: [roomScopeId], references: [roomScopeId])
-  Event     Event[]
+  roomId       Int            @id @default(autoincrement()) @map("room_id")
+  name         String
+  color        String
+  icon         String?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  roomScopeId  Int            @default(1) @map("room_scope_id")
+  roomTag      String?        @map("room_tag")
+  roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
+  Event        Event[]
+  RoomProperty RoomProperty[]
 
   @@map("room")
+}
+
+model RoomProperty {
+  roomPropertyId Int      @id @default(autoincrement()) @map("room_property_id")
+  roomId         Int      @map("room_id")
+  name           String
+  value          String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  room Room @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
+
+  @@map("room_property")
 }
 
 model RoomScope {
@@ -254,6 +268,17 @@ model Status {
   event Event[]
 
   @@map("status")
+}
+
+model Configuration {
+  configurationId Int      @id @default(autoincrement()) @map("configuration_id")
+  key             String   @unique
+  description     String?
+  value           String
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("configuration")
 }
 
 /**

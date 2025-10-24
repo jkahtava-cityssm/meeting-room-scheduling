@@ -400,10 +400,17 @@ export const combineDateTime = (dateField: Date, timeField: Date) => {
   return new Date(checkDate.setHours(checkTime.getHours(), checkTime.getMinutes()));
 };
 
-export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
+export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | string) {
+  const roomIds = Array.isArray(selectedRoomId) ? selectedRoomId : [selectedRoomId];
+
+  if (selectedRoomId === "-1") {
+    return events;
+  }
+
   const results = events.filter((event) => {
-    return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
+    return roomIds.includes(event.roomId.toString());
   });
+
   return results;
 }
 

@@ -14,12 +14,14 @@ import { Button } from "../ui/button";
 import { IEvent } from "@/lib/schemas/calendar";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { useEventsQuery } from "@/services/events";
+import { TVisibleHours } from "@/lib/types";
 
 export interface IAgendaProcessData {
   events: IEvent[];
   selectedDate: Date;
   selectedRoomId: string;
   multiDayEventsAtTop: boolean;
+  visibleHours: TVisibleHours;
 }
 
 export interface IAgendaResponseData {
@@ -90,6 +92,7 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
         selectedDate: date,
         selectedRoomId: selectedRoomId,
         multiDayEventsAtTop: true,
+        visibleHours: visibleHours,
       };
       //setLoading(true);
       setIsHeaderLoading(true);

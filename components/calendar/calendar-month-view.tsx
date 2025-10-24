@@ -14,12 +14,14 @@ import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
 import { useEventsQuery } from "@/services/events";
+import { TVisibleHours } from "@/lib/types";
 
 export interface IMonthProcessData {
   events: IEvent[];
   selectedDate: Date;
   selectedRoomId: string;
   multiDayEventsAtTop: boolean;
+  visibleHours: TVisibleHours;
 }
 
 export interface IMonthResponseData {
@@ -56,7 +58,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
   //const endDate: Date = endOfMonth(date);
 
   const { startDate, endDate } = getDaysInView(date);
-  const { selectedRoomId, setTotalEvents, setIsHeaderLoading } = useCalendar();
+  const { visibleHours, selectedRoomId, setTotalEvents, setIsHeaderLoading } = useCalendar();
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -119,6 +121,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
         selectedDate: date,
         selectedRoomId: selectedRoomId,
         multiDayEventsAtTop: true,
+        visibleHours: visibleHours,
       };
       //setLoading(true);
       setIsHeaderLoading(true);

@@ -19,7 +19,7 @@ async function formatYearData(yearData: IYearProcessData): Promise<IYearResponse
   const endDate: Date = endOfYear(yearData.selectedDate);
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, { from: 0, to: 24 })),
+    Promise.resolve(generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, yearData.visibleHours)),
     Promise.resolve(generateRecurringEventsInPeriod(yearData.eventList, startDate, endDate)),
   ]);
 

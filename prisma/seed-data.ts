@@ -1,3 +1,7 @@
+export const VISIBLE_HOUR_START = 8;
+export const VISIBLE_HOUR_END = 17;
+export const TIME_SLOT_INTERVAL_MINUTES = 15;
+
 export const RECURRENCE_TYPE = ["Between", "Occurrences", "Forever"];
 
 export const RECURRENCE_PERIOD = ["daily", "weekly", "monthly", "yearly"];

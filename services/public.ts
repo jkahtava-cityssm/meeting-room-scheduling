@@ -29,3 +29,14 @@ export const usePublicRoomsQuery = (enabled: boolean = true) =>
     enabled: enabled,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
+
+export const usePublicConfigurationsQuery = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["config_hours"],
+    queryFn: async () =>
+      fetchGET("/api/public/configuration", {}, 1440, ["config_hours"]).then((result) => {
+        return result.data;
+      }),
+    enabled: enabled,
+    staleTime: 1000 * 60 * 60 * 3, // 1 hour
+  });

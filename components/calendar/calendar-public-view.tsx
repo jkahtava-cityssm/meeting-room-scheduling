@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfWeek, endOfWeek, parse } from "date-fns";
+import { startOfWeek, endOfWeek, parse, format } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
@@ -21,19 +21,20 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { Skeleton } from "../ui/skeleton";
 import { Label } from "../ui/label";
-import { getVisibleHours, isWorkingHour } from "@/lib/helpers";
+import { getVisibleHours } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
+import { PublicEventBlock } from "./calendar-public-event-block";
 
-export interface IWeekProcessData {
+export interface IPublicProcessData {
   events: IEvent[];
   selectedDate: Date;
-  selectedRoomId: string;
+  roomIdList: string[];
   pixelHeight: number;
   visibleHours: TVisibleHours;
   multiDayEventsAtTop: boolean;
 }
 
-export interface IWeekResponseData {
+export interface IPublicResponseData {
   totalEvents: number;
   dayViews: IDayView[];
   hours: number[];
@@ -44,7 +45,7 @@ export interface IDayView {
   day: number;
   dayDate: Date;
   isToday: boolean;
-  eventBlocks: IEventBlock[];
+  eventBlocks: Map<string, IEventBlock[]>;
 }
 
 export interface IEventBlock {
@@ -77,7 +78,7 @@ export function CalendarPublicView() {
   const [data, setData] = useState([]);
   const [hours, setHours] = useState<number[]>([]);
 
-  const { workingHours, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
+  const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -110,8 +111,8 @@ export function CalendarPublicView() {
 
     newWorker.onmessage = (result) => {
       setData(result.data);
-      //setDayViews(result.dayViews);
-      setHours(Array.from({ length: 24 }, (_, i) => i + 0));
+      setDayViews(result.data.dayViews);
+      setHours(result.data.hours);
       //setTotalEvents(result.totalEvents);
       setIsHeaderLoading(false);
       setLoading(false);
@@ -128,16 +129,16 @@ export function CalendarPublicView() {
   }, [dateValue, setIsHeaderLoading, setTotalEvents]);
 
   useEffect(() => {
-    if (!events) {
+    if (!events && !rooms) {
       return;
     }
 
     if (workerRef.current) {
-      const data: IWeekProcessData = {
+      const data: IPublicProcessData = {
         events: events,
         visibleHours: visibleHours,
         selectedDate: dateValue,
-        selectedRoomId: selectedRoomId,
+        roomIdList: rooms.map((room) => room.roomId.toString()),
         multiDayEventsAtTop: true,
         pixelHeight: 96,
       };
@@ -146,9 +147,9 @@ export function CalendarPublicView() {
 
       workerRef.current.postMessage(data);
     }
-  }, [events, dateValue, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
+  }, [events, dateValue, isRefreshed, rooms, setIsHeaderLoading, visibleHours]);
 
-  if (isLoading) {
+  if (isLoading || !rooms || !events) {
     return <CalendarWeekViewSkeleton />;
   }
 
@@ -162,108 +163,180 @@ export function CalendarPublicView() {
         <p>Weekly view is not available on smaller devices.</p>
         <p>Please switch to daily or monthly view.</p>
       </div>
-
       <div className="hidden flex-col sm:flex">
         <div className="flex">
-          <div className="flex flex-1 flex-col">
-            <table>
-              <thead>
-                <tr>
-                  <th>HOUR</th>
-                  {rooms?.map((room) => (
-                    <th key={room.roomId}>
-                      <span className="py-2 text-center text-xs font-medium text-muted-foreground">{room.name}</span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {hours.map((hour, index) => (
-                  <tr key={`row-${index}`}>
-                    <th>{hour}</th>
-                    {rooms?.map((room) => (
-                      <td key={`${hour}-${room.roomId}`}>{/* Your cell content here */}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/*
-                <div className={`grid [grid-template-columns:repeat(${rooms.length},minmax(0,1fr))] gap-4`}>
-              {rooms?.map((room) => (
-                <span key={room.roomId} className="py-2 text-center text-xs font-medium text-muted-foreground">
-                  <span className="ml-1 font-semibold text-foreground">{room.name}</span>
-                </span>
-              ))}
-            </div>*/}
-
-            <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
-              <div className="flex overflow-hidden">
-                {/* Hours column */}
-                <HourColumn hours={hours} />
-
-                {/* Week grid */}
-                <div className="relative flex-1 border-l">
-                  <div className="grid grid-cols-7 divide-x">
-                    <div className="relative">
-                      <DayHourlyEventDialogs
-                        hours={hours}
-                        day={startDate}
-                        workingHours={workingHours}
-                        userId={undefined}
-                      />
-                    </div>
-
-                    {dayViews.map((day, dayIndex) => {
-                      return (
-                        <div key={dayIndex} className="relative">
-                             { hours.map((hour, index) => {
-                                    const isDisabled = !isWorkingHour(day, hour, workingHours);
-                                
-                                    return (
-                                      <div key={hour} className={cn("relative", isDisabled && "bg-calendar-disabled-hour")} style={{ height: "96px" }}>
-                                        {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b"></div>}
-                                
-                                        
-                                          <div className="absolute inset-x-0 top-0 h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                                        
-                                
-                                        
-                                          <div className="absolute inset-x-0 top-[24px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                                        
-                                
-                                        <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed"></div>
-                                
-                                        
-                                          <div className="absolute inset-x-0 top-[48px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                                        
-                                
-                                        
-                                          <div className="absolute inset-x-0 top-[72px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
-                                        
-                                      </div>
-                                    );
-                                  });
-                            }
-
-
-                          {day.eventBlocks.map((block, blockIndex) => {
-                            return (
-                              <div
-                                key={`day-${dayIndex}-block-${blockIndex}-event-${block.event.eventId}`}
-                                className="absolute p-1"
-                                style={block.eventStyle}
-                              >
-                                <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={undefined} />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
+          <div className="mr-4 w-[400px] flex-shrink-0">
+            <p className="text-sm text-muted-foreground">This is your calendar overview or instructions.</p>
+          </div>
+          <div className="flex-1 overflow-hidden w-150 h-150">
+            <ScrollArea className="w-140 h-140" type="always">
+              {/* Header Row */}
+              <div className="mx-6 mb-6">
+                <div className="flex h-[60px] w-full border-y-2  sticky top-0 z-10 bg-background">
+                  <div className="w-18 border-x-2 flex items-center justify-end pr-2">
+                    <span className="py-2 text-center text-xs font-medium text-muted-foreground">
+                      <span className="ml-1 font-semibold text-foreground">Time</span>
+                    </span>
                   </div>
+                  {rooms.map((room) => (
+                    <div key={room.roomId} className="w-45 border-r-2 flex items-center  justify-center">
+                      <span key={room.roomId} className="py-2 text-center text-xs font-medium text-muted-foreground">
+                        <span className="ml-1 font-semibold text-foreground">{room.name}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex ">
+                  <div className="min-w-18 border-x-2  pr-2  border-b-2">
+                    {hours.map((hour, index) => (
+                      <div key={hour} className="relative" style={{ height: "96px" }}>
+                        <div className={"absolute  right-2 flex h-6 items-center " + (index !== 0 ? "-top-3" : "")}>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date().setHours(hour), "hh a")}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex w-full border-b-2">
+                    {rooms.map((room) => (
+                      <div key={room.roomId}>
+                        <div className="w-45 relative border-r-1 border-dashed">
+                          {hours.map((hour, index) => (
+                            <div
+                              key={hour}
+                              className={cn("relative", false && "bg-calendar-disabled-hour")}
+                              style={{ height: "96px" }}
+                            >
+                              {index !== 0 && (
+                                <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />
+                              )}
+                              <div className="absolute inset-x-0 top-0 h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                              <div className="absolute inset-x-0 top-[24px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                              <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed" />
+                              <div className="absolute inset-x-0 top-[48px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                              <div className="absolute inset-x-0 top-[72px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                            </div>
+                          ))}
+                          {Array.from(dayViews[0].eventBlocks.entries()).flatMap(([roomId, blocks]) =>
+                            blocks.map((block, eventIndex) => {
+                              if (block.event.roomId !== room.roomId) return null;
+                              return (
+                                <div
+                                  key={`day-${dayViews[0].day}-block-${format(
+                                    block.event.startDate,
+                                    "yyyy-MM-dd-HH-mm"
+                                  )}-event-${block.event.eventId}`}
+                                  className="absolute p-1"
+                                  style={block.eventStyle}
+                                >
+                                  <PublicEventBlock
+                                    eventBlock={block}
+                                    heightInPixels={block.eventHeight}
+                                  ></PublicEventBlock>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <ScrollBar orientation="vertical" forceMount />
+              <ScrollBar orientation="horizontal" forceMount />
+            </ScrollArea>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
-                  <CalendarTimeline />
+{
+  /*
+  
+  <div className="hidden flex-col sm:flex">
+        <div className="flex">
+          <div className="mr-4 w-[400px] flex-shrink-0">
+            <p className="text-sm text-muted-foreground">
+
+              This is your calendar overview or instructions.
+            </p>
+          </div>
+
+
+          <div className="flex-1 overflow-hidden max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]">
+          
+            <div className="flex  h-[48px] overflow-hidden">
+
+              <div className="w-18 border-r-2 flex items-center justify-end right-2">
+                <span className="py-2 text-center text-xs font-medium text-muted-foreground ">
+                  <span className="ml-1 font-semibold text-foreground">Time</span>
+                </span>
+              </div>
+
+
+              <div
+                className="grid flex-1"
+                style={{
+                  gridTemplateColumns: `repeat(${rooms.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {rooms.map((room) => (
+                  <span
+                    key={room.roomId}
+                    className="py-2 text-center text-xs font-medium text-muted-foreground border-b-2"
+                  >
+                    <span className="ml-1 font-semibold text-foreground">{room.name}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+
+            <ScrollArea style={{ height: "calc(100% - 48px)" }} type="always">
+              <div className="flex">
+                <div className="w-18 border-r-2">
+                  {hours.map((hour, index) => (
+                    <div key={hour} className="relative" style={{ height: "96px" }}>
+                      <div className="absolute -top-3 right-2 flex h-6 items-center">
+                        {index !== 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date().setHours(hour), "hh a")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div
+                  className="grid flex-1"
+                  style={{
+                    gridTemplateColumns: `repeat(${rooms.length}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {rooms.map((room) => (
+                    <div key={room.roomId}>
+                      <div className="relative border-r-1 border-dashed">
+                        {hours.map((hour, index) => (
+                          <div
+                            key={hour}
+                            className={cn("relative", false && "bg-calendar-disabled-hour")}
+                            style={{ height: "96px" }}
+                          >
+                            {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />}
+                            <div className="absolute inset-x-0 top-0 h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                            <div className="absolute inset-x-0 top-[24px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                            <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed" />
+                            <div className="absolute inset-x-0 top-[48px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                            <div className="absolute inset-x-0 top-[72px] h-[24px] cursor-pointer transition-colors hover:bg-accent" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
               <ScrollBar orientation="vertical" forceMount></ScrollBar>
@@ -271,6 +344,5 @@ export function CalendarPublicView() {
           </div>
         </div>
       </div>
-    </>
-  );
+  */
 }

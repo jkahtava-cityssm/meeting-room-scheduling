@@ -19,7 +19,7 @@ async function processMonthEvents(monthData: IMonthProcessData): Promise<IMonthR
   const { startDate: monthStart, endDate: monthEnd } = getDaysInView(monthData.selectedDate);
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, { from: 0, to: 24 }),
+    generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, monthData.visibleHours),
     generateRecurringEventsInPeriod(monthData.events, monthStart, monthEnd),
   ]);
 

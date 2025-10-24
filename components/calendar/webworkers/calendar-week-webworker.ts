@@ -39,7 +39,7 @@ async function processWeekEvents(weekData: IWeekProcessData): Promise<IWeekRespo
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(weekData.events, weekStart, weekEnd, { from: 0, to: 24 })),
+    Promise.resolve(generateMultiDayEventsInPeriod(weekData.events, weekStart, weekEnd, weekData.visibleHours)),
     Promise.resolve(generateRecurringEventsInPeriod(weekData.events, weekStart, weekEnd)),
   ]);
 

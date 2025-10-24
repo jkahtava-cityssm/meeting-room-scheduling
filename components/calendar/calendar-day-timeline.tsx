@@ -19,7 +19,7 @@ export function CalendarTimeline() {
     return () => clearInterval(timer);
   }, []);
 
-  if (!currentTime) return null;
+  if (!currentTime || !visibleHours) return null;
 
   const currentHour = currentTime.getHours();
   if (currentHour < visibleHours.from || currentHour >= visibleHours.to) return null;
