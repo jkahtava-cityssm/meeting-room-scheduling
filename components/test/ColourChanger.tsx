@@ -3,7 +3,7 @@
 import { colorOptions, TColors } from "@/lib/types";
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { PublicEventCard } from "../calendar/calendar-public-event-block";
+import { PublicEventCard } from "../calendar/calendar-public-view-event-block";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export const ColorCycler = ({ setColor }: { setColor: (color: TColors) => void }) => {

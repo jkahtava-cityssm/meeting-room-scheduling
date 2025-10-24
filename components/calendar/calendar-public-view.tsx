@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { colorOptions, TColors, TVisibleHours } from "@/lib/types";
-import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
+import { PUBLIC_IEVENT, PUBLIC_IROOM, usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
 import { useSearchParams } from "next/navigation";
 import { useRoomsQuery } from "@/services/rooms";
 import { Button } from "../ui/button";
@@ -23,8 +23,10 @@ import { Skeleton } from "../ui/skeleton";
 import { Label } from "../ui/label";
 import { getVisibleHours } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
-import { PublicEventBlock, PublicEventCard } from "./calendar-public-event-block";
+import { PublicEventBlock, PublicEventCard } from "./calendar-public-view-event-block";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Checkbox } from "../ui/checkbox";
+import RoomCategoryLayout from "./calendar-public-view-room-list";
 
 export interface IPublicProcessData {
   events: PUBLIC_IEVENT[];
@@ -166,24 +168,13 @@ export function CalendarPublicView() {
         <p>Weekly view is not available on smaller devices.</p>
         <p>Please switch to daily or monthly view.</p>
       </div>
-      <div className="hidden flex-col sm:flex">
+      <div className="flex flex-col ">
         <div className="flex">
-          <div className="mr-4 w-[400px] shrink-0">
+          <div className="mr-4 w-[500px]">
             <p className="text-sm text-muted-foreground">This is your calendar overview or instructions.</p>
-            {roomCategories.map((category, index) => (
-              <div key={index} className="mt-2 flex items-center gap-2">
-                {category}
-
-                {rooms
-                  .filter((room) => room.roomCategory.name === category)
-                  .map((room) => (
-                    <div key={room.roomId} className="mt-2 flex items-center gap-2">
-                      {room.name}
-                    </div>
-                  ))}
-              </div>
-            ))}
+            <RoomCategoryLayout rooms={rooms}></RoomCategoryLayout>
           </div>
+
           <div className="flex-1 overflow-hidden w-150 h-150">
             <ScrollArea className="w-140 h-140" type="always">
               {/* Header Row */}
