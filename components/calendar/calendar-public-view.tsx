@@ -13,7 +13,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
+import { colorOptions, TColors, TVisibleHours } from "@/lib/types";
 import { usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
 import { useSearchParams } from "next/navigation";
 import { useRoomsQuery } from "@/services/rooms";
@@ -23,7 +23,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Label } from "../ui/label";
 import { getVisibleHours } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
-import { PublicEventBlock } from "./calendar-public-event-block";
+import { PublicEventBlock, PublicEventCard } from "./calendar-public-event-block";
 
 export interface IPublicProcessData {
   events: IEvent[];
@@ -64,6 +64,27 @@ function removeTimeFromDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+const ColorCycler = ({ setColor }: { setColor: (color: TColors) => void }) => {
+  const [index, setIndex] = useState(0);
+
+  const handleClick = () => {
+    const nextIndex = (index + 1) % colorOptions.length;
+    setIndex(nextIndex);
+    setColor(colorOptions[nextIndex]);
+  };
+
+  const currentColor: TColors = colorOptions[index];
+
+  return (
+    <div>
+      <p>
+        Current color: <strong>{currentColor}</strong>
+      </p>
+      <button onClick={handleClick}>Next Color</button>
+    </div>
+  );
+};
+
 export function CalendarPublicView() {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("selectedDate");
@@ -77,6 +98,8 @@ export function CalendarPublicView() {
   const [dayViews, setDayViews] = useState<IDayView[]>([]);
   const [data, setData] = useState([]);
   const [hours, setHours] = useState<number[]>([]);
+
+  const [colour, setColour] = useState<TColors>("blue");
 
   const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
@@ -129,7 +152,7 @@ export function CalendarPublicView() {
   }, [dateValue, setIsHeaderLoading, setTotalEvents]);
 
   useEffect(() => {
-    if (!events && !rooms) {
+    if (!events || !rooms) {
       return;
     }
 
@@ -167,6 +190,24 @@ export function CalendarPublicView() {
         <div className="flex">
           <div className="mr-4 w-[400px] flex-shrink-0">
             <p className="text-sm text-muted-foreground">This is your calendar overview or instructions.</p>
+            <ColorCycler setColor={setColour}></ColorCycler>
+            <div className="grid grid-cols-12">
+              {colorOptions.map((color) => {
+                const EventCardClasses = PublicEventCard({ color });
+                return (
+                  <div
+                    key={color}
+                    role="button"
+                    tabIndex={0}
+                    className={EventCardClasses}
+                    style={{
+                      height: `32px`,
+                      width: `32px`,
+                    }}
+                  ></div>
+                );
+              })}
+            </div>
           </div>
           <div className="flex-1 overflow-hidden w-150 h-150">
             <ScrollArea className="w-140 h-140" type="always">
@@ -233,6 +274,7 @@ export function CalendarPublicView() {
                                   <PublicEventBlock
                                     eventBlock={block}
                                     heightInPixels={block.eventHeight}
+                                    colour={colour}
                                   ></PublicEventBlock>
                                 </div>
                               );

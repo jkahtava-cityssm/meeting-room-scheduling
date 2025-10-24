@@ -1,27 +1,41 @@
 export type TCalendarView = "day" | "week" | "month" | "year" | "agenda";
-export type TColors =
-  | "red"
-  | "orange"
-  | "amber"
-  | "yellow"
-  | "lime"
-  | "green"
-  | "emerald"
-  | "teal"
-  | "cyan"
-  | "sky"
-  | "blue"
-  | "indigo"
-  | "violet"
-  | "purple"
-  | "fuchsia"
-  | "pink"
-  | "rose"
-  | "slate"
-  | "gray"
-  | "zinc"
-  | "neutral"
-  | "stone";
+
+export const colorOptions = [
+  "red",
+  "rose",
+  "razzmatazz",
+  "pink",
+  "japonica",
+  "orange",
+  "amber",
+  "yellow",
+  "manz",
+  "harvestGold",
+  "lime",
+  "sulu",
+
+  "malachite",
+  "camarone",
+  "green",
+  "emerald",
+  "watercourse",
+  "teal",
+  "cyan",
+  "scooter",
+  "sky",
+  "blue",
+  "havelockBlue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "viola",
+  "slate",
+  "zinc",
+] as const;
+
+export type TColors = (typeof colorOptions)[number];
+
 export type TWorkingHours = { [key: number]: { from: number; to: number } };
 export type TVisibleHours = { from: number; to: number };
 
