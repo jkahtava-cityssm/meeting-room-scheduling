@@ -11,26 +11,21 @@ DUCKDNS_SCRIPT=./duckdns/update.sh
 #init: setup up wait-postgres migrate build restart-app wait-nginx cert-init restart-nginx
 #init: setup up-db wait-postgres build up-app seed wait-nginx cert-init restart-nginx
 
-create: build-migrate up-migrate up-seed rm-migrate
 
-init: build up cert-init restart-nginx
-start: up cert-init restart-nginx
-#build
-#init: build up-app wait-nginx cert-init restart-nginx
-#init: wait-nginx  cert-init restart-nginx
-#  Reset everything (containers + volumes)
+
+
+
+
+#CREATE DATABASE AND DEPLOY DATABASE
+
+#CREATE & SEED
+create-seed: build-db up-db build-migrate up-migrate up-seed rm-migrate
+
+#CREATE BLANK DATABASE
+create: build-db up-db build-migrate up-migrate rm-migrate
 
 build-migrate: 
 	docker-compose build prisma-migrate
-#	$(COMPOSE) up prisma-migrate
-# \
-#	sh -c "npx prisma migrate dev"
-#	docker build -f Dockerfile.prisma-migrate -t temp-migrate ..
-#	docker run --rm \
-#        -e DATABASE_URL=$(DATABASE_URL) \
-#        temp-migrate \
-#        sh -c "npx prisma migrate deploy"
-#	docker image rm temp-migrate
 	    
 up-migrate:
 	docker compose run --rm prisma-migrate /bin/sh -c "npx prisma migrate deploy"
@@ -40,6 +35,35 @@ up-seed:
 
 rm-migrate:
 	docker image rm prisma-migrate
+
+build-db:
+	docker-compose build postgres	
+
+up-db:
+	docker-compose up -d postgres
+
+
+#
+build: build-db build-nginx build-certbot build-nextjs
+
+build-nginx:
+	docker-compose build nginx
+
+up-nginx:
+	docker-compose up -d nginx
+
+build-nextjs:
+	docker-compose build nextjs-app
+
+build-certbot:
+	docker-compose build certbot
+
+up: up-db up-nginx up-nextjs
+
+
+init: build up cert-init restart-nginx
+start: up cert-init restart-nginx
+
 
 reset:
 	$(COMPOSE) down -v --remove-orphans
@@ -57,16 +81,16 @@ setup:
 	chmod +x ./scripts/wait-postgres.sh
 
 #  Start all services
-up:
-	$(COMPOSE) up -d
+#up:
+#	$(COMPOSE) up -d
 
 #  Stop all services
 down:
 	$(COMPOSE) down
 
 #  Rebuild containers
-build:
-	$(COMPOSE) build
+#build:
+#	$(COMPOSE) build
 
 # View logs
 logs:
@@ -100,14 +124,10 @@ wait-nginx:
 	done
 	@echo "Nginx is ready to serve Certbot challenge."
 
-up-nginx:
-	docker-compose up -d nginx
 
 up-app:
 	docker-compose up -d nextjs-app nginx duckdns-updater certbot
 
-up-db:
-	docker-compose up -d postgres
 
 wait-postgres:
 	sh ./scripts/wait-postgres.sh

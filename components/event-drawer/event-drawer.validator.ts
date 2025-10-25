@@ -40,7 +40,6 @@ export const step2Schema = z
 
     durationType: z.string().min(1, "Please select a duration type"),
     occurrences: z.string(),
-    duration: z.string().optional(),
   })
   .check((ctx) => {
     if (ctx.value.durationType === "until" && ctx.value.ruleEndDate === "") {
@@ -323,7 +322,7 @@ export const ruleObject = z.object({
   ruleEndDate: z.string(),
 });
 
-export const CombinedEventSchema = step1Schema.extend(step2Schema.shape);
+export const CombinedEventSchema = step1Schema.safeExtend(step2Schema.shape);
 
 export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
 

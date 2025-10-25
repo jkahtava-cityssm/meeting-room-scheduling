@@ -10,6 +10,21 @@ const AllRooms: IRoom = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   icon: "Asterisk",
+  roomScopeId: -1,
+  roomScope: {
+    room_scope_id: -1,
+    name: "All",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    access_level: 1
+  },
+  roomCategoryId: -1,
+  roomCategory: {
+    roomCategoryId: -1,
+    name: "All",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
 };
 
 export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
