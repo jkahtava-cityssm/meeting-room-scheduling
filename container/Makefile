@@ -10,6 +10,9 @@ DUCKDNS_SCRIPT=./duckdns/update.sh
 #init: setup build up wait-postgres migrate wait-nginx cert-init restart-app restart-nginx
 #init: setup up wait-postgres migrate build restart-app wait-nginx cert-init restart-nginx
 #init: setup up-db wait-postgres build up-app seed wait-nginx cert-init restart-nginx
+
+create: build-migrate up-migrate up-seed rm-migrate
+
 init: build up cert-init restart-nginx
 start: up cert-init restart-nginx
 #build
@@ -17,7 +20,7 @@ start: up cert-init restart-nginx
 #init: wait-nginx  cert-init restart-nginx
 #  Reset everything (containers + volumes)
 
-test: 
+build-migrate: 
 	docker-compose build prisma-migrate
 #	$(COMPOSE) up prisma-migrate
 # \
@@ -34,6 +37,9 @@ up-migrate:
 
 up-seed:
 	docker compose run --rm prisma-migrate /bin/sh -c "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+
+rm-migrate:
+	docker image rm prisma-migrate
 
 reset:
 	$(COMPOSE) down -v --remove-orphans

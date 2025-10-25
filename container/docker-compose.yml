@@ -104,6 +104,7 @@ services:
       context: ..
       dockerfile: container/Dockerfile.prisma-migrate
     container_name: prisma-migrate
+    image: prisma-migrate
     environment:
       DATABASE_URL: ${DATABASE_URL}
       DATABASE_URL_ADMIN: ${DATABASE_URL_ADMIN}

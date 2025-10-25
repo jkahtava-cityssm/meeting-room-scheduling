@@ -2,8 +2,8 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY ../package.json ../package-lock.json ./
-RUN npm install
+#COPY ../package.json ../package-lock.json ./
+#RUN npm install
 
 COPY ../lib/types.ts ./lib/types.ts
 COPY ../prisma ./prisma
@@ -13,10 +13,10 @@ COPY ../tsconfig.json ./tsconfig.json
 #COPY  /app/node_modules/@prisma/client ./node_modules/@prisma/client
 #COPY ../.env ./
 
-#RUN npm install -g ts-node typescript
-#RUN npm install -g prisma
-#RUN npm install date-fns
-#RUN npm install rrule
+RUN npm install ts-node typescript
+RUN npm install prisma@6.6.0 --save-dev
+RUN npm install date-fns
+RUN npm install rrule
 
 RUN npx prisma generate
 
