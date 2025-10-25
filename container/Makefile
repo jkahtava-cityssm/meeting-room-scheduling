@@ -6,18 +6,10 @@ MIGRATE_COMPOSE=docker-compose -f docker-compose.migrate.yml
 CERTBOT_VOLUME=./certbot
 DUCKDNS_SCRIPT=./duckdns/update.sh
 
-#  First-time setup
-#init: setup build up wait-postgres migrate wait-nginx cert-init restart-app restart-nginx
-#init: setup up wait-postgres migrate build restart-app wait-nginx cert-init restart-nginx
-#init: setup up-db wait-postgres build up-app seed wait-nginx cert-init restart-nginx
-
-
-
-
-
-
 #CREATE DATABASE AND DEPLOY DATABASE
-
+init: build up cert-init restart-nginx
+start: up cert-init restart-nginx
+stop: down
 #CREATE & SEED
 create-seed: build-db up-db build-migrate up-migrate up-seed rm-migrate
 
@@ -39,18 +31,11 @@ rm-migrate:
 build-db:
 	docker-compose build postgres	
 
-up-db:
-	docker-compose up -d postgres
-
-
 #
 build: build-db build-nginx build-certbot build-nextjs
 
 build-nginx:
 	docker-compose build nginx
-
-up-nginx:
-	docker-compose up -d nginx
 
 build-nextjs:
 	docker-compose build nextjs-app
@@ -58,11 +43,18 @@ build-nextjs:
 build-certbot:
 	docker-compose build certbot
 
+up-db:
+	docker-compose up -d postgres
+
+up-nextjs:
+	docker-compose up -d nextjs-app
+
+up-nginx:
+	docker-compose up -d nginx
+
 up: up-db up-nginx up-nextjs
 
 
-init: build up cert-init restart-nginx
-start: up cert-init restart-nginx
 
 
 reset:
@@ -72,25 +64,10 @@ reset:
 	docker volume rm container_postgres_data || true
 	make setup
 
-#  Deploy stack (production-grade launch)
-deploy: setup cert-renew build up
-
-#  Make DuckDNS script executable
-setup:
-	chmod +x ./duckdns/update.sh
-	chmod +x ./scripts/wait-postgres.sh
-
-#  Start all services
-#up:
-#	$(COMPOSE) up -d
 
 #  Stop all services
 down:
 	$(COMPOSE) down
-
-#  Rebuild containers
-#build:
-#	$(COMPOSE) build
 
 # View logs
 logs:
@@ -116,38 +93,18 @@ cert-renew:
 		-v $(CERTBOT_VOLUME)/conf:/etc/letsencrypt \
 		certbot/certbot renew --webroot -w /var/www/certbot
 
-wait-nginx:
-	@echo "Waiting for Nginx to be ready..."
-	@until curl -s http://localhost/.well-known/acme-challenge/ || [ $$? -eq 0 ]; do \
-		echo "Nginx not ready yet..."; \
-		sleep 2; \
-	done
-	@echo "Nginx is ready to serve Certbot challenge."
+rm-cert:
+	docker image rm certbot/certbot
 
-
-up-app:
-	docker-compose up -d nextjs-app nginx duckdns-updater certbot
-
-
-wait-postgres:
-	sh ./scripts/wait-postgres.sh
-
-
-migrate:
-	docker-compose run --rm prisma-migrate
-
-restart-nginx:
-	$(COMPOSE) restart nginx
-
+start-cert: build-certbot cert-init rm-cert
 
 #  Manually update DuckDNS IP
 duckdns-update:
 	sh $(DUCKDNS_SCRIPT)
 
-#  Prisma seed manually
-seed:
-	docker exec -it container-prisma-migrate-1 sh -c " npx prisma db seed"
+restart-nginx:
+	$(COMPOSE) restart nginx
 
 #  Restart Next.js app only
-restart-app:
+restart-nextjs:
 	$(COMPOSE) restart nextjs-app

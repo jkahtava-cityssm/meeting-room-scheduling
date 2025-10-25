@@ -86,11 +86,12 @@ services:
       - ./certbot/conf:/etc/letsencrypt
     entrypoint: /bin/sh -c
     command: >
-      "trap exit TERM;
-      while :; do
-        certbot renew --webroot -w /var/www/certbot --quiet;
-        sleep 12h;
-      done"
+      "curl -s "https://www.duckdns.org/update?domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip="
+  #    "trap exit TERM;
+  #    while :; do
+  #      certbot renew --webroot -w /var/www/certbot --quiet;
+  #      sleep 12h;
+  #    done"
 
   duckdns-updater:
     image: alpine:latest
