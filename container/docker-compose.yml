@@ -38,6 +38,7 @@ services:
       # other env vars from .env
     depends_on:
       - postgres
+      - nginx
     networks:
       - webnet
     extra_hosts:
@@ -62,9 +63,6 @@ services:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     entrypoint: /etc/nginx/startup.sh
-    depends_on:
-      - nextjs-app #:
-        #condition: service_healthy
     networks:
       - webnet
     #healthcheck:
