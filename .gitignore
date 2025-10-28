@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/container/certbot/conf/*
+!/container/certbot/conf/.gitkeep
