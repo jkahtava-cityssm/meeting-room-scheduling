@@ -9,7 +9,7 @@ import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block
 import { HourColumn } from "./calendar-day-column-hourly";
 import { WeekViewDayHeader } from "./calendar-week-view-day-header";
 import { EventBlock } from "./calendar-day-event-block";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
@@ -29,246 +29,266 @@ import { Checkbox } from "../ui/checkbox";
 import RoomCategoryLayout from "./calendar-public-view-room-list";
 
 export interface IPublicProcessData {
-  events: PUBLIC_IEVENT[];
-  selectedDate: Date;
-  roomIdList: string[];
-  pixelHeight: number;
-  visibleHours: TVisibleHours;
-  multiDayEventsAtTop: boolean;
+	events: PUBLIC_IEVENT[];
+	selectedDate: Date;
+	roomIdList: string[];
+	pixelHeight: number;
+	visibleHours: TVisibleHours;
+	multiDayEventsAtTop: boolean;
 }
 
 export interface IPublicResponseData {
-  totalEvents: number;
-  dayViews: IDayView[];
-  hours: number[];
-  //weekViews: WeekView[];
+	totalEvents: number;
+	dayViews: IDayView[];
+	hours: number[];
+	//weekViews: WeekView[];
 }
 
 export interface IDayView {
-  day: number;
-  dayDate: Date;
-  isToday: boolean;
-  eventBlocks: Map<string, IEventBlock[]>;
+	day: number;
+	dayDate: Date;
+	isToday: boolean;
+	eventBlocks: Map<string, IEventBlock[]>;
 }
 
 export interface IEventBlock {
-  groupIndex: number;
-  eventIndex: number;
-  eventStyle: { top: string; width: string; left: string };
-  eventHeight: number;
-  event: IEvent;
+	groupIndex: number;
+	eventIndex: number;
+	eventStyle: { top: string; width: string; left: string };
+	eventHeight: number;
+	event: IEvent;
 }
 
 function getViewDate(dateParam: string | null) {
-  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
+	return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
 }
 
 function removeTimeFromDate(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 export function CalendarPublicView() {
-  const searchParams = useSearchParams();
-  const dateParam = searchParams.get("selectedDate");
+	const searchParams = useSearchParams();
+	const dateParam = searchParams.get("selectedDate");
 
-  const dateValue = useMemo(() => {
-    return getViewDate(dateParam);
-  }, [dateParam]);
+	const dateValue = useMemo(() => {
+		return getViewDate(dateParam);
+	}, [dateParam]);
 
-  const [isLoading, setLoading] = useState(true);
-  const [isRefreshed, setRefreshed] = useState(false);
-  const [dayViews, setDayViews] = useState<IDayView[]>([]);
-  const [data, setData] = useState([]);
-  const [hours, setHours] = useState<number[]>([]);
+	const [isLoading, setLoading] = useState(true);
+	const [isRefreshed, setRefreshed] = useState(false);
+	const [dayViews, setDayViews] = useState<IDayView[]>([]);
+	const [data, setData] = useState([]);
+	const [hours, setHours] = useState<number[]>([]);
 
-  const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
+	const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
-  const workerRef = useRef<Worker | null>(null);
+	const workerRef = useRef<Worker | null>(null);
 
-  const startDate: Date = startOfWeek(dateValue);
-  const endDate: Date = endOfWeek(dateValue);
+	const startDate: Date = startOfWeek(dateValue);
+	const endDate: Date = endOfWeek(dateValue);
 
-  const { data: events } = usePublicEventsQuery(startDate, endDate);
+	const { data: events } = usePublicEventsQuery(startDate, endDate);
 
-  const { data: rooms } = usePublicRoomsQuery();
+	const { data: rooms } = usePublicRoomsQuery();
 
-  const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
+	const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
-    //nextjs cache's the route so this is my temporary fix
-    setRefreshed(true);
-  }, []);
+	const filteredRooms = useMemo(() => {
+		return selectedRoomIds.length > 0 ? rooms?.filter(room => selectedRoomIds.includes(room.roomId)) : [];
+	}, [rooms, selectedRoomIds]);
 
-  useEffect(() => {
-    setLoading(true);
-  }, [dateValue]);
+	useEffect(() => {
+		//The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+		//nextjs cache's the route so this is my temporary fix
+		setRefreshed(true);
+	}, []);
 
-  useEffect(() => {
-    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
-    //But this example will come in handy for other applications
+	useEffect(() => {
+		setLoading(true);
+	}, [dateValue]);
 
-    if (workerRef.current) {
-      return;
-    }
+	useEffect(() => {
+		//This is mostly as an example for myself, technically this processing should likely be done on the server side.
+		//But this example will come in handy for other applications
 
-    const newWorker = new Worker(new URL("./webworkers/calendar-public-webworker.ts", import.meta.url));
+		if (workerRef.current) {
+			return;
+		}
 
-    newWorker.onmessage = (result) => {
-      setData(result.data);
-      setDayViews(result.data.dayViews);
-      setHours(result.data.hours);
-      //setTotalEvents(result.totalEvents);
-      setIsHeaderLoading(false);
-      setLoading(false);
-    };
+		const newWorker = new Worker(new URL("./webworkers/calendar-public-webworker.ts", import.meta.url));
 
-    workerRef.current = newWorker;
+		newWorker.onmessage = result => {
+			setData(result.data);
+			setDayViews(result.data.dayViews);
+			setHours(result.data.hours);
+			//setTotalEvents(result.totalEvents);
+			setIsHeaderLoading(false);
+			setLoading(false);
+		};
 
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, [dateValue, setIsHeaderLoading, setTotalEvents]);
+		workerRef.current = newWorker;
 
-  useEffect(() => {
-    if (!events || !rooms) {
-      return;
-    }
+		return () => {
+			if (workerRef.current) {
+				workerRef.current.terminate();
+				workerRef.current = null;
+			}
+		};
+	}, [dateValue, setIsHeaderLoading, setTotalEvents]);
 
-    if (workerRef.current) {
-      const data: IPublicProcessData = {
-        events: events,
-        visibleHours: visibleHours,
-        selectedDate: dateValue,
-        roomIdList: rooms.map((room) => room.roomId.toString()),
-        multiDayEventsAtTop: true,
-        pixelHeight: 96,
-      };
-      //setLoading(true);
-      setIsHeaderLoading(true);
+	useEffect(() => {
+		if (!events || !rooms) {
+			return;
+		}
 
-      workerRef.current.postMessage(data);
-    }
-  }, [events, dateValue, isRefreshed, rooms, setIsHeaderLoading, visibleHours]);
+		if (workerRef.current) {
+			const data: IPublicProcessData = {
+				events: events,
+				visibleHours: visibleHours,
+				selectedDate: dateValue,
+				roomIdList: rooms.map(room => room.roomId.toString()),
+				multiDayEventsAtTop: true,
+				pixelHeight: 96,
+			};
+			//setLoading(true);
+			setIsHeaderLoading(true);
 
-  if (isLoading || !rooms || !events) {
-    return <CalendarWeekViewSkeleton />;
-  }
+			workerRef.current.postMessage(data);
+		}
+	}, [events, dateValue, isRefreshed, rooms, setIsHeaderLoading, visibleHours]);
 
-  if (rooms || events) {
-    <div>...</div>;
-  }
+	const handleCheckedRoomsChange = useCallback((checkedIds: number[]) => {
+		setSelectedRoomIds(checkedIds);
+	}, []);
 
-  const handleCheckedRoomsChange = (checkedIds: number[]) => {
-    setSelectedRoomIds(checkedIds);
-    // You can also trigger other side effects here
-  };
+	if (isLoading || !filteredRooms || !events) {
+		return <CalendarWeekViewSkeleton />;
+	}
 
-  return (
-    <>
-      <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
-        <p>Weekly view is not available on smaller devices.</p>
-        <p>Please switch to daily or monthly view.</p>
-      </div>
-      <div className="flex flex-col ">
-        <div className="flex">
-          <div className="mr-4 w-[500px]">
-            <p className="text-sm text-muted-foreground">This is your calendar overview or instructions.</p>
-            <RoomCategoryLayout rooms={rooms} onCheckedRoomsChange={handleCheckedRoomsChange}></RoomCategoryLayout>
-          </div>
+	if (filteredRooms || events) {
+		<div>...</div>;
+	}
 
-          <div className="flex-1 overflow-hidden w-150 h-150">
-            <ScrollArea className="w-140 h-140" type="always">
-              {/* Header Row */}
-              <div className="mx-6 mb-6">
-                <div className="flex h-[60px] w-full border-y-2  sticky top-0 z-10 bg-background">
-                  <div className="w-18 border-x-2 flex items-center justify-end pr-2">
-                    <span className="py-2 text-center text-xs font-medium text-muted-foreground">
-                      <span className="ml-1 font-semibold text-foreground">Time</span>
-                    </span>
-                  </div>
+	return (
+		<>
+			<div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
+				<p>Weekly view is not available on smaller devices.</p>
+				<p>Please switch to daily or monthly view.</p>
+			</div>
+			<div className="flex flex-col ">
+				<div className="flex">
+					<div className="mr-4 w-[500px]">
+						<p className="text-sm text-muted-foreground">This is your calendar overview or instructions.</p>
+						<RoomCategoryLayout
+							rooms={rooms}
+							onCheckedRoomsChange={handleCheckedRoomsChange}
+						></RoomCategoryLayout>
+					</div>
 
-                  {rooms.map((room) => (
-                    <div key={room.roomId} className="w-45 border-r-2 flex items-center  justify-center">
-                      <span key={room.roomId} className="py-2 text-center text-xs font-medium text-muted-foreground">
-                        <span className="ml-1 font-semibold text-foreground">{room.name}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex ">
-                  <div className="min-w-18 border-x-2  pr-2  border-b-2">
-                    {hours.map((hour, index) => (
-                      <div key={hour} className="relative" style={{ height: "96px" }}>
-                        <div className={"absolute  right-2 flex h-6 items-center " + (index !== 0 ? "-top-3" : "")}>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date().setHours(hour), "hh a")}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex w-full border-b-2">
-                    {rooms.map((room) => (
-                      <div key={room.roomId}>
-                        <div className="w-45 relative border-r border-dashed">
-                          {hours.map((hour, index) => (
-                            <div
-                              key={hour}
-                              className={cn("relative", false && "bg-calendar-disabled-hour")}
-                              style={{ height: "96px" }}
-                            >
-                              {index !== 0 && (
-                                <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />
-                              )}
-                              <div className="absolute inset-x-0 top-0 h-6 cursor-pointer transition-colors hover:bg-accent" />
-                              <div className="absolute inset-x-0 top-6 h-6 cursor-pointer transition-colors hover:bg-accent" />
-                              <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed" />
-                              <div className="absolute inset-x-0 top-12 h-6 cursor-pointer transition-colors hover:bg-accent" />
-                              <div className="absolute inset-x-0 top-[72px] h-6 cursor-pointer transition-colors hover:bg-accent" />
-                            </div>
-                          ))}
-                          {Array.from(dayViews[0].eventBlocks.entries()).flatMap(([roomId, blocks]) =>
-                            blocks.map((block, eventIndex) => {
-                              if (block.event.roomId !== room.roomId) return null;
-                              return (
-                                <div
-                                  key={`day-${dayViews[0].day}-block-${format(
-                                    block.event.startDate,
-                                    "yyyy-MM-dd-HH-mm"
-                                  )}-event-${block.event.eventId}`}
-                                  className="absolute p-1"
-                                  style={block.eventStyle}
-                                >
-                                  <PublicEventBlock
-                                    eventBlock={block}
-                                    heightInPixels={block.eventHeight}
-                                  ></PublicEventBlock>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <ScrollBar orientation="vertical" forceMount />
-              <ScrollBar orientation="horizontal" forceMount />
-            </ScrollArea>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+					<div className="flex-1 overflow-hidden w-150 h-150">
+						<ScrollArea
+							className="w-140 h-140"
+							type="always"
+						>
+							{/* Header Row */}
+							<div className="mx-6 mb-6">
+								<div className="flex h-[60px] w-full border-y-2  sticky top-0 z-10 bg-background">
+									<div className="w-18 border-x-2 flex items-center justify-end pr-2">
+										<span className="py-2 text-center text-xs font-medium text-muted-foreground">
+											<span className="ml-1 font-semibold text-foreground">Time</span>
+										</span>
+									</div>
+
+									{filteredRooms.map(room => (
+										<div
+											key={room.roomId}
+											className="w-45 border-r-2 flex items-center  justify-center"
+										>
+											<span
+												key={room.roomId}
+												className="py-2 text-center text-xs font-medium text-muted-foreground"
+											>
+												<span className="ml-1 font-semibold text-foreground">{room.name}</span>
+											</span>
+										</div>
+									))}
+								</div>
+								<div className="flex ">
+									<div className="min-w-18 border-x-2  pr-2  border-b-2">
+										{hours.map((hour, index) => (
+											<div
+												key={hour}
+												className="relative"
+												style={{ height: "96px" }}
+											>
+												<div className={"absolute  right-2 flex h-6 items-center " + (index !== 0 ? "-top-3" : "")}>
+													<span className="text-xs text-muted-foreground">{format(new Date().setHours(hour), "hh a")}</span>
+												</div>
+											</div>
+										))}
+									</div>
+									<div className="flex w-full border-b-2">
+										{filteredRooms.map(room => (
+											<div key={room.roomId}>
+												<div className="w-45 relative border-r border-dashed">
+													{hours.map((hour, index) => (
+														<div
+															key={hour}
+															className={cn("relative", false && "bg-calendar-disabled-hour")}
+															style={{ height: "96px" }}
+														>
+															{index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />}
+															<div className="absolute inset-x-0 top-0 h-6 cursor-pointer transition-colors hover:bg-accent" />
+															<div className="absolute inset-x-0 top-6 h-6 cursor-pointer transition-colors hover:bg-accent" />
+															<div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed" />
+															<div className="absolute inset-x-0 top-12 h-6 cursor-pointer transition-colors hover:bg-accent" />
+															<div className="absolute inset-x-0 top-[72px] h-6 cursor-pointer transition-colors hover:bg-accent" />
+														</div>
+													))}
+													{Array.from(dayViews[0].eventBlocks.entries()).flatMap(([roomId, blocks]) =>
+														blocks.map((block, eventIndex) => {
+															if (block.event.roomId !== room.roomId) return null;
+															return (
+																<div
+																	key={`day-${dayViews[0].day}-block-${format(block.event.startDate, "yyyy-MM-dd-HH-mm")}-event-${
+																		block.event.eventId
+																	}`}
+																	className="absolute p-1"
+																	style={block.eventStyle}
+																>
+																	<PublicEventBlock
+																		eventBlock={block}
+																		heightInPixels={block.eventHeight}
+																	></PublicEventBlock>
+																</div>
+															);
+														})
+													)}
+												</div>
+											</div>
+										))}
+									</div>
+								</div>
+							</div>
+							<ScrollBar
+								orientation="vertical"
+								forceMount
+							/>
+							<ScrollBar
+								orientation="horizontal"
+								forceMount
+							/>
+						</ScrollArea>
+					</div>
+				</div>
+			</div>
+		</>
+	);
 }
 
 {
-  /*
+	/*
   
   <div className="hidden flex-col sm:flex">
         <div className="flex">
