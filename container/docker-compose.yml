@@ -19,13 +19,11 @@ services:
       timeout: 5s
       retries: 5
 
-
     #entrypoint: >
     #  sh -c "
     #    npx prisma migrate deploy &&
     #    npx prisma db seed &&
     #    echo 'Migration complete.'"
-
 
   nextjs-app:
     build:
@@ -36,10 +34,11 @@ services:
       - "3000"
     environment:
       BETTER_AUTH_URL: https://${DUCKDNS_DOMAIN}
-      NEXTAPP_URL: https://${DUCKDNS_DOMAIN}
+      NEXT_PUBLIC_BASE_URL: https://${DUCKDNS_DOMAIN}
       # other env vars from .env
     depends_on:
       - postgres
+      - nginx
     networks:
       - webnet
     extra_hosts:
@@ -49,7 +48,6 @@ services:
     #  interval: 10s
     #  timeout: 5s
     #  retries: 5
-
 
   nginx:
     build:
@@ -65,9 +63,6 @@ services:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     entrypoint: /etc/nginx/startup.sh
-    depends_on:
-      - nextjs-app #:
-        #condition: service_healthy
     networks:
       - webnet
     #healthcheck:
@@ -75,8 +70,6 @@ services:
     #  interval: 10s
     #  timeout: 5s
     #  retries: 5
-        
-
 
   certbot:
     image: certbot/certbot
@@ -118,7 +111,7 @@ services:
       LINKED_DATABASE_NAME: ${LINKED_DATABASE_NAME}
       LINKED_SERVER_NAME: ${LINKED_SERVER_NAME}
     depends_on:
-      - postgres  
+      - postgres
     #entrypoint: /bin/sh
     #command: -c "npx prisma migrate deploy"
     networks:

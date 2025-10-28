@@ -96,7 +96,7 @@ export const auth = betterAuth({
   plugins: [
     customSession(async ({ user, session }) => {
       const userData = await fetchGET(
-        `${process.env.NEXTAPP_URL}/api/users/${user.id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${user.id}`,
         { token: session.token },
         3600,
         [user.id]

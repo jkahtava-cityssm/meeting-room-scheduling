@@ -1,11 +1,22 @@
-include ../.env
+
 export
 
-COMPOSE=docker-compose -f docker-compose.yml
-MIGRATE_COMPOSE=docker-compose -f docker-compose.migrate.yml
+
+
+CONTAINER_MANAGER=podman
+
+MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.db.migrate.yml --env-file ../.env
+
+
+COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.yml --env-file ../.env
+
 CERTBOT_VOLUME=./certbot
 DUCKDNS_SCRIPT=./duckdns/update.sh
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> feafc5e90a5220061710e23e4a3d72cad9719896
 #CREATE DATABASE AND DEPLOY DATABASE
 init: build up cert-init restart-nginx
 start: up cert-init restart-nginx
@@ -16,33 +27,56 @@ create-seed: build-db up-db build-migrate up-migrate up-seed rm-migrate
 #CREATE BLANK DATABASE
 create: build-db up-db build-migrate up-migrate rm-migrate
 
+up: up-db up-nginx up-nextjs
+
+init: create build up cert-init restart-nginx
+start: up cert-init restart-nginx
+
+
 build-migrate: 
-	docker-compose build prisma-migrate
+	$(MIGRATE_COMPOSE) build prisma-migrate 
 	    
 up-migrate:
-	docker compose run --rm prisma-migrate /bin/sh -c "npx prisma migrate deploy"
+	$(MIGRATE_COMPOSE) run --rm prisma-migrate /bin/sh -c "npx prisma migrate deploy"
 
 up-seed:
-	docker compose run --rm prisma-migrate /bin/sh -c "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+	$(MIGRATE_COMPOSE) run --rm prisma-migrate /bin/sh -c "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
 
 rm-migrate:
-	docker image rm prisma-migrate
+	$(CONTAINER_MANAGER) image rm prisma-migrate
 
 build-db:
-	docker-compose build postgres	
+	$(COMPOSE) build postgres	
 
+<<<<<<< HEAD
+=======
+up-db:
+	$(COMPOSE) up -d postgres
+
+
+>>>>>>> feafc5e90a5220061710e23e4a3d72cad9719896
 #
 build: build-db build-nginx build-certbot build-nextjs
 
 build-nginx:
-	docker-compose build nginx
+	$(COMPOSE) build nginx
 
+<<<<<<< HEAD
+=======
+up-nginx:
+	$(COMPOSE) up -d nginx
+
+>>>>>>> feafc5e90a5220061710e23e4a3d72cad9719896
 build-nextjs:
-	docker-compose build nextjs-app
+	$(COMPOSE) build nextjs-app
+
+up-nextjs:
+	$(COMPOSE) up -d nextjs-app
 
 build-certbot:
-	docker-compose build certbot
+	$(COMPOSE) build certbot
 
+<<<<<<< HEAD
 up-db:
 	docker-compose up -d postgres
 
@@ -55,13 +89,15 @@ up-nginx:
 up: up-db up-nginx up-nextjs
 
 
+=======
+>>>>>>> feafc5e90a5220061710e23e4a3d72cad9719896
 
 
 reset:
 	$(COMPOSE) down -v --remove-orphans
 	rm -rf $(CERTBOT_VOLUME)/conf
 	rm -rf $(CERTBOT_VOLUME)/www
-	docker volume rm container_postgres_data || true
+	$(CONTAINER_MANAGER) volume rm container_postgres_data || true
 	make setup
 
 
@@ -75,7 +111,7 @@ logs:
 
 # Request initial SSL certificate
 cert-init:
-	docker run --rm \
+	$(CONTAINER_MANAGER) run --rm \
 		-v $(CERTBOT_VOLUME)/www:/var/www/certbot \
 		-v $(CERTBOT_VOLUME)/conf:/etc/letsencrypt \
 		certbot/certbot certonly \
@@ -88,11 +124,12 @@ cert-init:
 
 #  Manually renew SSL certificate
 cert-renew:
-	docker run --rm \
+	$(CONTAINER_MANAGER) run --rm \
 		-v $(CERTBOT_VOLUME)/www:/var/www/certbot \
 		-v $(CERTBOT_VOLUME)/conf:/etc/letsencrypt \
 		certbot/certbot renew --webroot -w /var/www/certbot
 
+<<<<<<< HEAD
 rm-cert:
 	docker image rm certbot/certbot
 
@@ -107,4 +144,12 @@ restart-nginx:
 
 #  Restart Next.js app only
 restart-nextjs:
+=======
+
+restart-nginx:
+	$(COMPOSE) restart nginx
+
+restart-app:
+>>>>>>> feafc5e90a5220061710e23e4a3d72cad9719896
 	$(COMPOSE) restart nextjs-app
+
