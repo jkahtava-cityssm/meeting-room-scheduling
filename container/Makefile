@@ -4,17 +4,20 @@ export
 
 
 CONTAINER_MANAGER=docker
-
-MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.db.migrate.yml --env-file ../.env
-
-
-COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.yml --env-file ../.env
+ENV_FILE_LOCATION=../.env
+MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.db.migrate.yml --env-file ${ENV_FILE_LOCATION}
+COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.yml --env-file ${ENV_FILE_LOCATION}
 
 CERTBOT_VOLUME=./certbot
 DUCKDNS_SCRIPT=./duckdns/update.sh
 
 #CREATE DATABASE AND DEPLOY DATABASE
-init: build up cert-init restart-nginx
+init: create build up
+init-certbot: init cert-init restart-nginx
+
+init-test: create-seed build up
+init-test-certbot: init-test cert-init restart-nginx
+
 start: up cert-init restart-nginx
 stop: down
 #CREATE & SEED
@@ -24,9 +27,6 @@ create-seed: build-db up-db build-migrate up-migrate up-seed rm-migrate
 create: build-db up-db build-migrate up-migrate rm-migrate
 
 up: up-db up-nginx up-nextjs
-
-init: create build up cert-init restart-nginx
-start: up cert-init restart-nginx
 
 
 build-migrate: 
@@ -73,7 +73,7 @@ reset:
 	rm -rf $(CERTBOT_VOLUME)/conf
 	rm -rf $(CERTBOT_VOLUME)/www
 	$(CONTAINER_MANAGER) volume rm container_postgres_data || true
-	make setup
+	make init
 
 
 #  Stop all services
