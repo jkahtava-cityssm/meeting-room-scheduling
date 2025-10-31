@@ -126,6 +126,14 @@ const CalendarView = ({
 								</div>
 							</div>
 						))}
+						{isLoading && (
+							<div
+								className="absolute p-1 w-10"
+								style={{ top: "100px", left: "100px" }}
+							>
+								...Loading
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
