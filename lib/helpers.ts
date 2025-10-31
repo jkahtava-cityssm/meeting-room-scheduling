@@ -73,6 +73,7 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
     month: direction === "next" ? addMonths : subMonths,
     week: direction === "next" ? addWeeks : subWeeks,
     day: direction === "next" ? addDays : subDays,
+    public: direction === "next" ? addDays : subDays,
   };
 
   return operations[view](date, 1);
@@ -85,6 +86,7 @@ export function navigateURL(date: Date | null, view: TCalendarView): string {
     month: "?view=month",
     week: "?view=week",
     day: "?view=day",
+    public: "?",
   };
 
   /*const dateParams = {

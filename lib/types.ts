@@ -1,4 +1,4 @@
-export type TCalendarView = "day" | "week" | "month" | "year" | "agenda";
+export type TCalendarView = "day" | "week" | "month" | "year" | "agenda" | "public";
 
 export const colorOptions = [
   "red",

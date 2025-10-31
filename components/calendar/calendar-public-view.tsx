@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfWeek, endOfWeek, parse, format, addYears, formatDate } from "date-fns";
+import { startOfWeek, endOfWeek, parse, format, addYears, formatDate, endOfDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -73,8 +73,8 @@ export function CalendarPublicView() {
 
   const workerRef = useRef<Worker | null>(null);
 
-  const startDate: Date = startOfWeek(dateValue);
-  const endDate: Date = endOfWeek(dateValue);
+  const startDate: Date = startOfDay(dateValue);
+  const endDate: Date = endOfDay(dateValue);
 
   const { data: events } = usePublicEventsQuery(startDate, endDate);
 
@@ -152,20 +152,29 @@ export function CalendarPublicView() {
 
   const memoizedHours = useMemo(() => hours, [hours]);
 
-  if (isLoading || !filteredRooms || !events) {
+  /*if (isLoading || !filteredRooms || !events) {
     return <CalendarWeekViewSkeleton />;
   }
 
   if (filteredRooms || events) {
     <div>...</div>;
   }
-
+*/
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-2 ">
-        <RoomCategoryLayout rooms={rooms || []} onCheckedRoomsChange={handleCheckedRoomsChange} />
-
-        {<FilteredRoomGrid filteredRooms={filteredRooms} hours={memoizedHours} eventBlocks={dayViews?.eventBlocks} />}
+        {rooms ? (
+          <RoomCategoryLayout rooms={rooms || []} onCheckedRoomsChange={handleCheckedRoomsChange} />
+        ) : (
+          <div>...loading</div>
+        )}
+        <FilteredRoomGrid
+          isLoading={isLoading || !filteredRooms || !events}
+          filteredRooms={filteredRooms || []}
+          hours={memoizedHours}
+          eventBlocks={dayViews?.eventBlocks}
+          selectedDate={dateValue}
+        />
       </div>
     </>
   );
