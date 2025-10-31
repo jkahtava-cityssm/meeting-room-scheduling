@@ -155,13 +155,13 @@ const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
 
   const handleNavigatePrevious = () => {
     const previousDate = navigateDate(selectedDate, "day", "previous");
-    //setCurrentDate(previousDate);
+    setCurrentDate(previousDate);
     push(navigateURL(previousDate, "public"));
   };
 
   const handleNavigateNext = () => {
     const nextDate = navigateDate(selectedDate, "day", "next");
-    //setCurrentDate(nextDate);
+    setCurrentDate(nextDate);
     push(navigateURL(nextDate, "public"));
   };
 
@@ -175,6 +175,7 @@ const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
           value={currentDate}
           onSelect={(selectedDate) => {
             if (!selectedDate) return;
+            setCurrentDate(selectedDate);
             push(navigateURL(selectedDate, "public"));
           }}
           placeholder={formatDate(currentDate, "MMMM do, yyyy")}
