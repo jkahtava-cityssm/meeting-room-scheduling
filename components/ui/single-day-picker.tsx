@@ -18,9 +18,19 @@ type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"
   value: Date;
   placeholder: string;
   labelVariant?: "P" | "PP" | "PPP";
+  children?: React.ReactNode;
 };
 
-function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = "PPP", value, ...props }: TProps) {
+function SingleDayPicker({
+  id,
+  onSelect,
+  className,
+  placeholder,
+  labelVariant = "PPP",
+  value,
+  children,
+  ...props
+}: TProps) {
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [calendarDate, setCalendarDate] = useState(value);
   //console.log(value);
@@ -44,18 +54,22 @@ function SingleDayPicker({ id, onSelect, className, placeholder, labelVariant = 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange} modal>
       <PopoverTrigger asChild>
-        <Button
-          id={id}
-          variant="outline"
-          className={cn(
-            "group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit disabled:opacity-75",
-            className
-          )}
-          {...props}
-        >
-          {value && <span>{format(value, labelVariant)}</span>}
-          {!value && <span className="text-muted-foreground">{placeholder}</span>}
-        </Button>
+        {children ? (
+          children
+        ) : (
+          <Button
+            id={id}
+            variant="outline"
+            className={cn(
+              "group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit disabled:opacity-75",
+              className
+            )}
+            {...props}
+          >
+            {value && <span>{format(value, labelVariant)}</span>}
+            {!value && <span className="text-muted-foreground">{placeholder}</span>}
+          </Button>
+        )}
       </PopoverTrigger>
 
       <PopoverContent align="center" className="w-fit p-0">

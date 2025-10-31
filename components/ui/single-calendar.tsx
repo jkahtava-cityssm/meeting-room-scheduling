@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 import type { PropsSingleRequired, PropsBase, DropdownProps } from "react-day-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 
 import { TCalendarView } from "@/lib/types";
+import { ScrollArea, ScrollBar } from "./scroll-area";
 
 function SingleCalendar({
   className,
@@ -145,6 +145,7 @@ function SingleCalendar({
                           {option.label}
                         </SelectItem>
                       ))}
+                      <ScrollBar forceMount orientation="vertical"></ScrollBar>
                     </ScrollArea>
                   </SelectContent>
                 </Select>
