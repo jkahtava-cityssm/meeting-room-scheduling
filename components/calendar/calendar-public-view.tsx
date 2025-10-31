@@ -1,37 +1,17 @@
 "use client";
 
-import { startOfWeek, endOfWeek, parse, format, addYears } from "date-fns";
+import { startOfWeek, endOfWeek, parse, format, addYears, formatDate } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
 
-import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
-import { HourColumn } from "./calendar-day-column-hourly";
-import { WeekViewDayHeader } from "./calendar-week-view-day-header";
-import { EventBlock } from "./calendar-day-event-block";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
-import { colorOptions, TColors, TVisibleHours } from "@/lib/types";
-import { PUBLIC_IEVENT, PUBLIC_IROOM, usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
+import { TVisibleHours } from "@/lib/types";
+import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
 import { useSearchParams } from "next/navigation";
-import { useRoomsQuery } from "@/services/rooms";
-import { Button } from "../ui/button";
-import Link from "next/link";
-import { Skeleton } from "../ui/skeleton";
-import { Label } from "../ui/label";
-import { getVisibleHours } from "@/lib/helpers";
-import { cn } from "@/lib/utils";
-import { PublicEventBlock, PublicEventCard } from "./calendar-public-view-event-block";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { Checkbox } from "../ui/checkbox";
-import RoomCategoryLayout, { DateControls } from "./calendar-public-view-room-list";
+import { RoomCategoryLayout } from "./calendar-public-view-room-list";
 import { FilteredRoomGrid } from "./calendar-public-view-room-grid";
-import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
-import { SingleCalendar } from "../ui/single-calendar";
-import { FilteredRoomGridOld } from "./calendar-public-view-room-grid copy";
-import { BreakPointText } from "../test/breakpoint";
 
 export interface IPublicProcessData {
   events: PUBLIC_IEVENT[];
@@ -184,6 +164,7 @@ export function CalendarPublicView() {
     <>
       <div className="flex flex-col sm:flex-row gap-2 ">
         <RoomCategoryLayout rooms={rooms || []} onCheckedRoomsChange={handleCheckedRoomsChange} />
+
         {<FilteredRoomGrid filteredRooms={filteredRooms} hours={memoizedHours} eventBlocks={dayViews?.eventBlocks} />}
       </div>
     </>

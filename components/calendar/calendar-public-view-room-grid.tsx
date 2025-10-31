@@ -1,41 +1,18 @@
 "use client";
 
-import { startOfWeek, endOfWeek, parse, format, formatDate } from "date-fns";
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { format, formatDate } from "date-fns";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
 
-import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
-import { WeekViewDayHeader } from "./calendar-week-view-day-header";
-import { EventBlock } from "./calendar-day-event-block";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
-import { IEvent } from "@/lib/schemas/calendar";
-import { colorOptions, TColors, TVisibleHours } from "@/lib/types";
-import { PUBLIC_IEVENT, PUBLIC_IROOM, usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
-import { useSearchParams } from "next/navigation";
-import { useRoomsQuery } from "@/services/rooms";
+import { PUBLIC_IROOM } from "@/services/public";
 import { Button } from "../ui/button";
-import Link from "next/link";
-import { Skeleton } from "../ui/skeleton";
-import { Label } from "../ui/label";
-import { getVisibleHours } from "@/lib/helpers";
-import { cn } from "@/lib/utils";
-import { PublicEventBlock, PublicEventCard } from "./calendar-public-view-event-block";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { Checkbox } from "../ui/checkbox";
-import RoomCategoryLayout from "./calendar-public-view-room-list";
+
+import { PublicEventBlock } from "./calendar-public-view-event-block";
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { IEventBlock, IEventList } from "./calendar-public-view";
-
-const XL_BREAKPOINT = 300;
-const LG_BREAKPOINT = 300;
-const MD_BREAKPOINT = 300;
-const SM_BREAKPOINT = 300;
-const XS_BREAKPOINT = 300;
-const XXS_BREAKPOINT = 50;
+import { IEventList } from "./calendar-public-view";
+import { SingleDayPicker } from "../ui/single-day-picker";
 
 export const FilteredRoomGrid = React.memo(
   ({
@@ -48,7 +25,6 @@ export const FilteredRoomGrid = React.memo(
     eventBlocks: IEventList | undefined;
   }) => {
     if (!filteredRooms.length || !eventBlocks) return null;
-    //w-100 xs:w-140 sm:w-120 md:w-170 lg:w-180 xl:w-240 2xl:w-300
 
     return (
       <div className="flex-1 ">
@@ -151,11 +127,27 @@ const HourColumn = React.memo(({ hours }: { hours: number[] }) => {
 HourColumn.displayName = "HourColumn";
 
 const DateControls = () => {
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   return (
     <div className="grid grid-cols-2 gap-2 auto-cols-min lg:grid-cols-[auto_minmax(10rem,1fr)_auto] w-full items-center min-w-65">
       {/* Label - spans both columns */}
-      <div className="text-center min-w-40 col-span-2 lg:col-start-2 lg:col-span-1 lg:row-start-1">
-        <Label className="block text-base font-semibold">{formatDate(new Date(), "MMMM do, yyyy")}</Label>
+      <div className="text-center justify-self-center col-span-2 lg:col-start-2 lg:col-span-1 lg:row-start-1">
+        <SingleDayPicker
+          id={`}Date`}
+          disabled={false}
+          value={currentDate}
+          onSelect={(selectedDate) => {
+            if (!selectedDate) return;
+            setCurrentDate(selectedDate);
+          }}
+          placeholder={formatDate(currentDate, "MMMM do, yyyy")}
+          className="block text-base font-semibold w-40"
+          data-invalid={false}
+        >
+          <Button size={"sm"} variant="ghost" className="block text-base font-semibold ">
+            {<span>{formatDate(currentDate, "PPP")}</span>}
+          </Button>
+        </SingleDayPicker>
       </div>
 
       {/* Previous Button */}

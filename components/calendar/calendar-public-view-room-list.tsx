@@ -1,11 +1,10 @@
 "use client";
 import { PUBLIC_IROOM } from "@/services/public";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
-import { ChevronLeft, ChevronRight, FilterIcon } from "lucide-react";
-import { formatDate } from "date-fns";
+import { FilterIcon } from "lucide-react";
 
 function useDebouncedToggle(delay: number = 100) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -26,7 +25,7 @@ function useDebouncedToggle(delay: number = 100) {
   return debounceToggle;
 }
 
-const RoomCategoryLayout = ({
+export const RoomCategoryLayout = ({
   rooms,
   onCheckedRoomsChange,
 }: {
@@ -173,36 +172,6 @@ const RoomCategoryLayout = ({
           </div>
         </div>
       ))}
-    </div>
-  );
-};
-export default RoomCategoryLayout;
-
-export const DateControls = () => {
-  return (
-    <div className=" flex w-full justify-center ">
-      <div className=" flex w-full items-center px-4 py-2">
-        {/* Left: Previous Button */}
-        <div className="shrink-0">
-          <Button>
-            <ChevronLeft />
-            Previous
-          </Button>
-        </div>
-
-        {/* Center: Label */}
-        <div className="grow text-center">
-          <Label className=" block text-base font-semibold">{formatDate(new Date(), "MMMM do, yyyy")}</Label>
-        </div>
-
-        {/* Right: Next Button */}
-        <div className="shrink-0">
-          <Button>
-            Next
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 };
