@@ -43,16 +43,20 @@ export const FilteredRoomGrid = React.memo(
         <div
           className={` w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg) flex justify-center overflow-hidden h-[calc(100vh-200px)]`}
         >
-          {!filteredRooms.length || !eventBlocks || isLoading ? (
-            <div>...Loading</div>
-          ) : (
-            <CalendarView eventBlocks={eventBlocks} filteredRooms={filteredRooms} hours={hours}></CalendarView>
-          )}
+          <CalendarView eventBlocks={eventBlocks} filteredRooms={filteredRooms} hours={hours}></CalendarView>
         </div>
       </div>
     );
   }
 );
+
+/*
+{!filteredRooms.length || !eventBlocks || isLoading ? (
+            <div>...Loading</div>
+          ) : (
+            <CalendarView eventBlocks={eventBlocks} filteredRooms={filteredRooms} hours={hours}></CalendarView>
+          )}
+*/
 
 const CalendarView = ({
   filteredRooms,
@@ -93,7 +97,7 @@ const CalendarView = ({
                 <div className="w-45 relative border-r border-dashed">
                   <RoomHourBlocks hours={hours} />
 
-                  {eventBlocks.get(String(room.roomId))?.map((eventBlock) => {
+                  {eventBlocks?.get(String(room.roomId))?.map((eventBlock) => {
                     return (
                       <div key={eventBlock.key} className="absolute p-1" style={eventBlock.eventStyle}>
                         <PublicEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} />
