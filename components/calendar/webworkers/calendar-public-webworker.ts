@@ -4,7 +4,15 @@ import { z } from "zod/v4";
 
 import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../../lib/helpers";
 
-import { areIntervalsOverlapping, differenceInMinutes, endOfDay, isSameDay, isToday, startOfDay } from "date-fns";
+import {
+  areIntervalsOverlapping,
+  differenceInMinutes,
+  endOfDay,
+  format,
+  isSameDay,
+  isToday,
+  startOfDay,
+} from "date-fns";
 
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 import { IDayView, IEventBlock, IPublicProcessData, IPublicResponseData } from "../calendar-public-view";
@@ -97,6 +105,7 @@ async function processDayEvents(dayData: IPublicProcessData): Promise<IPublicRes
         const heightInPixels = (durationInMinutes / 60) * dayData.pixelHeight - 8;
 
         const newBlock: IEventBlock = {
+          key: `block-${format(currentEvent.startDate, "yyyy-MM-dd-HH-mm")}-event-${currentEvent.eventId}`,
           groupIndex,
           eventIndex,
           eventStyle: blockStyle,
@@ -119,7 +128,5 @@ async function processDayEvents(dayData: IPublicProcessData): Promise<IPublicRes
     eventBlocks: eventBlocksByRoom,
   };
 
-  dayViews.push(newDay);
-
-  return { dayViews: dayViews, totalEvents: filteredEvents.length, hours: hours };
+  return { dayView: newDay, totalEvents: filteredEvents.length, hours: hours };
 }

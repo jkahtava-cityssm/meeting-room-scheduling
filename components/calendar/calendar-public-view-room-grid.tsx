@@ -6,7 +6,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/components/calendar/calendar-day-timeline";
 
 import { DayHourlyEventDialogs } from "./calendar-day-event-block-add-hour-block";
-import { HourColumn } from "./calendar-day-column-hourly";
 import { WeekViewDayHeader } from "./calendar-week-view-day-header";
 import { EventBlock } from "./calendar-day-event-block";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -29,56 +28,42 @@ import { Checkbox } from "../ui/checkbox";
 import RoomCategoryLayout from "./calendar-public-view-room-list";
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { IEventBlock, IEventList } from "./calendar-public-view";
 
-export interface IPublicProcessData {
-  events: PUBLIC_IEVENT[];
-  selectedDate: Date;
-  roomIdList: string[];
-  pixelHeight: number;
-  visibleHours: TVisibleHours;
-  multiDayEventsAtTop: boolean;
-}
-
-export interface IPublicResponseData {
-  totalEvents: number;
-  dayViews: IDayView[];
-  hours: number[];
-  //weekViews: WeekView[];
-}
-
-export interface IDayView {
-  day: number;
-  dayDate: Date;
-  isToday: boolean;
-  eventBlocks: Map<string, IEventBlock[]>;
-}
-
-export interface IEventBlock {
-  groupIndex: number;
-  eventIndex: number;
-  eventStyle: { top: string; width: string; left: string };
-  eventHeight: number;
-  event: IEvent;
-}
-/*
-        <div className="mx-6">
-          <Button></Button>
-        </div>
-*/
+const XL_BREAKPOINT = 300;
+const LG_BREAKPOINT = 300;
+const MD_BREAKPOINT = 300;
+const SM_BREAKPOINT = 300;
+const XS_BREAKPOINT = 300;
+const XXS_BREAKPOINT = 50;
 
 export const FilteredRoomGrid = React.memo(
-  ({ filteredRooms, hours, dayViews }: { filteredRooms: PUBLIC_IROOM[]; hours: number[]; dayViews: IDayView[] }) => {
-    if (!filteredRooms.length || !dayViews.length) return null;
+  ({
+    filteredRooms,
+    hours,
+    eventBlocks,
+  }: {
+    filteredRooms: PUBLIC_IROOM[];
+    hours: number[];
+    eventBlocks: IEventList | undefined;
+  }) => {
+    if (!filteredRooms.length || !eventBlocks) return null;
+    //w-100 xs:w-140 sm:w-120 md:w-170 lg:w-180 xl:w-240 2xl:w-300
 
     return (
       <div className="flex-1 ">
-        <div className=" flex justify-center w-300">
-          <div className=" flex justify-center w-290 px-12  border-b pb-4 mb-4">
+        <div
+          className={`w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg) flex justify-center`}
+        >
+          <div className={`w-[calc(100%-10px)] flex justify-center  px-12  border-b py-4 mb-4`}>
             <DateControls></DateControls>
           </div>
         </div>
-        <div className="flex justify-center overflow-hidden w-300 h-[calc(100vh-200px)]">
-          <ScrollArea className="w-290 h-[calc(100vh-220px)]" type="always">
+
+        <div
+          className={` w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg) flex justify-center overflow-hidden h-[calc(100vh-200px)]`}
+        >
+          <ScrollArea className={`w-[calc(100%-10px)] h-[calc(100vh-220px)]`} type="always">
             {/* Header Row */}
             <div className="mx-6 mb-6">
               <div className="flex h-[60px] w-full border-y-2 sticky top-0 z-10 bg-background">
@@ -107,23 +92,13 @@ export const FilteredRoomGrid = React.memo(
                       <div className="w-45 relative border-r border-dashed">
                         <RoomHourBlocks hours={hours} />
 
-                        {Array.from(dayViews[0].eventBlocks.entries()).flatMap(([roomId, blocks]) =>
-                          blocks.map((block) => {
-                            if (block.event.roomId !== room.roomId) return null;
-                            return (
-                              <div
-                                key={`day-${dayViews[0].day}-block-${format(
-                                  block.event.startDate,
-                                  "yyyy-MM-dd-HH-mm"
-                                )}-event-${block.event.eventId}`}
-                                className="absolute p-1"
-                                style={block.eventStyle}
-                              >
-                                <PublicEventBlock eventBlock={block} heightInPixels={block.eventHeight} />
-                              </div>
-                            );
-                          })
-                        )}
+                        {eventBlocks.get(String(room.roomId))?.map((eventBlock) => {
+                          return (
+                            <div key={eventBlock.key} className="absolute p-1" style={eventBlock.eventStyle}>
+                              <PublicEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} />
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -175,47 +150,24 @@ const HourColumn = React.memo(({ hours }: { hours: number[] }) => {
 
 HourColumn.displayName = "HourColumn";
 
-const RoomEventBlocks = React.memo(({ roomId, dayView }: { roomId: number; dayView: IDayView }) => {
-  const blocks = useMemo(() => {
-    const roomBlocks = dayView.eventBlocks.get(roomId);
-    if (!roomBlocks) return null;
-
-    return roomBlocks.map((block) => (
-      <div
-        key={`day-${dayView.day}-block-${format(block.event.startDate, "yyyy-MM-dd-HH-mm")}-event-${
-          block.event.eventId
-        }`}
-        className="absolute p-1"
-        style={block.eventStyle}
-      >
-        <PublicEventBlock eventBlock={block} heightInPixels={block.eventHeight} />
-      </div>
-    ));
-  }, [roomId, dayView]);
-
-  return <>{blocks}</>;
-});
-
-RoomEventBlocks.displayName = "RoomEventBlocks";
-
 const DateControls = () => {
   return (
-    <div className=" flex w-full  items-center">
-      {/* Left: Previous Button */}
-      <div className="shrink-0">
+    <div className="grid grid-cols-2 gap-2 auto-cols-min lg:grid-cols-[auto_minmax(10rem,1fr)_auto] w-full items-center min-w-65">
+      {/* Label - spans both columns */}
+      <div className="text-center min-w-40 col-span-2 lg:col-start-2 lg:col-span-1 lg:row-start-1">
+        <Label className="block text-base font-semibold">{formatDate(new Date(), "MMMM do, yyyy")}</Label>
+      </div>
+
+      {/* Previous Button */}
+      <div className="justify-self-end lg:col-start-1">
         <Button className="w-30" size="sm">
           <ChevronLeft />
           Previous
         </Button>
       </div>
 
-      {/* Center: Label */}
-      <div className="grow text-center">
-        <Label className=" block text-base font-semibold">{formatDate(new Date(), "MMMM do, yyyy")}</Label>
-      </div>
-
-      {/* Right: Next Button */}
-      <div className="shrink-0">
+      {/* Next Button */}
+      <div className="justify-self-start lg:col-start-3">
         <Button className="w-30" size="sm">
           Next
           <ChevronRight />

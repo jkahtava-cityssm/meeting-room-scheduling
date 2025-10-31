@@ -120,16 +120,16 @@ const RoomCategoryLayout = ({
   }, [rooms]);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 w-full border-b pb-4 mb-4">
+    <div className="space-y-6 w-(--public-calendar-filter-w-col-1) xs:w-(--public-calendar-filter-w-col-2) sm:w-(--public-calendar-filter-w-col-1) lg:w-(--public-calendar-filter-w-col-2) ">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-y-2 w-full border-b py-4 mb-4">
         <Label className="text-md font-bold">Meeting Room Filters</Label>
-        <Button size="sm">
+        <Button size="sm" className="text-xs w-50">
           <FilterIcon></FilterIcon> Select Rooms with Projectors
         </Button>
       </div>
 
       {rows.map((row, index) => (
-        <div key={index} className="grid grid-cols-1 xs:grid-cols-2 gap-4 w-full">
+        <div key={index} className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-1 lg:grid-cols-2 gap-4 w-full ">
           {/* Left category */}
           <div className="flex flex-col w-[180px]">
             <Label className="text-lg font-bold">{row.left}</Label>

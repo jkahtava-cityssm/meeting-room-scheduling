@@ -30,6 +30,8 @@ import RoomCategoryLayout, { DateControls } from "./calendar-public-view-room-li
 import { FilteredRoomGrid } from "./calendar-public-view-room-grid";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { SingleCalendar } from "../ui/single-calendar";
+import { FilteredRoomGridOld } from "./calendar-public-view-room-grid copy";
+import { BreakPointText } from "../test/breakpoint";
 
 export interface IPublicProcessData {
   events: PUBLIC_IEVENT[];
@@ -42,19 +44,22 @@ export interface IPublicProcessData {
 
 export interface IPublicResponseData {
   totalEvents: number;
-  dayViews: IDayView[];
+  dayView: IDayView;
   hours: number[];
   //weekViews: WeekView[];
 }
+
+export type IEventList = Map<string, IEventBlock[]>;
 
 export interface IDayView {
   day: number;
   dayDate: Date;
   isToday: boolean;
-  eventBlocks: Map<string, IEventBlock[]>;
+  eventBlocks: IEventList;
 }
 
 export interface IEventBlock {
+  key: string;
   groupIndex: number;
   eventIndex: number;
   eventStyle: { top: string; width: string; left: string };
@@ -80,7 +85,7 @@ export function CalendarPublicView() {
 
   const [isLoading, setLoading] = useState(true);
   const [isRefreshed, setRefreshed] = useState(false);
-  const [dayViews, setDayViews] = useState<IDayView[]>([]);
+  const [dayViews, setDayViews] = useState<IDayView>();
   const [data, setData] = useState([]);
   const [hours, setHours] = useState<number[]>([]);
 
@@ -123,7 +128,7 @@ export function CalendarPublicView() {
 
     newWorker.onmessage = (result) => {
       setData(result.data);
-      setDayViews(result.data.dayViews);
+      setDayViews(result.data.dayView);
       setHours(result.data.hours);
       //setTotalEvents(result.totalEvents);
       setIsHeaderLoading(false);
@@ -177,19 +182,9 @@ export function CalendarPublicView() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
-        <p>Weekly view is not available on smaller devices.</p>
-        <p>Please switch to daily or monthly view.</p>
-      </div>
-
-      <div className="flex flex-col ">
-        <div className="flex ">
-          <div className="mr-4 w-[500px]">
-            <RoomCategoryLayout rooms={rooms} onCheckedRoomsChange={handleCheckedRoomsChange} />
-          </div>
-
-          <FilteredRoomGrid filteredRooms={filteredRooms} hours={memoizedHours} dayViews={dayViews} />
-        </div>
+      <div className="flex flex-col sm:flex-row gap-2 ">
+        <RoomCategoryLayout rooms={rooms || []} onCheckedRoomsChange={handleCheckedRoomsChange} />
+        {<FilteredRoomGrid filteredRooms={filteredRooms} hours={memoizedHours} eventBlocks={dayViews?.eventBlocks} />}
       </div>
     </>
   );
