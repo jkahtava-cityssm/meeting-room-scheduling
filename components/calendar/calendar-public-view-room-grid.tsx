@@ -15,6 +15,7 @@ import { IEventList } from "./calendar-public-view";
 import { SingleDayPicker } from "../ui/single-day-picker";
 import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
+import { CalendarPublicViewRoomGridSkeleton } from "./skeleton-calendar-public-view-room-grid";
 
 export const FilteredRoomGrid = React.memo(
 	({
@@ -25,11 +26,13 @@ export const FilteredRoomGrid = React.memo(
 		selectedDate,
 	}: {
 		isLoading: boolean;
-		filteredRooms: PUBLIC_IROOM[];
-		hours: number[];
+		filteredRooms: PUBLIC_IROOM[] | undefined;
+		hours: number[] | undefined;
 		eventBlocks: IEventList | undefined;
 		selectedDate?: Date;
 	}) => {
+		const isMounting = !filteredRooms || !eventBlocks || !hours;
+
 		return (
 			<div className="flex-1 ">
 				<div className={`w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg) flex justify-center`}>
@@ -41,12 +44,16 @@ export const FilteredRoomGrid = React.memo(
 				<div
 					className={` w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg) flex justify-center overflow-hidden h-[calc(100vh-200px)]`}
 				>
-					<CalendarView
-						isLoading={isLoading}
-						eventBlocks={eventBlocks}
-						filteredRooms={filteredRooms}
-						hours={hours}
-					></CalendarView>
+					{isMounting ? (
+						<CalendarPublicViewRoomGridSkeleton></CalendarPublicViewRoomGridSkeleton>
+					) : (
+						<CalendarView
+							isLoading={isLoading}
+							eventBlocks={eventBlocks}
+							filteredRooms={filteredRooms}
+							hours={hours}
+						></CalendarView>
+					)}
 				</div>
 			</div>
 		);
