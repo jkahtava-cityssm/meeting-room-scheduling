@@ -2,6 +2,7 @@ import { createAuthClient } from "better-auth/react";
 import { customSessionClient } from "better-auth/client/plugins";
 import type { auth } from "@/lib/auth";
 import { SessionAction, SessionResource, SessionRole } from "./types";
+import { hasRole, isRequirementMet } from "./api-helpers";
 
 export const authClient = createAuthClient({
   /** The base URL of the server (optional if you're using the same domain) */
@@ -21,26 +22,11 @@ export function checkSessionPermission(
 ) {
   if (!session || !session.user || !session.user.roles) return false;
 
-  if (checkSessionRole(session, "Admin")) {
-    return true;
-  }
-
-  const permission = session.user.roles.some((role) => {
-    return role.permissions.some((permission) => {
-      return (
-        permission.permit === true &&
-        permission.resource.toLowerCase() === resource.toLowerCase() &&
-        permission.action.toLowerCase() === action.toLowerCase()
-      );
-    });
-  });
-
-  return permission;
+  return isRequirementMet(session.user.roles, { type: "permission", action, resource });
 }
 
 export function checkSessionRole(session: Session | undefined | null, role: SessionRole) {
   if (!session || !session.user || !session.user.roles) return false;
-  return session.user.roles.some((item) => {
-    return item.name.toLowerCase() === role.toLowerCase();
-  });
+
+  return isRequirementMet(session.user.roles, { type: "role", role });
 }
