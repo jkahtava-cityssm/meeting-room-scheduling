@@ -58,6 +58,7 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 Minutes
     },
   },
+  trustedOrigins: ["http://192.168.50.33", "https://192.168.50.33", "http://localhost:3000"],
   databaseHooks: {
     user: {
       update: {
