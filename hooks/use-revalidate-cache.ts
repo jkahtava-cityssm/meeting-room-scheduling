@@ -9,6 +9,8 @@ export function useRevalidateAndInvalidate() {
   const paths = ["/api/users/[userId]", "/api/users", "/api/users/" + session?.user.id];
   const tags = [session?.user.id, "users"];
 
+  const clientTags = ["users", "rooms"];
+
   const revalidateAndInvalidate = async () => {
     try {
       // Call your Next.js API route to revalidate paths
@@ -21,8 +23,9 @@ export function useRevalidateAndInvalidate() {
         throw new Error("Failed to revalidate paths");
       }
 
-      //queryClient.invalidateQueries();
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      clientTags.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
 
       return { success: true };
     } catch (error) {
