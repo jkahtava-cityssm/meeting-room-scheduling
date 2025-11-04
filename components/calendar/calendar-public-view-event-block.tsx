@@ -39,11 +39,14 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
             height: `${heightInPixels}px`,
           }}
         >
-          <div className="flex items-center gap-1.5 ">
-            <p className="truncate font-semibold">{eventBlock.event.title ?? "Booked"}</p>
+          <div className="flex items-center">
+            <p className="font-semibold text-wrap">Booked</p>
           </div>
-          <div className="flex items-center gap-1.5 truncate">
-            <p className="truncate">{timeRange}</p>
+          <div className="flex items-center text-wrap">
+            <p>{timeRange}</p>
+          </div>
+          <div className="flex items-center pt-1">
+            <p className="text-wrap">{eventBlock.event.title}</p>
           </div>
         </div>
       </TooltipTrigger>
@@ -54,6 +57,7 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
           </div>
           <p className="text-primary-foreground/80 text-sm font-normal">Booked</p>
           <p className="text-primary-foreground/80 text-sm font-normal">{timeRange}</p>
+          <p className="text-primary-foreground/80 text-sm font-normal">{eventBlock.event.title}</p>
         </div>
       </TooltipContent>
     </Tooltip>
