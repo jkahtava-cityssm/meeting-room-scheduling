@@ -151,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <Link href="/bookings/user-view">
                 <div className="flex aspect-square size-8 items-center justify-center">
                   <Image
-                    src="/images/city-shield-wreath-cmyk.svg"
+                    src="/images/menu_logo.svg"
                     alt="An image of the crest and wreath of the city of Sault Ste. Marie"
                     width={32}
                     height={32}

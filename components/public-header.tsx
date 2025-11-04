@@ -84,7 +84,7 @@ export function PublicHeader({ left, title, right, children }: HeaderProps) {
 <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
         <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
           <Image
-            src="/images/city-shield-wreath-cmyk.svg"
+            src="/images/menu_logo.svg"
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={32}
             height={32}
