@@ -87,8 +87,8 @@ model Room {
 
   roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
   roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
-  Event        Event[]
-  RoomProperty RoomProperty[]
+  event        Event[]
+  roomProperty RoomProperty[]
 
   @@map("room")
 }

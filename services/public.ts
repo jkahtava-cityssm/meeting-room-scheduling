@@ -1,5 +1,5 @@
 import { fetchGET } from "@/lib/fetch";
-import { SEvent, SRecurrence, SRoom, SRoomCategory } from "@/lib/schemas/calendar";
+import { SEvent, SRecurrence, SRoom, SRoomCategory, SRoomProperty } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { formatISO } from "date-fns";
 import { z } from "zod";
@@ -16,7 +16,10 @@ const PUBLIC_SROOM = z.object({
     roomCategoryId: true,
     name: true,
   }),
-  roomProperty: SRoom.shape.RoomProperty,
+  roomProperty: SRoomProperty.pick({
+    name: true,
+    value: true,
+  }).array(),
 });
 
 const PUBLIC_SEVENT = z.object({

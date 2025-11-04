@@ -50,6 +50,20 @@ export const RoomCategoryLayout = ({
     });
   };
 
+  const filterRoom = () => {
+    const roomsWithProjectors = rooms
+      .filter((room) =>
+        (room.roomProperty ?? []).some(
+          (properties) => properties.name === "HasProjector" && properties.value === "true"
+        )
+      )
+      .map((room) => room.roomId);
+
+    const newSet = new Set(roomsWithProjectors);
+
+    setCheckedRooms(newSet);
+  };
+
   const handleRoomClick = (roomId: number) => {
     debouncedToggleRoom(roomId, toggleRoom);
   };
@@ -122,7 +136,7 @@ export const RoomCategoryLayout = ({
     <div className="space-y-6 w-(--public-calendar-filter-w-col-1) xs:w-(--public-calendar-filter-w-col-2) sm:w-(--public-calendar-filter-w-col-1) lg:w-(--public-calendar-filter-w-col-2) ">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-y-2 w-full border-b py-4 mb-4">
         <Label className="text-md font-bold">Meeting Room Filters</Label>
-        <Button size="sm" className="text-xs w-50">
+        <Button size="sm" className="text-xs w-50" onClick={filterRoom}>
           <FilterIcon></FilterIcon> Select Rooms with Projectors
         </Button>
       </div>

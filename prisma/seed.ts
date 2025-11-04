@@ -158,6 +158,19 @@ async function FindCreateRoomCategory(name: string) {
   return record;
 }
 
+async function FindCreateRoomProperty(roomId: number, name: string, value: string) {
+  let record = await prisma.roomProperty.findFirst({
+    where: { roomId: roomId, name: name },
+  });
+
+  if (!record) {
+    record = await prisma.roomProperty.create({
+      data: { roomId: roomId, name: name, value: value },
+    });
+  }
+  return record;
+}
+
 async function FindCreateRooms(
   name: string,
   color: TColors,
@@ -720,12 +733,14 @@ async function main() {
   });
 */
   const roomList: {
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
     roomId: number;
+    name: string;
     color: string;
     icon: string | null;
+    roomScopeId: number;
+    createdAt: Date;
+    updatedAt: Date;
+    roomCategoryId: number;
   }[] = [];
 
   await FindCreateRoomScope("Public");
@@ -754,6 +769,23 @@ async function main() {
   roomList.push(await FindCreateRooms("Korah Room", "green", "BookKey", category_small));
   roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey", category_small));
   roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey", category_small));
+
+  const projectorRooms: string[] = [
+    "Biggings Room",
+    "Plummer Room",
+    "Russ Ramsay",
+    "W.J. Thompson Room",
+    "IT Training Room",
+    "Council Chambers",
+  ];
+
+  for (const room of roomList) {
+    const property = await FindCreateRoomProperty(
+      room.roomId,
+      "HasProjector",
+      projectorRooms.includes(room.name) ? "true" : "false"
+    );
+  }
 
   //await FindCreateEventStatus("Created");
   await FindCreateEventStatus("Pending Review");

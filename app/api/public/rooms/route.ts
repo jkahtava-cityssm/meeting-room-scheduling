@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
       name: true,
       color: true,
       roomCategory: { select: { roomCategoryId: true, name: true } },
-      RoomProperty: { select: { name: true, value: true } },
+      roomProperty: { select: { name: true, value: true } },
     },
     where: { roomScope: { name: "Public" } },
   });
