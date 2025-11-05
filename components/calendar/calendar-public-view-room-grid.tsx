@@ -25,20 +25,24 @@ export const FilteredRoomGrid = React.memo(
     hours,
     eventBlocks,
     selectedDate,
+    isSidebarOpen,
   }: {
     isLoading: boolean;
     filteredRooms: PUBLIC_IROOM[] | undefined;
     hours: number[] | undefined;
     eventBlocks: IEventList | undefined;
     selectedDate?: Date;
+    isSidebarOpen?: boolean;
   }) => {
     const isMounting = !filteredRooms || !eventBlocks || !hours;
 
+    const breakpoints = isSidebarOpen
+      ? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg)"
+      : "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
+
     return (
       <div className="flex-1 ">
-        <div
-          className={`w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg) flex justify-center`}
-        >
+        <div className={`${breakpoints} flex justify-center`}>
           <div className={`w-[calc(100%-10px)] flex justify-center  px-12  border-b py-4 mb-4`}>
             {isMounting ? (
               <DateControlSkeleton selectedDate={selectedDate || new Date()}></DateControlSkeleton>
@@ -48,9 +52,7 @@ export const FilteredRoomGrid = React.memo(
           </div>
         </div>
 
-        <div
-          className={` w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg) flex justify-center overflow-hidden h-[calc(100vh-200px)]`}
-        >
+        <div className={`${breakpoints} flex justify-center overflow-hidden h-[calc(100vh-200px)]`}>
           {isMounting ? (
             <CalendarPublicViewRoomGridSkeleton></CalendarPublicViewRoomGridSkeleton>
           ) : (
@@ -237,7 +239,7 @@ const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
   );
 };
 
-const DateControlSkeleton = ({ selectedDate }: { selectedDate: Date }) => {
+export const DateControlSkeleton = ({ selectedDate }: { selectedDate: Date }) => {
   return (
     <div className="grid grid-cols-2 gap-2 auto-cols-min lg:grid-cols-[auto_minmax(10rem,1fr)_auto] w-full items-center min-w-65">
       <div className="text-center justify-self-center col-span-2 lg:col-start-2 lg:col-span-1 lg:row-start-1">

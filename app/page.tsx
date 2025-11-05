@@ -7,8 +7,19 @@ import { ThemeButton } from "@/components/theme-button";
 import { PublicHeader } from "@/components/public-header";
 import { CalendarPublicView } from "@/components/calendar/calendar-public-view";
 import { CalendarProvider } from "@/contexts/CalendarProvider";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session) {
+    redirect("/availability");
+  }
+
   return (
     <div className="[--header-height:calc(--spacing(14))]">
       <PublicHeader
