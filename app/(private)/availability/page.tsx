@@ -9,9 +9,11 @@ export default function Availability() {
   const { open, openMobile, isMobile } = useSidebar();
   return (
     <div className="flex flex-1 flex-col ">
-      <CalendarProvider>
-        <CalendarPublicView sideBarOpen={open && !isMobile}></CalendarPublicView>
-      </CalendarProvider>
+      <Suspense fallback={<>...Loading</>}>
+        <CalendarProvider>
+          <CalendarPublicView sideBarOpen={open && !isMobile}></CalendarPublicView>
+        </CalendarProvider>
+      </Suspense>
     </div>
   );
 }
