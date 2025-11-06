@@ -1,11 +1,11 @@
 import { z } from "zod/v4";
 
 export const SRoomScope = z.object({
-  room_scope_id: z.number(),
+  roomScopeId: z.number(),
   name: z.string().min(1, "Name is required"),
   createdAt: z.string(),
   updatedAt: z.string(),
-  access_level: z.number(),
+  accessLevel: z.number(),
 });
 
 export const SRoomCategory = z.object({
@@ -16,8 +16,8 @@ export const SRoomCategory = z.object({
 });
 
 export const SRoomProperty = z.object({
-  room_property_id: z.number(),
-  room_id: z.number(),
+  roomPropertyId: z.number(),
+  roomId: z.number(),
   name: z.string().min(1, "Name is required"),
   value: z.string().min(1, "Value is required"),
   createdAt: z.string(),

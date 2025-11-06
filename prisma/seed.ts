@@ -73,9 +73,10 @@ async function FindCreatePermissionSet(
     actionRead: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
     actionUpdate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
     actionDelete: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
+    accessPrivate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
   },
   resource: { resourceId: number; createdAt: Date; updatedAt: Date; name: string },
-  permissions: { create: boolean; read: boolean; update: boolean; delete: boolean }
+  permissions: { create: boolean; read: boolean; update: boolean; delete: boolean; access: boolean }
 ) {
   const resourceActionEventCreate = await FindCreateRoleResourceAction(
     role.roleId,
@@ -102,7 +103,20 @@ async function FindCreatePermissionSet(
     permissions.delete
   );
 
-  return { resourceActionEventCreate, resourceActionEventRead, resourceActionEventUpdate, resourceActionEventDelete };
+  const resourceActionEventAccess = await FindCreateRoleResourceAction(
+    role.roleId,
+    resource.resourceId,
+    actions.accessPrivate.actionId,
+    permissions.access
+  );
+
+  return {
+    resourceActionEventCreate,
+    resourceActionEventRead,
+    resourceActionEventUpdate,
+    resourceActionEventDelete,
+    resourceActionEventAccess,
+  };
 }
 
 async function FindCreateUserRole(roleId: number, userId: number) {
@@ -670,8 +684,9 @@ async function main() {
   const actionRead = await FindCreateAction("Read");
   const actionUpdate = await FindCreateAction("Update");
   const actionDelete = await FindCreateAction("Delete");
+  const accessPrivate = await FindCreateAction("AccessPrivate");
 
-  const actions = { actionCreate, actionRead, actionUpdate, actionDelete };
+  const actions = { actionCreate, actionRead, actionUpdate, actionDelete, accessPrivate };
 
   for (const role of DEFAULT_USER_ROLES) {
     const dbRole = await FindCreateRole(role);
@@ -682,6 +697,7 @@ async function main() {
         read: true,
         update: role === "Admin" || role === "Clerk" ? true : false,
         delete: role === "Admin" || role === "Clerk" ? true : false,
+        access: role === "Admin" || role === "Clerk" ? true : false,
       };
       const dbResource = await FindCreateResource(resource);
       await FindCreatePermissionSet(dbRole, actions, dbResource, defaultPermission);

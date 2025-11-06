@@ -52,7 +52,7 @@ export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Any"] as const;
 
 export const DEFAULT_RESOURCES = ["Event", "Room", "User", "ReservationCalendar"] as const;
 
-export const DEFAULT_ACTIONS = ["Create", "Read", "Update", "Delete"] as const;
+export const DEFAULT_ACTIONS = ["Create", "Read", "Update", "Delete", "AccessPrivate"] as const;
 
 export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
 export type SessionResource = (typeof DEFAULT_RESOURCES)[number];

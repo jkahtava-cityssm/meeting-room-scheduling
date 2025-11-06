@@ -147,12 +147,12 @@ export async function GET(request: NextRequest) {
     request,
     { type: "permission", resource: "Event", action: "Read" },
 
-    async () => {
+    async (userId, roles) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");
       const endDateParam = searchParams.get("enddate");
-      const userId = searchParams.get("userId");
+      const hasUserId = searchParams.get("userId");
 
       if (!startDateParam || !endDateParam) {
         return BadRequestMessage();
@@ -176,12 +176,12 @@ export async function GET(request: NextRequest) {
         ],
       };
 
-      if (userId) {
+      if (hasUserId) {
         whereClause.AND = [{ userId: { equals: Number(userId) } }];
       }
 
       const events = await prisma.event.findMany({
-        include: { room: true, recurrence: true },
+        include: { room: { include: { roomScope: true, roomCategory: true, roomProperty: true } }, recurrence: true },
         where: whereClause,
       });
 

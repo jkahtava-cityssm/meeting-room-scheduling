@@ -121,7 +121,7 @@ model RoomScope {
   name        String
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  roomScope   Int      @default(1) @map("access_level")
+  accessLevel Int      @default(1) @map("access_level")
   room        Room[]
 
   @@map("room_scope")
