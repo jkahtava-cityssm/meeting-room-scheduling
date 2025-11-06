@@ -260,6 +260,9 @@
     100dvw - 300px - (var(--public-calendar-filter-w-col-1) + (var(--spacing) * 10))
   );
   --public-calendar-sidebar-w-lg: calc(100dvw - 90px - (var(--public-calendar-filter-w-col-2) + (var(--spacing) * 15)));
+  --public-calendar-sidebar-w-xl: calc(
+    100dvw - 300px - (var(--public-calendar-filter-w-col-2) + (var(--spacing) * 15))
+  );
 }
 
 :root {

@@ -143,7 +143,7 @@ export const RoomCategoryLayout = ({
   return (
     <div className={`space-y-6 ${breakpoints}`}>
       <div className={`grid grid-cols ${gridBreakpoints} gap-y-2 w-full border-b py-4 mb-4`}>
-        <Label className="text-md font-bold">Meeting Room Filters</Label>
+        <Label className="text-md font-bold h-8">Meeting Room Filters</Label>
         <Button size="sm" className="text-xs w-50" onClick={filterRoom}>
           <FilterIcon></FilterIcon> Select Rooms with Projectors
         </Button>

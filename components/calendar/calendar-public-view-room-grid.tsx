@@ -37,7 +37,7 @@ export const FilteredRoomGrid = React.memo(
     const isMounting = !filteredRooms || !eventBlocks || !hours;
 
     const breakpoints = isSidebarOpen
-      ? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg)"
+      ? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
       : "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
 
     return (

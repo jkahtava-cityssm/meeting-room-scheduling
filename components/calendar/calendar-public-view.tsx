@@ -167,7 +167,6 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 
   return (
     <>
-      <BreakPointText></BreakPointText>
       <div className={`flex flex-col sm:flex-row gap-2`}>
         {rooms ? (
           <RoomCategoryLayout

@@ -6,11 +6,11 @@ import { CalendarProvider } from "@/contexts/CalendarProvider";
 import { Suspense } from "react";
 
 export default function Availability() {
-  const { open } = useSidebar();
+  const { open, openMobile, isMobile } = useSidebar();
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col ">
       <CalendarProvider>
-        <CalendarPublicView sideBarOpen={open}></CalendarPublicView>
+        <CalendarPublicView sideBarOpen={open && !isMobile}></CalendarPublicView>
       </CalendarProvider>
     </div>
   );
