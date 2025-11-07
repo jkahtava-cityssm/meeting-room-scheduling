@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "dev-start": "NODE_TLS_REJECT_UNAUTHORIZED=0 next start",
+    "selfsignedstart": "NODE_TLS_REJECT_UNAUTHORIZED=0 next start",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
