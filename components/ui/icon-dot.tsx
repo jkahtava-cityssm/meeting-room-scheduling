@@ -6,16 +6,16 @@ import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 
 import { TColors } from "@/lib/types";
-import { sharedIconDotVariants } from "./eventCardVariants";
+import { sharedIconDotVariants } from "./theme/colorVariants";
 
 const IconColor = cva("", {
-	variants: {
-		color: sharedIconDotVariants,
-	},
-	compoundVariants: [],
-	defaultVariants: {
-		color: "blue",
-	},
+  variants: {
+    color: sharedIconDotVariants,
+  },
+  compoundVariants: [],
+  defaultVariants: {
+    color: "blue",
+  },
 });
 
 /*
@@ -26,23 +26,18 @@ React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<SVGSVGElement>
 // &Omit<VariantProps<typeof IconColor>, "color">;
 
 function IconDot({
-	color,
-	...props
+  color,
+  ...props
 }: //className,
 //...props
 {
-	color: TColors;
+  color: TColors;
 }) {
-	//Omit<LucideProps, "ref"> &
-	//React.RefAttributes<SVGSVGElement>
-	const EventCardClasses = IconColor({ color: color });
+  //Omit<LucideProps, "ref"> &
+  //React.RefAttributes<SVGSVGElement>
+  const EventCardClasses = IconColor({ color: color });
 
-	return (
-		<div
-			{...props}
-			className={cn("size-1.5 rounded-full", EventCardClasses)}
-		/>
-	);
+  return <div {...props} className={cn("size-1.5 rounded-full", EventCardClasses)} />;
 }
 
 export { IconDot };

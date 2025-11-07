@@ -5,7 +5,7 @@ import { TColors } from "../../lib/types";
 import { IEventBlock } from "./calendar-day-view";
 
 import EventDrawer from "../event-drawer/event-drawer";
-import { sharedColorVariants } from "../ui/eventCardVariants";
+import { sharedColorVariants } from "../ui/theme/colorVariants";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

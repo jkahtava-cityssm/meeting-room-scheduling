@@ -5,7 +5,7 @@ import { TColors } from "../../lib/types";
 import { IEventBlock } from "./calendar-day-view";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { sharedColorVariants } from "../ui/eventCardVariants";
+import { sharedColorVariants } from "../ui/theme/colorVariants";
 import { TooltipPortal } from "@radix-ui/react-tooltip";
 
 export const PublicEventCard = cva(
