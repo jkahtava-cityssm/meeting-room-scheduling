@@ -87,6 +87,7 @@ export const SEvent = z.object({
 export const SStatus = z.object({
   statusId: z.number(),
   name: z.string(),
+  icon: z.string(),
 });
 
 export type IStatus = z.infer<typeof SStatus>;

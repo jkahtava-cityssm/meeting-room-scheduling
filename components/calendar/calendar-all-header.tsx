@@ -25,8 +25,7 @@ export function CalendarHeader({
   userId?: string;
 }) {
   const { session, isPending } = useClientSession();
-
-  const { setSelectedRoomId } = useCalendar();
+  const { setSelectedRoomId, selectedRoomId } = useCalendar();
   const { push } = useRouter();
 
   const handleNavigatePrevious = () => {
@@ -124,7 +123,7 @@ export function CalendarHeader({
             </div>
           </div>
           <div className="w-full sm:w-auto">
-            <RoomSelect onRoomChange={handleNavigateRoomChange} />
+            <RoomSelect selectedRoomId={selectedRoomId} onRoomChange={handleNavigateRoomChange} />
           </div>
           {/*<AddEventDialog>
             <Button className="w-full sm:w-auto">

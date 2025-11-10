@@ -5,7 +5,7 @@ export function useClientSession() {
   const { data: session, isPending } = useSession();
 
   if (!session && !isPending) {
-    redirect("/");
+    redirect("/login");
   }
 
   return { session, isPending };

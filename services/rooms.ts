@@ -9,7 +9,7 @@ const AllRooms: IRoom = {
   color: "zinc",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  icon: "Asterisk",
+  icon: "asterisk",
   roomScopeId: -1,
   roomScope: {
     roomScopeId: -1,

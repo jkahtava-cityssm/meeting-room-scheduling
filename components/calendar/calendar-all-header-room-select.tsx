@@ -9,9 +9,18 @@ import { Asterisk, BookKey } from "lucide-react";
 
 import { Skeleton } from "../ui/skeleton";
 import { useRoomsQuery } from "@/services/rooms";
+import DynamicIcon, { IconName } from "../ui/icon-dynamic";
+import { Badge } from "../ui/badge";
+import { BadgeColored } from "../ui/badge-colored";
 
-export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => void }) {
-  const { selectedRoomId } = useCalendar();
+export function RoomSelect({
+  selectedRoomId,
+  onRoomChange,
+}: {
+  selectedRoomId: string;
+  onRoomChange: (value: string) => void;
+}) {
+  //const { selectedRoomId } = useCalendar();
 
   const { isPending, data } = useRoomsQuery(true);
 
@@ -48,12 +57,31 @@ export function RoomSelect({ onRoomChange }: { onRoomChange: (value: string) => 
 
       <SelectContent align="end">
         {data.map((room) => (
-          <SelectItem key={room.roomId} value={room.roomId.toString()} className="flex-1">
-            <div className="flex items-center gap-2">
+          <SelectItem key={room.roomId} value={room.roomId.toString()} className="flex-1 w-full ">
+            <div className="flex items-center gap-2 w-full ">
+              <BadgeColored color={room.color as TColors} className="w-full text-sm">
+                <DynamicIcon
+                  hideBackground={true}
+                  color={room.color as TColors}
+                  name={room.icon as IconName}
+                ></DynamicIcon>
+                {room.name}
+              </BadgeColored>
+              {/*
+              <DynamicIcon
+                hideBackground={false}
+                color={room.color as TColors}
+                name={room.icon as IconName}
+              ></DynamicIcon>
+              <p className="truncate">{room.name}</p>
+
+
+
               <IconColored hideBackground={false} color={room.color as TColors} showBorder={true}>
                 {room.roomId === -1 ? <Asterisk /> : <BookKey />}
               </IconColored>
-              <p className="truncate">{room.name}</p>
+              
+              */}
             </div>
           </SelectItem>
         ))}

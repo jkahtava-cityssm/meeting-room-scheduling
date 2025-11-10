@@ -12,6 +12,11 @@ import {
 } from "./seed-data";
 import { ByWeekday, datetime, RRule } from "rrule";
 
+import dynamicIconImports from "lucide-react/dynamicIconImports";
+
+// Define the type for icon names
+type IconName = keyof typeof dynamicIconImports;
+
 const prisma = new PrismaClient();
 
 const prismaAdmin = new PrismaClient({
@@ -188,7 +193,7 @@ async function FindCreateRoomProperty(roomId: number, name: string, value: strin
 async function FindCreateRooms(
   name: string,
   color: TColors,
-  icon: string,
+  icon: IconName,
   roomCategoryId: number = 1,
   roomScopeId: number = 1
 ) {
@@ -204,14 +209,14 @@ async function FindCreateRooms(
   return record;
 }
 
-async function FindCreateEventStatus(name: string) {
+async function FindCreateEventStatus(name: string, icon: IconName) {
   let record = await prisma.status.findFirst({
     where: { name: name },
   });
 
   if (!record) {
     record = await prisma.status.create({
-      data: { name: name },
+      data: { name: name, icon: icon },
     });
   }
   return record;
@@ -769,22 +774,22 @@ async function main() {
 
   //await FindCreateRooms("All", "zinc", "Asterisk");
 
-  roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("IT Training Room", "pink", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("Biggings Room", "orange", "book-key", category_large));
+  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "book-key", category_large));
+  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "book-key", category_large));
+  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "book-key", category_large));
+  roomList.push(await FindCreateRooms("IT Training Room", "pink", "book-key", category_large));
 
-  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "BookKey", category_special));
-  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "BookKey", category_special));
+  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "book-key", category_special));
+  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "book-key", category_special));
 
-  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey", category_special, 2));
-  roomList.push(await FindCreateRooms("Cafeteria", "amber", "BookKey", category_special, 2));
-  roomList.push(await FindCreateRooms("Penthouse", "violet", "BookKey", category_special, 2));
+  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "book-key", category_special, 2));
+  roomList.push(await FindCreateRooms("Cafeteria", "amber", "book-key", category_special, 2));
+  roomList.push(await FindCreateRooms("Penthouse", "violet", "book-key", category_special, 2));
 
-  roomList.push(await FindCreateRooms("Korah Room", "green", "BookKey", category_small));
-  roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey", category_small));
-  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey", category_small));
+  roomList.push(await FindCreateRooms("Korah Room", "green", "book-key", category_small));
+  roomList.push(await FindCreateRooms("Steelton Room", "slate", "book-key", category_small));
+  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "book-key", category_small));
 
   const projectorRooms: string[] = [
     "Biggings Room",
@@ -804,10 +809,10 @@ async function main() {
   }
 
   //await FindCreateEventStatus("Created");
-  await FindCreateEventStatus("Pending Review");
-  await FindCreateEventStatus("Confirmed");
-  await FindCreateEventStatus("Rejected");
-  await FindCreateEventStatus("Additional Info Required");
+  await FindCreateEventStatus("Pending Review", "circle-pause");
+  await FindCreateEventStatus("Confirmed", "circle-check");
+  await FindCreateEventStatus("Rejected", "circle-x");
+  await FindCreateEventStatus("Additional Info Required", "circle-question-mark");
 
   const user = await prisma.user.findFirst();
   if (!user) {

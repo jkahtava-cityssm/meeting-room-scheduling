@@ -64,7 +64,10 @@ export function NavMain({
           ) : (
             <SidebarMenuSubItem key={item.title}>
               <SidebarMenuSubButton asChild>
-                <Link href={item.url}>{item.title}</Link>
+                <SidebarMenuButton tooltip={item.title}>
+                  {item.icon && <item.icon />}
+                  <Link href={item.url}>{item.title}</Link>
+                </SidebarMenuButton>
               </SidebarMenuSubButton>
             </SidebarMenuSubItem>
           )

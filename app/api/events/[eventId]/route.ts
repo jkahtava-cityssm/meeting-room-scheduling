@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const events = await prisma.event.findMany({
-      include: { room: true, recurrence: true },
+      include: { room: { include: { roomScope: true, roomCategory: true, roomProperty: true } }, recurrence: true },
       where: { eventId: parseInt(eventId) },
     });
 

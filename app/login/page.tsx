@@ -15,7 +15,7 @@ export default async function Home() {
   });
 
   if (session) {
-    redirect("/bookings/user-view");
+    redirect("/availability");
   }
 
   return (

@@ -79,7 +79,7 @@ model Room {
   roomId         Int      @id @default(autoincrement()) @map("room_id")
   name           String
   color          String
-  icon           String?
+  icon           String?  @default("none")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   roomScopeId    Int      @default(1) @map("room_scope_id")
@@ -274,6 +274,8 @@ model Event {
 model Status {
   statusId  Int      @id @default(autoincrement()) @map("status_id")
   name      String
+  icon      String?  @default("none")
+  color     String?  @default("none")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
