@@ -52,17 +52,17 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
 function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
   const badgeVariants = cva("", {
     variants: {
-      colour: sharedColorVariants,
+      color: sharedColorVariants,
     },
     defaultVariants: {
-      colour: "slate",
+      color: "slate",
     },
   });
 
   return (
     <div className="w-full">
       <div
-        className={cn("sticky top-10 p-2  shadow-sm h-10 border-2", badgeVariants({ colour: roomSection.roomColour }))}
+        className={cn("sticky top-10 p-2  shadow-sm h-10 border-2", badgeVariants({ color: roomSection.roomColour }))}
       >
         <span className={cn("flex-1 text-md")}> {roomSection.roomName}</span>
       </div>

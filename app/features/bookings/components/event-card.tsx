@@ -23,7 +23,7 @@ export default function EventCard({
       <CardHeader>
         <CardTitle className="flex flex-row w-full justify-between items-center pb-2 mb-1 border-b">
           {eventCardFields.cardTitle}
-          <BadgeColored color={eventCardFields.colour}>{eventCardFields.roomName}</BadgeColored>
+          <BadgeColored color={eventCardFields.color}>{eventCardFields.roomName}</BadgeColored>
         </CardTitle>
         <CardTitle className="flex flex-row w-full justify-between items-center">
           {eventCardFields.eventTitle}

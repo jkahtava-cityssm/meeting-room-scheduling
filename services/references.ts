@@ -7,6 +7,7 @@ const AllStatus: IStatus = {
   statusId: -1,
   name: "Any Status",
   icon: "asterisk",
+  color: "zinc",
 };
 
 export const useStatusQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>

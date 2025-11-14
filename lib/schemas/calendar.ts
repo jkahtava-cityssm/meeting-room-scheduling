@@ -27,7 +27,7 @@ export const SRoomProperty = z.object({
 export const SRoom = z.object({
   roomId: z.number(),
   name: z.string().min(1, "Name is required"),
-  color: z.string().min(1, "Colour is required"),
+  color: z.string().min(1, "Color is required"),
   icon: z.string().nullable(),
   roomScopeId: z.number(),
   roomScope: SRoomScope,
@@ -88,6 +88,7 @@ export const SStatus = z.object({
   statusId: z.number(),
   name: z.string(),
   icon: z.string(),
+  color: z.string(),
 });
 
 export type IStatus = z.infer<typeof SStatus>;

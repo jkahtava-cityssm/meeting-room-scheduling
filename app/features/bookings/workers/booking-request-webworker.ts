@@ -131,7 +131,7 @@ function FormatEventCardFields(event: IEvent): IEventCardFields {
   return {
     cardTitle:
       eventType === "Recurring" ? "Recurring Event" : eventType === "Multiple" ? "Multi-Day Event" : "Single Day Event",
-    colour: event.room.color as TColors,
+    color: event.room.color as TColors,
     eventTitle: event.title,
     roomName: event.room.name,
     dateRange: formatDateRange(event, eventType, firstInstance, lastInstance),

@@ -21,7 +21,7 @@ export interface IEventCard {
 
 export interface IEventCardFields {
   cardTitle: string;
-  colour: TColors;
+  color: TColors;
   eventTitle: string;
   roomName: string;
   dateRange: string;
