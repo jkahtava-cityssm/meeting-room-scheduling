@@ -6,7 +6,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "selfsignedstart": "NODE_TLS_REJECT_UNAUTHORIZED=0 next start",
     "build": "next build",
     "start": "next start",
