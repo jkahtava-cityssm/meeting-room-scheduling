@@ -27,6 +27,7 @@ import { useStatusQuery } from "@/services/references";
 import { DateTimePicker, DateTimePickerRef } from "../ui/datetimepicker";
 import { useRef } from "react";
 import { Session } from "@/lib/auth-client";
+import { getDurationText } from "@/lib/helpers";
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch } = useFormContext<z.infer<typeof step1Schema>>();
@@ -62,47 +63,56 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 ) : (
                   <FormLabel>Room</FormLabel>
                 )}
-                <Select
-                  disabled={isReadOnly}
-                  //readonly={isReadOnly}
-                  //{...field}
-                  name={field.name}
-                  value={field.value}
-                  //defaultValue={field.value}
-                  key={field.value}
-                  onValueChange={(value: string) => {
-                    if (value === "") {
-                      //There is a Bug with the Select Field when used with React Hook Form:
-                      //https://github.com/radix-ui/primitives/issues/2944
-                      //https://github.com/radix-ui/primitives/issues/3135
-                      //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
-                      //return;
-                    }
+                {rooms && (
+                  <Select
+                    disabled={isReadOnly}
+                    //readonly={isReadOnly}
+                    //{...field}
+                    name={field.name}
+                    value={field.value}
+                    //defaultValue={field.value}
+                    key={field.value}
+                    onValueChange={(value: string) => {
+                      if (value === "") {
+                        //There is a Bug with the Select Field when used with React Hook Form:
+                        //https://github.com/radix-ui/primitives/issues/2944
+                        //https://github.com/radix-ui/primitives/issues/3135
+                        //We can also prevent this behaviour by forcing a re-render if we add the property key={field.value}
+                        //return;
+                      }
 
-                    field.onChange(value);
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className="min-w-52">
-                      <SelectValue placeholder="Select an option" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="min-w-52">
-                    {rooms?.map((room) => {
-                      return (
-                        <SelectItem key={room.roomId} value={room.roomId?.toString()} className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <IconColored color={room.color as TColors} showBorder={false} hideBackground={true}>
-                              <BookKey />
-                            </IconColored>
+                      field.onChange(value);
+                    }}
+                  >
+                    <FormControl>
+                      <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className="min-w-52">
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                    </FormControl>
 
-                            <p className="truncate">{room.name}</p>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                    <SelectContent className="min-w-52">
+                      {rooms?.map((room) => {
+                        return (
+                          <SelectItem key={room.roomId} value={room.roomId?.toString()} className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <IconColored color={room.color as TColors} showBorder={false} hideBackground={true}>
+                                <BookKey />
+                              </IconColored>
+
+                              <p className="truncate">{room.name}</p>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                )}
+                {!rooms && (
+                  <Button variant={"outline"} disabled>
+                    <Loader2Icon className="animate-spin" />
+                    Collecting Rooms
+                  </Button>
+                )}
               </FormItem>
             )}
           />
@@ -403,18 +413,6 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
       <ScrollBar orientation="vertical" forceMount></ScrollBar>
     </ScrollArea>
   );
-};
-
-export const getDurationText = (startDateTime: string, endDateTime: string): string => {
-  //const startDateTime = combineDateTime(new Date(startDate), new Date(startTime));
-  //const endDateTime = combineDateTime(new Date(endDate), new Date(endTime));
-
-  const duration = formatDuration(intervalToDuration({ start: new Date(startDateTime), end: new Date(endDateTime) }), {
-    format: ["years", "months", "days", "hours", "minutes"],
-    delimiter: ", ",
-  });
-
-  return duration.length === 0 ? "0 Minutes" : duration;
 };
 
 /*<div className="flex flex-col gap-3">

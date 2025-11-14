@@ -1,9 +1,10 @@
 import { IEvent } from "@/lib/schemas/calendar";
 import { addMinutes, differenceInYears, endOfDay, startOfDay } from "date-fns";
 import { z } from "zod/v4";
-import { getDurationText } from "./step1";
+
 import { RRule, rrulestr } from "rrule";
 import { getValidMinuteAndRolledHour } from "./multi-step-form-helper";
+import { getDurationText } from "@/lib/helpers";
 
 /*export const step1Schema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),

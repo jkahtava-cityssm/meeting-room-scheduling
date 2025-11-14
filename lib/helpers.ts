@@ -384,18 +384,6 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
     GENERIC FUNCTIONS
 ########################################################################*/
 
-export const getDurationText = (startDate: Date, startTime: Date, endDate: Date, endTime: Date): string => {
-  const startDateTime = combineDateTime(startDate, startTime);
-  const endDateTime = combineDateTime(endDate, endTime);
-
-  const duration = formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
-    format: ["years", "months", "days", "hours", "minutes"],
-    delimiter: ", ",
-  });
-
-  return duration.length === 0 ? "0 Minutes" : duration;
-};
-
 export const combineDateTime = (dateField: Date, timeField: Date) => {
   const checkDate = isDate(dateField) ? dateField : new Date(dateField);
   const checkTime = isDate(timeField) ? timeField : new Date(timeField);
@@ -415,6 +403,15 @@ export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | 
 
   return results;
 }
+
+export const getDurationText = (startDateTime: string, endDateTime: string): string => {
+  const duration = formatDuration(intervalToDuration({ start: new Date(startDateTime), end: new Date(endDateTime) }), {
+    format: ["years", "months", "days", "hours", "minutes"],
+    delimiter: ", ",
+  });
+
+  return duration.length === 0 ? "0 Minutes" : duration;
+};
 
 export function calculateMonthlyRecurrenceEndDate(startDate: Date, occurrences: number, day: number, months: number) {
   let iterations = occurrences;
