@@ -41,15 +41,15 @@ export function StatusSelect({
       <SelectContent align="end">
         {data.map((status) => (
           <SelectItem key={status.statusId} value={status.statusId.toString()} className="flex-1">
-            <div className="flex items-center gap-2">
-              <BadgeColored color={status.color as TColors} className="w-full text-sm">
+            <div className="flex items-center gap-2 w-full text-sm">
+              <BadgeColored color={status.color as TColors} className="h-6 w-6">
                 <DynamicIcon
                   hideBackground={true}
                   color={status.color as TColors}
                   name={status.icon as IconName}
                 ></DynamicIcon>
-                {status.name}
               </BadgeColored>
+              {status.name}
             </div>
           </SelectItem>
         ))}

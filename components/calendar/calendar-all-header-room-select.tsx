@@ -58,15 +58,16 @@ export function RoomSelect({
       <SelectContent align="end">
         {data.map((room) => (
           <SelectItem key={room.roomId} value={room.roomId.toString()} className="flex-1 w-full ">
-            <div className="flex items-center gap-2 w-full ">
-              <BadgeColored color={room.color as TColors} className="w-full text-sm">
+            <div className="flex items-center gap-2 w-full text-sm">
+              <BadgeColored color={room.color as TColors} className="h-6 w-6">
                 <DynamicIcon
                   hideBackground={true}
                   color={room.color as TColors}
                   name={room.icon as IconName}
                 ></DynamicIcon>
-                {room.name}
               </BadgeColored>
+              {room.name}
+
               {/*
               <DynamicIcon
                 hideBackground={false}
