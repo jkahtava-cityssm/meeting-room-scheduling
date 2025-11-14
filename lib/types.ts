@@ -31,7 +31,7 @@ export const colorOptions = [
   "viola",
   "slate",
   "zinc",
-  "none",
+  "invisible",
 ] as const;
 
 export type TColors = (typeof colorOptions)[number];
