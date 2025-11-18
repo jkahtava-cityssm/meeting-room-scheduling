@@ -43,10 +43,10 @@ export function generateMultiDayEventsInPeriod(
   events: IEvent[],
   periodStart: Date,
   periodEnd: Date,
-  visibleHours: TVisibleHours
+  minStartTime: number,
+  maxEndTime: number,
 ) {
-  const minStartTime = visibleHours.from;
-  const maxEndTime = visibleHours.to;
+
 
   const eventList: IEvent[] = [];
 

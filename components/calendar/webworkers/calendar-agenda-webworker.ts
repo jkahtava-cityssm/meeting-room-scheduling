@@ -17,9 +17,11 @@ self.onmessage = async (event: MessageEvent<IAgendaProcessData>) => {
 async function processAgendaEvents(dayData: IAgendaProcessData): Promise<IAgendaResponseData> {
   const startDate: Date = startOfDay(dayData.selectedDate);
   const endDate: Date = endOfDay(dayData.selectedDate);
+  const fromTime = dayData.visibleHours.from
+  const toTime = dayData.visibleHours.to
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, dayData.visibleHours)),
+    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate,fromTime,toTime )),
     Promise.resolve(generateRecurringEventsInPeriod(dayData.events, startDate, endDate)),
   ]);
 

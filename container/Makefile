@@ -1,113 +1,44 @@
-
 export
 
-
-
-CONTAINER_MANAGER=docker
+CONTAINER_MANAGER=podman
 ENV_FILE_LOCATION=../.env
-MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.db.migrate.yml --env-file ${ENV_FILE_LOCATION}
-COMPOSE=$(CONTAINER_MANAGER) compose  -f docker-compose.yml --env-file ${ENV_FILE_LOCATION}
+MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose -f docker-compose.db.migrate.yml --env-file ${ENV_FILE_LOCATION}
+COMPOSE=$(CONTAINER_MANAGER) compose -f docker-compose.merged.yml --env-file ${ENV_FILE_LOCATION}
 
-CERTBOT_VOLUME=./certbot
-DUCKDNS_SCRIPT=./duckdns/update.sh
+.PHONY: init dev app migrate seed cert-init cert-renew down logs
 
-#CREATE DATABASE AND DEPLOY DATABASE
-init: create build up
-init-certbot: init cert-init restart-nginx
+# Production bootstrap (DB + migrate + app stack)
+init:
+	$(COMPOSE) --profile init up -d
 
-init-test: create-seed build up
-init-test-certbot: init-test cert-init restart-nginx
+# Development bootstrap (DB + migrate + seed + app stack)
+dev:
+	$(COMPOSE) --profile dev up -d
 
-start: up cert-init restart-nginx
-stop: down
-#CREATE & SEED
-create-seed: build-db up-db build-migrate up-migrate up-seed rm-migrate
+# App stack only (no migrations/seed)
+app:
+	$(COMPOSE) --profile app up -d
 
-#CREATE BLANK DATABASE
-create: build-db up-db build-migrate up-migrate rm-migrate
+# Run migrations only (one-off)
+migrate:
+	$(COMPOSE) --profile migrate run --rm prisma-migrate
 
-up: up-db up-nginx up-nextjs
+# Run seed only (one-off)
+seed:
+	$(COMPOSE) --profile seed run --rm prisma-seed
 
+# Obtain initial certificates
+cert-init:
+	$(COMPOSE) --profile cert-init run --rm cert-init
 
-build-migrate: 
-	$(MIGRATE_COMPOSE) build prisma-migrate 
-	    
-up-migrate:
-	$(MIGRATE_COMPOSE) run --rm prisma-migrate /bin/sh -c "npx prisma migrate deploy"
+# Start certbot renewal daemon (depends on duckdns-updater)
+cert-renew:
+	$(COMPOSE) --profile cert-renew up -d
 
-up-seed:
-	$(MIGRATE_COMPOSE) run --rm prisma-migrate /bin/sh -c "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
-
-rm-migrate:
-	$(CONTAINER_MANAGER) image rm prisma-migrate
-
-build-db:
-	$(COMPOSE) build postgres	
-
-up-db:
-	$(COMPOSE) up -d postgres
-
-
-#
-build: build-db build-nginx build-certbot build-nextjs
-
-build-nginx:
-	$(COMPOSE) build nginx
-
-up-nginx:
-	$(COMPOSE) up -d nginx
-
-build-nextjs:
-	$(COMPOSE) build nextjs-app
-
-up-nextjs:
-	$(COMPOSE) up -d nextjs-app
-
-build-certbot:
-	$(COMPOSE) build certbot
-
-
-
-reset:
-	$(COMPOSE) down -v --remove-orphans
-	rm -rf $(CERTBOT_VOLUME)/conf
-	rm -rf $(CERTBOT_VOLUME)/www
-	$(CONTAINER_MANAGER) volume rm container_postgres_data || true
-	make init
-
-
-#  Stop all services
+# Stop everything
 down:
 	$(COMPOSE) down
 
-# View logs
+# Tail logs
 logs:
 	$(COMPOSE) logs -f
-
-# Request initial SSL certificate
-cert-init:
-	$(CONTAINER_MANAGER) run --rm \
-		-v $(CERTBOT_VOLUME)/www:/var/www/certbot \
-		-v $(CERTBOT_VOLUME)/conf:/etc/letsencrypt \
-		certbot/certbot certonly \
-		--webroot -w /var/www/certbot \
-		--keep-until-expiring \
-		--email ${EMAIL} \
-		--agree-tos \
-		--no-eff-email \
-		-d ${DUCKDNS_DOMAIN}
-
-#  Manually renew SSL certificate
-cert-renew:
-	$(CONTAINER_MANAGER) run --rm \
-		-v $(CERTBOT_VOLUME)/www:/var/www/certbot \
-		-v $(CERTBOT_VOLUME)/conf:/etc/letsencrypt \
-		certbot/certbot renew --webroot -w /var/www/certbot
-
-
-restart-nginx:
-	$(COMPOSE) restart nginx
-
-restart-app:
-	$(COMPOSE) restart nextjs-app
-

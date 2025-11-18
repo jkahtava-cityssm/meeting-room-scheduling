@@ -17,6 +17,7 @@ RUN npm install ts-node typescript
 RUN npm install prisma@6.6.0 --save-dev
 RUN npm install date-fns
 RUN npm install rrule
+RUN npm install lucide-react
 
 RUN npx prisma generate
 

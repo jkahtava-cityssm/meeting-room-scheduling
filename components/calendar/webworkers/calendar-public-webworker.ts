@@ -25,12 +25,16 @@ self.onmessage = async (event: MessageEvent<IPublicProcessData>) => {
 };
 
 async function processDayEvents(dayData: IPublicProcessData): Promise<IPublicResponseData> {
+  
   const startDate: Date = startOfDay(dayData.selectedDate);
   const endDate: Date = endOfDay(dayData.selectedDate);
 
+      const fromTime = dayData.visibleHours.from
+  const toTime = dayData.visibleHours.to
+
   const [multiDayEvents, recurringEvents] = await Promise.all([
     Promise.resolve(
-      generateMultiDayEventsInPeriod(dayData.events as IEvent[], startDate, endDate, dayData.visibleHours)
+      generateMultiDayEventsInPeriod(dayData.events as IEvent[], startDate, endDate, fromTime,toTime)
     ),
     Promise.resolve(generateRecurringEventsInPeriod(dayData.events as IEvent[], startDate, endDate)),
   ]);

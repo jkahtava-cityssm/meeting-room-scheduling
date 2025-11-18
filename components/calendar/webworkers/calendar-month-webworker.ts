@@ -18,8 +18,12 @@ self.onmessage = async (event: MessageEvent<IMonthProcessData>) => {
 async function processMonthEvents(monthData: IMonthProcessData): Promise<IMonthResponseData> {
   const { startDate: monthStart, endDate: monthEnd } = getDaysInView(monthData.selectedDate);
 
+    const fromTime = monthData.visibleHours.from
+  const toTime = monthData.visibleHours.to
+
+
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, monthData.visibleHours),
+    generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, fromTime,toTime),
     generateRecurringEventsInPeriod(monthData.events, monthStart, monthEnd),
   ]);
 

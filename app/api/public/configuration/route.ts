@@ -13,10 +13,16 @@ export async function GET(req: NextRequest) {
     return InternalServerErrorMessage();
   }
 
-  const config = configEntries.reduce((acc, entry) => {
-    acc[entry.key] = Number(entry.value);
-    return acc;
-  }, {} as Record<string, number>);
+  type VisibleKey = "visibleHoursStart" | "visibleHoursEnd";
+
+  const config = configEntries.reduce<Record<VisibleKey, number>>(
+    (acc, entry) => {
+      const key = entry.key as VisibleKey;
+      acc[key] = Number(entry.value);
+      return acc;
+    },
+    { visibleHoursStart: 0, visibleHoursEnd: 0 }
+  );
 
   const { visibleHoursStart, visibleHoursEnd } = validateVisibleHours(config.visibleHoursStart, config.visibleHoursEnd);
 

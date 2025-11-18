@@ -17,146 +17,146 @@ import { RoomCategoryLayoutSkeleton } from "./skeleton-calendar-public-view-room
 import { BreakPointText } from "../test/breakpoint";
 
 export interface IPublicProcessData {
-  events: PUBLIC_IEVENT[];
-  selectedDate: Date;
-  roomIdList: string[];
-  pixelHeight: number;
-  visibleHours: TVisibleHours;
-  multiDayEventsAtTop: boolean;
+	events: PUBLIC_IEVENT[];
+	selectedDate: Date;
+	roomIdList: string[];
+	pixelHeight: number;
+	visibleHours: TVisibleHours;
+	multiDayEventsAtTop: boolean;
 }
 
 export interface IPublicResponseData {
-  totalEvents: number;
-  dayView: IDayView;
-  hours: number[];
-  //weekViews: WeekView[];
+	totalEvents: number;
+	dayView: IDayView;
+	hours: number[];
+	//weekViews: WeekView[];
 }
 
 export type IEventList = Map<string, IEventBlock[]>;
 
 export interface IDayView {
-  day: number;
-  dayDate: Date;
-  isToday: boolean;
-  eventBlocks: IEventList;
+	day: number;
+	dayDate: Date;
+	isToday: boolean;
+	eventBlocks: IEventList;
 }
 
 export interface IEventBlock {
-  key: string;
-  groupIndex: number;
-  eventIndex: number;
-  eventStyle: { top: string; width: string; left: string };
-  eventHeight: number;
-  event: IEvent;
+	key: string;
+	groupIndex: number;
+	eventIndex: number;
+	eventStyle: { top: string; width: string; left: string };
+	eventHeight: number;
+	event: IEvent;
 }
 
 function getViewDate(dateParam: string | null) {
-  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
+	return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
 }
 
 function removeTimeFromDate(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: boolean }) {
-  console.log(sideBarOpen);
-  const searchParams = useSearchParams();
-  const dateParam = searchParams.get("selectedDate");
+	console.log(sideBarOpen);
+	const searchParams = useSearchParams();
+	const dateParam = searchParams.get("selectedDate");
 
-  const dateValue = useMemo(() => {
-    return getViewDate(dateParam);
-  }, [dateParam]);
+	const dateValue = useMemo(() => {
+		return getViewDate(dateParam);
+	}, [dateParam]);
 
-  const [isLoading, setLoading] = useState(true);
-  const [isRefreshed, setRefreshed] = useState(false);
-  const [dayViews, setDayViews] = useState<IDayView>();
-  const [data, setData] = useState([]);
-  const [hours, setHours] = useState<number[] | undefined>(undefined);
+	const [isLoading, setLoading] = useState(true);
+	const [isRefreshed, setRefreshed] = useState(false);
+	const [dayViews, setDayViews] = useState<IDayView>();
+	const [data, setData] = useState([]);
+	const [hours, setHours] = useState<number[] | undefined>(undefined);
 
-  const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
+	const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
-  const workerRef = useRef<Worker | null>(null);
+	const workerRef = useRef<Worker | null>(null);
 
-  const startDate: Date = startOfDay(dateValue);
-  const endDate: Date = endOfDay(dateValue);
+	const startDate: Date = startOfDay(dateValue);
+	const endDate: Date = endOfDay(dateValue);
 
-  const { data: events } = usePublicEventsQuery(startDate, endDate);
+	const { data: events } = usePublicEventsQuery(startDate, endDate);
 
-  const { data: rooms } = usePublicRoomsQuery();
+	const { data: rooms } = usePublicRoomsQuery();
 
-  const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
+	const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
 
-  const filteredRooms = useMemo(() => {
-    return selectedRoomIds.length > 0 ? rooms?.filter((room) => selectedRoomIds.includes(room.roomId)) : undefined;
-  }, [rooms, selectedRoomIds]);
+	const filteredRooms = useMemo(() => {
+		return selectedRoomIds.length > 0 ? rooms?.filter(room => selectedRoomIds.includes(room.roomId)) : undefined;
+	}, [rooms, selectedRoomIds]);
 
-  useEffect(() => {
-    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
-    //nextjs cache's the route so this is my temporary fix
-    setRefreshed(true);
-  }, []);
+	useEffect(() => {
+		//The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
+		//nextjs cache's the route so this is my temporary fix
+		setRefreshed(true);
+	}, []);
 
-  useEffect(() => {
-    setLoading(true);
-  }, [dateValue]);
+	useEffect(() => {
+		setLoading(true);
+	}, [dateValue]);
 
-  useEffect(() => {
-    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
-    //But this example will come in handy for other applications
+	useEffect(() => {
+		//This is mostly as an example for myself, technically this processing should likely be done on the server side.
+		//But this example will come in handy for other applications
 
-    if (workerRef.current) {
-      return;
-    }
+		if (workerRef.current) {
+			return;
+		}
 
-    const newWorker = new Worker(new URL("./webworkers/calendar-public-webworker.ts", import.meta.url));
+		const newWorker = new Worker(new URL("./webworkers/calendar-public-webworker.ts", import.meta.url));
 
-    newWorker.onmessage = (result) => {
-      setData(result.data);
-      setDayViews(result.data.dayView);
-      setHours(result.data.hours);
-      //setTotalEvents(result.totalEvents);
-      setIsHeaderLoading(false);
-      setLoading(false);
-    };
+		newWorker.onmessage = result => {
+			setData(result.data);
+			setDayViews(result.data.dayView);
+			setHours(result.data.hours);
+			//setTotalEvents(result.totalEvents);
+			setIsHeaderLoading(false);
+			setLoading(false);
+		};
 
-    workerRef.current = newWorker;
+		workerRef.current = newWorker;
 
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, [dateValue, setIsHeaderLoading, setTotalEvents]);
+		return () => {
+			if (workerRef.current) {
+				workerRef.current.terminate();
+				workerRef.current = null;
+			}
+		};
+	}, [dateValue, setIsHeaderLoading, setTotalEvents]);
 
-  useEffect(() => {
-    if (!events || !rooms) {
-      return;
-    }
+	useEffect(() => {
+		if (!events || !rooms) {
+			return;
+		}
 
-    if (workerRef.current) {
-      const data: IPublicProcessData = {
-        events: events,
-        visibleHours: visibleHours,
-        selectedDate: dateValue,
-        roomIdList: rooms.map((room) => room.roomId.toString()),
-        multiDayEventsAtTop: true,
-        pixelHeight: 96,
-      };
-      //setLoading(true);
-      setIsHeaderLoading(true);
+		if (workerRef.current) {
+			const data: IPublicProcessData = {
+				events: events,
+				visibleHours: visibleHours ? visibleHours : { from: 1, to: 24 },
+				selectedDate: dateValue,
+				roomIdList: rooms.map(room => room.roomId.toString()),
+				multiDayEventsAtTop: true,
+				pixelHeight: 96,
+			};
+			//setLoading(true);
+			setIsHeaderLoading(true);
 
-      workerRef.current.postMessage(data);
-    }
-  }, [events, dateValue, isRefreshed, rooms, setIsHeaderLoading, visibleHours]);
+			workerRef.current.postMessage(data);
+		}
+	}, [events, dateValue, isRefreshed, rooms, setIsHeaderLoading, visibleHours]);
 
-  const handleCheckedRoomsChange = useCallback((checkedIds: number[]) => {
-    setSelectedRoomIds(checkedIds);
-  }, []);
+	const handleCheckedRoomsChange = useCallback((checkedIds: number[]) => {
+		setSelectedRoomIds(checkedIds);
+	}, []);
 
-  const memoizedHours = useMemo(() => hours, [hours]);
+	const memoizedHours = useMemo(() => hours, [hours]);
 
-  /*if (isLoading || !filteredRooms || !events) {
+	/*if (isLoading || !filteredRooms || !events) {
     return <CalendarWeekViewSkeleton />;
   }
 
@@ -165,28 +165,28 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
   }
 */
 
-  return (
-    <>
-      <div className={`flex flex-col sm:flex-row gap-2`}>
-        {rooms ? (
-          <RoomCategoryLayout
-            rooms={rooms || []}
-            onCheckedRoomsChange={handleCheckedRoomsChange}
-            isSidebarOpen={sideBarOpen}
-          />
-        ) : (
-          <RoomCategoryLayoutSkeleton></RoomCategoryLayoutSkeleton>
-        )}
+	return (
+		<>
+			<div className={`flex flex-col sm:flex-row gap-2`}>
+				{rooms ? (
+					<RoomCategoryLayout
+						rooms={rooms || []}
+						onCheckedRoomsChange={handleCheckedRoomsChange}
+						isSidebarOpen={sideBarOpen}
+					/>
+				) : (
+					<RoomCategoryLayoutSkeleton></RoomCategoryLayoutSkeleton>
+				)}
 
-        <FilteredRoomGrid
-          isLoading={isLoading}
-          filteredRooms={filteredRooms}
-          hours={memoizedHours}
-          eventBlocks={dayViews?.eventBlocks}
-          selectedDate={dateValue}
-          isSidebarOpen={sideBarOpen}
-        />
-      </div>
-    </>
-  );
+				<FilteredRoomGrid
+					isLoading={isLoading}
+					filteredRooms={filteredRooms}
+					hours={memoizedHours}
+					eventBlocks={dayViews?.eventBlocks}
+					selectedDate={dateValue}
+					isSidebarOpen={sideBarOpen}
+				/>
+			</div>
+		</>
+	);
 }

@@ -4,6 +4,9 @@ RUN:
 - npm install
 - npx prisma generate
 
+MAKE FILE REQUIREMENT
+choco install make
+
 DOCKER
 
 - Setup to use ducknds.org domain for testing
