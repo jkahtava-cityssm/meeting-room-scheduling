@@ -9,11 +9,11 @@ COMPOSE=$(CONTAINER_MANAGER) compose -f docker-compose.merged.yml --env-file ${E
 
 # Production bootstrap (DB + migrate + app stack)
 init:
-	$(COMPOSE) --profile init up -d
+	$(COMPOSE) --profile init up -d --rm prisma-migrate
 
 # Development bootstrap (DB + migrate + seed + app stack)
 dev:
-	$(COMPOSE) --profile dev up -d
+	$(COMPOSE) --profile dev up -d --build
 
 # App stack only (no migrations/seed)
 app:

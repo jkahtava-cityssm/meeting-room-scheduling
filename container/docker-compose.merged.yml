@@ -1,11 +1,9 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:15
     container_name: container-postgres
     restart: always
-    profiles: ["app","init","dev"]
+    profiles: ["app", "init", "dev"]
     environment:
       POSTGRES_USER: ${DATABASE_USER_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
@@ -26,10 +24,11 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.prisma-migrate
+    image: meeting-room-booking/prisma-tools:latest
     container_name: prisma-migrate
-    profiles: ["migrate","init","dev"]
+    profiles: ["migrate", "init", "dev"]
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${CONTAINER_DB_URL}
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,10 +40,11 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.prisma-migrate
+    image: meeting-room-booking/prisma-tools:latest
     container_name: prisma-seed
-    profiles: ["seed","dev"]
+    profiles: ["seed", "dev"]
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${CONTAINER_DB_URL}
     depends_on:
       prisma-migrate:
         condition: service_completed_successfully
@@ -56,8 +56,9 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.nextjs-app
+    image: meeting-room-booking/nextjs-app:latest
     container_name: nextjs-app
-    profiles: ["app","init","dev"]
+    profiles: ["app", "init", "dev"]
     expose:
       - "3000"
     environment:
@@ -75,8 +76,9 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.nginx
+    image: meeting-room-booking/nginx:latest
     container_name: nginx
-    profiles: ["app","init","dev"]
+    profiles: ["app", "init", "dev"]
     ports:
       - "80:80"
       - "443:443"
