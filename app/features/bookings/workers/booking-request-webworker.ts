@@ -8,25 +8,17 @@ import { filterEventsByRoom, getDurationText } from "@/lib/helpers";
 import { RRule } from "rrule";
 import { IEventCard, IEventCardFields, IRoomSection, ISection } from "../components/types";
 import { TColors } from "@/lib/types";
-import { IAgendaProcessData, IAgendaResponseData } from "@/components/calendar/calendar-agenda-view";
+import { IUserRequestProcessData, IUserRequestResponseData } from "../components/user-request";
 
-self.onmessage = async (event: MessageEvent<{ events: IEvent[] }>) => {
-  if (event.data) {
-    const result = await processBookingRequestEvents(event.data.events, "-1");
+self.onmessage = async (message: MessageEvent<IUserRequestProcessData>) => {
+  if (message.data) {
+    const result = await processBookingRequestEvents(message.data.events, message.data.roomId);
     self.postMessage(result);
   }
 };
 
-export function processBookingRequestEvents(
-  passedEvents: IEvent[],
-  roomId: string
-): { totalEvents: number; sections: ISection[] } {
-  /*Promise<{
-  totalEvents: number;
-  eventsByDate: Map<string, IRoomSection[]>;
-}> */ const events = z.array(SEvent).parse(passedEvents);
-
-  const filteredEvents: IEvent[] = filterEventsByRoom(events, roomId);
+export function processBookingRequestEvents(events: IEvent[], roomId: string): IUserRequestResponseData {
+  const filteredEvents: IEvent[] = filterEventsByRoom(z.array(SEvent).parse(events), roomId);
 
   //const Rooms = new Map<number,IEvent[]>()
 

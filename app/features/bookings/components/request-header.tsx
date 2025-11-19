@@ -5,22 +5,37 @@ import { TodayButton } from "@/components/calendar/calendar-all-header-today-but
 import { Button } from "@/components/ui/button";
 import { Calendar, CalendarRange, Columns, Grid2x2, Grid3x3 } from "lucide-react";
 import Link from "next/link";
+import { RequestNavigator } from "./request-navigator";
+import { TCalendarView } from "@/lib/types";
 
 export default function RequestHeader({
   view,
+  date,
   roomId,
+  isHeaderLoading,
+  totalEvents,
   OnRoomChange,
 }: {
-  view: string;
+  view: TCalendarView;
+  date: Date;
   roomId: string;
-  OnRoomChange: () => void;
+  isHeaderLoading: boolean;
+  totalEvents: number;
+  OnRoomChange: (value: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex items-center gap-3">
-        <TodayButton view={"day"} />
+        <TodayButton view={view} />
 
-        <DateNavigator view={"day"} selectedDate={new Date()} onPreviousClick={() => {}} onNextClick={() => {}} />
+        <RequestNavigator
+          view={view}
+          selectedDate={date}
+          isHeaderLoading={isHeaderLoading}
+          totalEvents={totalEvents}
+          onPreviousClick={() => {}}
+          onNextClick={() => {}}
+        />
       </div>
 
       <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">

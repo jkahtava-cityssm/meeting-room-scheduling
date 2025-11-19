@@ -6,6 +6,7 @@ import { UTCDate } from "@date-fns/utc";
 
 import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { guardRoute } from "@/lib/api-guard";
+import { Prisma } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   return guardRoute(
@@ -138,6 +139,71 @@ export async function PUT(request: NextRequest) {
       }
 
       return CreatedMessage("Created Event", event);
+    }
+  );
+}
+
+export async function PATCH(request: NextRequest) {
+  return guardRoute(
+    request,
+    {
+      type: "or",
+      requirements: [
+        { type: "role", role: "Admin" },
+        { type: "permission", resource: "Event", action: "Update" },
+      ],
+    },
+    async () => {
+      const { eventData, ruleData } = await request.json();
+
+      if (!eventData || !eventData.eventId) {
+        return BadRequestMessage("Missing eventId for update");
+      }
+
+      const { eventId, title, description, startDate, endDate, roomId, recurrenceId, userId, status } = eventData;
+      const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
+
+      // Build dynamic update object
+      const updateData: Prisma.EventUpdateInput = {};
+      if (title !== undefined) updateData.title = title;
+      if (description !== undefined) updateData.description = description;
+      if (startDate !== undefined) updateData.startDate = startDate;
+      if (endDate !== undefined) updateData.endDate = endDate;
+      if (roomId !== undefined) updateData.room = { connect: { roomId } };
+      if (userId !== undefined) updateData.user = { connect: { id: userId } };
+      if (status !== undefined) updateData.status = status;
+
+      let recurrence = null;
+
+      if (rule) {
+        recurrence = await prisma.recurrence.upsert({
+          create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+          where: { recurrenceId: recurrenceId || 0 },
+          update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+        });
+        updateData.recurrence = { connect: { recurrenceId: recurrence.recurrenceId } };
+      }
+
+      if (ruleData === null && recurrenceId !== null) {
+        await prisma.recurrence.delete({ where: { recurrenceId } });
+        updateData.recurrence = { disconnect: true };
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return BadRequestMessage("No fields provided for update");
+      }
+
+      const event = await prisma.event.update({
+        where: { eventId },
+        data: updateData,
+        include: { room: true, recurrence: true },
+      });
+
+      if (!event) {
+        return InternalServerErrorMessage();
+      }
+
+      return SuccessMessage("Event updated successfully", event);
     }
   );
 }

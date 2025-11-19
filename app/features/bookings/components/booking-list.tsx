@@ -5,6 +5,7 @@ import EventCard from "./event-card";
 import { cva } from "class-variance-authority";
 import { sharedColorVariants } from "@/components/ui/theme/colorVariants";
 import { cn } from "@/lib/utils";
+import { useEventPatchMutation } from "@/services/events";
 
 export default function BookingList({ sections }: { sections: ISection[] }) {
   const breakpoints = true
@@ -50,6 +51,8 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
 }
 
 function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
+  const patchEvent = useEventPatchMutation();
+
   const badgeVariants = cva("", {
     variants: {
       color: sharedColorVariants,
@@ -73,11 +76,21 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
               key={String(eventCard.event.eventId)}
               eventCardFields={eventCard.eventCardFields}
               event={eventCard.event}
-              OnApprove={function (): void {
-                throw new Error("Function not implemented.");
+              OnApprove={() => {
+                patchEvent.mutate({
+                  eventId: eventCard.event.eventId,
+                  updates: {
+                    status: { connect: { statusId: 2 } },
+                  },
+                });
               }}
-              OnDeny={function (): void {
-                throw new Error("Function not implemented.");
+              OnDeny={() => {
+                patchEvent.mutate({
+                  eventId: eventCard.event.eventId,
+                  updates: {
+                    status: { connect: { statusId: 3 } },
+                  },
+                });
               }}
             ></EventCard>
           );
