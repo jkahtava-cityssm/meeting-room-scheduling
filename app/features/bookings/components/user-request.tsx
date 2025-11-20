@@ -4,7 +4,7 @@ import { useClientSession } from "@/hooks/use-client-auth";
 import { IEvent } from "@/lib/schemas/calendar";
 
 import { useEventPatchMutation, useEventsByStatusQuery } from "@/services/events";
-import { startOfMonth, endOfMonth, parse } from "date-fns";
+import { startOfMonth, endOfMonth, parse, formatISO } from "date-fns";
 
 import { redirect, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +14,7 @@ import BookingList from "@/app/features/bookings/components/booking-list";
 import { ISection } from "@/app/features/bookings/components/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import SkeletonBookingList from "@/app/features/bookings/components/skeleton-booking-list";
+import { BookingProvider } from "../context/BookingProvider";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -105,7 +106,7 @@ export default function UserRequests() {
         events: events,
         roomId: roomId,
       };
-      setLoading(true);
+      //setLoading(true);
       //setIsHeaderLoading(true);
 
       workerRef.current.postMessage(data);
@@ -139,7 +140,16 @@ export default function UserRequests() {
         }}
       />
       {isLoading && <SkeletonBookingList />}
-      {!isLoading && <BookingList sections={sections} />}
+      <BookingProvider
+        value={{
+          startDate: formatISO(startDate),
+          endDate: formatISO(endDate),
+          type: "status",
+          id: "1",
+        }}
+      >
+        {!isLoading && <BookingList sections={sections} />}
+      </BookingProvider>
     </>
   );
 }

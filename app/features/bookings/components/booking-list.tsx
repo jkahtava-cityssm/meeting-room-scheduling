@@ -6,6 +6,7 @@ import { cva } from "class-variance-authority";
 import { sharedColorVariants } from "@/components/ui/theme/colorVariants";
 import { cn } from "@/lib/utils";
 import { useEventPatchMutation } from "@/services/events";
+import { useBookingContext } from "../context/BookingProvider";
 
 export default function BookingList({ sections }: { sections: ISection[] }) {
   const breakpoints = true
@@ -52,7 +53,7 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
 
 function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
   const patchEvent = useEventPatchMutation();
-
+  const { startDate, endDate, type, id } = useBookingContext();
   const badgeVariants = cva("", {
     variants: {
       color: sharedColorVariants,
@@ -82,6 +83,7 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
                   updates: {
                     status: { connect: { statusId: 2 } },
                   },
+                  cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                 });
               }}
               OnDeny={() => {
@@ -90,6 +92,7 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
                   updates: {
                     status: { connect: { statusId: 3 } },
                   },
+                  cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                 });
               }}
             ></EventCard>

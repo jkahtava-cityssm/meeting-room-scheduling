@@ -10,7 +10,7 @@ import { Prisma } from "@prisma/client";
 
 export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["events", formatDate(startDate), formatDate(endDate), userId],
+    queryKey: ["events", formatDate(startDate), formatDate(endDate), "user", userId],
     queryFn: async () =>
       fetchGET("/api/events", {
         startdate: formatDate(startDate),
@@ -28,7 +28,7 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
 
 export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId?: string, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["event_status", formatDate(startDate), formatDate(endDate), statusId],
+    queryKey: ["events", formatDate(startDate), formatDate(endDate), "status", statusId],
     queryFn: async () =>
       fetchGET("/api/events/status", {
         startdate: formatDate(startDate),
@@ -108,7 +108,6 @@ export const useEventsMutationDelete = () => {
     },
   });
 };
-
 export const useEventPatchMutation = () => {
   const queryClient = useQueryClient();
 
@@ -117,10 +116,12 @@ export const useEventPatchMutation = () => {
       eventId,
       updates,
       ruleData,
+      cacheTags,
     }: {
       eventId: number;
-      updates: Prisma.EventUpdateInput; // Matches your PATCH endpoint typing
+      updates: Prisma.EventUpdateInput;
       ruleData?: Prisma.RecurrenceUpdateInput | null;
+      cacheTags: { startDate: string; endDate: string; type: "user" | "status"; id: string };
     }) => {
       return fetchPATCH("/api/events", {
         eventData: { eventId, ...updates },
@@ -129,42 +130,67 @@ export const useEventPatchMutation = () => {
     },
 
     onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: ["events"] });
-      await queryClient.cancelQueries({ queryKey: ["event", variables.eventId] });
+      const eventKey = ["event", variables.eventId];
+      const eventsKey = buildEventKey(variables.cacheTags);
 
-      const previousEvents = queryClient.getQueryData<IEvent[]>(["events"]);
-      const previousEvent = queryClient.getQueryData<IEvent>(["event", variables.eventId]);
+      await queryClient.cancelQueries({ queryKey: eventsKey });
+      await queryClient.cancelQueries({ queryKey: eventKey });
 
-      // Update the events list optimistically
+      const previousEvents = queryClient.getQueryData<IEvent[]>(eventsKey);
+      const previousEvent = queryClient.getQueryData<IEvent>(eventKey);
+
+      // Optimistic update for events list
       if (previousEvents) {
-        queryClient.setQueryData(["events"], (old: IEvent[] | undefined) =>
-          old?.map((event) => (event.eventId === variables.eventId ? { ...event, ...variables.updates } : event))
+        queryClient.setQueryData(eventsKey, (old: IEvent[] | undefined) =>
+          old?.map((event) =>
+            event.eventId === variables.eventId
+              ? {
+                  ...event,
+                  // Apply only known fields from updates
+                  statusId: variables.updates.status?.connect?.statusId ?? event.statusId,
+                }
+              : event
+          )
         );
       }
 
-      // Update the single event optimistically
+      // Optimistic update for single event
       if (previousEvent) {
-        queryClient.setQueryData(["event", variables.eventId], {
+        queryClient.setQueryData(eventKey, {
           ...previousEvent,
-          ...variables.updates,
+          statusId: variables.updates.status?.connect?.statusId ?? previousEvent.statusId,
         });
       }
 
       return { previousEvents, previousEvent };
     },
+
     onError: (err, variables, context) => {
-      // Rollback on error
+      const eventsKey = buildEventKey(variables.cacheTags);
+      const eventKey = ["event", variables.eventId];
+
       if (context?.previousEvents) {
-        queryClient.setQueryData(["events"], context.previousEvents);
+        queryClient.setQueryData(eventsKey, context.previousEvents);
       }
       if (context?.previousEvent) {
-        queryClient.setQueryData(["event", variables.eventId], context.previousEvent);
+        queryClient.setQueryData(eventKey, context.previousEvent);
       }
     },
+
     onSettled: (data, error, variables) => {
-      // Remove the single event from cache after success
-      queryClient.removeQueries({ queryKey: ["event", variables.eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+      const eventsKey = buildEventKey(variables.cacheTags);
+      const eventKey = ["event", variables.eventId];
+
+      queryClient.invalidateQueries({ queryKey: eventsKey });
+      queryClient.invalidateQueries({ queryKey: eventKey });
     },
   });
 };
+
+const buildEventKey = (tags: { startDate: string; endDate: string; type: string; id: string }) => [
+  "events",
+  tags.startDate,
+  tags.endDate,
+  tags.type,
+  tags.id,
+];
