@@ -15,30 +15,14 @@ import { BadgeColored } from "../ui/badge-colored";
 
 export function RoomSelect({
   selectedRoomId,
+  includeAllOption = true,
   onRoomChange,
 }: {
   selectedRoomId: string;
+  includeAllOption: boolean;
   onRoomChange: (value: string) => void;
 }) {
-  //const { selectedRoomId } = useCalendar();
-
-  const { isPending, data } = useRoomsQuery(true);
-
-  /*useEffect(() => {
-    if (data) {
-      const allRooms: IRoom = {
-        roomId: -1,
-        color: "slate",
-        icon: "Asterisk",
-        name: "All Rooms",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      setRooms([allRooms, ...data]);
-      setIsLoading(false);
-    }
-  }, [data]);*/
+  const { isPending, data } = useRoomsQuery(includeAllOption);
 
   if (isPending || !data) {
     return <Skeleton className="flex w-fit items-center justify-between gap-2 shrink-0 h-9 flex-1 md:w-60"></Skeleton>;

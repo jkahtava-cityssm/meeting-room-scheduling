@@ -5,26 +5,34 @@ import { IconColored } from "@/components/ui/icon-colored";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { Asterisk, BookKey } from "lucide-react";
+import { Asterisk, BookKey, Loader2Icon } from "lucide-react";
 
 import { Skeleton } from "../ui/skeleton";
 import { useStatusQuery } from "@/services/references";
 import DynamicIcon, { IconName } from "../ui/icon-dynamic";
 import { BadgeColored } from "../ui/badge-colored";
+import { Button } from "../ui/button";
 
 export function StatusSelect({
   selectedStatusId,
+  includeAllOption = true,
   onStatusChange,
 }: {
   selectedStatusId: string;
+  includeAllOption: boolean;
   onStatusChange: (value: string) => void;
 }) {
   //const { selectedRoomId } = useCalendar();
 
-  const { isPending, data } = useStatusQuery(true);
+  const { isPending, data } = useStatusQuery(includeAllOption);
 
   if (isPending || !data) {
-    return <Skeleton className="flex w-fit items-center justify-between gap-2 shrink-0 h-9 flex-1 md:w-60"></Skeleton>;
+    return (
+      <Button className="flex w-fit items-center justify-between gap-2 shrink-0 h-9 flex-1 md:w-60">
+        <Loader2Icon className="animate-spin" />
+        Collecting Status
+      </Button>
+    );
   }
 
   return (
