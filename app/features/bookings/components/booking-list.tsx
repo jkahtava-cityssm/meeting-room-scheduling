@@ -38,7 +38,10 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
   //{format(date, "EEEE, MMMM d, yyyy")
   return (
     <div className="border-b">
-      <div className="sticky top-0 bg-primary text-accent p-2  shadow-sm  h-10 z-10" data-date={formattedDate}>
+      <div
+        className="sticky top-0 bg-accent text-primary p-2 border-2 border-accent/50 shadow-sm  h-10 z-10"
+        data-date={formattedDate}
+      >
         <span className="flex-1 text-md">{formattedDate}</span>
       </div>
 
@@ -66,7 +69,10 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
   return (
     <div className="w-full">
       <div
-        className={cn("sticky top-10 p-2  shadow-sm h-10 border-2", badgeVariants({ color: roomSection.roomColour }))}
+        className={cn(
+          "sticky top-10 p-2  shadow-sm h-10 border-2 rounded-b-sm",
+          badgeVariants({ color: roomSection.roomColour })
+        )}
       >
         <span className={cn("flex-1 text-md")}> {roomSection.roomName}</span>
       </div>

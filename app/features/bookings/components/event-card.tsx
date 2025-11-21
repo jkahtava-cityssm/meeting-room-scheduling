@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { IEvent } from "@/lib/schemas/calendar";
 import { CalendarRange, CalendarSync, Clock, Hourglass, MapPin, Text } from "lucide-react";
 import { IEventCardFields } from "./types";
+import { TColors } from "@/lib/types";
+import { IconColored } from "@/components/ui/icon-colored";
+import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
 
 export default function EventCard({
   eventCardFields,
@@ -22,11 +25,21 @@ export default function EventCard({
     <Card className="w-100 p-2">
       <CardHeader>
         <CardTitle className="flex flex-row w-full justify-between items-center pb-2 mb-1 border-b">
-          {eventCardFields.cardTitle}
+          {eventCardFields.eventTitle}
           <BadgeColored color={eventCardFields.color}>{eventCardFields.roomName}</BadgeColored>
         </CardTitle>
         <CardTitle className="flex flex-row w-full justify-between items-center">
-          {eventCardFields.eventTitle}
+          {eventCardFields.cardTitle}
+
+          <BadgeColored color={event.status.color as TColors} className="h-6">
+            <DynamicIcon
+              hideBackground={true}
+              color={event.status.color as TColors}
+              name={event.status.icon as IconName}
+              className={"h-4 w-4"}
+            ></DynamicIcon>
+            {event.status.name}
+          </BadgeColored>
         </CardTitle>
 
         <CardDescription>
@@ -66,17 +79,26 @@ export default function EventCard({
             </div>
           </div>
           <div className="flex items-center gap-2 pl-7 ">
-            <p className="text-xs text-foreground line-clamp-6">{eventCardFields.description}</p>
+            <p className="text-xs text-foreground line-clamp-6 min-h-24">{eventCardFields.description}</p>
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex flex-col-reverse sm:flex-row gap-2 mt-auto">
-        <ButtonColored color="green" className="w-full sm:w-1/3" onClick={OnApprove}>
-          Approve
-        </ButtonColored>
-        <ButtonColored color="red" className="w-full sm:w-1/3" onClick={OnDeny}>
-          Deny
-        </ButtonColored>
+        {event.status.name !== "Confirmed" && (
+          <ButtonColored color="green" className="w-full sm:w-1/3" onClick={OnApprove}>
+            Confirm
+          </ButtonColored>
+        )}
+        {event.status.name !== "Rejected" && (
+          <ButtonColored color="red" className="w-full sm:w-1/3" onClick={OnDeny}>
+            Reject
+          </ButtonColored>
+        )}
+        {event.status.name !== "Pending Review" && (
+          <ButtonColored color="slate" className="w-full sm:w-1/3" onClick={OnDeny}>
+            Pending
+          </ButtonColored>
+        )}
         <EventDrawer event={event} userId={undefined}>
           <Button variant={"outline"} className="w-full sm:w-1/3">
             Review

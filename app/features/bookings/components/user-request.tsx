@@ -4,7 +4,7 @@ import { useClientSession } from "@/hooks/use-client-auth";
 import { IEvent } from "@/lib/schemas/calendar";
 
 import { useEventPatchMutation, useEventsByStatusQuery } from "@/services/events";
-import { startOfMonth, endOfMonth, parse, formatISO } from "date-fns";
+import { startOfMonth, endOfMonth, parse, formatISO, addYears } from "date-fns";
 
 import { redirect, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -15,6 +15,8 @@ import { ISection } from "@/app/features/bookings/components/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import SkeletonBookingList from "@/app/features/bookings/components/skeleton-booking-list";
 import { BookingProvider } from "../context/BookingProvider";
+import { SingleCalendar } from "@/components/ui/single-calendar";
+import YearViewMonth from "./calendar-picker-month";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -53,10 +55,10 @@ export default function UserRequests() {
   const [isRefreshed, setRefreshed] = useState(false);
 
   const workerRef = useRef<Worker | null>(null);
-
-  const { data: events } = useEventsByStatusQuery(startDate, endDate, "1");
-
   const [roomId, setRoomId] = useState<string>("-1");
+  const [statusId, setStatusId] = useState<string>("1");
+
+  const { data: events } = useEventsByStatusQuery(startDate, endDate, statusId);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -66,7 +68,7 @@ export default function UserRequests() {
 
   useEffect(() => {
     setLoading(true);
-  }, [dateValue]);
+  }, [dateValue, statusId]);
 
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
@@ -133,23 +135,76 @@ export default function UserRequests() {
         view={view}
         date={dateValue}
         roomId={roomId}
+        statusId={statusId}
         isHeaderLoading={isLoading}
         totalEvents={totalEvents}
         OnRoomChange={(value) => {
           setRoomId(value);
         }}
-      />
-      {isLoading && <SkeletonBookingList />}
-      <BookingProvider
-        value={{
-          startDate: formatISO(startDate),
-          endDate: formatISO(endDate),
-          type: "status",
-          id: "1",
+        OnStatusChange={(value) => {
+          setStatusId(value);
         }}
-      >
-        {!isLoading && <BookingList sections={sections} />}
-      </BookingProvider>
+      />
+      <div className="flex">
+        {isLoading && <SkeletonBookingList />}
+        <BookingProvider
+          value={{
+            startDate: formatISO(startDate),
+            endDate: formatISO(endDate),
+            type: "status",
+            id: "1",
+          }}
+        >
+          {!isLoading && <BookingList sections={sections} />}
+        </BookingProvider>
+        <div className="hidden w-74 divide-y border-l md:block">
+          <YearViewMonth selectedDate={new Date()}></YearViewMonth>
+          <SingleCalendar
+            className="mx-auto w-fit"
+            mode="single"
+            selected={new Date()}
+            onSelect={() => {}}
+            month={new Date()}
+            onMonthChange={() => {}}
+            fixedWeeks={true}
+            required
+            onToday={() => {}}
+            view={"year"}
+            startMonth={addYears(new Date(), -25)}
+            endMonth={addYears(new Date(), 25)}
+          />
+        </div>
+      </div>
     </>
   );
 }
+
+/*
+<SingleCalendar
+            className="mx-auto w-fit"
+            mode="single"
+            selected={new Date()}
+            onSelect={() => {}}
+            month={new Date()}
+            onMonthChange={() => {}}
+            fixedWeeks={true}
+            required
+            onToday={() => {}}
+            view={"year"}
+            startMonth={addYears(new Date(), -25)}
+            endMonth={addYears(new Date(), 25)}
+          />
+
+          <div className="flex-1 space-y-2">
+            <div className="flex items-start gap-1 px-4 pt-4">
+              <Skeleton className="w-full h-4"></Skeleton>
+            </div>
+            <div className="flex items-start gap-1 px-4 ">
+              <Skeleton className="w-full h-4"></Skeleton>
+            </div>
+            <div className="flex items-start gap-1 px-4 ">
+              <Skeleton className="w-full h-4"></Skeleton>
+            </div>
+          </div>
+        </div>
+*/

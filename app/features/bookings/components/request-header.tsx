@@ -12,16 +12,20 @@ export default function RequestHeader({
   view,
   date,
   roomId,
+  statusId,
   isHeaderLoading,
   totalEvents,
   OnRoomChange,
+  OnStatusChange,
 }: {
   view: TCalendarView;
   date: Date;
   roomId: string;
+  statusId: string;
   isHeaderLoading: boolean;
   totalEvents: number;
   OnRoomChange: (value: string) => void;
+  OnStatusChange: (value: string) => void;
 }) {
   return (
     <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
@@ -41,10 +45,10 @@ export default function RequestHeader({
       <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
         <div className="flex w-full items-center gap-1.5"></div>
         <div className="w-full sm:w-auto">
-          <RoomSelect selectedRoomId={roomId} onRoomChange={OnRoomChange} />
+          <RoomSelect selectedRoomId={roomId} includeAllOption={true} onRoomChange={OnRoomChange} />
         </div>
         <div className="w-full sm:w-auto">
-          <StatusSelect selectedStatusId="-1" onStatusChange={() => {}} />
+          <StatusSelect selectedStatusId={statusId} includeAllOption={false} onStatusChange={OnStatusChange} />
         </div>
         <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
           <Button
