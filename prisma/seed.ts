@@ -209,14 +209,14 @@ async function FindCreateRooms(
   return record;
 }
 
-async function FindCreateEventStatus(name: string, icon: IconName) {
+async function FindCreateEventStatus(name: string, icon: IconName, color: TColors) {
   let record = await prisma.status.findFirst({
     where: { name: name },
   });
 
   if (!record) {
     record = await prisma.status.create({
-      data: { name: name, icon: icon },
+      data: { name: name, icon: icon, color: color },
     });
   }
   return record;
@@ -809,10 +809,10 @@ async function main() {
   }
 
   //await FindCreateEventStatus("Created");
-  await FindCreateEventStatus("Pending Review", "circle-pause");
-  await FindCreateEventStatus("Confirmed", "circle-check");
-  await FindCreateEventStatus("Rejected", "circle-x");
-  await FindCreateEventStatus("Additional Info Required", "circle-question-mark");
+  await FindCreateEventStatus("Pending Review", "circle-pause", "slate");
+  await FindCreateEventStatus("Confirmed", "circle-check", "green");
+  await FindCreateEventStatus("Rejected", "circle-x", "red");
+  await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue");
 
   const user = await prisma.user.findFirst();
   if (!user) {
