@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
           statusId: 1,
           userId,
         },
-        include: { room: true, recurrence: true },
+        include: { room: true, recurrence: true, status: true },
       });
 
       if (!event) {
@@ -127,7 +127,7 @@ export async function PUT(request: NextRequest) {
           statusId: 1,
           userId,
         },
-        include: { room: true, recurrence: true },
+        include: { room: true, recurrence: true, status: true },
       });
 
       if (!event) {
@@ -196,7 +196,7 @@ export async function PATCH(request: NextRequest) {
       const event = await prisma.event.update({
         where: { eventId },
         data: updateData,
-        include: { room: true, recurrence: true },
+        include: { room: true, recurrence: true, status: true },
       });
 
       if (!event) {
@@ -247,7 +247,11 @@ export async function GET(request: NextRequest) {
       }
 
       const events = await prisma.event.findMany({
-        include: { room: { include: { roomScope: true, roomCategory: true, roomProperty: true } }, recurrence: true },
+        include: {
+          room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
+          recurrence: true,
+          status: true,
+        },
         where: whereClause,
       });
 
