@@ -59,6 +59,13 @@ export const SMultiDay = z.object({
   position: z.enum(["first", "last", "middle"]),
 });
 
+export const SStatus = z.object({
+  statusId: z.number(),
+  name: z.string(),
+  icon: z.string(),
+  color: z.string(),
+});
+
 export const SEvent = z.object({
   eventId: z.number(),
   roomId: z.number().gt(0, "Room is required"),
@@ -78,17 +85,11 @@ export const SEvent = z.object({
   description: z.string(),
   parentEventId: z.number().nullable().optional(),
   room: SRoom,
+  status: SStatus,
   recurrence: SRecurrence.nullish(),
   createdAt: z.coerce.string(),
   updatedAt: z.coerce.string(),
   multiDay: SMultiDay.optional(),
-});
-
-export const SStatus = z.object({
-  statusId: z.number(),
-  name: z.string(),
-  icon: z.string(),
-  color: z.string(),
 });
 
 export type IStatus = z.infer<typeof SStatus>;
