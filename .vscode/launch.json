@@ -26,6 +26,9 @@
         "pattern": "- Local:.+(https?://.+)",
         "uriFormat": "%s",
         "webRoot": "${workspaceFolder}"
+      },
+      "env": {
+        "NODE_ENV": "development"
       }
     }
   ]
