@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RoomSelect } from "@/components/calendar/calendar-all-header-room-select";
+import { RoomSelect } from "@/app/features/rooms/room-select";
 import { TodayButton } from "@/components/calendar/calendar-all-header-today-button";
 import { DateNavigator } from "@/components/calendar/calendar-all-header-date-navigator";
 
@@ -123,7 +123,11 @@ export function CalendarHeader({
             </div>
           </div>
           <div className="w-full sm:w-auto">
-            <RoomSelect selectedRoomId={selectedRoomId} onRoomChange={handleNavigateRoomChange} />
+            <RoomSelect
+              includeAllOption={true}
+              selectedRoomId={selectedRoomId}
+              onRoomChange={handleNavigateRoomChange}
+            />
           </div>
           {/*<AddEventDialog>
             <Button className="w-full sm:w-auto">

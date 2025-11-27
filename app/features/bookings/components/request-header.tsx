@@ -1,6 +1,6 @@
 import { DateNavigator } from "@/components/calendar/calendar-all-header-date-navigator";
-import { RoomSelect } from "@/components/calendar/calendar-all-header-room-select";
-import { StatusSelect } from "@/components/calendar/calendar-all-header-status-select";
+import { RoomSelect } from "@/app/features/rooms/room-select";
+import { StatusSelect } from "@/app/features/status/status-select";
 import { TodayButton } from "@/components/calendar/calendar-all-header-today-button";
 import { Button } from "@/components/ui/button";
 import { Calendar, CalendarRange, Columns, Grid2x2, Grid3x3 } from "lucide-react";
