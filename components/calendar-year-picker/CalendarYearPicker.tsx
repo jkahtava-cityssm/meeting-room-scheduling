@@ -10,7 +10,7 @@ import YearGrid from "./YearGrid";
 import YearBlockNavigation from "./YearBlockNavigation";
 import { useYearBlocks } from "./useYearBlocks";
 
-export default function SingleCalendarYear({ selectedDate }: { selectedDate: Date }) {
+export default function CalendarYearPicker({ selectedDate }: { selectedDate: Date }) {
   const [currentDate, setCurrentDate] = React.useState<Date>(selectedDate);
   const [lastFocusedYear, setLastFocusedYear] = React.useState<number | null>(null);
 
