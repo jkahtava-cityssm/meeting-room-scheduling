@@ -2,7 +2,7 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { z } from "zod/v4";
 
-import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../../lib/helpers";
+import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "@/lib/helpers";
 
 import { areIntervalsOverlapping, differenceInMinutes, endOfDay, isSameDay, isToday, startOfDay } from "date-fns";
 import { IDayProcessData, IDayResponseData, IDayView, IEventBlock } from "../calendar-day-view";
@@ -18,11 +18,11 @@ self.onmessage = async (event: MessageEvent<IDayProcessData>) => {
 async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseData> {
   const startDate: Date = startOfDay(dayData.selectedDate);
   const endDate: Date = endOfDay(dayData.selectedDate);
-  const fromTime = dayData.visibleHours.from
-  const toTime = dayData.visibleHours.to
+  const fromTime = dayData.visibleHours.from;
+  const toTime = dayData.visibleHours.to;
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate,fromTime,toTime )),
+    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, fromTime, toTime)),
     Promise.resolve(generateRecurringEventsInPeriod(dayData.events, startDate, endDate)),
   ]);
 

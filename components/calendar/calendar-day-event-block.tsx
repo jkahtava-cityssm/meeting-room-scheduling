@@ -1,10 +1,10 @@
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 
-import { TColors } from "../../lib/types";
+import { TColors } from "@/lib/types";
 import { IEventBlock } from "./calendar-day-view";
 
-import EventDrawer from "../event-drawer/event-drawer";
+import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { sharedColorVariants } from "../ui/theme/colorVariants";
 
 const EventCard = cva(

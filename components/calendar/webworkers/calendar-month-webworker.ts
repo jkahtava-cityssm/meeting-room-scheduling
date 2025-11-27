@@ -5,7 +5,7 @@ import { IDayView, IEventView, IMonthProcessData, IMonthResponseData, IWeekView 
 import { z } from "zod/v4";
 import { uniq, uniqBy } from "lodash";
 
-import { filterEventsByRoom, getDaysInView } from "../../../lib/helpers";
+import { filterEventsByRoom, getDaysInView } from "@/lib/helpers";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
 self.onmessage = async (event: MessageEvent<IMonthProcessData>) => {
@@ -18,12 +18,11 @@ self.onmessage = async (event: MessageEvent<IMonthProcessData>) => {
 async function processMonthEvents(monthData: IMonthProcessData): Promise<IMonthResponseData> {
   const { startDate: monthStart, endDate: monthEnd } = getDaysInView(monthData.selectedDate);
 
-    const fromTime = monthData.visibleHours.from
-  const toTime = monthData.visibleHours.to
-
+  const fromTime = monthData.visibleHours.from;
+  const toTime = monthData.visibleHours.to;
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, fromTime,toTime),
+    generateMultiDayEventsInPeriod(monthData.events, monthStart, monthEnd, fromTime, toTime),
     generateRecurringEventsInPeriod(monthData.events, monthStart, monthEnd),
   ]);
 

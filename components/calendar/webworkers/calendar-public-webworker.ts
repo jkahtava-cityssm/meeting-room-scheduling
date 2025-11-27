@@ -2,7 +2,7 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { z } from "zod/v4";
 
-import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../../lib/helpers";
+import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "@/lib/helpers";
 
 import {
   areIntervalsOverlapping,
@@ -25,17 +25,14 @@ self.onmessage = async (event: MessageEvent<IPublicProcessData>) => {
 };
 
 async function processDayEvents(dayData: IPublicProcessData): Promise<IPublicResponseData> {
-  
   const startDate: Date = startOfDay(dayData.selectedDate);
   const endDate: Date = endOfDay(dayData.selectedDate);
 
-      const fromTime = dayData.visibleHours.from
-  const toTime = dayData.visibleHours.to
+  const fromTime = dayData.visibleHours.from;
+  const toTime = dayData.visibleHours.to;
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(
-      generateMultiDayEventsInPeriod(dayData.events as IEvent[], startDate, endDate, fromTime,toTime)
-    ),
+    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events as IEvent[], startDate, endDate, fromTime, toTime)),
     Promise.resolve(generateRecurringEventsInPeriod(dayData.events as IEvent[], startDate, endDate)),
   ]);
   const currentDate = dayData.selectedDate;

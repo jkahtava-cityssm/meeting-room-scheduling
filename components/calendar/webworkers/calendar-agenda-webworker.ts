@@ -2,7 +2,7 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { z } from "zod/v4";
 
-import { filterEventsByRoom } from "../../../lib/helpers";
+import { filterEventsByRoom } from "@/lib/helpers";
 import { IAgendaProcessData, IAgendaResponseData } from "../calendar-agenda-view";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 import { endOfDay, startOfDay } from "date-fns";
@@ -17,11 +17,11 @@ self.onmessage = async (event: MessageEvent<IAgendaProcessData>) => {
 async function processAgendaEvents(dayData: IAgendaProcessData): Promise<IAgendaResponseData> {
   const startDate: Date = startOfDay(dayData.selectedDate);
   const endDate: Date = endOfDay(dayData.selectedDate);
-  const fromTime = dayData.visibleHours.from
-  const toTime = dayData.visibleHours.to
+  const fromTime = dayData.visibleHours.from;
+  const toTime = dayData.visibleHours.to;
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate,fromTime,toTime )),
+    Promise.resolve(generateMultiDayEventsInPeriod(dayData.events, startDate, endDate, fromTime, toTime)),
     Promise.resolve(generateRecurringEventsInPeriod(dayData.events, startDate, endDate)),
   ]);
 

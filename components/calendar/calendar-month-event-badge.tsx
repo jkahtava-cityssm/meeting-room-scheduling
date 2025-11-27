@@ -4,7 +4,7 @@ import { endOfDay, format, isSameDay, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { IEvent } from "@/lib/schemas/calendar";
-import EventDrawer from "../event-drawer/event-drawer";
+import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { sharedColorVariants } from "../ui/theme/colorVariants";
 
 export const eventBadgeVariants = cva(

@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 
-import { TColors } from "../../lib/types";
+import { TColors } from "@/lib/types";
 import { IEventBlock } from "./calendar-day-view";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

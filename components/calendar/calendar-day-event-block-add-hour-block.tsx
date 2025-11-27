@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import { isWorkingHour } from "../../lib/helpers";
-import { TWorkingHours } from "../../lib/types";
-import EventDrawer from "../event-drawer/event-drawer";
+import { isWorkingHour } from "@/lib/helpers";
+import { TWorkingHours } from "@/lib/types";
+import EventDrawer from "@/app/features/event-drawer/event-drawer";
 
 export function DayHourlyEventDialogs({
   hours,

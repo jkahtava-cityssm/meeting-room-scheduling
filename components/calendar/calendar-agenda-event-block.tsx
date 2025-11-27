@@ -6,7 +6,7 @@ import { Clock, MapPin, Text } from "lucide-react";
 
 import { TColors } from "@/lib/types";
 import { IEvent } from "@/lib/schemas/calendar";
-import EventDrawer from "../event-drawer/event-drawer";
+import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { sharedColorVariants } from "../ui/theme/colorVariants";
 
 const agendaEventCardVariants = cva(

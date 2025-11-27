@@ -3,7 +3,7 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { z } from "zod/v4";
 
-import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "../../../lib/helpers";
+import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "@/lib/helpers";
 import { IDayView, IEventBlock, IWeekProcessData, IWeekResponseData } from "../calendar-week-view";
 import {
   addDays,
@@ -38,11 +38,11 @@ async function processWeekEvents(weekData: IWeekProcessData): Promise<IWeekRespo
   const weekEnd: Date = endOfWeek(weekData.selectedDate);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const fromTime = weekData.visibleHours.from
-  const toTime = weekData.visibleHours.to
+  const fromTime = weekData.visibleHours.from;
+  const toTime = weekData.visibleHours.to;
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(weekData.events, weekStart, weekEnd, fromTime,toTime)),
+    Promise.resolve(generateMultiDayEventsInPeriod(weekData.events, weekStart, weekEnd, fromTime, toTime)),
     Promise.resolve(generateRecurringEventsInPeriod(weekData.events, weekStart, weekEnd)),
   ]);
 

@@ -11,7 +11,7 @@ import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { useRouter } from "next/navigation";
 
-import EventDrawer from "../event-drawer/event-drawer";
+import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { useClientSession } from "@/hooks/use-client-auth";
 import { checkSessionPermission } from "@/lib/auth-client";
 
