@@ -60,7 +60,6 @@ export default function SingleCalendarYear({ selectedDate }: { selectedDate: Dat
           years={currentBlock}
           selectedYear={selectedYear}
           currentYear={currentYear}
-          cols={4}
           onNavigateYear={(date) => handleNavigate(date)}
           onNavigateBlock={navigateBlock}
           lastFocusedYear={lastFocusedYear}
