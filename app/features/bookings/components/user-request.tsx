@@ -19,7 +19,7 @@ import { SingleCalendar } from "@/components/ui/single-calendar-day";
 import MonthView from "./calendar-picker-month";
 import YearView from "./calendar-picker-month-year";
 import SingleCalendarMonth from "@/components/ui/single-calendar-month";
-import SingleCalendarYear from "@/components/single-calendar-year/SingleCalendarYear";
+import SingleCalendarYear from "@/components/calendar-year-picker/CalendarYearPicker";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
