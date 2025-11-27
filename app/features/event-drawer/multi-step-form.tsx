@@ -14,7 +14,14 @@ import {
   getEventValues,
 } from "./event-drawer.validator";
 import { useContext } from "react";
-import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from "../ui/sheet";
+import {
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  Sheet,
+  SheetTrigger,
+} from "../../../components/ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
 
 import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/services/events";

@@ -6,7 +6,7 @@ import { cva } from "class-variance-authority";
 import { sharedColorVariants } from "@/components/ui/theme/colorVariants";
 import { cn } from "@/lib/utils";
 
-import EventDrawer from "@/components/event-drawer/event-drawer";
+import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { BadgeColored } from "@/components/ui/badge-colored";
 import { Button } from "@/components/ui/button";
 import { ButtonColored } from "@/components/ui/button-colored";

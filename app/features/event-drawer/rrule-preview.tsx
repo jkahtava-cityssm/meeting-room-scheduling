@@ -1,6 +1,14 @@
-import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Skeleton } from "../ui/skeleton";
+import { ScrollArea, ScrollBar } from "../../../components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../../components/ui/table";
+import { Skeleton } from "../../../components/ui/skeleton";
 import { format } from "date-fns";
 
 export function RRulePreview({

@@ -1,30 +1,30 @@
 import { useFormContext } from "react-hook-form";
-import { Input } from "../ui/input";
+import { Input } from "../../../components/ui/input";
 import { z } from "zod/v4";
 import { useMultiStepForm } from "./multi-step-form";
 import { step1Schema } from "./event-drawer.validator";
 
 import { TColors } from "@/lib/types";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import { SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../../components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { BookKey, Loader2Icon } from "lucide-react";
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../ui/form";
-import { IconColored } from "../ui/icon-colored";
-import { ScrollBar } from "../ui/scroll-area";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../../../components/ui/form";
+import { IconColored } from "../../../components/ui/icon-colored";
+import { ScrollBar } from "../../../components/ui/scroll-area";
 
-import { Textarea } from "../ui/textarea";
+import { Textarea } from "../../../components/ui/textarea";
 import { useRoomsQuery } from "@/services/rooms";
-import { Select } from "../ui/select";
+import { Select } from "../../../components/ui/select";
 
 import { formatDuration, intervalToDuration } from "date-fns";
-import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
+import { ComboBox, ComboBoxTrigger } from "../../../components/ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/services/users";
-import { Button } from "../ui/button";
+import { Button } from "../../../components/ui/button";
 import { useStatusQuery } from "@/services/references";
-import { DateTimePicker, DateTimePickerRef } from "../ui/datetimepicker";
+import { DateTimePicker, DateTimePickerRef } from "../../../components/ui/datetimepicker";
 import { useRef } from "react";
 import { Session } from "@/lib/auth-client";
 import { getDurationText } from "@/lib/helpers";
