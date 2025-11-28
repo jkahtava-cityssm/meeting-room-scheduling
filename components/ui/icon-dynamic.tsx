@@ -6,6 +6,7 @@ import { cva } from "class-variance-authority";
 import { sharedIconBackgrounVariants, sharedIconColorVariants } from "./theme/colorVariants";
 import { TColors } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { BadgeColored } from "./badge-colored";
 
 export type IconName = keyof typeof dynamicIconImports;
 
@@ -56,16 +57,13 @@ const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ..
 
   return (
     <Suspense fallback={null}>
-      <div
-        className={cn(
-          backgroundClasses,
-          !hideBackground
-            ? "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            : ""
-        )}
-      >
+      {hideBackground ? (
         <LazyIcon {...props} className={cn(iconClasses, props.className)} />
-      </div>
+      ) : (
+        <BadgeColored color={color} className="h-full aspect-square">
+          <LazyIcon {...props} className={cn(iconClasses, props.className)} />
+        </BadgeColored>
+      )}
     </Suspense>
   );
 });
@@ -73,3 +71,17 @@ const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ..
 DynamicIcon.displayName = "DynamicIcon";
 
 export default DynamicIcon;
+
+/*
+        <div
+          className={cn(
+            backgroundClasses,
+            !hideBackground
+              ? "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              : "",
+            "inline-flex items-center justify-center"
+          )}
+        >     
+            <LazyIcon {...props} className={cn(iconClasses, props.className)} />
+        </div>
+*/
