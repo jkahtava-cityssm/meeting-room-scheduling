@@ -537,9 +537,11 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
     //console.log(newRule);
     //console.log(newRule.toString());
   }*/
+  //parseISO(newRule.all().at(0)?.toISOString());
   const newEndDate = newRule.all().at(-1); //parseISO(newRule.all().at(-1)?.toISOString());
+  const firstStartDate = newRule.all().at(0);
 
-  if (!newEndDate) {
+  if (!newEndDate || !firstStartDate) {
     //console.log("NO END DATE");
     return null;
   }
@@ -547,7 +549,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
   const recurrence = await prisma.recurrence.create({
     data: {
       rule: newRule.toString(),
-      startDate: startDate,
+      startDate: firstStartDate,
       endDate: newEndDate, //newRule.all().at(-1) ?? "",
     },
   });
@@ -829,15 +831,23 @@ async function main() {
 
   //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
 
-  /*
-  const JordanKMember = await prisma.member.upsert({
-    where: { userId: user?.id },
-    update: {},
-    create: { userId: user?.id, 
-      theme: "dark",
-      userId: 1
-     },
-  });*/
+  if (process.env.ADMIN_USER_EMAIL) {
+    const ADMIN_USER = await prisma.user.upsert({
+      where: { email: process.env.ADMIN_USER_EMAIL },
+      update: {},
+      create: {
+        name: "Admin User",
+        email: process.env.ADMIN_USER_EMAIL,
+        emailVerified: false,
+        image: null,
+        employeeNumber: "000",
+        employeeActive: true,
+      },
+    });
+    const adminRole = await FindCreateRole("Admin");
+    const adminUserRole = await FindCreateUserRole(adminRole.roleId, ADMIN_USER.id);
+  }
+
   /*
 
 
