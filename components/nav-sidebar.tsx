@@ -182,9 +182,11 @@ export function SideBarCollapsibleGroup({
 
 export function SideBarPrimaryMenuItem({ title, iconName, url }: { title: string; iconName?: IconName; url: string }) {
   return (
-    <SidebarMenuButton key={title} tooltip={title}>
-      {iconName && <DynamicIcon name={iconName} />}
-      <Link href={url}>{title}</Link>
+    <SidebarMenuButton asChild key={title} tooltip={title}>
+      <Link href={url}>
+        {iconName && <DynamicIcon name={iconName} />}
+        <span>{title}</span>
+      </Link>
     </SidebarMenuButton>
   );
 }
@@ -204,9 +206,11 @@ export function SideBarSubMenuItem({
     <CollapsibleContent>
       <SidebarMenuSub>
         <SidebarMenuSubItem key={title}>
-          <SidebarMenuSubButton>
-            {iconName && <DynamicIcon name={iconName} />}
-            <Link href={url}>{title}</Link>
+          <SidebarMenuSubButton asChild>
+            <Link href={url}>
+              {iconName && <DynamicIcon name={iconName} />}
+              <span>{title}</span>
+            </Link>
           </SidebarMenuSubButton>
         </SidebarMenuSubItem>
       </SidebarMenuSub>
