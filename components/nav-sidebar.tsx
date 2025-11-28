@@ -2,112 +2,32 @@
 
 import * as React from "react";
 
-import Image from "next/image";
+import { ChevronRight } from "lucide-react";
 
-import { Calendar, LifeBuoy, Send, Settings2, Notebook, NotebookPen } from "lucide-react";
-
-import { NavMain } from "@/components/nav-sidebar-contents";
-import { NavSecondary } from "@/components/nav-sidebar-footer";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import DynamicIcon, { IconName } from "./ui/icon-dynamic";
+import Image from "next/image";
+
+import { Sidebar, SidebarContent, SidebarFooter } from "@/components/ui/sidebar";
 import { navigateURL } from "@/lib/helpers";
 import { Skeleton } from "./ui/skeleton";
 import { useClientSession } from "@/hooks/use-client-auth";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    image: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Availability",
-      url: "/availability",
-      icon: NotebookPen,
-    },
-    {
-      title: "Bookings",
-      url: "#",
-      icon: Send,
-      isActive: true,
-      items: [
-        {
-          title: "My Bookings",
-          url: "/bookings/user-view",
-        },
-        {
-          title: "Pending Requests",
-          url: "/bookings/user-requests",
-        },
-      ],
-    },
-    {
-      title: "View Calendar",
-      url: "#",
-      icon: Calendar,
-      isActive: true,
-      items: [
-        {
-          title: "Calendar - Daily Agenda",
-          url: "/calendar" + navigateURL(null, "agenda"),
-        },
-        {
-          title: "Calendar - Day",
-          url: "/calendar" + navigateURL(null, "day"),
-        },
-        {
-          title: "Calendar - Week",
-          url: "/calendar" + navigateURL(null, "week"),
-        },
-        {
-          title: "Calendar - Month",
-          url: "/calendar" + navigateURL(null, "month"),
-        },
-        {
-          title: "Calendar - Year",
-          url: "/calendar" + navigateURL(null, "year"),
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "Manage Rooms",
-          url: "/settings/manage-rooms",
-        },
-        {
-          title: "Manage Permissions",
-          url: "/settings/manage-permissions",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-  ],
-};
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, isPending } = useClientSession();
-  //32
-  //48 total + 8 = 64
-  //255
+
   if (isPending) {
     return (
       <div className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
@@ -144,34 +64,152 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link href="/bookings/user-view">
-                <div className="flex aspect-square size-8 items-center justify-center">
-                  <Image
-                    src="/images/menu_logo.svg"
-                    alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-                    width={32}
-                    height={32}
-                  />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Room Scheduling/Booking</span>
-                  <span className="cenet text-xs">The City of Sault Ste. Marie</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      <SideBarHeaderGroup
+        imagePath="/images/menu_logo.svg"
+        altText="An image of the crest and wreath of the city of Sault Ste. Marie"
+        title="Room Scheduling/Booking"
+        subtitle="The City of Sault Ste. Marie"
+        url="/bookings/user-view"
+      ></SideBarHeaderGroup>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <SideBarGroup title="Application">
+          <SideBarPrimaryMenuItem title={"Availability"} iconName={"notebook-pen"} url={"/availability"} />
+          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"send"} url={"/bookings/user-view"} />
+          <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="calendar">
+            <SideBarSubMenuItem
+              title={"Staff Requests"}
+              url={"/bookings/user-requests"}
+              iconName="circle-question-mark"
+            />
+            <SideBarSubMenuItem
+              title={"Agenda View"}
+              url={"/calendar" + navigateURL(null, "agenda")}
+              iconName="calendar-range"
+            />
+            <SideBarSubMenuItem title={"Day View"} url={"/calendar" + navigateURL(null, "day")} iconName="list" />
+            <SideBarSubMenuItem title={"Week View"} url={"/calendar" + navigateURL(null, "week")} iconName="columns" />
+            <SideBarSubMenuItem
+              title={"Month View"}
+              url={"/calendar" + navigateURL(null, "month")}
+              iconName="grid-2x2"
+            />
+            <SideBarSubMenuItem title={"Year View"} url={"/calendar" + navigateURL(null, "year")} iconName="grid-3x3" />
+          </SideBarCollapsibleGroup>
+          <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
+            <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />
+            <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
+          </SideBarCollapsibleGroup>
+        </SideBarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <SideBarGroup title="">
+          <SideBarPrimaryMenuItem title={"Support"} iconName={"life-buoy"} url={"#"} />
+        </SideBarGroup>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+export function SideBarHeaderGroup({
+  imagePath = "/images/menu_logo.svg",
+  altText,
+  title,
+  subtitle,
+  url,
+}: {
+  imagePath?: string;
+  altText: string;
+  title: string;
+  subtitle: string;
+  url: string;
+}) {
+  return (
+    <SidebarHeader>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" asChild>
+            <Link href={url}>
+              <div className="flex aspect-square size-8 items-center justify-center">
+                <Image src={imagePath} alt={altText} width={32} height={32} />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{title}</span>
+                <span className="cenet text-xs">{subtitle}</span>
+              </div>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarHeader>
+  );
+}
+
+export function SideBarGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{title}</SidebarGroupLabel>
+      <SidebarMenu>{children}</SidebarMenu>
+    </SidebarGroup>
+  );
+}
+
+export function SideBarCollapsibleGroup({
+  iconName,
+  isOpenByDefault,
+  title,
+  children,
+}: {
+  iconName?: IconName;
+  isOpenByDefault: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible defaultOpen={isOpenByDefault} className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip={title}>
+            {iconName && <DynamicIcon name={iconName} />}
+            <span>{title}</span>
+            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        {children}
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
+
+export function SideBarPrimaryMenuItem({ title, iconName, url }: { title: string; iconName?: IconName; url: string }) {
+  return (
+    <SidebarMenuButton key={title} tooltip={title}>
+      {iconName && <DynamicIcon name={iconName} />}
+      <Link href={url}>{title}</Link>
+    </SidebarMenuButton>
+  );
+}
+
+export function SideBarSubMenuItem({
+  title,
+  iconName,
+  url,
+  rightIndicator,
+}: {
+  title: string;
+  iconName?: IconName;
+  url: string;
+  rightIndicator?: React.ReactNode;
+}) {
+  return (
+    <CollapsibleContent>
+      <SidebarMenuSub>
+        <SidebarMenuSubItem key={title}>
+          <SidebarMenuSubButton>
+            {iconName && <DynamicIcon name={iconName} />}
+            <Link href={url}>{title}</Link>
+          </SidebarMenuSubButton>
+        </SidebarMenuSubItem>
+      </SidebarMenuSub>
+    </CollapsibleContent>
   );
 }
