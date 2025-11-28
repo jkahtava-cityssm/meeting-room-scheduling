@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
 
 type YearGridProps = {
-  years: number[];
+  yearList: number[];
   selectedYear: number;
   currentYear: number;
-  onNavigateYear: (date: Date) => void;
-  onNavigateBlock: (direction: "prev" | "next") => void;
+  onClickYear: (date: Date) => void;
+  onNavigateBand: (direction: "prev" | "next") => void;
   firstYearRef?: React.RefObject<HTMLButtonElement | null>;
   lastYearRef?: React.RefObject<HTMLButtonElement | null>;
 
@@ -15,11 +15,11 @@ type YearGridProps = {
 };
 
 export default function YearGrid({
-  years,
+  yearList,
   selectedYear,
   currentYear,
-  onNavigateYear,
-  onNavigateBlock,
+  onClickYear,
+  onNavigateBand,
   firstYearRef,
   lastYearRef,
 
@@ -30,16 +30,16 @@ export default function YearGrid({
 
   const gridRef = useRef<HTMLDivElement | null>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const lastFocusedIndex = lastFocusedYear != null ? years.indexOf(lastFocusedYear) : -1;
+  const lastFocusedIndex = lastFocusedYear != null ? yearList.indexOf(lastFocusedYear) : -1;
   const tabbableIndex = lastFocusedIndex >= 0 ? lastFocusedIndex : 0;
 
-  const lastIndex = years.length - 1;
-  const lastRowStart = years.length - totalColumns;
+  const lastIndex = yearList.length - 1;
+  const lastRowStart = yearList.length - totalColumns;
 
   const deferFocus = (index: number) => {
     setTimeout(() => {
       buttonRefs.current[index]?.focus();
-      onUpdateLastFocusedYear(years[index]);
+      onUpdateLastFocusedYear(yearList[index]);
     }, 0);
   };
 
@@ -47,11 +47,11 @@ export default function YearGrid({
     Home: () => deferFocus(0),
     End: () => deferFocus(lastIndex),
     PageUp: (index) => {
-      onNavigateBlock("prev");
+      onNavigateBand("prev");
       deferFocus(index);
     },
     PageDown: (index) => {
-      onNavigateBlock("next");
+      onNavigateBand("next");
       deferFocus(index);
     },
     ArrowRight: (index) => moveByOffset(index, 1, 0),
@@ -65,10 +65,10 @@ export default function YearGrid({
     const col = index % totalColumns;
 
     if (nextIndex < 0) {
-      onNavigateBlock("prev");
+      onNavigateBand("prev");
       deferFocus(fallback);
-    } else if (nextIndex >= years.length) {
-      onNavigateBlock("next");
+    } else if (nextIndex >= yearList.length) {
+      onNavigateBand("next");
       deferFocus(fallback);
     } else {
       deferFocus(nextIndex);
@@ -88,7 +88,7 @@ export default function YearGrid({
       ref={gridRef}
       role="grid"
       aria-label="Year selection"
-      className="grid grid-cols-4 gap-x-0.5 gap-y-2"
+      className="grid grid-cols-4 gap-x-0.5 gap-y-1.5"
       tabIndex={-1}
       onFocus={(e) => {
         if (e.target === gridRef.current) {
@@ -96,7 +96,7 @@ export default function YearGrid({
         }
       }}
     >
-      {years.map((year, index) => {
+      {yearList.map((year, index) => {
         const isSelected = year === selectedYear;
         const isCurrent = year === currentYear;
         const isTodayInYear = year === new Date().getFullYear();
@@ -123,7 +123,7 @@ export default function YearGrid({
             onKeyDown={(e) => handleKeyNavigation(e, index)}
             onClick={() => {
               onUpdateLastFocusedYear(year);
-              onNavigateYear(new Date(year, 0, 1));
+              onClickYear(new Date(year, 0, 1));
             }}
             className={`size-14 p-2  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 hover:text-primary-foreground  hover:bg-primary/50 
             ${isSelected ? "bg-primary font-semibold text-primary-foreground" : ""}
@@ -158,13 +158,13 @@ export default function YearGrid({
     }
 
     if (e.key === "PageUp") {
-      onNavigateBlock("prev");
+      onNavigateBand("prev");
       deferFocus(index);
       return;
     }
 
     if (e.key === "PageDown") {
-      onNavigateBlock("next");
+      onNavigateBand("next");
       deferFocus(index);
       return;
     }
@@ -176,11 +176,11 @@ export default function YearGrid({
     const col = index % totalColumns;
 
     if (nextIndex < 0) {
-      onNavigateBlock("prev");
+      onNavigateBand("prev");
       const targetIndex = e.key === "ArrowLeft" ? lastIndex : lastRowStart + col;
       deferFocus(targetIndex);
     } else if (nextIndex >= years.length) {
-      onNavigateBlock("next");
+      onNavigateBand("next");
       const targetIndex = e.key === "ArrowRight" ? 0 : col;
       deferFocus(targetIndex);
     } else {

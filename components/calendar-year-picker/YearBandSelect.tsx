@@ -3,22 +3,22 @@ import { parse } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
-export default function YearBlockSelect({
+export default function YearBandSelect({
   selectedDate,
-  blocks,
-  currentBlockLabel,
+  bands,
+  bandLabel,
   onYearChange,
 }: {
   selectedDate: Date;
-  blocks: number[][];
-  currentBlockLabel: string;
+  bands: number[][];
+  bandLabel: string;
   onYearChange?: (date: Date) => void;
 }) {
   const selectedYear = selectedDate.getFullYear();
 
   return (
     <Select
-      value={currentBlockLabel}
+      value={bandLabel}
       onValueChange={(value) => {
         const [startStr] = value.split(" - ");
         const nextYear = Number(startStr);
@@ -26,15 +26,15 @@ export default function YearBlockSelect({
         onYearChange?.(parsed);
       }}
     >
-      <SelectTrigger aria-label={`Current block: ${currentBlockLabel}`} className="w-48">
+      <SelectTrigger aria-label={`Current band: ${bandLabel}`} className="w-48">
         <div className="flex justify-center items-center w-full">
           <SelectValue />
         </div>
       </SelectTrigger>
       <SelectContent position="popper">
         <ScrollArea className="h-40">
-          {blocks.map((block, idx) => {
-            const label = `${block[0]} - ${block[block.length - 1]}`;
+          {bands.map((band, idx) => {
+            const label = `${band[0]} - ${band[band.length - 1]}`;
             return (
               <SelectItem key={idx} value={label} className="flex justify-center items-center w-full">
                 {label}

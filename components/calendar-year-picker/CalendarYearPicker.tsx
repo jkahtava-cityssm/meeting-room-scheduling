@@ -2,13 +2,13 @@ import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { format, startOfYear } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { navigateURL } from "@/lib/helpers";
-import YearBlockSelect from "./YearBlockSelect";
+
 import YearGrid from "./YearGrid";
 
-import YearBlockNavigation from "./YearBlockNavigation";
-import { useYearBlocks } from "./useYearBlocks";
+import YearBandNavigation from "./YearBandNavigation";
+import { useYearBands } from "./useYearBands";
 
 export default function CalendarYearPicker({ selectedDate }: { selectedDate: Date }) {
   const [currentDate, setCurrentDate] = React.useState<Date>(selectedDate);
@@ -18,7 +18,7 @@ export default function CalendarYearPicker({ selectedDate }: { selectedDate: Dat
   const currentYear = Number(format(currentDate, "yyyy"));
   const { push } = useRouter();
 
-  const { blocks, currentBlock, currentBlockLabel } = useYearBlocks(currentYear);
+  const { bands, yearList, bandLabel } = useYearBands(currentYear);
 
   const firstYearRef = useRef<HTMLButtonElement | null>(null);
   const lastYearRef = useRef<HTMLButtonElement | null>(null);
@@ -41,27 +41,30 @@ export default function CalendarYearPicker({ selectedDate }: { selectedDate: Dat
     <div className="flex flex-col">
       {/* Navigation */}
 
-      <YearBlockNavigation
+      <YearBandNavigation
         currentDate={currentDate}
         onYearChange={(date) => setCurrentDate(date)}
-        onNavigateBlock={navigateBlock}
-        blocks={blocks}
-        currentBlockLabel={currentBlockLabel}
+        onNavigateBand={navigateBlock}
+        bands={bands}
+        bandLabel={bandLabel}
       />
 
       {/* Live region */}
       <div aria-live="polite" className="sr-only">
-        Showing years {currentBlock[0]} to {currentBlock[currentBlock.length - 1]}
+        Showing years {yearList[0]} to {yearList[yearList.length - 1]}
       </div>
 
       {/* Year Grid */}
-      <div className="flex-1 mx-8 pb-1 min-h-65">
+      <div className="flex-1 mx-8 mb-1.5 min-h-65">
+        <div className="flex justify-center w-full mt-2">
+          <div className="text-xs font-medium text-muted-foreground h-4">aa</div>
+        </div>
         <YearGrid
-          years={currentBlock}
+          yearList={yearList}
           selectedYear={selectedYear}
           currentYear={currentYear}
-          onNavigateYear={(date) => handleNavigate(date)}
-          onNavigateBlock={navigateBlock}
+          onClickYear={(date) => handleNavigate(date)}
+          onNavigateBand={navigateBlock}
           lastFocusedYear={lastFocusedYear}
           onUpdateLastFocusedYear={(year) => setLastFocusedYear(year)}
           firstYearRef={firstYearRef}
