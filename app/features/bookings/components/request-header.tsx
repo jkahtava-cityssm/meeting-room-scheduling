@@ -7,6 +7,10 @@ import { Calendar, CalendarRange, Columns, Grid2x2, Grid3x3 } from "lucide-react
 import Link from "next/link";
 import { RequestNavigator } from "./request-navigator";
 import { TCalendarView } from "@/lib/types";
+import { navigateURL } from "@/lib/helpers";
+import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipPortal } from "@radix-ui/react-tooltip";
 
 export default function RequestHeader({
   view,
@@ -51,65 +55,110 @@ export default function RequestHeader({
           <StatusSelect selectedStatusId={statusId} includeAllOption={false} onStatusChange={OnStatusChange} />
         </div>
         <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
-          <Button
-            asChild
-            aria-label="Between Period"
-            size="icon"
-            variant={view === "day" ? "default" : "outline"}
-            className="rounded-r-none [&_svg]:size-5"
-          >
-            <Link href={""}>
-              <Calendar strokeWidth={1.8} />
-            </Link>
-          </Button>
+          <Tooltip delayDuration={500}>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                aria-label="By Day"
+                size="icon"
+                variant={view === "day" ? "default" : "outline"}
+                className="rounded-r-none [&_svg]:size-5"
+              >
+                <Link href={navigateURL(date, "day")}>
+                  <Calendar strokeWidth={1.8} />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent className="max-w-64" side="top" sticky="always">
+                Day View
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
 
-          <Button
-            asChild
-            aria-label="By Day"
-            size="icon"
-            variant={view === "week" ? "default" : "outline"}
-            className="-ml-px rounded-none [&_svg]:size-5"
-          >
-            <Link href={""}>
-              <Columns strokeWidth={1.8} />
-            </Link>
-          </Button>
+          <Tooltip delayDuration={500}>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                aria-label="By Month"
+                size="icon"
+                variant={view === "month" ? "default" : "outline"}
+                className="-ml-px rounded-none [&_svg]:size-5"
+              >
+                <Link href={navigateURL(date, "month")}>
+                  <Columns strokeWidth={1.8} />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent className="max-w-64" side="top" sticky="always">
+                Month View
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
 
-          <Button
-            asChild
-            aria-label="By Week"
-            size="icon"
-            variant={view === "month" ? "default" : "outline"}
-            className="-ml-px rounded-none [&_svg]:size-5"
-          >
-            <Link href={""}>
-              <Grid2x2 strokeWidth={1.8} />
-            </Link>
-          </Button>
+          <Tooltip delayDuration={500}>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                aria-label="By Year"
+                size="icon"
+                variant={view === "year" ? "default" : "outline"}
+                className="-ml-px rounded-none [&_svg]:size-5"
+              >
+                <Link href={navigateURL(date, "year")}>
+                  <Grid2x2 strokeWidth={1.8} />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent className="max-w-64" side="top" sticky="always">
+                Year View
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
 
-          <Button
-            asChild
-            aria-label="By Month"
-            size="icon"
-            variant={view === "year" ? "default" : "outline"}
-            className="-ml-px rounded-none [&_svg]:size-5"
-          >
-            <Link href={""}>
-              <Grid3x3 strokeWidth={1.8} />
-            </Link>
-          </Button>
+          <Tooltip delayDuration={500}>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                aria-label="All Time"
+                size="icon"
+                variant={view === "all" ? "default" : "outline"}
+                className="-ml-px rounded-none [&_svg]:size-5"
+              >
+                <Link href={"?view-all&selectedDate=" + format(date, "yyyy-MM-dd")}>
+                  <Grid3x3 strokeWidth={1.8} />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent className="max-w-64" side="top" sticky="always">
+                All of Time View
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
 
-          <Button
-            asChild
-            aria-label="By Year"
-            size="icon"
-            variant={view === "agenda" ? "default" : "outline"}
-            className="-ml-px rounded-l-none [&_svg]:size-5"
-          >
-            <Link href={""}>
-              <CalendarRange strokeWidth={1.8} />
-            </Link>
-          </Button>
+          <Tooltip delayDuration={500}>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                aria-label="By Year"
+                size="icon"
+                variant={view === "agenda" ? "default" : "outline"}
+                className="-ml-px rounded-l-none [&_svg]:size-5"
+              >
+                <Link href={navigateURL(date, "year")}>
+                  <CalendarRange strokeWidth={1.8} />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent className="max-w-64" side="top" sticky="always">
+                OTHER????
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
         </div>
       </div>
     </div>

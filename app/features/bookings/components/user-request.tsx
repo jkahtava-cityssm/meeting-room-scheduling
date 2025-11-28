@@ -16,10 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SkeletonBookingList from "@/app/features/bookings/components/skeleton-booking-list";
 import { BookingProvider } from "../context/BookingProvider";
 import { SingleCalendar } from "@/components/ui/single-calendar-day";
-import MonthView from "./calendar-picker-month";
-import YearView from "./calendar-picker-month-year";
-import SingleCalendarMonth from "@/components/ui/single-calendar-month";
-import SingleCalendarYear from "@/components/calendar-year-picker/CalendarYearPicker";
+import CalendarMonthPicker from "@/components/calendar-month-picker/CalendarMonthPicker";
+import CalendarYearPicker from "@/components/calendar-year-picker/CalendarYearPicker";
+import { TCalendarView } from "@/lib/types";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -42,6 +41,8 @@ export default function UserRequests() {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("selectedDate");
   const viewParam = searchParams.get("view");
+
+  const view = viewParam === null ? "day" : viewParam;
 
   const dateValue = useMemo(() => {
     return getViewDate(dateParam);
@@ -130,12 +131,11 @@ export default function UserRequests() {
   const breakpoints = true
     ? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
     : "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
-  const view = "day";
 
   return (
     <>
       <RequestHeader
-        view={view}
+        view={view as TCalendarView}
         date={dateValue}
         roomId={roomId}
         statusId={statusId}
@@ -161,28 +161,32 @@ export default function UserRequests() {
           {!isLoading && <BookingList sections={sections} />}
         </BookingProvider>
         <div className="hidden w-74 divide-y border-l md:block">
-          <SingleCalendarMonth selectedDate={dateValue}></SingleCalendarMonth>
-          <SingleCalendarYear selectedDate={dateValue}></SingleCalendarYear>
-          <SingleCalendar
-            className="mx-auto w-fit"
-            mode="single"
-            selected={addDays(new Date(), 1)}
-            onSelect={() => {}}
-            month={new Date()}
-            onMonthChange={() => {}}
-            fixedWeeks={true}
-            required
-            onToday={() => {}}
-            view={"year"}
-            startMonth={addYears(new Date(), -25)}
-            endMonth={addYears(new Date(), 25)}
-          />
+          {view === "month" && <CalendarMonthPicker selectedDate={dateValue}></CalendarMonthPicker>}
+          {view === "year" && <CalendarYearPicker selectedDate={dateValue}></CalendarYearPicker>}
+          {view === "day" && (
+            <SingleCalendar
+              className="mx-auto w-fit"
+              mode="single"
+              selected={dateValue}
+              onSelect={() => {}}
+              month={dateValue}
+              onMonthChange={() => {}}
+              fixedWeeks={true}
+              required
+              onToday={() => {}}
+              view={"year"}
+              startMonth={addYears(dateValue, -25)}
+              endMonth={addYears(dateValue, 25)}
+            />
+          )}
         </div>
       </div>
     </>
   );
 }
+//295x360  - 224x260 mt-16 mx-26
 
+//295x348
 /*
 <SingleCalendar
             className="mx-auto w-fit"
