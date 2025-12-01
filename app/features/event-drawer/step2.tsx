@@ -17,7 +17,7 @@ import { SingleDayPicker } from "@/components/ui/single-day-picker";
 
 import { step2Schema } from "./event-drawer.validator";
 import { useMultiStepForm } from "./multi-step-form";
-import { FormStatus } from "./types";
+import { FormStatus, MultiStepFormContextProps } from "./types";
 import { getRRuleData } from "./rrule-preview-helper";
 import { RRulePreview } from "./rrule-preview";
 import { endOfDay } from "date-fns";
@@ -97,7 +97,7 @@ export function Step2({ formStatus, session }: { formStatus: FormStatus; session
 
           if (data.lastDate && data.lastDate !== lastDateRef.current) {
             lastDateRef.current = data.lastDate;
-            setValue("ruleStartDate", startDate);
+            setValue("ruleStartDate", data.firstDate ? data.firstDate : startDate);
             setValue("ruleEndDate", data.lastDate);
           }
 

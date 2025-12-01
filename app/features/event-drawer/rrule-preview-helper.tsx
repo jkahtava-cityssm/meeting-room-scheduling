@@ -11,6 +11,7 @@ export function getRRuleData({
 }): Promise<{
   RRuleText: string;
   ruleString?: string;
+  firstDate?: string;
   lastDate?: string;
   count?: number;
   localDates?: Date[];
@@ -27,7 +28,7 @@ export function getRRuleData({
     const worker = new Worker(new URL("./rrule-preview-webworker.ts", import.meta.url));
 
     worker.onmessage = (
-      response: MessageEvent<{ rrule: RRule; count: number; lastDate: Date; localDates: Date[] }>
+      response: MessageEvent<{ rrule: RRule; count: number; firstDate: Date; lastDate: Date; localDates: Date[] }>
     ) => {
       try {
         const strippedObject = response.data.rrule;
@@ -35,6 +36,7 @@ export function getRRuleData({
         Object.setPrototypeOf(strippedObject, original);
 
         const ruleString = strippedObject.toString();
+        const firstDate = response.data.firstDate?.toISOString();
         const lastDate = response.data.lastDate?.toISOString();
         const count = response.data.count;
         const localDates = response.data.localDates;
@@ -42,6 +44,7 @@ export function getRRuleData({
         resolve({
           RRuleText,
           ruleString,
+          firstDate,
           lastDate,
           count,
           localDates,

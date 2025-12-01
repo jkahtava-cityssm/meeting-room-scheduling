@@ -19,6 +19,7 @@ self.onmessage = (response: MessageEvent<ParsedOptions>) => {
     self.postMessage({
       rrule: rrule,
       count: total,
+      firstDate: ruleList[0],
       lastDate: lastDate ? convertRRuleDateToDate(lastDate) : undefined,
       localDates: convertedRuleList,
     });
