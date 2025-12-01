@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { SignInGithub, SignInMicrosoft } from "@/components/sign-in-button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { checkSessionPermission } from "@/lib/auth-client";
+
 import { ThemeButton } from "@/components/theme-button";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
