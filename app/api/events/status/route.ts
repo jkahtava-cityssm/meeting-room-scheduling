@@ -29,13 +29,13 @@ export async function GET(request: NextRequest) {
       const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
         OR: [
           {
-            startDate: { lte: EndDate },
-            endDate: { gte: StartDate },
+            startDate: { lte: EndDate, gte: StartDate },
+            //endDate: { gte: StartDate },
           },
           {
             recurrence: {
-              startDate: { lte: EndDate },
-              endDate: { gte: StartDate },
+              startDate: { gte: StartDate, lte: EndDate },
+              //endDate: { gte: StartDate },
             },
           },
         ],
