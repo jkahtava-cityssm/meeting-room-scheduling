@@ -30,7 +30,7 @@ import { Session } from "@/lib/auth-client";
 import { getDurationText } from "@/lib/helpers";
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
-  const { control, getValues, setValue, watch } = useFormContext<z.infer<typeof step1Schema>>();
+  const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
 
   const { setIgnoreLastStep, setStartDate, userId } = useMultiStepForm();
 
@@ -136,6 +136,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 
                       if (value === "true" && startDate !== endDate) {
                         endDatePickerRef.current?.updateDate(startDate);
+
                         //setValue("endDate", getValues("startDate"));
                         setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                       }
@@ -310,11 +311,29 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                     value={field.value}
                     onChange={(isoString) => {
                       if (isRecurring === "true") {
-                        endDatePickerRef.current?.updateDate(isoString);
+                        const endDate = endDatePickerRef.current?.calculateNewDate(isoString);
+
+                        if (endDate) {
+                          setValue("endDate", endDate, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                            shouldValidate: false,
+                          });
+                        }
+                        setValue("startDate", isoString, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: false,
+                        });
+
+                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
+
                         setStartDate(isoString);
+                        trigger(["startDate", "endDate"]);
+                      } else {
+                        field.onChange(isoString);
+                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                       }
-                      field.onChange(isoString);
-                      setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                     }}
                     placeholder="Select a date"
                     data-invalid={fieldState.invalid}
