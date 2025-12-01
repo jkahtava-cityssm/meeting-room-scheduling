@@ -3,7 +3,7 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { z } from "zod/v4";
 
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
-import { endOfDay, format, isSameDay, startOfDay } from "date-fns";
+import { endOfDay, format, isSameDay, parse, startOfDay } from "date-fns";
 import { filterEventsByRoom, getDurationText } from "@/lib/helpers";
 import { RRule } from "rrule";
 import { IEventCard, IEventCardFields, IRoomSection, ISection } from "../components/types";
@@ -56,7 +56,7 @@ export function processBookingRequestEvents(events: IEvent[], roomId: string): I
   const sections: ISection[] = Array.from(eventsByDate.entries())
     .map(([dateKey, roomSections]) => ({
       sectionId: dateKey,
-      formattedDate: format(new Date(dateKey), "PPP"),
+      formattedDate: format(parse(dateKey, "yyyy-MM-dd", new Date()), "PPP"),
       roomSection: roomSections
         .map((section) => ({
           ...section,
