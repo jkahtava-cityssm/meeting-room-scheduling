@@ -4,7 +4,18 @@ import { useClientSession } from "@/hooks/use-client-auth";
 import { IEvent } from "@/lib/schemas/calendar";
 
 import { useEventPatchMutation, useEventsByStatusQuery } from "@/services/events";
-import { startOfMonth, endOfMonth, parse, formatISO, addYears, addDays } from "date-fns";
+import {
+  startOfMonth,
+  endOfMonth,
+  parse,
+  formatISO,
+  addYears,
+  addDays,
+  startOfDay,
+  endOfDay,
+  endOfYear,
+  startOfYear,
+} from "date-fns";
 
 import { redirect, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -37,6 +48,24 @@ function removeTimeFromDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+function getDateRange(view: TCalendarView, dateValue: Date) {
+  if (view === "day") {
+    return { startDate: startOfDay(dateValue), endDate: endOfDay(dateValue) };
+  }
+
+  if (view === "month") {
+    return { startDate: startOfMonth(dateValue), endDate: endOfMonth(dateValue) };
+  }
+  if (view === "year") {
+    return { startDate: startOfYear(dateValue), endDate: endOfYear(dateValue) };
+  }
+  if (view === "all") {
+    return { startDate: new Date(0), endDate: new Date(8640000000000000) };
+  }
+
+  return { startDate: startOfDay(dateValue), endDate: endOfDay(dateValue) };
+}
+
 export default function UserRequests() {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("selectedDate");
@@ -49,8 +78,8 @@ export default function UserRequests() {
   }, [dateParam]);
 
   const { session, isPending } = useClientSession();
-  const startDate: Date = startOfMonth(dateValue);
-  const endDate: Date = endOfMonth(dateValue);
+
+  const { startDate, endDate } = getDateRange(view as TCalendarView, dateValue);
 
   const [sections, setSections] = useState<ISection[]>([]);
   const [totalEvents, setTotalEvents] = useState<number>(0);
