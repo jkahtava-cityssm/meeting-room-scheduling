@@ -3,41 +3,49 @@ import { CombinedSchema } from "./event-drawer.validator";
 import { FormStep } from "./types";
 import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
 
-export const isStepValid = async (formStep: FormStep, methods: UseFormReturn<CombinedSchema>): Promise<boolean> => {
+export const isStepValid = async (
+  formStep: FormStep,
+  methods: UseFormReturn<CombinedSchema>
+): Promise<{ status: boolean; errorList: string[] }> => {
   const formValues = getFormValues(formStep, methods);
 
   if (formStep.validationSchema) {
     const validationResult = formStep.validationSchema.safeParse(formValues);
-
+    const errorList: string[] = [];
     if (!validationResult.success) {
       validationResult.error.issues.forEach((err) => {
         methods.setError(err.path.join(".") as keyof CombinedSchema, {
           type: "manual",
           message: err.message,
         });
+        if (err.message !== "Invalid input") errorList.push(err.message);
       });
-      return false;
+      return { status: false, errorList: errorList };
     }
   }
 
-  return true;
+  return { status: true, errorList: [] };
 };
 
 export const isFormValid = async (
   formSteps: FormStep[],
   methods: UseFormReturn<CombinedSchema>,
   skipSteps: number[] = []
-): Promise<boolean> => {
+): Promise<{ status: boolean; errorList: string[] }> => {
   let isValid = true;
+  let errorList: string[] = [];
   for (let step = 0; step < formSteps.length; step++) {
     if (skipSteps.includes(step)) {
       continue;
     }
 
     const stepValid = await isStepValid(formSteps[step], methods);
-    if (!stepValid) isValid = false;
+    if (!stepValid.status) {
+      isValid = false;
+      errorList = [...errorList, ...stepValid.errorList];
+    }
   }
-  return isValid;
+  return { status: isValid, errorList: errorList };
 };
 
 export const getFormValues = <T>(formStep: FormStep, methods: UseFormReturn<CombinedSchema>): T => {
@@ -59,15 +67,17 @@ export const updateRRuleIfNecessary = async (allData: CombinedSchema): Promise<C
     fieldValues: getFieldValuesArray(allData),
   });
 
-  if (!rruleData.ruleString || !rruleData.lastDate) {
+  if (!rruleData.ruleString || !rruleData.lastDate || !rruleData.firstDate) {
     return null;
   }
 
   return {
     ...allData,
+    //The event StartDate should always match the first recurrence
+    startDate: rruleData.firstDate !== allData.startDate ? rruleData.firstDate : allData.startDate,
     rule: rruleData.ruleString,
     ruleEndDate: rruleData.lastDate,
-    ruleStartDate: allData.startDate,
+    ruleStartDate: rruleData.firstDate,
   };
 };
 

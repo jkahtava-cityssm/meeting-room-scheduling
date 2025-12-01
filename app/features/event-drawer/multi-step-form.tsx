@@ -26,6 +26,7 @@ import FormFooter from "./multi-step-form-footer";
 import UnsavedChangesDialog from "./multi-step-form-unsaved-changes";
 import { useClientSession } from "@/hooks/use-client-auth";
 import { isFormValid, isStepValid, updateRRuleIfNecessary } from "./multi-step-form-helper";
+import { ConfirmErrorDialog } from "./multi-step-form-confirm-prompt";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -70,6 +71,9 @@ export const MultiStepForm = ({
 
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
   const [showAlert, setShowAlert] = useState(false);
+  const [showError, setShowError] = React.useState(false);
+  const [errors, setErrors] = React.useState<string[]>([]);
+
   const currentStep = formSteps[currentStepIndex];
   const [nextButtonDestructive, setNextButtonDestructive] = useState(false);
   const [backButtonDestructive, setBackButtonDestructive] = useState(false);
@@ -103,7 +107,7 @@ export const MultiStepForm = ({
 
       const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex], methods);
 
-      if (!isCurrentStepValid) {
+      if (!isCurrentStepValid.status) {
         setBackButtonDestructive(true);
       } else if (backButtonDestructive === true) {
         setBackButtonDestructive(false);
@@ -121,7 +125,7 @@ export const MultiStepForm = ({
 
       const isCurrentStepValid = await isStepValid(formSteps[currentStepIndex], methods);
 
-      if (!isCurrentStepValid) {
+      if (!isCurrentStepValid.status) {
         setNextButtonDestructive(true);
       } else if (nextButtonDestructive === true) {
         setNextButtonDestructive(false);
@@ -157,8 +161,18 @@ export const MultiStepForm = ({
     const isRecurring = formData.isRecurring === "true";
     const skipStep = isRecurring ? [] : [1];
 
-    const isValid = await isFormValid(formSteps, methods, skipStep);
-    if (!isValid) return;
+    const formState = await isFormValid(formSteps, methods, skipStep);
+
+    if (formData.startDate !== formData.ruleStartDate) {
+      formState.errorList.push("Start Date does not match the First Recurrence Date");
+    }
+
+    //setErrors(formState.errorList);
+    //setShowError(true);
+    //return;
+    if (!formState.status) {
+      return;
+    }
 
     const allData = await updateRRuleIfNecessary(formData);
 
@@ -270,6 +284,12 @@ export const MultiStepForm = ({
           ></FormFooter>
         </SheetContent>
       </Sheet>
+      <ConfirmErrorDialog
+        showError={showError}
+        errors={errors}
+        onClose={() => {}}
+        setShowError={setShowError}
+      ></ConfirmErrorDialog>
       <UnsavedChangesDialog
         showAlert={showAlert}
         defaultFormValues={defaultFormValues}

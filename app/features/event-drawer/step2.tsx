@@ -18,7 +18,7 @@ import { SingleDayPicker } from "@/components/ui/single-day-picker";
 import { step2Schema } from "./event-drawer.validator";
 import { useMultiStepForm } from "./multi-step-form";
 import { FormStatus, MultiStepFormContextProps } from "./types";
-import { getRRuleData } from "./rrule-preview-helper";
+import { getRRuleData, RRuleFieldValues } from "./rrule-preview-helper";
 import { RRulePreview } from "./rrule-preview";
 import { endOfDay } from "date-fns";
 import { Session } from "@/lib/auth-client";
@@ -39,13 +39,14 @@ export function Step2({ formStatus, session }: { formStatus: FormStatus; session
 
   const lastRuleRef = useRef<string | undefined>("");
   const lastDateRef = useRef<string | undefined>("");
+  const prevValuesRef = useRef<RRuleFieldValues | undefined>(undefined);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [count, setCount] = useState<number | undefined>(0);
   const [localDates, setLocalDates] = useState<Date[] | undefined>([]);
   const [isCalculating, setCalculating] = useState<boolean>(true);
 
-  const { control, getValues, setValue, watch } = useFormContext<z.infer<typeof step2Schema>>();
+  const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step2Schema>>();
 
   //const [rruleData, setRRuleData] = useState(null);
 
@@ -86,19 +87,34 @@ export function Step2({ formStatus, session }: { formStatus: FormStatus; session
     debounceTimerRef.current = setTimeout(() => {
       const fetchData = async () => {
         try {
+          const previousFieldValues = JSON.stringify(prevValuesRef.current);
+          const currentFieldValues = JSON.stringify(fieldValues);
+
+          const isSame = previousFieldValues ? previousFieldValues === currentFieldValues : false;
+          if (isSame) return;
+          prevValuesRef.current = fieldValues;
+
           const data = await getRRuleData({ startDate, fieldValues });
 
           if (isCancelled) return;
 
-          if (data.ruleString && data.ruleString !== lastRuleRef.current) {
-            lastRuleRef.current = data.ruleString;
-            setValue("rule", data.ruleString);
-          }
-
-          if (data.lastDate && data.lastDate !== lastDateRef.current) {
-            lastDateRef.current = data.lastDate;
-            setValue("ruleStartDate", data.firstDate ? data.firstDate : startDate);
-            setValue("ruleEndDate", data.lastDate);
+          if (data.ruleString && data.lastDate && data.firstDate) {
+            setValue("rule", data.ruleString, {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: false,
+            });
+            setValue("ruleStartDate", data.firstDate, {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: false,
+            });
+            setValue("ruleEndDate", data.lastDate, {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: false,
+            });
+            trigger(["rule", "ruleStartDate", "ruleEndDate"]);
           }
 
           setLocalDates(data.localDates ?? []);
