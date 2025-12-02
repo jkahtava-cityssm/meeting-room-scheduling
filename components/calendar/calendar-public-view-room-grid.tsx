@@ -12,7 +12,7 @@ import { PublicEventBlock } from "./calendar-public-view-event-block";
 import React from "react";
 import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { IEventList } from "./calendar-public-view";
-import { SingleDayPicker } from "../ui/single-day-picker";
+import { CalendarDayPopover } from "../calendar-day-popover/calendar-day-popover";
 import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { CalendarPublicViewRoomGridSkeleton } from "./skeleton-calendar-public-view-room-grid";
@@ -201,7 +201,7 @@ const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
     <div className="grid grid-cols-2 gap-2 auto-cols-min lg:grid-cols-[auto_minmax(10rem,1fr)_auto] w-full items-center min-w-65">
       {/* Label - spans both columns */}
       <div className="text-center justify-self-center col-span-2 lg:col-start-2 lg:col-span-1 lg:row-start-1">
-        <SingleDayPicker
+        <CalendarDayPopover
           id={`}Date`}
           disabled={false}
           value={currentDate}
@@ -217,7 +217,7 @@ const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
           <Button size={"sm"} variant="ghost" className="block text-base font-semibold ">
             {<span>{formatDate(currentDate, "PPP")}</span>}
           </Button>
-        </SingleDayPicker>
+        </CalendarDayPopover>
       </div>
 
       {/* Previous Button */}

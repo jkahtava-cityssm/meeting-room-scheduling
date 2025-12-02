@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
-import { SingleDayPicker } from "./single-day-picker";
+import { CalendarDayPopover } from "../calendar-day-popover/calendar-day-popover";
 import { TimePicker } from "./time-picker";
 import { Label } from "./label";
 
@@ -109,7 +109,7 @@ export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePick
               </Label>
             )}
             {!(hideDate ?? false) && (
-              <SingleDayPicker
+              <CalendarDayPopover
                 id={`${id}Date`}
                 disabled={disabled}
                 value={date}

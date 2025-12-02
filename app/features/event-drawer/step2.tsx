@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useEffect, useRef, useState } from "react";
-import { SingleDayPicker } from "@/components/ui/single-day-picker";
+import { CalendarDayPopover } from "@/components/calendar-day-popover/calendar-day-popover";
 
 import { step2Schema } from "./event-drawer.validator";
 import { useMultiStepForm } from "./multi-step-form";
@@ -211,7 +211,7 @@ export function Step2({ formStatus, session }: { formStatus: FormStatus; session
                         <FormControl>
                           <FormItem className="flex items-center gap-2">
                             <FormControl>
-                              <SingleDayPicker
+                              <CalendarDayPopover
                                 id="untilDate"
                                 disabled={isReadOnly}
                                 value={field.value ? endOfDay(new Date(field.value)) : new Date()}
