@@ -36,7 +36,7 @@ export default function SkeletonBookingList() {
   );
 }
 
-function SectionLayoutSkeleton() {
+export function SectionLayoutSkeleton() {
   //{format(date, "EEEE, MMMM d, yyyy")
   return (
     <div className="border-b">

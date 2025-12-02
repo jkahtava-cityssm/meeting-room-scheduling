@@ -17,6 +17,8 @@ import CalendarMonthPicker from "@/components/calendar-month-picker/CalendarMont
 import CalendarYearPicker from "@/components/calendar-year-picker/CalendarYearPicker";
 import { TCalendarView } from "@/lib/types";
 import { CalendarDayPicker } from "@/components/calendar-day-picker/CalendarDayPicker";
+import BookingListByRoom from "./booking-list-by-room";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -82,6 +84,8 @@ export default function UserRequests() {
   const [statusId, setStatusId] = useState<string>("1");
 
   const { data: events } = useEventsByStatusQuery(startDate, endDate, statusId);
+
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -177,14 +181,69 @@ export default function UserRequests() {
             id: "1",
           }}
         >
-          {!isLoading && <BookingList sections={sections} />}
+          {!isLoading && view !== "all" && <BookingList sections={sections} />}
+          {!isLoading && view === "all" && (
+            <BookingListByRoom sections={sections} page={currentPage}></BookingListByRoom>
+          )}
         </BookingProvider>
         <div className="hidden w-74 divide-y border-l md:block">
           {view === "month" && <CalendarMonthPicker selectedDate={dateValue}></CalendarMonthPicker>}
           {view === "year" && <CalendarYearPicker selectedDate={dateValue}></CalendarYearPicker>}
           {view === "day" && <CalendarDayPicker selectedDate={dateValue}></CalendarDayPicker>}
+          {view === "all" && (
+            <PageList currentPage={currentPage} onPageChange={setCurrentPage} sections={sections}></PageList>
+          )}
         </div>
       </div>
+    </>
+  );
+}
+
+function PageList({
+  sections,
+  currentPage,
+  onPageChange,
+}: {
+  sections: ISection[];
+  currentPage: number;
+  onPageChange: (value: number) => void;
+}) {
+  const PAGE_SIZE = 100;
+  const totalPages = Math.ceil(sections.length / PAGE_SIZE);
+
+  const getPageInfo = (page: number) => {
+    const start = (page - 1) * PAGE_SIZE;
+    const end = Math.min(start + PAGE_SIZE, sections.length);
+    const firstDate = sections[start]?.formattedDate || "";
+    const lastDate = sections[end - 1]?.formattedDate || "";
+    const count = end - start;
+    return { range: `${firstDate} - ${lastDate}`, count };
+  };
+
+  return (
+    <>
+      {totalPages > 1 && (
+        <ScrollArea className="max-h-[calc(100vh-180px)] ">
+          <div className="flex flex-wrap gap-2 p-4 justify-center border-t">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              const { range, count } = getPageInfo(page);
+              return (
+                <button
+                  key={page}
+                  onClick={() => onPageChange(page)}
+                  className={`px-3 py-1 rounded ${currentPage === page ? "bg-primary text-white" : "bg-gray-200"}`}
+                >
+                  <div className="text-sm font-semibold">
+                    Page {page} ({count} sections)
+                  </div>
+                  <div className="text-xs ">{range}</div>
+                </button>
+              );
+            })}
+          </div>
+          <ScrollBar forceMount={true} orientation="vertical" />
+        </ScrollArea>
+      )}
     </>
   );
 }
