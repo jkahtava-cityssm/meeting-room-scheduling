@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       const StartDate: UTCDate = new UTCDate(startDateParam);
       const EndDate: UTCDate = new UTCDate(endDateParam);
 
-      const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
+      /*const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
         OR: [
           {
             startDate: { lte: EndDate, gte: StartDate },
@@ -40,8 +40,16 @@ export async function GET(request: NextRequest) {
           },
         ],
         AND: [{ statusId: Number(statusId) }],
-      };
+      };*/
 
+      const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
+        AND: [
+          {
+            createdAt: { lte: EndDate, gte: StartDate },
+          },
+          { statusId: Number(statusId) },
+        ],
+      };
       const events = await prisma.event.findMany({
         include: {
           room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
