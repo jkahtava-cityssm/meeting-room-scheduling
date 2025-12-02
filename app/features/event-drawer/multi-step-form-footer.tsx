@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SheetFooter } from "@/components/ui/sheet";
 import {
@@ -51,6 +51,9 @@ const FormFooter: React.FC<FormFooterProps> = ({
   onDelete,
   setStatus,
 }) => {
+  const [isSaving, setSaving] = useState(false);
+  const [isDeleting, setDeleting] = useState(false);
+
   const canUpdateEvent = useVerifySessionRequirement(session, {
     type: "permission",
     resource: "Event",
@@ -74,9 +77,23 @@ const FormFooter: React.FC<FormFooterProps> = ({
 
   return (
     <SheetFooter className="flex md:flex-row gap-6">
-      {saveButtonEnabled && (
-        <Button variant="default" onClick={onSave} className="md:w-24" disabled={isSaveDisabled}>
+      {!isSaving && saveButtonEnabled && (
+        <Button
+          variant="default"
+          onClick={() => {
+            setSaving(true);
+            onSave();
+          }}
+          className="md:w-24"
+          disabled={isSaveDisabled || isDeleting}
+        >
           {status === "Edit" ? <SaveIcon /> : <CalendarPlus />}
+          {status === "Edit" ? "Save" : "Create"}
+        </Button>
+      )}
+      {isSaving && saveButtonEnabled && (
+        <Button variant="default" className="md:w-24" disabled={true}>
+          {<Loader2Icon className="animate-spin" />}
           {status === "Edit" ? "Save" : "Create"}
         </Button>
       )}
@@ -116,10 +133,26 @@ const FormFooter: React.FC<FormFooterProps> = ({
 
       {status === "Edit" && (
         <div className="flex flex-row h-9 md:w-24">
-          <Button variant="outline_destructive" className="grow md:w-24" onClick={onDelete}>
-            <Trash2 />
-            Delete
-          </Button>
+          {isDeleting && (
+            <Button variant="outline_destructive" className="grow md:w-24" disabled={true}>
+              <Loader2Icon className="animate-spin" />
+              Delete
+            </Button>
+          )}
+          {!isDeleting && (
+            <Button
+              variant="outline_destructive"
+              className="grow md:w-24"
+              onClick={() => {
+                setDeleting(true);
+                onDelete();
+              }}
+              disabled={isSaving}
+            >
+              <Trash2 />
+              Delete
+            </Button>
+          )}
         </div>
       )}
     </SheetFooter>
