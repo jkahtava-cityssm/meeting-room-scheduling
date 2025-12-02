@@ -29,4 +29,5 @@ export interface IEventCardFields {
   duration: string;
   recurrence: string;
   description: string;
+  createdDate: string;
 }

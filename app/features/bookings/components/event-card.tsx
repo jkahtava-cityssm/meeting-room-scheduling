@@ -4,7 +4,19 @@ import { Button } from "@/components/ui/button";
 import { ButtonColored } from "@/components/ui/button-colored";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { IEvent } from "@/lib/schemas/calendar";
-import { CalendarRange, CalendarSync, Clock, Hourglass, MapPin, Text } from "lucide-react";
+import {
+  CalendarRange,
+  CalendarSync,
+  ChevronRight,
+  CirclePlus,
+  Clock,
+  Hourglass,
+  MapPin,
+  Save,
+  Send,
+  SendHorizonal,
+  Text,
+} from "lucide-react";
 import { IEventCardFields } from "./types";
 import { TColors } from "@/lib/types";
 import { IconColored } from "@/components/ui/icon-colored";
@@ -24,9 +36,18 @@ export default function EventCard({
   return (
     <Card className="w-100 p-2">
       <CardHeader>
-        <CardTitle className="flex flex-row w-full justify-between items-center pb-2 mb-1 border-b">
-          {eventCardFields.eventTitle}
-          <BadgeColored color={eventCardFields.color}>{eventCardFields.roomName}</BadgeColored>
+        <CardTitle className="pb-2 mb-1 border-b">
+          <div className="flex flex-row w-full justify-between items-center">
+            {eventCardFields.eventTitle}
+            <BadgeColored color={eventCardFields.color}>{eventCardFields.roomName}</BadgeColored>
+          </div>
+
+          <div className="flex flex-col">
+            <div className="mt-2 flex items-center gap-1">
+              <SendHorizonal className="size-5 shrink-0 text-muted-foreground" />
+              <p className="text-xs text-foreground font-medium">{eventCardFields.createdDate}</p>
+            </div>
+          </div>
         </CardTitle>
         <CardTitle className="flex flex-row w-full justify-between items-center">
           {eventCardFields.cardTitle}
@@ -73,9 +94,9 @@ export default function EventCard({
       <CardContent>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 mb-2">
-            <Text className="size-5 shrink-0" />
+            <Text className="size-5 shrink-0 text-muted-foreground " />
             <div>
-              <p className="text-sm font-medium">Details</p>
+              <p className="text-xs text-foreground font-medium">Details</p>
             </div>
           </div>
           <div className="flex items-center gap-2 pl-7 ">

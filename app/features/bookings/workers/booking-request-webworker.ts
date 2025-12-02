@@ -23,7 +23,7 @@ export function processBookingRequestEvents(events: IEvent[], roomId: string): I
   //const Rooms = new Map<number,IEvent[]>()
 
   // Step 1: Group by date and room
-  const eventsByDate = filteredEvents.reduce((outerMap, event) => {
+  const eventsByStartDate = filteredEvents.reduce((outerMap, event) => {
     const dateKey = format(event.startDate, "yyyy-MM-dd");
     const roomId = String(event.roomId);
 
@@ -53,7 +53,7 @@ export function processBookingRequestEvents(events: IEvent[], roomId: string): I
   }, new Map<string, IRoomSection[]>());
 
   // Step 2: Flatten and sort
-  const sections: ISection[] = Array.from(eventsByDate.entries())
+  const sections: ISection[] = Array.from(eventsByStartDate.entries())
     .map(([dateKey, roomSections]) => ({
       sectionId: dateKey,
       formattedDate: format(parse(dateKey, "yyyy-MM-dd", new Date()), "PPP"),
@@ -61,7 +61,7 @@ export function processBookingRequestEvents(events: IEvent[], roomId: string): I
         .map((section) => ({
           ...section,
           eventCards: section.eventCards.sort(
-            (a, b) => new Date(a.event.startDate).getTime() - new Date(b.event.startDate).getTime()
+            (a, b) => new Date(a.event.createdAt).getTime() - new Date(b.event.createdAt).getTime()
           ), // Sort cards by start time
         }))
         .sort((a, b) => a.roomName.localeCompare(b.roomName)), // Sort rooms by name
@@ -131,5 +131,6 @@ function FormatEventCardFields(event: IEvent): IEventCardFields {
     duration: getDurationText(event.startDate, event.endDate),
     recurrence: formattedText,
     description: event.description,
+    createdDate: format(event.createdAt, "PPP @ p"),
   };
 }
