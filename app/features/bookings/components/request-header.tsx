@@ -142,7 +142,7 @@ export default function RequestHeader({
                 variant={view === "all" ? "default" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href={"?view-all&selectedDate=" + format(selectedDate, "yyyy-MM-dd")}>
+                <Link href={navigateURL(selectedDate, "all")}>
                   <Grid3x3 strokeWidth={1.8} />
                 </Link>
               </Button>

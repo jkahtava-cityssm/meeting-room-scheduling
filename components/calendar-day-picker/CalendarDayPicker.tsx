@@ -16,13 +16,13 @@ export function CalendarDayPicker({ selectedDate }: { selectedDate: Date }) {
     <DayPicker
       className="mx-auto w-fit"
       mode="single"
-      selected={currentDate}
+      selected={selectedDate}
       onSelect={handleNavigate}
       month={currentDate}
       onMonthChange={setCurrentDate}
       fixedWeeks={true}
       required
-      onToday={() => setCurrentDate(new Date())}
+      onToday={() => handleNavigate(new Date())}
       startMonth={addYears(currentDate, -25)}
       endMonth={addYears(currentDate, 25)}
     />

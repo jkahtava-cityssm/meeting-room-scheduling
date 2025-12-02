@@ -59,6 +59,8 @@ export function rangeText(view: TCalendarView, date: Date) {
     case "day":
     case "agenda":
       return format(date, formatString);
+    case "all":
+      return "All Dates";
     default:
       return "Error while formatting ";
   }

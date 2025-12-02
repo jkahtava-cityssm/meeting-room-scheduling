@@ -4,29 +4,15 @@ import { useClientSession } from "@/hooks/use-client-auth";
 import { IEvent } from "@/lib/schemas/calendar";
 
 import { useEventPatchMutation, useEventsByStatusQuery } from "@/services/events";
-import {
-  startOfMonth,
-  endOfMonth,
-  parse,
-  formatISO,
-  addYears,
-  addDays,
-  startOfDay,
-  endOfDay,
-  endOfYear,
-  startOfYear,
-} from "date-fns";
+import { startOfMonth, endOfMonth, parse, formatISO, startOfDay, endOfDay, endOfYear, startOfYear } from "date-fns";
 
 import { redirect, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { processBookingRequestEvents } from "@/app/features/bookings/workers/booking-request-webworker";
+import { useEffect, useMemo, useRef, useState } from "react";
 import RequestHeader from "@/app/features/bookings/components/request-header";
 import BookingList from "@/app/features/bookings/components/booking-list";
 import { ISection } from "@/app/features/bookings/components/types";
-import { Skeleton } from "@/components/ui/skeleton";
 import SkeletonBookingList from "@/app/features/bookings/components/skeleton-booking-list";
 import { BookingProvider } from "../context/BookingProvider";
-import { DayPicker } from "@/components/ui/day-picker";
 import CalendarMonthPicker from "@/components/calendar-month-picker/CalendarMonthPicker";
 import CalendarYearPicker from "@/components/calendar-year-picker/CalendarYearPicker";
 import { TCalendarView } from "@/lib/types";
@@ -61,7 +47,10 @@ function getDateRange(view: TCalendarView, dateValue: Date) {
     return { startDate: startOfYear(dateValue), endDate: endOfYear(dateValue) };
   }
   if (view === "all") {
-    return { startDate: new Date(0), endDate: new Date(8640000000000000) };
+    return {
+      startDate: parse("0001-01-01", "yyyy-MM-dd", new Date()),
+      endDate: parse("9999-12-31", "yyyy-MM-dd", new Date()),
+    };
   }
 
   return { startDate: startOfDay(dateValue), endDate: endOfDay(dateValue) };
@@ -102,7 +91,7 @@ export default function UserRequests() {
 
   useEffect(() => {
     setLoading(true);
-  }, [dateValue, statusId]);
+  }, [dateValue, statusId, view]);
 
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
@@ -178,7 +167,7 @@ export default function UserRequests() {
           setStatusId(value);
         }}
       />
-      <div className="flex">
+      <div className="flex h-[calc(100vh-180px)]">
         {isLoading && <SkeletonBookingList />}
         <BookingProvider
           value={{

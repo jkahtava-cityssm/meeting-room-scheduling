@@ -7,6 +7,9 @@ import { sharedColorVariants } from "@/components/ui/theme/colorVariants";
 import { cn } from "@/lib/utils";
 import { useEventPatchMutation } from "@/services/events";
 import { useBookingContext } from "../context/BookingProvider";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
 export default function BookingList({ sections }: { sections: ISection[] }) {
   const breakpoints = true
@@ -18,6 +21,7 @@ export default function BookingList({ sections }: { sections: ISection[] }) {
       <ScrollArea className="max-h-[calc(100vh-180px)] overflow-y-auto" type="always">
         <div className="relative">
           <div className="flex flex-col gap-6 max-w-screen-2xl pr-4">
+            {sections.length === 0 && <NoContentWarning />}
             {sections.map((section) => {
               return (
                 <SectionLayout
@@ -105,6 +109,18 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function NoContentWarning() {
+  return (
+    <div className="relative flex-1  p-4">
+      <Alert className="mt-4 ">
+        <Terminal className="h-4 w-4" />
+        <AlertTitle>No Requests Found</AlertTitle>
+        <AlertDescription>Please pick a different day, room, or status</AlertDescription>
+      </Alert>
     </div>
   );
 }
