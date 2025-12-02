@@ -362,6 +362,8 @@ async function CreateRandomEvents(
         recurrenceId: await CreateRandomRecurrence(startDate, endDate),
         statusId: 1,
         userId: userList[userIndex].id,
+        createdAt: startDate.toISOString(),
+        updatedAt: startDate.toISOString(),
       },
     });
   }
