@@ -27,7 +27,7 @@ export default function SkeletonBookingList() {
       <ScrollArea className="min-h-[40vh] max-h-[70vh] overflow-y-auto" type="always">
         <div className="relative">
           <div className="flex flex-col gap-6 max-w-screen-2xl pr-4">
-            {[...Array(30).keys()].map((value) => {
+            {[...Array(2).keys()].map((value) => {
               return <SectionLayout key={value} />;
             })}
           </div>
@@ -62,7 +62,7 @@ function RoomSection() {
         <Skeleton className={"w-60 h-5.5"}></Skeleton>
       </div>
       <div className="flex flex-wrap gap-4 p-4 ">
-        {[...Array(2).keys()].map((value) => {
+        {[...Array(3).keys()].map((value) => {
           return (
             <Card key={value} className="w-100 p-2">
               <CardHeader>

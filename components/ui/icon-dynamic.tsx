@@ -7,6 +7,7 @@ import { sharedIconBackgrounVariants, sharedIconColorVariants } from "./theme/co
 import { TColors } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BadgeColored } from "./badge-colored";
+import { Skeleton } from "./skeleton";
 
 export type IconName = keyof typeof dynamicIconImports;
 
@@ -56,7 +57,7 @@ const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ..
   const LazyIcon = lazyIconCache[name]!;
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<Skeleton className="min-w-6 min-h-6" />}>
       {hideBackground ? (
         <LazyIcon {...props} className={cn(iconClasses, props.className)} />
       ) : (
