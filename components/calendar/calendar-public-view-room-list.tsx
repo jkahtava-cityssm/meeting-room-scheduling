@@ -76,7 +76,7 @@ export const RoomCategoryLayout = ({
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
-      console.log("Checked rooms changed:");
+      //console.log("Checked rooms changed:");
       onCheckedRoomsChange(Array.from(checkedRooms));
     }, 300);
 
