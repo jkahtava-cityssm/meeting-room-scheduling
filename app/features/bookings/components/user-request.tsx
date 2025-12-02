@@ -26,10 +26,11 @@ import { ISection } from "@/app/features/bookings/components/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import SkeletonBookingList from "@/app/features/bookings/components/skeleton-booking-list";
 import { BookingProvider } from "../context/BookingProvider";
-import { SingleCalendar } from "@/components/ui/single-calendar-day";
+import { DayPicker } from "@/components/ui/day-picker";
 import CalendarMonthPicker from "@/components/calendar-month-picker/CalendarMonthPicker";
 import CalendarYearPicker from "@/components/calendar-year-picker/CalendarYearPicker";
 import { TCalendarView } from "@/lib/types";
+import { CalendarDayPicker } from "@/components/calendar-day-picker/CalendarDayPicker";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -165,7 +166,7 @@ export default function UserRequests() {
     <>
       <RequestHeader
         view={view as TCalendarView}
-        date={dateValue}
+        selectedDate={dateValue}
         roomId={roomId}
         statusId={statusId}
         isHeaderLoading={isLoading}
@@ -192,22 +193,7 @@ export default function UserRequests() {
         <div className="hidden w-74 divide-y border-l md:block">
           {view === "month" && <CalendarMonthPicker selectedDate={dateValue}></CalendarMonthPicker>}
           {view === "year" && <CalendarYearPicker selectedDate={dateValue}></CalendarYearPicker>}
-          {view === "day" && (
-            <SingleCalendar
-              className="mx-auto w-fit"
-              mode="single"
-              selected={dateValue}
-              onSelect={() => {}}
-              month={dateValue}
-              onMonthChange={() => {}}
-              fixedWeeks={true}
-              required
-              onToday={() => {}}
-              view={"year"}
-              startMonth={addYears(dateValue, -25)}
-              endMonth={addYears(dateValue, 25)}
-            />
-          )}
+          {view === "day" && <CalendarDayPicker selectedDate={dateValue}></CalendarDayPicker>}
         </div>
       </div>
     </>
@@ -217,7 +203,7 @@ export default function UserRequests() {
 
 //295x348
 /*
-<SingleCalendar
+<DayPicker
             className="mx-auto w-fit"
             mode="single"
             selected={new Date()}
