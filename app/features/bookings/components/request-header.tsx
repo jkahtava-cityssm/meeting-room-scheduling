@@ -7,14 +7,15 @@ import { Calendar, CalendarRange, Columns, Grid2x2, Grid3x3 } from "lucide-react
 import Link from "next/link";
 import { RequestNavigator } from "./request-navigator";
 import { TCalendarView } from "@/lib/types";
-import { navigateURL } from "@/lib/helpers";
+import { navigateDate, navigateURL } from "@/lib/helpers";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipPortal } from "@radix-ui/react-tooltip";
+import { useRouter } from "next/navigation";
 
 export default function RequestHeader({
   view,
-  date,
+  selectedDate,
   roomId,
   statusId,
   isHeaderLoading,
@@ -23,7 +24,7 @@ export default function RequestHeader({
   OnStatusChange,
 }: {
   view: TCalendarView;
-  date: Date;
+  selectedDate: Date;
   roomId: string;
   statusId: string;
   isHeaderLoading: boolean;
@@ -31,6 +32,20 @@ export default function RequestHeader({
   OnRoomChange: (value: string) => void;
   OnStatusChange: (value: string) => void;
 }) {
+  const { push } = useRouter();
+
+  const handleNavigatePrevious = () => {
+    const previousDate = navigateDate(selectedDate, view, "previous");
+
+    push(navigateURL(previousDate, view));
+  };
+
+  const handleNavigateNext = () => {
+    const nextDate = navigateDate(selectedDate, view, "next");
+
+    push(navigateURL(nextDate, view));
+  };
+
   return (
     <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex items-center gap-3">
@@ -38,11 +53,11 @@ export default function RequestHeader({
 
         <RequestNavigator
           view={view}
-          selectedDate={date}
+          selectedDate={selectedDate}
           isHeaderLoading={isHeaderLoading}
           totalEvents={totalEvents}
-          onPreviousClick={() => {}}
-          onNextClick={() => {}}
+          onPreviousClick={handleNavigatePrevious}
+          onNextClick={handleNavigateNext}
         />
       </div>
 
@@ -64,7 +79,7 @@ export default function RequestHeader({
                 variant={view === "day" ? "default" : "outline"}
                 className="rounded-r-none [&_svg]:size-5"
               >
-                <Link href={navigateURL(date, "day")}>
+                <Link href={navigateURL(selectedDate, "day")}>
                   <Calendar strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -85,7 +100,7 @@ export default function RequestHeader({
                 variant={view === "month" ? "default" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href={navigateURL(date, "month")}>
+                <Link href={navigateURL(selectedDate, "month")}>
                   <Columns strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -106,7 +121,7 @@ export default function RequestHeader({
                 variant={view === "year" ? "default" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href={navigateURL(date, "year")}>
+                <Link href={navigateURL(selectedDate, "year")}>
                   <Grid2x2 strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -127,7 +142,7 @@ export default function RequestHeader({
                 variant={view === "all" ? "default" : "outline"}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href={"?view-all&selectedDate=" + format(date, "yyyy-MM-dd")}>
+                <Link href={"?view-all&selectedDate=" + format(selectedDate, "yyyy-MM-dd")}>
                   <Grid3x3 strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -148,7 +163,7 @@ export default function RequestHeader({
                 variant={view === "agenda" ? "default" : "outline"}
                 className="-ml-px rounded-l-none [&_svg]:size-5"
               >
-                <Link href={navigateURL(date, "year")}>
+                <Link href={navigateURL(selectedDate, "year")}>
                   <CalendarRange strokeWidth={1.8} />
                 </Link>
               </Button>
