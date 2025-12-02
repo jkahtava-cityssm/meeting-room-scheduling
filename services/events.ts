@@ -7,6 +7,9 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { Prisma } from "@prisma/client";
 
 //const queryClient = new QueryClient();
+const formatDate = (date: Date) => {
+  return formatISO(date);
+};
 
 export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) =>
   useQuery({
@@ -26,7 +29,7 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
     enabled: enabled,
   });
 
-export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId?: string, enabled: boolean = true) =>
+export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) =>
   useQuery({
     queryKey: ["events", formatDate(startDate), formatDate(endDate), "status", statusId],
     queryFn: async () =>
@@ -44,9 +47,27 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId?
     enabled: enabled,
   });
 
-const formatDate = (date: Date) => {
-  return formatISO(date);
-};
+export const useTotalEventsByStatusQuery = (
+  statusId: string,
+  startDate?: Date,
+  endDate?: Date,
+  enabled: boolean = true
+) =>
+  useQuery({
+    queryKey: ["total_events", "status", statusId],
+    queryFn: async () =>
+      fetchGET("/api/events/status/counts", {
+        startdate: startDate ? formatDate(startDate) : undefined,
+        enddate: endDate ? formatDate(endDate) : undefined,
+        statusId: statusId,
+      }).then((result) => {
+        return result.data;
+      }),
+    refetchInterval: 60 * 1000,
+    refetchIntervalInBackground: true,
+    enabled: enabled,
+    staleTime: 60 * 1000,
+  });
 
 export const useEventQuery = (eventId: number | undefined, enabled: boolean = true) =>
   useQuery({
