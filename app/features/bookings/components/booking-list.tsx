@@ -15,7 +15,7 @@ export default function BookingList({ sections }: { sections: ISection[] }) {
 
   return (
     <div className={`flex flex-1 flex-col ${breakpoints}`}>
-      <ScrollArea className="min-h-[40vh] max-h-[70vh] overflow-y-auto" type="always">
+      <ScrollArea className="max-h-[calc(100vh-180px)] overflow-y-auto" type="always">
         <div className="relative">
           <div className="flex flex-col gap-6 max-w-screen-2xl pr-4">
             {sections.map((section) => {
