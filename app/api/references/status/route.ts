@@ -14,7 +14,7 @@ export async function GET() {
   }
 
   const status = await prisma.status.findMany({
-    select: { statusId: true, name: true, icon: true, color: true },
+    select: { statusId: true, key: true, name: true, icon: true, color: true },
   });
 
   if (!status) {
