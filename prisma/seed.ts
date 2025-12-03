@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors } from "../lib/types";
+import { DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors, TStatusKey } from "../lib/types";
 import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import {
   EVENTDESCRIPTIONS,
@@ -209,14 +209,14 @@ async function FindCreateRooms(
   return record;
 }
 
-async function FindCreateEventStatus(name: string, icon: IconName, color: TColors) {
+async function FindCreateEventStatus(name: string, icon: IconName, color: TColors, key: TStatusKey) {
   let record = await prisma.status.findFirst({
     where: { name: name },
   });
 
   if (!record) {
     record = await prisma.status.create({
-      data: { name: name, icon: icon, color: color },
+      data: { name: name, icon: icon, color: color, key: key },
     });
   }
   return record;
@@ -813,10 +813,10 @@ async function main() {
   }
 
   //await FindCreateEventStatus("Created");
-  await FindCreateEventStatus("Pending Review", "circle-pause", "slate");
-  await FindCreateEventStatus("Confirmed", "circle-check", "green");
-  await FindCreateEventStatus("Rejected", "circle-x", "red");
-  await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue");
+  await FindCreateEventStatus("Pending Review", "circle-pause", "slate", "PENDING");
+  await FindCreateEventStatus("Confirmed", "circle-check", "green", "APPROVE");
+  await FindCreateEventStatus("Rejected", "circle-x", "red", "REJECTED");
+  await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue", "INFORMATION");
 
   const user = await prisma.user.findFirst();
   if (!user) {

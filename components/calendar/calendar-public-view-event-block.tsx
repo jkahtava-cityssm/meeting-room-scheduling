@@ -24,9 +24,10 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
   if (!eventBlock?.event) {
     return;
   }
-  const color = eventBlock.event.room.color as TColors;
 
-  const EventCardClasses = PublicEventCard({ color: color as TColors });
+  const isApproved = eventBlock.event.status.key === "APPROVED";
+  const color: TColors = isApproved ? (eventBlock.event.room.color as TColors) : ("slate" as TColors);
+  const EventCardClasses = PublicEventCard({ color: color });
 
   const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;
   return (
@@ -41,7 +42,7 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
           }}
         >
           <div className="flex items-center">
-            <p className="font-semibold text-wrap">Booked</p>
+            <p className="font-semibold text-wrap">{isApproved ? "Booked" : "Requested"}</p>
           </div>
           <div className="flex items-center text-wrap">
             <p>{timeRange}</p>
@@ -57,7 +58,7 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
             <div className="flex items-center gap-2 border-b border-muted-foreground h-8">
               <p className="text-sm font-medium">{eventBlock.event.room.name}</p>
             </div>
-            <p className="text-primary-foreground/80 text-sm font-normal">Booked</p>
+            <p className="text-primary-foreground/80 text-sm font-normal">{isApproved ? "Booked" : "Requested"}</p>
             <p className="text-primary-foreground/80 text-sm font-normal">{timeRange}</p>
             <p className="text-primary-foreground/80 text-sm font-normal">{eventBlock.event.title}</p>
           </div>

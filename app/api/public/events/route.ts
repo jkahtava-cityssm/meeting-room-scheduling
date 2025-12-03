@@ -25,18 +25,24 @@ export async function GET(request: NextRequest) {
       roomId: true,
       room: { select: { color: true, name: true } },
       recurrence: { select: { startDate: true, endDate: true, rule: true } },
+      status: { select: { statusId: true, name: true, key: true } },
     },
     where: {
-      OR: [
+      AND: [
         {
-          startDate: { lte: EndDate },
-          endDate: { gte: StartDate },
-        },
-        {
-          recurrence: {
-            startDate: { lte: EndDate },
-            endDate: { gte: StartDate },
-          },
+          OR: [
+            {
+              startDate: { lte: EndDate },
+              endDate: { gte: StartDate },
+            },
+            {
+              recurrence: {
+                startDate: { lte: EndDate },
+                endDate: { gte: StartDate },
+              },
+            },
+          ],
+          AND: [{ OR: [{ status: { key: "APPROVED" } }, { status: { key: "PENDING" } }] }],
         },
       ],
     },

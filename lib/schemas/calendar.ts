@@ -61,6 +61,7 @@ export const SMultiDay = z.object({
 
 export const SStatus = z.object({
   statusId: z.number(),
+  key: z.string(),
   name: z.string(),
   icon: z.string(),
   color: z.string(),

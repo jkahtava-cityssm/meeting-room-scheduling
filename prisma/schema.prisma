@@ -273,6 +273,7 @@ model Event {
 
 model Status {
   statusId  Int      @id @default(autoincrement()) @map("status_id")
+  key       String   @unique
   name      String
   icon      String?  @default("none")
   color     String?  @default("none")
