@@ -5,6 +5,7 @@ import z from "zod/v4";
 
 const AllStatus: IStatus = {
   statusId: -1,
+  key: "ALL",
   name: "Any Status",
   icon: "asterisk",
   color: "zinc",
