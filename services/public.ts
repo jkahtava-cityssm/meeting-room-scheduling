@@ -39,31 +39,31 @@ export type PUBLIC_IROOM = z.infer<typeof PUBLIC_SROOM>;
 export const usePublicEventsQuery = (startDate: Date, endDate: Date, enabled: boolean = true) =>
   useQuery({
     queryKey: ["events", formatDate(startDate), formatDate(endDate)],
-    queryFn: async () =>
-      fetchGET("/api/public/events", {
+    queryFn: async () => {
+      const result = await fetchGET("/api/public/events", {
         startdate: formatDate(startDate),
         enddate: formatDate(endDate),
-      }).then((result) => {
-        const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
+      });
+      const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
 
-        if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) throw new Error("Invalid event data");
 
-        return parsedResult.data;
-      }),
+      return parsedResult.data;
+    },
     enabled: enabled,
   });
 
 export const usePublicRoomsQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: ["rooms"],
-    queryFn: async () =>
-      fetchGET("/api/public/rooms", {}).then((result) => {
-        const parsedResult = z.array(PUBLIC_SROOM).safeParse(result.data);
+    queryFn: async () => {
+      const result = await fetchGET("/api/public/rooms", {});
+      const parsedResult = z.array(PUBLIC_SROOM).safeParse(result.data);
 
-        if (!parsedResult.success) throw new Error("Invalid room data");
+      if (!parsedResult.success) throw new Error("Invalid room data");
 
-        return parsedResult.data;
-      }),
+      return parsedResult.data;
+    },
     enabled: enabled,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
@@ -71,10 +71,10 @@ export const usePublicRoomsQuery = (enabled: boolean = true) =>
 export const usePublicConfigurationsQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: ["config_hours"],
-    queryFn: async () =>
-      fetchGET("/api/public/configuration", {}, 1440, ["config_hours"]).then((result) => {
-        return result.data;
-      }),
+    queryFn: async () => {
+      const result = await fetchGET("/api/public/configuration", {}, 1440, ["config_hours"]);
+      return result.data;
+    },
     enabled: enabled,
     staleTime: 1000 * 60 * 60 * 3, // 1 hour
   });

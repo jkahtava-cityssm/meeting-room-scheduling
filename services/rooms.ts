@@ -30,18 +30,18 @@ const AllRooms: IRoom = {
 export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
   useQuery({
     queryKey: ["rooms", includeAllOption ? "all" : "existing"],
-    queryFn: async () =>
-      fetchGET("/api/rooms").then((result) => {
-        if (includeAllOption) {
-          result.data.unshift(AllRooms);
-        }
+    queryFn: async () => {
+      const result = await fetchGET("/api/rooms");
+      if (includeAllOption) {
+        result.data.unshift(AllRooms);
+      }
 
-        const parsedResult = z.array(SRoom).safeParse(result.data);
+      const parsedResult = z.array(SRoom).safeParse(result.data);
 
-        if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) throw new Error("Invalid event data");
 
-        return parsedResult.data;
-      }),
+      return parsedResult.data;
+    },
     enabled: enabled,
     //staleTime: 0,
     staleTime: 1000 * 60 * 60, // 1 hour

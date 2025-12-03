@@ -14,36 +14,36 @@ const formatDate = (date: Date) => {
 export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) =>
   useQuery({
     queryKey: ["events", formatDate(startDate), formatDate(endDate), "user", userId],
-    queryFn: async () =>
-      fetchGET("/api/events", {
+    queryFn: async () => {
+      const result = await fetchGET("/api/events", {
         startdate: formatDate(startDate),
         enddate: formatDate(endDate),
         userId: userId,
-      }).then((result) => {
-        const parsedResult = z.array(SEvent).safeParse(result.data);
+      });
+      const parsedResult = z.array(SEvent).safeParse(result.data);
 
-        if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) throw new Error("Invalid event data");
 
-        return parsedResult.data;
-      }),
+      return parsedResult.data;
+    },
     enabled: enabled,
   });
 
 export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) =>
   useQuery({
     queryKey: ["events", formatDate(startDate), formatDate(endDate), "status", statusId],
-    queryFn: async () =>
-      fetchGET("/api/events/status", {
+    queryFn: async () => {
+      const result = await fetchGET("/api/events/status", {
         startdate: formatDate(startDate),
         enddate: formatDate(endDate),
         statusId: statusId,
-      }).then((result) => {
-        const parsedResult = z.array(SEvent).safeParse(result.data);
+      });
+      const parsedResult = z.array(SEvent).safeParse(result.data);
 
-        if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) throw new Error("Invalid event data");
 
-        return parsedResult.data;
-      }),
+      return parsedResult.data;
+    },
     enabled: enabled,
   });
 
@@ -55,14 +55,17 @@ export const useTotalEventsByStatusQuery = (
 ) =>
   useQuery({
     queryKey: ["total_events", "status", statusId],
-    queryFn: async () =>
-      fetchGET("/api/events/status/counts", {
+    queryFn: async () => {
+      const result = await fetchGET("/api/events/status/counts", {
         startdate: startDate ? formatDate(startDate) : undefined,
         enddate: endDate ? formatDate(endDate) : undefined,
         statusId: statusId,
-      }).then((result) => {
-        return result.data;
-      }),
+      });
+
+      if (!result.data) throw new Error("Invalid total events");
+
+      return result.data;
+    },
     refetchInterval: 60 * 1000,
     refetchIntervalInBackground: true,
     enabled: enabled,
@@ -72,14 +75,14 @@ export const useTotalEventsByStatusQuery = (
 export const useEventQuery = (eventId: number | undefined, enabled: boolean = true) =>
   useQuery({
     queryKey: ["event", eventId],
-    queryFn: async () =>
-      fetchGET(`/api/events/${eventId}`).then((result) => {
-        const parsedResult = z.array(SEvent).safeParse(result.data);
+    queryFn: async () => {
+      const result = await fetchGET(`/api/events/${eventId}`);
+      const parsedResult = z.array(SEvent).safeParse(result.data);
 
-        if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) throw new Error("Invalid event data");
 
-        return parsedResult.data[0];
-      }),
+      return parsedResult.data[0];
+    },
     enabled: enabled && eventId !== undefined,
     gcTime: 0,
     staleTime: 0,

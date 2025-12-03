@@ -14,17 +14,18 @@ const AllStatus: IStatus = {
 export const useStatusQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
   useQuery({
     queryKey: ["status", includeAllOption ? "all" : "existing"],
-    queryFn: async () =>
-      fetchGET(`/api/references/status`, undefined, 180, ["status"]).then((result) => {
-        if (includeAllOption) {
-          result.data.unshift(AllStatus);
-        }
+    queryFn: async () => {
+      const result = await fetchGET(`/api/references/status`, undefined, 180, ["status"]);
 
-        const parsedResult = z.array(SStatus).safeParse(result.data);
+      if (includeAllOption) {
+        result.data.unshift(AllStatus);
+      }
 
-        if (!parsedResult.success) throw new Error("Invalid status data");
+      const parsedResult = z.array(SStatus).safeParse(result.data);
 
-        return parsedResult.data;
-      }),
+      if (!parsedResult.success) throw new Error("Invalid status data");
+
+      return parsedResult.data;
+    },
     enabled: enabled,
   });
