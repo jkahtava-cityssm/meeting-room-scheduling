@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-  return guardRoute(req, { type: "role", role: "Admin" }, async () => {
+  return guardRoute(req, { type: "function", check: () => process.env.NODE_ENV === "development" }, async () => {
     const { paths, tags } = await req.json();
 
     for (const path of paths) {

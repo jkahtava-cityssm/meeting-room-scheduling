@@ -98,7 +98,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                   }}
                 ></Switch>
               </DropdownMenuItem>
-              {canRefreshAPI && <RefreshMenuItem />}
+              {process.env.NODE_ENV === "development" && <RefreshMenuItem />}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
