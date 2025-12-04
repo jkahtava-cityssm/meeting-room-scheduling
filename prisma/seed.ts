@@ -814,7 +814,7 @@ async function main() {
 
   //await FindCreateEventStatus("Created");
   await FindCreateEventStatus("Pending Review", "circle-pause", "slate", "PENDING");
-  await FindCreateEventStatus("Confirmed", "circle-check", "green", "APPROVE");
+  await FindCreateEventStatus("Confirmed", "circle-check", "green", "APPROVED");
   await FindCreateEventStatus("Rejected", "circle-x", "red", "REJECTED");
   await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue", "INFORMATION");
 

@@ -1,5 +1,5 @@
 export type TCalendarView = "day" | "week" | "month" | "year" | "agenda" | "public" | "all";
-export type TStatusKey = "PENDING" | "APPROVE" | "REJECTED" | "INFORMATION";
+export type TStatusKey = "PENDING" | "APPROVED" | "REJECTED" | "INFORMATION";
 export const colorOptions = [
   "red",
   "rose",

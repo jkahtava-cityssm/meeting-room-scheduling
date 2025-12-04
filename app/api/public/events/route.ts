@@ -3,6 +3,7 @@ import { prisma } from "@/prisma";
 import { NextRequest } from "next/server";
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { UTCDate } from "@date-fns/utc";
+import { TStatusKey } from "@/lib/types";
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
               },
             },
           ],
-          AND: [{ OR: [{ status: { key: "APPROVED" } }, { status: { key: "PENDING" } }] }],
+          AND: [{ OR: [{ status: { key: "APPROVED" as TStatusKey } }, { status: { key: "PENDING" as TStatusKey } }] }],
         },
       ],
     },

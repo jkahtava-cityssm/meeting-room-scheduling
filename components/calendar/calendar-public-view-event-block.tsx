@@ -1,7 +1,7 @@
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 
-import { TColors } from "@/lib/types";
+import { TColors, TStatusKey } from "@/lib/types";
 import { IEventBlock } from "./calendar-day-view";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,7 +25,7 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
     return;
   }
 
-  const isApproved = eventBlock.event.status.key === "APPROVED";
+  const isApproved = eventBlock.event.status.key === ("APPROVED" as TStatusKey);
   const color: TColors = isApproved ? (eventBlock.event.room.color as TColors) : ("slate" as TColors);
   const EventCardClasses = PublicEventCard({ color: color });
 
