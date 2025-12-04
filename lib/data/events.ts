@@ -1,11 +1,18 @@
 import { prisma } from "@/prisma";
 import type { Prisma } from "@prisma/client";
 
+// Standard event include configuration — used across all DAL functions
+const EVENT_INCLUDE = {
+  room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
+  recurrence: true,
+  status: true,
+} as const satisfies Prisma.EventInclude;
+
 // Create an event — the DAL controls which relations are included.
 export async function createEvent(data: Prisma.EventCreateInput) {
   return prisma.event.create({
     data,
-    include: { room: true, recurrence: true, status: true },
+    include: EVENT_INCLUDE,
   });
 }
 
@@ -19,7 +26,7 @@ export async function upsertEvent(params: {
     where: params.where,
     create: params.create,
     update: params.update,
-    include: { room: true, recurrence: true, status: true },
+    include: EVENT_INCLUDE,
   });
 }
 
@@ -27,7 +34,7 @@ export async function updateEvent(params: { where: Prisma.EventWhereUniqueInput;
   return prisma.event.update({
     where: params.where,
     data: params.data,
-    include: { room: true, recurrence: true, status: true },
+    include: EVENT_INCLUDE,
   });
 }
 
@@ -35,11 +42,7 @@ export async function updateEvent(params: { where: Prisma.EventWhereUniqueInput;
 export async function findManyEvents(where?: Prisma.EventWhereInput) {
   return prisma.event.findMany({
     where,
-    include: {
-      room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
-      recurrence: true,
-      status: true,
-    },
+    include: EVENT_INCLUDE,
   });
 }
 
