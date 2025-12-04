@@ -307,6 +307,7 @@ export const eventObject = z.object({
     .optional(),
   roomId: z.string().transform((val) => Number(val)),
   userId: z.string().transform((val) => Number(val)),
+  statusId: z.string().transform((val) => Number(val)),
   startDate: z.string(),
   endDate: z.string(),
   title: z.string(),
