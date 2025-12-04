@@ -78,7 +78,11 @@ export const MultiStepForm = ({
   const [nextButtonDestructive, setNextButtonDestructive] = useState(false);
   const [backButtonDestructive, setBackButtonDestructive] = useState(false);
 
-  const { data: collectedEvent } = useEventQuery(Number(defaultFormValues["eventId"]), status === "Loading");
+  const {
+    data: collectedEvent,
+    isPending,
+    isFetching,
+  } = useEventQuery(Number(defaultFormValues["eventId"]), status === "Loading");
   const saveButtonEnabled =
     status === "Edit" || status === "New" || (ignoreLastStep && status !== "Read" && status !== "Loading");
   const editButtonEnabled = status === "Read" || status === "Loading";
@@ -87,7 +91,7 @@ export const MultiStepForm = ({
   const mutationDelete = useEventsMutationDelete();
 
   useEffect(() => {
-    if (status === "Loading" && collectedEvent) {
+    if (status === "Loading" && collectedEvent && !isFetching) {
       const parsedData = getEventValues(collectedEvent);
       methods.reset(parsedData);
 
@@ -97,7 +101,7 @@ export const MultiStepForm = ({
     }
     //Complains about methods.reset but it is a function and should not be included
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, collectedEvent]);
+  }, [status, collectedEvent, isFetching]);
 
   // Navigation functions
   const nextStep = async () => {
