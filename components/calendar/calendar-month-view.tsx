@@ -128,7 +128,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
 
       workerRef.current.postMessage(data);
     }
-  }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading]);
+  }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
   if (isLoading || isPending) {
     return <MonthViewDayCellSkeleton date={date} />;
@@ -141,7 +141,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
   return (
     <>
       <div
-        className="grid grid-cols-7 border-b-1"
+        className="grid grid-cols-7 border-b"
         //pr-[15px]
       >
         {WEEK_DAYS.map((day) => (
@@ -176,7 +176,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
                 </ScrollArea>
               </div>
               <div
-                className="grid grid-cols-7 overflow-hidden border-b-1"
+                className="grid grid-cols-7 overflow-hidden border-b"
                 //pr-[15px]
               >
                 {week.dayViews.map((day, index) => {
