@@ -1,4 +1,4 @@
-import { prisma } from "@/prisma";
+import { findManyEvents, deleteManyEvents } from "@/lib/data/events";
 import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { guardRoute } from "@/lib/api-guard";
 import { NextRequest } from "next/server";
@@ -10,14 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return BadRequestMessage();
     }
 
-    const events = await prisma.event.findMany({
-      include: {
-        room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
-        recurrence: true,
-        status: true,
-      },
-      where: { eventId: parseInt(eventId) },
-    });
+    const events = await findManyEvents({ eventId: parseInt(eventId) });
 
     if (!events) {
       return InternalServerErrorMessage();
@@ -38,9 +31,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         return BadRequestMessage();
       }
 
-      const totalDeleted = await prisma.event.deleteMany({
-        where: { eventId: parseInt(eventId) },
-      });
+      const totalDeleted = await deleteManyEvents({ eventId: parseInt(eventId) });
 
       if (!totalDeleted) {
         return InternalServerErrorMessage();

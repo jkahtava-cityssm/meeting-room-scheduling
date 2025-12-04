@@ -1,7 +1,9 @@
 import { GenericSelect } from "@/components/shared/GenericSelect";
+import { Button } from "@/components/ui/button";
 import { IconName } from "@/components/ui/icon-dynamic";
 import { TColors } from "@/lib/types";
-import { useStatusQuery } from "@/services/references";
+import { useStatusQuery } from "@/lib/services/references";
+import { CircleX } from "lucide-react";
 
 export function StatusSelect({
   selectedStatusId,
@@ -12,8 +14,16 @@ export function StatusSelect({
   includeAllOption: boolean;
   onStatusChange: (value: string) => void;
 }) {
-  const { isPending, data } = useStatusQuery(includeAllOption);
+  const { isPending, data, error } = useStatusQuery(includeAllOption);
 
+  if (error) {
+    return (
+      <Button variant={"outline"} disabled className="min-w-60">
+        <CircleX />
+        Error
+      </Button>
+    );
+  }
   return (
     <GenericSelect
       list={data}

@@ -28,7 +28,7 @@ import { useClientSession } from "@/hooks/use-client-auth";
 import { useVerifySessionRequirement } from "@/lib/auth-client";
 
 import { BadgeColored } from "./ui/badge-colored";
-import { useTotalEventsByStatusQuery } from "@/services/events";
+import { useTotalEventsByStatusQuery } from "@/lib/services/events";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
 

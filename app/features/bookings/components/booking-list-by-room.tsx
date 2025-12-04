@@ -4,7 +4,7 @@ import EventCard from "./event-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LoaderIcon, Terminal } from "lucide-react";
 import { IRoomSection, ISection } from "./types";
-import { useEventPatchMutation } from "@/services/events";
+import { useEventPatchMutation } from "@/lib/services/events";
 import { useBookingContext } from "../context/BookingProvider";
 import { useEffect, useState } from "react";
 import { SectionLayoutSkeleton } from "./skeleton-booking-list";

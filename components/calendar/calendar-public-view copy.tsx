@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
-import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/services/public";
+import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/lib/services/public";
 import { useSearchParams } from "next/navigation";
 import { RoomCategoryLayout } from "./calendar-public-view-room-list";
 import { DateControlSkeleton, FilteredRoomGrid } from "./calendar-public-view-room-grid";

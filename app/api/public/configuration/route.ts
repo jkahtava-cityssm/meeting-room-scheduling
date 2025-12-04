@@ -1,13 +1,11 @@
 import { prisma } from "@/prisma";
+import { findManyConfiguration } from "@/lib/data/configuration";
 
 import { NextRequest } from "next/server";
 import { InternalServerErrorMessage, SuccessMessage, validateVisibleHours } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
-  const configEntries = await prisma.configuration.findMany({
-    select: { key: true, value: true },
-    where: { OR: [{ key: "visibleHoursStart" }, { key: "visibleHoursEnd" }] },
-  });
+  const configEntries = await findManyConfiguration({ OR: [{ key: "visibleHoursStart" }, { key: "visibleHoursEnd" }] });
 
   if (!configEntries) {
     return InternalServerErrorMessage();

@@ -17,7 +17,7 @@ import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
-import { useEventsQuery } from "@/services/events";
+import { useEventsQuery } from "@/lib/services/events";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Terminal } from "lucide-react";
 import { Button } from "../ui/button";

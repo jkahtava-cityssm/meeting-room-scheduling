@@ -1,6 +1,7 @@
 import { guardRoute } from "@/lib/api-guard";
 import { NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
 import { prisma } from "@/prisma";
+import { findManyUsers } from "@/lib/data/users";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -9,10 +10,7 @@ export async function GET(request: NextRequest) {
     { type: "permission", resource: "User", action: "Read" },
 
     async () => {
-      const users = await prisma.user.findMany({
-        select: { id: true, name: true, email: true },
-        where: { employeeActive: true },
-      });
+      const users = await findManyUsers({ employeeActive: true });
 
       if (!users) {
         return NotFoundMessage();

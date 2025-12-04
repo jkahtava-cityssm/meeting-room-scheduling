@@ -7,6 +7,8 @@ import { UTCDate } from "@date-fns/utc";
 import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { guardRoute } from "@/lib/api-guard";
 import { Prisma } from "@prisma/client";
+import { createEvent, upsertEvent, updateEvent, findManyEvents } from "@/lib/data/events";
+import { createRecurrence, upsertRecurrence, deleteRecurrence } from "@/lib/data/recurrence";
 
 export async function POST(request: NextRequest) {
   return guardRoute(
@@ -24,23 +26,20 @@ export async function POST(request: NextRequest) {
       let recurrence = null;
 
       if (rule) {
-        recurrence = await prisma.recurrence.create({
+        recurrence = await createRecurrence({
           data: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
         });
       }
 
-      const event = await prisma.event.create({
-        data: {
-          title,
-          description,
-          startDate,
-          endDate,
-          roomId,
-          recurrenceId: recurrence ? recurrence.recurrenceId : null,
-          statusId: 1,
-          userId,
-        },
-        include: { room: true, recurrence: true, status: true },
+      const event = await createEvent({
+        title,
+        description,
+        startDate,
+        endDate,
+        room: { connect: { roomId } },
+        recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : undefined,
+        status: { connect: { key: "PENDING" } },
+        user: { connect: { id: userId } },
       });
 
       if (!event) {
@@ -91,7 +90,7 @@ export async function PUT(request: NextRequest) {
       let recurrence = null;
 
       if (rule) {
-        recurrence = await prisma.recurrence.upsert({
+        recurrence = await upsertRecurrence({
           create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
           where: { recurrenceId: recurrenceId },
           update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
@@ -100,34 +99,33 @@ export async function PUT(request: NextRequest) {
 
       if (ruleData === null && recurrenceId !== null && recurrenceId > 0) {
         // Delete recurrence if ruleData is null and recurrenceId exists
-        await prisma.recurrence.delete({
+        await deleteRecurrence({
           where: { recurrenceId: recurrenceId },
         });
       }
 
-      const event = await prisma.event.upsert({
+      const event = await upsertEvent({
+        where: { eventId: eventId },
         create: {
           title,
           description,
           startDate,
           endDate,
-          roomId,
-          recurrenceId: recurrence ? recurrence.recurrenceId : null,
-          statusId: 1,
-          userId,
+          room: { connect: { roomId } },
+          recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : undefined,
+          status: { connect: { key: "PENDING" } },
+          user: { connect: { id: userId } },
         },
-        where: { eventId: eventId },
         update: {
           title,
           description,
           startDate,
           endDate,
-          roomId,
-          recurrenceId: recurrence ? recurrence.recurrenceId : null,
-          statusId: 1,
-          userId,
+          room: { connect: { roomId } },
+          recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : undefined,
+          status: { connect: { key: "PENDING" } },
+          user: { connect: { id: userId } },
         },
-        include: { room: true, recurrence: true, status: true },
       });
 
       if (!event) {
@@ -176,7 +174,7 @@ export async function PATCH(request: NextRequest) {
       let recurrence = null;
 
       if (rule) {
-        recurrence = await prisma.recurrence.upsert({
+        recurrence = await upsertRecurrence({
           create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
           where: { recurrenceId: recurrenceId || 0 },
           update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
@@ -185,7 +183,7 @@ export async function PATCH(request: NextRequest) {
       }
 
       if (ruleData === null && recurrenceId !== null) {
-        await prisma.recurrence.delete({ where: { recurrenceId } });
+        await deleteRecurrence({ where: { recurrenceId } });
         updateData.recurrence = { disconnect: true };
       }
 
@@ -193,10 +191,9 @@ export async function PATCH(request: NextRequest) {
         return BadRequestMessage("No fields provided for update");
       }
 
-      const event = await prisma.event.update({
+      const event = await updateEvent({
         where: { eventId },
         data: updateData,
-        include: { room: true, recurrence: true, status: true },
       });
 
       if (!event) {
@@ -246,14 +243,7 @@ export async function GET(request: NextRequest) {
         whereClause.AND = [{ userId: { equals: Number(userId) } }];
       }
 
-      const events = await prisma.event.findMany({
-        include: {
-          room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
-          recurrence: true,
-          status: true,
-        },
-        where: whereClause,
-      });
+      const events = await findManyEvents(whereClause);
 
       if (!events) {
         return InternalServerErrorMessage();

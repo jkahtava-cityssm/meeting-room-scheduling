@@ -17,7 +17,7 @@ import { useContext } from "react";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
 
-import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/services/events";
+import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/lib/services/events";
 import React from "react";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useEventStore } from "@/lib/zustand/new-event-store";

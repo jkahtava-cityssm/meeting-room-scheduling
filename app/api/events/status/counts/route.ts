@@ -1,4 +1,4 @@
-import { prisma } from "@/prisma";
+import { countEvents as countEventsDAL } from "@/lib/data/events";
 
 import { NextRequest } from "next/server";
 
@@ -34,17 +34,15 @@ export async function GET(request: NextRequest) {
       const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
         AND: [timeClause, { statusId: Number(statusId) }],
       };
-      const countEvents = await prisma.event.count({
-        where: whereClause,
-      });
+      const total = await countEventsDAL(whereClause);
 
-      if (!countEvents) {
+      if (total === undefined || total === null) {
         return InternalServerErrorMessage();
       }
       //console.log("###########################################");
       //console.log("COUNT RAN: ", format(new Date(), "PPP @ p"));
       //console.log("###########################################");
-      return SuccessMessage("Collected Total Events", { total: countEvents });
+      return SuccessMessage("Collected Total Events", { total });
     }
   );
 }

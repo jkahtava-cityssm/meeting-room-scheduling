@@ -5,7 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { useMemo, useState } from "react";
 
-import { PUBLIC_IROOM } from "@/services/public";
+import { PUBLIC_IROOM } from "@/lib/services/public";
 import { Button } from "../ui/button";
 
 import { PublicEventBlock } from "./calendar-public-view-event-block";

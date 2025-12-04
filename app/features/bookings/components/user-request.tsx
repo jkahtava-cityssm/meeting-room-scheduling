@@ -3,7 +3,7 @@
 import { useClientSession } from "@/hooks/use-client-auth";
 import { IEvent } from "@/lib/schemas/calendar";
 
-import { useEventPatchMutation, useEventsByStatusQuery } from "@/services/events";
+import { useEventPatchMutation, useEventsByStatusQuery } from "@/lib/services/events";
 import { startOfMonth, endOfMonth, parse, formatISO, startOfDay, endOfDay, endOfYear, startOfYear } from "date-fns";
 
 import { redirect, useSearchParams } from "next/navigation";

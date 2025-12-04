@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
-import { useEventsQuery } from "@/services/events";
+import { useEventsQuery } from "@/lib/services/events";
 
 export interface IWeekProcessData {
   events: IEvent[];

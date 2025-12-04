@@ -1,5 +1,5 @@
 "use client";
-import { PUBLIC_IROOM } from "@/services/public";
+import { PUBLIC_IROOM } from "@/lib/services/public";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";

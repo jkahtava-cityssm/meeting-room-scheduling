@@ -15,15 +15,15 @@ import { IconColored } from "@/components/ui/icon-colored";
 import { ScrollBar } from "@/components/ui/scroll-area";
 
 import { Textarea } from "@/components/ui/textarea";
-import { useRoomsQuery } from "@/services/rooms";
+import { useRoomsQuery } from "@/lib/services/rooms";
 import { Select } from "@/components/ui/select";
 
 import { formatDuration, intervalToDuration } from "date-fns";
 import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
 import { FormStatus } from "./types";
-import { useUsersQuery } from "@/services/users";
+import { useUsersQuery } from "@/lib/services/users";
 import { Button } from "@/components/ui/button";
-import { useStatusQuery } from "@/services/references";
+import { useStatusQuery } from "@/lib/services/references";
 import { DateTimePicker, DateTimePickerRef } from "@/components/ui/datetimepicker";
 import { useRef } from "react";
 import { Session } from "@/lib/auth-client";

@@ -13,7 +13,7 @@ import { MonthViewDayHeader } from "./calendar-month-view-day-header";
 import { cn } from "@/lib/utils";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { getDaysInView } from "@/lib/helpers";
-import { useEventsQuery } from "@/services/events";
+import { useEventsQuery } from "@/lib/services/events";
 import { TVisibleHours } from "@/lib/types";
 
 export interface IMonthProcessData {

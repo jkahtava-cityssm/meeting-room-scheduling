@@ -1,20 +1,12 @@
 import { prisma } from "@/prisma";
+import { findManyRooms } from "@/lib/data/rooms";
 
 import { NextRequest } from "next/server";
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { UTCDate } from "@date-fns/utc";
 
 export async function GET(req: NextRequest) {
-  const rooms = await prisma.room.findMany({
-    select: {
-      roomId: true,
-      name: true,
-      color: true,
-      roomCategory: { select: { roomCategoryId: true, name: true } },
-      roomProperty: { select: { name: true, value: true } },
-    },
-    where: { roomScope: { name: "Public" } },
-  });
+  const rooms = await findManyRooms({ roomScope: { name: "Public" } });
 
   if (!rooms) {
     return InternalServerErrorMessage();

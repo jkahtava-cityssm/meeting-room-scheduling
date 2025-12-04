@@ -1,6 +1,7 @@
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/prisma";
+import { findManyStatus } from "@/lib/data/status";
 
 export async function GET() {
   if (!process.env.DATABASE_URL) {
@@ -13,9 +14,7 @@ export async function GET() {
     return BadRequestMessage("Not Authorized");
   }
 
-  const status = await prisma.status.findMany({
-    select: { statusId: true, key: true, name: true, icon: true, color: true },
-  });
+  const status = await findManyStatus();
 
   if (!status) {
     return InternalServerErrorMessage();

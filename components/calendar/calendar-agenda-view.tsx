@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "../ui/button";
 import { IEvent } from "@/lib/schemas/calendar";
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
-import { useEventsQuery } from "@/services/events";
+import { useEventsQuery } from "@/lib/services/events";
 import { TVisibleHours } from "@/lib/types";
 
 export interface IAgendaProcessData {

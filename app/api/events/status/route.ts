@@ -1,4 +1,4 @@
-import { prisma } from "@/prisma";
+import { findManyEvents } from "@/lib/data/events";
 
 import { NextRequest } from "next/server";
 
@@ -50,14 +50,7 @@ export async function GET(request: NextRequest) {
           { statusId: Number(statusId) },
         ],
       };
-      const events = await prisma.event.findMany({
-        include: {
-          room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
-          recurrence: true,
-          status: true,
-        },
-        where: whereClause,
-      });
+      const events = await findManyEvents(whereClause);
 
       if (!events) {
         return InternalServerErrorMessage();

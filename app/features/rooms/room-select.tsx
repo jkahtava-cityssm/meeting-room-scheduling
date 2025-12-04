@@ -1,7 +1,7 @@
 import { GenericSelect } from "@/components/shared/GenericSelect";
 import { IconName } from "@/components/ui/icon-dynamic";
 import { TColors } from "@/lib/types";
-import { useRoomsQuery } from "@/services/rooms";
+import { useRoomsQuery } from "@/lib/services/rooms";
 
 export function RoomSelect({
   selectedRoomId,

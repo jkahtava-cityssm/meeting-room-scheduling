@@ -8,7 +8,7 @@ import YearViewMonth from "./calendar-year-view-month";
 import { IEvent } from "@/lib/schemas/calendar";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";
-import { useEventsQuery } from "@/services/events";
+import { useEventsQuery } from "@/lib/services/events";
 
 export interface IMonthView {
   month: number;

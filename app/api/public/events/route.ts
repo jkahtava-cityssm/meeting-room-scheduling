@@ -1,4 +1,5 @@
 import { prisma } from "@/prisma";
+import { findManyEvents } from "@/lib/data/events";
 
 import { NextRequest } from "next/server";
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
@@ -17,36 +18,24 @@ export async function GET(request: NextRequest) {
   const StartDate: UTCDate = new UTCDate(startDateParam);
   const EndDate: UTCDate = new UTCDate(endDateParam);
 
-  const events = await prisma.event.findMany({
-    select: {
-      eventId: true,
-      startDate: true,
-      endDate: true,
-      recurrenceId: true,
-      roomId: true,
-      room: { select: { color: true, name: true } },
-      recurrence: { select: { startDate: true, endDate: true, rule: true } },
-      status: { select: { statusId: true, name: true, key: true } },
-    },
-    where: {
-      AND: [
-        {
-          OR: [
-            {
+  const events = await findManyEvents({
+    AND: [
+      {
+        OR: [
+          {
+            startDate: { lte: EndDate },
+            endDate: { gte: StartDate },
+          },
+          {
+            recurrence: {
               startDate: { lte: EndDate },
               endDate: { gte: StartDate },
             },
-            {
-              recurrence: {
-                startDate: { lte: EndDate },
-                endDate: { gte: StartDate },
-              },
-            },
-          ],
-          AND: [{ OR: [{ status: { key: "APPROVED" as TStatusKey } }, { status: { key: "PENDING" as TStatusKey } }] }],
-        },
-      ],
-    },
+          },
+        ],
+        AND: [{ OR: [{ status: { key: "APPROVED" as TStatusKey } }, { status: { key: "PENDING" as TStatusKey } }] }],
+      },
+    ],
   });
 
   if (!events) {
