@@ -73,7 +73,8 @@ export async function PUT(request: NextRequest) {
         eventData.startDate === undefined ||
         eventData.endDate === undefined ||
         eventData.roomId === undefined ||
-        eventData.userId === undefined
+        eventData.userId === undefined ||
+        eventData.statusId === undefined
       ) {
         return BadRequestMessage();
       }
@@ -84,7 +85,7 @@ export async function PUT(request: NextRequest) {
       ) {
         return BadRequestMessage();
       }
-      const { eventId, title, description, startDate, endDate, roomId, recurrenceId, userId } = eventData;
+      const { eventId, title, description, startDate, endDate, roomId, recurrenceId, userId, statusId } = eventData;
       const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
 
       let recurrence = null;
@@ -113,7 +114,7 @@ export async function PUT(request: NextRequest) {
           endDate,
           room: { connect: { roomId } },
           recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : undefined,
-          status: { connect: { key: "PENDING" } },
+          status: { connect: { statusId: statusId } },
           user: { connect: { id: userId } },
         },
         update: {
@@ -123,7 +124,7 @@ export async function PUT(request: NextRequest) {
           endDate,
           room: { connect: { roomId } },
           recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : undefined,
-          status: { connect: { key: "PENDING" } },
+          status: { connect: { statusId: statusId } },
           user: { connect: { id: userId } },
         },
       });
