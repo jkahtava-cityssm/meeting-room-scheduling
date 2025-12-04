@@ -301,7 +301,7 @@ async function CreateRandomEvents(
   const userList = await getActiveUsers();
 
   const intervalsInHour = 60 / timeSlotIntervalMinutes;
-  const hourInterval = visibleHoursEnd - visibleHoursStart + 1;
+  const hourInterval = visibleHoursEnd - visibleHoursStart;
 
   for (let index = 0; index < maxEvents; index++) {
     // Determine if this is a multi-day event (10% chance)
@@ -351,6 +351,15 @@ async function CreateRandomEvents(
     }
     const eventIndex = Math.floor(Math.random() * EVENTS.length);
     const userIndex = Math.floor(Math.random() * userList.length);
+
+    //Check that Dates are within the visible hour window
+
+    if (endDate.getHours() >= visibleHoursEnd) {
+      if (startDate.getHours() === endDate.getHours()) {
+        startDate.setHours(startDate.getHours() - 1, 30);
+      }
+      endDate.setHours(visibleHoursEnd, 0);
+    }
 
     const b = await prisma.event.create({
       data: {
