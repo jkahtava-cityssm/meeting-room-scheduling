@@ -18,7 +18,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRoomsQuery } from "@/lib/services/rooms";
 import { Select } from "@/components/ui/select";
 
-import { formatDuration, intervalToDuration } from "date-fns";
 import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/lib/services/users";
@@ -135,6 +134,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                       const endDate = getValues("endDate");
 
                       if (value === "true" && startDate !== endDate) {
+                        const b = new Date(startDate);
                         endDatePickerRef.current?.updateDate(startDate);
 
                         //setValue("endDate", getValues("startDate"));
@@ -300,10 +300,6 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
             name="startDate"
             render={({ field, fieldState }) => (
               <FormItem className="col-span-2 row-3">
-                <div className="flex gap-2  justify-items-center">
-                  {fieldState.invalid && <FormMessage className="leading-none font-medium" />}
-                </div>
-
                 <FormControl>
                   <DateTimePicker
                     id="startDate"
@@ -329,16 +325,17 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                         setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
 
                         setStartDate(isoString);
-                        trigger(["startDate", "endDate"]);
                       } else {
                         field.onChange(isoString);
                         setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
                       }
+                      trigger(["startDate", "endDate"]);
                     }}
                     placeholder="Select a date"
                     data-invalid={fieldState.invalid}
                     className="min-w-52"
                     label={"Start Date"}
+                    errorMessage={fieldState.error?.message}
                   ></DateTimePicker>
                 </FormControl>
               </FormItem>
@@ -350,10 +347,6 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
             name="endDate"
             render={({ field, fieldState }) => (
               <FormItem className="col-span-2 row-4">
-                <div className="flex gap-2">
-                  {fieldState.invalid && <FormMessage className="leading-none font-medium" />}
-                </div>
-
                 <FormControl>
                   <DateTimePicker
                     id="endDate"
@@ -361,13 +354,23 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                     disabled={isReadOnly}
                     value={field.value}
                     onChange={(isoString) => {
-                      field.onChange(isoString);
-                      setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
+                      if (isRecurring === "true") {
+                        setValue("endDate", isoString, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: false,
+                        });
+                      } else {
+                        field.onChange(isoString);
+                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
+                      }
+                      trigger(["startDate", "endDate"]);
                     }}
                     placeholder="Select a date"
                     data-invalid={fieldState.invalid}
                     className="min-w-52"
                     label={"End Date"}
+                    errorMessage={fieldState.error?.message}
                     hideDate={isRecurring === "true"}
                   ></DateTimePicker>
                 </FormControl>

@@ -12,6 +12,7 @@ type CombinedDateTimePickerProps = {
   className?: string;
   "data-invalid"?: boolean;
   label?: string;
+  errorMessage: string | undefined;
   hideDate?: boolean;
   hideTime?: boolean;
 };
@@ -29,9 +30,13 @@ function isISO8601(isoString: string): boolean {
 }
 
 export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePickerProps>(
-  ({ id, disabled, value, onChange, placeholder, label = "", hideDate, hideTime, ...props }, ref) => {
+  (
+    { id, disabled, value, onChange, placeholder, label = "", errorMessage = "", hideDate, hideTime, ...props },
+    ref
+  ) => {
     const initialDate = value ? new Date(value) : new Date();
     const [date, setDate] = useState<Date>(initialDate);
+    const message = errorMessage ? errorMessage : label;
 
     useEffect(() => {
       if (value) {
@@ -105,7 +110,7 @@ export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePick
                 htmlFor={id + "DayPickerLabel"}
                 //className="text-center"
               >
-                {label ? label : "\u00A0"}
+                {message ? message : "\u00A0"}
               </Label>
             )}
             {!(hideDate ?? false) && (

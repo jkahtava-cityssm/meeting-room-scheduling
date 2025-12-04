@@ -21,7 +21,7 @@ export const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelect
     };
 
     const handleValueChange = (value: Period) => {
-      setPeriod(value);
+      //setPeriod(value);
 
       /**
        * trigger an update whenever the user switches between AM and PM;
