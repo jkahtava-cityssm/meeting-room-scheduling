@@ -5,7 +5,7 @@ import { TColors, TStatusKey } from "@/lib/types";
 import { IEventBlock } from "./calendar-day-view";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { sharedColorVariants } from "../ui/theme/colorVariants";
+import { sharedColorVariants } from "../../lib/theme/colorVariants";
 import { TooltipPortal } from "@radix-ui/react-tooltip";
 
 export const PublicEventCard = cva(
@@ -26,7 +26,7 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
   }
 
   const isApproved = eventBlock.event.status.key === ("APPROVED" as TStatusKey);
-  const color: TColors = isApproved ? (eventBlock.event.room.color as TColors) : ("slate" as TColors);
+  const color: TColors = isApproved ? (eventBlock.event.room.color as TColors) : ("disabled" as TColors);
   const EventCardClasses = PublicEventCard({ color: color });
 
   const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;

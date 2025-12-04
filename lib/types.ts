@@ -21,6 +21,7 @@ export const colorOptions = [
   "teal",
   "cyan",
   "scooter",
+  "disabled",
   "sky",
   "blue",
   "havelockBlue",

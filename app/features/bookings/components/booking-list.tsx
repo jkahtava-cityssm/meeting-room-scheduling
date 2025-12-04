@@ -3,7 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IEventCard, IRoomSection, ISection } from "./types";
 import EventCard from "./event-card";
 import { cva } from "class-variance-authority";
-import { sharedColorVariants } from "@/components/ui/theme/colorVariants";
+import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import { cn } from "@/lib/utils";
 import { useEventPatchMutation } from "@/lib/services/events";
 import { useBookingContext } from "../context/BookingProvider";

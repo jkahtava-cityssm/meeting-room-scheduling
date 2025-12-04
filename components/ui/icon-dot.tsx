@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 
 import { TColors } from "@/lib/types";
-import { sharedIconDotVariants } from "./theme/colorVariants";
+import { sharedIconDotVariants } from "../../lib/theme/colorVariants";
 
 const IconColor = cva("", {
   variants: {

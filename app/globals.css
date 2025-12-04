@@ -5,11 +5,25 @@
 @source inline("{dark:bg,dark:text,dark:border}-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,slate,gray,zinc,neutral,stone}-{900,800,700}");
 @source inline("[&_.event-dot]:fill-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,slate,gray,zinc,neutral,stone}-600");
 
-@source inline("{bg,text,border,fill}-{razzmatazz,viola,havelock,scooter,watercourse,camarone,malachite,sulu,manz,harvest,japonica}-{50,100,200,300,400,500,600,700,800,900}");
-@source inline("{dark:bg,dark:text,dark:border}-{razzmatazz,viola,havelock,scooter,watercourse,camarone,malachite,sulu,manz,harvest,japonica}-{900,800,700}");
-@source inline("[&_.event-dot]:fill-{razzmatazz,viola,havelock,scooter,watercourse,camarone,malachite,sulu,manz,harvest,japonica}-600");
+@source inline("{bg,text,border,fill}-{silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-{50,100,200,300,400,500,600,700,800,900}");
+@source inline("{dark:bg,dark:text,dark:border}-{silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-{900,800,700}");
+@source inline("[&_.event-dot]:fill-{silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-600");
 
 @theme {
+  /* color-silver-chalice */
+
+  --color-silver-chalice-50: #f7f7f7;
+  --color-silver-chalice-100: #ededed;
+  --color-silver-chalice-200: #dfdfdf;
+  --color-silver-chalice-300: #c8c8c8;
+  --color-silver-chalice-400: #b0b0b0;
+  --color-silver-chalice-500: #999999;
+  --color-silver-chalice-600: #888888;
+  --color-silver-chalice-700: #7b7b7b;
+  --color-silver-chalice-800: #676767;
+  --color-silver-chalice-900: #545454;
+  --color-silver-chalice-950: #363636;
+
   /* Terra */
   --color-japonica-50: #fcf5f4;
   --color-japonica-100: #faeae6;

@@ -5,17 +5,17 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 import { TColors } from "@/lib/types";
-import { sharedIconBackgrounVariants, sharedIconColorVariants } from "./theme/colorVariants";
+import { sharedIconBackgrounVariants, sharedIconColorVariants } from "../../lib/theme/colorVariants";
 
 const IconColor = cva("", {
-	variants: {
-		color: sharedIconColorVariants,
-		background: sharedIconBackgrounVariants,
-	},
-	compoundVariants: [],
-	defaultVariants: {
-		color: "blue",
-	},
+  variants: {
+    color: sharedIconColorVariants,
+    background: sharedIconBackgrounVariants,
+  },
+  compoundVariants: [],
+  defaultVariants: {
+    color: "blue",
+  },
 });
 
 /*
@@ -26,42 +26,44 @@ React.HTMLAttributes<HTMLDivElement> & React.RefAttributes<SVGSVGElement>
 // &Omit<VariantProps<typeof IconColor>, "color">;
 
 function IconColored(
-	{
-		color,
-		showBorder = false,
-		hideBackground = false,
-		children,
-	}: //className,
-	//...props
-	{
-		color: TColors;
-		showBorder: boolean;
-		hideBackground: boolean;
-		children: React.ReactElement<SVGSVGElement>;
-	} //& React.HTMLAttributes<HTMLDivElement> &
+  {
+    color,
+    showBorder = false,
+    hideBackground = false,
+    children,
+  }: //className,
+  //...props
+  {
+    color: TColors;
+    showBorder: boolean;
+    hideBackground: boolean;
+    children: React.ReactElement<SVGSVGElement>;
+  } //& React.HTMLAttributes<HTMLDivElement> &
 ) {
-	//Omit<LucideProps, "ref"> &
-	//React.RefAttributes<SVGSVGElement>
-	const EventCardClasses = IconColor({ color: color, background: hideBackground ? "invisible" : color });
+  //Omit<LucideProps, "ref"> &
+  //React.RefAttributes<SVGSVGElement>
+  const EventCardClasses = IconColor({ color: color, background: hideBackground ? "invisible" : color });
 
-	const renderIcon = () => {
-		return React.Children.map(children, child => {
-			if (React.isValidElement(child)) {
-				return React.cloneElement(child, { className: cn(EventCardClasses) });
-			}
-		});
-	};
+  const renderIcon = () => {
+    return React.Children.map(children, (child) => {
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, { className: cn(EventCardClasses) });
+      }
+    });
+  };
 
-	return (
-		<div
-			className={cn(
-				EventCardClasses,
-				showBorder ? "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" : ""
-			)}
-		>
-			{renderIcon()}
-		</div>
-	);
+  return (
+    <div
+      className={cn(
+        EventCardClasses,
+        showBorder
+          ? "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          : ""
+      )}
+    >
+      {renderIcon()}
+    </div>
+  );
 }
 
 export { IconColored };

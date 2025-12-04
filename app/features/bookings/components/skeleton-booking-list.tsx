@@ -3,7 +3,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { IEventCard, IRoomSection, ISection } from "./types";
 import EventCard from "./event-card";
 import { cva } from "class-variance-authority";
-import { sharedColorVariants, sharedIconBackgrounVariants } from "@/components/ui/theme/colorVariants";
+import { sharedColorVariants, sharedIconBackgrounVariants } from "@/lib/theme/colorVariants";
 import { cn } from "@/lib/utils";
 
 import EventDrawer from "@/app/features/event-drawer/event-drawer";

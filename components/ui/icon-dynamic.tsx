@@ -3,7 +3,7 @@
 import { lazy, Suspense, memo } from "react";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { cva } from "class-variance-authority";
-import { sharedIconBackgrounVariants, sharedIconColorVariants } from "./theme/colorVariants";
+import { sharedIconBackgrounVariants, sharedIconColorVariants } from "../../lib/theme/colorVariants";
 import { TColors } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BadgeColored } from "./badge-colored";

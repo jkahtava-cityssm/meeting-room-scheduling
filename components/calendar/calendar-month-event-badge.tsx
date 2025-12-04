@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 import { IEvent } from "@/lib/schemas/calendar";
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
-import { sharedColorVariants } from "../ui/theme/colorVariants";
+import { sharedColorVariants } from "../../lib/theme/colorVariants";
 
 export const eventBadgeVariants = cva(
   "mx-1 flex size-auto h-6.5 select-none items-center justify-between gap-1.5 truncate whitespace-nowrap rounded-md border px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
