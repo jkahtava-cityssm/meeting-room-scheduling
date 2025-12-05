@@ -4,11 +4,12 @@ import { z } from "zod/v4";
 
 import {
   calculateEventBlockStyle,
+  createEventMapByRoom,
   filterEventsByRoom,
   getVisibleHours,
   groupEvents,
   groupEventsByRoom,
-  hasOverlapWithinRoom,
+  hasEventOverlap,
 } from "@/lib/helpers";
 
 import { areIntervalsOverlapping, differenceInMinutes, endOfDay, isSameDay, isToday, startOfDay } from "date-fns";
@@ -51,7 +52,58 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
 
   const dailyEvents = filteredEvents.filter((event) => isSameDay(event.startDate, currentDate));
 
-  const groupedByRoom = groupEventsByRoom(dailyEvents);
+  const eventsByRoom = createEventMapByRoom(filteredEvents);
+
+  eventsByRoom.forEach((value, key) => {
+    const groupedEvents = groupEvents(value);
+    console.log(key, value);
+    console.log(groupedEvents);
+
+    //If this process becomes to cumbersome or costly a sweep-line algorithm could be implemented
+    //This would compute all the overlapping events first reducing the number of loops required.
+    groupedEvents.forEach((currentGroup, groupIndex) => {
+      currentGroup.forEach((currentEvent, eventIndex) => {
+        const hasOverlap = hasEventOverlap(currentEvent, groupedEvents, groupIndex);
+
+        const blockStyle = calculateEventBlockStyle(
+          currentEvent,
+          currentDate,
+          groupIndex,
+          groupedEvents.length,
+          hasOverlap,
+          {
+            from: earliestEventHour,
+            to: latestEventHour,
+          }
+        );
+
+        const durationInMinutes = differenceInMinutes(currentEvent.endDate, currentEvent.startDate);
+        const heightInPixels = (durationInMinutes / 60) * dayData.pixelHeight - 8;
+
+        const newBlock: IEventBlock = {
+          groupIndex,
+          eventIndex,
+          eventStyle: blockStyle,
+          eventHeight: heightInPixels,
+          event: currentEvent,
+          roomId: currentEvent.roomId,
+        };
+
+        eventBlocks.push(newBlock);
+      });
+    });
+  });
+
+  const newDay: IDayView = {
+    day: currentDate.getDate(),
+    dayDate: currentDate,
+    isToday: isToday(currentDate),
+    eventBlocks: eventBlocks,
+  };
+
+  dayViews.push(newDay);
+  const roomIds = Array.from(eventsByRoom.keys());
+  /*const groupedByRoom = groupEventsByRoom(dailyEvents);
 
   const roomIds = Object.keys(groupedByRoom);
 
@@ -98,7 +150,7 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
   };
 
   dayViews.push(newDay);
-
+*/
   return {
     dayViews: dayViews,
     totalEvents: filteredEvents.length,

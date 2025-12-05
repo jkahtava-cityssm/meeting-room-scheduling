@@ -36,7 +36,7 @@ export interface IDayResponseData {
   dayViews: IDayView[];
   hours: number[];
   filteredEvents: IEvent[];
-  roomIds: string[];
+  roomIds: number[];
 }
 
 export interface IDayView {
@@ -61,7 +61,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
   const [dayViews, setDayViews] = useState<IDayView | undefined>(undefined);
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
   const [hours, setHours] = useState<number[]>([]);
-  const [rooms, setRooms] = useState<string[]>([]);
+  const [rooms, setRooms] = useState<number[]>([]);
 
   const { workingHours, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
@@ -198,13 +198,22 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
               {/* Day grid */}
               <div className="relative flex-1 border-b">
                 <div className="relative">
-                  <DayRoomsGrid
-                    rooms={rooms}
-                    dayViews={dayViews}
-                    hours={hours}
-                    workingHours={workingHours}
-                    userId={userId}
-                  ></DayRoomsGrid>
+                  {rooms.length > 0 ? (
+                    <DayRoomsGrid
+                      rooms={rooms}
+                      dayViews={dayViews}
+                      hours={hours}
+                      workingHours={workingHours}
+                      userId={userId}
+                    ></DayRoomsGrid>
+                  ) : (
+                    <DayHourlyEventDialogs
+                      hours={hours}
+                      day={dayViews.dayDate}
+                      workingHours={workingHours}
+                      userId={userId}
+                    />
+                  )}
                 </div>
 
                 <CalendarTimeline />
@@ -230,7 +239,7 @@ function DayRoomsGrid({
   workingHours,
   userId,
 }: {
-  rooms: string[];
+  rooms: number[];
   dayViews: IDayView;
   hours: number[];
   workingHours: TWorkingHours;
@@ -239,12 +248,12 @@ function DayRoomsGrid({
   return (
     <div className="flex w-full">
       {rooms?.map((room) => {
-        const roomBlocks = dayViews.eventBlocks.filter((b) => String(b.roomId) === room);
-
+        const roomBlocks = dayViews.eventBlocks.filter((b) => String(b.roomId) === String(room));
+        const roomName = roomBlocks.length > 0 ? roomBlocks[0].event.room.name : "";
         return (
           <div key={room} className="relative flex-1 border-b">
             {/* Optional room header 
-                        <div className="sticky top-0 z-10 bg-white border-b px-2 py-1 text-sm font-medium">{room.name}</div>
+                        <div className="sticky top-0 z-10 bg-white border-b px-2 py-1 text-sm font-medium">{roomName}</div>
             */}
 
             <div className="relative">

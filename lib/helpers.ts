@@ -32,6 +32,7 @@ import type { ICalendarCell } from "@/lib/interfaces";
 import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/lib/types";
 
 import { IEvent } from "./schemas/calendar";
+import next from "next";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -186,17 +187,46 @@ export function groupEventsByRoom(dayEvents: IEvent[]): Record<string, IEvent[][
   return grouped;
 }
 
-export function hasOverlapWithinRoom(currentEvent: IEvent, roomGroups: IEvent[][], currentGroupIndex: number): boolean {
-  return roomGroups.some(
-    (otherGroup, otherIndex) =>
-      otherIndex !== currentGroupIndex &&
-      otherGroup.some((otherEvent) =>
-        areIntervalsOverlapping(
-          { start: currentEvent.startDate, end: currentEvent.endDate },
-          { start: otherEvent.startDate, end: otherEvent.endDate }
-        )
+export function hasEventOverlap(currentEvent: IEvent, eventList: IEvent[][], currentGroupIndex: number): boolean {
+  const currentEventInterval = { start: currentEvent.startDate, end: currentEvent.endDate };
+
+  return eventList.some(
+    (eventListToCompare, eventListIndex) =>
+      eventListIndex !== currentGroupIndex &&
+      eventListToCompare.some((eventToCompare) =>
+        areIntervalsOverlapping(currentEventInterval, {
+          start: eventToCompare.startDate,
+          end: eventToCompare.endDate,
+        })
       )
   );
+}
+
+export function createEventMapByRoom(events: IEvent[]) {
+  const eventsByRoom = new Map<number, IEvent[]>();
+
+  events.forEach((event) => {
+    const key = event.roomId;
+    if (!eventsByRoom.has(key)) eventsByRoom.set(key, []);
+    eventsByRoom.get(key)!.push(event);
+  });
+
+  const sortedArray = [...eventsByRoom.entries()];
+  sortedArray.sort((a, b) => {
+    return a[0] - b[0];
+  });
+
+  return new Map(sortedArray);
+}
+
+export function createEventMapByDay(events: IEvent[]) {
+  const eventsByDate = new Map<string, IEvent[]>();
+  events.forEach((event) => {
+    const key = format(event.startDate, "yyyy-MM-dd");
+    if (!eventsByDate.has(key)) eventsByDate.set(key, []);
+    eventsByDate.get(key)!.push(event);
+  });
+  return eventsByDate;
 }
 
 export function calculateEventBlockStyle(
@@ -300,7 +330,7 @@ export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHou
   const dayHours = workingHours[dayIndex];
   return hour >= dayHours.from && hour < dayHours.to;
 }
-
+/*
 export function hasOverlap(groupedEvents: IEvent[][], event: IEvent, index: number): boolean {
   return groupedEvents.some(
     (otherGroup, otherIndex) =>
@@ -318,7 +348,7 @@ export function hasOverlap(groupedEvents: IEvent[][], event: IEvent, index: numb
         )
       )
   );
-}
+}*/
 
 /**
  * Loop through each event, increase the Earliest and Latest Visible Hours if an Event occurs outside of the window

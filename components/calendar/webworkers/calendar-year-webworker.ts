@@ -2,7 +2,7 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { addMonths, endOfYear, format, getDaysInMonth, isToday, startOfMonth, startOfYear } from "date-fns";
 import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "../calendar-year-view";
-import { filterEventsByRoom } from "@/lib/helpers";
+import { createEventMapByDay, filterEventsByRoom } from "@/lib/helpers";
 
 import z from "zod/v4";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
@@ -18,11 +18,11 @@ async function formatYearData(yearData: IYearProcessData): Promise<IYearResponse
   const startDate: Date = startOfYear(yearData.selectedDate);
   const endDate: Date = endOfYear(yearData.selectedDate);
 
-    const fromTime = yearData.visibleHours.from
-  const toTime = yearData.visibleHours.to
+  const fromTime = yearData.visibleHours.from;
+  const toTime = yearData.visibleHours.to;
 
   const [multiDayEvents, recurringEvents] = await Promise.all([
-    Promise.resolve(generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, fromTime,toTime)),
+    Promise.resolve(generateMultiDayEventsInPeriod(yearData.eventList, startDate, endDate, fromTime, toTime)),
     Promise.resolve(generateRecurringEventsInPeriod(yearData.eventList, startDate, endDate)),
   ]);
 
@@ -34,12 +34,7 @@ async function formatYearData(yearData: IYearProcessData): Promise<IYearResponse
     (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
   );
 
-  const eventsByDate = new Map<string, IEvent[]>();
-  filteredEvents.forEach((event) => {
-    const key = format(event.startDate, "yyyy-MM-dd");
-    if (!eventsByDate.has(key)) eventsByDate.set(key, []);
-    eventsByDate.get(key)!.push(event);
-  });
+  const eventsByDate = createEventMapByDay(filteredEvents);
 
   const months: Date[] = getMonths(yearData.selectedDate);
 
