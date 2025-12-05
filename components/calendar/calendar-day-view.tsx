@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
+import { TVisibleHours, TWorkingHours } from "@/lib/types";
 
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { useEventsQuery } from "@/lib/services/events";
@@ -36,6 +36,7 @@ export interface IDayResponseData {
   dayViews: IDayView[];
   hours: number[];
   filteredEvents: IEvent[];
+  roomIds: string[];
 }
 
 export interface IDayView {
@@ -43,6 +44,7 @@ export interface IDayView {
   dayDate: Date;
   isToday: boolean;
   eventBlocks: IEventBlock[];
+  roomIds: string[];
 }
 
 export interface IEventBlock {
@@ -51,6 +53,7 @@ export interface IEventBlock {
   eventStyle: { top: string; width: string; left: string };
   eventHeight: number;
   event: IEvent;
+  roomId: number;
 }
 
 export function CalendarDayView({ date, userId }: { date: Date; userId?: string }) {
@@ -194,26 +197,13 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
               {/* Day grid */}
               <div className="relative flex-1 border-b">
                 <div className="relative">
-                  <DayHourlyEventDialogs
+                  <DayRoomsGrid
+                    rooms={dayViews.roomIds}
+                    dayViews={dayViews}
                     hours={hours}
-                    day={dayViews.dayDate}
                     workingHours={workingHours}
                     userId={userId}
-                  />
-
-                  {dayViews.eventBlocks.map((block) => {
-                    return (
-                      <div
-                        key={`day-${dayViews.day}-block-${format(block.event.startDate, "yyyy-MM-dd-HH-mm")}-event-${
-                          block.event.eventId
-                        }`}
-                        className="absolute p-1"
-                        style={block.eventStyle}
-                      >
-                        <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
-                      </div>
-                    );
-                  })}
+                  ></DayRoomsGrid>
                 </div>
 
                 <CalendarTimeline />
@@ -229,5 +219,52 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
         ></CalendarDayColumnCalendar>
       </div>
     </>
+  );
+}
+
+function DayRoomsGrid({
+  rooms,
+  dayViews, // your day view object
+  hours,
+  workingHours,
+  userId,
+}: {
+  rooms: string[];
+  dayViews: IDayView;
+  hours: number[];
+  workingHours: TWorkingHours;
+  userId: string | undefined;
+}) {
+  return (
+    <div className="flex w-full">
+      {rooms?.map((room) => {
+        const roomBlocks = dayViews.eventBlocks.filter((b) => String(b.roomId) === room);
+
+        return (
+          <div key={room} className="relative flex-1 border-b">
+            {/* Optional room header 
+                        <div className="sticky top-0 z-10 bg-white border-b px-2 py-1 text-sm font-medium">{room.name}</div>
+            */}
+
+            <div className="relative">
+              <DayHourlyEventDialogs hours={hours} day={dayViews.dayDate} workingHours={workingHours} userId={userId} />
+
+              {roomBlocks.map((block) => (
+                <div
+                  key={`day-${dayViews.day}-room-${room}-block-${format(
+                    block.event.startDate,
+                    "yyyy-MM-dd-HH-mm"
+                  )}-event-${block.event.eventId}`}
+                  className="absolute p-1"
+                  style={block.eventStyle} // top/left/width are within this room column
+                >
+                  <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

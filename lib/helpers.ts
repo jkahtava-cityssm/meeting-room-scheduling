@@ -170,6 +170,35 @@ export function groupEvents(dayEvents: IEvent[]) {
   return groups;
 }
 
+export function groupEventsByRoom(dayEvents: IEvent[]): Record<string, IEvent[][]> {
+  const byRoom: Record<string, IEvent[]> = {};
+
+  for (const event of dayEvents) {
+    const roomId = String(event.roomId);
+    if (!byRoom[roomId]) byRoom[roomId] = [];
+    byRoom[roomId].push(event);
+  }
+
+  const grouped: Record<string, IEvent[][]> = {};
+  for (const [roomId, events] of Object.entries(byRoom)) {
+    grouped[roomId] = groupEvents(events);
+  }
+  return grouped;
+}
+
+export function hasOverlapWithinRoom(currentEvent: IEvent, roomGroups: IEvent[][], currentGroupIndex: number): boolean {
+  return roomGroups.some(
+    (otherGroup, otherIndex) =>
+      otherIndex !== currentGroupIndex &&
+      otherGroup.some((otherEvent) =>
+        areIntervalsOverlapping(
+          { start: currentEvent.startDate, end: currentEvent.endDate },
+          { start: otherEvent.startDate, end: otherEvent.endDate }
+        )
+      )
+  );
+}
+
 export function calculateEventBlockStyle(
   event: IEvent,
   day: Date,
