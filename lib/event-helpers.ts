@@ -30,7 +30,7 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
 
       eventList.push({
         ...event,
-        title: `Series - ${event.title}`,
+        title: "Series" + (event.title ? " - " + event.title : ""),
         startDate: set(event.startDate, { year, month, date }).toISOString(),
         endDate: set(event.endDate, { year, month, date }).toISOString(),
       });
@@ -43,10 +43,10 @@ export function generateMultiDayEventsInPeriod(
   events: IEvent[],
   periodStart: Date,
   periodEnd: Date,
-  visibleHours: TVisibleHours
+  minStartTime: number,
+  maxEndTime: number,
 ) {
-  const minStartTime = visibleHours.from;
-  const maxEndTime = visibleHours.to;
+
 
   const eventList: IEvent[] = [];
 
@@ -73,7 +73,7 @@ export function generateMultiDayEventsInPeriod(
       const newEvent = {
         ...event,
         eventIsSplit: true,
-        title: `Day ${dayIndex + 1} of ${totalDaysBetween + 1} - ${event.title}`,
+        title: `Day ${dayIndex + 1} of ${totalDaysBetween + 1}` + (event.title ? " - " + event.title : ""),
       };
 
       if (dayIndex === 0) {

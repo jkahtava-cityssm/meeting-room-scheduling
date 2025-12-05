@@ -1,0 +1,124 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: container-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
+      POSTGRES_DB: meeting_room_scheduling
+    ports:
+      - "5432:5432"
+    networks:
+      - webnet
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    #entrypoint: >
+    #  sh -c "
+    #    npx prisma migrate deploy &&
+    #    npx prisma db seed &&
+    #    echo 'Migration complete.'"
+
+  nextjs-app:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.nextjs-app
+    container_name: nextjs-app
+    expose:
+      - "3000"
+    environment:
+      BETTER_AUTH_URL: https://${DUCKDNS_DOMAIN}
+      NEXT_PUBLIC_BASE_URL: https://${DUCKDNS_DOMAIN}
+      # other env vars from .env
+    depends_on:
+      - postgres
+      - nginx
+    networks:
+      - webnet
+    extra_hosts:
+      - "${DUCKDNS_DOMAIN}:host-gateway"
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost:3000"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 5
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    container_name: nginx
+    environment:
+      DUCKDNS_DOMAIN: ${DUCKDNS_DOMAIN}
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: /etc/nginx/startup.sh
+    networks:
+      - webnet
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 5
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint: /bin/sh -c
+    command: >
+      "curl -s "https://www.duckdns.org/update?domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip="
+  #    "trap exit TERM;
+  #    while :; do
+  #      certbot renew --webroot -w /var/www/certbot --quiet;
+  #      sleep 12h;
+  #    done"
+
+  duckdns-updater:
+    image: alpine:latest
+    container_name: duckdns
+    volumes:
+      - ./duckdns:/scripts
+    entrypoint: /bin/sh
+    command: -c "while true; do sh /scripts/update.sh; sleep 300; done"
+
+  prisma-migrate:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.prisma-migrate
+    container_name: prisma-migrate
+    image: prisma-migrate
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_ADMIN: ${DATABASE_URL_ADMIN}
+      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
+      DATABASE_NAME: ${DATABASE_NAME}
+      LINKED_SERVER: ${LINKED_SERVER}
+      LINKED_USERNAME: ${LINKED_USERNAME}
+      LINKED_PASSWORD: ${LINKED_PASSWORD}
+      LINKED_DATABASE_NAME: ${LINKED_DATABASE_NAME}
+      LINKED_SERVER_NAME: ${LINKED_SERVER_NAME}
+    depends_on:
+      - postgres
+    #entrypoint: /bin/sh
+    #command: -c "npx prisma migrate deploy"
+    networks:
+      - webnet
+
+volumes:
+  postgres_data:
+
+networks:
+  webnet:

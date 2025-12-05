@@ -157,9 +157,45 @@ export function hasPermission(roles: Role[] | undefined, resource: SessionResour
 }
 
 export function hasRole(roles: Role[] | undefined, role: SessionRole) {
+  if (role.toLowerCase() === "any") return true;
+
   if (!roles) return false;
 
   return roles.some((item) => {
     return item.name.toLowerCase() === role.toLowerCase();
   });
+}
+
+export function validateVisibleHours(visibleHoursStart?: number, visibleHoursEnd?: number) {
+  if (
+    !visibleHoursStart ||
+    !visibleHoursEnd ||
+    visibleHoursStart >= visibleHoursEnd ||
+    visibleHoursStart <= 0 ||
+    visibleHoursEnd > 24
+  ) {
+    console.log(
+      `Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
+        `Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`
+    );
+    visibleHoursStart = 1;
+    visibleHoursEnd = 24;
+  }
+
+  return { visibleHoursStart, visibleHoursEnd };
+}
+
+export function validateTimeSlotInterval(interval?: number): number {
+  if (!interval) {
+    return 1;
+  }
+
+  const validDivisors = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60];
+
+  if (!validDivisors.includes(interval)) {
+    console.log(`Invalid timeSlotIntervalMinutes: ${interval}. Must be a positive divisor of 60. Defaulting to 1.`);
+    return 1;
+  }
+
+  return interval;
 }

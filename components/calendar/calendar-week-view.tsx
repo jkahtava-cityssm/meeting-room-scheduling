@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
-import { useEventsQuery } from "@/services/events";
+import { useEventsQuery } from "@/lib/services/events";
 
 export interface IWeekProcessData {
   events: IEvent[];
@@ -45,6 +45,7 @@ export interface IEventBlock {
   eventStyle: { top: string; width: string; left: string };
   eventHeight: number;
   event: IEvent;
+  roomId: number;
 }
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
@@ -88,7 +89,6 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
       const json = decoder.decode(buffer);
       const result = JSON.parse(json);
 
-      console.timeEnd("worker");
       setDayViews(result.dayViews);
       setHours(result.hours);
       setTotalEvents(result.totalEvents);
@@ -122,7 +122,6 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
       };
       //setLoading(true);
       setIsHeaderLoading(true);
-      console.time("worker");
 
       const encoder = new TextEncoder();
       const serialized = encoder.encode(JSON.stringify(data)); // weekDataResult is the output of processWeekEvents_2

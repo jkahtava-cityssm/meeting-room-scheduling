@@ -25,6 +25,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "radix-ui"],
   },
+  devIndicators: {
+    position: "top-right", // Moves the development indicator to the top-right
+    // Set to false to hide the indicator entirely:
+    // devIndicators: false,
+  },
+};
+
+module.exports = {
+  output: "standalone",
 };
 
 export default nextConfig;

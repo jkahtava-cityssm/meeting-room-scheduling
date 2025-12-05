@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
     //console.log(request.nextUrl.pathname);
     //console.log(session);
     //console.log("MIDDLEWARE REDIRECT")
-    return NextResponse.redirect(new URL("/?callbackurl=" + request.nextUrl.pathname, request.url));
+    return NextResponse.redirect(new URL("/login/?callbackurl=" + request.nextUrl.pathname, request.url));
   }
 
   //console.log(session)
@@ -35,6 +35,9 @@ export const config = {
      * - public/images
      * - $ = index = /
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|images|$).*)",
+    //"/((?!^/images$|^/|^/_next/static|^/robots.txt|^/_next/image$|^/_next/static$|^/api/public|^/login$|^/robots.txt$|^/favicon.ico|^/favicon.ico$|^/sitemap.xml$|^/login|^/api/auth$|^/api/auth|^/images|^/api/public$|^/_next/image|^/sitemap.xml).*)",
+    //"/((?!^/$|^/login$|^/api|^/_next/static|^/_next/image|^/favicon.ico$|^/sitemap.xml$|^/robots.txt$|^/images).*)",
+    "/((?!api|login|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|images|$).*)",
+    //"/((?!^/$|^/login$|^/api/public|^/api/auth|^/_next/static|^/_next/image|^/favicon.ico$|^/sitemap.xml$|^/robots.txt$|^/images).*)",
   ],
 };

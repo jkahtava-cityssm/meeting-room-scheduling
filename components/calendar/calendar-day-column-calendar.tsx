@@ -1,6 +1,6 @@
 "use client";
 import { IEvent } from "@/lib/schemas/calendar";
-import { SingleCalendar } from "../ui/single-calendar";
+import { DayPicker } from "../ui/day-picker";
 import { Skeleton } from "../ui/skeleton";
 
 import { addYears } from "date-fns";
@@ -37,7 +37,7 @@ export function CalendarDayColumnCalendar({
 
   return (
     <div className="hidden w-74 divide-y border-l md:block">
-      <SingleCalendar
+      <DayPicker
         className="mx-auto w-fit"
         mode="single"
         selected={date}
@@ -49,7 +49,6 @@ export function CalendarDayColumnCalendar({
         fixedWeeks={true}
         required
         onToday={handleToday}
-        view={view}
         startMonth={addYears(date, -25)}
         endMonth={addYears(date, 25)}
       />

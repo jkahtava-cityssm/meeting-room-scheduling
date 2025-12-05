@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { CombinedSchema } from "@/components/event-drawer/event-drawer.validator";
+import { CombinedSchema } from "@/app/features/event-drawer/event-drawer.validator";
 
 type EventStore = {
   event: CombinedSchema | null;

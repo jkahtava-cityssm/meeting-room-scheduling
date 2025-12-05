@@ -7,11 +7,12 @@ import { Label } from "./label";
 import { TimePeriodSelect } from "./time-period-select";
 
 function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInput>, "picker">) {
-  const [period, setPeriod] = React.useState<Period>(getPeriodFromDate(props.date));
+  const period = getPeriodFromDate(props.date);
 
   const minuteRef = React.useRef<HTMLInputElement>(null);
   const hourRef = React.useRef<HTMLInputElement>(null);
   const periodRef = React.useRef<HTMLButtonElement>(null);
+
   return (
     <div className="grid grid-cols-3 ">
       <div className="grid col-span-1 gap-2 justify-items-center">
@@ -60,7 +61,7 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
           disabled={props.disabled}
           aria-invalid={props["aria-invalid"]}
           period={period}
-          setPeriod={setPeriod}
+          setPeriod={() => {}}
           date={props.date}
           setDate={props.setDate}
           ref={periodRef}

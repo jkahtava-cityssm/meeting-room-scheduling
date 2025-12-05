@@ -32,6 +32,7 @@ import type { ICalendarCell } from "@/lib/interfaces";
 import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/lib/types";
 
 import { IEvent } from "./schemas/calendar";
+import next from "next";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
@@ -59,6 +60,8 @@ export function rangeText(view: TCalendarView, date: Date) {
     case "day":
     case "agenda":
       return format(date, formatString);
+    case "all":
+      return "All Dates";
     default:
       return "Error while formatting ";
   }
@@ -73,6 +76,8 @@ export function navigateDate(date: Date, view: TCalendarView, direction: "previo
     month: direction === "next" ? addMonths : subMonths,
     week: direction === "next" ? addWeeks : subWeeks,
     day: direction === "next" ? addDays : subDays,
+    public: direction === "next" ? addDays : subDays,
+    all: (date: Date, _: number) => date,
   };
 
   return operations[view](date, 1);
@@ -85,6 +90,8 @@ export function navigateURL(date: Date | null, view: TCalendarView): string {
     month: "?view=month",
     week: "?view=week",
     day: "?view=day",
+    public: "?view=public",
+    all: "?view=all",
   };
 
   /*const dateParams = {
@@ -162,6 +169,64 @@ export function groupEvents(dayEvents: IEvent[]) {
   }
 
   return groups;
+}
+
+export function groupEventsByRoom(dayEvents: IEvent[]): Record<string, IEvent[][]> {
+  const byRoom: Record<string, IEvent[]> = {};
+
+  for (const event of dayEvents) {
+    const roomId = String(event.roomId);
+    if (!byRoom[roomId]) byRoom[roomId] = [];
+    byRoom[roomId].push(event);
+  }
+
+  const grouped: Record<string, IEvent[][]> = {};
+  for (const [roomId, events] of Object.entries(byRoom)) {
+    grouped[roomId] = groupEvents(events);
+  }
+  return grouped;
+}
+
+export function hasEventOverlap(currentEvent: IEvent, eventList: IEvent[][], currentGroupIndex: number): boolean {
+  const currentEventInterval = { start: currentEvent.startDate, end: currentEvent.endDate };
+
+  return eventList.some(
+    (eventListToCompare, eventListIndex) =>
+      eventListIndex !== currentGroupIndex &&
+      eventListToCompare.some((eventToCompare) =>
+        areIntervalsOverlapping(currentEventInterval, {
+          start: eventToCompare.startDate,
+          end: eventToCompare.endDate,
+        })
+      )
+  );
+}
+
+export function createEventMapByRoom(events: IEvent[]) {
+  const eventsByRoom = new Map<number, IEvent[]>();
+
+  events.forEach((event) => {
+    const key = event.roomId;
+    if (!eventsByRoom.has(key)) eventsByRoom.set(key, []);
+    eventsByRoom.get(key)!.push(event);
+  });
+
+  const sortedArray = [...eventsByRoom.entries()];
+  sortedArray.sort((a, b) => {
+    return a[0] - b[0];
+  });
+
+  return new Map(sortedArray);
+}
+
+export function createEventMapByDay(events: IEvent[]) {
+  const eventsByDate = new Map<string, IEvent[]>();
+  events.forEach((event) => {
+    const key = format(event.startDate, "yyyy-MM-dd");
+    if (!eventsByDate.has(key)) eventsByDate.set(key, []);
+    eventsByDate.get(key)!.push(event);
+  });
+  return eventsByDate;
 }
 
 export function calculateEventBlockStyle(
@@ -265,7 +330,7 @@ export function isWorkingHour(day: Date, hour: number, workingHours: TWorkingHou
   const dayHours = workingHours[dayIndex];
   return hour >= dayHours.from && hour < dayHours.to;
 }
-
+/*
 export function hasOverlap(groupedEvents: IEvent[][], event: IEvent, index: number): boolean {
   return groupedEvents.some(
     (otherGroup, otherIndex) =>
@@ -283,7 +348,7 @@ export function hasOverlap(groupedEvents: IEvent[][], event: IEvent, index: numb
         )
       )
   );
-}
+}*/
 
 /**
  * Loop through each event, increase the Earliest and Latest Visible Hours if an Event occurs outside of the window
@@ -382,30 +447,34 @@ export function getMonthCellEvents(date: Date, events: IEvent[], eventPositions:
     GENERIC FUNCTIONS
 ########################################################################*/
 
-export const getDurationText = (startDate: Date, startTime: Date, endDate: Date, endTime: Date): string => {
-  const startDateTime = combineDateTime(startDate, startTime);
-  const endDateTime = combineDateTime(endDate, endTime);
-
-  const duration = formatDuration(intervalToDuration({ start: startDateTime, end: endDateTime }), {
-    format: ["years", "months", "days", "hours", "minutes"],
-    delimiter: ", ",
-  });
-
-  return duration.length === 0 ? "0 Minutes" : duration;
-};
-
 export const combineDateTime = (dateField: Date, timeField: Date) => {
   const checkDate = isDate(dateField) ? dateField : new Date(dateField);
   const checkTime = isDate(timeField) ? timeField : new Date(timeField);
   return new Date(checkDate.setHours(checkTime.getHours(), checkTime.getMinutes()));
 };
 
-export function filterEventsByRoom(events: IEvent[], selectedRoomId: string) {
+export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | string) {
+  const roomIds = Array.isArray(selectedRoomId) ? selectedRoomId : [selectedRoomId];
+
+  if (selectedRoomId === "-1") {
+    return events;
+  }
+
   const results = events.filter((event) => {
-    return event.roomId.toString() === selectedRoomId || selectedRoomId === "-1";
+    return roomIds.includes(event.roomId.toString());
   });
+
   return results;
 }
+
+export const getDurationText = (startDateTime: string, endDateTime: string): string => {
+  const duration = formatDuration(intervalToDuration({ start: new Date(startDateTime), end: new Date(endDateTime) }), {
+    format: ["years", "months", "days", "hours", "minutes"],
+    delimiter: ", ",
+  });
+
+  return duration.length === 0 ? "0 Minutes" : duration;
+};
 
 export function calculateMonthlyRecurrenceEndDate(startDate: Date, occurrences: number, day: number, months: number) {
   let iterations = occurrences;

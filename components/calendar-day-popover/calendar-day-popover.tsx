@@ -1,0 +1,91 @@
+import { addYears, format } from "date-fns";
+
+import { useDisclosure } from "@/hooks/use-disclosure";
+
+import { Button } from "@/components/ui/button";
+import { DayPicker } from "@/components/ui/day-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+import { cn } from "@/lib/utils";
+
+import type { ButtonHTMLAttributes } from "react";
+import React, { useState } from "react";
+
+type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"> & {
+  onSelect: (value: Date | undefined) => void;
+  value: Date;
+  placeholder: string;
+  labelVariant?: "P" | "PP" | "PPP";
+  children?: React.ReactNode;
+};
+
+function CalendarDayPopover({
+  id,
+  onSelect,
+  className,
+  placeholder,
+  labelVariant = "PPP",
+  value,
+  children,
+  ...props
+}: TProps) {
+  const { isOpen, onClose, onToggle } = useDisclosure();
+  const [calendarDate, setCalendarDate] = useState(value);
+  //console.log(value);
+  const handleSelect = (date: Date | undefined) => {
+    onSelect(date);
+    onClose();
+  };
+
+  const handleToday = () => {
+    onSelect(new Date());
+    onClose();
+  };
+
+  const onOpenChange = (open: boolean) => {
+    if (value !== calendarDate && open) {
+      setCalendarDate(value);
+    }
+    onToggle();
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={onOpenChange} modal>
+      <PopoverTrigger asChild>
+        {children ? (
+          children
+        ) : (
+          <Button
+            id={id}
+            variant="outline"
+            className={cn(
+              "group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit disabled:opacity-75",
+              className
+            )}
+            {...props}
+          >
+            {value && <span>{format(value, labelVariant)}</span>}
+            {!value && <span className="text-muted-foreground">{placeholder}</span>}
+          </Button>
+        )}
+      </PopoverTrigger>
+
+      <PopoverContent align="center" className="w-fit p-0">
+        <DayPicker
+          mode="single"
+          selected={value}
+          onSelect={handleSelect}
+          month={calendarDate}
+          onMonthChange={setCalendarDate}
+          required
+          onToday={handleToday}
+          startMonth={addYears(value, -25)}
+          endMonth={addYears(value, 25)}
+          fixedWeeks={true}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export { CalendarDayPopover };

@@ -1,0 +1,48 @@
+import { fetchGET } from "@/lib/fetch";
+import { IRoom, SRoom } from "@/lib/schemas/calendar";
+import { useQuery } from "@tanstack/react-query";
+import { z } from "zod/v4";
+
+const AllRooms: IRoom = {
+  roomId: -1,
+  name: "All Rooms",
+  color: "zinc",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  icon: "asterisk",
+  roomScopeId: -1,
+  roomScope: {
+    roomScopeId: -1,
+    name: "All",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    accessLevel: 1,
+  },
+  roomCategoryId: -1,
+  roomCategory: {
+    roomCategoryId: -1,
+    name: "All",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+};
+
+export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["rooms", includeAllOption ? "all" : "existing"],
+    queryFn: async () => {
+      const result = await fetchGET("/api/rooms");
+      if (includeAllOption) {
+        result.data.unshift(AllRooms);
+      }
+
+      const parsedResult = z.array(SRoom).safeParse(result.data);
+
+      if (!parsedResult.success) throw new Error("Invalid event data");
+
+      return parsedResult.data;
+    },
+    enabled: enabled,
+    //staleTime: 0,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });

@@ -1,6 +1,7 @@
 import { guardRoute } from "@/lib/api-guard";
-import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { InternalServerErrorMessage, isRequirementMet, SuccessMessage } from "@/lib/api-helpers";
 import { prisma } from "@/prisma";
+import { findManyRooms } from "@/lib/data/rooms";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -9,8 +10,16 @@ export async function GET(req: NextRequest) {
 
     { type: "permission", resource: "Room", action: "Read" },
 
-    async () => {
-      const rooms = await prisma.room.findMany();
+    async (userId, roles) => {
+      const hasPrivateAccess = await isRequirementMet(roles, {
+        type: "permission",
+        resource: "Room",
+        action: "AccessPrivate",
+      });
+
+      const roomScopeFilter = hasPrivateAccess ? { name: { in: ["Public", "Private"] } } : { name: "Public" };
+
+      const rooms = await findManyRooms({ roomScope: roomScopeFilter });
 
       if (!rooms) {
         return InternalServerErrorMessage();

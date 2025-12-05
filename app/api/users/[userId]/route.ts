@@ -1,4 +1,5 @@
 import { prisma } from "@/prisma";
+import { findSession } from "@/lib/data/users";
 
 import { NextRequest } from "next/server";
 
@@ -18,10 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
     return BadRequestMessage();
   }
 
-  const session = await prisma.session.findFirst({
-    select: { userId: true, expiresAt: true },
-    where: { AND: { userId: Number(userId), token: sessionToken } },
-  });
+  const session = await findSession({ AND: { userId: Number(userId), token: sessionToken } });
 
   if (!session || session?.expiresAt < new Date() || session.userId != Number(userId)) {
     return BadRequestMessage("Not Authorized");

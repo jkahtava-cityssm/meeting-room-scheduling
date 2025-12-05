@@ -1,1 +1,9 @@
-{}
+{
+  "makefile.makefilePath": "C:\\Users\\j.kahtava\\source\\meeting-room-scheduling\\container",
+
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "css.lint.unknownAtRules": "ignore",
+  "prisma.pinToPrisma6": true
+}

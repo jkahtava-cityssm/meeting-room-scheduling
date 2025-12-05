@@ -24,5 +24,4 @@ export default function PrivateLayout({
       </SidebarProvider>
     </div>
   );
-  return <>{children}</>;
 }

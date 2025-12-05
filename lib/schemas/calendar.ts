@@ -1,14 +1,41 @@
 import { z } from "zod/v4";
 
-//const coerceDate = z.coerce.date() as unknown as z.ZodDate
-
-export const SRoom = z.object({
-  roomId: z.number(),
-  color: z.string().min(1, "Colour is required"),
+export const SRoomScope = z.object({
+  roomScopeId: z.number(),
   name: z.string().min(1, "Name is required"),
   createdAt: z.string(),
   updatedAt: z.string(),
+  accessLevel: z.number(),
+});
+
+export const SRoomCategory = z.object({
+  roomCategoryId: z.number(),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const SRoomProperty = z.object({
+  roomPropertyId: z.number(),
+  roomId: z.number(),
+  name: z.string().min(1, "Name is required"),
+  value: z.string().min(1, "Value is required"),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const SRoom = z.object({
+  roomId: z.number(),
+  name: z.string().min(1, "Name is required"),
+  color: z.string().min(1, "Color is required"),
   icon: z.string().nullable(),
+  roomScopeId: z.number(),
+  roomScope: SRoomScope,
+  roomCategoryId: z.number(),
+  roomCategory: SRoomCategory,
+  RoomProperty: z.array(SRoomProperty).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 export const SRecurrence = z.object({
@@ -32,6 +59,14 @@ export const SMultiDay = z.object({
   position: z.enum(["first", "last", "middle"]),
 });
 
+export const SStatus = z.object({
+  statusId: z.number(),
+  key: z.string(),
+  name: z.string(),
+  icon: z.string(),
+  color: z.string(),
+});
+
 export const SEvent = z.object({
   eventId: z.number(),
   roomId: z.number().gt(0, "Room is required"),
@@ -51,15 +86,11 @@ export const SEvent = z.object({
   description: z.string(),
   parentEventId: z.number().nullable().optional(),
   room: SRoom,
+  status: SStatus,
   recurrence: SRecurrence.nullish(),
   createdAt: z.coerce.string(),
   updatedAt: z.coerce.string(),
   multiDay: SMultiDay.optional(),
-});
-
-export const SStatus = z.object({
-  statusId: z.number(),
-  name: z.string(),
 });
 
 export type IStatus = z.infer<typeof SStatus>;

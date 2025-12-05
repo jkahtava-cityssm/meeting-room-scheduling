@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows", "linux-musl-openssl-3.0.x"]
 }
 
 model User {
@@ -75,16 +76,55 @@ model Verification {
 }
 
 model Room {
-  roomId    Int      @id @default(autoincrement()) @map("room_id")
-  name      String
-  color     String
-  icon      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  roomId         Int      @id @default(autoincrement()) @map("room_id")
+  name           String
+  color          String
+  icon           String?  @default("none")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  roomScopeId    Int      @default(1) @map("room_scope_id")
+  roomCategoryId Int      @default(1) @map("room_category_id")
 
-  event Event[]
+  roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
+  roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
+  event        Event[]
+  roomProperty RoomProperty[]
 
   @@map("room")
+}
+
+model RoomCategory {
+  roomCategoryId Int      @id @default(autoincrement()) @map("room_category_id")
+  name           String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  room           Room[]
+
+  @@map("room_category")
+}
+
+model RoomProperty {
+  roomPropertyId Int      @id @default(autoincrement()) @map("room_property_id")
+  roomId         Int      @map("room_id")
+  name           String
+  value          String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  room Room @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
+
+  @@map("room_property")
+}
+
+model RoomScope {
+  roomScopeId Int      @id @default(autoincrement()) @map("room_scope_id")
+  name        String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  accessLevel Int      @default(1) @map("access_level")
+  room        Room[]
+
+  @@map("room_scope")
 }
 
 //Member 1 or Many Roles, MemberRole
@@ -233,13 +273,27 @@ model Event {
 
 model Status {
   statusId  Int      @id @default(autoincrement()) @map("status_id")
+  key       String   @unique
   name      String
+  icon      String?  @default("none")
+  color     String?  @default("none")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   event Event[]
 
   @@map("status")
+}
+
+model Configuration {
+  configurationId Int      @id @default(autoincrement()) @map("configuration_id")
+  key             String   @unique
+  description     String?
+  value           String
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("configuration")
 }
 
 /**

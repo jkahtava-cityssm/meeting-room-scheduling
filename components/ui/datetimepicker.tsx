@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
-import { SingleDayPicker } from "./single-day-picker";
+import { CalendarDayPopover } from "../calendar-day-popover/calendar-day-popover";
 import { TimePicker } from "./time-picker";
 import { Label } from "./label";
 
@@ -12,11 +12,14 @@ type CombinedDateTimePickerProps = {
   className?: string;
   "data-invalid"?: boolean;
   label?: string;
+  errorMessage: string | undefined;
   hideDate?: boolean;
   hideTime?: boolean;
 };
 
 export type DateTimePickerRef = {
+  calculateNewTime: (isoString: string) => string;
+  calculateNewDate: (isoString: string) => string;
   updateTime: (isoString: string) => void;
   updateDate: (isoString: string) => void;
 };
@@ -27,9 +30,13 @@ function isISO8601(isoString: string): boolean {
 }
 
 export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePickerProps>(
-  ({ id, disabled, value, onChange, placeholder, label = "", hideDate, hideTime, ...props }, ref) => {
+  (
+    { id, disabled, value, onChange, placeholder, label = "", errorMessage = "", hideDate, hideTime, ...props },
+    ref
+  ) => {
     const initialDate = value ? new Date(value) : new Date();
     const [date, setDate] = useState<Date>(initialDate);
+    const message = errorMessage ? errorMessage : label;
 
     useEffect(() => {
       if (value) {
@@ -37,7 +44,8 @@ export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePick
       }
     }, [value]);
 
-    const updateDateTime = (newDate: Date) => {
+    const updateDateTime = (isoString: string) => {
+      const newDate = new Date(isoString);
       newDate.setSeconds(0);
       newDate.setMilliseconds(0);
 
@@ -45,30 +53,49 @@ export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePick
       onChange(newDate.toISOString());
     };
 
-    useImperativeHandle(ref, () => ({
-      updateTime: (isoString: string) => {
-        if (!isISO8601(isoString)) {
-          console.warn("Invalid ISO 8601 time string:", isoString);
-          return;
-        }
-        const newTime = new Date(isoString);
+    const calculateNewTime = (isoString: string) => {
+      if (!isISO8601(isoString)) {
+        console.warn("Invalid ISO 8601 time string:", isoString);
+        return new Date().toISOString();
+      }
+      const newTime = new Date(isoString);
 
-        const updated = new Date(date);
-        updated.setHours(newTime.getHours(), newTime.getMinutes(), 0, 0);
-        updateDateTime(updated);
+      const updated = new Date(date);
+      updated.setHours(newTime.getHours(), newTime.getMinutes(), 0, 0);
+
+      return updated.toISOString();
+    };
+    const calculateNewDate = (isoString: string) => {
+      if (!isISO8601(isoString)) {
+        console.warn("Invalid ISO 8601 date string:", isoString);
+        return new Date().toISOString();
+      }
+      const newDate = new Date(isoString);
+
+      const updated = new Date(date);
+      updated.setFullYear(newDate.getFullYear());
+      updated.setMonth(newDate.getMonth());
+      updated.setDate(newDate.getDate());
+
+      return updated.toISOString();
+    };
+
+    useImperativeHandle(ref, () => ({
+      calculateNewTime,
+      calculateNewDate,
+
+      updateTime: (isoString: string) => {
+        const newDateString = calculateNewTime(isoString);
+        updateDateTime(newDateString);
+
+        return newDateString;
       },
       updateDate: (isoString: string) => {
-        if (!isISO8601(isoString)) {
-          console.warn("Invalid ISO 8601 date string:", isoString);
-          return;
-        }
-        const newDate = new Date(isoString);
+        const newDateString = calculateNewDate(isoString);
 
-        const updated = new Date(date);
-        updated.setFullYear(newDate.getFullYear());
-        updated.setMonth(newDate.getMonth());
-        updated.setDate(newDate.getDate());
-        updateDateTime(updated);
+        updateDateTime(newDateString);
+
+        return newDateString;
       },
     }));
 
@@ -83,21 +110,18 @@ export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePick
                 htmlFor={id + "DayPickerLabel"}
                 //className="text-center"
               >
-                {label ? label : "\u00A0"}
+                {message ? message : "\u00A0"}
               </Label>
             )}
             {!(hideDate ?? false) && (
-              <SingleDayPicker
+              <CalendarDayPopover
                 id={`${id}Date`}
                 disabled={disabled}
                 value={date}
                 onSelect={(selectedDate) => {
                   if (!selectedDate) return;
-                  const updated = new Date(date);
-                  updated.setFullYear(selectedDate.getFullYear());
-                  updated.setMonth(selectedDate.getMonth());
-                  updated.setDate(selectedDate.getDate());
-                  updateDateTime(updated);
+                  const newDateString = calculateNewDate(selectedDate.toISOString());
+                  updateDateTime(newDateString);
                 }}
                 placeholder={placeholder}
                 className="min-w-52"
@@ -112,8 +136,11 @@ export const DateTimePicker = forwardRef<DateTimePickerRef, CombinedDateTimePick
               id={`${id}Time`}
               disabled={disabled}
               date={date}
-              setDate={(updatedDate) => {
-                if (updatedDate) updateDateTime(updatedDate);
+              setDate={(selectedDate) => {
+                if (selectedDate) {
+                  const newDateString = calculateNewTime(selectedDate.toISOString());
+                  updateDateTime(newDateString);
+                }
               }}
               data-invalid={props["data-invalid"]}
             />

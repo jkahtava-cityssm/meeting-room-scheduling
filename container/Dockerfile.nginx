@@ -1,0 +1,21 @@
+# Docker.nginx
+FROM nginx:latest
+
+WORKDIR /container
+# Copy startup script
+COPY ./container/nginx/startup.sh /etc/nginx/startup.sh
+RUN chmod +x /etc/nginx/startup.sh
+
+# Copy config templates
+COPY ./container/nginx/full.conf.template /etc/nginx/full.conf.template
+COPY ./container/nginx/http-only.conf.template /etc/nginx/http-only.conf.template
+COPY ./container/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+
+# Remove Carriage Return characters from files (in case edited on Windows)
+RUN sed -i 's/\r$//' /etc/nginx/startup.sh
+
+RUN sed -i 's/\r$//' /etc/nginx/full.conf.template
+RUN sed -i 's/\r$//' /etc/nginx/http-only.conf.template
+RUN sed -i 's/\r$//' /etc/nginx/nginx.conf.template
+
+RUN ls -l /etc/nginx/startup.sh

@@ -17,7 +17,7 @@ import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
 import { useTheme } from "next-themes";
 import { IUser } from "./nav-header";
-import { checkSessionRole, Session } from "@/lib/auth-client";
+import { getSessionRoles, Session, useVerifySessionRequirement } from "@/lib/auth-client";
 import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
@@ -30,7 +30,9 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
     image: session?.user.image ? session.user.image : undefined,
   };
 
-  const canRefreshAPI = checkSessionRole(session, "Admin");
+  const canRefreshAPI = useVerifySessionRequirement(session, { type: "role", role: "Admin" });
+  //console.log("canRefreshAPI:", canRefreshAPI);
+  const listRoles = getSessionRoles(session);
 
   if (isPending) {
     return (
@@ -96,10 +98,20 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                   }}
                 ></Switch>
               </DropdownMenuItem>
-              {canRefreshAPI && <RefreshMenuItem />}
+              {process.env.NODE_ENV === "development" && <RefreshMenuItem />}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
+            {process.env.NODE_ENV === "development" && (
+              <>
+                <DropdownMenuSeparator />
+                <div className="px-3 py-2 text-xs text-muted-foreground">
+                  <div>
+                    <span className="font-medium">Roles:</span> {listRoles?.join(", ")}
+                  </div>
+                </div>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

@@ -15,7 +15,7 @@ import {
 export async function guardRoute(
   req: NextRequest,
   requirement: PermissionRequirement,
-  handler: (userId: number) => Promise<Response>
+  handler: (userId: number, roles: Role[]) => Promise<Response>
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
@@ -35,7 +35,7 @@ export async function guardRoute(
     return BadRequestMessage("Not Authorized");
   }
 
-  return handler(userId);
+  return handler(userId, roles);
 }
 
 async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {

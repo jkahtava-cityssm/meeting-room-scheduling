@@ -1,27 +1,42 @@
-export type TCalendarView = "day" | "week" | "month" | "year" | "agenda";
-export type TColors =
-  | "red"
-  | "orange"
-  | "amber"
-  | "yellow"
-  | "lime"
-  | "green"
-  | "emerald"
-  | "teal"
-  | "cyan"
-  | "sky"
-  | "blue"
-  | "indigo"
-  | "violet"
-  | "purple"
-  | "fuchsia"
-  | "pink"
-  | "rose"
-  | "slate"
-  | "gray"
-  | "zinc"
-  | "neutral"
-  | "stone";
+export type TCalendarView = "day" | "week" | "month" | "year" | "agenda" | "public" | "all";
+export type TStatusKey = "PENDING" | "APPROVED" | "REJECTED" | "INFORMATION";
+export const colorOptions = [
+  "red",
+  "rose",
+  "razzmatazz",
+  "pink",
+  "japonica",
+  "orange",
+  "amber",
+  "yellow",
+  "manz",
+  "harvestGold",
+  "lime",
+  "sulu",
+  "malachite",
+  "camarone",
+  "green",
+  "emerald",
+  "watercourse",
+  "teal",
+  "cyan",
+  "scooter",
+  "disabled",
+  "sky",
+  "blue",
+  "havelockBlue",
+  "indigo",
+  "violet",
+  "purple",
+  "fuchsia",
+  "viola",
+  "slate",
+  "zinc",
+  "invisible",
+] as const;
+
+export type TColors = (typeof colorOptions)[number];
+
 export type TWorkingHours = { [key: number]: { from: number; to: number } };
 export type TVisibleHours = { from: number; to: number };
 
@@ -35,11 +50,11 @@ export type TRecurrencePattern =
   | "Every X Months on X Day"
   | "Every X Year on X Month on X Day";
 
-export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin"] as const;
+export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Any"] as const;
 
 export const DEFAULT_RESOURCES = ["Event", "Room", "User", "ReservationCalendar"] as const;
 
-export const DEFAULT_ACTIONS = ["Create", "Read", "Update", "Delete"] as const;
+export const DEFAULT_ACTIONS = ["Create", "Read", "Update", "Delete", "AccessPrivate"] as const;
 
 export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
 export type SessionResource = (typeof DEFAULT_RESOURCES)[number];

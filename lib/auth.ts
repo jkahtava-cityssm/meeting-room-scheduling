@@ -58,6 +58,14 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 Minutes
     },
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["microsoft", "github"],
+      updateUserInfoOnLink: true,
+    },
+  },
+  trustedOrigins: ["http://192.168.50.33", "https://192.168.50.33", "http://localhost:3000"],
   databaseHooks: {
     user: {
       update: {
@@ -96,12 +104,12 @@ export const auth = betterAuth({
   plugins: [
     customSession(async ({ user, session }) => {
       const userData = await fetchGET(
-        `${process.env.NEXTAPP_URL}/api/users/${user.id}`,
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${user.id}`,
         { token: session.token },
         3600,
         [user.id]
       );
-
+      //console.log("SESSION GET");
       return {
         user: {
           ...user,

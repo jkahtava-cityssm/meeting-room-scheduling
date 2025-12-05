@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 import { IconDot } from "@/components/ui/icon-dot";
-import { TColors } from "../../lib/types";
+import { TColors } from "@/lib/types";
 import { IDayView } from "./calendar-year-view";
 import { navigateURL } from "@/lib/helpers";
 

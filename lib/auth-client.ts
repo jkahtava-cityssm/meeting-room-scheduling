@@ -2,11 +2,13 @@ import { createAuthClient } from "better-auth/react";
 import { customSessionClient } from "better-auth/client/plugins";
 import type { auth } from "@/lib/auth";
 import { SessionAction, SessionResource, SessionRole } from "./types";
+import { hasRole, isRequirementMet, PermissionRequirement } from "./api-helpers";
+import { useEffect, useState } from "react";
 
 export const authClient = createAuthClient({
-  /** The base URL of the server (optional if you're using the same domain) */
-  baseURL: process.env.BETTER_AUTH_URL,
-  plugins: [customSessionClient<typeof auth>()],
+	/** The base URL of the server (optional if you're using the same domain) */
+	baseURL: process.env.BETTER_AUTH_URL,
+	plugins: [customSessionClient<typeof auth>()],
 });
 
 export type Session = typeof authClient.$Infer.Session;
@@ -14,33 +16,33 @@ export type Session = typeof authClient.$Infer.Session;
 
 export const { signIn, signOut, useSession } = authClient;
 
-export function checkSessionPermission(
-  session: Session | undefined | null,
-  resource: SessionResource,
-  action: SessionAction
-) {
-  if (!session || !session.user || !session.user.roles) return false;
+export function useVerifySessionRequirement(session: Session | undefined | null, requirement: PermissionRequirement) {
+	const [requirementMet, setRequirementMet] = useState<boolean>(false);
 
-  if (checkSessionRole(session, "Admin")) {
-    return true;
-  }
+	useEffect(() => {
+		let active = true;
 
-  const permission = session.user.roles.some((role) => {
-    return role.permissions.some((permission) => {
-      return (
-        permission.permit === true &&
-        permission.resource.toLowerCase() === resource.toLowerCase() &&
-        permission.action.toLowerCase() === action.toLowerCase()
-      );
-    });
-  });
+		if (!session?.user?.roles) {
+			setRequirementMet(false);
+			return;
+		}
+		(async () => {
+			const result = await isRequirementMet(session.user.roles, requirement);
+			if (active) {
+				setRequirementMet(result);
+			}
+		})();
 
-  return permission;
+		return () => {
+			active = false;
+		};
+	}, [session, requirement]);
+
+	return requirementMet;
 }
 
-export function checkSessionRole(session: Session | undefined | null, role: SessionRole) {
-  if (!session || !session.user || !session.user.roles) return false;
-  return session.user.roles.some((item) => {
-    return item.name.toLowerCase() === role.toLowerCase();
-  });
+export function getSessionRoles(session: Session | undefined | null) {
+	if (!session || !session.user || !session.user.roles) return undefined;
+
+	return session.user.roles.map(role => role.name);
 }

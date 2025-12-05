@@ -1,0 +1,26 @@
+services:
+  prisma-migrate:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.prisma-migrate
+    container_name: prisma-migrate
+    image: prisma-migrate
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_ADMIN: ${DATABASE_URL_ADMIN}
+      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
+      DATABASE_NAME: ${DATABASE_NAME}
+      LINKED_SERVER: ${LINKED_SERVER}
+      LINKED_USERNAME: ${LINKED_USERNAME}
+      LINKED_PASSWORD: ${LINKED_PASSWORD}
+      LINKED_DATABASE_NAME: ${LINKED_DATABASE_NAME}
+      LINKED_SERVER_NAME: ${LINKED_SERVER_NAME}
+    #depends_on:
+    #  - postgres
+    #entrypoint: /bin/sh
+    #command: -c "npx prisma migrate deploy"
+    networks:
+      - webnet
+
+networks:
+  webnet:

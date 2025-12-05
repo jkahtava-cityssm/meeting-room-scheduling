@@ -14,10 +14,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
+import { TVisibleHours, TWorkingHours } from "@/lib/types";
 
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
-import { useEventsQuery } from "@/services/events";
+import { useEventsQuery } from "@/lib/services/events";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Terminal } from "lucide-react";
 import { Button } from "../ui/button";
@@ -36,6 +36,7 @@ export interface IDayResponseData {
   dayViews: IDayView[];
   hours: number[];
   filteredEvents: IEvent[];
+  roomIds: number[];
 }
 
 export interface IDayView {
@@ -51,6 +52,7 @@ export interface IEventBlock {
   eventStyle: { top: string; width: string; left: string };
   eventHeight: number;
   event: IEvent;
+  roomId: number;
 }
 
 export function CalendarDayView({ date, userId }: { date: Date; userId?: string }) {
@@ -59,6 +61,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
   const [dayViews, setDayViews] = useState<IDayView | undefined>(undefined);
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
   const [hours, setHours] = useState<number[]>([]);
+  const [rooms, setRooms] = useState<number[]>([]);
 
   const { workingHours, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
@@ -101,6 +104,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
       setHours(event.data.hours);
       setTotalEvents(event.data.totalEvents);
       setFilteredEvents(event.data.filteredEvents);
+      setRooms(event.data.roomIds);
       setIsHeaderLoading(false);
       setLoading(false);
     };
@@ -194,26 +198,22 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
               {/* Day grid */}
               <div className="relative flex-1 border-b">
                 <div className="relative">
-                  <DayHourlyEventDialogs
-                    hours={hours}
-                    day={dayViews.dayDate}
-                    workingHours={workingHours}
-                    userId={userId}
-                  />
-
-                  {dayViews.eventBlocks.map((block) => {
-                    return (
-                      <div
-                        key={`day-${dayViews.day}-block-${format(block.event.startDate, "yyyy-MM-dd-HH-mm")}-event-${
-                          block.event.eventId
-                        }`}
-                        className="absolute p-1"
-                        style={block.eventStyle}
-                      >
-                        <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
-                      </div>
-                    );
-                  })}
+                  {rooms.length > 0 ? (
+                    <DayRoomsGrid
+                      rooms={rooms}
+                      dayViews={dayViews}
+                      hours={hours}
+                      workingHours={workingHours}
+                      userId={userId}
+                    ></DayRoomsGrid>
+                  ) : (
+                    <DayHourlyEventDialogs
+                      hours={hours}
+                      day={dayViews.dayDate}
+                      workingHours={workingHours}
+                      userId={userId}
+                    />
+                  )}
                 </div>
 
                 <CalendarTimeline />
@@ -229,5 +229,52 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
         ></CalendarDayColumnCalendar>
       </div>
     </>
+  );
+}
+
+function DayRoomsGrid({
+  rooms,
+  dayViews, // your day view object
+  hours,
+  workingHours,
+  userId,
+}: {
+  rooms: number[];
+  dayViews: IDayView;
+  hours: number[];
+  workingHours: TWorkingHours;
+  userId: string | undefined;
+}) {
+  return (
+    <div className="flex w-full">
+      {rooms?.map((room) => {
+        const roomBlocks = dayViews.eventBlocks.filter((b) => String(b.roomId) === String(room));
+        const roomName = roomBlocks.length > 0 ? roomBlocks[0].event.room.name : "";
+        return (
+          <div key={room} className="relative flex-1 border-b">
+            {/* Optional room header 
+                        <div className="sticky top-0 z-10 bg-white border-b px-2 py-1 text-sm font-medium">{roomName}</div>
+            */}
+
+            <div className="relative">
+              <DayHourlyEventDialogs hours={hours} day={dayViews.dayDate} workingHours={workingHours} userId={userId} />
+
+              {roomBlocks.map((block) => (
+                <div
+                  key={`day-${dayViews.day}-room-${room}-block-${format(
+                    block.event.startDate,
+                    "yyyy-MM-dd-HH-mm"
+                  )}-event-${block.event.eventId}`}
+                  className="absolute p-1"
+                  style={block.eventStyle} // top/left/width are within this room column
+                >
+                  <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

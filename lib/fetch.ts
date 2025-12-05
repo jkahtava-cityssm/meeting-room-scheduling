@@ -65,3 +65,15 @@ export function fetchPOST(url: string, data: object) {
     return res.json();
   });
 }
+
+export function fetchPATCH(url: string, data: object) {
+  return fetch(url, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+  }).then((res) => {
+    //if (!res.ok) throw new Error("Network Response Error");
+
+    return res.json();
+  });
+}

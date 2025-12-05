@@ -1,12 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { SingleCalendar } from "../ui/single-calendar";
+import { DayPicker } from "../ui/day-picker";
 
 export function SkeletonCalendarEventListRightPanel({ date }: { date: Date }) {
   //const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));
 
   return (
     <div className="hidden w-74 divide-y border-l md:block">
-      <SingleCalendar
+      <DayPicker
         className="mx-auto w-fit"
         mode="single"
         selected={date}
@@ -15,7 +15,6 @@ export function SkeletonCalendarEventListRightPanel({ date }: { date: Date }) {
         onMonthChange={() => {}}
         required
         onToday={() => {}}
-        view={"day"}
       />
 
       <div className="flex-1 space-y-2">
