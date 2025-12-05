@@ -45,6 +45,7 @@ export interface IEventBlock {
   eventStyle: { top: string; width: string; left: string };
   eventHeight: number;
   event: IEvent;
+  roomId: number;
 }
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {

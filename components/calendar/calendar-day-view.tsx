@@ -44,7 +44,6 @@ export interface IDayView {
   dayDate: Date;
   isToday: boolean;
   eventBlocks: IEventBlock[];
-  roomIds: string[];
 }
 
 export interface IEventBlock {
@@ -62,6 +61,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
   const [dayViews, setDayViews] = useState<IDayView | undefined>(undefined);
   const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
   const [hours, setHours] = useState<number[]>([]);
+  const [rooms, setRooms] = useState<string[]>([]);
 
   const { workingHours, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
@@ -104,6 +104,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
       setHours(event.data.hours);
       setTotalEvents(event.data.totalEvents);
       setFilteredEvents(event.data.filteredEvents);
+      setRooms(event.data.roomIds);
       setIsHeaderLoading(false);
       setLoading(false);
     };
@@ -198,7 +199,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
               <div className="relative flex-1 border-b">
                 <div className="relative">
                   <DayRoomsGrid
-                    rooms={dayViews.roomIds}
+                    rooms={rooms}
                     dayViews={dayViews}
                     hours={hours}
                     workingHours={workingHours}

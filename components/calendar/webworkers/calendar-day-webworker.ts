@@ -95,7 +95,6 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
     dayDate: currentDate,
     isToday: isToday(currentDate),
     eventBlocks: eventBlocks,
-    roomIds: roomIds,
   };
 
   dayViews.push(newDay);

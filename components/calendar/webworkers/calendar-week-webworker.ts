@@ -102,6 +102,7 @@ async function processWeekEvents(weekData: IWeekProcessData): Promise<IWeekRespo
           eventStyle: blockStyle,
           eventHeight: heightInPixels,
           event: event,
+          roomId: 1,
         };
       })
     );
