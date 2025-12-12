@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRolesQuery } from "@/lib/services/permissions";
 
 // --- Types (adjust to your app) ---
 export type Role = {
@@ -49,7 +50,7 @@ type PermissionGridProps = {
 const cellKey = (k: PermissionCellKey) => `${k.roleId}:${k.resourceId}:${k.actionId}`;
 
 export function PermissionGrid({
-  roles,
+  //roles,
   resources,
   actionsByResource,
   permissions,
@@ -58,6 +59,16 @@ export function PermissionGrid({
   noLabel = "NO",
   tooltipForDenied = "Insufficient permissions",
 }: PermissionGridProps) {
+  const { data: roles } = useRolesQuery();
+  
+  //const roles = data?.map((role) => {return {name: role.name, id: role.roleId}})
+  console.log(roles);
+
+  if(!roles)
+  {
+    return <>...Loading</>
+  }
+
   return (
     <TooltipProvider>
       <Card className="w-full">

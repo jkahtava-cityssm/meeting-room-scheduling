@@ -50,11 +50,20 @@ export type TRecurrencePattern =
   | "Every X Months on X Day"
   | "Every X Year on X Month on X Day";
 
-export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Any"] as const;
+export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Public"] as const;
 
-export const DEFAULT_RESOURCES = ["Event", "Room", "User", "ReservationCalendar"] as const;
+export const DEFAULT_RESOURCES = ["Event", "Room", "User", "Calendar", "My Bookings", "Settings"] as const;
 
-export const DEFAULT_ACTIONS = ["Create", "Read", "Update", "Delete", "AccessPrivate"] as const;
+export const DEFAULT_ACTIONS = [
+  "Create",
+  "Read",
+  "Update",
+  "Delete",
+  "Private Rooms Visible",
+  "Edit Permissions",
+  "Edit Rooms",
+  "Edit Users",
+] as const;
 
 export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
 export type SessionResource = (typeof DEFAULT_RESOURCES)[number];
