@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       const hasPrivateAccess = await isRequirementMet(roles, {
         type: "permission",
         resource: "Room",
-        action: "AccessPrivate",
+        action: "View Hidden",
       });
 
       const roomScopeFilter = hasPrivateAccess ? { name: { in: ["Public", "Private"] } } : { name: "Public" };

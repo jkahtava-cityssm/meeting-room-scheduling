@@ -4,7 +4,7 @@ import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { findManyRoles } from "@/lib/data/permissions";
 import { guardRoute } from "@/lib/api-guard";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+export async function GET(req: NextRequest) {
   return guardRoute(
     req,
     {

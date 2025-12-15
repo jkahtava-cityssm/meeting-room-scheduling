@@ -59,7 +59,7 @@ export const DEFAULT_ACTIONS = [
   "Read",
   "Update",
   "Delete",
-  "Private Rooms Visible",
+  "View Hidden",
   "Edit Permissions",
   "Edit Rooms",
   "Edit Users",

@@ -36,7 +36,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, isPending } = useClientSession();
   const ReadCalendar = useVerifySessionRequirement(session, {
     type: "permission",
-    resource: "ReservationCalendar",
+    resource: "Calendar",
     action: "Read",
   });
 

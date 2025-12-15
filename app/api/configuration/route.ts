@@ -6,7 +6,7 @@ import { InternalServerErrorMessage, SuccessMessage, validateVisibleHours } from
 import { guardRoute } from "@/lib/api-guard";
 
 export async function GET(request: NextRequest) {
-  return guardRoute(request, { type: "role", role: "Any" }, async () => {
+  return guardRoute(request, { type: "role", role: "Public" }, async () => {
     const configEntries = await findManyConfiguration({
       OR: [{ key: "visibleHoursStart" }, { key: "visibleHoursEnd" }],
     });

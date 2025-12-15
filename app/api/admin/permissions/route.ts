@@ -1,13 +1,10 @@
-import { prisma } from "@/prisma";
-import { findSession } from "@/lib/data/users";
-
 import { NextRequest } from "next/server";
 
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { findManyPermissionSets } from "@/lib/data/permissions";
 import { guardRoute } from "@/lib/api-guard";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+export async function GET(req: NextRequest) {
   return guardRoute(
     req,
     {
