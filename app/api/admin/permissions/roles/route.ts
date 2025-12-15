@@ -1,10 +1,7 @@
-import { prisma } from "@/prisma";
-import { findSession } from "@/lib/data/users";
-
 import { NextRequest } from "next/server";
 
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { findManyPermissionSets } from "@/lib/data/permissions";
+import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { findManyRoles } from "@/lib/data/permissions";
 import { guardRoute } from "@/lib/api-guard";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
@@ -18,13 +15,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
       ],
     },
     async () => {
-      const permissionSets = await findManyPermissionSets();
+      const roles = await findManyRoles();
 
-      if (!permissionSets) {
+      if (!roles) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("PermissionSets Found", permissionSets);
+      return SuccessMessage("Roles Found", roles);
     }
   );
 }

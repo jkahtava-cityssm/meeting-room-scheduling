@@ -11,21 +11,22 @@ export const SPermission = z.object({
   resourceId: z.string(),
   resource: z.string(),
 });
-export const SRole = z.object({ name: z.string(), roleId: z.string(), permissions: z.array(SPermission) });
+export const SPermissionSet = z.object({ roleId: z.string(), roleName: z.string(), permissions: z.array(SPermission) });
 
-export type IRole = z.infer<typeof SRole>;
+export type IPermission = z.infer<typeof SPermission>;
+export type IPermissionSet = z.infer<typeof SPermissionSet>;
 
-const TEST = {
+const PERMISSION_SET_SELECT = {
   roleResourceAction: { include: { resource: true, action: true } },
 } as const satisfies Prisma.RoleInclude;
 
-export async function findManyRoles(where?: Prisma.RoleWhereInput): Promise<IRole[] | undefined> {
-  const roles = await prisma.role.findMany({ where, include: TEST });
+export async function findManyPermissionSets(where?: Prisma.RoleWhereInput): Promise<IPermissionSet[] | undefined> {
+  const roles = await prisma.role.findMany({ where, include: PERMISSION_SET_SELECT });
 
   return roles?.map((role) => {
     return {
-      name: role.name,
       roleId: String(role.roleId),
+      roleName: role.name,
       permissions: role.roleResourceAction.map((permission) => {
         return {
           permissionId: String(permission.roleResourceActionId),
@@ -38,4 +39,27 @@ export async function findManyRoles(where?: Prisma.RoleWhereInput): Promise<IRol
       }),
     };
   });
+}
+
+//Role Schema and Type
+export const SRole = z.object({
+  roleId: z.number(),
+  name: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type IRole = z.infer<typeof SRole>;
+
+const ROLE_SELECT = {
+  roleId: true,
+  name: true,
+  createdAt: true,
+  updatedAt: true,
+} as const satisfies Prisma.RoleSelect;
+
+export async function findManyRoles(where?: Prisma.RoleWhereInput) {
+  const roles = await prisma.role.findMany({ where, select: ROLE_SELECT });
+
+  return roles;
 }

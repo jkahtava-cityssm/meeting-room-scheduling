@@ -1,73 +1,70 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useState, Fragment, useMemo, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useRolesQuery } from "@/lib/services/permissions";
+import { usePermissionsQuery } from "@/lib/services/permissions";
+import { IPermissionSet } from "@/lib/data/permissions";
 
-// --- Types (adjust to your app) ---
-export type Role = {
-  roleId: number;
-  name: string;
-};
-
-export type Resource = {
-  resourceId: number;
-  name: string; // e.g., "Events", "Rooms"
-};
-
-export type Action = {
-  actionId: number;
-  name: string; // e.g., "create" | "read" | "update" | "delete"
-};
-
-export type PermissionCellKey = {
-  roleId: number;
-  resourceId: number;
-  actionId: number;
-};
-
-// Backing data (boolean per cell); key format: `${roleId}:${resourceId}:${actionId}`
-export type PermissionMap = Record<string, boolean>;
+export type ResourceActions = {
+  resourceId: string;
+  resourceName: string;
+  actions: { actionId: string; actionName: string }[];
+}[];
 
 type PermissionGridProps = {
-  roles: Role[];
-  resources: Resource[];
-  actionsByResource: Record<number, Action[]>; // resourceId -> Action[]
-  permissions: PermissionMap;
-  onToggle: (key: PermissionCellKey, nextValue: boolean) => void;
   yesLabel?: string; // default YES
   noLabel?: string; // default NO
   // Optional: show tips on hover to explain permission
   tooltipForDenied?: string; // e.g., "Ask an admin for access"
 };
 
-const cellKey = (k: PermissionCellKey) => `${k.roleId}:${k.resourceId}:${k.actionId}`;
-
 export function PermissionGrid({
-  //roles,
-  resources,
-  actionsByResource,
-  permissions,
-  onToggle,
   yesLabel = "YES",
   noLabel = "NO",
   tooltipForDenied = "Insufficient permissions",
 }: PermissionGridProps) {
-  const { data: roles } = useRolesQuery();
-  
-  //const roles = data?.map((role) => {return {name: role.name, id: role.roleId}})
-  console.log(roles);
+  const { data: serverPermissions, isLoading, error } = usePermissionsQuery();
 
-  if(!roles)
-  {
-    return <>...Loading</>
+  const [workingPermissions, setWorkingPermissions] = useState<IPermissionSet[] | undefined>(undefined);
+  //const [resourceActions, setResourceActions] = useState<ResourceActions | undefined>(undefined);
+
+  useEffect(() => {
+    if (serverPermissions) {
+      // Deep-ish clone (assuming shallow for entries is fine)
+      setWorkingPermissions(structuredClone(serverPermissions));
+    }
+  }, [serverPermissions]);
+
+  const resourceActions = useMemo(() => {
+    if (!workingPermissions || workingPermissions.length === 0) return undefined;
+    return getDistinctResources(workingPermissions);
+  }, [workingPermissions]);
+
+  const onToggle = useCallback(
+    (
+      roleId: string,
+      resourceId: string,
+      resourceName: string,
+      actionId: string,
+      actionName: string,
+      next: boolean | "indeterminate"
+    ) => {
+      if (!workingPermissions) return;
+      const isChecked = next === true;
+      setWorkingPermissions((prev) =>
+        prev ? setPermit(prev, roleId, resourceId, resourceName, actionId, actionName, isChecked) : prev
+      );
+    },
+    [workingPermissions]
+  );
+
+  if (isLoading || error || !workingPermissions || !resourceActions) {
+    return <>...Loading</>;
   }
+  console.log(workingPermissions);
 
   return (
     <TooltipProvider>
@@ -81,8 +78,11 @@ export function PermissionGrid({
               {/* First column: Resource / Action */}
               <col style={{ minWidth: "220px" }} />
               {/* One <col> per role; you can fix or let them auto */}
-              {roles.map((_, i) => (
-                <col key={i} style={{ minWidth: "180px" }} /* auto width or set a fixed %/px if you prefer */ />
+              {workingPermissions.map((permissionSet) => (
+                <col
+                  key={permissionSet.roleId}
+                  style={{ minWidth: "180px" }} /* auto width or set a fixed %/px if you prefer */
+                />
               ))}
             </colgroup>
 
@@ -90,52 +90,63 @@ export function PermissionGrid({
             <TableHeader className="">
               <TableRow className="bg-background hover:bg-background border-0 ">
                 <TableHead className="">Action</TableHead>
-                {roles.map((role) => (
-                  <TableHead key={role.roleId} className="text-center ">
-                    {role.name}
+                {workingPermissions.map((permissionSet) => (
+                  <TableHead key={permissionSet.roleId} className="text-center ">
+                    {permissionSet.roleName}
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {resources.map((res) => {
-                const resActions = actionsByResource[res.resourceId] ?? [];
+              {resourceActions.map((resourceAction) => {
                 return (
-                  <React.Fragment key={res.resourceId}>
+                  <Fragment key={resourceAction.resourceId}>
                     {/* Resource Title Row */}
                     <TableRow className="bg-muted hover:bg-muted border ">
-                      <TableCell colSpan={roles.length + 1} className="font-semibold">
-                        {res.name}
+                      <TableCell colSpan={workingPermissions.length + 1} className="font-semibold">
+                        {resourceAction.resourceName}
                       </TableCell>
                     </TableRow>
 
                     {/* Actions for resource */}
-                    {resActions.map((act) => (
-                      <TableRow key={`${res.resourceId}:${act.actionId}`} className="border-t">
+                    {resourceAction.actions.map((action) => (
+                      <TableRow key={`${resourceAction.resourceId}:${action.actionId}`} className="border-t">
                         {/* Action label */}
-                        <TableCell className="font-medium ">{act.name}</TableCell>
+                        <TableCell className="font-medium ">{action.actionName}</TableCell>
 
                         {/* One cell per role */}
-                        {roles.map((role) => {
-                          const keyObj: PermissionCellKey = {
-                            roleId: role.roleId,
-                            resourceId: res.resourceId,
-                            actionId: act.actionId,
-                          };
-                          const k = cellKey(keyObj);
-                          const isAllowed = !!permissions[k];
+                        {workingPermissions.map((permissionSet) => {
+                          const isAllowed = permissionSet.permissions.some(
+                            (t) =>
+                              t.actionId === action.actionId &&
+                              t.resourceId === resourceAction.resourceId &&
+                              t.permit === true
+                          ); //!!permissions[k];
 
                           return (
-                            <TableCell key={k} className="text-center ">
+                            <TableCell
+                              key={`${permissionSet.roleId}:${resourceAction.resourceId}:${action.actionId}`}
+                              className="text-center "
+                            >
                               <div className="flex flex-col items-center gap-1">
                                 {/* Toggle */}
                                 <Checkbox
+                                  disabled={permissionSet.roleName === "Admin" || permissionSet.roleName === "Public"}
                                   checked={isAllowed}
-                                  onCheckedChange={(next) => onToggle(keyObj, next === true)}
-                                  aria-label={`${res.name}:${act.name} for ${role.name} = ${
-                                    isAllowed ? yesLabel : noLabel
-                                  }`}
+                                  onCheckedChange={(next) =>
+                                    onToggle(
+                                      permissionSet.roleId,
+                                      resourceAction.resourceId,
+                                      resourceAction.resourceName,
+                                      action.actionId,
+                                      action.actionName,
+                                      next
+                                    )
+                                  }
+                                  aria-label={`${resourceAction.resourceName}:${action.actionName} for ${
+                                    permissionSet.roleName
+                                  } = ${isAllowed ? yesLabel : noLabel}`}
                                 />
                               </div>
                             </TableCell>
@@ -143,7 +154,7 @@ export function PermissionGrid({
                         })}
                       </TableRow>
                     ))}
-                  </React.Fragment>
+                  </Fragment>
                 );
               })}
             </TableBody>
@@ -153,3 +164,100 @@ export function PermissionGrid({
     </TooltipProvider>
   );
 }
+
+function getDistinctResources(permissionSets: IPermissionSet[]) {
+  const byResource = new Map<string, { resourceId: string; resourceName: string; actions: Map<string, string> }>();
+
+  for (const set of permissionSets) {
+    for (const p of set.permissions) {
+      let bucket = byResource.get(p.resourceId);
+      if (!bucket) {
+        bucket = {
+          resourceId: p.resourceId,
+          resourceName: p.resource,
+          actions: new Map<string, string>(),
+        };
+        byResource.set(p.resourceId, bucket);
+      }
+      if (!bucket.actions.has(p.actionId)) {
+        bucket.actions.set(p.actionId, p.action);
+      }
+    }
+  }
+
+  return Array.from(byResource.values()).map((bucket) => ({
+    resourceId: bucket.resourceId,
+    resourceName: bucket.resourceName,
+    actions: Array.from(bucket.actions.entries()).map(([actionId, actionName]) => ({
+      actionId,
+      actionName,
+    })),
+  }));
+}
+
+function setPermit(
+  sets: IPermissionSet[],
+  roleId: string,
+  resourceId: string,
+  resourceName: string,
+  actionId: string,
+  actionName: string,
+  nextValue: boolean
+): IPermissionSet[] {
+  return sets.map((set) => {
+    if (set.roleId !== roleId) return set;
+
+    // Find entry; if missing, optionally create it (depends on your backend model)
+    const idx = set.permissions.findIndex((p) => p.resourceId === resourceId && p.actionId === actionId);
+
+    if (idx === -1) {
+      // If permissions are sparse per role, you might need to add a new entry
+      return {
+        ...set,
+        permissions: [
+          ...set.permissions,
+          {
+            permissionId: "-1",
+            permit: nextValue,
+            actionId,
+            action: actionName,
+            resourceId,
+            resource: resourceName,
+          },
+        ],
+      };
+    }
+
+    // Update existing entry immutably
+    const updated = [...set.permissions];
+    updated[idx] = { ...updated[idx], permit: nextValue };
+    return { ...set, permissions: updated };
+  });
+}
+
+/*
+function getDistinctResources(permissionSets: IPermissionSet[]) {
+  const resourceActions: {
+    resourceId: string;
+    resourceName: string;
+    actions: { actionId: string; actionName: string }[];
+  }[] = [];
+
+  permissionSets.forEach((permissionSet) => {
+    permissionSet.permissions.map((permission) => {
+      let element = resourceActions.find((item) => item.resourceId === permission.resourceId);
+
+      if (!element) {
+        element = { resourceId: permission.resourceId, resourceName: permission.resource, actions: [] };
+        resourceActions.push(element);
+      }
+
+      if (!element.actions.some((action) => action.actionId === permission.actionId)) {
+        element.actions.push({ actionId: permission.actionId, actionName: permission.action });
+      }
+    });
+  });
+
+  return resourceActions;
+}
+*/

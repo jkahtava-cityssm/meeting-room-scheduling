@@ -702,7 +702,7 @@ async function main() {
   const actionRead = await FindCreateAction("Read");
   const actionUpdate = await FindCreateAction("Update");
   const actionDelete = await FindCreateAction("Delete");
-  const accessPrivate = await FindCreateAction("AccessPrivate");
+  const accessPrivate = await FindCreateAction("ViewHidden");
 
   const actions = { actionCreate, actionRead, actionUpdate, actionDelete, accessPrivate };
 

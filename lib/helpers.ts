@@ -33,6 +33,7 @@ import type { TCalendarView, TVisibleHours, TWorkingHours } from "@/lib/types";
 
 import { IEvent } from "./schemas/calendar";
 import next from "next";
+import { IPermissionSet } from "./data/permissions";
 
 export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
 export const MAX_VISIBLE_EVENTS = 5;
