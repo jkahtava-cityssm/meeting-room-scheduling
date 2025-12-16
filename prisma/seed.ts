@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors, TStatusKey } from "../lib/types";
+import { DEFAULT_ACTIONS, DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors, TStatusKey } from "../lib/types";
 import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import {
   EVENTDESCRIPTIONS,
@@ -698,11 +698,20 @@ async function main() {
   await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString());
   await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
 
+  await prisma.role.deleteMany();
+  await prisma.action.deleteMany();
+  await prisma.resource.deleteMany();
+  await prisma.roleResourceAction.deleteMany();
+
+  for (const action of DEFAULT_ACTIONS) {
+    await FindCreateAction(action);
+  }
+
   const actionCreate = await FindCreateAction("Create");
   const actionRead = await FindCreateAction("Read");
   const actionUpdate = await FindCreateAction("Update");
   const actionDelete = await FindCreateAction("Delete");
-  const accessPrivate = await FindCreateAction("ViewHidden");
+  const accessPrivate = await FindCreateAction("View Hidden");
 
   const actions = { actionCreate, actionRead, actionUpdate, actionDelete, accessPrivate };
 

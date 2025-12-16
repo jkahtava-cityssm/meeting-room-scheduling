@@ -59,6 +59,8 @@ export const DEFAULT_ACTIONS = [
   "Read",
   "Update",
   "Delete",
+  "Change Status",
+  "Change Assigned",
   "View Hidden",
   "Edit Permissions",
   "Edit Rooms",
@@ -68,3 +70,13 @@ export const DEFAULT_ACTIONS = [
 export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
 export type SessionResource = (typeof DEFAULT_RESOURCES)[number];
 export type SessionAction = (typeof DEFAULT_ACTIONS)[number];
+
+export type DEFAULT_PERMISSION_SETS = {
+  ROLE: SessionRole;
+  SET: { RESOURCE: SessionResource; ACTIONS: SessionAction[] }[];
+};
+
+const test: DEFAULT_PERMISSION_SETS = {
+  ROLE: "User",
+  SET: [{ RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"] }],
+};
