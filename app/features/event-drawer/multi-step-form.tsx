@@ -211,7 +211,7 @@ export const MultiStepForm = ({
   };
 
   const onCloseDrawer = () => {
-    if (methods.formState.isDirty) {
+    if (methods.formState.isDirty && status !== "Read") {
       setShowAlert(true);
       return;
     }
