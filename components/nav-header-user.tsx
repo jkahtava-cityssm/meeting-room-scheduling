@@ -19,6 +19,7 @@ import { useTheme } from "next-themes";
 import { IUser } from "./nav-header";
 import { getSessionRoles, Session, useVerifySessionRequirement } from "@/lib/auth-client";
 import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
+import { RegisterSSO } from "./sign-in-button";
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
   const { isMobile } = useSidebar();
@@ -102,6 +103,11 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
+            {process.env.NODE_ENV === "development" && (
+              <div className="flex flex-col items-center gap-2 m-4">
+                <RegisterSSO />
+              </div>
+            )}
             {process.env.NODE_ENV === "development" && (
               <>
                 <DropdownMenuSeparator />

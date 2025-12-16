@@ -75,6 +75,20 @@ model Verification {
   @@map("user_verification")
 }
 
+model ssoProvider {
+  id             Int     @id @default(autoincrement()) // @map("sso_provider_id")
+  issuer         String
+  domain         String
+  oidcConfig     String //@map("oidc_config")
+  samlConfig     String //@map("saml_config")
+  userId         Int //@map("user_id")
+  providerId     String //@map("provider_id")
+  organizationId String //@map("organization_id")
+  domainVerified Boolean //@map("domain_verified")
+
+  @@map("sso_provider")
+}
+
 model Room {
   roomId         Int      @id @default(autoincrement()) @map("room_id")
   name           String

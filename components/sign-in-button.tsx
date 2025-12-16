@@ -8,72 +8,147 @@ import { Button } from "./ui/button";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Loader2Icon } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { fetchPOST } from "@/lib/fetch";
 
 export const signInGitHub = async (callback: string) => {
-	const data = await signIn.social({
-		provider: "github",
-		callbackURL: callback,
-	});
-	return data;
+  const data = await signIn.social({
+    provider: "github",
+    callbackURL: callback,
+  });
+  return data;
 };
 
 export const signInAzure = async (callback: string) => {
-	const data = await signIn.social({
-		provider: "microsoft",
-		callbackURL: callback,
-		scopes: ["email", "openid", "profile", "offline_access", "User.Read"],
-	});
-	return data;
+  const data = await signIn.social({
+    provider: "microsoft",
+    callbackURL: callback,
+    scopes: ["email", "openid", "profile", "offline_access", "User.Read"],
+  });
+  return data;
+};
+
+export const signInSSO = async (callback: string) => {
+  const res = await authClient.signIn.sso({
+    email: "", // optional: hint; Microsoft may pre-fill if provided
+    providerId: "microsoft",
+    callbackURL: callback, // where to land post-login
+    // errorCallbackURL: "/auth/error", // optional
+  });
+  return res;
 };
 
 export function SignInMicrosoft() {
-	const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
-	const callbackURL = searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
+  const callbackURL =
+    searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
 
-	return (
-		<>
-			<MicrosoftButton onClick={() => signInAzure(callbackURL)}>
-				<Image
-					src="/images/ms-symbollockup_mssymbol_19.svg"
-					alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-					width={21}
-					height={21}
-				/>
-				Sign in with Microsoft
-			</MicrosoftButton>
-		</>
-	);
+  return (
+    <>
+      <MicrosoftButton onClick={() => signInAzure(callbackURL)}>
+        <Image
+          src="/images/ms-symbollockup_mssymbol_19.svg"
+          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+          width={21}
+          height={21}
+        />
+        Sign in with Microsoft
+      </MicrosoftButton>
+    </>
+  );
 }
 
 export function SignInGithub() {
-	const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
-	const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
-	const callbackURL = searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
+  const callbackURL =
+    searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
 
-	const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-	useEffect(() => {
-		setMounted(true);
-	}, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-	return (
-		<>
-			<Button onClick={() => signInGitHub(callbackURL)}>
-				{mounted ? (
-					<Image
-						src={resolvedTheme === "light" ? "/images/github-mark-white.svg" : "/images/github-mark.svg"}
-						alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-						width={21}
-						height={21}
-					/>
-				) : (
-					<Loader2Icon className="h-5.25 w-5.25 animate-spin" />
-				)}
-				Sign in with GitHub
-			</Button>
-		</>
-	);
+  return (
+    <>
+      <Button onClick={() => signInGitHub(callbackURL)}>
+        {mounted ? (
+          <Image
+            src={resolvedTheme === "light" ? "/images/github-mark-white.svg" : "/images/github-mark.svg"}
+            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+            width={21}
+            height={21}
+          />
+        ) : (
+          <Loader2Icon className="h-5.25 w-5.25 animate-spin" />
+        )}
+        Sign in with GitHub
+      </Button>
+    </>
+  );
+}
+
+export function SignInSSO() {
+  const { resolvedTheme } = useTheme();
+
+  const searchParams = useSearchParams();
+
+  const callbackURL =
+    searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <>
+      <Button onClick={() => signInSSO(callbackURL)}>
+        {mounted ? (
+          <Image
+            src={resolvedTheme === "light" ? "/images/github-mark-white.svg" : "/images/github-mark.svg"}
+            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+            width={21}
+            height={21}
+          />
+        ) : (
+          <Loader2Icon className="h-5.25 w-5.25 animate-spin" />
+        )}
+        Sign in with SSO
+      </Button>
+    </>
+  );
+}
+
+async function onRegisterSSO() {
+  const res = await fetchPOST("/api/admin/register-sso", {});
+  if (!res?.ok) {
+    // handle error
+    //alert(res?.error ?? "Registration failed");
+    console.log(res?.error);
+    return;
+  }
+}
+
+export function RegisterSSO() {
+  const searchParams = useSearchParams();
+
+  return (
+    <>
+      <MicrosoftButton onClick={() => onRegisterSSO()}>
+        <Image
+          src="/images/ms-symbollockup_mssymbol_19.svg"
+          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+          width={21}
+          height={21}
+        />
+        Register SSO
+      </MicrosoftButton>
+    </>
+  );
 }
