@@ -19,11 +19,11 @@ model User {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  accounts     Account[]
-  sessions     Session[]
-  userRoles    UserRole[]
-  events       Event[]
-  ssoproviders SSOProvider[]
+  account     Account[]
+  session     Session[]
+  userRole    UserRole[]
+  event       Event[]
+  ssoprovider SSOProvider[]
 
   @@map("user")
 }
@@ -101,10 +101,10 @@ model Room {
   roomScopeId    Int      @default(1) @map("room_scope_id")
   roomCategoryId Int      @default(1) @map("room_category_id")
 
-  roomCategory  RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
-  roomScope     RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
-  events        Event[]
-  roomPropertys RoomProperty[]
+  roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
+  roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
+  events       Event[]
+  roomProperty RoomProperty[]
 
   @@map("room")
 }
@@ -114,7 +114,7 @@ model RoomCategory {
   name           String
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
-  rooms          Room[]
+  room           Room[]
 
   @@map("room_category")
 }
@@ -138,7 +138,7 @@ model RoomScope {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   accessLevel Int      @default(1) @map("access_level")
-  rooms       Room[]
+  room        Room[]
 
   @@map("room_scope")
 }
@@ -164,8 +164,8 @@ model Role {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  userRoles           UserRole[]
-  roleResourceActions RoleResourceAction[]
+  userRole           UserRole[]
+  roleResourceAction RoleResourceAction[]
   // RolePermission     RolePermission[]
 
   @@map("role")
@@ -195,7 +195,7 @@ model Resource {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  roleResourceActions RoleResourceAction[]
+  roleResourceAction RoleResourceAction[]
 
   @@map("resource")
 }
@@ -206,7 +206,7 @@ model Action {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  roleResourceActions RoleResourceAction[]
+  roleResourceAction RoleResourceAction[]
 
   @@map("action")
 }
@@ -229,7 +229,7 @@ model Recurrence {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  events                 Event[]
+  event                  Event[]
   recurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
   recurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
 
@@ -244,7 +244,7 @@ model RecurrenceCancellation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  recurrences Recurrence[]
+  recurrence Recurrence[]
 
   @@map("recurrence_cancellation")
 }
@@ -257,7 +257,7 @@ model RecurrenceException {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  recurrences Recurrence[]
+  recurrence Recurrence[]
 
   @@map("recurrence_exception")
 }
@@ -296,7 +296,7 @@ model Status {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  events Event[]
+  event Event[]
 
   @@map("status")
 }

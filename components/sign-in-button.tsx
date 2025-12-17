@@ -11,7 +11,7 @@ import { Loader2Icon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { fetchPOST } from "@/lib/fetch";
 
-export const signInGitHub = async (callback: string) => {
+const signInGitHub = async (callback: string) => {
   const data = await signIn.social({
     provider: "github",
     callbackURL: callback,
@@ -19,7 +19,7 @@ export const signInGitHub = async (callback: string) => {
   return data;
 };
 
-export const signInAzure = async (callback: string) => {
+const signInEntra = async (callback: string) => {
   const data = await signIn.social({
     provider: "microsoft",
     callbackURL: callback,
@@ -28,7 +28,7 @@ export const signInAzure = async (callback: string) => {
   return data;
 };
 
-export const signInSSO = async (callback: string) => {
+const signInEntraSSO = async (callback: string) => {
   const res = await authClient.signIn.sso({
     providerId: "microsoft",
     callbackURL: callback, // where to land post-login
@@ -45,7 +45,7 @@ export function SignInMicrosoft() {
 
   return (
     <>
-      <MicrosoftButton onClick={() => signInAzure(callbackURL)}>
+      <MicrosoftButton onClick={() => signInEntra(callbackURL)}>
         <Image
           src="/images/ms-symbollockup_mssymbol_19.svg"
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"
@@ -91,7 +91,7 @@ export function SignInGithub() {
   );
 }
 
-export function SignInSSO() {
+export function SignInMicrosoftSSO() {
   const { resolvedTheme } = useTheme();
 
   const searchParams = useSearchParams();
@@ -107,7 +107,7 @@ export function SignInSSO() {
 
   return (
     <>
-      <Button onClick={() => signInSSO(callbackURL)}>
+      <Button onClick={() => signInEntraSSO(callbackURL)}>
         {mounted ? (
           <Image
             src={resolvedTheme === "light" ? "/images/github-mark-white.svg" : "/images/github-mark.svg"}
@@ -120,34 +120,6 @@ export function SignInSSO() {
         )}
         Sign in with SSO
       </Button>
-    </>
-  );
-}
-
-async function onRegisterSSO() {
-  const res = await fetchPOST("/api/admin/register-sso", {});
-  if (!res?.ok) {
-    // handle error
-    //alert(res?.error ?? "Registration failed");
-    console.log(res?.error);
-    return;
-  }
-}
-
-export function RegisterSSO() {
-  const searchParams = useSearchParams();
-
-  return (
-    <>
-      <MicrosoftButton onClick={() => onRegisterSSO()}>
-        <Image
-          src="/images/ms-symbollockup_mssymbol_19.svg"
-          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-          width={21}
-          height={21}
-        />
-        Register SSO
-      </MicrosoftButton>
     </>
   );
 }

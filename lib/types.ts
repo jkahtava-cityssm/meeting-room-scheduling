@@ -80,3 +80,7 @@ const test: DEFAULT_PERMISSION_SETS = {
   ROLE: "User",
   SET: [{ RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"] }],
 };
+
+export const CONFIGURATION_KEYS = ["visibleHoursStart", "visibleHoursEnd", "SingleSignOnEnabled"] as const;
+
+export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];

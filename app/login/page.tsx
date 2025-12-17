@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { RegisterSSO, SignInGithub, SignInMicrosoft, SignInSSO } from "@/components/sign-in-button";
+import { SignInGithub, SignInMicrosoft, SignInMicrosoftSSO } from "@/components/sign-in-button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -71,7 +71,7 @@ export default async function Home() {
                 )}
                 {process.env.NODE_ENV === "development" && (
                   <div className="flex flex-col items-center gap-2 m-4">
-                    <SignInSSO />
+                    <SignInMicrosoftSSO />
                   </div>
                 )}
               </div>

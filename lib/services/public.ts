@@ -68,11 +68,22 @@ export const usePublicRoomsQuery = (enabled: boolean = true) =>
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
-export const usePublicConfigurationsQuery = (enabled: boolean = true) =>
+export const usePublicConfigurationHoursQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: ["config_hours"],
     queryFn: async () => {
-      const result = await fetchGET("/api/public/configuration", {}, 1440, ["config_hours"]);
+      const result = await fetchGET("/api/public/configuration/hours", {}, 1440, ["config_hours"]);
+      return result.data;
+    },
+    enabled: enabled,
+    staleTime: 1000 * 60 * 60 * 3, // 1 hour
+  });
+
+export const usePublicConfigurationSingleSignOnQuery = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["config_sso"],
+    queryFn: async () => {
+      const result = await fetchGET("/api/public/configuration/hours", {}, 1440, ["config_hours"]);
       return result.data;
     },
     enabled: enabled,

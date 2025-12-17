@@ -1,4 +1,4 @@
-import { PermissionGrid } from "@/app/features/permissions/PermissionGrid";
+import { PermissionGrid } from "@/app/features/permissions/permission-grid";
 import * as React from "react";
 
 export default function PermissionsPage() {
