@@ -50,7 +50,7 @@ export type TRecurrencePattern =
   | "Every X Months on X Day"
   | "Every X Year on X Month on X Day";
 
-export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Public"] as const;
+export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Public", "Private"] as const;
 
 export const DEFAULT_RESOURCES = ["Event", "Room", "User", "Calendar", "My Bookings", "Settings"] as const;
 

@@ -157,9 +157,14 @@ export function hasPermission(roles: Role[] | undefined, resource: SessionResour
 }
 
 export function hasRole(roles: Role[] | undefined, role: SessionRole) {
-  if (role.toLowerCase() === "any") return true;
+  //If it is a public requirement just return true we dont need to check anything
+  if (role === "Public") return true;
 
   if (!roles) return false;
+
+  //if it is a Private requirement we can return true if roles has a value since the user has atleast 1 role
+  //we dont care which role
+  if (role === "Private") return true;
 
   return roles.some((item) => {
     return item.name.toLowerCase() === role.toLowerCase();
