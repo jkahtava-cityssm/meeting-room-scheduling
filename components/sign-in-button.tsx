@@ -30,7 +30,6 @@ export const signInAzure = async (callback: string) => {
 
 export const signInSSO = async (callback: string) => {
   const res = await authClient.signIn.sso({
-    email: "", // optional: hint; Microsoft may pre-fill if provided
     providerId: "microsoft",
     callbackURL: callback, // where to land post-login
     // errorCallbackURL: "/auth/error", // optional

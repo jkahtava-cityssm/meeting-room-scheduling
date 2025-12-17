@@ -10,17 +10,22 @@ export async function POST(req: NextRequest) {
   return guardRoute(req, { type: "function", check: () => process.env.NODE_ENV === "development" }, async () => {
     try {
       const session_headers = await headers();
+      const domain = process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, "") ?? "localhost:3000";
 
       const result = await auth.api.registerSSOProvider({
         body: {
-          providerId: "microsoft-entra",
-          domain: process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, "") ?? "localhost:3000",
+          providerId: "microsoft",
+          domain: domain,
           issuer: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0`,
           oidcConfig: {
             clientId: process.env.AZURE_AD_CLIENT_ID!,
             clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+            authorizationEndpoint: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/oauth2/v2.0/authorize`,
+            tokenEndpoint: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/oauth2/v2.0/token`,
+            jwksEndpoint: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/discovery/v2.0/keys`,
             discoveryEndpoint: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0/.well-known/openid-configuration`,
-            scopes: ["openid", "profile", "email", "offline_access"], // minimal identity scopes
+
+            scopes: ["openid", "profile", "email"], // minimal identity scopes
             pkce: true,
             mapping: {
               id: "sub",
@@ -28,14 +33,10 @@ export async function POST(req: NextRequest) {
               emailVerified: "email_verified",
               name: "name",
               image: "picture",
-              extraFields: {
-                preferred_username: "preferred_username",
-                tid: "tid",
-                oid: "oid",
-              },
             },
           },
         },
+
         headers: session_headers,
       });
 
@@ -45,6 +46,4 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: errorMessage }, { status: 400 });
     }
   });
-
-  // 2) Perform the registration (server-side: secrets stay safe)
 }

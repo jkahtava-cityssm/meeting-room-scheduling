@@ -19,10 +19,11 @@ model User {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  accounts Account[]
-  sessions Session[]
-  userRole UserRole[]
-  event    Event[]
+  accounts     Account[]
+  sessions     Session[]
+  userRoles    UserRole[]
+  events       Event[]
+  ssoproviders SSOProvider[]
 
   @@map("user")
 }
@@ -75,16 +76,17 @@ model Verification {
   @@map("user_verification")
 }
 
-model ssoProvider {
-  id             Int     @id @default(autoincrement()) // @map("sso_provider_id")
+model SSOProvider {
+  id             Int     @id @default(autoincrement()) @map("sso_provider_id")
   issuer         String
   domain         String
-  oidcConfig     String //@map("oidc_config")
-  samlConfig     String //@map("saml_config")
-  userId         Int //@map("user_id")
-  providerId     String //@map("provider_id")
-  organizationId String //@map("organization_id")
-  domainVerified Boolean //@map("domain_verified")
+  oidcConfig     String? @map("oidc_config")
+  samlConfig     String? @map("saml_config")
+  userId         Int?    @map("user_id")
+  providerId     String  @map("provider_id")
+  organizationId String? @map("organization_id")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sso_provider")
 }
@@ -99,10 +101,10 @@ model Room {
   roomScopeId    Int      @default(1) @map("room_scope_id")
   roomCategoryId Int      @default(1) @map("room_category_id")
 
-  roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
-  roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
-  event        Event[]
-  roomProperty RoomProperty[]
+  roomCategory  RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
+  roomScope     RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
+  events        Event[]
+  roomPropertys RoomProperty[]
 
   @@map("room")
 }
@@ -112,7 +114,7 @@ model RoomCategory {
   name           String
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
-  room           Room[]
+  rooms          Room[]
 
   @@map("room_category")
 }
@@ -136,7 +138,7 @@ model RoomScope {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   accessLevel Int      @default(1) @map("access_level")
-  room        Room[]
+  rooms       Room[]
 
   @@map("room_scope")
 }
@@ -162,8 +164,8 @@ model Role {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  userRole           UserRole[]
-  roleResourceAction RoleResourceAction[]
+  userRoles           UserRole[]
+  roleResourceActions RoleResourceAction[]
   // RolePermission     RolePermission[]
 
   @@map("role")
@@ -193,7 +195,7 @@ model Resource {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  roleResourceAction RoleResourceAction[]
+  roleResourceActions RoleResourceAction[]
 
   @@map("resource")
 }
@@ -204,7 +206,7 @@ model Action {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  roleResourceAction RoleResourceAction[]
+  roleResourceActions RoleResourceAction[]
 
   @@map("action")
 }
@@ -227,7 +229,7 @@ model Recurrence {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  event                  Event[]
+  events                 Event[]
   recurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
   recurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
 
@@ -242,7 +244,7 @@ model RecurrenceCancellation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  recurrence Recurrence[]
+  recurrences Recurrence[]
 
   @@map("recurrence_cancellation")
 }
@@ -255,7 +257,7 @@ model RecurrenceException {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  recurrence Recurrence[]
+  recurrences Recurrence[]
 
   @@map("recurrence_exception")
 }
@@ -294,7 +296,7 @@ model Status {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  event Event[]
+  events Event[]
 
   @@map("status")
 }
