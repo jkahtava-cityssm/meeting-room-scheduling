@@ -8,6 +8,8 @@ import { ThemeButton } from "@/components/theme-button";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PublicHeader } from "@/components/public-header";
+import { usePublicConfiguration } from "@/lib/services/public";
+import { findManyConfiguration } from "@/lib/data/configuration";
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -17,6 +19,9 @@ export default async function Home() {
   if (session) {
     redirect("/availability");
   }
+
+  const configEntries = await findManyConfiguration(["SingleSignOnEnabled"]);
+  const useSSO = configEntries.SingleSignOnEnabled === "true";
 
   return (
     <div className="[--header-height:calc(--spacing(14))]">
@@ -61,15 +66,17 @@ export default async function Home() {
 
                 <h1 className="text-xl">City of Sault Ste. Marie</h1>
                 <h1 className="text-2xl font-bold">Room Scheduling/Booking</h1>
-                <div className="flex flex-col items-center gap-2 m-4">
-                  <SignInMicrosoft />
-                </div>
+                {!useSSO && (
+                  <div className="flex flex-col items-center gap-2 m-4">
+                    <SignInMicrosoft />
+                  </div>
+                )}
                 {process.env.NODE_ENV === "development" && (
                   <div className="flex flex-col items-center gap-2 m-4">
                     <SignInGithub />
                   </div>
                 )}
-                {process.env.NODE_ENV === "development" && (
+                {useSSO && (
                   <div className="flex flex-col items-center gap-2 m-4">
                     <SignInMicrosoftSSO />
                   </div>

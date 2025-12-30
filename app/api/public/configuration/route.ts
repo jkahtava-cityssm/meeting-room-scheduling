@@ -14,6 +14,6 @@ export async function GET(req: NextRequest) {
 
   return SuccessMessage("Collected Public Configuration", {
     hours: { from: visibleHoursStart, to: visibleHoursEnd },
-    showEntraSSO: configEntries.SingleSignOnEnabled,
+    useSSO: configEntries.SingleSignOnEnabled,
   });
 }

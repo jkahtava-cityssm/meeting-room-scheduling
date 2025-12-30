@@ -1,5 +1,12 @@
 import { PrismaClient } from "@prisma/client";
-import { DEFAULT_ACTIONS, DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors, TStatusKey } from "../lib/types";
+import {
+  DEFAULT_ACTIONS,
+  DEFAULT_RESOURCES,
+  DEFAULT_USER_ROLES,
+  TColors,
+  TConfigurationKeys,
+  TStatusKey,
+} from "../lib/types";
 import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import {
   EVENTDESCRIPTIONS,
@@ -138,7 +145,7 @@ async function FindCreateUserRole(roleId: number, userId: number) {
   return record;
 }
 
-async function FindCreateConfigurationSetting(name: string, value: string) {
+async function FindCreateConfigurationSetting(name: TConfigurationKeys, value: string) {
   let record = await prisma.configuration.findFirst({
     where: { key: name },
   });
@@ -697,6 +704,7 @@ async function main() {
   await FindCreateConfigurationSetting("visibleHoursStart", VISIBLE_HOUR_START.toString());
   await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString());
   await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
+  await FindCreateConfigurationSetting("SingleSignOnEnabled", "true");
 
   await prisma.role.deleteMany();
   await prisma.action.deleteMany();
