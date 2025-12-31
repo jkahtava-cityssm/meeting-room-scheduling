@@ -1,0 +1,30 @@
+
+# container/Dockerfile.nginx
+FROM nginx:alpine
+
+# Install required tools: openssl (certs), bash (script), gettext (envsubst)
+RUN apk add --no-cache openssl bash gettext
+
+WORKDIR /container
+
+# Copy startup script
+COPY ./container/nginx/local.startup.sh /etc/nginx/startup.sh
+RUN chmod +x /etc/nginx/startup.sh
+
+# Copy config templates
+COPY ./container/nginx/local.full.conf.template /etc/nginx/full.conf.template
+COPY ./container/nginx/local.http-only.conf.template /etc/nginx/http-only.conf.template
+COPY ./container/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
+
+# Remove Windows CRLF if present
+RUN sed -i 's/\r$//' /etc/nginx/startup.sh 
+RUN sed -i '1s/^\xEF\xBB\xBF//' /etc/nginx/startup.sh 
+RUN sed -i 's/\r$//' /etc/nginx/full.conf.template
+RUN sed -i 's/\r$//' /etc/nginx/http-only.conf.template
+RUN sed -i 's/\r$//' /etc/nginx/nginx.conf.template
+
+# Helpful: show the script exists (kept from your original)
+RUN ls -l /etc/nginx/startup.sh
+
+# Entrypoint uses the startup script (will generate certs and start nginx)
+ENTRYPOINT ["/bin/sh","/etc/nginx/startup.sh"]
