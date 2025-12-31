@@ -106,15 +106,6 @@ export const auth = betterAuth({
   plugins: [
     sso({
       modelName: "SSOProvider",
-      /*fields: {
-        providerId: "provider_id",
-        issuer: "issuer",
-        domain: "domain",
-        oidcConfig: "oidc_config",
-        samlConfig: "saml_config",
-        userId: "user_id",
-        organizationId: "organization_id",
-      },*/
     }),
 
     customSession(async ({ user, session }) => {
