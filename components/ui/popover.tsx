@@ -18,9 +18,9 @@ function PopoverContent({
   align = "center",
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & { container?: Element | DocumentFragment }) {
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal container={props.container}>
       <PopoverPrimitive.Content
         data-slot="popover-content"
         align={align}

@@ -17,6 +17,7 @@ import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { CalendarPublicViewRoomGridSkeleton } from "./skeleton-calendar-public-view-room-grid";
 import { Skeleton } from "../ui/skeleton";
+import { PublicEventBlockHybrid } from "./calendar-public-view-event-block-hybrid";
 
 export const FilteredRoomGrid = React.memo(
   ({
@@ -88,10 +89,17 @@ const CalendarView = ({
   hours: number[];
   eventBlocks: IEventList | undefined;
 }) => {
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
   return (
     <ScrollArea className={`w-[calc(100%-10px)] h-[calc(100vh-220px)]`} type="always">
       {/* Header Row */}
-      <div className="mx-6 mb-6">
+      <div
+        className="mx-6 mb-6"
+        ref={(el) => {
+          // Try to find the radix viewport inside this ScrollArea
+          viewportRef.current = el?.querySelector("[data-radix-scroll-area-viewport]") as HTMLDivElement | null;
+        }}
+      >
         <div className="flex h-[60px] w-full border-y-2 sticky top-0 z-10 bg-background">
           <div className="w-18 border-x-2 flex items-center justify-end pr-2">
             <span className="py-2 text-center text-xs font-medium text-muted-foreground">
@@ -122,7 +130,16 @@ const CalendarView = ({
                     eventBlocks?.get(String(room.roomId))?.map((eventBlock) => {
                       return (
                         <div key={eventBlock.key} className="absolute p-1" style={eventBlock.eventStyle}>
-                          <PublicEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} />
+                          <PublicEventBlockHybrid
+                            viewportRef={viewportRef}
+                            eventBlock={eventBlock}
+                            heightInPixels={eventBlock.eventHeight}
+                          ></PublicEventBlockHybrid>
+                          {/*<PublicEventBlock
+                            viewportRef={viewportRef}
+                            eventBlock={eventBlock}
+                            heightInPixels={eventBlock.eventHeight}
+                          />*/}
                         </div>
                       );
                     })}
