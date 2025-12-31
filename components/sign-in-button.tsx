@@ -92,8 +92,6 @@ export function SignInGithub() {
 }
 
 export function SignInMicrosoftSSO() {
-  const { resolvedTheme } = useTheme();
-
   const searchParams = useSearchParams();
 
   const callbackURL =
@@ -107,19 +105,15 @@ export function SignInMicrosoftSSO() {
 
   return (
     <>
-      <Button onClick={() => signInEntraSSO(callbackURL)}>
-        {mounted ? (
-          <Image
-            src={resolvedTheme === "light" ? "/images/github-mark-white.svg" : "/images/github-mark.svg"}
-            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-            width={21}
-            height={21}
-          />
-        ) : (
-          <Loader2Icon className="h-5.25 w-5.25 animate-spin" />
-        )}
-        Sign in with SSO
-      </Button>
+      <MicrosoftButton onClick={() => signInEntraSSO(callbackURL)}>
+        <Image
+          src="/images/ms-symbollockup_mssymbol_19.svg"
+          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+          width={21}
+          height={21}
+        />
+        Sign in with Microsoft
+      </MicrosoftButton>
     </>
   );
 }
