@@ -102,8 +102,21 @@ export const auth = betterAuth({
       roles: { type: "number[]"},
     },
   },*/
+
   plugins: [
-    sso(),
+    sso({
+      modelName: "SSOProvider",
+      /*fields: {
+        providerId: "provider_id",
+        issuer: "issuer",
+        domain: "domain",
+        oidcConfig: "oidc_config",
+        samlConfig: "saml_config",
+        userId: "user_id",
+        organizationId: "organization_id",
+      },*/
+    }),
+
     customSession(async ({ user, session }) => {
       const userData = await fetchGET(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${user.id}`,
