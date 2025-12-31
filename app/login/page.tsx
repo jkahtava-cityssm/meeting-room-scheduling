@@ -20,8 +20,8 @@ export default async function Home() {
     redirect("/availability");
   }
 
-  const configEntries = await findManyConfiguration(["SingleSignOnEnabled"]);
-  const useSSO = configEntries.SingleSignOnEnabled === "true";
+  const configEntries = await findManyConfiguration(["singleSignOnEnabled"]);
+  const useSSO = configEntries.singleSignOnEnabled === "true";
 
   return (
     <div className="[--header-height:calc(--spacing(14))]">
@@ -71,14 +71,14 @@ export default async function Home() {
                     <SignInMicrosoft />
                   </div>
                 )}
-                {process.env.NODE_ENV === "development" && (
-                  <div className="flex flex-col items-center gap-2 m-4">
-                    <SignInGithub />
-                  </div>
-                )}
                 {useSSO && (
                   <div className="flex flex-col items-center gap-2 m-4">
                     <SignInMicrosoftSSO />
+                  </div>
+                )}
+                {process.env.NODE_ENV === "development" && (
+                  <div className="flex flex-col items-center gap-2 m-4">
+                    <SignInGithub />
                   </div>
                 )}
               </div>

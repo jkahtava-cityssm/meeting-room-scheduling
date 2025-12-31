@@ -2,12 +2,13 @@
 
 import { MicrosoftButton } from "@/components/ui/microsoft-signin-button";
 import { fetchPOST } from "@/lib/fetch";
+import { usePublicConfiguration } from "@/lib/services/public";
 import { Loader2Icon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
-export function RegisterSSO() {
-  const [disabled, setDisabled] = useState(false);
+export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
+  const [disabled, setDisabled] = useState(isDisabled);
   const [pending, setPending] = useState(false);
 
   async function onRegisterSSO() {
@@ -17,7 +18,7 @@ export function RegisterSSO() {
     setDisabled(true);
 
     const result = await fetchPOST("/api/admin/register-sso", {});
-    if (!result?.ok) {
+    if (result?.status !== 204) {
       setDisabled(false);
       console.log(result?.error);
     }

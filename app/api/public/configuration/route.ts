@@ -5,7 +5,7 @@ import { NextRequest } from "next/server";
 import { InternalServerErrorMessage, SuccessMessage, validateVisibleHours } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
-  const configEntries = await findManyConfiguration(["visibleHoursStart", "visibleHoursEnd", "SingleSignOnEnabled"]);
+  const configEntries = await findManyConfiguration(["visibleHoursStart", "visibleHoursEnd", "singleSignOnEnabled"]);
 
   const { visibleHoursStart, visibleHoursEnd } = validateVisibleHours(
     Number(configEntries.visibleHoursStart),
@@ -14,6 +14,6 @@ export async function GET(req: NextRequest) {
 
   return SuccessMessage("Collected Public Configuration", {
     hours: { from: visibleHoursStart, to: visibleHoursEnd },
-    useSSO: configEntries.SingleSignOnEnabled,
+    useSSO: configEntries.singleSignOnEnabled,
   });
 }

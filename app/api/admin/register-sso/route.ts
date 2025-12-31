@@ -5,6 +5,7 @@ import { guardRoute } from "@/lib/api-guard";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NoContentMessage, SuccessMessage } from "@/lib/api-helpers";
+import { prisma } from "@/prisma";
 
 export async function POST(req: NextRequest) {
   return guardRoute(req, { type: "function", check: () => process.env.NODE_ENV === "development" }, async () => {
@@ -39,6 +40,13 @@ export async function POST(req: NextRequest) {
 
         headers: session_headers,
       });
+
+      if (result) {
+        await prisma.configuration.update({
+          where: { key: "singleSignOnEnabled" },
+          data: { value: "true" },
+        });
+      }
 
       return NoContentMessage();
     } catch (err: unknown) {

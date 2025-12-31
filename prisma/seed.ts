@@ -704,7 +704,7 @@ async function main() {
   await FindCreateConfigurationSetting("visibleHoursStart", VISIBLE_HOUR_START.toString());
   await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString());
   await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
-  await FindCreateConfigurationSetting("SingleSignOnEnabled", "true");
+  await FindCreateConfigurationSetting("singleSignOnEnabled", "false");
 
   await prisma.role.deleteMany();
   await prisma.action.deleteMany();

@@ -134,6 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
             <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />
             <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
+            <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
           </SideBarCollapsibleGroup>
         </SideBarGroup>
       </SidebarContent>

@@ -85,7 +85,7 @@ export const CONFIGURATION_KEYS = [
   "visibleHoursStart",
   "visibleHoursEnd",
   "timeSlotIntervalMinutes",
-  "SingleSignOnEnabled",
+  "singleSignOnEnabled",
 ] as const;
 
 export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
