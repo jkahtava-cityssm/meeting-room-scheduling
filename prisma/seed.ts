@@ -17,7 +17,13 @@ import dynamicIconImports from "lucide-react/dynamicIconImports";
 // Define the type for icon names
 type IconName = keyof typeof dynamicIconImports;
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL, // e.g., regular user
+    },
+  },
+});
 
 const prismaAdmin = new PrismaClient({
   datasources: {
@@ -574,6 +580,8 @@ export function convertDateToRRuleDate(date: Date) {
   );
 }
 
+
+
 async function createLinkedServer() {
   await prismaAdmin.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS postgres_fdw;`);
 
@@ -675,6 +683,7 @@ async function createLinkedServer() {
 
   await prisma.$executeRawUnsafe(`CALL public.insert_avanti_users();`);
 }
+
 
 async function main() {
   if (process.env.LINKED_SERVER === "1") {

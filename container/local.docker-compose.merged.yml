@@ -44,7 +44,17 @@ services:
     container_name: prisma-seed
     profiles: ["seed", "dev"]
     environment:
-      DATABASE_URL: ${CONTAINER_DB_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_ADMIN: ${DATABASE_URL_ADMIN}
+      DATABASE_HOST:  ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      LINKED_SERVER: ${LINKED_SERVER}
+      LINKED_SERVER_NAME: ${LINKED_SERVER_NAME}
+      LINKED_DATABASE_NAME: ${LINKED_DATABASE_NAME}
+      LINKED_USERNAME: ${LINKED_USERNAME}
+      LINKED_PASSWORD: ${LINKED_PASSWORD}
+      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
+      ADMIN_USER_EMAIL: ${ADMIN_USER_EMAIL}
     depends_on:
       prisma-migrate:
         condition: service_completed_successfully
@@ -90,9 +100,6 @@ services:
       CERT_LOCALITY: "Sault Ste. Marie"
       CERT_ORG: Dev
       CERT_OU: IT
-
-    volumes:
-      - /etc/nginx/certs
     
     networks:
       - webnet

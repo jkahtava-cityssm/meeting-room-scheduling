@@ -25,7 +25,8 @@ migrate:
 
 # Run seed only (one-off)
 seed:
-	$(COMPOSE) --profile seed run --rm prisma-seed
+	$(COMPOSE) --profile seed up -d 
+#--rm prisma-seed
 
 # Obtain initial certificates
 cert-init:

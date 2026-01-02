@@ -1,68 +1,83 @@
 
-
+# container/Dockerfile.local.nextjs-app
 FROM node:20-alpine AS base
 
-# Install dependencies only when needed
+# ---------- deps ----------
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN npm ci
 
-
-
-# Rebuild the source code only when needed
+# ---------- builder ----------
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
+# Optionally disable Next telemetry during build:
 # ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN npm run build
 
-# Production image, copy all the files and run next
+# ---------- runner ----------
 FROM base AS runner
-WORKDIR /app
 
+# Create non-root user/group early
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 --ingroup nodejs --home /home/nextjs --shell /sbin/nologin nextjs
+
+WORKDIR /app
 ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
+# Optionally disable Next telemetry at runtime:
 # ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Ensure working dir ownership
+RUN mkdir -p /app \
+ && chown -R nextjs:nodejs /app
 
-
-COPY --from=builder /app/public ./public
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+# Copy artifacts with correct ownership
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy the full Prisma client and runtime
+# Prisma client and runtime
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
-USER nextjs
+# --- REMOVE PACKAGE MANAGERS & COMMON DOWNLOAD TOOLS ---
+# Keep this resilient across base image updates by using || true
+# (Alpine paths shown; some tools may not exist.)
+RUN set -eux; \
+  # Node package managers
+  rm -rf /usr/local/lib/node_modules/npm || true; \
+  rm -f  /usr/local/bin/npm            || true; \
+  rm -f  /usr/local/bin/npx            || true; \
+  rm -f  /usr/local/bin/pnpm           || true; \
+  rm -f  /usr/local/bin/yarn           || true; \
+  rm -rf /usr/local/lib/node_modules/corepack || true; \
+  rm -f  /usr/local/bin/corepack       || true; \
+  # Alpine package manager
+  rm -f  /sbin/apk                     || true; \
+  rm -f  /usr/bin/apk                  || true; \
+  # Common fetch/install tools
+  rm -f  /usr/bin/curl                 || true; \
+  rm -f  /usr/bin/wget                 || true; \
+  rm -f  /usr/bin/git                  || true; \
+  # Any leftover helper scripts sometimes present
+  rm -f  /usr/bin/adduser              || true; \
+  rm -f  /usr/bin/addgroup             || true
 
+# Drop privileges (numeric UID/GID helps in Podman/K8s)
+USER 1001:1001
+
+# Networking
 EXPOSE 3000
-
 ENV PORT=3000
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
 ENV HOSTNAME="0.0.0.0"
+
+# Dev-only (self-signed certs): do NOT use in prod
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
+# Next.js standalone output provides server.js
 CMD ["node", "server.js"]
-
-
-
