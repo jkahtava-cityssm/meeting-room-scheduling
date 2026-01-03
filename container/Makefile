@@ -3,7 +3,7 @@ export
 CONTAINER_MANAGER=podman
 ENV_FILE_LOCATION=../.env
 MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose -f docker-compose.db.migrate.yml --env-file ${ENV_FILE_LOCATION}
-COMPOSE=$(CONTAINER_MANAGER) compose -f docker-compose.merged.yml --env-file ${ENV_FILE_LOCATION}
+COMPOSE=$(CONTAINER_MANAGER) compose -f local.docker-compose.merged.yml --env-file ${ENV_FILE_LOCATION}
 
 .PHONY: init dev app migrate seed cert-init cert-renew down logs
 
@@ -25,7 +25,8 @@ migrate:
 
 # Run seed only (one-off)
 seed:
-	$(COMPOSE) --profile seed run --rm prisma-seed
+	$(COMPOSE) --profile seed up -d 
+#--rm prisma-seed
 
 # Obtain initial certificates
 cert-init:
