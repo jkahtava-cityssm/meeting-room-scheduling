@@ -24,6 +24,7 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.prisma-migrate
+      target: runner
     image: meeting-room-booking/prisma-tools:latest
     container_name: prisma-migrate
     profiles: ["migrate", "init", "dev"]
@@ -40,6 +41,7 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.prisma-migrate
+      target: runner
     image: meeting-room-booking/prisma-tools:latest
     container_name: prisma-seed
     profiles: ["seed", "dev"]
@@ -66,6 +68,7 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.local.nextjs-app
+      target: runner
     image: meeting-room-booking/nextjs-app:latest
     container_name: nextjs-app
     profiles: ["app", "init", "dev"]
