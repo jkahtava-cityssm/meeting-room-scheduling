@@ -102,6 +102,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
+
             {process.env.NODE_ENV === "development" && (
               <>
                 <DropdownMenuSeparator />

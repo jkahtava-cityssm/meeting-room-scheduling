@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${DATABASE_USER_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
-      POSTGRES_DB: meeting_room_scheduling
+      POSTGRES_DB: ${DATABASE_NAME}
     ports:
       - "5432:5432"
     networks:

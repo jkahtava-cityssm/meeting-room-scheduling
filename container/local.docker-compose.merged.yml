@@ -1,0 +1,113 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: container-postgres
+    restart: always
+    profiles: ["app", "init", "dev"]
+    environment:
+      POSTGRES_USER: ${DATABASE_USER_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    ports:
+      - "5432:5432"
+    networks:
+      - webnet
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  prisma-migrate:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.prisma-migrate
+    image: meeting-room-booking/prisma-tools:latest
+    container_name: prisma-migrate
+    profiles: ["migrate", "init", "dev"]
+    environment:
+      DATABASE_URL: ${CONTAINER_DB_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npx prisma migrate deploy
+    networks:
+      - webnet
+
+  prisma-seed:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.prisma-migrate
+    image: meeting-room-booking/prisma-tools:latest
+    container_name: prisma-seed
+    profiles: ["seed", "dev"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL_ADMIN: ${DATABASE_URL_ADMIN}
+      DATABASE_HOST:  ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      LINKED_SERVER: ${LINKED_SERVER}
+      LINKED_SERVER_NAME: ${LINKED_SERVER_NAME}
+      LINKED_DATABASE_NAME: ${LINKED_DATABASE_NAME}
+      LINKED_USERNAME: ${LINKED_USERNAME}
+      LINKED_PASSWORD: ${LINKED_PASSWORD}
+      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
+      ADMIN_USER_EMAIL: ${ADMIN_USER_EMAIL}
+    depends_on:
+      prisma-migrate:
+        condition: service_completed_successfully
+    command: npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
+    networks:
+      - webnet
+
+  nextjs-app:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.local.nextjs-app
+    image: meeting-room-booking/nextjs-app:latest
+    container_name: nextjs-app
+    profiles: ["app", "init", "dev"]
+    expose:
+      - "3000"
+    environment:
+      BETTER_AUTH_URL: https://${DUCKDNS_DOMAIN}
+      NEXT_PUBLIC_BASE_URL: https://${DUCKDNS_DOMAIN}
+    depends_on:
+      - postgres
+      - nginx
+    networks:
+      - webnet
+    extra_hosts:
+      - "${DUCKDNS_DOMAIN}:host-gateway"
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.local.nginx
+    image: meeting-room-booking/nginx:latest
+    container_name: nginx
+    profiles: ["app", "init", "dev"]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DUCKDNS_DOMAIN: ${DUCKDNS_DOMAIN},localhost,127.0.0.1
+      CERT_DAYS: 365
+      CERT_COUNTRY: CA
+      CERT_STATE: Ontario
+      CERT_LOCALITY: "Sault Ste. Marie"
+      CERT_ORG: Dev
+      CERT_OU: IT
+    
+    networks:
+      - webnet
+
+
+
+volumes:
+  postgres_data:
+
+networks:
+  webnet:

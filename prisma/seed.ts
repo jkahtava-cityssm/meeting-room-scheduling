@@ -1,5 +1,12 @@
 import { PrismaClient } from "@prisma/client";
-import { DEFAULT_ACTIONS, DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors, TStatusKey } from "../lib/types";
+import {
+  DEFAULT_ACTIONS,
+  DEFAULT_RESOURCES,
+  DEFAULT_USER_ROLES,
+  TColors,
+  TConfigurationKeys,
+  TStatusKey,
+} from "../lib/types";
 import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import {
   EVENTDESCRIPTIONS,
@@ -17,7 +24,13 @@ import dynamicIconImports from "lucide-react/dynamicIconImports";
 // Define the type for icon names
 type IconName = keyof typeof dynamicIconImports;
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL, // e.g., regular user
+    },
+  },
+});
 
 const prismaAdmin = new PrismaClient({
   datasources: {
@@ -138,7 +151,7 @@ async function FindCreateUserRole(roleId: number, userId: number) {
   return record;
 }
 
-async function FindCreateConfigurationSetting(name: string, value: string) {
+async function FindCreateConfigurationSetting(name: TConfigurationKeys, value: string) {
   let record = await prisma.configuration.findFirst({
     where: { key: name },
   });
@@ -574,6 +587,8 @@ export function convertDateToRRuleDate(date: Date) {
   );
 }
 
+
+
 async function createLinkedServer() {
   await prismaAdmin.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS postgres_fdw;`);
 
@@ -676,6 +691,7 @@ async function createLinkedServer() {
   await prisma.$executeRawUnsafe(`CALL public.insert_avanti_users();`);
 }
 
+
 async function main() {
   if (process.env.LINKED_SERVER === "1") {
     await createLinkedServer();
@@ -697,6 +713,7 @@ async function main() {
   await FindCreateConfigurationSetting("visibleHoursStart", VISIBLE_HOUR_START.toString());
   await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString());
   await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
+  await FindCreateConfigurationSetting("singleSignOnEnabled", "false");
 
   await prisma.role.deleteMany();
   await prisma.action.deleteMany();

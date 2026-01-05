@@ -20,7 +20,15 @@ export const PublicEventCard = cva(
   }
 );
 
-export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: IEventBlock; heightInPixels: number }) {
+export function PublicEventBlock({
+  viewportRef,
+  eventBlock,
+  heightInPixels,
+}: {
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  eventBlock: IEventBlock;
+  heightInPixels: number;
+}) {
   if (!eventBlock?.event) {
     return;
   }
@@ -52,7 +60,7 @@ export function PublicEventBlock({ eventBlock, heightInPixels }: { eventBlock: I
           </div>
         </div>
       </TooltipTrigger>
-      <TooltipPortal>
+      <TooltipPortal container={viewportRef.current ?? undefined}>
         <TooltipContent className="max-w-64" side="right" sticky="always">
           <div className="space-y-1">
             <div className="flex items-center gap-2 border-b border-muted-foreground h-8">

@@ -33,6 +33,14 @@ const PUBLIC_SEVENT = z.object({
   status: SStatus.pick({ statusId: true, name: true, key: true }),
 });
 
+const PUBLIC_SCONFIGURATION = z.object({
+  hours: z.object({
+    from: z.number(),
+    to: z.number(),
+  }),
+  useSSO: z.string(),
+});
+
 export type PUBLIC_IEVENT = z.infer<typeof PUBLIC_SEVENT>;
 export type PUBLIC_IROOM = z.infer<typeof PUBLIC_SROOM>;
 
@@ -68,12 +76,17 @@ export const usePublicRoomsQuery = (enabled: boolean = true) =>
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
-export const usePublicConfigurationsQuery = (enabled: boolean = true) =>
+export const usePublicConfiguration = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["config_hours"],
+    queryKey: ["public_configuration"],
     queryFn: async () => {
-      const result = await fetchGET("/api/public/configuration", {}, 1440, ["config_hours"]);
-      return result.data;
+      const result = await fetchGET("/api/public/configuration", {}, 1440, ["public_configuration"]);
+
+      const parsedResult = PUBLIC_SCONFIGURATION.safeParse(result.data);
+
+      if (!parsedResult.success) throw new Error("Invalid public configuration data");
+
+      return parsedResult.data;
     },
     enabled: enabled,
     staleTime: 1000 * 60 * 60 * 3, // 1 hour

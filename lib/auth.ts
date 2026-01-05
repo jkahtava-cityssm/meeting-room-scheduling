@@ -1,5 +1,6 @@
 import { prisma } from "@/prisma";
 import { betterAuth } from "better-auth";
+import { sso } from "@better-auth/sso";
 import { customSession } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
@@ -101,7 +102,12 @@ export const auth = betterAuth({
       roles: { type: "number[]"},
     },
   },*/
+
   plugins: [
+    sso({
+      modelName: "SSOProvider",
+    }),
+
     customSession(async ({ user, session }) => {
       const userData = await fetchGET(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${user.id}`,

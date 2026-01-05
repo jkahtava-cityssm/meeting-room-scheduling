@@ -1,38 +1,37 @@
-import { prisma } from "@/prisma";
-import { findManyConfiguration } from "@/lib/data/configuration";
-
 import { NextRequest } from "next/server";
-import { InternalServerErrorMessage, SuccessMessage, validateVisibleHours } from "@/lib/api-helpers";
+import { findManyConfiguration } from "@/lib/data/configuration";
+import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { guardRoute } from "@/lib/api-guard";
+import { CONFIGURATION_KEYS, TConfigurationKeys } from "@/lib/types";
+
+function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[] {
+  const url = new URL(request.url);
+  const keysParams = url.searchParams.getAll("keys");
+
+  // If no keys provided, return all
+  if (keysParams.length === 0) {
+    return CONFIGURATION_KEYS;
+  }
+
+  // Filter invalid values and narrow to TConfigurationKeys
+  const valid = keysParams.filter((k): k is TConfigurationKeys =>
+    (CONFIGURATION_KEYS as readonly string[]).includes(k)
+  );
+
+  // If after filtering there are none, default to all
+  return valid.length > 0 ? valid : CONFIGURATION_KEYS;
+}
 
 export async function GET(request: NextRequest) {
   return guardRoute(request, { type: "role", role: "Public" }, async () => {
-    const configEntries = await findManyConfiguration({
-      OR: [{ key: "visibleHoursStart" }, { key: "visibleHoursEnd" }],
-    });
+    const requestedKeys = parseRequestedKeys(request);
+
+    const configEntries = await findManyConfiguration(requestedKeys);
 
     if (!configEntries) {
       return InternalServerErrorMessage();
     }
 
-    type VisibleKey = "visibleHoursStart" | "visibleHoursEnd";
-
-    const config = configEntries.reduce<Record<VisibleKey, number>>(
-      (acc, entry) => {
-        const key = entry.key as VisibleKey;
-        acc[key] = Number(entry.value);
-        return acc;
-      },
-      { visibleHoursStart: 0, visibleHoursEnd: 0 }
-    );
-
-    const { visibleHoursStart, visibleHoursEnd } = validateVisibleHours(
-      config.visibleHoursStart,
-      config.visibleHoursEnd
-    );
-
-    const visibleHoursRange = { from: visibleHoursStart, to: visibleHoursEnd };
-
-    return SuccessMessage("Collected Hours", visibleHoursRange);
+    return SuccessMessage("Collected Configuration", configEntries);
   });
 }

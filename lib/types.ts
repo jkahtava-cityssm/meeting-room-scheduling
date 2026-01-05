@@ -50,7 +50,7 @@ export type TRecurrencePattern =
   | "Every X Months on X Day"
   | "Every X Year on X Month on X Day";
 
-export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Public"] as const;
+export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Public", "Private"] as const;
 
 export const DEFAULT_RESOURCES = ["Event", "Room", "User", "Calendar", "My Bookings", "Settings"] as const;
 
@@ -80,3 +80,12 @@ const test: DEFAULT_PERMISSION_SETS = {
   ROLE: "User",
   SET: [{ RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"] }],
 };
+
+export const CONFIGURATION_KEYS = [
+  "visibleHoursStart",
+  "visibleHoursEnd",
+  "timeSlotIntervalMinutes",
+  "singleSignOnEnabled",
+] as const;
+
+export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];

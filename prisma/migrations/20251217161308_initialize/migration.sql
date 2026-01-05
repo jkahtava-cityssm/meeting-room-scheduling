@@ -59,15 +59,64 @@ CREATE TABLE "user_verification" (
 );
 
 -- CreateTable
+CREATE TABLE "sso_provider" (
+    "sso_provider_id" SERIAL NOT NULL,
+    "issuer" TEXT NOT NULL,
+    "domain" TEXT NOT NULL,
+    "oidc_config" TEXT,
+    "saml_config" TEXT,
+    "user_id" INTEGER,
+    "provider_id" TEXT NOT NULL,
+    "organization_id" TEXT,
+
+    CONSTRAINT "sso_provider_pkey" PRIMARY KEY ("sso_provider_id")
+);
+
+-- CreateTable
 CREATE TABLE "room" (
     "room_id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "color" TEXT NOT NULL,
-    "icon" TEXT,
+    "icon" TEXT DEFAULT 'none',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "room_scope_id" INTEGER NOT NULL DEFAULT 1,
+    "room_category_id" INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT "room_pkey" PRIMARY KEY ("room_id")
+);
+
+-- CreateTable
+CREATE TABLE "room_category" (
+    "room_category_id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "room_pkey" PRIMARY KEY ("room_id")
+    CONSTRAINT "room_category_pkey" PRIMARY KEY ("room_category_id")
+);
+
+-- CreateTable
+CREATE TABLE "room_property" (
+    "room_property_id" SERIAL NOT NULL,
+    "room_id" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "room_property_pkey" PRIMARY KEY ("room_property_id")
+);
+
+-- CreateTable
+CREATE TABLE "room_scope" (
+    "room_scope_id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+    "access_level" INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT "room_scope_pkey" PRIMARY KEY ("room_scope_id")
 );
 
 -- CreateTable
@@ -180,11 +229,26 @@ CREATE TABLE "event" (
 -- CreateTable
 CREATE TABLE "status" (
     "status_id" SERIAL NOT NULL,
+    "key" TEXT NOT NULL,
     "name" TEXT NOT NULL,
+    "icon" TEXT DEFAULT 'none',
+    "color" TEXT DEFAULT 'none',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "status_pkey" PRIMARY KEY ("status_id")
+);
+
+-- CreateTable
+CREATE TABLE "configuration" (
+    "configuration_id" SERIAL NOT NULL,
+    "key" TEXT NOT NULL,
+    "description" TEXT,
+    "value" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "configuration_pkey" PRIMARY KEY ("configuration_id")
 );
 
 -- CreateIndex
@@ -193,11 +257,29 @@ CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "user_session_token_key" ON "user_session"("token");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "status_key_key" ON "status"("key");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "configuration_key_key" ON "configuration"("key");
+
 -- AddForeignKey
 ALTER TABLE "user_session" ADD CONSTRAINT "user_session_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_account" ADD CONSTRAINT "user_account_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sso_provider" ADD CONSTRAINT "sso_provider_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "room" ADD CONSTRAINT "room_room_category_id_fkey" FOREIGN KEY ("room_category_id") REFERENCES "room_category"("room_category_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "room" ADD CONSTRAINT "room_room_scope_id_fkey" FOREIGN KEY ("room_scope_id") REFERENCES "room_scope"("room_scope_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "room_property" ADD CONSTRAINT "room_property_room_id_fkey" FOREIGN KEY ("room_id") REFERENCES "room"("room_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_role" ADD CONSTRAINT "user_role_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
