@@ -95,6 +95,33 @@ export async function VerifyToken(token: string): Promise<{ message: string; dat
   }
 }
 
+export type PermissionCache = {
+  isAdmin: boolean;
+  roleSet: Set<SessionRole>;
+  permitSet: Set<string>;
+};
+
+export function buildPermissionCache(roles: Role[] | undefined): PermissionCache {
+  const roleSet = new Set<SessionRole>();
+  const permitSet = new Set<string>();
+  let isAdmin = false;
+
+  for (const role of roles ?? []) {
+    const roleName = role.name as SessionRole;
+    roleSet.add(roleName);
+    if (roleName === "Admin") isAdmin = true;
+
+    for (const p of role.permissions ?? []) {
+      if (p.permit) {
+        // Assuming p.resource/action conform to SessionResource/SessionAction
+        permitSet.add(`${p.resource}|${p.action}`);
+      }
+    }
+  }
+
+  return { isAdmin, roleSet, permitSet };
+}
+
 export type PermissionRequirement =
   | { type: "permission"; resource: SessionResource; action: SessionAction }
   | { type: "role"; role: SessionRole }
@@ -102,13 +129,15 @@ export type PermissionRequirement =
   | { type: "and"; requirements: PermissionRequirement[] }
   | { type: "or"; requirements: PermissionRequirement[] };
 
+export type GroupedPermissionRequirement = Record<string, PermissionRequirement | PermissionRequirement[]>;
+
 export async function isRequirementMet(
   roles: Role[] | undefined,
   requirement: PermissionRequirement
 ): Promise<boolean> {
   if (!roles && requirement.type !== "function") return false;
 
-  const isAdmin = roles?.some((role) => role.name.toLowerCase() === "admin");
+  const isAdmin = roles?.some((role) => role.name === "Admin");
   if (isAdmin) return true;
 
   switch (requirement.type) {
@@ -140,16 +169,47 @@ export async function isRequirementMet(
   }
 }
 
+export async function isGroupRequirementMet(
+  roles: Role[] | undefined,
+  groups: GroupedPermissionRequirement
+): Promise<Record<string, boolean>> {
+  const labels = Object.keys(groups);
+  const isAdmin = roles?.some((role) => role.name === "Admin") ?? false;
+
+  const byGroup: Record<string, boolean> = {};
+
+  if (isAdmin) {
+    // Admin: all groups pass
+    for (const label of labels) byGroup[label] = true;
+    return byGroup;
+  }
+
+  // Evaluate each group independently (no cross-group short-circuiting)
+  for (const label of labels) {
+    const value = groups[label];
+    const items = Array.isArray(value) ? value : [value];
+
+    let groupResult = true;
+    for (const item of items) {
+      const ok = await isRequirementMet(roles, item);
+      if (!ok) {
+        groupResult = false; // short-circuit inside the group
+        break;
+      }
+    }
+
+    byGroup[label] = groupResult;
+  }
+
+  return byGroup;
+}
+
 export function hasPermission(roles: Role[] | undefined, resource: SessionResource, action: SessionAction) {
   if (!roles) return false;
 
   const permission = roles.some((role) => {
     return role.permissions.some((permission) => {
-      return (
-        permission.permit === true &&
-        permission.resource.toLowerCase() === resource.toLowerCase() &&
-        permission.action.toLowerCase() === action.toLowerCase()
-      );
+      return permission.permit === true && permission.resource === resource && permission.action === action;
     });
   });
 
@@ -167,7 +227,7 @@ export function hasRole(roles: Role[] | undefined, role: SessionRole) {
   if (role === "Private") return true;
 
   return roles.some((item) => {
-    return item.name.toLowerCase() === role.toLowerCase();
+    return item.name === role;
   });
 }
 

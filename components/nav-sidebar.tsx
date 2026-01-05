@@ -40,6 +40,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     action: "Read",
   });
 
+  const ReadSettings = useVerifySessionRequirement(session, {
+    type: "permission",
+    resource: "Settings",
+    action: "Read",
+  });
+
+  const EditPermissions = useVerifySessionRequirement(session, {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Permissions",
+  });
+
+  const EditRooms = useVerifySessionRequirement(session, {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Rooms",
+  });
+
+  const EditConfiguration = useVerifySessionRequirement(session, {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Configuration",
+  });
+
   const today = format(new Date(), "yyyy-MM-dd");
 
   const { startDate, endDate } = useMemo(() => {
