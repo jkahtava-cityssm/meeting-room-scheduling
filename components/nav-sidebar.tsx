@@ -34,35 +34,28 @@ import { useMemo } from "react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, isPending } = useClientSession();
+
   const ReadCalendar = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Calendar",
-    action: "Read",
+    GroupA: {
+      type: "permission",
+      resource: "Calendar",
+      action: "Read",
+    },
   });
 
-  const ReadSettings = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Settings",
-    action: "Read",
-  });
+  const ReadCalendar2 = useVerifySessionRequirement(session, {
+    GroupA: {
+      type: "permission",
+      resource: "Calendar",
+      action: "Read",
+    },
+    GroupB: { type: "permission", resource: "Calendar", action: "Read" },
+  } as const);
 
-  const EditPermissions = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Permissions",
-  });
+  const isGroupAValid = ReadCalendar2?.GroupA;
+  const isGroupBValid = ReadCalendar2?.GroupB;
 
-  const EditRooms = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Rooms",
-  });
-
-  const EditConfiguration = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Configuration",
-  });
+  const isvalid = ReadCalendar?.GroupA;
 
   const today = format(new Date(), "yyyy-MM-dd");
 

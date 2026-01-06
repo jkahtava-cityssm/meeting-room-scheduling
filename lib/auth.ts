@@ -21,6 +21,7 @@ export type User = {
 };
 
 export type Role = {
+  roleId: number;
   name: SessionRole;
   permissions: Permission[];
 };

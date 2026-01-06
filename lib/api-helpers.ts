@@ -131,10 +131,7 @@ export type PermissionRequirement =
 
 export type GroupedPermissionRequirement = Record<string, PermissionRequirement | PermissionRequirement[]>;
 
-export async function isRequirementMet(
-  permissionCache: PermissionCache,
-  permission: PermissionRequirement
-): Promise<boolean> {
+async function isRequirementMet(permissionCache: PermissionCache, permission: PermissionRequirement): Promise<boolean> {
   if (!permissionCache.roleSet.size && permission.type !== "function") return false;
   if (permissionCache.isAdmin) return true;
 
@@ -146,7 +143,11 @@ export async function isRequirementMet(
       return hasRole(permissionCache, permission.role);
 
     case "function":
-      return await Promise.resolve(permission.check(permissionCache));
+      try {
+        return await Promise.resolve(permission.check(permissionCache));
+      } catch {
+        return false;
+      }
 
     case "and":
       for (const requirement of permission.requirements) {
@@ -167,11 +168,24 @@ export async function isRequirementMet(
   }
 }
 
+export function formatRequirementType(
+  groupedRequirements: GroupedPermissionRequirement | PermissionRequirement
+): GroupedPermissionRequirement {
+  //Check if we have a single requirement or grouped requirements
+  if (typeof groupedRequirements === "object" && "type" in groupedRequirements) {
+    return { ["single"]: groupedRequirements } as GroupedPermissionRequirement;
+  }
+
+  return groupedRequirements as GroupedPermissionRequirement;
+}
+
 export async function isGroupRequirementMet(
   permissionCache: PermissionCache,
-  groups: GroupedPermissionRequirement
+  groupedRequirements: GroupedPermissionRequirement | PermissionRequirement
 ): Promise<Record<string, boolean>> {
-  const labels = Object.keys(groups);
+  const formattedRequirements = formatRequirementType(groupedRequirements);
+
+  const labels = Object.keys(formattedRequirements);
 
   const byGroup: Record<string, boolean> = {};
 
@@ -183,7 +197,7 @@ export async function isGroupRequirementMet(
 
   // Evaluate each group independently (no cross-group short-circuiting)
   for (const label of labels) {
-    const value = groups[label];
+    const value = formattedRequirements[label];
     const items = Array.isArray(value) ? value : [value];
 
     let groupResult = true;
@@ -202,7 +216,7 @@ export async function isGroupRequirementMet(
 }
 
 export function hasPermission(permissionCache: PermissionCache, resource: SessionResource, action: SessionAction) {
-  if (!permissionCache.isAdmin) return false;
+  if (permissionCache.isAdmin) return true;
   return permissionCache.permitSet.has(`${resource}|${action}`);
 }
 

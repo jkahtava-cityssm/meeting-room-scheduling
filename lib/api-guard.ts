@@ -4,18 +4,21 @@ import { SessionAction, SessionResource, SessionRole } from "./types";
 import { prisma } from "@/prisma";
 import {
   BadRequestMessage,
+  buildPermissionCache,
+  GroupedPermissionRequirement,
   hasPermission,
   hasRole,
   InternalServerErrorMessage,
-  isRequirementMet,
+  isGroupRequirementMet,
+  PermissionCache,
   PermissionRequirement,
   VerifyToken,
 } from "./api-helpers";
 
 export async function guardRoute(
   req: NextRequest,
-  requirement: PermissionRequirement,
-  handler: (userId: number, roles: Role[]) => Promise<Response>
+  groupedRequirements: GroupedPermissionRequirement | PermissionRequirement,
+  handler: (userId: number, roles: PermissionCache) => Promise<Response>
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
@@ -27,15 +30,17 @@ export async function guardRoute(
     return BadRequestMessage("Not Authorized");
   }
 
-  const roles = await GetUserPermissions(userId);
+  const roles = await GetUserRolePermissions(userId);
+  const permissionCache = buildPermissionCache(roles);
 
-  const isAuthorized = await isRequirementMet(roles, requirement);
+  const groupedAuthorization = await isGroupRequirementMet(permissionCache, groupedRequirements);
+  const groupsAuthorized = Object.values(groupedAuthorization).every(Boolean);
 
-  if (!isAuthorized) {
+  if (!groupsAuthorized) {
     return BadRequestMessage("Not Authorized");
   }
 
-  return handler(userId, roles);
+  return handler(userId, permissionCache);
 }
 
 async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {
@@ -58,7 +63,7 @@ async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {
   return session ? Number(session.user.id) : null;
 }
 
-export async function GetUserPermissions(userId: number): Promise<Role[]> {
+export async function GetUserRolePermissions(userId: number): Promise<Role[]> {
   const user = await prisma.user.findFirst({
     include: {
       userRole: {
@@ -78,10 +83,14 @@ export async function GetUserPermissions(userId: number): Promise<Role[]> {
   const roles =
     user?.userRole.map((userRole) => {
       return {
-        name: userRole.role.name,
         roleId: userRole.role.roleId,
+        name: userRole.role.name as SessionRole,
         permissions: userRole.role.roleResourceAction.map((permission) => {
-          return { permit: permission.permit, action: permission.action.name, resource: permission.resource.name };
+          return {
+            permit: permission.permit,
+            action: permission.action.name as SessionAction,
+            resource: permission.resource.name as SessionResource,
+          };
         }),
       };
     }) || [];
