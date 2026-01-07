@@ -6,8 +6,6 @@ import {
   BadRequestMessage,
   buildPermissionCache,
   GroupedPermissionRequirement,
-  hasPermission,
-  hasRole,
   InternalServerErrorMessage,
   isGroupRequirementMet,
   PermissionCache,

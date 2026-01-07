@@ -19,6 +19,11 @@ import { useTheme } from "next-themes";
 import { IUser } from "./nav-header";
 import { getSessionRoles, Session, useVerifySessionRequirement } from "@/lib/auth-client";
 import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
+import { GroupedPermissionRequirement } from "@/lib/api-helpers";
+
+const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
+  IsAdmin: { type: "role", role: "Admin" },
+};
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
   const { isMobile } = useSidebar();
@@ -30,7 +35,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
     image: session?.user.image ? session.user.image : undefined,
   };
 
-  const canRefreshAPI = useVerifySessionRequirement(session, { type: "role", role: "Admin" });
+  const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
   //console.log("canRefreshAPI:", canRefreshAPI);
   const listRoles = getSessionRoles(session);
 

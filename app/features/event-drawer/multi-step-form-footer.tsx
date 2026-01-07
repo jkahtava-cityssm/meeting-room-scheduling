@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useVerifySessionRequirement, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
+import { GroupedPermissionRequirement } from "@/lib/api-helpers";
 
 type FormFooterProps = {
   saveButtonEnabled: boolean;
@@ -31,6 +32,19 @@ type FormFooterProps = {
   nextButtonDestructive?: boolean;
   onDelete: () => void;
   setStatus: (status: FormStatus) => void;
+};
+
+const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
+  UpdateEvent: {
+    type: "permission",
+    resource: "Event",
+    action: "Update",
+  },
+  CreateEvent: {
+    type: "permission",
+    resource: "Event",
+    action: "Create",
+  },
 };
 
 const FormFooter: React.FC<FormFooterProps> = ({
@@ -54,26 +68,17 @@ const FormFooter: React.FC<FormFooterProps> = ({
   const [isSaving, setSaving] = useState(false);
   const [isDeleting, setDeleting] = useState(false);
 
-  const canUpdateEvent = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Event",
-    action: "Update",
-  });
-  const canCreateEvent = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Event",
-    action: "Create",
-  });
+  const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const isSaveDisabled = useMemo(() => {
-    if (status === "Edit") return !canUpdateEvent;
-    if (status === "New") return !canCreateEvent || userId !== undefined;
+    if (status === "Edit") return !Permissions.UpdateEvent;
+    if (status === "New") return !Permissions.CreateEvent || userId !== undefined;
     return false;
-  }, [status, canUpdateEvent, canCreateEvent, userId]);
+  }, [status, Permissions, userId]);
 
   const isEditDisabled = useMemo(() => {
-    return status === "Loading" || !canUpdateEvent;
-  }, [status, canUpdateEvent]);
+    return status === "Loading" || !Permissions.UpdateEvent;
+  }, [status, Permissions]);
 
   return (
     <SheetFooter className="flex md:flex-row gap-6">
