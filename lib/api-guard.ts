@@ -75,23 +75,29 @@ export async function GetUserRolePermissions(userId: number): Promise<Role[]> {
     where: { id: userId },
   });
 
-  if (!user?.userRole) {
+  if (!user?.userRole || user.userRole.length === 0) {
+    return [];
   }
 
-  const roles =
-    user?.userRole.map((userRole) => {
+  const roles = user.userRole
+    .map((userRole) => {
       return {
         roleId: userRole.role.roleId,
         name: userRole.role.name as SessionRole,
-        permissions: userRole.role.roleResourceAction.map((permission) => {
-          return {
-            permit: permission.permit,
-            action: permission.action.name as SessionAction,
-            resource: permission.resource.name as SessionResource,
-          };
-        }),
+        permissions: userRole.role.roleResourceAction
+          .map((permission) => {
+            return {
+              permit: permission.permit,
+              action: permission.action.name as SessionAction,
+              resource: permission.resource.name as SessionResource,
+            };
+          })
+          .sort((a, b) =>
+            a.resource === b.resource ? a.action.localeCompare(b.action) : a.resource.localeCompare(b.resource)
+          ),
       };
-    }) || [];
+    })
+    .sort((a, b) => a.roleId - b.roleId);
 
   return roles;
 }

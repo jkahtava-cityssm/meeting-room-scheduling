@@ -29,7 +29,6 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
   }, [requirement]);
 
   const [result, setResult] = useState<{ [K in keyof T]: boolean }>(initialState);
-  const [loading, setLoading] = useState<boolean>(true);
 
   const permissionCache = useMemo(() => {
     if (!roles) return null;
@@ -41,17 +40,14 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
 
     if (!roles || !permissionCache) {
       setResult(initialState);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     (async () => {
       const groupedResults = await isGroupRequirementMet(permissionCache, requirement);
 
       if (active) {
         setResult(groupedResults as { [K in keyof T]: boolean });
-        setLoading(false);
       }
     })();
 

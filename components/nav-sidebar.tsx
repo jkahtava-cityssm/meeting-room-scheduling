@@ -123,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SideBarGroup title="Application">
           <SideBarPrimaryMenuItem title={"Availability"} iconName={"notebook-pen"} url={"/availability"} />
           <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"send"} url={"/bookings/user-view"} />
-          {PagePermissions.ReadCalendar && (
+          {PagePermissions.CalendarAccess && (
             <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="calendar">
               <SideBarSubMenuItem
                 title={"Staff Requests"}
