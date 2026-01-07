@@ -21,9 +21,9 @@ import { getSessionRoles, Session, useVerifySessionRequirement } from "@/lib/aut
 import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
 import { GroupedPermissionRequirement } from "@/lib/api-helpers";
 
-const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
+const PAGE_PERMISSIONS = {
   IsAdmin: { type: "role", role: "Admin" },
-};
+} as const satisfies GroupedPermissionRequirement;
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
   const { isMobile } = useSidebar();

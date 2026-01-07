@@ -33,7 +33,7 @@ import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
 import { GroupedPermissionRequirement } from "@/lib/api-helpers";
 
-const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
+const PAGE_PERMISSIONS = {
   CalendarAccess: {
     type: "permission",
     resource: "Calendar",
@@ -58,13 +58,13 @@ const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
     resource: "Settings",
     action: "Edit Configuration",
   },
-};
+} as const satisfies GroupedPermissionRequirement;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, isPending } = useClientSession();
 
   const PagePermissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
-  console.log("PagePermissions:", PagePermissions);
+
   const today = format(new Date(), "yyyy-MM-dd");
 
   const { startDate, endDate } = useMemo(() => {
@@ -156,11 +156,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               />
             </SideBarCollapsibleGroup>
           )}
-          <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
-            <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />
-            <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
-            <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
-          </SideBarCollapsibleGroup>
+          {PagePermissions.SettingsAccess && (
+            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
+              {PagePermissions.RoomsAccess && (
+                <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />
+              )}
+              {PagePermissions.PermissionsAccess && (
+                <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
+              )}
+              {PagePermissions.ConfigurationAccess && (
+                <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
+              )}
+            </SideBarCollapsibleGroup>
+          )}
         </SideBarGroup>
       </SidebarContent>
 

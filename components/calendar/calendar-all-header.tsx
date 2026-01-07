@@ -16,9 +16,9 @@ import { useClientSession } from "@/hooks/use-client-auth";
 import { useVerifySessionRequirement } from "@/lib/auth-client";
 import { GroupedPermissionRequirement } from "@/lib/api-helpers";
 
-const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
+const PAGE_PERMISSIONS = {
   CreateEvent: { type: "permission", resource: "Event", action: "Create" },
-};
+} as const satisfies GroupedPermissionRequirement;
 
 export function CalendarHeader({
   view,

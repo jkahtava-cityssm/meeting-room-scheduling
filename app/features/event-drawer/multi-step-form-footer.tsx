@@ -34,7 +34,7 @@ type FormFooterProps = {
   setStatus: (status: FormStatus) => void;
 };
 
-const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
+const PAGE_PERMISSIONS = {
   UpdateEvent: {
     type: "permission",
     resource: "Event",
@@ -45,7 +45,7 @@ const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
     resource: "Event",
     action: "Create",
   },
-};
+} as const satisfies GroupedPermissionRequirement;
 
 const FormFooter: React.FC<FormFooterProps> = ({
   saveButtonEnabled,
