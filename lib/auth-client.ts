@@ -2,14 +2,7 @@ import { createAuthClient } from "better-auth/react";
 import { customSessionClient } from "better-auth/client/plugins";
 import type { auth } from "@/lib/auth";
 import { SessionAction, SessionResource, SessionRole } from "./types";
-import {
-  buildPermissionCache,
-  formatRequirementType,
-  GroupedPermissionRequirement,
-  hasRole,
-  isGroupRequirementMet,
-  PermissionRequirement,
-} from "./api-helpers";
+import { buildPermissionCache, GroupedPermissionRequirement, isGroupRequirementMet } from "./api-helpers";
 import { useEffect, useMemo, useState } from "react";
 import { ssoClient } from "@better-auth/sso/client";
 

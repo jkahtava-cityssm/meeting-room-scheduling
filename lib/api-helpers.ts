@@ -95,15 +95,19 @@ export async function VerifyToken(token: string): Promise<{ message: string; dat
   }
 }
 
+const keyOf = (resource: SessionResource, action: SessionAction) => `${resource}::${action}`;
+
 export type PermissionCache = {
   isAdmin: boolean;
   roleSet: Set<SessionRole>;
   permitSet: Set<string>;
+  resourceSet: Set<SessionResource>;
 };
 
 export function buildPermissionCache(roles: Role[] | undefined): PermissionCache {
   const roleSet = new Set<SessionRole>();
   const permitSet = new Set<string>();
+  const resourceSet = new Set<SessionResource>();
   let isAdmin = false;
 
   for (const role of roles ?? []) {
@@ -113,17 +117,22 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
 
     for (const p of role.permissions ?? []) {
       if (p.permit) {
+        const resource = p.resource as SessionResource;
+        const action = p.action as SessionAction;
         // Assuming p.resource/action conform to SessionResource/SessionAction
-        permitSet.add(`${p.resource}|${p.action}`);
+
+        permitSet.add(keyOf(resource, action));
+        resourceSet.add(resource);
       }
     }
   }
 
-  return { isAdmin, roleSet, permitSet };
+  return { isAdmin, roleSet, permitSet, resourceSet };
 }
 
 export type PermissionRequirement =
   | { type: "permission"; resource: SessionResource; action: SessionAction }
+  | { type: "resource"; resource: SessionResource }
   | { type: "role"; role: SessionRole }
   | { type: "function"; check: (roles: PermissionCache | undefined) => boolean | Promise<boolean> }
   | { type: "and"; requirements: PermissionRequirement[] }
@@ -132,18 +141,19 @@ export type PermissionRequirement =
 export type GroupedPermissionRequirement = Record<string, PermissionRequirement | PermissionRequirement[]>;
 
 async function isRequirementMet(permissionCache: PermissionCache, permission: PermissionRequirement): Promise<boolean> {
-  if (!permissionCache.roleSet.size && permission.type !== "function") return false;
-  if (permissionCache.isAdmin) return true;
-
   switch (permission.type) {
     case "permission":
       return hasPermission(permissionCache, permission.resource, permission.action);
+
+    case "resource":
+      return hasResource(permissionCache, permission.resource);
 
     case "role":
       return hasRole(permissionCache, permission.role);
 
     case "function":
       try {
+        if (typeof permission.check !== "function") return false;
         return await Promise.resolve(permission.check(permissionCache));
       } catch {
         return false;
@@ -168,7 +178,7 @@ async function isRequirementMet(permissionCache: PermissionCache, permission: Pe
   }
 }
 
-export function formatRequirementType(
+function formatRequirementType(
   groupedRequirements: GroupedPermissionRequirement | PermissionRequirement
 ): GroupedPermissionRequirement {
   //Check if we have a single requirement or grouped requirements
@@ -215,22 +225,25 @@ export async function isGroupRequirementMet(
   return byGroup;
 }
 
-export function hasPermission(permissionCache: PermissionCache, resource: SessionResource, action: SessionAction) {
-  if (permissionCache.isAdmin) return true;
-  return permissionCache.permitSet.has(`${resource}|${action}`);
+function hasPermission(permissionCache: PermissionCache, resource: SessionResource, action: SessionAction) {
+  return permissionCache.permitSet.has(keyOf(resource, action));
 }
 
-export function hasRole(permissionCache: PermissionCache, role: SessionRole) {
+function hasRole(permissionCache: PermissionCache, role: SessionRole) {
   //If it is a public requirement just return true we dont need to check anything
   if (role === "Public") return true;
 
-  if (!permissionCache.roleSet.size) return false;
+  if (permissionCache.roleSet.size === 0) return false;
 
   //if it is a Private requirement we can return true if roles has a value since the user has atleast 1 role
   //we dont care which role
   if (role === "Private") return true;
 
   return permissionCache.roleSet.has(role);
+}
+
+function hasResource(permissionCache: PermissionCache, resource: SessionResource): boolean {
+  return permissionCache.resourceSet.has(resource);
 }
 
 export function validateVisibleHours(visibleHoursStart?: number, visibleHoursEnd?: number) {

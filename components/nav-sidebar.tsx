@@ -31,32 +31,40 @@ import { BadgeColored } from "./ui/badge-colored";
 import { useTotalEventsByStatusQuery } from "@/lib/services/events";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
+import { GroupedPermissionRequirement } from "@/lib/api-helpers";
+
+const PAGE_PERMISSIONS: GroupedPermissionRequirement = {
+  CalendarAccess: {
+    type: "permission",
+    resource: "Calendar",
+    action: "Read",
+  },
+  SettingsAccess: {
+    type: "resource",
+    resource: "Settings",
+  },
+  PermissionsAccess: {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Permissions",
+  },
+  RoomsAccess: {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Rooms",
+  },
+  ConfigurationAccess: {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Configuration",
+  },
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, isPending } = useClientSession();
 
-  const ReadCalendar = useVerifySessionRequirement(session, {
-    GroupA: {
-      type: "permission",
-      resource: "Calendar",
-      action: "Read",
-    },
-  });
-
-  const ReadCalendar2 = useVerifySessionRequirement(session, {
-    GroupA: {
-      type: "permission",
-      resource: "Calendar",
-      action: "Read",
-    },
-    GroupB: { type: "permission", resource: "Calendar", action: "Read" },
-  } as const);
-
-  const isGroupAValid = ReadCalendar2?.GroupA;
-  const isGroupBValid = ReadCalendar2?.GroupB;
-
-  const isvalid = ReadCalendar?.GroupA;
-
+  const PagePermissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
+  console.log("PagePermissions:", PagePermissions);
   const today = format(new Date(), "yyyy-MM-dd");
 
   const { startDate, endDate } = useMemo(() => {
