@@ -10,13 +10,18 @@ import {
   isGroupRequirementMet,
   PermissionCache,
   PermissionRequirement,
+  RequirementResult,
   VerifyToken,
 } from "./api-helpers";
 
 export async function guardRoute(
   req: NextRequest,
-  groupedRequirements: GroupedPermissionRequirement | PermissionRequirement,
-  handler: (userId: number, roles: PermissionCache) => Promise<Response>
+  groupedRequirements: GroupedPermissionRequirement,
+  handler: (
+    userId: number,
+    roles: PermissionCache,
+    authorization: RequirementResult<GroupedPermissionRequirement>
+  ) => Promise<Response>
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
@@ -38,7 +43,7 @@ export async function guardRoute(
     return BadRequestMessage("Not Authorized");
   }
 
-  return handler(userId, permissionCache);
+  return handler(userId, permissionCache, groupedAuthorization);
 }
 
 async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {

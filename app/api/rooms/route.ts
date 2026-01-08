@@ -7,18 +7,18 @@ import { NextRequest } from "next/server";
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
-    { type: "permission", resource: "Room", action: "Read" },
+    { ReadRoom: { type: "permission", resource: "Room", action: "Read" } },
 
     async (userId, roles) => {
-      const hasPrivateAccess = await isGroupRequirementMet(roles, {
-        groupA: {
+      const permissions = await isGroupRequirementMet(roles, {
+        ViewPrivate: {
           type: "permission",
           resource: "Room",
           action: "View Hidden",
         },
       });
 
-      const roomScopeFilter = hasPrivateAccess ? { name: { in: ["Public", "Private"] } } : { name: "Public" };
+      const roomScopeFilter = permissions.ViewPrivate ? { name: { in: ["Public", "Private"] } } : { name: "Public" };
 
       const rooms = await findManyRooms({ roomScope: roomScopeFilter });
 

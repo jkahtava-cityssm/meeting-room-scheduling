@@ -2,7 +2,12 @@ import { createAuthClient } from "better-auth/react";
 import { customSessionClient } from "better-auth/client/plugins";
 import type { auth } from "@/lib/auth";
 import { SessionAction, SessionResource, SessionRole } from "./types";
-import { buildPermissionCache, GroupedPermissionRequirement, isGroupRequirementMet } from "./api-helpers";
+import {
+  buildPermissionCache,
+  GroupedPermissionRequirement,
+  isGroupRequirementMet,
+  RequirementResult,
+} from "./api-helpers";
 import { useEffect, useMemo, useState } from "react";
 import { ssoClient } from "@better-auth/sso/client";
 
@@ -20,15 +25,15 @@ export const { signIn, signOut, useSession } = authClient;
 export function useVerifySessionRequirement<T extends Readonly<GroupedPermissionRequirement>>(
   session: Session | undefined | null,
   requirement: T
-): { [K in keyof T]: boolean } {
+): RequirementResult<GroupedPermissionRequirement> {
   const roles = session?.user?.roles;
 
   const initialState = useMemo(() => {
     const entries = Object.keys(requirement).map((k) => [k, false] as const);
-    return Object.fromEntries(entries) as { [K in keyof T]: boolean };
+    return Object.fromEntries(entries) as RequirementResult<GroupedPermissionRequirement>;
   }, [requirement]);
 
-  const [result, setResult] = useState<{ [K in keyof T]: boolean }>(initialState);
+  const [result, setResult] = useState<RequirementResult<GroupedPermissionRequirement>>(initialState);
 
   const permissionCache = useMemo(() => {
     if (!roles) return null;
@@ -47,7 +52,7 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
       const groupedResults = await isGroupRequirementMet(permissionCache, requirement);
 
       if (active) {
-        setResult(groupedResults as { [K in keyof T]: boolean });
+        setResult(groupedResults as RequirementResult<GroupedPermissionRequirement>);
       }
     })();
 

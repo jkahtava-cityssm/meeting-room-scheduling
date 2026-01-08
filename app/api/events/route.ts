@@ -13,7 +13,7 @@ import { createRecurrence, upsertRecurrence, deleteRecurrence } from "@/lib/data
 export async function POST(request: NextRequest) {
   return guardRoute(
     request,
-    { type: "permission", resource: "Event", action: "Create" },
+    { CreateEvent: { type: "permission", resource: "Event", action: "Create" } },
 
     async () => {
       const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate, userId } =
@@ -55,11 +55,7 @@ export async function PUT(request: NextRequest) {
   return guardRoute(
     request,
     {
-      type: "or",
-      requirements: [
-        { type: "role", role: "Admin" },
-        { type: "permission", resource: "Event", action: "Update" },
-      ],
+      UpdateEvent: { type: "permission", resource: "Event", action: "Update" },
     },
     async () => {
       const { eventData, ruleData } = await request.json();
@@ -146,11 +142,7 @@ export async function PATCH(request: NextRequest) {
   return guardRoute(
     request,
     {
-      type: "or",
-      requirements: [
-        { type: "role", role: "Admin" },
-        { type: "permission", resource: "Event", action: "Update" },
-      ],
+      UpdateEvent: { type: "permission", resource: "Event", action: "Update" },
     },
     async () => {
       const { eventData, ruleData } = await request.json();
@@ -209,7 +201,7 @@ export async function PATCH(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { type: "permission", resource: "Event", action: "Read" },
+    { ReadEvent: { type: "permission", resource: "Event", action: "Read" } },
 
     async (userId, roles) => {
       const searchParams = request.nextUrl.searchParams;

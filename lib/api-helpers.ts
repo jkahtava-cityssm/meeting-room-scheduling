@@ -140,6 +140,10 @@ export type PermissionRequirement =
 
 export type GroupedPermissionRequirement = Record<string, PermissionRequirement | PermissionRequirement[]>;
 
+export type RequirementResult<T extends Record<string, unknown>> = {
+  [K in keyof T]: boolean;
+};
+
 async function isRequirementMet(permissionCache: PermissionCache, permission: PermissionRequirement): Promise<boolean> {
   switch (permission.type) {
     case "permission":
@@ -189,15 +193,13 @@ function formatRequirementType(
   return groupedRequirements as GroupedPermissionRequirement;
 }
 
-export async function isGroupRequirementMet(
+export async function isGroupRequirementMet<T extends Readonly<GroupedPermissionRequirement>>(
   permissionCache: PermissionCache,
-  groupedRequirements: GroupedPermissionRequirement | PermissionRequirement
-): Promise<Record<string, boolean>> {
-  const formattedRequirements = formatRequirementType(groupedRequirements);
+  groupedRequirements: T
+): Promise<RequirementResult<GroupedPermissionRequirement>> {
+  const labels = Object.keys(groupedRequirements) as (keyof T)[];
 
-  const labels = Object.keys(formattedRequirements);
-
-  const byGroup: Record<string, boolean> = {};
+  const byGroup = {} as RequirementResult<T>;
 
   if (permissionCache.isAdmin) {
     // Admin: all groups pass
@@ -207,7 +209,7 @@ export async function isGroupRequirementMet(
 
   // Evaluate each group independently (no cross-group short-circuiting)
   for (const label of labels) {
-    const value = formattedRequirements[label];
+    const value = groupedRequirements[label];
     const items = Array.isArray(value) ? value : [value];
 
     let groupResult = true;
