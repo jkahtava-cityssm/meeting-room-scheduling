@@ -7,13 +7,7 @@ import { guardRoute } from "@/lib/api-guard";
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
-    {
-      type: "or",
-      requirements: [
-        { type: "role", role: "Admin" },
-        { type: "permission", resource: "Settings", action: "Edit Permissions" },
-      ],
-    },
+    { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
     async () => {
       const roles = await findManyRoles();
 

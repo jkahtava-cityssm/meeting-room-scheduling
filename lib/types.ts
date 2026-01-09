@@ -64,6 +64,7 @@ export const DEFAULT_ACTIONS = [
   "View Hidden",
   "Edit Permissions",
   "Edit Rooms",
+  "Edit Configuration",
   "Edit Users",
 ] as const;
 

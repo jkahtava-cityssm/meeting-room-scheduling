@@ -95,42 +95,84 @@ export async function VerifyToken(token: string): Promise<{ message: string; dat
   }
 }
 
+const keyOf = (resource: SessionResource, action: SessionAction) => `${resource}::${action}`;
+
+export type PermissionCache = {
+  isAdmin: boolean;
+  roleSet: Set<SessionRole>;
+  permitSet: Set<string>;
+  resourceSet: Set<SessionResource>;
+};
+
+export function buildPermissionCache(roles: Role[] | undefined): PermissionCache {
+  const roleSet = new Set<SessionRole>();
+  const permitSet = new Set<string>();
+  const resourceSet = new Set<SessionResource>();
+  let isAdmin = false;
+
+  for (const role of roles ?? []) {
+    const roleName = role.name as SessionRole;
+    roleSet.add(roleName);
+    if (roleName === "Admin") isAdmin = true;
+
+    for (const p of role.permissions ?? []) {
+      if (p.permit) {
+        const resource = p.resource as SessionResource;
+        const action = p.action as SessionAction;
+        // Assuming p.resource/action conform to SessionResource/SessionAction
+
+        permitSet.add(keyOf(resource, action));
+        resourceSet.add(resource);
+      }
+    }
+  }
+
+  return { isAdmin, roleSet, permitSet, resourceSet };
+}
+
 export type PermissionRequirement =
   | { type: "permission"; resource: SessionResource; action: SessionAction }
+  | { type: "resource"; resource: SessionResource }
   | { type: "role"; role: SessionRole }
-  | { type: "function"; check: (roles: Role[] | undefined) => boolean | Promise<boolean> }
+  | { type: "function"; check: (roles: PermissionCache | undefined) => boolean | Promise<boolean> }
   | { type: "and"; requirements: PermissionRequirement[] }
   | { type: "or"; requirements: PermissionRequirement[] };
 
-export async function isRequirementMet(
-  roles: Role[] | undefined,
-  requirement: PermissionRequirement
-): Promise<boolean> {
-  if (!roles && requirement.type !== "function") return false;
+export type GroupedPermissionRequirement = Record<string, PermissionRequirement | PermissionRequirement[]>;
 
-  const isAdmin = roles?.some((role) => role.name.toLowerCase() === "admin");
-  if (isAdmin) return true;
+export type RequirementResult<T extends Record<string, unknown>> = {
+  [K in keyof T]: boolean;
+};
 
-  switch (requirement.type) {
+async function isRequirementMet(permissionCache: PermissionCache, permission: PermissionRequirement): Promise<boolean> {
+  switch (permission.type) {
     case "permission":
-      return hasPermission(roles, requirement.resource, requirement.action);
+      return hasPermission(permissionCache, permission.resource, permission.action);
+
+    case "resource":
+      return hasResource(permissionCache, permission.resource);
 
     case "role":
-      return hasRole(roles, requirement.role);
+      return hasRole(permissionCache, permission.role);
 
     case "function":
-      return await Promise.resolve(requirement.check(roles));
+      try {
+        if (typeof permission.check !== "function") return false;
+        return await Promise.resolve(permission.check(permissionCache));
+      } catch {
+        return false;
+      }
 
     case "and":
-      for (const req of requirement.requirements) {
-        const result = await isRequirementMet(roles, req);
+      for (const requirement of permission.requirements) {
+        const result = await isRequirementMet(permissionCache, requirement);
         if (!result) return false; // short-circuit on first failure
       }
       return true;
 
     case "or":
-      for (const req of requirement.requirements) {
-        const result = await isRequirementMet(roles, req);
+      for (const requirement of permission.requirements) {
+        const result = await isRequirementMet(permissionCache, requirement);
         if (result) return true; // short-circuit on first success
       }
       return false;
@@ -140,35 +182,70 @@ export async function isRequirementMet(
   }
 }
 
-export function hasPermission(roles: Role[] | undefined, resource: SessionResource, action: SessionAction) {
-  if (!roles) return false;
+function formatRequirementType(
+  groupedRequirements: GroupedPermissionRequirement | PermissionRequirement
+): GroupedPermissionRequirement {
+  //Check if we have a single requirement or grouped requirements
+  if (typeof groupedRequirements === "object" && "type" in groupedRequirements) {
+    return { ["single"]: groupedRequirements } as GroupedPermissionRequirement;
+  }
 
-  const permission = roles.some((role) => {
-    return role.permissions.some((permission) => {
-      return (
-        permission.permit === true &&
-        permission.resource.toLowerCase() === resource.toLowerCase() &&
-        permission.action.toLowerCase() === action.toLowerCase()
-      );
-    });
-  });
-
-  return permission;
+  return groupedRequirements as GroupedPermissionRequirement;
 }
 
-export function hasRole(roles: Role[] | undefined, role: SessionRole) {
+export async function isGroupRequirementMet<T extends Readonly<GroupedPermissionRequirement>>(
+  permissionCache: PermissionCache,
+  groupedRequirements: T
+): Promise<RequirementResult<GroupedPermissionRequirement>> {
+  const labels = Object.keys(groupedRequirements) as (keyof T)[];
+
+  const byGroup = {} as RequirementResult<T>;
+
+  if (permissionCache.isAdmin) {
+    // Admin: all groups pass
+    for (const label of labels) byGroup[label] = true;
+    return byGroup;
+  }
+
+  // Evaluate each group independently (no cross-group short-circuiting)
+  for (const label of labels) {
+    const value = groupedRequirements[label];
+    const items = Array.isArray(value) ? value : [value];
+
+    let groupResult = true;
+    for (const item of items) {
+      const ok = await isRequirementMet(permissionCache, item);
+      if (!ok) {
+        groupResult = false; // short-circuit inside the group
+        break;
+      }
+    }
+
+    byGroup[label] = groupResult;
+  }
+
+  return byGroup;
+}
+
+function hasPermission(permissionCache: PermissionCache, resource: SessionResource, action: SessionAction) {
+  return permissionCache.permitSet.has(keyOf(resource, action));
+}
+
+function hasRole(permissionCache: PermissionCache, role: SessionRole) {
   //If it is a public requirement just return true we dont need to check anything
   if (role === "Public") return true;
 
-  if (!roles) return false;
+  if (permissionCache.roleSet.size === 0) return false;
 
   //if it is a Private requirement we can return true if roles has a value since the user has atleast 1 role
   //we dont care which role
   if (role === "Private") return true;
 
-  return roles.some((item) => {
-    return item.name.toLowerCase() === role.toLowerCase();
-  });
+  return permissionCache.roleSet.has(role);
+}
+
+function hasResource(permissionCache: PermissionCache, resource: SessionResource): boolean {
+  return permissionCache.resourceSet.has(resource);
 }
 
 export function validateVisibleHours(visibleHoursStart?: number, visibleHoursEnd?: number) {

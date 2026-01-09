@@ -11,7 +11,7 @@ import { format } from "date-fns";
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { type: "role", role: "Public" },
+    { IsPublic: { type: "role", role: "Public" } },
 
     async (userId, roles) => {
       const searchParams = request.nextUrl.searchParams;

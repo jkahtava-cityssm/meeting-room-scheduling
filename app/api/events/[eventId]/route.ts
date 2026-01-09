@@ -4,7 +4,7 @@ import { guardRoute } from "@/lib/api-guard";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
-  return guardRoute(request, { type: "permission", resource: "Event", action: "Read" }, async () => {
+  return guardRoute(request, { ReadEvent: { type: "permission", resource: "Event", action: "Read" } }, async () => {
     const { eventId } = await params;
     if (!eventId || isNaN(Number(eventId))) {
       return BadRequestMessage();
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
   return guardRoute(
     request,
-    { type: "permission", resource: "Event", action: "Delete" },
+    { DeleteEvent: { type: "permission", resource: "Event", action: "Delete" } },
 
     async () => {
       const { eventId } = await params;

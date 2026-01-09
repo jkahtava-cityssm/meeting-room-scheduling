@@ -4,7 +4,7 @@ import { findSession } from "@/lib/data/users";
 import { NextRequest } from "next/server";
 
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { GetUserPermissions } from "@/lib/api-guard";
+import { GetUserRolePermissions } from "@/lib/api-guard";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   if (!process.env.DATABASE_URL) {
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
   if (!session || session?.expiresAt < new Date() || session.userId != Number(userId)) {
     return BadRequestMessage("Not Authorized");
   }
-  const roles = await GetUserPermissions(Number(userId));
+  const roles = await GetUserRolePermissions(Number(userId));
 
   if (!roles) {
     return InternalServerErrorMessage();

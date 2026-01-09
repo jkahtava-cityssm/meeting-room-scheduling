@@ -1,11 +1,12 @@
 import { prisma } from "@/prisma";
-import { betterAuth } from "better-auth";
+import { betterAuth, Session } from "better-auth";
 import { sso } from "@better-auth/sso";
 import { customSession } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { headers } from "next/headers";
 import { fetchGET } from "./fetch";
+import { SessionAction, SessionResource, SessionRole } from "./types";
 
 export type User = {
   userId: string | undefined | null;
@@ -20,14 +21,15 @@ export type User = {
 };
 
 export type Role = {
-  name: string;
+  roleId: number;
+  name: SessionRole;
   permissions: Permission[];
 };
 
 export type Permission = {
   permit: boolean;
-  resource: string;
-  action: string;
+  resource: SessionResource;
+  action: SessionAction;
 };
 
 export const auth = betterAuth({

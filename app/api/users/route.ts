@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { type: "permission", resource: "User", action: "Read" },
+    { ReadUser: { type: "permission", resource: "User", action: "Read" } },
 
     async () => {
       const users = await findManyUsers({ employeeActive: true });

@@ -23,7 +23,7 @@ function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[]
 }
 
 export async function GET(request: NextRequest) {
-  return guardRoute(request, { type: "role", role: "Public" }, async () => {
+  return guardRoute(request, { IsPublic: { type: "role", role: "Public" } }, async () => {
     const requestedKeys = parseRequestedKeys(request);
 
     const configEntries = await findManyConfiguration(requestedKeys);

@@ -31,14 +31,39 @@ import { BadgeColored } from "./ui/badge-colored";
 import { useTotalEventsByStatusQuery } from "@/lib/services/events";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
+import { GroupedPermissionRequirement } from "@/lib/api-helpers";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { session, isPending } = useClientSession();
-  const ReadCalendar = useVerifySessionRequirement(session, {
+const PAGE_PERMISSIONS = {
+  CalendarAccess: {
     type: "permission",
     resource: "Calendar",
     action: "Read",
-  });
+  },
+  SettingsAccess: {
+    type: "resource",
+    resource: "Settings",
+  },
+  PermissionsAccess: {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Permissions",
+  },
+  RoomsAccess: {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Rooms",
+  },
+  ConfigurationAccess: {
+    type: "permission",
+    resource: "Settings",
+    action: "Edit Configuration",
+  },
+} as const satisfies GroupedPermissionRequirement;
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { session, isPending } = useClientSession();
+
+  const PagePermissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -98,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SideBarGroup title="Application">
           <SideBarPrimaryMenuItem title={"Availability"} iconName={"notebook-pen"} url={"/availability"} />
           <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"send"} url={"/bookings/user-view"} />
-          {ReadCalendar && (
+          {PagePermissions.CalendarAccess && (
             <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="calendar">
               <SideBarSubMenuItem
                 title={"Staff Requests"}
@@ -131,11 +156,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               />
             </SideBarCollapsibleGroup>
           )}
-          <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
-            <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />
-            <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
-            <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
-          </SideBarCollapsibleGroup>
+          {PagePermissions.SettingsAccess && (
+            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
+              {PagePermissions.RoomsAccess && (
+                <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />
+              )}
+              {PagePermissions.PermissionsAccess && (
+                <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
+              )}
+              {PagePermissions.ConfigurationAccess && (
+                <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
+              )}
+            </SideBarCollapsibleGroup>
+          )}
         </SideBarGroup>
       </SidebarContent>
 
