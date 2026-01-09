@@ -31,7 +31,7 @@ import { BadgeColored } from "./ui/badge-colored";
 import { useTotalEventsByStatusQuery } from "@/lib/services/events";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
-import { GroupedPermissionRequirement } from "@/lib/api-helpers";
+import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 
 const PAGE_PERMISSIONS = {
   CalendarAccess: {

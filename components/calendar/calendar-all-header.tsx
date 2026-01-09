@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { useClientSession } from "@/hooks/use-client-auth";
 import { useVerifySessionRequirement } from "@/lib/auth-client";
-import { GroupedPermissionRequirement } from "@/lib/api-helpers";
+import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 
 const PAGE_PERMISSIONS = {
   CreateEvent: { type: "permission", resource: "Event", action: "Create" },

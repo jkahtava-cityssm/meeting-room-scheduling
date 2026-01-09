@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useVerifySessionRequirement, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
-import { GroupedPermissionRequirement } from "@/lib/api-helpers";
+import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 
 type FormFooterProps = {
   saveButtonEnabled: boolean;

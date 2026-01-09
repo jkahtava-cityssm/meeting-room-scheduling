@@ -2,17 +2,15 @@ import { NextRequest } from "next/server";
 import { getServerSession, Role } from "./auth";
 import { SessionAction, SessionResource, SessionRole } from "./types";
 import { prisma } from "@/prisma";
+import { BadRequestMessage, InternalServerErrorMessage, VerifyToken } from "./api-helpers";
+
 import {
-  BadRequestMessage,
   buildPermissionCache,
   GroupedPermissionRequirement,
-  InternalServerErrorMessage,
   isGroupRequirementMet,
   PermissionCache,
-  PermissionRequirement,
   RequirementResult,
-  VerifyToken,
-} from "./api-helpers";
+} from "./auth-permission-checks";
 
 export async function guardRoute(
   req: NextRequest,

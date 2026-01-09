@@ -19,7 +19,7 @@ import { useTheme } from "next-themes";
 import { IUser } from "./nav-header";
 import { getSessionRoles, Session, useVerifySessionRequirement } from "@/lib/auth-client";
 import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
-import { GroupedPermissionRequirement } from "@/lib/api-helpers";
+import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 
 const PAGE_PERMISSIONS = {
   IsAdmin: { type: "role", role: "Admin" },

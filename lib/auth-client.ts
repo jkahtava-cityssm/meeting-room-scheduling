@@ -7,7 +7,7 @@ import {
   GroupedPermissionRequirement,
   isGroupRequirementMet,
   RequirementResult,
-} from "./api-helpers";
+} from "./auth-permission-checks";
 import { useEffect, useMemo, useState } from "react";
 import { ssoClient } from "@better-auth/sso/client";
 

@@ -74,13 +74,65 @@ export type SessionAction = (typeof DEFAULT_ACTIONS)[number];
 
 export type DEFAULT_PERMISSION_SETS = {
   ROLE: SessionRole;
-  SET: { RESOURCE: SessionResource; ACTIONS: SessionAction[] }[];
+  SET: DEFAULT_PERMISSION_RESOURCE_SETS[];
 };
 
-const test: DEFAULT_PERMISSION_SETS = {
-  ROLE: "User",
-  SET: [{ RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"] }],
+export type DEFAULT_PERMISSION_RESOURCE_SETS = {
+  RESOURCE: SessionResource;
+  ACTIONS: SessionAction[];
 };
+
+export const DEFAULT_RESOURCE_ACTIONS = [
+  {
+    RESOURCE: "Event",
+    ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"],
+  },
+  {
+    RESOURCE: "Room",
+    ACTIONS: ["Read", "Create", "Update", "Delete", "View Hidden"],
+  },
+  {
+    RESOURCE: "User",
+    ACTIONS: ["Read", "Create", "Update", "Delete"],
+  },
+  {
+    RESOURCE: "Calendar",
+    ACTIONS: ["Read", "Update", "Delete"],
+  },
+  {
+    RESOURCE: "My Bookings",
+    ACTIONS: ["Read", "Update", "Delete"],
+  },
+  {
+    RESOURCE: "Settings",
+    ACTIONS: ["Edit Permissions", "Edit Rooms", "Edit Configuration", "Edit Users"],
+  },
+] as const satisfies readonly DEFAULT_PERMISSION_RESOURCE_SETS[];
+
+const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SETS[] = [
+  {
+    ROLE: "Clerk",
+    SET: [
+      { RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"] },
+      { RESOURCE: "Room", ACTIONS: ["Read", "Create", "Update", "Delete", "View Hidden"] },
+      { RESOURCE: "User", ACTIONS: ["Read"] },
+      { RESOURCE: "Calendar", ACTIONS: ["Read", "Update"] },
+      { RESOURCE: "My Bookings", ACTIONS: ["Read", "Update", "Delete"] },
+      { RESOURCE: "Settings", ACTIONS: ["Edit Rooms"] },
+    ],
+  },
+  {
+    ROLE: "User",
+    SET: [
+      { RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update"] },
+      { RESOURCE: "Room", ACTIONS: ["Read"] },
+      { RESOURCE: "User", ACTIONS: [] },
+      { RESOURCE: "Calendar", ACTIONS: [] },
+      { RESOURCE: "My Bookings", ACTIONS: ["Read", "Update"] },
+      { RESOURCE: "Settings", ACTIONS: [] },
+    ],
+  },
+];
 
 export const CONFIGURATION_KEYS = [
   "visibleHoursStart",
