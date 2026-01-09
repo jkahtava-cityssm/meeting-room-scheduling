@@ -90,6 +90,12 @@ export type RequirementResult<T extends Record<string, unknown>> = {
   [K in keyof T]: boolean;
 };
 
+const SPECIAL_ROLES = {
+  PUBLIC: "Public" as SessionRole,
+  PRIVATE: "Private" as SessionRole,
+  ADMIN: "Admin" as SessionRole,
+} as const;
+
 export function buildPermissionCache(roles: Role[] | undefined): PermissionCache {
   const roleSet = new Set<SessionRole>();
   const permitSet = new Set<AnyPairKey>();
@@ -99,7 +105,7 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
   for (const role of roles ?? []) {
     const roleName = role.name as SessionRole;
     roleSet.add(roleName);
-    if (roleName === "Admin") isAdmin = true;
+    if (roleName === SPECIAL_ROLES.ADMIN) isAdmin = true;
 
     for (const p of role.permissions ?? []) {
       if (p.permit) {
@@ -107,12 +113,25 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
         const action = p.action as SessionAction;
 
         const allowed = RESOURCE_TO_ACTIONS[resource];
-        if (allowed?.has(action)) {
-          // Assuming p.resource/action conform to SessionResource/SessionAction
 
-          permitSet.add(keyOf(resource, action) as AnyPairKey);
-          resourceSet.add(resource);
+        if (!allowed) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn(`[Permission Warning]: Unknown resource "${resource}" found on role "${roleName}".`);
+          }
+          continue;
         }
+
+        if (!allowed.has(action)) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn(
+              `[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`
+            );
+          }
+          continue;
+        }
+
+        permitSet.add(keyOf(resource, action) as AnyPairKey);
+        resourceSet.add(resource);
       }
     }
   }
@@ -198,13 +217,13 @@ function hasPermission(permissionCache: PermissionCache, resource: SessionResour
 
 function hasRole(permissionCache: PermissionCache, role: SessionRole) {
   //If it is a public requirement just return true we dont need to check anything
-  if (role === "Public") return true;
+  if (role === SPECIAL_ROLES.PUBLIC) return true;
 
   if (permissionCache.roleSet.size === 0) return false;
 
   //if it is a Private requirement we can return true if roles has a value since the user has atleast 1 role
   //we dont care which role
-  if (role === "Private") return true;
+  if (role === SPECIAL_ROLES.PRIVATE) return true;
 
   return permissionCache.roleSet.has(role);
 }
