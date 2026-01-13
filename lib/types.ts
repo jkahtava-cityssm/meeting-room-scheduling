@@ -50,37 +50,21 @@ export type TRecurrencePattern =
   | "Every X Months on X Day"
   | "Every X Year on X Month on X Day";
 
-export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Public", "Private"] as const;
-
-export const DEFAULT_RESOURCES = ["Event", "Room", "User", "Calendar", "My Bookings", "Settings"] as const;
-
-export const DEFAULT_ACTIONS = [
-  "Create",
-  "Read",
-  "Update",
-  "Delete",
-  "Change Status",
-  "Change Assigned",
-  "View Hidden",
-  "Edit Permissions",
-  "Edit Rooms",
-  "Edit Configuration",
-  "Edit Users",
+export const CONFIGURATION_KEYS = [
+  "visibleHoursStart",
+  "visibleHoursEnd",
+  "timeSlotIntervalMinutes",
+  "singleSignOnEnabled",
 ] as const;
 
+export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
+
+/**
+ * Default Roles, Resources, Actions, and Permission Sets
+ */
+
+export const DEFAULT_USER_ROLES = ["User", "Clerk", "Admin", "Public", "Private"] as const;
 export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
-export type SessionResource = (typeof DEFAULT_RESOURCES)[number];
-export type SessionAction = (typeof DEFAULT_ACTIONS)[number];
-
-export type DEFAULT_PERMISSION_SETS = {
-  ROLE: SessionRole;
-  SET: DEFAULT_PERMISSION_RESOURCE_SETS[];
-};
-
-export type DEFAULT_PERMISSION_RESOURCE_SETS = {
-  RESOURCE: SessionResource;
-  ACTIONS: SessionAction[];
-};
 
 export const DEFAULT_RESOURCE_ACTIONS = [
   {
@@ -107,9 +91,23 @@ export const DEFAULT_RESOURCE_ACTIONS = [
     RESOURCE: "Settings",
     ACTIONS: ["Edit Permissions", "Edit Rooms", "Edit Configuration", "Edit Users"],
   },
-] as const satisfies readonly DEFAULT_PERMISSION_RESOURCE_SETS[];
+] as const;
 
-const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SETS[] = [
+type ResourceActionDefinition = (typeof DEFAULT_RESOURCE_ACTIONS)[number];
+export type SessionResource = ResourceActionDefinition["RESOURCE"];
+export type SessionAction = ResourceActionDefinition["ACTIONS"][number];
+
+export type DEFAULT_PERMISSION_SET = {
+  ROLE: SessionRole;
+  SET: DEFAULT_PERMISSION_RESOURCE_SETS[];
+};
+
+export type DEFAULT_PERMISSION_RESOURCE_SETS = {
+  RESOURCE: SessionResource;
+  ACTIONS: SessionAction[];
+};
+
+export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
   {
     ROLE: "Clerk",
     SET: [
@@ -133,12 +131,3 @@ const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SETS[] = [
     ],
   },
 ];
-
-export const CONFIGURATION_KEYS = [
-  "visibleHoursStart",
-  "visibleHoursEnd",
-  "timeSlotIntervalMinutes",
-  "singleSignOnEnabled",
-] as const;
-
-export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
