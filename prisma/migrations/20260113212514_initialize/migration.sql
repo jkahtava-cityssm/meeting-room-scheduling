@@ -141,11 +141,21 @@ CREATE TABLE "role" (
 );
 
 -- CreateTable
+CREATE TABLE "resource_action" (
+    "resource_action_id" SERIAL NOT NULL,
+    "resource_id" INTEGER NOT NULL,
+    "action_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "resource_action_pkey" PRIMARY KEY ("resource_action_id")
+);
+
+-- CreateTable
 CREATE TABLE "role_resource_action" (
     "role_resource_action_id" SERIAL NOT NULL,
     "role_id" INTEGER NOT NULL,
-    "resource_id" INTEGER NOT NULL,
-    "action_id" INTEGER NOT NULL,
+    "resource_action_id" INTEGER NOT NULL,
     "permit" BOOLEAN NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -258,6 +268,12 @@ CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 CREATE UNIQUE INDEX "user_session_token_key" ON "user_session"("token");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "resource_action_resource_id_action_id_key" ON "resource_action"("resource_id", "action_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "role_resource_action_role_id_resource_action_id_key" ON "role_resource_action"("role_id", "resource_action_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "status_key_key" ON "status"("key");
 
 -- CreateIndex
@@ -288,13 +304,16 @@ ALTER TABLE "user_role" ADD CONSTRAINT "user_role_user_id_fkey" FOREIGN KEY ("us
 ALTER TABLE "user_role" ADD CONSTRAINT "user_role_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "role"("role_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "resource_action" ADD CONSTRAINT "resource_action_resource_id_fkey" FOREIGN KEY ("resource_id") REFERENCES "resource"("resource_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "resource_action" ADD CONSTRAINT "resource_action_action_id_fkey" FOREIGN KEY ("action_id") REFERENCES "action"("actionId") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "role_resource_action" ADD CONSTRAINT "role_resource_action_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "role"("role_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "role_resource_action" ADD CONSTRAINT "role_resource_action_resource_id_fkey" FOREIGN KEY ("resource_id") REFERENCES "resource"("resource_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "role_resource_action" ADD CONSTRAINT "role_resource_action_action_id_fkey" FOREIGN KEY ("action_id") REFERENCES "action"("actionId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "role_resource_action" ADD CONSTRAINT "role_resource_action_resource_action_id_fkey" FOREIGN KEY ("resource_action_id") REFERENCES "resource_action"("resource_action_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "recurrence" ADD CONSTRAINT "recurrence_recurrence_cancellation_id_fkey" FOREIGN KEY ("recurrence_cancellation_id") REFERENCES "recurrence_cancellation"("recurrence_cancellation_id") ON DELETE SET NULL ON UPDATE CASCADE;

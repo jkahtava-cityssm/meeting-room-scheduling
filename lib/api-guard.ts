@@ -70,7 +70,18 @@ export async function GetUserRolePermissions(userId: number): Promise<Role[]> {
       userRole: {
         include: {
           role: {
-            include: { roleResourceAction: { include: { resource: true, action: true } } },
+            include: {
+              roleResourceAction: {
+                include: {
+                  resourceAction: {
+                    include: {
+                      resource: true,
+                      action: true,
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -89,10 +100,11 @@ export async function GetUserRolePermissions(userId: number): Promise<Role[]> {
         name: userRole.role.name as SessionRole,
         permissions: userRole.role.roleResourceAction
           .map((permission) => {
+            const ra = permission.resourceAction;
             return {
               permit: permission.permit,
-              action: permission.action.name as SessionAction,
-              resource: permission.resource.name as SessionResource,
+              action: ra.action.name as SessionAction,
+              resource: ra.resource.name as SessionResource,
             };
           })
           .sort((a, b) =>

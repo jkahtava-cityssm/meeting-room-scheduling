@@ -17,7 +17,7 @@ export type IPermission = z.infer<typeof SPermission>;
 export type IPermissionSet = z.infer<typeof SPermissionSet>;
 
 const PERMISSION_SET_SELECT = {
-  roleResourceAction: { include: { resource: true, action: true } },
+  roleResourceAction: { include: { resourceAction: { include: { resource: true, action: true } } } },
 } as const satisfies Prisma.RoleInclude;
 
 export async function findManyPermissionSets(where?: Prisma.RoleWhereInput): Promise<IPermissionSet[] | undefined> {
@@ -31,10 +31,10 @@ export async function findManyPermissionSets(where?: Prisma.RoleWhereInput): Pro
         return {
           permissionId: String(permission.roleResourceActionId),
           permit: permission.permit,
-          actionId: String(permission.actionId),
-          action: permission.action.name,
-          resourceId: String(permission.resourceId),
-          resource: permission.resource.name,
+          actionId: String(permission.resourceAction.actionId),
+          action: permission.resourceAction.action.name,
+          resourceId: String(permission.resourceAction.resourceId),
+          resource: permission.resourceAction.resource.name,
         };
       }),
     };

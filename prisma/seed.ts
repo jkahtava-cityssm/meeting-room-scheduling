@@ -1,4 +1,4 @@
-import { Action, PrismaClient, Resource, Role } from "@prisma/client";
+import { Action, PrismaClient, Resource, ResourceAction, Role } from "@prisma/client";
 import {
   DEFAULT_PERMISSION_SETS,
   DEFAULT_RESOURCE_ACTIONS,
@@ -111,27 +111,60 @@ async function FindCreateResource(name: string): Promise<Resource> {
   return record;
 }
 
-async function FindCreateRoleResourceAction(roleId: number, resourceId: number, actionId: number, permit: boolean) {
-  let record = await prisma.roleResourceAction.findFirst({
-    where: { roleId: roleId, resourceId: resourceId, actionId: actionId },
+async function FindCreateResourceActionList(
+  resourceList: Record<SessionResource, Resource>,
+  actionList: Record<SessionAction, Action>
+) {
+  const resourceActionList: Record<string, Record<string, ResourceAction>> = {} as Record<
+    string,
+    Record<string, ResourceAction>
+  >;
+
+  for (const resourceAction of DEFAULT_RESOURCE_ACTIONS) {
+    const resourceId = resourceList[resourceAction.RESOURCE].resourceId;
+    resourceActionList[resourceAction.RESOURCE] = {};
+
+    for (const actionName of resourceAction.ACTIONS) {
+      const actionId = actionList[actionName].actionId;
+      resourceActionList[resourceAction.RESOURCE][actionName] = await FindCreateResourceActionRecord(
+        resourceId,
+        actionId
+      );
+    }
+  }
+  return resourceActionList;
+}
+
+async function FindCreateResourceActionRecord(resourceId: number, actionId: number): Promise<ResourceAction> {
+  let record = await prisma.resourceAction.findFirst({
+    where: { resourceId: resourceId, actionId: actionId },
   });
 
   if (!record) {
-    record = await prisma.roleResourceAction.create({
-      data: { roleId: roleId, resourceId: resourceId, actionId: actionId, permit: permit },
+    record = await prisma.resourceAction.create({
+      data: { resourceId: resourceId, actionId: actionId },
     });
   }
 
   return record;
 }
 
-async function FindCreatePermissionSet(role: Role, action: Action, resource: Resource) {
-  const roleResourceAction = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    action.actionId,
-    true
-  );
+async function FindCreateRoleResourceAction(roleId: number, resourceActionId: number, permit: boolean) {
+  let record = await prisma.roleResourceAction.findFirst({
+    where: { roleId: roleId, resourceActionId: resourceActionId },
+  });
+
+  if (!record) {
+    record = await prisma.roleResourceAction.create({
+      data: { roleId: roleId, resourceActionId: resourceActionId, permit: permit },
+    });
+  }
+
+  return record;
+}
+
+async function FindCreatePermissionSet(role: Role, resourceAction: ResourceAction) {
+  const roleResourceAction = await FindCreateRoleResourceAction(role.roleId, resourceAction.resourceActionId, true);
 
   return {
     roleResourceAction,
@@ -720,6 +753,7 @@ async function main() {
 
   const actions = await FindCreateActionList();
   const resources = await FindCreateResourceList();
+  const resourceActions = await FindCreateResourceActionList(resources, actions);
   const roles = await FindCreateRoleList();
 
   for (const roleSet of DEFAULT_PERMISSION_SETS) {
@@ -728,8 +762,8 @@ async function main() {
       const resource = resources[resourceSet.RESOURCE];
 
       for (const actionName of resourceSet.ACTIONS) {
-        const action = actions[actionName];
-        await FindCreatePermissionSet(role, action, resource);
+        const resourceAction = resourceActions[resourceSet.RESOURCE][actionName];
+        await FindCreatePermissionSet(role, resourceAction);
       }
     }
   }

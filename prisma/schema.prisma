@@ -171,20 +171,33 @@ model Role {
   @@map("role")
 }
 
+model ResourceAction {
+  resourceActionId Int      @id @default(autoincrement()) @map("resource_action_id")
+  resourceId       Int      @map("resource_id")
+  actionId         Int      @map("action_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  resource           Resource             @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
+  action             Action               @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
+  roleResourceAction RoleResourceAction[] // Permissions for this resource-action pair
+
+  @@unique([resourceId, actionId]) // Prevent duplicates
+  @@map("resource_action")
+}
+
 model RoleResourceAction {
   roleResourceActionId Int      @id @default(autoincrement()) @map("role_resource_action_id")
   roleId               Int      @map("role_id")
-  resourceId           Int      @map("resource_id")
-  actionId             Int      @map("action_id")
+  resourceActionId     Int      @map("resource_action_id")
   permit               Boolean
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
-  role     Role     @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
-  resource Resource @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
-  action   Action   @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
-  //RolePermission RolePermission[]
+  role           Role           @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+  resourceAction ResourceAction @relation(fields: [resourceActionId], references: [resourceActionId], onDelete: Cascade)
 
+  @@unique([roleId, resourceActionId])
   @@map("role_resource_action")
 }
 
@@ -195,7 +208,7 @@ model Resource {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  roleResourceAction RoleResourceAction[]
+  resourceAction ResourceAction[]
 
   @@map("resource")
 }
@@ -206,7 +219,7 @@ model Action {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  roleResourceAction RoleResourceAction[]
+  resourceAction ResourceAction[]
 
   @@map("action")
 }
