@@ -71,6 +71,8 @@ async function FindCreateRoleList() {
   const roleList: Record<SessionRole, Role> = {} as Record<SessionRole, Role>;
 
   for (const role of DEFAULT_USER_ROLES) {
+    if (role === "Public" || role === "Private") continue;
+
     roleList[role] = await FindCreateRole(role);
   }
   return roleList;
