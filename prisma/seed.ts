@@ -1,8 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { Action, PrismaClient, Resource, Role } from "@prisma/client";
 import {
-  DEFAULT_ACTIONS,
-  DEFAULT_RESOURCES,
+  DEFAULT_PERMISSION_SETS,
+  DEFAULT_RESOURCE_ACTIONS,
   DEFAULT_USER_ROLES,
+  SessionAction,
+  SessionResource,
+  SessionRole,
   TColors,
   TConfigurationKeys,
   TStatusKey,
@@ -40,7 +43,21 @@ const prismaAdmin = new PrismaClient({
   },
 });
 
-async function FindCreateAction(name: string) {
+async function FindCreateActionList() {
+  const DEFAULT_ACTIONS = Array.from(
+    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS))
+  ) as readonly SessionAction[];
+
+  const actionList: Record<SessionAction, Action> = {} as Record<SessionAction, Action>;
+
+  for (const action of DEFAULT_ACTIONS) {
+    actionList[action] = await FindCreateAction(action);
+  }
+
+  return actionList;
+}
+
+async function FindCreateAction(name: string): Promise<Action> {
   let record = await prisma.action.findFirst({ where: { name: name } });
 
   if (!record) {
@@ -50,7 +67,16 @@ async function FindCreateAction(name: string) {
   return record;
 }
 
-async function FindCreateRole(name: string) {
+async function FindCreateRoleList() {
+  const roleList: Record<SessionRole, Role> = {} as Record<SessionRole, Role>;
+
+  for (const role of DEFAULT_USER_ROLES) {
+    roleList[role] = await FindCreateRole(role);
+  }
+  return roleList;
+}
+
+async function FindCreateRole(name: string): Promise<Role> {
   let record = await prisma.role.findFirst({ where: { name: name } });
 
   if (!record) {
@@ -60,7 +86,20 @@ async function FindCreateRole(name: string) {
   return record;
 }
 
-async function FindCreateResource(name: string) {
+async function FindCreateResourceList() {
+  const DEFAULT_RESOURCES = Array.from(
+    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.RESOURCE))
+  ) as readonly SessionResource[];
+
+  const resourceList: Record<SessionResource, Resource> = {} as Record<SessionResource, Resource>;
+
+  for (const resource of DEFAULT_RESOURCES) {
+    resourceList[resource] = await FindCreateResource(resource);
+  }
+  return resourceList;
+}
+
+async function FindCreateResource(name: string): Promise<Resource> {
   let record = await prisma.resource.findFirst({ where: { name: name } });
 
   if (!record) {
@@ -84,56 +123,16 @@ async function FindCreateRoleResourceAction(roleId: number, resourceId: number, 
   return record;
 }
 
-async function FindCreatePermissionSet(
-  role: { roleId: number; createdAt: Date; updatedAt: Date; name: string },
-  actions: {
-    actionCreate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    actionRead: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    actionUpdate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    actionDelete: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    accessPrivate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-  },
-  resource: { resourceId: number; createdAt: Date; updatedAt: Date; name: string },
-  permissions: { create: boolean; read: boolean; update: boolean; delete: boolean; access: boolean }
-) {
-  const resourceActionEventCreate = await FindCreateRoleResourceAction(
+async function FindCreatePermissionSet(role: Role, action: Action, resource: Resource) {
+  const roleResourceAction = await FindCreateRoleResourceAction(
     role.roleId,
     resource.resourceId,
-    actions.actionCreate.actionId,
-    permissions.create
-  );
-  const resourceActionEventRead = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.actionRead.actionId,
-    permissions.read
-  );
-  const resourceActionEventUpdate = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.actionUpdate.actionId,
-    permissions.update
-  );
-  const resourceActionEventDelete = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.actionDelete.actionId,
-    permissions.delete
-  );
-
-  const resourceActionEventAccess = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.accessPrivate.actionId,
-    permissions.access
+    action.actionId,
+    true
   );
 
   return {
-    resourceActionEventCreate,
-    resourceActionEventRead,
-    resourceActionEventUpdate,
-    resourceActionEventDelete,
-    resourceActionEventAccess,
+    roleResourceAction,
   };
 }
 
@@ -587,8 +586,6 @@ export function convertDateToRRuleDate(date: Date) {
   );
 }
 
-
-
 async function createLinkedServer() {
   await prismaAdmin.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS postgres_fdw;`);
 
@@ -691,7 +688,6 @@ async function createLinkedServer() {
   await prisma.$executeRawUnsafe(`CALL public.insert_avanti_users();`);
 }
 
-
 async function main() {
   if (process.env.LINKED_SERVER === "1") {
     await createLinkedServer();
@@ -720,78 +716,22 @@ async function main() {
   await prisma.resource.deleteMany();
   await prisma.roleResourceAction.deleteMany();
 
-  for (const action of DEFAULT_ACTIONS) {
-    await FindCreateAction(action);
-  }
+  const actions = await FindCreateActionList();
+  const resources = await FindCreateResourceList();
+  const roles = await FindCreateRoleList();
 
-  const actionCreate = await FindCreateAction("Create");
-  const actionRead = await FindCreateAction("Read");
-  const actionUpdate = await FindCreateAction("Update");
-  const actionDelete = await FindCreateAction("Delete");
-  const accessPrivate = await FindCreateAction("View Hidden");
+  for (const roleSet of DEFAULT_PERMISSION_SETS) {
+    const role = roles[roleSet.ROLE];
+    for (const resourceSet of roleSet.SET) {
+      const resource = resources[resourceSet.RESOURCE];
 
-  const actions = { actionCreate, actionRead, actionUpdate, actionDelete, accessPrivate };
-
-  for (const role of DEFAULT_USER_ROLES) {
-    const dbRole = await FindCreateRole(role);
-
-    for (const resource of DEFAULT_RESOURCES) {
-      const defaultPermission = {
-        create: (resource === "Event" && role === "User") || role === "Admin" || role === "Clerk" ? true : false,
-        read: true,
-        update: role === "Admin" || role === "Clerk" ? true : false,
-        delete: role === "Admin" || role === "Clerk" ? true : false,
-        access: role === "Admin" || role === "Clerk" ? true : false,
-      };
-      const dbResource = await FindCreateResource(resource);
-      await FindCreatePermissionSet(dbRole, actions, dbResource, defaultPermission);
+      for (const actionName of resourceSet.ACTIONS) {
+        const action = actions[actionName];
+        await FindCreatePermissionSet(role, action, resource);
+      }
     }
   }
 
-  /*const roleUser = await FindCreateRole("User");
-  const roleClerk = await FindCreateRole("Clerk");
-  const roleAdmin = await FindCreateRole("Admin");
-
-  const resourceEvent = await FindCreateResource("Event");
-  const resourceAPI = await FindCreateResource("API");
-  const resourceImpersonate = await FindCreateResource("Impersonate");
-  
-
-  await FindCreatePermissionSet(roleUser, actions, resourceEvent, {
-    create: false,
-    read: true,
-    update: false,
-    delete: false,
-  });
-
-  await FindCreatePermissionSet(roleClerk, actions, resourceEvent, {
-    create: false,
-    read: true,
-    update: false,
-    delete: false,
-  });
-
-  await FindCreatePermissionSet(roleAdmin, actions, resourceEvent, {
-    create: true,
-    read: true,
-    update: true,
-    delete: true,
-  });
-
-  await FindCreatePermissionSet(roleAdmin, actions, resourceAPI, {
-    create: true,
-    read: true,
-    update: true,
-    delete: true,
-  });
-
-  await FindCreatePermissionSet(roleAdmin, actions, resourceImpersonate, {
-    create: true,
-    read: true,
-    update: true,
-    delete: true,
-  });
-*/
   const roomList: {
     roomId: number;
     name: string;
