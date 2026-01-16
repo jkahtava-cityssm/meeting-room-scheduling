@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 
 import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { findManyPermissionSets } from "@/lib/data/permissions";
+import { findManyExpandedPermissionSets } from "@/lib/data/permissions";
 import { guardRoute } from "@/lib/api-guard";
 
 export async function GET(req: NextRequest) {
@@ -10,13 +10,13 @@ export async function GET(req: NextRequest) {
 
     { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
     async () => {
-      const permissionSets = await findManyPermissionSets();
+      const permissionSets = await findManyExpandedPermissionSets();
 
       if (!permissionSets) {
         return InternalServerErrorMessage();
       }
 
       return SuccessMessage("PermissionSets Found", permissionSets);
-    }
+    },
   );
 }

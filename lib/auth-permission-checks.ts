@@ -1,5 +1,5 @@
 import { Role } from "./auth";
-import { DEFAULT_RESOURCE_ACTIONS, SessionAction, SessionResource, SessionRole } from "./types";
+import { DEFAULT_RESOURCE_ACTIONS, ROLES_ENUM, SessionAction, SessionResource, SessionRole } from "./types";
 
 /**
  * 1. Creates a lookup table (object type) where the keys are Resources
@@ -73,7 +73,7 @@ export type PermissionCache = {
  * Key-Value object where each value is a Set for fast lookups.
  */
 const RESOURCE_TO_ACTIONS: Readonly<Record<SessionResource, ReadonlySet<SessionAction>>> = Object.fromEntries(
-  DEFAULT_RESOURCE_ACTIONS.map(({ RESOURCE, ACTIONS }) => [RESOURCE, new Set(ACTIONS)])
+  DEFAULT_RESOURCE_ACTIONS.map(({ RESOURCE, ACTIONS }) => [RESOURCE, new Set(ACTIONS)]),
 ) as never;
 
 type PermissionRequirement =
@@ -90,12 +90,6 @@ export type RequirementResult<T extends Record<string, unknown>> = {
   [K in keyof T]: boolean;
 };
 
-const SPECIAL_ROLES = {
-  PUBLIC: "Public" as SessionRole,
-  PRIVATE: "Private" as SessionRole,
-  ADMIN: "Admin" as SessionRole,
-} as const;
-
 export function buildPermissionCache(roles: Role[] | undefined): PermissionCache {
   const roleSet = new Set<SessionRole>();
   const permitSet = new Set<AnyPairKey>();
@@ -105,7 +99,7 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
   for (const role of roles ?? []) {
     const roleName = role.name as SessionRole;
     roleSet.add(roleName);
-    if (roleName === SPECIAL_ROLES.ADMIN) isAdmin = true;
+    if (roleName === ROLES_ENUM.Admin) isAdmin = true;
 
     for (const p of role.permissions ?? []) {
       if (p.permit) {
@@ -124,7 +118,7 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
         if (!allowed.has(action)) {
           if (process.env.NODE_ENV !== "production") {
             console.warn(
-              `[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`
+              `[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`,
             );
           }
           continue;
@@ -179,7 +173,7 @@ async function isRequirementMet(permissionCache: PermissionCache, permission: Pe
 
 export async function isGroupRequirementMet<T extends Readonly<GroupedPermissionRequirement>>(
   permissionCache: PermissionCache,
-  groupedRequirements: T
+  groupedRequirements: T,
 ): Promise<RequirementResult<GroupedPermissionRequirement>> {
   const labels = Object.keys(groupedRequirements) as (keyof T)[];
 
@@ -217,13 +211,13 @@ function hasPermission(permissionCache: PermissionCache, resource: SessionResour
 
 function hasRole(permissionCache: PermissionCache, role: SessionRole) {
   //If it is a public requirement just return true we dont need to check anything
-  if (role === SPECIAL_ROLES.PUBLIC) return true;
+  if (role === ROLES_ENUM.Public) return true;
 
   if (permissionCache.roleSet.size === 0) return false;
 
   //if it is a Private requirement we can return true if roles has a value since the user has atleast 1 role
   //we dont care which role
-  if (role === SPECIAL_ROLES.PRIVATE) return true;
+  if (role === ROLES_ENUM.Private) return true;
 
   return permissionCache.roleSet.has(role);
 }

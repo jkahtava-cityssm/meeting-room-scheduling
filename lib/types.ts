@@ -131,3 +131,10 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
     ],
   },
 ];
+
+function makeEnum<T extends readonly string[]>(values: T) {
+  return Object.fromEntries(values.map((v) => [v, v])) as {
+    [K in T[number]]: K;
+  };
+}
+export const ROLES_ENUM = makeEnum(DEFAULT_USER_ROLES);

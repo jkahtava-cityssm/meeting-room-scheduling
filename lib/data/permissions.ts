@@ -2,6 +2,7 @@ import { prisma } from "@/prisma";
 import { Prisma } from "@prisma/client";
 import { Role } from "../auth";
 import z from "zod/v4";
+import { ROLES_ENUM } from "../types";
 
 export const SPermission = z.object({
   permissionId: z.string(),
@@ -20,21 +21,31 @@ const PERMISSION_SET_SELECT = {
   roleResourceAction: { include: { resourceAction: { include: { resource: true, action: true } } } },
 } as const satisfies Prisma.RoleInclude;
 
-export async function findManyPermissionSets(where?: Prisma.RoleWhereInput): Promise<IPermissionSet[] | undefined> {
+export async function findManyExpandedPermissionSets(
+  where?: Prisma.RoleWhereInput,
+): Promise<IPermissionSet[] | undefined> {
   const roles = await prisma.role.findMany({ where, include: PERMISSION_SET_SELECT });
+  const allResourceActions = await prisma.resourceAction.findMany({
+    include: { resource: true, action: true },
+  });
 
+  console.log("Roles fetched:", roles);
   return roles?.map((role) => {
     return {
       roleId: String(role.roleId),
       roleName: role.name,
-      permissions: role.roleResourceAction.map((permission) => {
+      permissions: allResourceActions.map((resourceAction) => {
+        const permissionInRole = role.roleResourceAction.find(
+          (pa) => pa.resourceActionId === resourceAction.resourceActionId || role.name === ROLES_ENUM.Admin,
+        );
+
         return {
-          permissionId: String(permission.roleResourceActionId),
-          permit: permission.permit,
-          actionId: String(permission.resourceAction.actionId),
-          action: permission.resourceAction.action.name,
-          resourceId: String(permission.resourceAction.resourceId),
-          resource: permission.resourceAction.resource.name,
+          permissionId: String(permissionInRole ? permissionInRole.roleResourceActionId : "-1"),
+          permit: permissionInRole ? permissionInRole.permit : false,
+          actionId: String(resourceAction.actionId),
+          action: resourceAction.action.name,
+          resourceId: String(resourceAction.resourceId),
+          resource: resourceAction.resource.name,
         };
       }),
     };
