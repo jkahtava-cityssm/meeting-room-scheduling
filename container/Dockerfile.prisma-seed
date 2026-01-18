@@ -1,0 +1,42 @@
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+COPY prisma/seed-deps.json ./seed-deps.json
+
+RUN node - <<'EOF'
+const fs = require("fs");
+
+const app = JSON.parse(fs.readFileSync("package.json", "utf8"));
+const allow = JSON.parse(fs.readFileSync("seed-deps.json", "utf8"));
+
+const out = { name: "prisma", private: true, dependencies: {}, devDependencies: {} };
+
+for (const dep of allow.dependencies)
+  out.dependencies[dep] = app.dependencies[dep];
+
+for (const dep of allow.devDependencies)
+  out.devDependencies[dep] = app.devDependencies[dep];
+
+fs.writeFileSync("package.json", JSON.stringify(out, null, 2));
+EOF
+
+COPY prisma ./prisma
+COPY lib ./lib
+COPY tsconfig.json ./
+COPY prisma/seed.ts ./prisma/seed.ts
+
+RUN npm install
+
+RUN npx prisma generate
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules 
+COPY --from=builder /app/prisma ./prisma 
+COPY --from=builder /app/lib ./lib 
+COPY --from=builder /app/tsconfig.json ./ 
+COPY --from=builder /app/package.json ./
+
+CMD ["npx", "ts-node", "prisma/seed.ts"]

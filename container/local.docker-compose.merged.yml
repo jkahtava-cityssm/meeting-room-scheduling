@@ -3,7 +3,7 @@ services:
     image: postgres:15
     container_name: container-postgres
     restart: always
-    profiles: ["app", "init", "dev"]
+    profiles: ["app", "init", "dev","install-db", "install-app"]
     environment:
       POSTGRES_USER: ${DATABASE_USER_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
@@ -24,9 +24,9 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.prisma-migrate
-    image: meeting-room-booking/prisma-tools:latest
+    image: meeting-room-booking-prisma-tools:latest
     container_name: prisma-migrate
-    profiles: ["migrate", "init", "dev"]
+    profiles: ["migrate", "init", "dev","install-db"]
     environment:
       DATABASE_URL: ${CONTAINER_DB_URL}
     depends_on:
@@ -39,8 +39,8 @@ services:
   prisma-seed:
     build:
       context: ..
-      dockerfile: container/Dockerfile.prisma-migrate
-    image: meeting-room-booking/prisma-tools:latest
+      dockerfile: container/Dockerfile.prisma-seed
+    image: meeting-room-booking-prisma-tools:latest
     container_name: prisma-seed
     profiles: ["seed", "dev"]
     environment:
@@ -55,9 +55,6 @@ services:
       LINKED_PASSWORD: ${LINKED_PASSWORD}
       DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
       ADMIN_USER_EMAIL: ${ADMIN_USER_EMAIL}
-    depends_on:
-      prisma-migrate:
-        condition: service_completed_successfully
     command: npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
     networks:
       - webnet
@@ -66,9 +63,9 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.local.nextjs-app
-    image: meeting-room-booking/nextjs-app:latest
+    image: meeting-room-booking-nextjs-app:latest
     container_name: nextjs-app
-    profiles: ["app", "init", "dev"]
+    profiles: ["app", "init", "dev","install-app"]
     expose:
       - "3000"
     environment:
@@ -86,9 +83,9 @@ services:
     build:
       context: ..
       dockerfile: container/Dockerfile.local.nginx
-    image: meeting-room-booking/nginx:latest
+    image: meeting-room-booking-nginx:latest
     container_name: nginx
-    profiles: ["app", "init", "dev"]
+    profiles: ["app", "init", "dev","install-app","install-nginx"]
     ports:
       - "80:80"
       - "443:443"

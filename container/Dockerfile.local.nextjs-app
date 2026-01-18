@@ -1,53 +1,47 @@
 
-# container/Dockerfile.local.nextjs-app
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
+
+# Dev-only (self-signed certs): do NOT use in prod
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update 
+RUN apt-get install -y --no-install-recommends openssl ca-certificates curl 
+RUN rm -rf /var/lib/apt/lists/*
 
 # ---------- deps ----------
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* .npmrc* ./
 RUN npm ci
 
 # ---------- builder ----------
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
 COPY . .
-# Optionally disable Next telemetry during build:
-# ENV NEXT_TELEMETRY_DISABLED=1
+RUN rm -rf .next
+COPY --from=deps /app/node_modules ./node_modules
+
 RUN npx prisma generate
 RUN npm run build
 
 # ---------- runner ----------
 FROM base AS runner
 
-# Create non-root user/group early
-RUN addgroup --system --gid 1001 nodejs \
- && adduser  --system --uid 1001 --ingroup nodejs --home /home/nextjs --shell /sbin/nologin nextjs
-
+RUN groupadd --gid 1001 nodejs \
+  && useradd --uid 1001 --gid nodejs --home /home/nextjs --shell /usr/sbin/nologin nextjs
 WORKDIR /app
+
 ENV NODE_ENV=production
-# Optionally disable Next telemetry at runtime:
-# ENV NEXT_TELEMETRY_DISABLED=1
 
-# Ensure working dir ownership
-RUN mkdir -p /app \
- && chown -R nextjs:nodejs /app
-
-# Copy artifacts with correct ownership
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Prisma client and runtime
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
-
-# --- REMOVE PACKAGE MANAGERS & COMMON DOWNLOAD TOOLS ---
-# Keep this resilient across base image updates by using || true
-# (Alpine paths shown; some tools may not exist.)
 RUN set -eux; \
   # Node package managers
   rm -rf /usr/local/lib/node_modules/npm || true; \
@@ -57,16 +51,12 @@ RUN set -eux; \
   rm -f  /usr/local/bin/yarn           || true; \
   rm -rf /usr/local/lib/node_modules/corepack || true; \
   rm -f  /usr/local/bin/corepack       || true; \
-  # Alpine package manager
-  rm -f  /sbin/apk                     || true; \
-  rm -f  /usr/bin/apk                  || true; \
+
   # Common fetch/install tools
   rm -f  /usr/bin/curl                 || true; \
   rm -f  /usr/bin/wget                 || true; \
-  rm -f  /usr/bin/git                  || true; \
-  # Any leftover helper scripts sometimes present
-  rm -f  /usr/bin/adduser              || true; \
-  rm -f  /usr/bin/addgroup             || true
+  rm -f  /usr/bin/git                  || true; 
+
 
 # Drop privileges (numeric UID/GID helps in Podman/K8s)
 USER 1001:1001
@@ -76,8 +66,7 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Dev-only (self-signed certs): do NOT use in prod
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
 
 # Next.js standalone output provides server.js
 CMD ["node", "server.js"]
