@@ -25,7 +25,8 @@ import { ByWeekday, datetime, RRule } from "rrule";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 
 // Define the type for icon names
-type IconName = keyof typeof dynamicIconImports;
+import * as Icons from "lucide-react";
+type IconName = keyof typeof Icons;
 
 const prisma = new PrismaClient({
   datasources: {
@@ -45,7 +46,7 @@ const prismaAdmin = new PrismaClient({
 
 async function FindCreateActionList() {
   const DEFAULT_ACTIONS = Array.from(
-    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS))
+    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS)),
   ) as readonly SessionAction[];
 
   const actionList: Record<SessionAction, Action> = {} as Record<SessionAction, Action>;
@@ -90,7 +91,7 @@ async function FindCreateRole(name: string): Promise<Role> {
 
 async function FindCreateResourceList() {
   const DEFAULT_RESOURCES = Array.from(
-    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.RESOURCE))
+    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.RESOURCE)),
   ) as readonly SessionResource[];
 
   const resourceList: Record<SessionResource, Resource> = {} as Record<SessionResource, Resource>;
@@ -113,7 +114,7 @@ async function FindCreateResource(name: string): Promise<Resource> {
 
 async function FindCreateResourceActionList(
   resourceList: Record<SessionResource, Resource>,
-  actionList: Record<SessionAction, Action>
+  actionList: Record<SessionAction, Action>,
 ) {
   const resourceActionList: Record<string, Record<string, ResourceAction>> = {} as Record<
     string,
@@ -128,7 +129,7 @@ async function FindCreateResourceActionList(
       const actionId = actionList[actionName].actionId;
       resourceActionList[resourceAction.RESOURCE][actionName] = await FindCreateResourceActionRecord(
         resourceId,
-        actionId
+        actionId,
       );
     }
   }
@@ -242,7 +243,7 @@ async function FindCreateRooms(
   color: TColors,
   icon: IconName,
   roomCategoryId: number = 1,
-  roomScopeId: number = 1
+  roomScopeId: number = 1,
 ) {
   let record = await prisma.room.findFirst({
     where: { name: name },
@@ -271,7 +272,7 @@ async function FindCreateEventStatus(name: string, icon: IconName, color: TColor
 
 function FindRoomID(
   roomName: string,
-  rooms: { name: string; createdAt: Date; updatedAt: Date; roomId: number; color: string; icon: string | null }[]
+  rooms: { name: string; createdAt: Date; updatedAt: Date; roomId: number; color: string; icon: string | null }[],
 ) {
   const test = rooms.find((room) => {
     return room.name === roomName;
@@ -310,7 +311,7 @@ function validateVisibleHours(visibleHoursStart: number, visibleHoursEnd: number
   if (visibleHoursStart >= visibleHoursEnd || visibleHoursStart <= 0 || visibleHoursEnd > 24) {
     console.log(
       `Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
-        `Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`
+        `Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`,
     );
     visibleHoursStart = 1;
     visibleHoursEnd = 24;
@@ -333,7 +334,7 @@ async function CreateRandomEvents(
   visibleHoursStart: number = 8,
   visibleHoursEnd: number = 8,
   timeSlotIntervalMinutes: number = 15,
-  maxRangeInDays: number = 30
+  maxRangeInDays: number = 30,
 ) {
   timeSlotIntervalMinutes = validateTimeSlotInterval(timeSlotIntervalMinutes);
 
@@ -363,7 +364,7 @@ async function CreateRandomEvents(
       Math.floor(Math.random() * hourInterval) + visibleHoursStart,
       Math.floor(Math.random() * intervalsInHour) * timeSlotIntervalMinutes,
       0,
-      0
+      0,
     );
 
     const endDate = new Date(startDate);
@@ -378,7 +379,7 @@ async function CreateRandomEvents(
         Math.floor(Math.random() * hourInterval) + visibleHoursStart,
         Math.floor(Math.random() * intervalsInHour) * timeSlotIntervalMinutes,
         0,
-        0
+        0,
       );
     } else {
       const minDuration = 30;
@@ -617,7 +618,14 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
 export function convertDateToRRuleDate(date: Date) {
   return new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds())
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      date.getHours(),
+      date.getMinutes(),
+      date.getSeconds(),
+    ),
   );
 }
 
@@ -656,14 +664,14 @@ async function createLinkedServer() {
                                                   OPTIONS (schema_name 'public', table_name 'avanti_z_ex_emp_data');`);
 
   await prismaAdmin.$executeRawUnsafe(
-    `GRANT USAGE ON FOREIGN SERVER ${process.env.LINKED_SERVER_NAME} TO ${process.env.DATABASE_USER_USERNAME};`
+    `GRANT USAGE ON FOREIGN SERVER ${process.env.LINKED_SERVER_NAME} TO ${process.env.DATABASE_USER_USERNAME};`,
   );
   await prismaAdmin.$executeRawUnsafe(`GRANT USAGE ON SCHEMA public TO ${process.env.DATABASE_USER_USERNAME};`);
   await prismaAdmin.$executeRawUnsafe(
-    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_pers TO ${process.env.DATABASE_USER_USERNAME};`
+    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_pers TO ${process.env.DATABASE_USER_USERNAME};`,
   );
   await prismaAdmin.$executeRawUnsafe(
-    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_data TO ${process.env.DATABASE_USER_USERNAME};`
+    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_data TO ${process.env.DATABASE_USER_USERNAME};`,
   );
 
   await prismaAdmin.$executeRawUnsafe(
@@ -715,7 +723,7 @@ async function createLinkedServer() {
       employee_active = EXCLUDED.employee_active,
       image = EXCLUDED.image,
       updated_at = now();
-    $BODY$;`
+    $BODY$;`,
   );
 
   await prismaAdmin.$executeRawUnsafe(`ALTER PROCEDURE public.insert_avanti_users() OWNER TO postgres;`);
@@ -745,6 +753,15 @@ async function main() {
   await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString());
   await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
   await FindCreateConfigurationSetting("singleSignOnEnabled", "false");
+
+  if (process.env.NODE_ENV === "production") {
+    await prisma.session.deleteMany();
+    await prisma.account.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.sSOProvider.deleteMany();
+    await prisma.userRole.deleteMany();
+    await prisma.verification.deleteMany();
+  }
 
   await prisma.role.deleteMany();
   await prisma.action.deleteMany();
@@ -789,22 +806,20 @@ async function main() {
 
   //await FindCreateRooms("All", "zinc", "Asterisk");
 
-  roomList.push(await FindCreateRooms("Biggings Room", "orange", "book-key", category_large));
-  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "book-key", category_large));
-  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "book-key", category_large));
-  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "book-key", category_large));
-  roomList.push(await FindCreateRooms("IT Training Room", "pink", "book-key", category_large));
+  roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("IT Training Room", "pink", "BookKey", category_large));
+  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "BookKey", category_special));
+  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "BookKey", category_special));
 
-  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "book-key", category_special));
-  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "book-key", category_special));
-
-  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "book-key", category_special, 2));
-  roomList.push(await FindCreateRooms("Cafeteria", "amber", "book-key", category_special, 2));
-  roomList.push(await FindCreateRooms("Penthouse", "violet", "book-key", category_special, 2));
-
-  roomList.push(await FindCreateRooms("Korah Room", "green", "book-key", category_small));
-  roomList.push(await FindCreateRooms("Steelton Room", "slate", "book-key", category_small));
-  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "book-key", category_small));
+  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey", category_special, 2));
+  roomList.push(await FindCreateRooms("Cafeteria", "amber", "BookKey", category_special, 2));
+  roomList.push(await FindCreateRooms("Penthouse", "violet", "BookKey", category_special, 2));
+  roomList.push(await FindCreateRooms("Korah Room", "green", "BookKey", category_small));
+  roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey", category_small));
+  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey", category_small));
 
   const projectorRooms: string[] = [
     "Biggings Room",
@@ -819,15 +834,15 @@ async function main() {
     const property = await FindCreateRoomProperty(
       room.roomId,
       "HasProjector",
-      projectorRooms.includes(room.name) ? "true" : "false"
+      projectorRooms.includes(room.name) ? "true" : "false",
     );
   }
 
   //await FindCreateEventStatus("Created");
-  await FindCreateEventStatus("Pending Review", "circle-pause", "slate", "PENDING");
-  await FindCreateEventStatus("Confirmed", "circle-check", "green", "APPROVED");
-  await FindCreateEventStatus("Rejected", "circle-x", "red", "REJECTED");
-  await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue", "INFORMATION");
+  await FindCreateEventStatus("Pending Review", "CirclePause", "slate", "PENDING");
+  await FindCreateEventStatus("Confirmed", "CircleCheck", "green", "APPROVED");
+  await FindCreateEventStatus("Rejected", "CircleX", "red", "REJECTED");
+  await FindCreateEventStatus("Additional Info Required", "CircleQuestionMark", "blue", "INFORMATION");
 
   const user = await prisma.user.findFirst();
   if (!user) {
@@ -838,9 +853,11 @@ async function main() {
   await prisma.event.deleteMany();
   await prisma.recurrence.deleteMany();
 
-  CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
+  if (process.env.NODE_ENV === "development") {
+    CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
 
-  CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+    CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+  }
 
   //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
 
