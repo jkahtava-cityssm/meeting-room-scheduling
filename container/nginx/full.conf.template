@@ -1,6 +1,6 @@
 server {
   listen 80;
-  server_name ${DUCKDNS_DOMAIN};
+  server_name ${SERVER_NAME};
 
   location /.well-known/acme-challenge/ {
     root /var/www/certbot;
@@ -13,10 +13,10 @@ server {
 
 server {
   listen 443 ssl;
-  server_name ${DUCKDNS_DOMAIN};
+  server_name ${SERVER_NAME};
 
-  ssl_certificate /etc/letsencrypt/live/${DUCKDNS_DOMAIN}/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/${DUCKDNS_DOMAIN}/privkey.pem;
+  ssl_certificate /etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/${SERVER_NAME}/privkey.pem;
 
   location / {
     proxy_pass http://nextjs-app:3000;
