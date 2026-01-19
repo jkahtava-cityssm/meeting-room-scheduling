@@ -30,18 +30,22 @@ export async function findManyExpandedPermissionSets(
   });
 
   console.log("Roles fetched:", roles);
+
   return roles?.map((role) => {
     return {
       roleId: String(role.roleId),
       roleName: role.name,
       permissions: allResourceActions.map((resourceAction) => {
         const permissionInRole = role.roleResourceAction.find(
-          (pa) => pa.resourceActionId === resourceAction.resourceActionId || role.name === ROLES_ENUM.Admin,
+          (pa) => pa.resourceActionId === resourceAction.resourceActionId,
         );
+
+        const permissionExists = permissionInRole ? permissionInRole.permit : false;
+        const permit = role.name === ROLES_ENUM.Admin ? true : permissionExists;
 
         return {
           permissionId: String(permissionInRole ? permissionInRole.roleResourceActionId : "-1"),
-          permit: permissionInRole ? permissionInRole.permit : false,
+          permit: permit,
           actionId: String(resourceAction.actionId),
           action: resourceAction.action.name,
           resourceId: String(resourceAction.resourceId),
