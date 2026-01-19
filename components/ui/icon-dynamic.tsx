@@ -1,7 +1,7 @@
 "use client";
 
-import { lazy, Suspense, memo } from "react";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
+import type { LucideIcon } from "lucide-react";
+import { memo } from "react";
 import { cva } from "class-variance-authority";
 import { sharedIconBackgrounVariants, sharedIconColorVariants } from "../../lib/theme/colorVariants";
 import { TColors } from "@/lib/types";
@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import { BadgeColored } from "./badge-colored";
 import { Skeleton } from "./skeleton";
 
-export type IconName = keyof typeof dynamicIconImports;
+import * as Icons from "lucide-react";
+export type IconName = keyof typeof Icons;
 
 const IconColors = cva("", {
   variants: {
@@ -36,36 +37,21 @@ interface DynamicIconProps extends React.SVGProps<SVGSVGElement> {
   hideBackground?: boolean;
 }
 
-// Global cache for lazy-loaded icons
-const lazyIconCache: Partial<Record<IconName, React.ComponentType<React.SVGProps<SVGSVGElement>>>> = {};
-
 const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ...props }: DynamicIconProps) => {
   const iconClasses = IconColors({ color: color });
   const backgroundClasses = BackgroundColors({ background: hideBackground ? "invisible" : color });
 
-  const importFn = dynamicIconImports[name];
+  const Icon = Icons[name as keyof typeof Icons] as LucideIcon;
 
-  if (!importFn) {
-    return null;
-  }
+  if (!Icon) return null;
 
-  // Cache the lazy-loaded icon component
-  if (!lazyIconCache[name]) {
-    lazyIconCache[name] = lazy(importFn);
-  }
-
-  const LazyIcon = lazyIconCache[name]!;
-
-  return (
-    <Suspense fallback={<Skeleton className="min-w-6 min-h-6" />}>
-      {hideBackground ? (
-        <LazyIcon {...props} className={cn(iconClasses, props.className)} />
-      ) : (
-        <BadgeColored color={color} className="h-full aspect-square">
-          <LazyIcon {...props} className={cn(iconClasses, props.className)} />
-        </BadgeColored>
-      )}
-    </Suspense>
+  //<Skeleton className="min-w-6 min-h-6" />
+  return hideBackground ? (
+    <Icon {...props} className={cn(iconClasses, props.className)} />
+  ) : (
+    <BadgeColored color={color} className="h-full aspect-square">
+      <Icon {...props} className={cn(iconClasses, props.className)} />
+    </BadgeColored>
   );
 });
 

@@ -121,14 +121,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <SideBarGroup title="Application">
-          <SideBarPrimaryMenuItem title={"Availability"} iconName={"notebook-pen"} url={"/availability"} />
-          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"send"} url={"/bookings/user-view"} />
+          <SideBarPrimaryMenuItem title={"Availability"} iconName={"NotebookPen"} url={"/availability"} />
+          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"Send"} url={"/bookings/user-view"} />
           {PagePermissions.CalendarAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="calendar">
+            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="Calendar">
               <SideBarSubMenuItem
                 title={"Staff Requests"}
                 url={"/bookings/user-requests"}
-                iconName="circle-question-mark"
+                iconName="CircleQuestionMark"
                 rightIndicator={
                   <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
                 }
@@ -136,28 +136,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SideBarSubMenuItem
                 title={"Agenda View"}
                 url={"/calendar" + navigateURL(null, "agenda")}
-                iconName="calendar-range"
+                iconName="CalendarRange"
               />
-              <SideBarSubMenuItem title={"Day View"} url={"/calendar" + navigateURL(null, "day")} iconName="list" />
+              <SideBarSubMenuItem title={"Day View"} url={"/calendar" + navigateURL(null, "day")} iconName="List" />
               <SideBarSubMenuItem
                 title={"Week View"}
                 url={"/calendar" + navigateURL(null, "week")}
-                iconName="columns"
+                iconName="Columns"
               />
               <SideBarSubMenuItem
                 title={"Month View"}
                 url={"/calendar" + navigateURL(null, "month")}
-                iconName="grid-2x2"
+                iconName="Grid2x2"
               />
               <SideBarSubMenuItem
                 title={"Year View"}
                 url={"/calendar" + navigateURL(null, "year")}
-                iconName="grid-3x3"
+                iconName="Grid3x3"
               />
             </SideBarCollapsibleGroup>
           )}
           {PagePermissions.SettingsAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
+            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="Settings2">
               {PagePermissions.RoomsAccess && (
                 <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />
               )}
@@ -174,7 +174,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SideBarGroup title="">
-          <SideBarPrimaryMenuItem title={"Support"} iconName={"life-buoy"} url={"#"} />
+          <SideBarPrimaryMenuItem title={"Support"} iconName={"LifeBuoy"} url={"#"} />
         </SideBarGroup>
       </SidebarFooter>
     </Sidebar>
