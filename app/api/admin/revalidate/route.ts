@@ -6,7 +6,7 @@ import { NextRequest } from "next/server";
 export async function POST(req: NextRequest) {
   return guardRoute(
     req,
-    { IsDevelopment: { type: "function", check: () => process.env.NODE_ENV === "development" } },
+    { IsDevelopment: { type: "function", check: () => process.env.NEXT_PUBLIC_ENVIRONMENT === "development" } },
     async () => {
       const { paths, tags } = await req.json();
 
@@ -21,6 +21,6 @@ export async function POST(req: NextRequest) {
       }
 
       return NoContentMessage();
-    }
+    },
   );
 }

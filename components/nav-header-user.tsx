@@ -103,12 +103,12 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                   }}
                 ></Switch>
               </DropdownMenuItem>
-              {process.env.NODE_ENV === "development" && <RefreshMenuItem />}
+              {process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && <RefreshMenuItem />}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
 
-            {process.env.NODE_ENV === "development" && (
+            {process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && (
               <>
                 <DropdownMenuSeparator />
                 <div className="px-3 py-2 text-xs text-muted-foreground">
