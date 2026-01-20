@@ -1,7 +1,7 @@
 
 server {
   listen 80;
-  server_name exampledomain.home;
+  server_name ${SERVER_NAME};
 
   # Redirect all HTTP to HTTPS
   location / {
@@ -11,7 +11,7 @@ server {
 
 server {
   listen 443 ssl;
-  server_name exampledomain.home;
+  server_name ${SERVER_NAME};
 
   # Self-signed certificate paths (generated in startup.sh)
   ssl_certificate     /etc/nginx/certs/selfsigned.crt;
