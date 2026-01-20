@@ -18,7 +18,9 @@ install:
 	$(COMPOSE) --profile install-nginx up -d
 	$(COMPOSE) --profile install-app build --no-cache
 	$(COMPOSE) --profile install-app up -d
-
+	# Clean up dangling <none> images immediately after
+	podman image prune -f
+	
 installMigrate:
 	$(COMPOSE) --profile install-db build --no-cache
 	$(COMPOSE) --profile install-db up -d
