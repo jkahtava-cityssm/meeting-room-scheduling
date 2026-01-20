@@ -3,29 +3,55 @@ import { NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
 import { prisma } from "@/prisma";
 import { findManyUsers } from "@/lib/data/users";
 import { NextRequest } from "next/server";
+import { isGroupRequirementMet } from "@/lib/auth-permission-checks";
 
 export async function GET(request: NextRequest) {
-  return guardRoute(
-    request,
-    { ReadUser: { type: "permission", resource: "User", action: "Read" } },
+	return guardRoute(
+		request,
+		{
+			ReadUser: {
+				type: "or",
+				requirements: [
+					{ type: "permission", resource: "User", action: "Read All" },
+					{ type: "permission", resource: "User", action: "Read Self" },
+				],
+			},
+		},
 
-    async () => {
-      const users = await findManyUsers({ employeeActive: true });
+		async (userId, roles, authorization) => {
+			const permissions = await isGroupRequirementMet(roles, {
+				ReadAll: {
+					type: "permission",
+					resource: "User",
+					action: "Read All",
+				},
+				ReadSelf: {
+					type: "permission",
+					resource: "User",
+					action: "Read Self",
+				},
+			});
 
-      if (!users) {
-        return NotFoundMessage();
-      }
+			const users = permissions.ReadAll
+				? await findManyUsers({ employeeActive: true })
+				: permissions.ReadSelf
+					? await findManyUsers({ id: userId, employeeActive: true })
+					: null;
 
-      const flatUsers =
-        users.map((user) => {
-          return {
-            userId: user.id,
-            name: user.name,
-            email: user.email,
-          };
-        }) || [];
+			if (!users) {
+				return NotFoundMessage();
+			}
 
-      return SuccessMessage("Collected Users", flatUsers);
-    }
-  );
+			const flatUsers =
+				users.map(user => {
+					return {
+						userId: user.id,
+						name: user.name,
+						email: user.email,
+					};
+				}) || [];
+
+			return SuccessMessage("Collected Users", flatUsers);
+		},
+	);
 }
