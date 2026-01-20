@@ -10,7 +10,7 @@ import { prisma } from "@/prisma";
 export async function POST(req: NextRequest) {
   return guardRoute(
     req,
-    { IsDevelopment: { type: "function", check: () => process.env.NODE_ENV === "development" } },
+    { IsDevelopment: { type: "function", check: () => process.env.NEXT_PUBLIC_ENVIRONMENT === "development" } },
     async () => {
       try {
         const session_headers = await headers();
@@ -56,6 +56,6 @@ export async function POST(req: NextRequest) {
         const errorMessage = err instanceof Error ? err.message : "Registration failed";
         return NextResponse.json({ ok: false, error: errorMessage }, { status: 400 });
       }
-    }
+    },
   );
 }

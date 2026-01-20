@@ -68,7 +68,12 @@ export const auth = betterAuth({
       updateUserInfoOnLink: true,
     },
   },
-  trustedOrigins: ["http://192.168.50.33", "https://192.168.50.33", "http://localhost:3000"],
+  trustedOrigins: [
+    "http://192.168.50.33",
+    "https://192.168.50.33",
+    "http://localhost:3000",
+    "https://exampledomain.home",
+  ],
   databaseHooks: {
     user: {
       update: {
@@ -115,7 +120,7 @@ export const auth = betterAuth({
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${user.id}`,
         { token: session.token },
         3600,
-        [user.id]
+        [user.id],
       );
       //console.log("SESSION GET");
       return {

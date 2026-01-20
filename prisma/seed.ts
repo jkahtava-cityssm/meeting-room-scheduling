@@ -754,7 +754,7 @@ async function main() {
   await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
   await FindCreateConfigurationSetting("singleSignOnEnabled", "false");
 
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();
     await prisma.user.deleteMany();
@@ -853,7 +853,7 @@ async function main() {
   await prisma.event.deleteMany();
   await prisma.recurrence.deleteMany();
 
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
     CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
 
     CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);

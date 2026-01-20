@@ -76,7 +76,7 @@ export default async function Home() {
                     <SignInMicrosoftSSO />
                   </div>
                 )}
-                {process.env.NODE_ENV === "development" && (
+                {process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && (
                   <div className="flex flex-col items-center gap-2 m-4">
                     <SignInGithub />
                   </div>
