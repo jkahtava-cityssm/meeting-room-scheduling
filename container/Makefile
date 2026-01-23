@@ -1,7 +1,7 @@
 export
 
 CONTAINER_MANAGER=podman
-ENV_FILE_LOCATION=../.env
+ENV_FILE_LOCATION=../.env.docker
 MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose -f docker-compose.db.migrate.yml --env-file ${ENV_FILE_LOCATION}
 COMPOSE=$(CONTAINER_MANAGER) compose -f local.docker-compose.merged.yml --env-file ${ENV_FILE_LOCATION}
 
@@ -18,20 +18,23 @@ install:
 	$(COMPOSE) --profile install-nginx up -d
 	$(COMPOSE) --profile install-app build --no-cache
 	$(COMPOSE) --profile install-app up -d
-	# Clean up dangling <none> images immediately after
 	podman image prune -f
-	
+# Clean up dangling <none> images immediately after
+
 installMigrate:
 	$(COMPOSE) --profile install-db build --no-cache
 	$(COMPOSE) --profile install-db up -d
+	podman image prune -f
 
 installApp:
 	$(COMPOSE) --profile install-app build --no-cache	
 	$(COMPOSE) --profile install-app up -d
+	podman image prune -f
 
 installSeed:
 	$(COMPOSE) --profile seed build --no-cache	
 	$(COMPOSE) --profile seed up -d
+	podman image prune -f
 #--rm prisma-migrate
 
 # Development bootstrap (DB + migrate + seed + app stack)

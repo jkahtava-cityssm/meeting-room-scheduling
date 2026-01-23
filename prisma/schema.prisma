@@ -214,7 +214,7 @@ model Resource {
 }
 
 model Action {
-  actionId  Int      @id @default(autoincrement())
+  actionId  Int      @id @default(autoincrement()) @map("action_id")
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
