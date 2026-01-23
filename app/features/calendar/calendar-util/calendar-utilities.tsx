@@ -15,6 +15,28 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 const MINIMUM_INTERVAL = 5;
 const MAXIMUM_INTERVAL = 60;
 
+export const HeaderTimeBlocks = React.memo(function HeaderTimeBlocks({
+	rooms,
+	hours,
+	currentDate,
+	userId,
+	eventBlocks,
+	dayIndex,
+	interval,
+	allowCreateEvent,
+}: {
+	rooms: number[];
+	hours: number[];
+	currentDate: Date;
+	userId: string | undefined;
+	eventBlocks: IEventBlock[];
+	dayIndex: string;
+	interval: number;
+	allowCreateEvent: boolean;
+}) {
+	return <></>;
+});
+
 export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 	rooms,
 	hours,
@@ -50,30 +72,17 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 		? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
 		: "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
 	return (
-		<div className={`${breakpoints}`}>
-			{/*<DayViewDayHeader
-				key={dayViews.day}
-				currentDate={dayViews.dayDate}
-			/>
-            */}
-			{
-				/*<ScrollArea
-				className={`w-[calc(100%-10px)] h-[calc(100vh-220px)]`}
-				type="always"
-			>*/
-				//255 -
-			}
-
-			<ScrollArea
-				className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh] w-[calc(100%-10px)]"
-				type="always"
-			>
-				<div className="flex border-l">
-					{/* Hours column   h-[500px]  */}
-					<HourColumn hours={hours} />
-					<div className="flex w-full">
-						{roomsToRender.map(room => {
-							return (
+		<ScrollArea
+			className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh] w-full"
+			type="always"
+		>
+			<div className="flex  min-w-0">
+				{/* Hours column   h-[500px]  */}
+				<HourColumn hours={hours} />
+				<div className="flex w-full min-w-0 pr-4">
+					{roomsToRender.map(room => {
+						return (
+							<>
 								<DayColumn
 									key={room.roomId}
 									hours={hours}
@@ -83,29 +92,31 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 									dayIndex={dayIndex}
 									interval={interval}
 									allowCreateEvent={allowCreateEvent}
+									isLastColumn={room.roomId === roomList[roomList.length - 1]}
 								/>
-							);
-						})}
-					</div>
+							</>
+						);
+					})}
 				</div>
-				<ScrollBar
-					orientation="vertical"
-					forceMount
-				/>
-				<ScrollBar
-					orientation="horizontal"
-					forceMount
-				/>
-			</ScrollArea>
-		</div>
+			</div>
+			<ScrollBar
+				orientation="vertical"
+				forceMount
+			/>
+			<ScrollBar
+				orientation="horizontal"
+				forceMount
+			/>
+		</ScrollArea>
 	);
 });
 
 export const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }) {
 	const lastHour = hours[hours.length - 1] + 1;
 	return (
-		<div className="min-w-18 border-x-2 pr-2 border-b-2 border-t-2">
-			<TimeBlockAnchor></TimeBlockAnchor>
+		<div className="sticky left-0 z-10 bg-background min-w-18 border-x-2 pr-2 border-b-2">
+			<div className="h-8"></div>
+			<TimeBlockTopAnchor></TimeBlockTopAnchor>
 			{hours.map((hour, index) => {
 				return (
 					<div
@@ -118,7 +129,7 @@ export const HourColumn = React.memo(function HourColumn({ hours }: { hours: num
 					</div>
 				);
 			})}
-			<TimeBlockAnchor title={format(new Date().setHours(lastHour), "hh a")}></TimeBlockAnchor>
+			<TimeBlockBottomAnchor title={format(new Date().setHours(lastHour), "hh a")}></TimeBlockBottomAnchor>
 		</div>
 	);
 });
@@ -131,6 +142,7 @@ export const DayColumn = React.memo(function DayColumn({
 	dayIndex,
 	interval,
 	allowCreateEvent,
+	isLastColumn,
 }: {
 	hours: number[];
 	currentDate: Date;
@@ -139,9 +151,15 @@ export const DayColumn = React.memo(function DayColumn({
 	dayIndex: string;
 	interval: number;
 	allowCreateEvent: boolean;
+	isLastColumn: boolean;
 }) {
 	return (
-		<div className="min-w-45 w-full border-b-2 border-t-2">
+		<div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
+			<div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
+				<span className="py-2 text-center text-xs font-medium text-muted-foreground">
+					<span className="ml-1 font-semibold text-foreground">{"AAA"}</span>
+				</span>
+			</div>
 			<TimeBlocks
 				hours={hours}
 				currentDate={currentDate}
@@ -191,7 +209,7 @@ export function TimeBlocks({
 
 	return (
 		<div>
-			<TimeBlockAnchor showBackground={true}></TimeBlockAnchor>
+			<TimeBlockTopAnchor showBackground={true}></TimeBlockTopAnchor>
 			{hours.map((hour, index) => {
 				return (
 					<div
@@ -219,7 +237,7 @@ export function TimeBlocks({
 					</div>
 				);
 			})}
-			<TimeBlockAnchor showBackground={true}></TimeBlockAnchor>
+			<TimeBlockBottomAnchor showBackground={true}></TimeBlockBottomAnchor>
 		</div>
 	);
 }
@@ -259,7 +277,7 @@ const TimeBlockEventDrawer = ({
 	);
 };
 
-function TimeBlockAnchor({
+function TimeBlockBottomAnchor({
 	title,
 	showBackground = false,
 	topBorder = false,
@@ -271,14 +289,18 @@ function TimeBlockAnchor({
 	bottomBorder?: boolean;
 }) {
 	return (
-		<div className={cn("relative h-1.5 ", showBackground && "bg-(--color-border) ", topBorder && "border-t-2", bottomBorder && "border-b-2")}>
+		<div className={cn("relative h-4 ", showBackground && "bg-(--color-border) ", topBorder && "border-t-2", bottomBorder && "border-b-2")}>
 			{title && (
-				<div className={"absolute right-2 flex items-center -top-1 h-1.5"}>
+				<div className={"absolute right-2 flex items-center -top-2 h-4"}>
 					<span className="text-xs text-muted-foreground">{title}</span>
 				</div>
 			)}
 		</div>
 	);
+}
+
+function TimeBlockTopAnchor({ showBackground = false }: { title?: string; showBackground?: boolean; topBorder?: boolean; bottomBorder?: boolean }) {
+	return <div className={cn("relative h-1.5 ", showBackground && "bg-(--color-border) ")}></div>;
 }
 
 const HEIGHTS: Record<number, string> = { 12: "h-2", 6: "h-4", 4: "h-6", 3: "h-8", 2: "h-12" } as const;
