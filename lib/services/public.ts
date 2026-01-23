@@ -39,6 +39,7 @@ const PUBLIC_SCONFIGURATION = z.object({
 		to: z.number(),
 	}),
 	useSSO: z.string(),
+	interval: z.number(),
 });
 
 export type PUBLIC_IEVENT = z.infer<typeof PUBLIC_SEVENT>;

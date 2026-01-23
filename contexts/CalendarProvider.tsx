@@ -20,6 +20,7 @@ interface ICalendarContext {
 	workingHours: TWorkingHours;
 	setWorkingHours: Dispatch<SetStateAction<TWorkingHours>>;
 	visibleHours: TVisibleHours;
+	interval: number;
 	//setVisibleHours: Dispatch<SetStateAction<TVisibleHours>>;
 }
 
@@ -42,6 +43,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
 	const { data: configurationData } = usePublicConfiguration();
 
 	const visibleHours: TVisibleHours = configurationData ? configurationData.hours : VISIBLE_HOURS;
+	const interval = configurationData ? configurationData.interval : 30;
 
 	const [isHeaderLoading, setIsHeaderLoading] = useState(true);
 	const [totalEvents, setTotalEvents] = useState(0);
@@ -65,6 +67,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
 				selectedRoomId,
 				setSelectedRoomId,
 				visibleHours,
+				interval,
 				//setVisibleHours,
 				workingHours,
 				setWorkingHours,
