@@ -244,6 +244,7 @@ const TimeBlockEventDrawer = ({
     <TimeBlockButton totalSlots={totalSlots} index={index}></TimeBlockButton>
   );
 };
+//<div className={cn("absolute inset-x-0 cursor-pointer transition-colors hover:bg-accent", height, top)} />
 
 function TimeBlockBottomAnchor({
   title,
@@ -317,14 +318,20 @@ const SEPARATIONS: Record<number, number[]> = {
   1: [-1],
 } as const;
 
-function TimeBlockButton({ totalSlots, index }: { totalSlots: number; index: number }) {
+const TimeBlockButton = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { totalSlots: number; index: number }
+>(function TimeBlockButton({ totalSlots, index, className, ...props }, ref) {
   const height = HEIGHTS[totalSlots];
   const top = TOPS[totalSlots]?.[index];
-  //console.log("Total Slots:", totalSlots, "Index:", index);
-  //console.log(TOPS, HEIGHTS);
-  //console.log("Rendering TimeBlockButton with height:", height, "and top:", top);
-  return <div className={cn("absolute inset-x-0 cursor-pointer transition-colors hover:bg-accent", height, top)} />;
-}
+  return (
+    <div
+      ref={ref}
+      className={cn("absolute inset-x-0 cursor-pointer transition-colors hover:bg-accent", height, top)}
+      {...props}
+    />
+  );
+});
 
 function TimeBlockSeperator() {
   return <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed" />;
