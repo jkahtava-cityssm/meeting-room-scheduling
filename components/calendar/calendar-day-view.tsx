@@ -112,7 +112,7 @@ export function CalendarDayView({
       currentDate: date,
       startDate: startOfDay(date),
       endDate: endOfDay(date),
-      selectedRooms: visibleRooms?.map((room) => String(room.roomId)) || [],
+      selectedRooms: [selectedRoomId],
       visibleHours: visibleHours,
     });
   }, [events, date, selectedRoomId, visibleHours, postMessage, setIsHeaderLoading, visibleRooms]);
