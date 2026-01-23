@@ -1,48 +1,21 @@
-import { EventBlock } from "@/components/calendar/calendar-day-event-block";
-
-import { IDayView, IEventBlock } from "@/components/calendar/calendar-week-view";
+import { IEventBlock } from "@/components/calendar/calendar-week-view";
 import { format } from "date-fns";
 import React from "react";
 
 import { cn } from "@/lib/utils";
-import { isWorkingHour } from "@/lib/helpers";
-import { TWorkingHours } from "@/lib/types";
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
-import { useMemo } from "react";
-import { IRoom } from "@/lib/schemas/calendar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { IBlock, IBlockList } from "./calendar-day-grid-webworker";
 
 const MINIMUM_INTERVAL = 5;
 const MAXIMUM_INTERVAL = 60;
-
-export const HeaderTimeBlocks = React.memo(function HeaderTimeBlocks({
-	rooms,
-	hours,
-	currentDate,
-	userId,
-	eventBlocks,
-	dayIndex,
-	interval,
-	allowCreateEvent,
-}: {
-	rooms: number[];
-	hours: number[];
-	currentDate: Date;
-	userId: string | undefined;
-	eventBlocks: IEventBlock[];
-	dayIndex: string;
-	interval: number;
-	allowCreateEvent: boolean;
-}) {
-	return <></>;
-});
 
 export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 	rooms,
 	hours,
 	currentDate,
 	userId,
-	eventBlocks,
+	roomBlocks,
 	dayIndex,
 	interval,
 	allowCreateEvent,
@@ -51,22 +24,31 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 	hours: number[];
 	currentDate: Date;
 	userId: string | undefined;
-	eventBlocks: IEventBlock[];
+	roomBlocks: Map<string, IBlock[]>;
 	dayIndex: string;
 	interval: number;
 	allowCreateEvent: boolean;
 }) {
-	const roomList = rooms && rooms.length > 0 ? rooms : [-1];
+	const roomsToRender: { roomId: number; roomName: string; blocks: IBlock[] }[] = [];
+	roomBlocks.forEach((blocks, key) => {
+		const roomName = blocks.length > 0 ? blocks[0].event.room.name : "default";
 
+		roomsToRender.push({ roomId: Number(key), roomName, blocks });
+	});
+
+	const roomList = rooms && rooms.length > 0 ? rooms : [-1];
+	/*
 	const roomsToRender = roomList.map(roomId => {
 		if (roomId === -1) {
-			return { roomId: -1, roomName: "No Rooms", roomBlocks: eventBlocks };
+			return { roomId: -1, roomName: "No Rooms", roomBlocks: roomBlocks };
 		}
 
-		const roomBlocks = eventBlocks.filter(b => String(b.roomId) === String(roomId));
-		const roomName = roomBlocks.length > 0 ? roomBlocks[0].event.room.name : "default";
-		return { roomId, roomName, roomBlocks };
+		const filteredRoomBlocks = roomBlocks.get(String(roomId)) as IBlock[]; //.filter(b => String(b.roomId) === String(roomId));
+		const roomName = filteredRoomBlocks.length > 0 ? filteredRoomBlocks[0].event.room.name : "default";
+		
+		return { roomId, roomName, filteredRoomBlocks };
 	});
+	*/
 
 	const breakpoints = false
 		? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
@@ -90,7 +72,7 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 									hours={hours}
 									currentDate={currentDate}
 									userId={userId}
-									eventBlocks={room.roomBlocks}
+									eventBlocks={room.blocks || []}
 									dayIndex={dayIndex}
 									interval={interval}
 									allowCreateEvent={allowCreateEvent}
@@ -112,8 +94,7 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 		</ScrollArea>
 	);
 });
-
-export const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }) {
+const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }) {
 	const lastHour = hours[hours.length - 1] + 1;
 	return (
 		<div className="sticky left-0 z-10 bg-background min-w-18 border-x-2 pr-2 border-b-2">
@@ -136,7 +117,7 @@ export const HourColumn = React.memo(function HourColumn({ hours }: { hours: num
 	);
 });
 
-export const DayColumn = React.memo(function DayColumn({
+const DayColumn = React.memo(function DayColumn({
 	hours,
 	currentDate,
 	roomId,
@@ -153,7 +134,7 @@ export const DayColumn = React.memo(function DayColumn({
 	roomId: number;
 	roomName: string;
 	userId: string | undefined;
-	eventBlocks: IEventBlock[];
+	eventBlocks: IBlock[];
 	dayIndex: string;
 	interval: number;
 	allowCreateEvent: boolean;
@@ -194,7 +175,7 @@ export const DayColumn = React.memo(function DayColumn({
 	);
 });
 
-export function TimeBlocks({
+function TimeBlocks({
 	roomId,
 	hours,
 	currentDate,
