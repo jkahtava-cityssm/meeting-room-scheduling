@@ -85,6 +85,8 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 							<>
 								<DayColumn
 									key={room.roomId}
+									roomId={room.roomId}
+									roomName={room.roomName}
 									hours={hours}
 									currentDate={currentDate}
 									userId={userId}
@@ -137,6 +139,8 @@ export const HourColumn = React.memo(function HourColumn({ hours }: { hours: num
 export const DayColumn = React.memo(function DayColumn({
 	hours,
 	currentDate,
+	roomId,
+	roomName,
 	userId,
 	eventBlocks,
 	dayIndex,
@@ -146,6 +150,8 @@ export const DayColumn = React.memo(function DayColumn({
 }: {
 	hours: number[];
 	currentDate: Date;
+	roomId: number;
+	roomName: string;
 	userId: string | undefined;
 	eventBlocks: IEventBlock[];
 	dayIndex: string;
@@ -157,10 +163,11 @@ export const DayColumn = React.memo(function DayColumn({
 		<div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
 			<div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
 				<span className="py-2 text-center text-xs font-medium text-muted-foreground">
-					<span className="ml-1 font-semibold text-foreground">{"AAA"}</span>
+					<span className="ml-1 font-semibold text-foreground">{roomName}</span>
 				</span>
 			</div>
 			<TimeBlocks
+				roomId={roomId}
 				hours={hours}
 				currentDate={currentDate}
 				userId={userId}
@@ -188,12 +195,14 @@ export const DayColumn = React.memo(function DayColumn({
 });
 
 export function TimeBlocks({
+	roomId,
 	hours,
 	currentDate,
 	userId,
 	allowCreateEvent,
 	interval = 15,
 }: {
+	roomId: number;
 	hours: number[];
 	currentDate: Date;
 	userId?: string;
@@ -222,6 +231,7 @@ export function TimeBlocks({
 								<div key={currentSlot}>
 									<TimeBlockEventDrawer
 										key={currentSlot}
+										roomId={roomId}
 										minute={clampedValue}
 										currentDate={currentDate}
 										hour={hour}
@@ -248,6 +258,7 @@ const TimeBlockEventDrawer = ({
 	minute,
 	allowCreateEvent,
 	userId,
+	roomId,
 	totalSlots,
 	index,
 }: {
@@ -257,12 +268,14 @@ const TimeBlockEventDrawer = ({
 	allowCreateEvent: boolean;
 	totalSlots: number;
 	userId: string | undefined;
+	roomId: number;
 	index: number;
 }) => {
 	return allowCreateEvent ? (
 		<EventDrawer
 			creationDate={getDateTime(currentDate, hour, minute)}
 			userId={userId}
+			roomId={roomId}
 		>
 			<TimeBlockButton
 				totalSlots={totalSlots}
