@@ -20,174 +20,154 @@ import { Button } from "../ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Terminal } from "lucide-react";
 import { DayViewDayHeader } from "./calendar-day-view-day-header";
+import { useSidebar } from "../ui/sidebar";
 //import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null) {
-	return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
+  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
 }
 
 function removeTimeFromDate(date: Date) {
-	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 const PAGE_PERMISSIONS = {
-	CreateEvent: { type: "permission", resource: "Event", action: "Create" },
-	AllowDayView: { type: "permission", resource: "Calendar", action: "View Day" },
-	AllowWeekView: { type: "permission", resource: "Calendar", action: "View Week" },
-	AllowMonthView: { type: "permission", resource: "Calendar", action: "View Month" },
-	AllowYearView: { type: "permission", resource: "Calendar", action: "View Year" },
-	AllowAgendaView: { type: "permission", resource: "Calendar", action: "View Agenda" },
+  CreateEvent: { type: "permission", resource: "Event", action: "Create" },
+  AllowDayView: { type: "permission", resource: "Calendar", action: "View Day" },
+  AllowWeekView: { type: "permission", resource: "Calendar", action: "View Week" },
+  AllowMonthView: { type: "permission", resource: "Calendar", action: "View Month" },
+  AllowYearView: { type: "permission", resource: "Calendar", action: "View Year" },
+  AllowAgendaView: { type: "permission", resource: "Calendar", action: "View Agenda" },
 } as const;
 
 export function CalendarAllViews({ userId }: { userId?: string }) {
-	const searchParams = useSearchParams();
-	const dateParam = searchParams.get("selectedDate");
-	const viewParam = searchParams.get("view");
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("selectedDate");
+  const viewParam = searchParams.get("view");
 
-	const view = viewParam === null ? "day" : viewParam;
+  const view = viewParam === null ? "day" : viewParam;
 
-	const dateValue = useMemo(() => {
-		return getViewDate(dateParam);
-	}, [dateParam]);
+  const dateValue = useMemo(() => {
+    return getViewDate(dateParam);
+  }, [dateParam]);
 
-	const { session, isPending } = useClientSession();
+  const { session, isPending } = useClientSession();
 
-	const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
+  const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
-	if (isPending) {
-		return <div>Verifying Access</div>;
-	}
+  const { open, openMobile, isMobile } = useSidebar();
 
-	if (!session) {
-		//console.log("Calendar-All-Views No session, redirecting to login");
-		redirect("/");
-	}
+  if (isPending) {
+    return <div>Verifying Access</div>;
+  }
 
-	if (session) {
-		return (
-			<div className="overflow-hidden rounded-xl border min-w-92">
-				<CalendarHeader
-					view={view as TCalendarView}
-					selectedDate={dateValue}
-					userId={userId}
-					allowCreateEvent={Permissions.CreateEvent}
-				/>
+  if (!session) {
+    //console.log("Calendar-All-Views No session, redirecting to login");
+    redirect("/");
+  }
 
-				{view === "day" && (
-					<CalendarDayView
-						date={dateValue}
-						userId={userId}
-						//allowDayView={Permissions.AllowDayView}
-						allowCreateEvent={Permissions.CreateEvent}
-					/>
-				)}
-				{view === "month" && (
-					<CalendarMonthView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-				{view === "week" && (
-					<CalendarWeekView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-				{view === "year" && (
-					<CalendarYearView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-				{view === "agenda" && (
-					<CalendarAgendaView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-			</div>
-		);
-	}
+  if (session) {
+    return (
+      <div className="overflow-hidden rounded-xl border min-w-92">
+        <CalendarHeader
+          view={view as TCalendarView}
+          selectedDate={dateValue}
+          userId={userId}
+          allowCreateEvent={Permissions.CreateEvent}
+        />
+
+        {view === "day" && (
+          <CalendarDayView
+            date={dateValue}
+            userId={userId}
+            //allowDayView={Permissions.AllowDayView}
+            allowCreateEvent={Permissions.CreateEvent}
+            isSidebarOpen={open}
+          />
+        )}
+        {view === "month" && <CalendarMonthView date={dateValue} userId={userId} />}
+        {view === "week" && <CalendarWeekView date={dateValue} userId={userId} />}
+        {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
+        {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
+      </div>
+    );
+  }
 }
 
 export function CalendarAccessDenied({
-	currentDate,
-	title,
-	description,
-	children,
+  currentDate,
+  title,
+  description,
+  children,
 }: {
-	currentDate: Date;
-	title?: string;
-	description?: string;
-	children?: React.ReactNode;
+  currentDate: Date;
+  title?: string;
+  description?: string;
+  children?: React.ReactNode;
 }) {
-	return (
-		<div className="flex">
-			<div className="flex flex-1 flex-col">
-				{children}
+  return (
+    <div className="flex">
+      <div className="flex flex-1 flex-col">
+        {children}
 
-				<div className="flex h-full border-l">
-					<div className="w-18 border-r"></div>
-					<div className="relative flex-1 border-b p-4">
-						<Alert
-							variant="destructive"
-							className="mt-4 "
-						>
-							<Terminal className="h-4 w-4" />
-							<AlertTitle>{title ? title : "Error"}</AlertTitle>
-							<AlertDescription>{description ? description : "You do not have permission to view these events."}</AlertDescription>
-						</Alert>
-					</div>
-				</div>
-			</div>
-			<CalendarDayColumnCalendar
-				date={currentDate}
-				isLoading={false}
-				events={[]}
-				view={"day"}
-			></CalendarDayColumnCalendar>
-		</div>
-	);
+        <div className="flex h-full border-l">
+          <div className="w-18 border-r"></div>
+          <div className="relative flex-1 border-b p-4">
+            <Alert variant="destructive" className="mt-4 ">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>{title ? title : "Error"}</AlertTitle>
+              <AlertDescription>
+                {description ? description : "You do not have permission to view these events."}
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      </div>
+      <CalendarDayColumnCalendar
+        date={currentDate}
+        isLoading={false}
+        events={[]}
+        view={"day"}
+      ></CalendarDayColumnCalendar>
+    </div>
+  );
 }
 
 export function CalendarEmptyAlert({
-	currentDate,
-	title,
-	description,
-	children,
+  currentDate,
+  title,
+  description,
+  children,
 }: {
-	currentDate: Date;
-	title?: string;
-	description?: string;
-	children?: React.ReactNode;
+  currentDate: Date;
+  title?: string;
+  description?: string;
+  children?: React.ReactNode;
 }) {
-	return (
-		<div className="flex">
-			<div className="flex flex-1 flex-col">
-				{children}
+  return (
+    <div className="flex">
+      <div className="flex flex-1 flex-col">
+        {children}
 
-				<div className="flex h-full border-l">
-					<div className="w-18 border-r"></div>
-					<div className="relative flex-1 border-b p-4">
-						<Alert
-							variant="destructive"
-							className="mt-4 "
-						>
-							<Terminal className="h-4 w-4" />
-							<AlertTitle>{title ? title : "Empty"}</AlertTitle>
-							<AlertDescription>{description ? description : "No Data was Found"}</AlertDescription>
-						</Alert>
-					</div>
-				</div>
-			</div>
-			<CalendarDayColumnCalendar
-				date={currentDate}
-				isLoading={false}
-				events={[]}
-				view={"day"}
-			></CalendarDayColumnCalendar>
-		</div>
-	);
+        <div className="flex h-full border-l">
+          <div className="w-18 border-r"></div>
+          <div className="relative flex-1 border-b p-4">
+            <Alert variant="destructive" className="mt-4 ">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>{title ? title : "Empty"}</AlertTitle>
+              <AlertDescription>{description ? description : "No Data was Found"}</AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      </div>
+      <CalendarDayColumnCalendar
+        date={currentDate}
+        isLoading={false}
+        events={[]}
+        view={"day"}
+      ></CalendarDayColumnCalendar>
+    </div>
+  );
 }
 
 /*function CalendarDayViewWithAllEvents({ date }: { date: Date }) {
