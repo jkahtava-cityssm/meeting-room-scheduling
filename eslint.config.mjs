@@ -1,7 +1,7 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
-import * as localHookRules from "./eslint-rules/no-inline-for-verification-hook.js";
+import ruleDefinition from "./eslint-rules/no-inline-for-verification-hook.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,7 +20,7 @@ const eslintConfig = [
 
     // In Flat Config, plugins are plain objects (not strings)
     plugins: {
-      "local-hooks": localHookRules,
+      "local-hooks": ruleDefinition,
     },
 
     rules: {
