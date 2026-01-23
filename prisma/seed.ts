@@ -772,7 +772,7 @@ async function main() {
   const resources = await FindCreateResourceList();
   const resourceActions = await FindCreateResourceActionList(resources, actions);
   const roles = await FindCreateRoleList();
-
+  console.log("Seeding Permission Sets...");
   for (const roleSet of DEFAULT_PERMISSION_SETS) {
     const role = roles[roleSet.ROLE];
     for (const resourceSet of roleSet.SET) {
@@ -796,9 +796,11 @@ async function main() {
     roomCategoryId: number;
   }[] = [];
 
+  console.log("Seeding Room Scopes...");
   await FindCreateRoomScope("Public");
   await FindCreateRoomScope("Private");
 
+  console.log("Seeding Room Sizes...");
   const { roomCategoryId: category_none } = await FindCreateRoomCategory("None");
   const { roomCategoryId: category_small } = await FindCreateRoomCategory("Small");
   const { roomCategoryId: category_large } = await FindCreateRoomCategory("Large");
@@ -806,6 +808,7 @@ async function main() {
 
   //await FindCreateRooms("All", "zinc", "Asterisk");
 
+  console.log("Seeding Default Rooms...");
   roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey", category_large));
   roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey", category_large));
   roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "BookKey", category_large));
@@ -837,7 +840,7 @@ async function main() {
       projectorRooms.includes(room.name) ? "true" : "false",
     );
   }
-
+  console.log("Seeding Event Statuses...");
   //await FindCreateEventStatus("Created");
   await FindCreateEventStatus("Pending Review", "CirclePause", "slate", "PENDING");
   await FindCreateEventStatus("Confirmed", "CircleCheck", "green", "APPROVED");
@@ -850,10 +853,11 @@ async function main() {
     return;
   }
 
-  await prisma.event.deleteMany();
-  await prisma.recurrence.deleteMany();
-
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
+    console.log("Seeding Random Events...");
+    await prisma.event.deleteMany();
+    await prisma.recurrence.deleteMany();
+
     CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
 
     CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
