@@ -75,22 +75,24 @@ async function processDayEvents(dayData: IDayGridMessage): Promise<IDayGridRespo
   const dailyEvents = combinedEvents.filter((event) => isSameDay(event.startDate, startDate));
   //const events = z.array(SEvent).parse(combinedEvents);
 
+  const filteredEvents: IEvent[] = filterEventsByRoom(dailyEvents, selectedRooms).sort(
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+  );
+
   const eventsByRoom = new Map<string, IEvent[]>();
 
-  selectedRooms.forEach((roomId) => {
-    const events = filterEventsByRoom(dailyEvents, roomId).sort(
-      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
-    );
+  const expandedSelectedRooms = selectedRooms.includes("-1")
+    ? Array.from(new Set(filteredEvents.map((e) => String(e.roomId))))
+    : selectedRooms;
+
+  expandedSelectedRooms.forEach((roomId) => {
+    const events = filteredEvents.filter((e) => String(e.roomId) === roomId);
 
     if (!eventsByRoom.has(roomId)) {
       eventsByRoom.set(roomId, []);
     }
     eventsByRoom.get(roomId)!.push(...events);
   });
-
-  const filteredEvents: IEvent[] = filterEventsByRoom(dailyEvents, selectedRooms).sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
-  );
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, filteredEvents);
 
