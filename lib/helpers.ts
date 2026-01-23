@@ -198,8 +198,8 @@ export function hasEventOverlap(currentEvent: IEvent, eventList: IEvent[][], cur
         areIntervalsOverlapping(currentEventInterval, {
           start: eventToCompare.startDate,
           end: eventToCompare.endDate,
-        })
-      )
+        }),
+      ),
   );
 }
 
@@ -236,7 +236,7 @@ export function calculateEventBlockStyle(
   groupIndex: number,
   groupSize: number,
   hasOverlap: boolean,
-  visibleHoursRange?: { from: number; to: number }
+  visibleHoursRange?: { from: number; to: number },
 ) {
   const startDate = new Date(event.startDate);
   const dayStart = new Date(day.setHours(0, 0, 0, 0));
@@ -285,7 +285,14 @@ export function mergeDateWithTime(date: Date, time: Date) {
  */
 export function convertDateToRRuleDate(date: Date) {
   return new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds())
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      date.getHours(),
+      date.getMinutes(),
+      date.getSeconds(),
+    ),
   );
 }
 
@@ -306,7 +313,7 @@ export function convertRRuleDateToDate(date: Date) {
     date.getUTCDate(),
     date.getUTCHours(),
     date.getUTCMinutes(),
-    date.getUTCSeconds()
+    date.getUTCSeconds(),
   );
 }
 
@@ -457,7 +464,7 @@ export const combineDateTime = (dateField: Date, timeField: Date) => {
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | string) {
   const roomIds = Array.isArray(selectedRoomId) ? selectedRoomId : [selectedRoomId];
 
-  if (selectedRoomId === "-1") {
+  if (roomIds.includes("-1")) {
     return events;
   }
 
@@ -493,7 +500,7 @@ export function calculateYearlyRecurrenceEndDate(
   occurrences: number,
   day: number,
   month: number,
-  years: number
+  years: number,
 ) {
   //OUTLOOK HAS AN INTERESTING BEHAVIOUR I WILL TRY AND MIMIC
   //IT SETS THE FIRST EVENT TO OCCUR IN THE SAME YEAR
