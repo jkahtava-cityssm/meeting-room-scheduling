@@ -6,20 +6,20 @@ import { useClientSession } from "@/hooks/use-client-auth";
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  const { session, isPending } = useClientSession();
+	const { session, isPending } = useClientSession();
 
-  if (isPending) {
-    return <div>Verifying Access</div>;
-  }
+	if (isPending) {
+		return <div>Verifying Access</div>;
+	}
 
-  if (!session) {
-    //console.log("User Requests No session, redirecting to login");
-    redirect("/");
-  }
+	if (!session) {
+		//console.log("User Requests No session, redirecting to login");
+		redirect("/");
+	}
 
-  return (
-    <div>
-      <CalendarAllViews userId={session?.user.id} />
-    </div>
-  );
+	return (
+		<div className="h-[calc(100vh-var(--header-height)-1px-32px)]">
+			<CalendarAllViews userId={session?.user.id} />
+		</div>
+	);
 }
