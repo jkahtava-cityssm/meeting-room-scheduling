@@ -150,7 +150,6 @@ const DayColumn = React.memo(function DayColumn({
 				/>
 
 				{eventBlocks.map((block, blockIndex) => {
-					console.log("Rendering Event Block:", block);
 					return (
 						<div
 							key={`day-${dayIndex}-block-${blockIndex}-event-${block.event.eventId}`}
