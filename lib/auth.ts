@@ -8,6 +8,8 @@ import { headers } from "next/headers";
 import { fetchGET } from "./fetch";
 import { SessionAction, SessionResource, SessionRole } from "./types";
 
+import { getCachedUserRoles } from "./auth-role-cache";
+
 export type User = {
 	userId: string | undefined | null;
 	roles: Role[] | undefined;
@@ -55,7 +57,7 @@ export const auth = betterAuth({
 	session: {
 		expiresIn: 60 * 60 * 24 * 7, // 7 days
 		updateAge: 60 * 60 * 24, // 1 day
-		additionalFields: {},
+		additionalFields: { impersonatedRole: { type: "string", required: false } },
 		cookieCache: {
 			enabled: true,
 			maxAge: 5 * 60, // 5 Minutes
@@ -103,18 +105,21 @@ export const auth = betterAuth({
 		}),
 
 		customSession(async ({ user, session }) => {
-			const userData = await fetchGET(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${user.id}`, { token: session.token }, 3600, [user.id]);
-			//console.log("SESSION GET");
+			const currentSession = session as Session & { impersonatedRole?: string };
+			const token = session.token;
+			const userId = Number(user.id);
+
 			return {
 				user: {
 					...user,
-					roles: userData.data ? (userData.data.roles as Role[] | undefined) : undefined,
+					roles: await getCachedUserRoles(token, userId, currentSession.impersonatedRole),
 				},
-				session,
+				session: currentSession,
 			};
 		}),
 	],
 });
+
 
 export async function getServerSession() {
 	const session = await auth.api.getSession({

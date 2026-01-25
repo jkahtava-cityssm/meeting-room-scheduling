@@ -11,6 +11,8 @@ import {
 	PermissionCache,
 	PermissionResult,
 } from "./auth-permission-checks";
+import { Session } from "./auth-client";
+import { getRolesByUserId } from "./data/permissions";
 
 export async function guardRoute(
 	req: NextRequest,
@@ -21,14 +23,13 @@ export async function guardRoute(
 		return InternalServerErrorMessage("DATABASE_URL Missing");
 	}
 
-	const userId = await getUserIdFromRequest(req);
+	const user = await getUserFromRequest(req);
 
-	if (!userId) {
+	if (!user) {
 		return BadRequestMessage("Not Authorized");
 	}
 
-	const roles = await GetUserRolePermissions(userId);
-	const permissionCache = buildPermissionCache(roles);
+	const permissionCache = buildPermissionCache(user.roles);
 
 	const groupedAuthorization = await isGroupRequirementMet(permissionCache, groupedRequirements);
 	const groupsAuthorized = Object.values(groupedAuthorization).every(Boolean);
@@ -37,15 +38,16 @@ export async function guardRoute(
 		return BadRequestMessage("Not Authorized");
 	}
 
-	return handler(userId, permissionCache, groupedAuthorization);
+	return handler(user.userId, permissionCache, groupedAuthorization);
 }
 
-async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {
+async function getUserFromRequest(req: NextRequest): Promise<{ userId: number; roles: Role[] } | null> {
 	const authHeader = req.headers.get("authorization");
 	const token = (authHeader || "").split("Bearer ").at(1);
 	if (token) {
 		const tokenResponse = await VerifyToken(token);
 		const accountId = tokenResponse.data?.sub;
+
 		if (!accountId) return null;
 
 		const account = await prisma.account.findFirst({
@@ -53,60 +55,17 @@ async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {
 			where: { accountId },
 		});
 
-		return account?.userId ?? null;
+		if (!account?.userId) return null;
+
+		const roles = await getRolesByUserId(account.userId);
+
+		if (!roles) return null;
+
+		return { userId: account.userId, roles };
 	}
 
 	const session = await getServerSession();
-	return session ? Number(session.user.id) : null;
-}
+	if (!session) return null;
 
-export async function GetUserRolePermissions(userId: number): Promise<Role[]> {
-	const user = await prisma.user.findFirst({
-		include: {
-			userRole: {
-				include: {
-					role: {
-						include: {
-							roleResourceAction: {
-								include: {
-									resourceAction: {
-										include: {
-											resource: true,
-											action: true,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		where: { id: userId },
-	});
-
-	if (!user?.userRole || user.userRole.length === 0) {
-		return [];
-	}
-
-	const roles = user.userRole
-		.map(userRole => {
-			return {
-				roleId: userRole.role.roleId,
-				name: userRole.role.name as SessionRole,
-				permissions: userRole.role.roleResourceAction
-					.map(permission => {
-						const ra = permission.resourceAction;
-						return {
-							permit: permission.permit,
-							action: ra.action.name as SessionAction,
-							resource: ra.resource.name as SessionResource,
-						};
-					})
-					.sort((a, b) => (a.resource === b.resource ? a.action.localeCompare(b.action) : a.resource.localeCompare(b.resource))),
-			};
-		})
-		.sort((a, b) => a.roleId - b.roleId);
-
-	return roles;
+	return { userId: Number(session.user.id), roles: session.user.roles };
 }
