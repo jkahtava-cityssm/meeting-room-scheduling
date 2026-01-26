@@ -3,6 +3,7 @@ import { Role } from "./auth";
 import { getRolesByName, getRolesByUserId } from "./data/permissions";
 
 const MAX_CACHE_ENTRIES = 5000;
+const TTL = 5 * 60 * 1000;
 
 function cacheIsSafe() {
 	const rss = process.memoryUsage().rss;
@@ -43,28 +44,25 @@ function ensurePruneInterval() {
 
 //ensurePruneInterval();
 
-
 export async function getCachedUserRoles(sessionToken: string, userId: number, impersonatingRole?: string): Promise<Role[]> {
 	const now = Date.now();
 
 	const cacheEnabled = cacheIsSafe();
-	let roles: Role[];
-
-	if (impersonatingRole) {
-		return await getRolesByName(impersonatingRole);
-	}
+	const cacheKey = impersonatingRole ? `impersonate:${sessionToken}:${impersonatingRole}` : sessionToken;
 
 	if (cacheEnabled) {
-		const cached = roleCache.get(sessionToken);
+		const cached = roleCache.get(cacheKey);
 
 		if (cached && cached.expiresAt > now) {
 			return cached.roles;
-		} else {
-			roles = await getRolesByUserId(userId);
-			roleCache.set(sessionToken, { roles, expiresAt: now + 60 * 1000 * 5 });
-			return roles;
 		}
 	}
 
-    return await getRolesByUserId(userId);
+	const roles = impersonatingRole ? await getRolesByName(impersonatingRole) : await getRolesByUserId(userId);
+
+	if (cacheEnabled) {
+		roleCache.set(cacheKey, { roles, expiresAt: now + TTL });
+	}
+
+	return roles;
 }
