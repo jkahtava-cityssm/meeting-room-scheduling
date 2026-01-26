@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
 import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours, TWorkingHours } from "@/lib/types";
+import { TVisibleHours } from "@/lib/types";
 
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { useEventsQuery } from "@/lib/services/events";

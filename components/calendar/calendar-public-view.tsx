@@ -73,7 +73,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
   const [data, setData] = useState([]);
   const [hours, setHours] = useState<number[] | undefined>(undefined);
 
-  const { workingHours, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
+  const { visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
   const workerRef = useRef<Worker | null>(null);
 

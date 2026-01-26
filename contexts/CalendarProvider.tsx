@@ -4,7 +4,7 @@ import { createContext, useContext, useState } from "react";
 
 import type { Dispatch, SetStateAction } from "react";
 
-import type { TVisibleHours, TWorkingHours } from "@/lib/types";
+import type { TVisibleHours } from "@/lib/types";
 import { VISIBLE_HOURS } from "../lib/helpers";
 import { usePublicConfiguration } from "@/lib/services/public";
 import { useRoomsQuery } from "@/lib/services/rooms";
