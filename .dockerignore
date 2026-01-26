@@ -26,8 +26,12 @@ Dockerfile*
 .dockerignore
 
 # Environment files
-#.env*
-#*.env
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
 
 # Editor configs
 .vscode
