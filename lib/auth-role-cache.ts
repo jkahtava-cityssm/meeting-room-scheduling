@@ -21,25 +21,23 @@ function pruneExpiredEntries(now: number) {
 	}
 }
 
-const globalForRoleCache = globalThis as unknown as { roleCache?: Map<string, { roles: Role[]; expiresAt: number }> }; 
+const globalForCache = globalThis as unknown as {
+	roleCache?: Map<string, { roles: Role[]; expiresAt: number }>;
+	pruneInterval?: NodeJS.Timeout;
+};
 
-export const roleCache = globalForRoleCache.roleCache ??= new Map();
-
+export const roleCache = (globalForCache.roleCache ??= new Map());
 
 // A private WeakMap to store the interval safely
-const intervalStore = new WeakMap<object, NodeJS.Timeout>();
 
 function ensurePruneInterval() {
-	if (!intervalStore.has(globalThis)) {
-		const interval = setInterval(
+	if (!globalForCache.pruneInterval) {
+		globalForCache.pruneInterval = setInterval(
 			() => {
 				pruneExpiredEntries(Date.now());
-				console.warn("Pruned expired role cache entries");
 			},
 			5 * 60 * 1000,
 		);
-
-		intervalStore.set(globalThis, interval);
 	}
 }
 

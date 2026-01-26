@@ -1,7 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 import { customSessionClient } from "better-auth/client/plugins";
 import type { auth } from "@/lib/auth";
-import { SessionAction, SessionResource, SessionRole } from "./types";
+
 import { buildPermissionCache, GroupedPermissionRequirement, isGroupRequirementMet, PermissionResult } from "./auth-permission-checks";
 import { useEffect, useMemo, useState } from "react";
 import { ssoClient } from "@better-auth/sso/client";
@@ -58,6 +58,7 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
 
 	return result;
 }
+
 
 export function getSessionRoles(session: Session | undefined | null) {
 	if (!session || !session.user || !session.user.roles) return undefined;

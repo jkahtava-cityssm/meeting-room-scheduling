@@ -108,11 +108,11 @@ export const auth = betterAuth({
 			const currentSession = session as Session & { impersonatedRole?: string };
 			const token = session.token;
 			const userId = Number(user.id);
-
+			const roles = await getCachedUserRoles(token, userId, currentSession.impersonatedRole);
 			return {
 				user: {
 					...user,
-					roles: await getCachedUserRoles(token, userId, currentSession.impersonatedRole),
+					roles: roles,
 				},
 				session: currentSession,
 			};

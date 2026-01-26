@@ -29,15 +29,15 @@ export const usePermissionsQuery = (enabled: boolean = true) => {
 export const useRolesQuery = (enabled: boolean = true) => {
   const session = useSession();
   return useQuery({
-    queryKey: ["permissions"],
-    queryFn: async () => {
-      const result = await fetchGET("/api/admin/permissions/roles");
-      const parsedResult = z.array(SRole).safeParse(result.data);
+		queryKey: ["roles"],
+		queryFn: async () => {
+			const result = await fetchGET("/api/admin/permissions/roles");
+			const parsedResult = z.array(SRole).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid status data");
+			if (!parsedResult.success) throw new Error("Invalid status data");
 
-      return parsedResult.data;
-    },
-    enabled: enabled,
-  });
+			return parsedResult.data;
+		},
+		enabled: enabled,
+	});
 };
