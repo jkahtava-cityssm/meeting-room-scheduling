@@ -22,7 +22,7 @@ import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/lib/services/users";
 import { Button } from "@/components/ui/button";
-import { useStatusQuery } from "@/lib/services/references";
+import { useStatusQuery } from "@/lib/services/status";
 import { DateTimePicker, DateTimePickerRef } from "@/components/ui/datetimepicker";
 import { useRef } from "react";
 import { Session } from "@/lib/auth-client";
