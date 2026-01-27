@@ -132,8 +132,8 @@ export function CalendarDayView({
 	// transition-[width] duration-150 ease-linear
 	return (
 		<>
-			<div className="flex">
-				<div className={cn("flex flex-col  min-w-0 transition-[width] duration-600 ease-in-out", breakpoints3)}>
+			<div className="flex flex-1 min-h-0">
+				<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1", breakpoints3)}>
 					<DayViewDayHeader
 						key={dayViews.day}
 						currentDate={dayViews.dayDate}

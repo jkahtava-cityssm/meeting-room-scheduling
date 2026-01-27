@@ -36,37 +36,40 @@ export function CalendarDayColumnCalendar({
   };
 
   return (
-    <div className="hidden w-74 divide-y border-l md:block">
-      <DayPicker
-        className="mx-auto w-fit"
-        mode="single"
-        selected={date}
-        onSelect={(value) => {
-          push(navigateURL(value, view));
-        }}
-        month={calendarDate}
-        onMonthChange={setCalendarDate}
-        fixedWeeks={true}
-        required
-        onToday={handleToday}
-        startMonth={addYears(date, -25)}
-        endMonth={addYears(date, 25)}
-      />
-      {isLoading ? (
-        <div className="flex-1 space-y-2">
-          <div className="flex items-start gap-1 px-4 pt-4">
-            <Skeleton className="w-full h-4"></Skeleton>
-          </div>
-          <div className="flex items-start gap-1 px-4 ">
-            <Skeleton className="w-full h-4"></Skeleton>
-          </div>
-          <div className="flex items-start gap-1 px-4 ">
-            <Skeleton className="w-full h-4"></Skeleton>
-          </div>
-        </div>
-      ) : (
-        <CalendarDayColumnCurrentEvents date={date} events={events}></CalendarDayColumnCurrentEvents>
-      )}
-    </div>
-  );
+		<div className="hidden w-74 divide-y border-l md:block shrink-0">
+			<DayPicker
+				className="mx-auto w-fit"
+				mode="single"
+				selected={date}
+				onSelect={value => {
+					push(navigateURL(value, view));
+				}}
+				month={calendarDate}
+				onMonthChange={setCalendarDate}
+				fixedWeeks={true}
+				required
+				onToday={handleToday}
+				startMonth={addYears(date, -25)}
+				endMonth={addYears(date, 25)}
+			/>
+			{isLoading ? (
+				<div className="flex-1 space-y-2">
+					<div className="flex items-start gap-1 px-4 pt-4">
+						<Skeleton className="w-full h-4"></Skeleton>
+					</div>
+					<div className="flex items-start gap-1 px-4 ">
+						<Skeleton className="w-full h-4"></Skeleton>
+					</div>
+					<div className="flex items-start gap-1 px-4 ">
+						<Skeleton className="w-full h-4"></Skeleton>
+					</div>
+				</div>
+			) : (
+				<CalendarDayColumnCurrentEvents
+					date={date}
+					events={events}
+				></CalendarDayColumnCurrentEvents>
+			)}
+		</div>
+	);
 }

@@ -48,10 +48,10 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 
 	return (
 		<ScrollArea
-			className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh] w-full"
+			className="w-full flex-1 min-h-0"
 			type="always"
 		>
-			<div className="flex  min-w-0">
+			<div className="flex min-w-0 w-max">
 				{/* Hours column   h-[500px]  */}
 				<HourColumn hours={hours} />
 				<div className="flex w-full min-w-0 pr-4">
@@ -88,7 +88,7 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }) {
 	const lastHour = hours[hours.length - 1] + 1;
 	return (
-		<div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2">
+		<div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0">
 			<div className="h-8"></div>
 			<TimeBlockTopAnchor></TimeBlockTopAnchor>
 			{hours.map((hour, index) => {

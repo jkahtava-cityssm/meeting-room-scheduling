@@ -53,7 +53,7 @@ export function CalendarHeader({
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between">
+			<div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between shrink-0">
 				<div className="flex items-center gap-3">
 					<TodayButton view={view} />
 

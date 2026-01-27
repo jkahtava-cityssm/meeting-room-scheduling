@@ -1,13 +1,10 @@
 import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
+import { CalendarProvider } from "@/contexts/CalendarProvider";
 
 export default async function Calendar() {
-  //const params = await searchParams;
-  //const dateParam = searchParams.get("selectedDate");
-  //const viewParam = searchParams.get("view");
-  //console.log(params);
-  return (
-    <div>
-      <CalendarAllViews />
-    </div>
-  );
+	return (
+		<CalendarProvider>
+			<CalendarAllViews />
+		</CalendarProvider>
+	);
 }

@@ -1,5 +1,6 @@
 "use client";
 import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
+import { CalendarProvider } from "@/contexts/CalendarProvider";
 
 import { useClientSession } from "@/hooks/use-client-auth";
 
@@ -18,8 +19,8 @@ export default function Home() {
 	}
 
 	return (
-		<div className="h-[calc(100vh-var(--header-height)-1px-32px)]">
+		<CalendarProvider>
 			<CalendarAllViews userId={session?.user.id} />
-		</div>
+		</CalendarProvider>
 	);
 }

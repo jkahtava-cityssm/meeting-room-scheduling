@@ -13,11 +13,16 @@ export function DayViewDayHeader({ currentDate }: { currentDate: Date }) {
   };
 
   return (
-    <Button variant={"link"} size={"sm"} onClick={handleClick}>
-      <span className="py-2 text-center text-xs font-medium text-muted-foreground">
-        {format(currentDate, "EE")}{" "}
-        <span className="ml-1 font-semibold text-foreground">{format(currentDate, "d")}</span>
-      </span>
-    </Button>
-  );
+		<div className="h-8 shrink-0">
+			<Button
+				variant={"link"}
+				size={"sm"}
+				onClick={handleClick}
+			>
+				<span className="py-2 text-center text-xs font-medium text-muted-foreground">
+					{format(currentDate, "EE")} <span className="ml-1 font-semibold text-foreground">{format(currentDate, "d")}</span>
+				</span>
+			</Button>
+		</div>
+	);
 }
