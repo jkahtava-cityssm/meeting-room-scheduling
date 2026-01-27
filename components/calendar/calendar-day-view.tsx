@@ -13,150 +13,187 @@ import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { useEventsQuery } from "@/lib/services/events";
 import { getVisibleHours } from "@/lib/helpers";
 import { DailyTimeBlocks } from "@/app/features/calendar/calendar-util/calendar-day-grid";
+import { CalendarDayGridProvider } from "@/app/features/calendar/calendar-util/calendar-day-grid-context";
 import { DayViewDayHeader } from "./calendar-day-view-day-header";
 import { useCalendarDayGrid } from "@/app/features/calendar/calendar-util/use-calendar-day-grid";
 import { IBlock, IDayGrid } from "@/app/features/calendar/calendar-util/calendar-day-grid-webworker";
 import { cn } from "@/lib/utils";
 
 export interface IDayProcessData {
-	events: IEvent[];
-	selectedDate: Date;
-	selectedRoomId: string;
-	pixelHeight: number;
-	visibleHours: TVisibleHours;
-	multiDayEventsAtTop: boolean;
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  pixelHeight: number;
+  visibleHours: TVisibleHours;
+  multiDayEventsAtTop: boolean;
 }
 
 export interface IDayResponseData {
-	totalEvents: number;
-	dayViews: IDayView[];
-	hours: number[];
-	filteredEvents: IEvent[];
-	roomIds: number[];
+  totalEvents: number;
+  dayViews: IDayView[];
+  hours: number[];
+  filteredEvents: IEvent[];
+  roomIds: number[];
 }
 
 export interface IDayView {
-	day: number;
-	dayDate: Date;
-	isToday: boolean;
-	eventBlocks: IEventBlock[];
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  eventBlocks: IEventBlock[];
 }
 
 export interface IEventBlock {
-	groupIndex: number;
-	eventIndex: number;
-	eventStyle: { top: string; width: string; left: string };
-	eventHeight: number;
-	event: IEvent;
-	roomId: number;
+  groupIndex: number;
+  eventIndex: number;
+  eventStyle: { top: string; width: string; left: string };
+  eventHeight: number;
+  event: IEvent;
+  roomId: number;
 }
 
 export function CalendarDayView({
-	date,
-	userId,
-	isSidebarOpen = false,
-	allowCreateEvent,
+  date,
+  userId,
+  isSidebarOpen = false,
+  allowCreateEvent,
 }: {
-	date: Date;
-	userId?: string;
-	isSidebarOpen?: boolean;
-	allowCreateEvent: boolean;
+  date: Date;
+  userId?: string;
+  isSidebarOpen?: boolean;
+  allowCreateEvent: boolean;
 }) {
-	const [isLoading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
 
-	const [hours, setHours] = useState<number[]>([]);
+  const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
+  const [hours, setHours] = useState<number[]>(getVisibleHours(visibleHours, []).hours);
+  // stable derived props for children — avoids passing new references each render
+  const visibleRoomsForGrid = useMemo(() => visibleRooms ?? [], [visibleRooms]);
+  const selectedRoomIdNumber = useMemo(() => Number(selectedRoomId), [selectedRoomId]);
 
-	const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
+  const startDate = useMemo(() => startOfDay(date), [date]);
+  const endDate = useMemo(() => endOfDay(date), [date]);
 
-	const startDate = useMemo(() => startOfDay(date), [date]);
-	const endDate = useMemo(() => endOfDay(date), [date]);
+  const [dayViews, setDayViews] = useState<IDayGrid>({
+    day: date.getDate(),
+    dayDate: date,
+    isToday: isToday(date),
+    roomBlocks: new Map<string, IBlock[]>(),
+  });
+  console.log("Rendering CalendarDayView for date:", date);
 
-	const [dayViews, setDayViews] = useState<IDayGrid>({
-		day: date.getDate(),
-		dayDate: date,
-		isToday: isToday(date),
-		roomBlocks: new Map<string, IBlock[]>(),
-	});
+  const { data: events, error } = useEventsQuery(startDate, endDate, userId);
+  const { data: gridData, loading: gridLoading, error: gridError, postMessage } = useCalendarDayGrid();
 
-	const { data: events, error } = useEventsQuery(startDate, endDate, userId);
-	const { data: gridData, loading: gridLoading, error: gridError, postMessage } = useCalendarDayGrid();
+  // Derived mounting state — true while initial data hasn't arrived
+  const isMounting = !gridData || events === undefined;
 
-	useEffect(() => {
-		if (!gridError) return;
+  useEffect(() => {
+    setLoading(true);
+  }, [date]);
 
-		setTotalEvents(0);
-		setHours(getVisibleHours(visibleHours, []).hours);
-		setIsHeaderLoading(false);
-		setLoading(false);
-	}, [gridError, setIsHeaderLoading, setTotalEvents, visibleHours]);
+  useEffect(() => {
+    if (!gridError) return;
 
-	useEffect(() => {
-		if (!events) return;
-		setIsHeaderLoading(true);
-		setLoading(true);
-		postMessage({
-			events: events,
-			currentDate: date,
-			startDate: startDate,
-			endDate: endDate,
-			selectedRooms: [selectedRoomId],
-			visibleHours: visibleHours,
-		});
-	}, [events, date, selectedRoomId, visibleHours, postMessage, setIsHeaderLoading, visibleRooms, startDate, endDate]);
+    setTotalEvents(0);
+    setHours(getVisibleHours(visibleHours, []).hours);
+    setIsHeaderLoading(false);
+    //setLoading(false);
+  }, [gridError, setIsHeaderLoading, setTotalEvents, visibleHours]);
 
-	useEffect(() => {
-		if (!gridData) return;
-		setDayViews(gridData.dayView);
-		setHours(gridData.hours);
-		setTotalEvents(gridData.totalEvents);
-		setIsHeaderLoading(false);
-		setLoading(false);
-	}, [gridData, setIsHeaderLoading, setTotalEvents]);
+  useEffect(() => {
+    if (!events) return;
+    setIsHeaderLoading(true);
+    // Pre-filter events by selected room when possible so the worker
+    // doesn't need to filter by room (reduces work and avoids reprocessing)
 
-	if (isLoading) {
-		return (
-			<div className="flex">
-				<CalendarDayViewSkeleton />
-				<CalendarDayColumnCalendar
-					date={date}
-					isLoading={isLoading}
-					events={events ?? []}
-					view={"day"}
-				></CalendarDayColumnCalendar>
-			</div>
-		);
-	}
+    postMessage({
+      events: events,
+      currentDate: date,
+      startDate: startDate,
+      endDate: endDate,
+      selectedRooms: visibleRoomsForGrid.map((room) => room.roomId.toString()),
+      visibleHours: visibleHours,
+    });
+  }, [
+    events,
+    date,
+    visibleRoomsForGrid,
+    visibleHours,
+    postMessage,
+    setIsHeaderLoading,
+    visibleRooms,
+    startDate,
+    endDate,
+  ]);
 
-	const breakpoints3 = isSidebarOpen ? "w-[calc(100dvw-var(--sidebar-width)-32px-300px)]" : "w-[calc(100dvw-300px)]";
-	//w-full
-	// transition-[width] duration-150 ease-linear
-	return (
-		<>
-			<div className="flex flex-1 min-h-0">
-				<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1", breakpoints3)}>
-					<DayViewDayHeader
-						key={dayViews.day}
-						currentDate={dayViews.dayDate}
-					/>
-					<DailyTimeBlocks
-						hours={hours}
-						currentDate={dayViews.dayDate}
-						userId={userId}
-						roomBlocks={dayViews.roomBlocks}
-						dayIndex={String(0)}
-						interval={interval}
-						allowCreateEvent={allowCreateEvent}
-						selectedRoomId={Number(selectedRoomId)}
-						visibleRooms={visibleRooms ? visibleRooms : []}
-					></DailyTimeBlocks>
-				</div>
-				<CalendarDayColumnCalendar
-					date={date}
-					isLoading={isLoading}
-					events={events ? events : []}
-					view={"day"}
-				></CalendarDayColumnCalendar>
-			</div>
-		</>
-	);
+  useEffect(() => {
+    if (!gridData) return;
+    setDayViews(gridData.dayView);
+    setHours(gridData.hours);
+    setTotalEvents(gridData.totalEvents);
+    setIsHeaderLoading(false);
+    setLoading(false);
+  }, [gridData, setIsHeaderLoading, setTotalEvents]);
+
+  if (false) {
+    return (
+      <div className="flex">
+        <CalendarDayViewSkeleton />
+        <CalendarDayColumnCalendar
+          date={date}
+          isLoading={isLoading}
+          events={events ?? []}
+          view={"day"}
+        ></CalendarDayColumnCalendar>
+      </div>
+    );
+  }
+
+  const breakpoints3 = isSidebarOpen ? "w-[calc(100dvw-var(--sidebar-width)-32px-300px)]" : "w-[calc(100dvw-300px)]";
+  //w-full
+  // transition-[width] duration-150 ease-linear
+
+  return (
+    <>
+      <div className="flex flex-1 min-h-0">
+        <div
+          className={cn(
+            "flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1",
+            breakpoints3,
+          )}
+        >
+          <DayViewDayHeader key={dayViews.day} currentDate={dayViews.dayDate} />
+          {isMounting ? (
+            <CalendarDayViewSkeleton />
+          ) : (
+            <CalendarDayGridProvider
+              value={{
+                hours,
+                currentDate: dayViews.dayDate,
+                userId,
+                interval,
+                allowCreateEvent,
+                isLoading,
+              }}
+            >
+              <DailyTimeBlocks
+                isLoading={isLoading}
+                roomBlocks={dayViews.roomBlocks}
+                dayIndex={"0"}
+                selectedRoomId={selectedRoomIdNumber}
+                visibleRooms={visibleRoomsForGrid}
+              />
+            </CalendarDayGridProvider>
+          )}
+        </div>
+        <CalendarDayColumnCalendar
+          date={date}
+          isLoading={isLoading}
+          events={events ? events : []}
+          view={"day"}
+        ></CalendarDayColumnCalendar>
+      </div>
+    </>
+  );
 }

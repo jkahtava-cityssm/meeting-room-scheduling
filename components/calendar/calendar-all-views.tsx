@@ -51,6 +51,8 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
     return getViewDate(dateParam);
   }, [dateParam]);
 
+  console.log(dateValue);
+
   const { session, isPending } = useClientSession();
 
   const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
@@ -68,49 +70,29 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
 
   if (session) {
     return (
-			<div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
-				<CalendarHeader
-					view={view as TCalendarView}
-					selectedDate={dateValue}
-					userId={userId}
-					allowCreateEvent={Permissions.CreateEvent}
-				/>
+      <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
+        <CalendarHeader
+          view={view as TCalendarView}
+          selectedDate={dateValue}
+          userId={userId}
+          allowCreateEvent={Permissions.CreateEvent}
+        />
 
-				{view === "day" && (
-					<CalendarDayView
-						date={dateValue}
-						userId={userId}
-						//allowDayView={Permissions.AllowDayView}
-						allowCreateEvent={Permissions.CreateEvent}
-						isSidebarOpen={open}
-					/>
-				)}
-				{view === "month" && (
-					<CalendarMonthView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-				{view === "week" && (
-					<CalendarWeekView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-				{view === "year" && (
-					<CalendarYearView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-				{view === "agenda" && (
-					<CalendarAgendaView
-						date={dateValue}
-						userId={userId}
-					/>
-				)}
-			</div>
-		);
+        {view === "day" && (
+          <CalendarDayView
+            date={dateValue}
+            userId={userId}
+            //allowDayView={Permissions.AllowDayView}
+            allowCreateEvent={Permissions.CreateEvent}
+            isSidebarOpen={open}
+          />
+        )}
+        {view === "month" && <CalendarMonthView date={dateValue} userId={userId} />}
+        {view === "week" && <CalendarWeekView date={dateValue} userId={userId} />}
+        {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
+        {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
+      </div>
+    );
   }
 }
 

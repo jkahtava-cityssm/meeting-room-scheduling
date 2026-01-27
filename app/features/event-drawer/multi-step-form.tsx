@@ -27,6 +27,7 @@ import UnsavedChangesDialog from "./multi-step-form-unsaved-changes";
 import { useClientSession } from "@/hooks/use-client-auth";
 import { isFormValid, isStepValid, updateRRuleIfNecessary } from "./multi-step-form-helper";
 import { ConfirmErrorDialog } from "./multi-step-form-confirm-prompt";
+import { usePublicConfiguration } from "@/lib/services/public";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -45,14 +46,19 @@ export const MultiStepForm = ({
 }) => {
   const { session } = useClientSession();
   const { setEvent, resetEvent, getEventState } = useEventStore();
-
+  const { data: configurationData } = usePublicConfiguration();
   const storedEvent = getEventState().event;
 
+  // Prefer explicit `event` prop, then an explicit `creationDate` (new slot),
+  // then any stored draft in session storage. This avoids stale stored drafts
+  // overriding a freshly requested creation date.
   const defaultFormValues = event
     ? getEventValues(event)
-    : storedEvent
-    ? storedEvent
-    : defaultValues(creationDate, userId);
+    : creationDate
+      ? defaultValues(creationDate, userId, configurationData?.interval)
+      : storedEvent
+        ? storedEvent
+        : defaultValues(undefined, userId, configurationData?.interval);
 
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedEventSchema),
@@ -66,7 +72,7 @@ export const MultiStepForm = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues["isRecurring"] === "false");
   const [startDate, setStartDate] = useState(
-    defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate
+    defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
   );
 
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
@@ -104,6 +110,41 @@ export const MultiStepForm = ({
   }, [status, collectedEvent, isFetching]);
 
   // Navigation functions
+
+  // Reset form when incoming props change (creationDate or event).
+  // - If the sheet is closed, always reset to the new defaults.
+  // - If the sheet is open, only reset when the form is not dirty (avoid clobbering user edits).
+  useEffect(() => {
+    const newDefaults = event
+      ? getEventValues(event)
+      : creationDate
+        ? defaultValues(creationDate, userId, configurationData?.interval)
+        : storedEvent
+          ? storedEvent
+          : defaultValues(undefined, userId, configurationData?.interval);
+
+    if (!isOpen) {
+      // Closed: always reset to new defaults
+      methods.reset(newDefaults);
+      setStatus(newDefaults["eventId"] === "0" ? "New" : "Read");
+      setCurrentStepIndex(0);
+      setIgnoreLastStep(newDefaults["isRecurring"] === "false");
+      setNextButtonDestructive(false);
+      setBackButtonDestructive(false);
+      return;
+    }
+
+    // Open: only reset when the form is pristine
+    if (!methods.formState.isDirty) {
+      methods.reset(newDefaults);
+      setStatus(newDefaults["eventId"] === "0" ? "New" : "Read");
+      setCurrentStepIndex(0);
+      setIgnoreLastStep(newDefaults["isRecurring"] === "false");
+      setNextButtonDestructive(false);
+      setBackButtonDestructive(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creationDate, event]);
   const nextStep = async () => {
     if (currentStepIndex < formSteps.length - 1 && !ignoreLastStep) {
       // Move to the next step if not at the last step
@@ -197,7 +238,7 @@ export const MultiStepForm = ({
             onClose();
           },
           onError: () => {}, // Optional: handle error
-        }
+        },
       );
     }
   };

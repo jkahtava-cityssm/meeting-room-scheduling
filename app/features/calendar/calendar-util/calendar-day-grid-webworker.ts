@@ -1,6 +1,6 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
-import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "@/lib/helpers";
+import { calculateEventBlockStyle, getVisibleHours, groupEvents } from "@/lib/helpers";
 
 import {
   areIntervalsOverlapping,
@@ -72,26 +72,23 @@ async function processDayEvents(dayData: IDayGridMessage): Promise<IDayGridRespo
   ]);
 
   const combinedEvents: IEvent[] = [...multiDayEvents, ...recurringEvents];
+  // dailyEvents should already be filtered by the caller when possible.
   const dailyEvents = combinedEvents.filter((event) => isSameDay(event.startDate, startDate));
-  //const events = z.array(SEvent).parse(combinedEvents);
 
-  const filteredEvents: IEvent[] = filterEventsByRoom(dailyEvents, selectedRooms).sort(
+  // Use all daily events (caller can pre-filter by room to reduce work)
+  const filteredEvents: IEvent[] = dailyEvents.sort(
     (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
   );
 
   const eventsByRoom = new Map<string, IEvent[]>();
 
-  const expandedSelectedRooms = selectedRooms.includes("-1")
-    ? Array.from(new Set(filteredEvents.map((e) => String(e.roomId))))
-    : selectedRooms;
-
-  expandedSelectedRooms.forEach((roomId) => {
-    const events = filteredEvents.filter((e) => String(e.roomId) === roomId);
-
+  // Group events by their roomId
+  filteredEvents.forEach((e) => {
+    const roomId = String(e.roomId);
     if (!eventsByRoom.has(roomId)) {
       eventsByRoom.set(roomId, []);
     }
-    eventsByRoom.get(roomId)!.push(...events);
+    eventsByRoom.get(roomId)!.push(e);
   });
 
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, filteredEvents);
