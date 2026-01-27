@@ -103,7 +103,7 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
   return (
     <SharedEventDrawerProvider>
       <ScrollArea className="w-full flex-1 min-h-0" type="always">
-        <div className="flex min-w-0 w-max">
+        <div className="flex min-w-0 w-full">
           <HourColumn currentDate={currentDate} hours={hours} />
           <div className="flex w-full min-w-0 pr-4">
             {roomsToRender?.map((room) => {
