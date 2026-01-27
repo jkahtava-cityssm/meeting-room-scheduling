@@ -108,6 +108,13 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
                 />
               );
             })}
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
+                  <LoaderCircle className="animate-spin" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <ScrollBar orientation="vertical" forceMount />
@@ -175,13 +182,6 @@ const DayColumn = React.memo(function DayColumn({
               </div>
             );
           })}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex bg-accent-foreground text-accent px-4 py-2 rounded ">
-              <LoaderCircle className="animate-spin" />
-            </div>
-          </div>
-        )}
       </div>
       <TimeBlockBottomAnchor showBackground={true}></TimeBlockBottomAnchor>
     </div>
