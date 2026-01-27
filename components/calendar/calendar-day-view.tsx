@@ -80,7 +80,6 @@ export function CalendarDayView({
     isToday: isToday(date),
     roomBlocks: new Map<string, IBlock[]>(),
   });
-  console.log("Rendering CalendarDayView for date:", date);
 
   const { data: events, error } = useEventsQuery(startDate, endDate, userId);
   const { data: gridData, loading: gridLoading, error: gridError, postMessage } = useCalendarDayGrid();

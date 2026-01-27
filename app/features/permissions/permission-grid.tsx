@@ -50,21 +50,20 @@ export function PermissionGrid({
       resourceName: string,
       actionId: string,
       actionName: string,
-      next: boolean | "indeterminate"
+      next: boolean | "indeterminate",
     ) => {
       if (!workingPermissions) return;
       const isChecked = next === true;
       setWorkingPermissions((prev) =>
-        prev ? setPermit(prev, roleId, resourceId, resourceName, actionId, actionName, isChecked) : prev
+        prev ? setPermit(prev, roleId, resourceId, resourceName, actionId, actionName, isChecked) : prev,
       );
     },
-    [workingPermissions]
+    [workingPermissions],
   );
 
   if (isLoading || error || !workingPermissions || !resourceActions) {
     return <>...Loading</>;
   }
-  console.log(workingPermissions);
 
   return (
     <TooltipProvider>
@@ -121,7 +120,7 @@ export function PermissionGrid({
                             (t) =>
                               t.actionId === action.actionId &&
                               t.resourceId === resourceAction.resourceId &&
-                              t.permit === true
+                              t.permit === true,
                           ); //!!permissions[k];
 
                           return (
@@ -141,7 +140,7 @@ export function PermissionGrid({
                                       resourceAction.resourceName,
                                       action.actionId,
                                       action.actionName,
-                                      next
+                                      next,
                                     )
                                   }
                                   aria-label={`${resourceAction.resourceName}:${action.actionName} for ${
@@ -202,7 +201,7 @@ function setPermit(
   resourceName: string,
   actionId: string,
   actionName: string,
-  nextValue: boolean
+  nextValue: boolean,
 ): IPermissionSet[] {
   return sets.map((set) => {
     if (set.roleId !== roleId) return set;

@@ -27,7 +27,7 @@ function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) 
       // ignore
     }
   }, []);
-  console.log(payload);
+
   return (
     <SharedDrawerContext.Provider value={{ open }}>
       {children}

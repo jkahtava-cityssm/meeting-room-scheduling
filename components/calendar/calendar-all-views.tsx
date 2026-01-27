@@ -51,8 +51,6 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
     return getViewDate(dateParam);
   }, [dateParam]);
 
-  console.log(dateValue);
-
   const { session, isPending } = useClientSession();
 
   const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);

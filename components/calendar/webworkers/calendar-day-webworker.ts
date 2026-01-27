@@ -39,7 +39,7 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
   const events = z.array(SEvent).parse(combinedEvents);
 
   const filteredEvents: IEvent[] = filterEventsByRoom(events, dayData.selectedRoomId).sort(
-    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
   );
 
   const currentDate = dayData.selectedDate;
@@ -56,8 +56,6 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
 
   eventsByRoom.forEach((value, key) => {
     const groupedEvents = groupEvents(value);
-    console.log(key, value);
-    console.log(groupedEvents);
 
     //If this process becomes to cumbersome or costly a sweep-line algorithm could be implemented
     //This would compute all the overlapping events first reducing the number of loops required.
@@ -74,7 +72,7 @@ async function processDayEvents(dayData: IDayProcessData): Promise<IDayResponseD
           {
             from: earliestEventHour,
             to: latestEventHour,
-          }
+          },
         );
 
         const durationInMinutes = differenceInMinutes(currentEvent.endDate, currentEvent.startDate);
