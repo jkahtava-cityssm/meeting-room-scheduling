@@ -66,7 +66,7 @@ export function CalendarDayView({
   const [isLoading, setLoading] = useState(true);
 
   const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
-  const [hours, setHours] = useState<number[]>(getVisibleHours(visibleHours, []).hours);
+  const [hours, setHours] = useState<number[] | undefined>(undefined);
   // stable derived props for children — avoids passing new references each render
   const visibleRoomsForGrid = useMemo(() => visibleRooms ?? [], [visibleRooms]);
   const selectedRoomIdNumber = useMemo(() => Number(selectedRoomId), [selectedRoomId]);
@@ -74,12 +74,7 @@ export function CalendarDayView({
   const startDate = useMemo(() => startOfDay(date), [date]);
   const endDate = useMemo(() => endOfDay(date), [date]);
 
-  const [dayViews, setDayViews] = useState<IDayGrid>({
-    day: date.getDate(),
-    dayDate: date,
-    isToday: isToday(date),
-    roomBlocks: new Map<string, IBlock[]>(),
-  });
+  const [dayViews, setDayViews] = useState<IDayGrid | undefined>(undefined);
 
   const { data: events, error } = useEventsQuery(startDate, endDate, userId);
   const { data: gridData, loading: gridLoading, error: gridError, postMessage } = useCalendarDayGrid();
@@ -162,29 +157,26 @@ export function CalendarDayView({
             breakpoints3,
           )}
         >
-          <DayViewDayHeader key={dayViews.day} currentDate={dayViews.dayDate} />
-          {isMounting ? (
-            <CalendarDayViewSkeleton />
-          ) : (
-            <CalendarDayGridProvider
-              value={{
-                hours,
-                currentDate: dayViews.dayDate,
-                userId,
-                interval,
-                allowCreateEvent,
-                isLoading,
-              }}
-            >
-              <DailyTimeBlocks
-                isLoading={isLoading}
-                roomBlocks={dayViews.roomBlocks}
-                dayIndex={"0"}
-                selectedRoomId={selectedRoomIdNumber}
-                visibleRooms={visibleRoomsForGrid}
-              />
-            </CalendarDayGridProvider>
-          )}
+          <DayViewDayHeader currentDate={date} />
+
+          <CalendarDayGridProvider
+            value={{
+              hours,
+              currentDate: date,
+              userId,
+              interval,
+              allowCreateEvent,
+              isLoading,
+            }}
+          >
+            <DailyTimeBlocks
+              isLoading={isLoading}
+              roomBlocks={dayViews?.roomBlocks}
+              dayIndex={"0"}
+              selectedRoomId={selectedRoomIdNumber}
+              visibleRooms={visibleRoomsForGrid}
+            />
+          </CalendarDayGridProvider>
         </div>
         <CalendarDayColumnCalendar
           date={date}

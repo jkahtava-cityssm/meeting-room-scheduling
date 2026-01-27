@@ -60,6 +60,8 @@ import { Button } from "@/components/ui/button";
 import { GridEventBlock } from "./calendar-day-grid-event-block";
 import { useCalendarDayGrid } from "./calendar-day-grid-context";
 import { LoaderCircle } from "lucide-react";
+import { CalendarDayViewSkeleton } from "@/components/calendar/skeleton-calendar-day-view";
+import { CalendarDayColumnCalendar } from "@/components/calendar/calendar-day-column-calendar";
 
 export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
   isLoading,
@@ -70,32 +72,41 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 }: {
   isLoading: boolean;
   selectedRoomId: number;
-  visibleRooms: IRoom[];
-  roomBlocks: Map<string, IBlock[]>;
+  visibleRooms: IRoom[] | undefined;
+  roomBlocks: Map<string, IBlock[]> | undefined;
   dayIndex: string;
 }) {
-  const { hours, currentDate, userId, interval, allowCreateEvent } = useCalendarDayGrid();
+  const { hours, currentDate } = useCalendarDayGrid();
   const roomsToRender = React.useMemo(
     () =>
       visibleRooms
-        .filter((room) => selectedRoomId === -1 || room.roomId === selectedRoomId)
+        ?.filter((room) => selectedRoomId === -1 || room.roomId === selectedRoomId)
         .map((room) => {
-          const blocks = roomBlocks.get(String(room.roomId)) ?? [];
+          const blocks = roomBlocks?.get(String(room.roomId)) ?? [];
           return { roomId: room.roomId, roomName: room.name, blocks };
         }),
     [visibleRooms, selectedRoomId, roomBlocks],
   );
 
-  const lastRoomId = roomsToRender.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
+  const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
+
+  const isMounting = !visibleRooms || !roomBlocks || !hours;
+
+  if (isMounting) {
+    return (
+      <div className="flex">
+        <CalendarDayViewSkeleton />
+      </div>
+    );
+  }
 
   return (
     <SharedEventDrawerProvider>
       <ScrollArea className="w-full flex-1 min-h-0" type="always">
         <div className="flex min-w-0 w-max">
-          {/* Hours column   h-[500px]  */}
           <HourColumn currentDate={currentDate} hours={hours} />
           <div className="flex w-full min-w-0 pr-4">
-            {roomsToRender.map((room) => {
+            {roomsToRender?.map((room) => {
               return (
                 <DayColumn
                   isLoading={isLoading}
@@ -198,7 +209,7 @@ const TimeBlocks = React.memo(function TimeBlocks({ roomId }: { roomId: number }
 
   return React.useMemo(
     () =>
-      hours.map((hour, index) => {
+      hours?.map((hour, index) => {
         return (
           <div key={hour} className={cn("relative h-24")}>
             {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2"></div>}

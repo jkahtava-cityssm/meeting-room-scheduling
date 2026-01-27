@@ -1,7 +1,7 @@
 import React from "react";
 
 type CalendarDayGridContextType = {
-  hours: number[];
+  hours: number[] | undefined;
   currentDate: Date;
   userId?: string;
   interval: number;
