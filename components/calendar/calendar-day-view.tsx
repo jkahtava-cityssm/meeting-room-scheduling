@@ -11,12 +11,11 @@ import { TVisibleHours } from "@/lib/types";
 
 import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { useEventsQuery } from "@/lib/services/events";
-import { getVisibleHours } from "@/lib/helpers";
 import { DailyTimeBlocks } from "@/app/features/calendar/calendar-util/calendar-day-grid";
 import { CalendarDayGridProvider } from "@/app/features/calendar/calendar-util/calendar-day-grid-context";
 import { DayViewDayHeader } from "./calendar-day-view-day-header";
 import { useCalendarDayGrid } from "@/app/features/calendar/calendar-util/use-calendar-day-grid";
-import { IBlock, IDayGrid } from "@/app/features/calendar/calendar-util/calendar-day-grid-webworker";
+import { IDayGrid } from "@/app/features/calendar/calendar-util/calendar-day-grid-webworker";
 import { cn } from "@/lib/utils";
 
 export interface IDayProcessData {
@@ -90,7 +89,7 @@ export function CalendarDayView({
     if (!gridError) return;
 
     setTotalEvents(0);
-    setHours(getVisibleHours(visibleHours, []).hours);
+
     setIsHeaderLoading(false);
     //setLoading(false);
   }, [gridError, setIsHeaderLoading, setTotalEvents, visibleHours]);

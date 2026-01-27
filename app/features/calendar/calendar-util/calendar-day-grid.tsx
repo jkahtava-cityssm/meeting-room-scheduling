@@ -54,14 +54,11 @@ function useSharedDrawer() {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { IBlock } from "./calendar-day-grid-webworker";
 import { IEvent, IRoom } from "@/lib/schemas/calendar";
-import { useRouter } from "next/navigation";
-import { navigateURL } from "@/lib/helpers";
-import { Button } from "@/components/ui/button";
 import { GridEventBlock } from "./calendar-day-grid-event-block";
 import { useCalendarDayGrid } from "./calendar-day-grid-context";
 import { LoaderCircle } from "lucide-react";
 import { CalendarDayViewSkeleton } from "@/components/calendar/skeleton-calendar-day-view";
-import { CalendarDayColumnCalendar } from "@/components/calendar/calendar-day-column-calendar";
+import { CalendarDayGridTimeline } from "./calendar-day-grid-timeline";
 
 export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
   isLoading,
@@ -103,8 +100,9 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
   return (
     <SharedEventDrawerProvider>
       <ScrollArea className="w-full flex-1 min-h-0" type="always">
-        <div className="flex min-w-0 w-full">
+        <div className="relative flex min-w-0 w-full">
           <HourColumn currentDate={currentDate} hours={hours} />
+
           <div className="flex w-full min-w-0 pr-4">
             {roomsToRender?.map((room) => {
               return (
@@ -128,6 +126,7 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
             )}
           </div>
         </div>
+
         <ScrollBar orientation="vertical" forceMount />
         <ScrollBar orientation="horizontal" forceMount />
       </ScrollArea>
@@ -140,6 +139,7 @@ const HourColumn = React.memo(function HourColumn({ currentDate, hours }: { curr
     <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0">
       <div className="h-8"></div>
       <TimeBlockTopAnchor></TimeBlockTopAnchor>
+      <CalendarDayGridTimeline />
       {hours.map((hour, index) => {
         return (
           <div key={hour} className="h-24 flex items-start pr-2">
@@ -177,6 +177,7 @@ const DayColumn = React.memo(function DayColumn({
           <span className="ml-1 font-semibold text-foreground">{roomName}</span>
         </span>
       </div>
+
       <TimeBlockTopAnchor showBackground={true}></TimeBlockTopAnchor>
       <div className="relative">
         <TimeBlocks roomId={roomId} />
