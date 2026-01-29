@@ -1,11 +1,10 @@
-import { CalendarTimeline } from "@/app/features/calendar/view-day/calendar-day-timeline";
 import { cn } from "@/lib/utils";
 import { HourColumn } from "./calendar-day-column-hourly";
 import { Skeleton } from "@/components/ui/skeleton";
-
-import { TIME_BLOCK_SIZE } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { TIME_BLOCK_SIZE } from "@/lib/types";
+import { CalendarTimeline } from "./calendar-day-timeline";
 
 export function CalendarDayViewSkeleton({ hours = [...Array(24).keys()] }: { hours?: number[] }) {
   //const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));
