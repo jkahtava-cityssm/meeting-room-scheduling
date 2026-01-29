@@ -2,7 +2,7 @@ import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 
 import { TColors } from "@/lib/types";
-import { IEventBlock } from "./calendar-day-view";
+import { IEventBlock } from "../../app/features/calendar/calendar-day/calendar-day-view";
 
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { sharedColorVariants } from "../../lib/theme/colorVariants";
@@ -53,7 +53,7 @@ const EventCard = cva(
     defaultVariants: {
       color: "blue",
     },
-  }
+  },
 );
 
 export function EventBlock({

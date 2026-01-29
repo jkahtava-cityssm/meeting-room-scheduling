@@ -5,15 +5,15 @@ import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
+import { CalendarDayViewSkeleton } from "../../../../components/calendar/skeleton-calendar-day-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 
-import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
+import { CalendarDayColumnCalendar } from "../../../../components/calendar/calendar-day-column-calendar";
 import { useEventsQuery } from "@/lib/services/events";
 import { DailyTimeBlocks } from "@/app/features/calendar/calendar-day-grid/calendar-day-grid";
 import { CalendarDayGridProvider } from "@/app/features/calendar/calendar-day-grid/calendar-day-grid-context";
-import { DayViewDayHeader } from "../../app/features/calendar/calendar-day/calendar-day-view-day-header";
+import { DayViewDayHeader } from "./calendar-day-view-day-header";
 import { useCalendarDayGrid } from "@/app/features/calendar/calendar-day-grid/use-calendar-day-grid";
 import { IDayGrid } from "@/app/features/calendar/calendar-day-grid/calendar-day-grid-webworker";
 import { cn } from "@/lib/utils";

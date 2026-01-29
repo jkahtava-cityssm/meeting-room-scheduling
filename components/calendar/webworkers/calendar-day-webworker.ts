@@ -13,7 +13,12 @@ import {
 } from "@/lib/helpers";
 
 import { areIntervalsOverlapping, differenceInMinutes, endOfDay, isSameDay, isToday, startOfDay } from "date-fns";
-import { IDayProcessData, IDayResponseData, IDayView, IEventBlock } from "../calendar-day-view";
+import {
+  IDayProcessData,
+  IDayResponseData,
+  IDayView,
+  IEventBlock,
+} from "../../../app/features/calendar/calendar-day/calendar-day-view";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 
 self.onmessage = async (event: MessageEvent<IDayProcessData>) => {

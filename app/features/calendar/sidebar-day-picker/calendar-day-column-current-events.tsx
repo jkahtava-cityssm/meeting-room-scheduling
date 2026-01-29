@@ -1,6 +1,6 @@
 import { format, isToday, isWithinInterval, set } from "date-fns";
 import { useEffect, useState } from "react";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea } from "../../../../components/ui/scroll-area";
 import { IEvent } from "@/lib/schemas/calendar";
 import { Calendar, Clock, User } from "lucide-react";
 
@@ -31,7 +31,7 @@ function getLastFiveMinuteInterval(date: Date) {
 export function CalendarDayColumnCurrentEvents({ events, date }: { events: IEvent[]; date: Date }) {
   const [currentTime, setCurrentTime] = useState(getLastFiveMinuteInterval(getDateAsOfNow(date)));
   const [currentEvents, setCurrentEvents] = useState(
-    getCurrentEvents(events, getLastFiveMinuteInterval(getDateAsOfNow(date)))
+    getCurrentEvents(events, getLastFiveMinuteInterval(getDateAsOfNow(date))),
   );
 
   useEffect(() => {

@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
-import { TVisibleHours } from "@/lib/types";
+import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
 
 export interface IDayGridMessage {
   events: IEvent[];
@@ -130,7 +130,7 @@ async function processDayEvents(dayData: IDayGridMessage): Promise<IDayGridRespo
         );
 
         const durationInMinutes = differenceInMinutes(currentEvent.endDate, currentEvent.startDate);
-        const heightInPixels = (durationInMinutes / 60) * 96 - 8;
+        const heightInPixels = (durationInMinutes / 60) * TIME_BLOCK_SIZE - 8;
 
         const newBlock: IBlock = {
           key: `block-${format(currentEvent.startDate, "yyyy-MM-dd-HH-mm")}-event-${currentEvent.eventId}`,

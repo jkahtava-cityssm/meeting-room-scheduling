@@ -4,53 +4,6 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
 
-// Shared drawer context to avoid mounting many drawers — mount a single EventDrawer
-const SharedDrawerContext = React.createContext<{
-  open: (payload: { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number }) => void;
-} | null>(null);
-
-function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) {
-  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
-  const [payload, setPayload] = React.useState<{
-    creationDate?: Date;
-    event?: IEvent;
-    userId?: string;
-    roomId?: number;
-  } | null>(null);
-
-  const open = React.useCallback((p: { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number }) => {
-    setPayload(p || null);
-    // click the hidden trigger to open the sheet inside EventDrawer
-    try {
-      triggerRef.current?.click();
-    } catch (e) {
-      // ignore
-    }
-  }, []);
-
-  return (
-    <SharedDrawerContext.Provider value={{ open }}>
-      {children}
-      {/* Offscreen trigger wrapped by the single EventDrawer instance */}
-      <div style={{ position: "absolute", left: -9999, width: 1, height: 1, overflow: "hidden" }}>
-        <EventDrawer
-          creationDate={payload?.creationDate}
-          event={payload?.event}
-          userId={payload?.userId}
-          roomId={payload?.roomId}
-        >
-          <button ref={triggerRef} aria-hidden tabIndex={-1} />
-        </EventDrawer>
-      </div>
-    </SharedDrawerContext.Provider>
-  );
-}
-
-function useSharedDrawer() {
-  const ctx = React.useContext(SharedDrawerContext);
-  if (!ctx) throw new Error("useSharedDrawer must be used within SharedEventDrawerProvider");
-  return ctx;
-}
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { IBlock } from "./calendar-day-grid-webworker";
 import { IEvent, IRoom } from "@/lib/schemas/calendar";
@@ -59,6 +12,7 @@ import { useCalendarDayGrid } from "./calendar-day-grid-context";
 import { LoaderCircle } from "lucide-react";
 import { CalendarDayViewSkeleton } from "@/components/calendar/skeleton-calendar-day-view";
 import { CalendarDayGridTimeline } from "./calendar-day-grid-timeline";
+import { SharedEventDrawerProvider, useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
 
 export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
   isLoading,
@@ -135,21 +89,26 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 });
 const HourColumn = React.memo(function HourColumn({ currentDate, hours }: { currentDate: Date; hours: number[] }) {
   const lastHour = hours[hours.length - 1] + 1;
+
   return (
-    <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0">
-      <div className="h-8"></div>
-      <TimeBlockTopAnchor></TimeBlockTopAnchor>
-      <CalendarDayGridTimeline />
-      {hours.map((hour, index) => {
-        return (
-          <div key={hour} className="h-24 flex items-start pr-2">
-            <span className="ml-auto -mt-1 text-xs text-muted-foreground">
-              {format(new Date().setHours(hour), "hh a")}
-            </span>
-          </div>
-        );
-      })}
-      <TimeBlockBottomAnchor title={format(new Date().setHours(lastHour), "hh a")}></TimeBlockBottomAnchor>
+    <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0 mt-8">
+      <div className=" pt-1.5">
+        <CalendarDayGridTimeline />
+        {hours.map((hour, index) => {
+          return (
+            <div key={hour} className="h-24 flex items-start pr-2">
+              <span className="ml-auto -mt-2 text-xs text-muted-foreground">
+                {format(new Date().setHours(hour), "hh a")}
+              </span>
+            </div>
+          );
+        })}
+        <div className={"h-4 flex items-start pr-2"}>
+          <span className="ml-auto -mt-2 text-xs text-muted-foreground">
+            {format(new Date().setHours(lastHour), "hh a")}
+          </span>
+        </div>
+      </div>
     </div>
   );
 });
@@ -177,25 +136,24 @@ const DayColumn = React.memo(function DayColumn({
           <span className="ml-1 font-semibold text-foreground">{roomName}</span>
         </span>
       </div>
+      <div className=" border-t-6 border-b-16">
+        <div className="relative">
+          <TimeBlocks roomId={roomId} />
 
-      <TimeBlockTopAnchor showBackground={true}></TimeBlockTopAnchor>
-      <div className="relative">
-        <TimeBlocks roomId={roomId} />
-
-        {!isLoading &&
-          eventBlocks.map((block, blockIndex) => {
-            return (
-              <div
-                key={`day-${dayIndex}-block-${blockIndex}-event-${block.event.eventId}`}
-                className="absolute p-1"
-                style={block.eventStyle}
-              >
-                {<GridEventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />}
-              </div>
-            );
-          })}
+          {!isLoading &&
+            eventBlocks.map((block, blockIndex) => {
+              return (
+                <div
+                  key={`day-${dayIndex}-block-${blockIndex}-event-${block.event.eventId}`}
+                  className="absolute p-1"
+                  style={block.eventStyle}
+                >
+                  {<GridEventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />}
+                </div>
+              );
+            })}
+        </div>
       </div>
-      <TimeBlockBottomAnchor showBackground={true}></TimeBlockBottomAnchor>
     </div>
   );
 });
@@ -265,74 +223,24 @@ const TimeBlockEventDrawer = React.memo(function TimeBlockEventDrawer({
     [currentDate, hour, startMinute],
   );
 
-  const shared = useSharedDrawer();
+  const eventDrawer = useSharedEventDrawer();
 
-  if (!allowCreateEvent)
+  if (!allowCreateEvent || !eventDrawer)
     return <TimeBlockButton totalSlots={totalSlots} index={index} showBottomSeparator={showBottomSeparator} />;
 
-  // Fallback: if provider not present, just render the button
-  if (!shared) {
-    return (
-      <div role="button" tabIndex={0}>
-        <TimeBlockButton totalSlots={totalSlots} index={index} showBottomSeparator={showBottomSeparator} />
-      </div>
-    );
-  }
-
   return (
-    <div
-      onPointerDown={() => shared.open({ creationDate, userId, roomId })}
-      role="button"
+    <button
+      onClick={() => eventDrawer.open({ creationDate, userId, roomId })}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") shared.open({ creationDate, userId, roomId });
+        if (e.key === "Enter" || e.key === " ") eventDrawer.open({ creationDate, userId, roomId });
       }}
     >
       <TimeBlockButton totalSlots={totalSlots} index={index} showBottomSeparator={showBottomSeparator} />
-    </div>
+    </button>
   );
 });
 //<div className={cn("absolute inset-x-0 cursor-pointer transition-colors hover:bg-accent", height, top)} />
-
-function TimeBlockBottomAnchor({
-  title,
-  showBackground = false,
-  topBorder = false,
-  bottomBorder = false,
-}: {
-  title?: string;
-  showBackground?: boolean;
-  topBorder?: boolean;
-  bottomBorder?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "relative h-4 ",
-        showBackground && "bg-(--color-border) ",
-        topBorder && "border-t-2",
-        bottomBorder && "border-b-2",
-      )}
-    >
-      {title && (
-        <div className={"absolute right-2 flex items-center -top-2 h-4"}>
-          <span className="text-xs text-muted-foreground">{title}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TimeBlockTopAnchor({
-  showBackground = false,
-}: {
-  title?: string;
-  showBackground?: boolean;
-  topBorder?: boolean;
-  bottomBorder?: boolean;
-}) {
-  return <div className={cn("relative h-1.5 ", showBackground && "bg-(--color-border) ")}></div>;
-}
 
 const HEIGHTS: Record<number, string> = { 12: "h-2", 6: "h-4", 4: "h-6", 3: "h-8", 2: "h-12" } as const;
 const TOPS: Record<number, string[]> = {
