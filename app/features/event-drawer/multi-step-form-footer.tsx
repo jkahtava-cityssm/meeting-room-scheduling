@@ -68,17 +68,17 @@ const FormFooter: React.FC<FormFooterProps> = ({
   const [isSaving, setSaving] = useState(false);
   const [isDeleting, setDeleting] = useState(false);
 
-  const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
+  const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const isSaveDisabled = useMemo(() => {
-    if (status === "Edit") return !Permissions.UpdateEvent;
-    if (status === "New") return !Permissions.CreateEvent || userId !== undefined;
+    if (status === "Edit") return !permissions.UpdateEvent;
+    if (status === "New") return !permissions.CreateEvent || userId !== undefined;
     return false;
-  }, [status, Permissions, userId]);
+  }, [status, permissions, userId]);
 
   const isEditDisabled = useMemo(() => {
-    return status === "Loading" || !Permissions.UpdateEvent;
-  }, [status, Permissions]);
+    return status === "Loading" || !permissions.UpdateEvent;
+  }, [status, permissions]);
 
   return (
     <SheetFooter className="flex md:flex-row gap-6">

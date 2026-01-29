@@ -1,7 +1,7 @@
 "use client";
 
 import { TCalendarView } from "@/lib/types";
-import { CalendarDayView } from "./calendar-day-view";
+import { CalendarDayView } from "../../app/features/calendar/calendar-day/calendar-day-view";
 import { CalendarMonthView } from "./calendar-month-view";
 import { CalendarWeekView } from "./calendar-week-view";
 import { CalendarYearView } from "./calendar-year-view";
@@ -19,7 +19,6 @@ import { CalendarDayColumnCalendar } from "./calendar-day-column-calendar";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Terminal } from "lucide-react";
-import { DayViewDayHeader } from "./calendar-day-view-day-header";
 import { useSidebar } from "../ui/sidebar";
 //import { hasPermission } from "@/lib/auth";
 
@@ -53,7 +52,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
 
   const { session, isPending } = useClientSession();
 
-  const Permissions = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
+  const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const { open, openMobile, isMobile } = useSidebar();
 
@@ -73,15 +72,15 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
           view={view as TCalendarView}
           selectedDate={dateValue}
           userId={userId}
-          allowCreateEvent={Permissions.CreateEvent}
+          allowCreateEvent={permissions.CreateEvent}
         />
 
         {view === "day" && (
           <CalendarDayView
             date={dateValue}
             userId={userId}
-            //allowDayView={Permissions.AllowDayView}
-            allowCreateEvent={Permissions.CreateEvent}
+            //allowDayView={permissions.AllowDayView}
+            allowCreateEvent={permissions.CreateEvent}
             isSidebarOpen={open}
           />
         )}
