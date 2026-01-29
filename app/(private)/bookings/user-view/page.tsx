@@ -1,5 +1,6 @@
 "use client";
-import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
+
+import { CalendarAllViews } from "@/app/features/calendar/calendar-controller/calendar-all-views";
 import { CalendarProvider } from "@/contexts/CalendarProvider";
 
 import { useClientSession } from "@/hooks/use-client-auth";

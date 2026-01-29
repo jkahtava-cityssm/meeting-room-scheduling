@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarPublicView } from "@/components/calendar/calendar-public-view";
+import { CalendarPublicView } from "@/app/features/calendar/view-public/calendar-public-view";
 import { useSidebar } from "@/components/ui/sidebar";
 import { CalendarProvider } from "@/contexts/CalendarProvider";
 import { Suspense } from "react";

@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ThemeButton } from "@/components/theme-button";
 import { PublicHeader } from "@/components/public-header";
-import { CalendarPublicView } from "@/components/calendar/calendar-public-view";
+
 import { CalendarProvider } from "@/contexts/CalendarProvider";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { CalendarPublicView } from "./features/calendar/view-public/calendar-public-view";
 
 export default async function Home() {
   const session = await auth.api.getSession({

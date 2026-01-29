@@ -2,17 +2,16 @@ import { format } from "date-fns";
 import React from "react";
 
 import { cn } from "@/lib/utils";
-import EventDrawer from "@/app/features/event-drawer/event-drawer";
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { IBlock } from "./calendar-day-grid-webworker";
-import { IEvent, IRoom } from "@/lib/schemas/calendar";
+import { IRoom } from "@/lib/schemas/calendar";
 import { GridEventBlock } from "./calendar-day-grid-event-block";
 import { useCalendarDayGrid } from "./calendar-day-grid-context";
-import { LoaderCircle } from "lucide-react";
-import { CalendarDayViewSkeleton } from "@/components/calendar/skeleton-calendar-day-view";
-import { CalendarDayGridTimeline } from "./calendar-day-grid-timeline";
-import { SharedEventDrawerProvider, useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
+
+import { CalendarDayViewSkeleton } from "@/app/features/calendar/view-day/skeleton-calendar-day-view";
+
+import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
+import { CalendarScrollContainer } from "../components/calendar-scroll-container";
 
 export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
   isLoading,
@@ -43,73 +42,27 @@ export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
 
   const isMounting = !visibleRooms || !roomBlocks || !hours;
 
-  if (isMounting) {
-    return (
-      <div className="flex">
-        <CalendarDayViewSkeleton />
-      </div>
-    );
-  }
-
   return (
-    <SharedEventDrawerProvider>
-      <ScrollArea className="w-full flex-1 min-h-0" type="always">
-        <div className="relative flex min-w-0 w-full">
-          <HourColumn currentDate={currentDate} hours={hours} />
-
-          <div className="flex w-full min-w-0 pr-4">
-            {roomsToRender?.map((room) => {
-              return (
-                <DayColumn
-                  isLoading={isLoading}
-                  key={room.roomId}
-                  roomId={room.roomId}
-                  roomName={room.roomName}
-                  eventBlocks={room.blocks || []}
-                  dayIndex={dayIndex}
-                  isLastColumn={room.roomId === lastRoomId}
-                />
-              );
-            })}
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
-                  <LoaderCircle className="animate-spin" />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <ScrollBar orientation="vertical" forceMount />
-        <ScrollBar orientation="horizontal" forceMount />
-      </ScrollArea>
-    </SharedEventDrawerProvider>
-  );
-});
-const HourColumn = React.memo(function HourColumn({ currentDate, hours }: { currentDate: Date; hours: number[] }) {
-  const lastHour = hours[hours.length - 1] + 1;
-
-  return (
-    <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0 mt-8">
-      <div className=" pt-1.5">
-        <CalendarDayGridTimeline />
-        {hours.map((hour, index) => {
-          return (
-            <div key={hour} className="h-24 flex items-start pr-2">
-              <span className="ml-auto -mt-2 text-xs text-muted-foreground">
-                {format(new Date().setHours(hour), "hh a")}
-              </span>
-            </div>
-          );
-        })}
-        <div className={"h-4 flex items-start pr-2"}>
-          <span className="ml-auto -mt-2 text-xs text-muted-foreground">
-            {format(new Date().setHours(lastHour), "hh a")}
-          </span>
-        </div>
-      </div>
-    </div>
+    <CalendarScrollContainer
+      isLoading={isLoading}
+      hours={hours || []}
+      isMounting={isMounting}
+      skeleton={<CalendarDayViewSkeleton hours={hours} />}
+    >
+      {roomsToRender?.map((room) => {
+        return (
+          <DayColumn
+            isLoading={isLoading}
+            key={room.roomId}
+            roomId={room.roomId}
+            roomName={room.roomName}
+            eventBlocks={room.blocks || []}
+            dayIndex={dayIndex}
+            isLastColumn={room.roomId === lastRoomId}
+          />
+        );
+      })}
+    </CalendarScrollContainer>
   );
 });
 
