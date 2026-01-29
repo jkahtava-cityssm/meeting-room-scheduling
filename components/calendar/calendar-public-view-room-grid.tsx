@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { CalendarPublicViewRoomGridSkeleton } from "./skeleton-calendar-public-view-room-grid";
 import { Skeleton } from "../ui/skeleton";
 import { PublicEventBlockHybrid } from "./calendar-public-view-event-block-hybrid";
+import { TIME_BLOCK_SIZE } from "@/lib/types";
 
 export const FilteredRoomGrid = React.memo(
   ({
@@ -67,7 +68,7 @@ export const FilteredRoomGrid = React.memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 /*
@@ -167,7 +168,7 @@ FilteredRoomGrid.displayName = "FilteredRoomGrid";
 const RoomHourBlocks = ({ hours }: { hours: number[] }) => {
   const hourBlocks = useMemo(() => {
     return hours.map((hour, index) => (
-      <div key={hour} className="relative" style={{ height: "96px" }}>
+      <div key={hour} className="relative" style={{ height: `${TIME_BLOCK_SIZE}px` }}>
         {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />}
         <div className="absolute inset-x-0 top-0 h-6 cursor-pointer transition-colors hover:bg-accent" />
         <div className="absolute inset-x-0 top-6 h-6 cursor-pointer transition-colors hover:bg-accent" />
@@ -185,7 +186,7 @@ const HourColumn = React.memo(({ hours }: { hours: number[] }) => {
   return (
     <div className="min-w-18 border-x-2 pr-2 border-b-2">
       {hours.map((hour, index) => (
-        <div key={hour} className="relative" style={{ height: "96px" }}>
+        <div key={hour} className="relative" style={{ height: `${TIME_BLOCK_SIZE}px` }}>
           <div className={"absolute right-2 flex h-6 items-center " + (index !== 0 ? "-top-3" : "")}>
             <span className="text-xs text-muted-foreground">{format(new Date().setHours(hour), "hh a")}</span>
           </div>

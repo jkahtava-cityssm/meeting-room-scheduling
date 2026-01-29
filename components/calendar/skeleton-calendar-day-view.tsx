@@ -4,6 +4,7 @@ import { HourColumn } from "./calendar-day-column-hourly";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
+import { TIME_BLOCK_SIZE } from "@/lib/types";
 
 export function CalendarDayViewSkeleton() {
   //const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));
@@ -22,7 +23,7 @@ export function CalendarDayViewSkeleton() {
             <div className="relative">
               {hours.map((hour, index) => {
                 return (
-                  <div key={hour} className={cn("relative")} style={{ height: "96px" }}>
+                  <div key={hour} className={cn("relative")} style={{ height: `${TIME_BLOCK_SIZE}px` }}>
                     {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b"></div>}
                     <Skeleton className="absolute inset-x-0 top-[2px] h-[44px] transition-colors hover:bg-accent rounded-none"></Skeleton>
 

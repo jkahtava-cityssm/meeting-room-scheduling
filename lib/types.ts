@@ -142,3 +142,9 @@ function makeEnum<T extends readonly string[]>(values: T) {
   };
 }
 export const ROLES_ENUM = makeEnum(DEFAULT_USER_ROLES);
+
+//THIS SHOULD REMAIN 96, because it is easily divisible
+// 5,10,15,20,30,60
+// 12,6,4 ,3 ,2 ,1
+// 60/5 = 12, 60/10=6, 60/15=4, 60/20=3, 60/30=2, 60/60=1
+export const TIME_BLOCK_SIZE = 96;

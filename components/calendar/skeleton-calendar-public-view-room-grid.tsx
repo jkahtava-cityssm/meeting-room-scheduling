@@ -16,6 +16,7 @@ import { CalendarDayPopover } from "../calendar-day-popover/calendar-day-popover
 import { navigateDate, navigateURL } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "../ui/skeleton";
+import { TIME_BLOCK_SIZE } from "@/lib/types";
 
 const HOURS = 12;
 const ROOMS = 12;
@@ -50,7 +51,7 @@ export const CalendarPublicViewRoomGridSkeleton = ({
         <div className="flex">
           <div className="min-w-18 border-x-2 pr-2 border-b-2">
             {[...Array(hourBlocksToCreate).keys()].map((hour, index) => (
-              <div key={hour} className="relative" style={{ height: "96px" }}>
+              <div key={hour} className="relative" style={{ height: `${TIME_BLOCK_SIZE}px` }}>
                 <div className={"absolute right-2 flex h-6 items-center " + (index !== 0 ? "-top-3" : "")}>
                   <Skeleton className="w-8 h-6"></Skeleton>
                 </div>
@@ -65,7 +66,7 @@ export const CalendarPublicViewRoomGridSkeleton = ({
                 <div className="w-45 relative border-r border-dashed">
                   {[...Array(hourBlocksToCreate).keys()].map((hour, index) => {
                     return (
-                      <div key={hour} className="relative" style={{ height: "96px" }}>
+                      <div key={hour} className="relative" style={{ height: `${TIME_BLOCK_SIZE}px` }}>
                         {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />}
                         <div className="absolute inset-x-0 top-0 h-6 cursor-pointer transition-colors hover:bg-accent" />
                         <div className="absolute inset-x-0 top-6 h-6 cursor-pointer transition-colors hover:bg-accent" />
@@ -90,7 +91,7 @@ export const CalendarPublicViewRoomGridSkeleton = ({
 const RoomHourBlocks = ({ hourBlocksToCreate }: { hourBlocksToCreate: number[] }) => {
   const hourBlocks = useMemo(() => {
     return hourBlocksToCreate.map((hour, index) => (
-      <div key={hour} className="relative" style={{ height: "96px" }}>
+      <div key={hour} className="relative" style={{ height: `${TIME_BLOCK_SIZE}px` }}>
         {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2" />}
         <div className="absolute inset-x-0 top-0 h-6 cursor-pointer transition-colors hover:bg-accent" />
         <div className="absolute inset-x-0 top-6 h-6 cursor-pointer transition-colors hover:bg-accent" />
@@ -108,7 +109,7 @@ const HourColumn = React.memo(({ hourBlocksToCreate }: { hourBlocksToCreate: num
   return (
     <div className="min-w-18 border-x-2 pr-2 border-b-2">
       {hourBlocksToCreate.map((hour, index) => (
-        <div key={hour} className="relative" style={{ height: "96px" }}>
+        <div key={hour} className="relative" style={{ height: `${TIME_BLOCK_SIZE}px` }}>
           <div className={"absolute right-2 flex h-6 items-center " + (index !== 0 ? "-top-3" : "")}>
             <span className="text-xs text-muted-foreground">{format(new Date().setHours(hour), "hh a")}</span>
           </div>

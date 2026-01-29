@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
+import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
 import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/lib/services/public";
 import { useSearchParams } from "next/navigation";
 import { RoomCategoryLayout } from "./calendar-public-view-room-list";
@@ -141,7 +141,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
         selectedDate: dateValue,
         roomIdList: rooms.map((room) => room.roomId.toString()),
         multiDayEventsAtTop: true,
-        pixelHeight: 96,
+        pixelHeight: TIME_BLOCK_SIZE,
       };
       //setLoading(true);
       setIsHeaderLoading(true);
