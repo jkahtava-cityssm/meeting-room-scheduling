@@ -15,6 +15,7 @@ import { useVerifySessionRequirement } from "@/lib/auth-client";
 import { GroupedPermissionRequirement, PermissionResult } from "@/lib/auth-permission-checks";
 import { DateNavigator } from "./calendar-all-header-date-navigator";
 import { TodayButton } from "./calendar-all-header-today-button";
+import { CalendarPermissions } from "../permissions/calendar.permissions";
 
 const PAGE_PERMISSIONS = {
   CreateEvent: { type: "permission", resource: "Event", action: "Create" },
@@ -23,15 +24,14 @@ const PAGE_PERMISSIONS = {
 export function CalendarHeader({
   view,
   selectedDate,
-  allowCreateEvent,
   userId,
 }: {
   view: TCalendarView;
   selectedDate: Date;
-  allowCreateEvent: boolean;
   userId?: string;
 }) {
-  const { session, isPending } = useClientSession();
+  //const { session, isPending } = useClientSession();
+  const { permissions, isVerifying } = CalendarPermissions.usePermissions();
   const { setSelectedRoomId, selectedRoomId } = useCalendar();
   const { push } = useRouter();
 
@@ -143,7 +143,7 @@ export function CalendarHeader({
             </Button>
           </AddEventDialog>*/}
 
-          {!isPending && allowCreateEvent && (
+          {!isVerifying && permissions.CreateEvent && (
             <EventDrawer userId={userId}>
               <Button className="w-full sm:w-auto">
                 <Plus />

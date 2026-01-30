@@ -22,6 +22,7 @@ import { CalendarYearView } from "@/app/features/calendar/view-year/calendar-yea
 import { CalendarAgendaView } from "@/app/features/calendar/view-agenda/calendar-agenda-view";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CalendarHeader } from "./calendar-all-header";
+import { CalendarPermissions } from "../permissions/calendar.permissions";
 //import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null) {
@@ -31,15 +32,6 @@ function getViewDate(dateParam: string | null) {
 function removeTimeFromDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
-
-const PAGE_PERMISSIONS = {
-  CreateEvent: { type: "permission", resource: "Event", action: "Create" },
-  AllowDayView: { type: "permission", resource: "Calendar", action: "View Day" },
-  AllowWeekView: { type: "permission", resource: "Calendar", action: "View Week" },
-  AllowMonthView: { type: "permission", resource: "Calendar", action: "View Month" },
-  AllowYearView: { type: "permission", resource: "Calendar", action: "View Year" },
-  AllowAgendaView: { type: "permission", resource: "Calendar", action: "View Agenda" },
-} as const;
 
 export function CalendarAllViews({ userId }: { userId?: string }) {
   const searchParams = useSearchParams();
@@ -54,8 +46,6 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
 
   const { session, isPending } = useClientSession();
 
-  const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
-
   const { open, openMobile, isMobile } = useSidebar();
 
   if (isPending) {
@@ -69,28 +59,17 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
 
   if (session) {
     return (
-      <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
-        <CalendarHeader
-          view={view as TCalendarView}
-          selectedDate={dateValue}
-          userId={userId}
-          allowCreateEvent={permissions.CreateEvent}
-        />
+      <CalendarPermissions.Provider session={session}>
+        <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
+          <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} userId={userId} />
 
-        {view === "day" && (
-          <CalendarDayView
-            date={dateValue}
-            userId={userId}
-            //allowDayView={permissions.AllowDayView}
-            allowCreateEvent={permissions.CreateEvent}
-            isSidebarOpen={open}
-          />
-        )}
-        {view === "month" && <CalendarMonthView date={dateValue} userId={userId} />}
-        {view === "week" && <CalendarWeekView date={dateValue} userId={userId} />}
-        {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
-        {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
-      </div>
+          {view === "day" && <CalendarDayView date={dateValue} userId={userId} isSidebarOpen={open} />}
+          {view === "month" && <CalendarMonthView date={dateValue} userId={userId} />}
+          {view === "week" && <CalendarWeekView date={dateValue} userId={userId} />}
+          {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
+          {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
+        </div>
+      </CalendarPermissions.Provider>
     );
   }
 }

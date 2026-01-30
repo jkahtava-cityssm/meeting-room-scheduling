@@ -17,6 +17,7 @@ import { useCalendarDayGrid } from "@/app/features/calendar/calendar-day-grid/us
 import { IDayGrid } from "@/app/features/calendar/calendar-day-grid/calendar-day-grid-webworker";
 import { cn } from "@/lib/utils";
 import { CalendarDayColumnCalendar } from "../sidebar-day-picker/calendar-day-column-calendar";
+import { CalendarPermissions } from "../permissions/calendar.permissions";
 
 export interface IDayProcessData {
   events: IEvent[];
@@ -55,15 +56,13 @@ export function CalendarDayView({
   date,
   userId,
   isSidebarOpen = false,
-  allowCreateEvent,
 }: {
   date: Date;
   userId?: string;
   isSidebarOpen?: boolean;
-  allowCreateEvent: boolean;
 }) {
   const [isLoading, setLoading] = useState(true);
-
+  const { permissions, isVerifying } = CalendarPermissions.usePermissions();
   const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
   const [hours, setHours] = useState<number[] | undefined>(undefined);
   // stable derived props for children — avoids passing new references each render
@@ -164,7 +163,7 @@ export function CalendarDayView({
               currentDate: date,
               userId,
               interval,
-              allowCreateEvent,
+              allowCreateEvent: permissions.CreateEvent,
               isLoading,
             }}
           >
