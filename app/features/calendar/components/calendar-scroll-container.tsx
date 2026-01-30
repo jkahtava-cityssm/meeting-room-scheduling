@@ -48,7 +48,7 @@ const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }
   const lastHour = hours.length > 0 ? hours[hours.length - 1] + 1 : 0;
 
   return (
-    <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0 mt-8">
+    <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0 pt-8">
       <div className=" pt-1.5">
         <CalendarHourTimeline hours={hours} />
         {hours.map((hour, index) => {
