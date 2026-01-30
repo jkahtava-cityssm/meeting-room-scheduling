@@ -33,9 +33,7 @@ export const CalendarScrollColumn = memo(function ContentColumn({
   return (
     <div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
       <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
-        <span className="py-2 text-center text-xs font-medium text-muted-foreground">
-          <span className="ml-1 font-semibold text-foreground">{title}</span>
-        </span>
+        <span className="ml-1 text-xs font-semibold text-foreground">{title}</span>
       </div>
       <div className=" border-t-6 border-b-16">
         <div className="relative">
@@ -122,30 +120,6 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
     />
   );
 });
-//<div className={cn("absolute inset-x-0 cursor-pointer transition-colors hover:bg-accent", height, top)} />
-
-const HEIGHTS: Record<number, string> = { 12: "h-2", 6: "h-4", 4: "h-6", 3: "h-8", 2: "h-12" } as const;
-const TOPS: Record<number, string[]> = {
-  12: [
-    "top-0",
-    "top-2",
-    "top-4",
-    "top-6",
-    "top-8",
-    "top-10",
-    "top-12",
-    "top-14",
-    "top-16",
-    "top-18",
-    "top-20",
-    "top-22",
-  ],
-  6: ["top-0", "top-4", "top-8", "top-12", "top-16", "top-20"],
-  4: ["top-0", "top-6", "top-12", "top-18", "top-22"],
-  3: ["top-0", "top-8", "top-16"],
-  2: ["top-0", "top-12"],
-  1: ["top-0"],
-} as const;
 
 const TimeBlockButton = memo(
   forwardRef<
@@ -193,3 +167,26 @@ function clampToValidInterval(interval: number) {
     VALID_INTERVALS[0],
   );
 }
+
+const HEIGHTS: Record<number, string> = { 12: "h-2", 6: "h-4", 4: "h-6", 3: "h-8", 2: "h-12" } as const;
+const TOPS: Record<number, string[]> = {
+  12: [
+    "top-0",
+    "top-2",
+    "top-4",
+    "top-6",
+    "top-8",
+    "top-10",
+    "top-12",
+    "top-14",
+    "top-16",
+    "top-18",
+    "top-20",
+    "top-22",
+  ],
+  6: ["top-0", "top-4", "top-8", "top-12", "top-16", "top-20"],
+  4: ["top-0", "top-6", "top-12", "top-18", "top-22"],
+  3: ["top-0", "top-8", "top-16"],
+  2: ["top-0", "top-12"],
+  1: ["top-0"],
+} as const;

@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfWeek, endOfWeek } from "date-fns";
+import { startOfWeek, endOfWeek, format } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/app/features/calendar/view-day/calendar-day-timeline";
@@ -15,6 +15,12 @@ import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
 import { useEventsQuery } from "@/lib/services/events";
+import { WeeklyBlocks } from "../calendar-day-grid/calendar-week-grid";
+import { CalendarScrollContainer } from "../components/calendar-scroll-container";
+import { CalendarScrollColumn } from "../components/calendar-scroll-column";
+import { CalendarDayViewSkeleton } from "../view-day/skeleton-calendar-day-view";
+import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
+import { cn } from "@/lib/utils";
 
 export interface IWeekProcessData {
   events: IEvent[];
@@ -54,7 +60,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
   const [dayViews, setDayViews] = useState<IDayView[]>([]);
   const [hours, setHours] = useState<number[]>([]);
 
-  const { visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
+  const { interval, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
   const workerRef = useRef<Worker | null>(null);
 
@@ -132,23 +138,44 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     }
   }, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
-  if (isLoading) {
+  /*if (isLoading) {
     return <CalendarWeekViewSkeleton />;
-  }
+  }*/
+
+  const isMounting = !dayViews || !hours;
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
-        <p>Weekly view is not available on smaller devices.</p>
-        <p>Please switch to daily or monthly view.</p>
-      </div>
-
-      <div className="hidden flex-col sm:flex">
-        <div className="flex">
-          <div className="flex flex-1 flex-col">
-            {isLoading ? (
-              <CalendarWeekViewSkeleton />
-            ) : (
+      <div className="flex flex-1 min-h-0">
+        <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+          {isLoading ? (
+            <CalendarWeekViewSkeleton />
+          ) : (
+            <CalendarScrollContainer
+              isLoading={isLoading}
+              hours={hours || []}
+              isMounting={isMounting}
+              skeleton={<CalendarDayViewSkeleton hours={hours} />}
+            >
+              {dayViews?.map((day, dayIndex) => {
+                return (
+                  <CalendarScrollColumn
+                    key={day.day}
+                    loadingBlocks={isLoading}
+                    title={format(day.dayDate, "EE d")}
+                    interval={interval}
+                    roomId={undefined}
+                    userId={userId}
+                    hours={hours || []}
+                    eventBlocks={(day.eventBlocks as unknown as IBlock[]) || []}
+                    isLastColumn={dayViews.length - 1 === dayIndex}
+                    currentDate={day.dayDate}
+                  />
+                );
+              })}
+            </CalendarScrollContainer>
+          )}
+          {/* 
               <>
                 <div className="relative z-20 flex border-b">
                   <div className="w-18"></div>
@@ -160,10 +187,10 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                 </div>
                 <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
                   <div className="flex overflow-hidden">
-                    {/* Hours column */}
+                    
                     <HourColumn hours={hours} />
 
-                    {/* Week grid */}
+                    
                     <div className="relative flex-1 border-l">
                       <div className="grid grid-cols-7 divide-x">
                         {dayViews.map((day, dayIndex) => {
@@ -193,8 +220,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                   <ScrollBar orientation="vertical" forceMount></ScrollBar>
                 </ScrollArea>
               </>
-            )}
-          </div>
+              */}
         </div>
       </div>
     </>

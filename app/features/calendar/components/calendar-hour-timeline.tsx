@@ -49,7 +49,7 @@ export function CalendarHourTimeline({ hours }: { hours: number[] }) {
 }
 
 const getCurrentTimePosition = (currentTime: Date, visibleHours: TVisibleHours, hours: number[]) => {
-  const padding = 6;
+  const padding = 38;
   const index = hours.indexOf(currentTime.getHours());
   const minutes2 = currentTime.getMinutes();
   const block = index * TIME_BLOCK_SIZE;
