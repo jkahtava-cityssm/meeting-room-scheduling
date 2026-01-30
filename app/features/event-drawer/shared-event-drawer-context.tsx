@@ -1,10 +1,10 @@
-import { createContext, useContext, useRef, useState, useCallback } from "react";
+import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
 import EventDrawer from "./event-drawer";
 import { IEvent } from "@/lib/schemas/calendar";
 
 // Shared drawer context to avoid mounting many drawers — mount a single EventDrawer
 const SharedDrawerContext = createContext<{
-  open: (payload: { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number }) => void;
+  openEventDrawer: (payload: { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number }) => void;
 } | null>(null);
 
 export function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) {
@@ -16,18 +16,23 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
     roomId?: number;
   } | null>(null);
 
-  const open = useCallback((p: { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number }) => {
-    setPayload(p || null);
-    // click the hidden trigger to open the sheet inside EventDrawer
-    try {
-      triggerRef.current?.click();
-    } catch (e) {
-      // ignore
-    }
-  }, []);
+  const openEventDrawer = useCallback(
+    (p: { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number }) => {
+      setPayload(p || null);
+      // click the hidden trigger to open the sheet inside EventDrawer
+      try {
+        triggerRef.current?.click();
+      } catch (e) {
+        // ignore
+      }
+    },
+    [],
+  );
+
+  const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
 
   return (
-    <SharedDrawerContext.Provider value={{ open }}>
+    <SharedDrawerContext.Provider value={ctxValue}>
       {children}
       {/* Offscreen trigger wrapped by the single EventDrawer instance */}
 
