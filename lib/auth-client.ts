@@ -26,7 +26,7 @@ export const { signIn, signOut, useSession } = authClient;
 export function useVerifySessionRequirement<T extends Readonly<GroupedPermissionRequirement>>(
   session: Session | undefined | null,
   requirement: T,
-): { permissions: PermissionResult<T>; cache: PermissionCache | null; loading: boolean } {
+): { permissions: PermissionResult<T>; cache: PermissionCache | null; isVerifying: boolean } {
   const roles = session?.user?.roles;
 
   const initialState = useMemo(() => {
@@ -35,7 +35,7 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
   }, [requirement]);
 
   const [result, setResult] = useState<PermissionResult<T>>(initialState);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isVerifying, setVerifying] = useState<boolean>(true);
 
   const permissionCache = useMemo(() => {
     if (!roles) return null;
@@ -47,18 +47,18 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
 
     if (!roles || !permissionCache) {
       setResult(initialState);
-      setLoading(false);
+      setVerifying(false);
       return;
     }
 
-    setLoading(true);
+    setVerifying(true);
 
     (async () => {
       const groupedResults = await isGroupRequirementMet(permissionCache, requirement);
 
       if (active) {
         setResult(groupedResults as PermissionResult<T>);
-        setLoading(false);
+        setVerifying(false);
       }
     })();
 
@@ -67,7 +67,7 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
     };
   }, [requirement, roles, permissionCache, initialState]);
 
-  return { permissions: result, cache: permissionCache, loading };
+  return { permissions: result, cache: permissionCache, isVerifying };
 }
 
 export function getSessionRoles(session: Session | undefined | null) {

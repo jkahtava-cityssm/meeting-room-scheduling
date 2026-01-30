@@ -10,23 +10,23 @@ export function createSecurityContext<const T extends Readonly<GroupedPermission
   type CtxValue = {
     cache: PermissionCache | null;
     permissions: Result;
-    loading: boolean;
+    isVerifying: boolean;
     can: (key: Key) => boolean;
   };
 
   const Ctx = React.createContext<CtxValue | null>(null);
 
   function Provider({ session, children }: { session: Session | null | undefined; children: React.ReactNode }) {
-    const { permissions, cache, loading } = useVerifySessionRequirement(session, PERMISSIONS);
+    const { permissions, cache, isVerifying } = useVerifySessionRequirement(session, PERMISSIONS);
 
     const value = React.useMemo<CtxValue>(() => {
       return {
         cache,
         permissions,
-        loading,
+        isVerifying,
         can: (key) => Boolean(permissions[key]),
       };
-    }, [cache, permissions, loading]);
+    }, [cache, permissions, isVerifying]);
 
     return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
   }
@@ -49,8 +49,8 @@ export function createSecurityContext<const T extends Readonly<GroupedPermission
     loadingFallback?: React.ReactNode;
     children: React.ReactNode;
   }) {
-    const { can, loading } = usePermissions();
-    if (loading) return <>{loadingFallback}</>;
+    const { can, isVerifying } = usePermissions();
+    if (isVerifying) return <>{loadingFallback}</>;
     return can(permissionKey) ? <>{children}</> : <>{fallback}</>;
   }
 
@@ -61,8 +61,8 @@ export function createSecurityContext<const T extends Readonly<GroupedPermission
     permissionKey: Key;
     children: (allowed: boolean) => React.ReactNode;
   }) {
-    const { can, loading } = usePermissions();
-    return <>{children(!loading && can(permissionKey))}</>;
+    const { can, isVerifying } = usePermissions();
+    return <>{children(!isVerifying && can(permissionKey))}</>;
   }
 
   return {
