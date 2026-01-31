@@ -147,42 +147,37 @@ export function CalendarDayView({
   // transition-[width] duration-150 ease-linear
 
   return (
-    <>
-      <div className="flex flex-1 min-h-0">
-        <div
-          className={cn(
-            "flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1",
-            breakpoints3,
-          )}
-        >
-          <DayViewDayHeader currentDate={date} />
+		<>
+			<div className="flex flex-1 min-h-0">
+				<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+					<DayViewDayHeader currentDate={date} />
 
-          <CalendarDayGridProvider
-            value={{
-              hours,
-              currentDate: date,
-              userId,
-              interval,
-              allowCreateEvent: permissions.CreateEvent,
-              isLoading,
-            }}
-          >
-            <DailyTimeBlocks
-              isLoading={isLoading}
-              roomBlocks={dayViews?.roomBlocks}
-              dayIndex={"0"}
-              selectedRoomId={selectedRoomIdNumber}
-              visibleRooms={visibleRoomsForGrid}
-            />
-          </CalendarDayGridProvider>
-        </div>
-        <CalendarDayColumnCalendar
-          date={date}
-          isLoading={isLoading}
-          events={events ? events : []}
-          view={"day"}
-        ></CalendarDayColumnCalendar>
-      </div>
-    </>
-  );
+					<CalendarDayGridProvider
+						value={{
+							hours,
+							currentDate: date,
+							userId,
+							interval,
+							allowCreateEvent: permissions.CreateEvent,
+							isLoading,
+						}}
+					>
+						<DailyTimeBlocks
+							isLoading={isLoading}
+							roomBlocks={dayViews?.roomBlocks}
+							dayIndex={"0"}
+							selectedRoomId={selectedRoomIdNumber}
+							visibleRooms={visibleRoomsForGrid}
+						/>
+					</CalendarDayGridProvider>
+				</div>
+				<CalendarDayColumnCalendar
+					date={date}
+					isLoading={isLoading}
+					events={events ? events : []}
+					view={"day"}
+				></CalendarDayColumnCalendar>
+			</div>
+		</>
+	);
 }
