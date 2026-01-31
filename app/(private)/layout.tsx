@@ -17,7 +17,7 @@ export default function PrivateLayout({
 				<SiteHeader />
 				<div className="flex flex-1">
 					<AppSidebar />
-					<SidebarInset className="gap-4 p-4 h-[calc(100vh-var(--header-height)-1px)] transition-[width] duration-300 min-w-0 flex flex-col">
+					<SidebarInset className="gap-4 p-4 h-[calc(100vh-var(--header-height)-1px)] transition-[width] duration-300 min-w-0 flex flex-col overflow-y-auto">
 						{children}
 					</SidebarInset>
 				</div>
