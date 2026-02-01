@@ -5,10 +5,10 @@ import { customSession } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { headers } from "next/headers";
-import { fetchGET } from "./fetch";
 import { SessionAction, SessionResource, SessionRole } from "./types";
 
 import { getCachedUserRoles } from "./auth-role-cache";
+import { nextCookies } from "better-auth/next-js";
 
 export type User = {
 	userId: string | undefined | null;
@@ -60,7 +60,9 @@ export const auth = betterAuth({
 		additionalFields: { impersonatedRole: { type: "string", required: false } },
 		cookieCache: {
 			enabled: true,
-			maxAge: 5 * 60, // 5 Minutes
+			maxAge: 10 * 60, // 5 Minutes
+			strategy: "compact",
+			refreshCache: { updateAge: 60 * 2 },
 		},
 	},
 	account: {
@@ -117,6 +119,7 @@ export const auth = betterAuth({
 				session: currentSession,
 			};
 		}),
+		nextCookies(), // make sure this is the last plugin in the array
 	],
 });
 

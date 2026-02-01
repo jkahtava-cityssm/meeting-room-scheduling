@@ -1,21 +1,17 @@
 import { betterFetch } from "@better-fetch/fetch";
 import type { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 
 type Session = typeof auth.$Infer.Session;
 
 export async function middleware(request: NextRequest) {
-	const { data: session } = await betterFetch<Session>("/api/auth/get-session", {
-		baseURL: process.env.NEXT_PUBLIC_API_URL,
-		headers: {
-			cookie: request.headers.get("cookie") || "", // Forward the cookies from the request
-		},
-	});
+	const sessionCookie = getSessionCookie(request);
 
-	if (!session) {
-		//console.log(request.nextUrl.pathname);
-		//console.log(session);
-		//console.log("MIDDLEWARE REDIRECT")
+	//This is a quick check to redirect users if a cookie isnt present.
+	//it is not considered secure, because middleware is not secure.
+	//so each page and api route should check for a session regardless
+	if (!sessionCookie) {
 		return NextResponse.redirect(new URL("/login/?callbackurl=" + request.nextUrl.pathname, request.url));
 	}
 
