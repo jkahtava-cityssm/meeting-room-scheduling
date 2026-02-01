@@ -12,9 +12,19 @@ import { useSearchParams } from "next/navigation";
 
 import { FilteredRoomGrid } from "./calendar-public-view-room-grid";
 import { RoomCategoryLayoutSkeleton } from "./skeleton-calendar-public-view-room-list";
-import PublicHeader from "./public-header";
+import PublicHeader, { DateControls } from "./public-header";
 import { RoomCategoryLayout } from "./public-categories";
 import { CalendarPublicViewRoomGridSkeleton } from "./skeleton-calendar-public-view-room-grid";
+import { Button } from "@/components/ui/button";
+import { FilterIcon } from "lucide-react";
+import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
+import { CalendarDayGridProvider } from "../calendar-day-grid/calendar-day-grid-context";
+import { DailyTimeBlocks } from "../calendar-day-grid/calendar-day-grid";
+import { CalendarScrollContainer } from "../components/calendar-scroll-container";
+import { CalendarDayViewSkeleton } from "../view-day/skeleton-calendar-day-view";
+import { CalendarScrollColumn } from "../components/calendar-scroll-column";
+import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
+import { CalendarPermissions } from "../permissions/calendar.permissions";
 
 export interface IPublicProcessData {
 	events: PUBLIC_IEVENT[];
@@ -73,7 +83,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 	const [data, setData] = useState([]);
 	const [hours, setHours] = useState<number[] | undefined>(undefined);
 
-	const { visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
+	const { interval, visibleRooms, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
 	const workerRef = useRef<Worker | null>(null);
 
@@ -164,37 +174,78 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
     <div>...</div>;
   }
 */
+	const lastRoomId = filteredRooms?.length ? filteredRooms[filteredRooms.length - 1].roomId : undefined;
+	const isMounting = !dayViews || !hours;
 	return (
-		<div className="flex flex-col lg:flex-row gap-4 h-full">
+		<div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
 			{/* LEFT CONTAINER */}
-			<div className="w-full lg:w-72 flex flex-col border-r pr-4">
+			<div className="w-full flex flex-col gap-2 lg:w-72 ">
 				{/* HEADER: Label & Button stack when tight */}
-				<div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-					<label className="font-bold">Filters</label>
-					<button className="bg-blue-500 text-white px-2 py-1 rounded">Reset</button>
+				<div className="flex flex-wrap items-center justify-between">
+					<label className="font-bold">Filter</label>
+					<ButtonGroup>
+						<Button
+							size="sm"
+							className="text-xs"
+							onClick={() => {}}
+						>
+							<FilterIcon></FilterIcon> Rooms with Projectors
+						</Button>
+						<ButtonGroupSeparator />
+						<Button
+							size="sm"
+							className="text-xs "
+							onClick={() => {}}
+						>
+							Clear
+						</Button>
+					</ButtonGroup>
 				</div>
 				{/* BODY: Checkboxes */}
-				<div className="w-full lg:w-72 shrink-0 border-b lg:border-b-0 lg:border-r pb-6 lg:pb-0 lg:pr-6">
-					<RoomCategoryLayout rooms={rooms || []}></RoomCategoryLayout>
+				<div className="w-full shrink-0 border rounded-lg p-4 lg:w-72 ">
+					<RoomCategoryLayout
+						onCheckedRoomsChange={handleCheckedRoomsChange}
+						rooms={rooms || []}
+					></RoomCategoryLayout>
 				</div>
 			</div>
 
 			{/* RIGHT CONTAINER */}
-			<div className="flex-1 flex flex-col min-w-0">
+			<div className="flex-1 flex flex-col min-w-0 gap-2 min-h-0">
 				{/* HEADER: Date Nav stacks middle item on top if narrow */}
-				<div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-					<button className="order-2 sm:order-1">Back</button>
-					<div className="order-1 sm:order-2 w-full sm:w-auto text-center">
-						<input
-							type="date"
-							className="border p-1 rounded w-full"
-						/>
-					</div>
-					<button className="order-3">Next</button>
-				</div>
+
+				<DateControls selectedDate={new Date()}></DateControls>
 				{/* MAIN PANEL: Grows to take space */}
-				<div className="flex-1 bg-gray-50 border rounded-lg p-4 overflow-auto">
-					<CalendarPublicViewRoomGridSkeleton></CalendarPublicViewRoomGridSkeleton>
+				<div className="flex border rounded-lg p-4 min-h-0">
+					{isLoading ? (
+						<>...loading</>
+					) : (
+						<CalendarPermissions.Provider session={undefined}>
+							<CalendarScrollContainer
+								isLoading={isLoading}
+								hours={hours || []}
+								isMounting={isMounting}
+								skeleton={<CalendarDayViewSkeleton hours={hours} />}
+							>
+								{filteredRooms?.map(room => {
+									return (
+										<CalendarScrollColumn
+											key={room.roomId}
+											loadingBlocks={true}
+											title={room.name}
+											interval={interval}
+											roomId={room.roomId}
+											userId={undefined}
+											hours={hours || []}
+											eventBlocks={(dayViews?.eventBlocks as unknown as IBlock[]) || []}
+											isLastColumn={room.roomId === lastRoomId}
+											currentDate={dateValue}
+										/>
+									);
+								})}
+							</CalendarScrollContainer>
+						</CalendarPermissions.Provider>
+					)}
 				</div>
 			</div>
 		</div>

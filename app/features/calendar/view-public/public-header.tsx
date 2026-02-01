@@ -50,7 +50,7 @@ export default function PublicHeader({
 	);
 }
 
-const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
+export const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
 	const { push } = useRouter();
 
 	const [currentDate, setCurrentDate] = useState<Date>(selectedDate);
@@ -68,7 +68,7 @@ const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
 	};
 
 	return (
-		<div className="grid grid-cols-2 gap-2 auto-cols-min lg:grid-cols-[auto_minmax(10rem,1fr)_auto] w-full items-center min-w-65">
+		<div className="grid grid-cols-2 gap-2 auto-cols-min w-full items-center min-w-65 lg:grid-cols-[auto_minmax(10rem,1fr)_auto] ">
 			{/* Label - spans both columns */}
 			<div className="text-center justify-self-center col-span-2 lg:col-start-2 lg:col-span-1 lg:row-start-1">
 				<CalendarDayPopover

@@ -133,23 +133,23 @@ export const RoomCategoryLayout = ({
 
 	return (
 		<div className={cn("w-full", className)}>
-			<div className={cn("flex flex-wrap gap-x-12 gap-y-8", className)}>
+			<div className={cn("flex flex-wrap gap-x-2 gap-y-8", className)}>
 				{rows.map((row, index) => (
-                    <React.Fragment key={index}>
-					<Group
-						key={index}
-						categories={[row.left]}
-						roomsByCategory={roomsByCategory}
-						checkedRooms={checkedRooms}
-						toggleRoom={toggleRoom}
-					/>
-                    <Group
-              categories={row.right}
-              roomsByCategory={roomsByCategory}
-              checkedRooms={checkedRooms}
-              toggleRoom={toggleRoom}
-            />
-                    </React.Fragment>
+					<React.Fragment key={index}>
+						<Group
+							key={index}
+							categories={[row.left]}
+							roomsByCategory={roomsByCategory}
+							checkedRooms={checkedRooms}
+							toggleRoom={toggleRoom}
+						/>
+						<Group
+							categories={row.right}
+							roomsByCategory={roomsByCategory}
+							checkedRooms={checkedRooms}
+							toggleRoom={toggleRoom}
+						/>
+					</React.Fragment>
 				))}
 			</div>
 		</div>
@@ -167,7 +167,7 @@ const Group = ({
 	checkedRooms: Set<number>;
 	toggleRoom: (roomId: number) => void;
 }) => (
-	<div className="min-w-[200px] flex-1 lg:flex-none">
+	<div className="min-w-[180px] flex-1 lg:flex-none">
 		<div className="flex flex-col gap-4">
 			{categories.map(category => (
 				<GroupHeader
