@@ -24,7 +24,7 @@ import Image from "next/image";
 import { Sidebar, SidebarContent, SidebarFooter } from "@/components/ui/sidebar";
 import { navigateURL } from "@/lib/helpers";
 import { Skeleton } from "./ui/skeleton";
-import { useClientSession } from "@/hooks/use-client-auth";
+import { useSession } from "@/contexts/SessionProvider";
 import { useVerifySessionRequirement } from "@/lib/auth-client";
 
 import { BadgeColored } from "./ui/badge-colored";
@@ -34,149 +34,185 @@ import { useMemo } from "react";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 
 const PAGE_PERMISSIONS = {
-  CalendarAccess: {
-    type: "permission",
-    resource: "Calendar",
-    action: "Read",
-  },
-  SettingsAccess: {
-    type: "resource",
-    resource: "Settings",
-  },
-  PermissionsAccess: {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Permissions",
-  },
-  RoomsAccess: {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Rooms",
-  },
-  ConfigurationAccess: {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Configuration",
-  },
+	CalendarAccess: {
+		type: "permission",
+		resource: "Calendar",
+		action: "Read",
+	},
+	SettingsAccess: {
+		type: "resource",
+		resource: "Settings",
+	},
+	PermissionsAccess: {
+		type: "permission",
+		resource: "Settings",
+		action: "Edit Permissions",
+	},
+	RoomsAccess: {
+		type: "permission",
+		resource: "Settings",
+		action: "Edit Rooms",
+	},
+	ConfigurationAccess: {
+		type: "permission",
+		resource: "Settings",
+		action: "Edit Configuration",
+	},
 } as const satisfies GroupedPermissionRequirement;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { session, isPending } = useClientSession();
+	const { session, isPending } = useSession();
 
-  const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
+	const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
-  const today = format(new Date(), "yyyy-MM-dd");
+	const today = format(new Date(), "yyyy-MM-dd");
 
-  const { startDate, endDate } = useMemo(() => {
-    const parsedDate = parse(today, "yyyy-MM-dd", new Date());
-    const startDate = startOfDay(parsedDate);
-    const endDate = endOfDay(parsedDate);
-    return { startDate, endDate };
-  }, [today]);
-  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery("1");
+	const { startDate, endDate } = useMemo(() => {
+		const parsedDate = parse(today, "yyyy-MM-dd", new Date());
+		const startDate = startOfDay(parsedDate);
+		const endDate = endOfDay(parsedDate);
+		return { startDate, endDate };
+	}, [today]);
+	const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery("1");
 
-  if (isPending) {
-    return (
-      <div className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
-        <div className="flex flex-col bg-sidebar border-r h-full w-full ">
-          <div className="flex min-h-0 flex-1 flex-col ">
-            <div className="flex flex-col gap-2 p-2 h-16 w-64">
-              <Skeleton className="h-full"></Skeleton>
-            </div>
-            <div className="relative flex w-full min-w-0 flex-col p-2">
-              <div className="pr-2 py-2">
-                <Skeleton className="h-4" />
-              </div>
+	if (isPending) {
+		return (
+			<div className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
+				<div className="flex flex-col bg-sidebar border-r h-full w-full ">
+					<div className="flex min-h-0 flex-1 flex-col ">
+						<div className="flex flex-col gap-2 p-2 h-16 w-64">
+							<Skeleton className="h-full"></Skeleton>
+						</div>
+						<div className="relative flex w-full min-w-0 flex-col p-2">
+							<div className="pr-2 py-2">
+								<Skeleton className="h-4" />
+							</div>
 
-              <div className="pr-2 mb-1">
-                <Skeleton className="h-8" />
-              </div>
-              <div className="flex flex-col px-2.5 py-0.5 mx-3.5 border-l gap-1">
-                <Skeleton className="h-7" />
-                <Skeleton className="h-7" />
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 p-2 h-16 w-64">
-            <Skeleton className="h-full "></Skeleton>
-          </div>
-        </div>
-      </div>
-    );
-  }
+							<div className="pr-2 mb-1">
+								<Skeleton className="h-8" />
+							</div>
+							<div className="flex flex-col px-2.5 py-0.5 mx-3.5 border-l gap-1">
+								<Skeleton className="h-7" />
+								<Skeleton className="h-7" />
+							</div>
+						</div>
+					</div>
+					<div className="flex flex-col gap-2 p-2 h-16 w-64">
+						<Skeleton className="h-full "></Skeleton>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
-  if (!session) {
-    //console.log("No session, redirecting to login");
-  }
+	if (!session) {
+		//console.log("No session, redirecting to login");
+	}
 
-  return (
-    <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
-      <SideBarHeaderGroup
-        imagePath="/images/menu_logo.svg"
-        altText="An image of the crest and wreath of the city of Sault Ste. Marie"
-        title="Room Scheduling/Booking"
-        subtitle="The City of Sault Ste. Marie"
-        url="/bookings/user-view"
-      ></SideBarHeaderGroup>
+	return (
+		<Sidebar
+			className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!"
+			{...props}
+		>
+			<SideBarHeaderGroup
+				imagePath="/images/menu_logo.svg"
+				altText="An image of the crest and wreath of the city of Sault Ste. Marie"
+				title="Room Scheduling/Booking"
+				subtitle="The City of Sault Ste. Marie"
+				url="/bookings/user-view"
+			></SideBarHeaderGroup>
 
-      <SidebarContent>
-        <SideBarGroup title="Application">
-          <SideBarPrimaryMenuItem title={"Availability"} iconName={"NotebookPen"} url={"/availability"} />
-          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"Send"} url={"/bookings/user-view"} />
-          {permissions.CalendarAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="Calendar">
-              <SideBarSubMenuItem
-                title={"Staff Requests"}
-                url={"/bookings/user-requests"}
-                iconName="CircleQuestionMark"
-                rightIndicator={
-                  <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
-                }
-              />
-              <SideBarSubMenuItem
-                title={"Agenda View"}
-                url={"/calendar" + navigateURL(null, "agenda")}
-                iconName="CalendarRange"
-              />
-              <SideBarSubMenuItem title={"Day View"} url={"/calendar" + navigateURL(null, "day")} iconName="List" />
-              <SideBarSubMenuItem
-                title={"Week View"}
-                url={"/calendar" + navigateURL(null, "week")}
-                iconName="Columns"
-              />
-              <SideBarSubMenuItem
-                title={"Month View"}
-                url={"/calendar" + navigateURL(null, "month")}
-                iconName="Grid2x2"
-              />
-              <SideBarSubMenuItem
-                title={"Year View"}
-                url={"/calendar" + navigateURL(null, "year")}
-                iconName="Grid3x3"
-              />
-            </SideBarCollapsibleGroup>
-          )}
-          {permissions.SettingsAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="Settings2">
-              {permissions.RoomsAccess && <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />}
-              {permissions.PermissionsAccess && (
-                <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
-              )}
-              {permissions.ConfigurationAccess && (
-                <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
-              )}
-            </SideBarCollapsibleGroup>
-          )}
-        </SideBarGroup>
-      </SidebarContent>
+			<SidebarContent>
+				<SideBarGroup title="Application">
+					<SideBarPrimaryMenuItem
+						title={"Availability"}
+						iconName={"NotebookPen"}
+						url={"/availability"}
+					/>
+					<SideBarPrimaryMenuItem
+						title={"My Bookings"}
+						iconName={"Send"}
+						url={"/bookings/user-view"}
+					/>
+					{permissions.CalendarAccess && (
+						<SideBarCollapsibleGroup
+							isOpenByDefault={true}
+							title={"Calendar"}
+							iconName="Calendar"
+						>
+							<SideBarSubMenuItem
+								title={"Staff Requests"}
+								url={"/bookings/user-requests"}
+								iconName="CircleQuestionMark"
+								rightIndicator={<BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>}
+							/>
+							<SideBarSubMenuItem
+								title={"Agenda View"}
+								url={"/calendar" + navigateURL(null, "agenda")}
+								iconName="CalendarRange"
+							/>
+							<SideBarSubMenuItem
+								title={"Day View"}
+								url={"/calendar" + navigateURL(null, "day")}
+								iconName="List"
+							/>
+							<SideBarSubMenuItem
+								title={"Week View"}
+								url={"/calendar" + navigateURL(null, "week")}
+								iconName="Columns"
+							/>
+							<SideBarSubMenuItem
+								title={"Month View"}
+								url={"/calendar" + navigateURL(null, "month")}
+								iconName="Grid2x2"
+							/>
+							<SideBarSubMenuItem
+								title={"Year View"}
+								url={"/calendar" + navigateURL(null, "year")}
+								iconName="Grid3x3"
+							/>
+						</SideBarCollapsibleGroup>
+					)}
+					{permissions.SettingsAccess && (
+						<SideBarCollapsibleGroup
+							isOpenByDefault={false}
+							title={"Settings"}
+							iconName="Settings2"
+						>
+							{permissions.RoomsAccess && (
+								<SideBarSubMenuItem
+									title={"Manage Rooms"}
+									url={"/settings/manage-rooms"}
+								/>
+							)}
+							{permissions.PermissionsAccess && (
+								<SideBarSubMenuItem
+									title={"Manage Permissions"}
+									url={"/settings/manage-permissions"}
+								/>
+							)}
+							{permissions.ConfigurationAccess && (
+								<SideBarSubMenuItem
+									title={"Manage Configuration"}
+									url={"/settings/manage-configuration"}
+								/>
+							)}
+						</SideBarCollapsibleGroup>
+					)}
+				</SideBarGroup>
+			</SidebarContent>
 
-      <SidebarFooter>
-        <SideBarGroup title="">
-          <SideBarPrimaryMenuItem title={"Support"} iconName={"LifeBuoy"} url={"#"} />
-        </SideBarGroup>
-      </SidebarFooter>
-    </Sidebar>
-  );
+			<SidebarFooter>
+				<SideBarGroup title="">
+					<SideBarPrimaryMenuItem
+						title={"Support"}
+						iconName={"LifeBuoy"}
+						url={"#"}
+					/>
+				</SideBarGroup>
+			</SidebarFooter>
+		</Sidebar>
+	);
 }
 
 export function SideBarHeaderGroup({
