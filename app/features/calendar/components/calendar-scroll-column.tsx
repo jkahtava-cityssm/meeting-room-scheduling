@@ -4,6 +4,7 @@ import { GridEventBlock } from "../calendar-day-grid/calendar-day-grid-event-blo
 import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from "react";
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
+import { TIME_BLOCK_SIZE } from "@/lib/types";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -99,47 +100,53 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
       <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
         <span className="ml-1 text-xs font-semibold text-foreground">{title}</span>
       </div>
-      <div className=" border-t-6 border-b-16">
-        <div className="relative">
-          {hours?.map((hour, index) => {
+      <div className="relative border-t-6 border-b-16">
+        {hours?.map((hour, index) => {
+          return (
+            <div
+              key={hour}
+              className="grid w-full h-24 relative"
+              style={{
+                gridTemplateRows: `repeat(${totalBlocks}, 1fr)`,
+                contentVisibility: "auto",
+                containIntrinsicSize: `auto ${TIME_BLOCK_SIZE}px`,
+              }}
+            >
+              {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2"></div>}
+              {Array.from({ length: totalBlocks }, (_, blockIndex) => {
+                const startMinute = blockIndex * validInterval;
+                const showBottomSeparator = blockIndex === middleBlock;
+                return (
+                  <Fragment key={`${hour}-${blockIndex}`}>
+                    {renderTimeBlock({
+                      roomId,
+                      userId,
+                      hour,
+                      startMinute,
+                      currentDate,
+                      totalBlocks,
+                      blockIndex,
+                      showBottomSeparator,
+                    })}
+                  </Fragment>
+                );
+              })}
+            </div>
+          );
+        })}
+
+        {!loadingBlocks &&
+          eventBlocks.map((block) => {
             return (
-              <div key={hour} className={"relative h-24"}>
-                {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2"></div>}
-                {Array.from({ length: totalBlocks }, (_, blockIndex) => {
-                  const startMinute = blockIndex * validInterval;
-                  const showBottomSeparator = blockIndex === middleBlock;
-                  return (
-                    <Fragment key={`${hour}-${blockIndex}`}>
-                      {renderTimeBlock({
-                        roomId,
-                        userId,
-                        hour,
-                        startMinute,
-                        currentDate,
-                        totalBlocks,
-                        blockIndex,
-                        showBottomSeparator,
-                      })}
-                    </Fragment>
-                  );
-                })}
+              <div
+                key={`event-${block.event.eventId}-start-${new Date(block.event.startDate).getTime()}`}
+                className="absolute p-1"
+                style={block.eventStyle}
+              >
+                {<GridEventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />}
               </div>
             );
           })}
-
-          {!loadingBlocks &&
-            eventBlocks.map((block) => {
-              return (
-                <div
-                  key={`event-${block.event.eventId}-start-${new Date(block.event.startDate).getTime()}`}
-                  className="absolute p-1"
-                  style={block.eventStyle}
-                >
-                  {<GridEventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />}
-                </div>
-              );
-            })}
-        </div>
       </div>
     </div>
   );
@@ -191,20 +198,16 @@ const TimeBlockButton = memo(
     HTMLButtonElement,
     ButtonHTMLAttributes<HTMLButtonElement> & { totalBlocks: number; blockIndex: number; showBottomSeparator?: boolean }
   >(function TimeBlockButton({ totalBlocks, blockIndex, showBottomSeparator, disabled, className, ...props }, ref) {
-    const height = HEIGHTS[totalBlocks];
-    const top = TOPS[totalBlocks]?.[blockIndex];
-    const separatorClass = showBottomSeparator ? "border-b border-dashed" : "";
     return (
       <button
         ref={ref}
         type="button"
         disabled={disabled}
         className={cn(
-          "absolute inset-x-0 transition-colors ",
+          "w-full h-full transition-colors relative",
           disabled ? "cursor-default pointer-events-none" : "cursor-pointer hover:bg-accent",
-          height,
-          top,
-          separatorClass,
+
+          showBottomSeparator && "border-b border-dashed",
           className,
         )}
         {...props}
@@ -232,26 +235,3 @@ function clampToValidInterval(interval: number) {
     VALID_INTERVALS[0],
   );
 }
-
-const HEIGHTS: Record<number, string> = { 12: "h-2", 6: "h-4", 4: "h-6", 3: "h-8", 2: "h-12", 1: "h-24" } as const;
-const TOPS: Record<number, string[]> = {
-  12: [
-    "top-0",
-    "top-2",
-    "top-4",
-    "top-6",
-    "top-8",
-    "top-10",
-    "top-12",
-    "top-14",
-    "top-16",
-    "top-18",
-    "top-20",
-    "top-22",
-  ],
-  6: ["top-0", "top-4", "top-8", "top-12", "top-16", "top-20"],
-  4: ["top-0", "top-6", "top-12", "top-18"],
-  3: ["top-0", "top-8", "top-16"],
-  2: ["top-0", "top-12"],
-  1: ["top-0"],
-} as const;
