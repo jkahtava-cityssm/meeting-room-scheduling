@@ -20,11 +20,13 @@ import { FilterIcon } from "lucide-react";
 import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
 import { CalendarDayGridProvider } from "../calendar-day-grid/calendar-day-grid-context";
 import { DailyTimeBlocks } from "../calendar-day-grid/calendar-day-grid";
-import { CalendarScrollContainer } from "../components/calendar-scroll-container";
+
 import { CalendarDayViewSkeleton } from "../view-day/skeleton-calendar-day-view";
-import { CalendarScrollColumn } from "../components/calendar-scroll-column";
+
 import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
+import { CalendarScrollColumn } from "./calendar-public-scroll-column";
+import { CalendarScrollContainer } from "./calendar-public-scroll-container";
 
 export interface IPublicProcessData {
 	events: PUBLIC_IEVENT[];
@@ -177,9 +179,9 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 	const lastRoomId = filteredRooms?.length ? filteredRooms[filteredRooms.length - 1].roomId : undefined;
 	const isMounting = !dayViews || !hours;
 	return (
-		<div className="flex flex-col lg:flex-row gap-4 h-full min-h-0">
+		<div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 overflow-auto ">
 			{/* LEFT CONTAINER */}
-			<div className="w-full flex flex-col gap-2 lg:w-72 ">
+			<div className="w-full flex flex-col gap-2 p-4 sm:p-0 lg:w-72 ">
 				{/* HEADER: Label & Button stack when tight */}
 				<div className="flex flex-wrap items-center justify-between">
 					<label className="font-bold">Filter</label>
@@ -211,41 +213,37 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 			</div>
 
 			{/* RIGHT CONTAINER */}
-			<div className="flex-1 flex flex-col min-w-0 gap-2 min-h-0">
+			<div className="flex-1 flex flex-col min-w-0 gap-2 min-h-0 ">
 				{/* HEADER: Date Nav stacks middle item on top if narrow */}
 
-				<DateControls selectedDate={new Date()}></DateControls>
+				<DateControls selectedDate={dateValue}></DateControls>
 				{/* MAIN PANEL: Grows to take space */}
-				<div className="flex border rounded-lg p-4 min-h-0">
-					{isLoading ? (
-						<>...loading</>
-					) : (
-						<CalendarPermissions.Provider session={undefined}>
-							<CalendarScrollContainer
-								isLoading={isLoading}
-								hours={hours || []}
-								isMounting={isMounting}
-								skeleton={<CalendarDayViewSkeleton hours={hours} />}
-							>
-								{filteredRooms?.map(room => {
-									return (
-										<CalendarScrollColumn
-											key={room.roomId}
-											loadingBlocks={true}
-											title={room.name}
-											interval={interval}
-											roomId={room.roomId}
-											userId={undefined}
-											hours={hours || []}
-											eventBlocks={(dayViews?.eventBlocks as unknown as IBlock[]) || []}
-											isLastColumn={room.roomId === lastRoomId}
-											currentDate={dateValue}
-										/>
-									);
-								})}
-							</CalendarScrollContainer>
-						</CalendarPermissions.Provider>
-					)}
+				<div className="flex border rounded-lg sm:p-4 min-h-125">
+					<CalendarPermissions.Provider session={undefined}>
+						<CalendarScrollContainer
+							isLoading={isLoading}
+							hours={hours || []}
+							isMounting={isMounting}
+							skeleton={<CalendarDayViewSkeleton hours={hours} />}
+						>
+							{filteredRooms?.map(room => {
+								return (
+									<CalendarScrollColumn
+										key={room.roomId}
+										loadingBlocks={true}
+										title={room.name}
+										interval={interval}
+										roomId={room.roomId}
+										userId={undefined}
+										hours={hours || []}
+										eventBlocks={(dayViews?.eventBlocks as unknown as IBlock[]) || []}
+										isLastColumn={room.roomId === lastRoomId}
+										currentDate={dateValue}
+									/>
+								);
+							})}
+						</CalendarScrollContainer>
+					</CalendarPermissions.Provider>
 				</div>
 			</div>
 		</div>
