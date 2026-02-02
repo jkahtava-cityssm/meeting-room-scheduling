@@ -26,7 +26,7 @@ import { CalendarDayViewSkeleton } from "../view-day/skeleton-calendar-day-view"
 import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { CalendarScrollColumn } from "./calendar-public-scroll-column";
-import { CalendarScrollContainer } from "./calendar-public-scroll-container";
+import { CalendarScrollContainerPublic } from "./calendar-public-scroll-container";
 
 export interface IPublicProcessData {
 	events: PUBLIC_IEVENT[];
@@ -220,7 +220,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 				{/* MAIN PANEL: Grows to take space */}
 				<div className="flex border rounded-lg sm:p-4 min-h-125">
 					<CalendarPermissions.Provider session={undefined}>
-						<CalendarScrollContainer
+						<CalendarScrollContainerPublic
 							isLoading={isLoading}
 							hours={hours || []}
 							isMounting={isMounting}
@@ -242,7 +242,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 									/>
 								);
 							})}
-						</CalendarScrollContainer>
+						</CalendarScrollContainerPublic>
 					</CalendarPermissions.Provider>
 				</div>
 			</div>

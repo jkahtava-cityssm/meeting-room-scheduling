@@ -6,42 +6,50 @@ import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
 import { CalendarHourTimeline } from "../components/calendar-hour-timeline";
 
-export const CalendarScrollContainer = React.memo(function CalendarScrollContainer({
-  isLoading,
-  isMounting,
-  hours,
-  skeleton,
-  children,
+export const CalendarScrollContainerPublic = React.memo(function CalendarScrollContainerPublic({
+	isLoading,
+	isMounting,
+	hours,
+	skeleton,
+	children,
 }: {
-  isLoading: boolean;
-  hours: number[];
-  isMounting: boolean;
-  skeleton: React.ReactNode;
-  children: React.ReactNode;
+	isLoading: boolean;
+	hours: number[];
+	isMounting: boolean;
+	skeleton: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  if (isMounting) {
-    return <div className="flex">{skeleton}</div>;
-  }
+	if (isMounting) {
+		return <div className="flex">{skeleton}</div>;
+	}
 
-  return (
+	return (
+		<ScrollArea
+			className="w-full flex-1 min-h-0"
+			type="always"
+		>
+			<div className="relative flex min-w-0 w-full">
+				<HourColumn hours={hours} />
 
-      <ScrollArea className="w-full flex-1 min-h-0" type="always">
-        <div className="relative flex min-w-0 w-full">
-          <HourColumn hours={hours} />
-
-          <div className="flex w-full min-w-0 pr-4">{children}</div>
-        </div>
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
-              <LoaderCircle className="animate-spin" />
-            </div>
-          </div>
-        )}
-        <ScrollBar orientation="vertical" forceMount />
-        <ScrollBar orientation="horizontal" forceMount />
-      </ScrollArea>
-  );
+				<div className="flex w-full min-w-0 pr-4">{children}</div>
+			</div>
+			{isLoading && (
+				<div className="absolute inset-0 flex items-center justify-center">
+					<div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
+						<LoaderCircle className="animate-spin" />
+					</div>
+				</div>
+			)}
+			<ScrollBar
+				orientation="vertical"
+				forceMount
+			/>
+			<ScrollBar
+				orientation="horizontal"
+				forceMount
+			/>
+		</ScrollArea>
+	);
 });
 
 const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }) {
