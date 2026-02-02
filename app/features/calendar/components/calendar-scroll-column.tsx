@@ -1,10 +1,9 @@
 import { cn } from "@/lib/utils";
 import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
 import { GridEventBlock } from "../calendar-day-grid/calendar-day-grid-event-block";
-import { ButtonHTMLAttributes, forwardRef, HTMLAttributes, memo, useCallback, useMemo } from "react";
+import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from "react";
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
-import React from "react";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -35,11 +34,14 @@ export type CalendarScrollColumnProps = {
   eventBlocks: IBlock[];
   isLastColumn: boolean;
   currentDate: Date;
-  renderTimeBlock: (p: TimeBlockRenderProps) => React.ReactNode;
+  renderTimeBlock: (p: TimeBlockRenderProps) => ReactNode;
 };
 
 export function CalendarScrollColumnPrivate(props: Omit<CalendarScrollColumnProps, "renderTimeBlock">) {
-  const renderTimeBlock = React.useCallback(
+  const { can, isVerifying } = CalendarPermissions.usePermissions();
+  const allowed = !isVerifying && can("CreateEvent");
+
+  const renderTimeBlock = useCallback(
     (p: TimeBlockRenderProps) => (
       <TimeBlockEventDrawer
         roomId={p.roomId}
@@ -50,23 +52,24 @@ export function CalendarScrollColumnPrivate(props: Omit<CalendarScrollColumnProp
         totalBlocks={p.totalBlocks}
         blockIndex={p.blockIndex}
         showBottomSeparator={p.showBottomSeparator}
+        createEventAllowed={allowed}
       />
     ),
-    [],
+    [allowed],
   );
 
   return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} />;
 }
 
 export function CalendarScrollColumnPublic(props: Omit<CalendarScrollColumnProps, "renderTimeBlock">) {
-  const renderTimeBlock = React.useCallback(
-    ({ totalBlocks, blockIndex, showBottomSeparator }: TimeBlockRenderProps) => (
+  const renderTimeBlock = useCallback(
+    ({ totalBlocks, blockIndex, showBottomSeparator, hour, startMinute }: TimeBlockRenderProps) => (
       <TimeBlockButton
         totalBlocks={totalBlocks}
         blockIndex={blockIndex}
         showBottomSeparator={showBottomSeparator}
         disabled={true}
-        onClick={undefined}
+        aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, "0")}`}
       />
     ),
     [],
@@ -106,7 +109,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                   const startMinute = blockIndex * validInterval;
                   const showBottomSeparator = blockIndex === middleBlock;
                   return (
-                    <React.Fragment key={`${hour}-${blockIndex}`}>
+                    <Fragment key={`${hour}-${blockIndex}`}>
                       {renderTimeBlock({
                         roomId,
                         userId,
@@ -117,7 +120,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                         blockIndex,
                         showBottomSeparator,
                       })}
-                    </React.Fragment>
+                    </Fragment>
                   );
                 })}
               </div>
@@ -125,10 +128,10 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
           })}
 
           {!loadingBlocks &&
-            eventBlocks.map((block, blockIndex) => {
+            eventBlocks.map((block) => {
               return (
                 <div
-                  key={`block-${blockIndex}-event-${block.event.eventId}`}
+                  key={`event-${block.event.eventId}-start-${new Date(block.event.startDate).getTime()}`}
                   className="absolute p-1"
                   style={block.eventStyle}
                 >
@@ -150,6 +153,7 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
   roomId,
   totalBlocks,
   blockIndex,
+  createEventAllowed,
   showBottomSeparator,
 }: {
   currentDate: Date;
@@ -159,26 +163,25 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
   userId: string | undefined;
   roomId: number | undefined;
   blockIndex: number;
+  createEventAllowed: boolean;
   showBottomSeparator?: boolean;
 }) {
   const creationDate = useMemo(() => getDateTime(currentDate, hour, startMinute), [currentDate, hour, startMinute]);
   const { openEventDrawer } = useSharedEventDrawer();
 
-  const { can, isVerifying } = CalendarPermissions.usePermissions();
-  const allowed = !isVerifying && can("CreateEvent");
-
   const openDrawer = useCallback(() => {
-    if (!allowed) return undefined;
-    openEventDrawer({ creationDate: creationDate, userId: userId, roomId: roomId });
-  }, [allowed, openEventDrawer, creationDate, userId, roomId]);
+    if (!createEventAllowed) return;
+    openEventDrawer({ creationDate, userId, roomId });
+  }, [createEventAllowed, openEventDrawer, creationDate, userId, roomId]);
 
   return (
     <TimeBlockButton
       totalBlocks={totalBlocks}
       blockIndex={blockIndex}
       showBottomSeparator={showBottomSeparator}
-      disabled={!allowed}
+      disabled={!createEventAllowed}
       onClick={openDrawer}
+      aria-label={`Create event at ${hour}:${String(startMinute).padStart(2, "0")}`}
     />
   );
 });
@@ -198,7 +201,7 @@ const TimeBlockButton = memo(
         disabled={disabled}
         className={cn(
           "absolute inset-x-0 transition-colors ",
-          disabled ? "cursor-default" : "cursor-pointer hover:bg-accent",
+          disabled ? "cursor-default pointer-events-none" : "cursor-pointer hover:bg-accent",
           height,
           top,
           separatorClass,
@@ -230,7 +233,7 @@ function clampToValidInterval(interval: number) {
   );
 }
 
-const HEIGHTS: Record<number, string> = { 12: "h-2", 6: "h-4", 4: "h-6", 3: "h-8", 2: "h-12" } as const;
+const HEIGHTS: Record<number, string> = { 12: "h-2", 6: "h-4", 4: "h-6", 3: "h-8", 2: "h-12", 1: "h-24" } as const;
 const TOPS: Record<number, string[]> = {
   12: [
     "top-0",
@@ -247,7 +250,7 @@ const TOPS: Record<number, string[]> = {
     "top-22",
   ],
   6: ["top-0", "top-4", "top-8", "top-12", "top-16", "top-20"],
-  4: ["top-0", "top-6", "top-12", "top-18", "top-22"],
+  4: ["top-0", "top-6", "top-12", "top-18"],
   3: ["top-0", "top-8", "top-16"],
   2: ["top-0", "top-12"],
   1: ["top-0"],
