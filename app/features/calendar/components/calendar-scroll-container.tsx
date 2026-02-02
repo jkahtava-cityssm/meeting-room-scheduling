@@ -5,42 +5,54 @@ import { CalendarHourTimeline } from "./calendar-hour-timeline";
 import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
 
-export const CalendarScrollContainer = React.memo(function CalendarScrollContainer({
-  isLoading,
-  isMounting,
-  hours,
-  skeleton,
-  children,
-}: {
+export type CalendarScrollContainerProps = {
   isLoading: boolean;
   hours: number[];
   isMounting: boolean;
   skeleton: React.ReactNode;
   children: React.ReactNode;
-}) {
+};
+
+export function CalendarScrollContainerPrivate(props: CalendarScrollContainerProps) {
+  return (
+    <SharedEventDrawerProvider>
+      <CalendarScrollContainerBase {...props} />
+    </SharedEventDrawerProvider>
+  );
+}
+
+export function CalendarScrollContainerPublic(props: CalendarScrollContainerProps) {
+  return <CalendarScrollContainerBase {...props} />;
+}
+
+const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerBase({
+  isLoading,
+  isMounting,
+  hours,
+  skeleton,
+  children,
+}: CalendarScrollContainerProps) {
   if (isMounting) {
     return <div className="flex">{skeleton}</div>;
   }
 
   return (
-    <SharedEventDrawerProvider>
-      <ScrollArea className="w-full flex-1 min-h-0" type="always">
-        <div className="relative flex min-w-0 w-full">
-          <HourColumn hours={hours} />
+    <ScrollArea className="w-full flex-1 min-h-0" type="always">
+      <div className="relative flex min-w-0 w-full">
+        <HourColumn hours={hours} />
 
-          <div className="flex w-full min-w-0 pr-4">{children}</div>
-        </div>
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
-              <LoaderCircle className="animate-spin" />
-            </div>
+        <div className="flex w-full min-w-0 pr-4">{children}</div>
+      </div>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
+            <LoaderCircle className="animate-spin" />
           </div>
-        )}
-        <ScrollBar orientation="vertical" forceMount />
-        <ScrollBar orientation="horizontal" forceMount />
-      </ScrollArea>
-    </SharedEventDrawerProvider>
+        </div>
+      )}
+      <ScrollBar orientation="vertical" forceMount />
+      <ScrollBar orientation="horizontal" forceMount />
+    </ScrollArea>
   );
 });
 

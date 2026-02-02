@@ -4,122 +4,142 @@ import { GridEventBlock } from "../calendar-day-grid/calendar-day-grid-event-blo
 import { ButtonHTMLAttributes, forwardRef, HTMLAttributes, memo, useCallback, useMemo } from "react";
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
+import React from "react";
 
-export type PrivateCallback = { currentDate: Date; hour: number; startMinute: number; userId: string | undefined; roomId: number | undefined };
+export type PrivateCallback = {
+  currentDate: Date;
+  hour: number;
+  startMinute: number;
+  userId: string | undefined;
+  roomId: number | undefined;
+};
 
-function usePrivateCalendarActions() {
-	const { openEventDrawer } = useSharedEventDrawer();
-	const { can, isVerifying } = CalendarPermissions.usePermissions();
+export type TimeBlockRenderProps = {
+  roomId: number | undefined;
+  userId: string | undefined;
+  hour: number;
+  startMinute: number;
+  currentDate: Date;
+  totalBlocks: number;
+  blockIndex: number;
+  showBottomSeparator: boolean;
+};
 
-	return useCallback(
-		({ currentDate, hour, startMinute, userId, roomId }: PrivateCallback) => {
-			const creationDate = getDateTime(currentDate, hour, startMinute);
-			const allowed = !isVerifying && can("CreateEvent");
+export type CalendarScrollColumnProps = {
+  loadingBlocks: boolean;
+  title: string;
+  interval: number;
+  roomId: number | undefined;
+  userId: string | undefined;
+  hours: number[];
+  eventBlocks: IBlock[];
+  isLastColumn: boolean;
+  currentDate: Date;
+  renderTimeBlock: (p: TimeBlockRenderProps) => React.ReactNode;
+};
 
-			return {
-				allowed,
-				openDrawer: () => {
-					if (!allowed) return;
-					openEventDrawer({ creationDate, userId, roomId });
-				},
-			};
-		},
-		[openEventDrawer, can, isVerifying],
-	);
+export function CalendarScrollColumnPrivate(props: Omit<CalendarScrollColumnProps, "renderTimeBlock">) {
+  const renderTimeBlock = React.useCallback(
+    (p: TimeBlockRenderProps) => (
+      <TimeBlockEventDrawer
+        roomId={p.roomId}
+        userId={p.userId}
+        hour={p.hour}
+        startMinute={p.startMinute}
+        currentDate={p.currentDate}
+        totalBlocks={p.totalBlocks}
+        blockIndex={p.blockIndex}
+        showBottomSeparator={p.showBottomSeparator}
+      />
+    ),
+    [],
+  );
+
+  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} />;
 }
 
-export const CalendarScrollColumnPrivate = memo(function CalendarScrollColumnPrivate(props) {
-	const getActions = usePrivateCalendarActions();
-	return (
-		<CalendarScrollColumnBase
-			{...props}
-			getActions={getActions}
-		/>
-	);
-});
+export function CalendarScrollColumnPublic(props: Omit<CalendarScrollColumnProps, "renderTimeBlock">) {
+  const renderTimeBlock = React.useCallback(
+    ({ totalBlocks, blockIndex, showBottomSeparator }: TimeBlockRenderProps) => (
+      <TimeBlockButton
+        totalBlocks={totalBlocks}
+        blockIndex={blockIndex}
+        showBottomSeparator={showBottomSeparator}
+        disabled={true}
+        onClick={undefined}
+      />
+    ),
+    [],
+  );
 
-const CalendarScrollColumnBase = memo(function ContentColumn({
-	loadingBlocks,
-	title,
-	interval,
-	hours,
-	roomId,
-	userId,
-	eventBlocks,
-	isLastColumn,
-	currentDate,
-}: {
-	loadingBlocks: boolean;
-	title: string;
-	interval: number;
-	roomId: number | undefined;
-	userId: string | undefined;
-	hours: number[];
-	eventBlocks: IBlock[];
-	isLastColumn: boolean;
-	currentDate: Date;
-}) {
-	const validInterval = clampToValidInterval(interval);
-	const totalBlocks = 60 / validInterval;
-	const middleBlock = useMemo(() => Math.max(0, Math.floor(totalBlocks / 2) - 1), [totalBlocks]);
+  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} />;
+}
 
-	return (
-		<div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
-			<div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
-				<span className="ml-1 text-xs font-semibold text-foreground">{title}</span>
-			</div>
-			<div className=" border-t-6 border-b-16">
-				<div className="relative">
-					{hours?.map((hour, index) => {
-						return (
-							<div
-								key={hour}
-								className={"relative h-24"}
-							>
-								{index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2"></div>}
-								{Array.from({ length: totalBlocks }, (_, blockIndex) => {
-									const startMinute = blockIndex * validInterval;
-									const showBottomSeparator = blockIndex === middleBlock;
-									return (
-										<TimeBlockEventDrawer
-											key={blockIndex}
-											roomId={roomId}
-											userId={userId}
-											hour={hour}
-											startMinute={startMinute}
-											currentDate={currentDate}
-											totalBlocks={totalBlocks}
-											blockIndex={blockIndex}
-											showBottomSeparator={showBottomSeparator}
-										/>
-									);
-								})}
-							</div>
-						);
-					})}
+const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
+  loadingBlocks,
+  title,
+  interval,
+  hours,
+  roomId,
+  userId,
+  eventBlocks,
+  isLastColumn,
+  currentDate,
+  renderTimeBlock,
+}: CalendarScrollColumnProps) {
+  const validInterval = clampToValidInterval(interval);
+  const totalBlocks = 60 / validInterval;
+  const middleBlock = useMemo(() => Math.max(0, Math.floor(totalBlocks / 2) - 1), [totalBlocks]);
 
-					{!loadingBlocks &&
-						eventBlocks.map((block, blockIndex) => {
-							return (
-								<div
-									key={`block-${blockIndex}-event-${block.event.eventId}`}
-									className="absolute p-1"
-									style={block.eventStyle}
-								>
-									{
-										<GridEventBlock
-											eventBlock={block}
-											heightInPixels={block.eventHeight}
-											userId={userId}
-										/>
-									}
-								</div>
-							);
-						})}
-				</div>
-			</div>
-		</div>
-	);
+  return (
+    <div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
+      <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
+        <span className="ml-1 text-xs font-semibold text-foreground">{title}</span>
+      </div>
+      <div className=" border-t-6 border-b-16">
+        <div className="relative">
+          {hours?.map((hour, index) => {
+            return (
+              <div key={hour} className={"relative h-24"}>
+                {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2"></div>}
+                {Array.from({ length: totalBlocks }, (_, blockIndex) => {
+                  const startMinute = blockIndex * validInterval;
+                  const showBottomSeparator = blockIndex === middleBlock;
+                  return (
+                    <React.Fragment key={`${hour}-${blockIndex}`}>
+                      {renderTimeBlock({
+                        roomId,
+                        userId,
+                        hour,
+                        startMinute,
+                        currentDate,
+                        totalBlocks,
+                        blockIndex,
+                        showBottomSeparator,
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            );
+          })}
+
+          {!loadingBlocks &&
+            eventBlocks.map((block, blockIndex) => {
+              return (
+                <div
+                  key={`block-${blockIndex}-event-${block.event.eventId}`}
+                  className="absolute p-1"
+                  style={block.eventStyle}
+                >
+                  {<GridEventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />}
+                </div>
+              );
+            })}
+        </div>
+      </div>
+    </div>
+  );
 });
 
 const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({

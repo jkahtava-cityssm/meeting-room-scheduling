@@ -11,61 +11,62 @@ import { useCalendarDayGrid } from "./calendar-day-grid-context";
 import { CalendarDayViewSkeleton } from "@/app/features/calendar/view-day/skeleton-calendar-day-view";
 
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
+
+import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-column";
 import { CalendarScrollContainerPrivate } from "../components/calendar-scroll-container";
-import { CalendarScrollColumn } from "../components/calendar-scroll-column";
 
 export const DailyTimeBlocks = React.memo(function DailyTimeBlocks({
-	isLoading,
-	selectedRoomId,
-	visibleRooms,
-	roomBlocks,
-	dayIndex,
+  isLoading,
+  selectedRoomId,
+  visibleRooms,
+  roomBlocks,
+  dayIndex,
 }: {
-	isLoading: boolean;
-	selectedRoomId: number;
-	visibleRooms: IRoom[] | undefined;
-	roomBlocks: Map<string, IBlock[]> | undefined;
-	dayIndex: string;
+  isLoading: boolean;
+  selectedRoomId: number;
+  visibleRooms: IRoom[] | undefined;
+  roomBlocks: Map<string, IBlock[]> | undefined;
+  dayIndex: string;
 }) {
-	const { hours, currentDate, interval, userId } = useCalendarDayGrid();
-	const roomsToRender = React.useMemo(
-		() =>
-			visibleRooms
-				?.filter(room => selectedRoomId === -1 || room.roomId === selectedRoomId)
-				.map(room => {
-					const blocks = roomBlocks?.get(String(room.roomId)) ?? [];
-					return { roomId: room.roomId, roomName: room.name, blocks };
-				}),
-		[visibleRooms, selectedRoomId, roomBlocks],
-	);
+  const { hours, currentDate, interval, userId } = useCalendarDayGrid();
+  const roomsToRender = React.useMemo(
+    () =>
+      visibleRooms
+        ?.filter((room) => selectedRoomId === -1 || room.roomId === selectedRoomId)
+        .map((room) => {
+          const blocks = roomBlocks?.get(String(room.roomId)) ?? [];
+          return { roomId: room.roomId, roomName: room.name, blocks };
+        }),
+    [visibleRooms, selectedRoomId, roomBlocks],
+  );
 
-	const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
+  const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
 
-	const isMounting = !visibleRooms || !roomBlocks || !hours;
+  const isMounting = !visibleRooms || !roomBlocks || !hours;
 
-	return (
-		<CalendarScrollContainerPrivate
-			isLoading={isLoading}
-			hours={hours || []}
-			isMounting={isMounting}
-			skeleton={<CalendarDayViewSkeleton hours={hours} />}
-		>
-			{roomsToRender?.map(room => {
-				return (
-					<CalendarScrollColumn
-						key={room.roomId}
-						loadingBlocks={isLoading}
-						title={room.roomName}
-						interval={interval}
-						roomId={room.roomId}
-						userId={userId}
-						hours={hours || []}
-						eventBlocks={room.blocks || []}
-						isLastColumn={room.roomId === lastRoomId}
-						currentDate={currentDate}
-					/>
-				);
-			})}
-		</CalendarScrollContainerPrivate>
-	);
+  return (
+    <CalendarScrollContainerPrivate
+      isLoading={isLoading}
+      hours={hours || []}
+      isMounting={isMounting}
+      skeleton={<CalendarDayViewSkeleton hours={hours} />}
+    >
+      {roomsToRender?.map((room) => {
+        return (
+          <CalendarScrollColumnPrivate
+            key={room.roomId}
+            loadingBlocks={isLoading}
+            title={room.roomName}
+            interval={interval}
+            roomId={room.roomId}
+            userId={userId}
+            hours={hours || []}
+            eventBlocks={room.blocks || []}
+            isLastColumn={room.roomId === lastRoomId}
+            currentDate={currentDate}
+          />
+        );
+      })}
+    </CalendarScrollContainerPrivate>
+  );
 });
