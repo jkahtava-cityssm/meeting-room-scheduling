@@ -237,43 +237,4 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
       </div>
     </div>
   );
-
-  return (
-    <div className={`flex flex-col sm:flex-row gap-2`}>
-      <PublicHeader
-        selectedDate={new Date()}
-        isMounting={false}
-        filterRoom={function (): void {
-          throw new Error("Function not implemented.");
-        }}
-        leftContent={<RoomCategoryLayout rooms={rooms || []}></RoomCategoryLayout>}
-        rightContent={<CalendarPublicViewRoomGridSkeleton></CalendarPublicViewRoomGridSkeleton>}
-      ></PublicHeader>
-    </div>
-  );
-
-  return (
-    <>
-      <div className={`flex flex-col sm:flex-row gap-2`}>
-        {rooms ? (
-          <RoomCategoryLayout
-            rooms={rooms || []}
-            onCheckedRoomsChange={handleCheckedRoomsChange}
-            isSidebarOpen={sideBarOpen}
-          />
-        ) : (
-          <RoomCategoryLayoutSkeleton></RoomCategoryLayoutSkeleton>
-        )}
-
-        <FilteredRoomGrid
-          isLoading={isLoading}
-          filteredRooms={filteredRooms}
-          hours={memoizedHours}
-          eventBlocks={dayViews?.eventBlocks}
-          selectedDate={dateValue}
-          isSidebarOpen={sideBarOpen}
-        />
-      </div>
-    </>
-  );
 }
