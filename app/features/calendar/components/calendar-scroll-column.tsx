@@ -7,6 +7,7 @@ import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { TIME_BLOCK_SIZE } from "@/lib/types";
 import { useCalendarViewport } from "./calendar-scroll-context";
 import { PublicEventBlock } from "../view-public/calendar-public-view-event-block";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -101,6 +102,30 @@ export function CalendarScrollColumnPublic(
         disabled={true}
         aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, "0")}`}
       />
+    ),
+    [],
+  );
+
+  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;
+}
+
+export function CalendarScrollColumnSkeleton(
+  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
+) {
+  const viewportRef = useCalendarViewport();
+
+  const renderEventBlock = useCallback(({ eventBlock, userId }: EventBlockRenderProps) => <></>, [viewportRef]);
+
+  const renderTimeBlock = useCallback(
+    ({ totalBlocks, blockIndex, showBottomSeparator, hour, startMinute }: TimeBlockRenderProps) => (
+      <div key={hour} className={cn("relative")} style={{ height: `${TIME_BLOCK_SIZE}px` }}>
+        {blockIndex !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b"></div>}
+        <Skeleton className="absolute inset-x-0 top-[2px] h-[44px] transition-colors hover:bg-accent rounded-none"></Skeleton>
+
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed border-1"></div>
+
+        <Skeleton className="absolute inset-x-0 top-[52px] h-[42px] transition-colors rounded-none"></Skeleton>
+      </div>
     ),
     [],
   );
