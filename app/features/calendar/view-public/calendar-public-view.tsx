@@ -1,6 +1,6 @@
 "use client";
 
-import { startOfWeek, endOfWeek, parse, format, addYears, formatDate, endOfDay, startOfDay } from "date-fns";
+import { parse, endOfDay, startOfDay } from "date-fns";
 import { useCalendar } from "@/contexts/CalendarProvider";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -10,16 +10,12 @@ import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
 import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/lib/services/public";
 import { useSearchParams } from "next/navigation";
 
-import { FilteredRoomGrid } from "./calendar-public-view-room-grid";
-import { RoomCategoryLayoutSkeleton } from "./skeleton-calendar-public-view-room-list";
-import PublicHeader, { DateControls } from "./public-header";
+import { DateControls } from "./public-header";
 import { RoomCategoryLayout } from "./public-categories";
-import { CalendarPublicViewRoomGridSkeleton } from "./skeleton-calendar-public-view-room-grid";
+
 import { Button } from "@/components/ui/button";
 import { FilterIcon } from "lucide-react";
 import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
-import { CalendarDayGridProvider } from "../calendar-day-grid/calendar-day-grid-context";
-import { DailyTimeBlocks } from "../calendar-day-grid/calendar-day-grid";
 
 import { CalendarDayViewSkeleton } from "../view-day/skeleton-calendar-day-view";
 
