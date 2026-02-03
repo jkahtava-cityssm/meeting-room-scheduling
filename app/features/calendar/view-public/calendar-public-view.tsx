@@ -219,13 +219,13 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
                 return (
                   <CalendarScrollColumnPublic
                     key={room.roomId}
-                    loadingBlocks={true}
+                    loadingBlocks={isLoading}
                     title={room.name}
                     interval={interval}
                     roomId={room.roomId}
                     userId={undefined}
                     hours={hours || []}
-                    eventBlocks={(dayViews?.eventBlocks as unknown as IBlock[]) || []}
+                    eventBlocks={(dayViews?.eventBlocks.get(String(room.roomId)) as unknown as IBlock[]) || []}
                     isLastColumn={room.roomId === lastRoomId}
                     currentDate={dateValue}
                   />
