@@ -117,20 +117,22 @@ export function PublicEventBlockHybrid({ viewportRef, eventBlock, heightInPixels
       >
         {Trigger}
       </PopoverTrigger>
-      <PopoverContent
-        container={viewportRef.current ?? undefined}
-        className="w-fit max-w-64 px-3 py-1.5"
-        side="right"
-        sideOffset={8}
-        avoidCollisions
-        collisionBoundary={viewportRef.current ?? undefined}
-        collisionPadding={8}
-        // prevent autofocus jumps on open/close
-        onOpenAutoFocus={(e) => e.preventDefault()}
-        onCloseAutoFocus={(e) => e.preventDefault()}
-      >
-        {OverlayContent}
-      </PopoverContent>
+      {viewportRef.current && (
+        <PopoverContent
+          container={viewportRef.current ?? undefined}
+          className="w-fit max-w-64 px-3 py-1.5"
+          side="right"
+          sideOffset={8}
+          avoidCollisions
+          collisionBoundary={viewportRef.current ?? undefined}
+          collisionPadding={8}
+          // prevent autofocus jumps on open/close
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+          {OverlayContent}
+        </PopoverContent>
+      )}
     </Popover>
   );
 
