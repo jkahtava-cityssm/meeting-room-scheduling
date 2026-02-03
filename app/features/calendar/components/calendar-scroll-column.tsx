@@ -5,6 +5,9 @@ import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallbac
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { TIME_BLOCK_SIZE } from "@/lib/types";
+import { PublicEventBlockHybrid } from "../view-public/calendar-public-view-event-block-hybrid";
+import { PublicEventBlock } from "../view-public/calendar-public-view-event-block";
+import { useCalendarViewport } from "./calendar-scroll-context";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -36,11 +39,27 @@ export type CalendarScrollColumnProps = {
   isLastColumn: boolean;
   currentDate: Date;
   renderTimeBlock: (p: TimeBlockRenderProps) => ReactNode;
+  renderEventBlock: (p: EventBlockRenderProps) => ReactNode;
 };
 
-export function CalendarScrollColumnPrivate(props: Omit<CalendarScrollColumnProps, "renderTimeBlock">) {
+export type EventBlockRenderProps = {
+  eventBlock: IBlock;
+  heightInPixels: number;
+  userId: string | undefined;
+};
+
+export function CalendarScrollColumnPrivate(
+  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
+) {
   const { can, isVerifying } = CalendarPermissions.usePermissions();
   const allowed = !isVerifying && can("CreateEvent");
+
+  const renderEventBlock = useCallback(
+    ({ eventBlock, userId }: EventBlockRenderProps) => (
+      <GridEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} userId={userId} />
+    ),
+    [],
+  );
 
   const renderTimeBlock = useCallback(
     (p: TimeBlockRenderProps) => (
@@ -59,10 +78,21 @@ export function CalendarScrollColumnPrivate(props: Omit<CalendarScrollColumnProp
     [allowed],
   );
 
-  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} />;
+  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;
 }
 
-export function CalendarScrollColumnPublic(props: Omit<CalendarScrollColumnProps, "renderTimeBlock">) {
+export function CalendarScrollColumnPublic(
+  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
+) {
+  const viewportRef = useCalendarViewport();
+
+  const renderEventBlock = useCallback(
+    ({ eventBlock, userId }: EventBlockRenderProps) => (
+      <PublicEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} viewportRef={viewportRef} />
+    ),
+    [viewportRef],
+  );
+
   const renderTimeBlock = useCallback(
     ({ totalBlocks, blockIndex, showBottomSeparator, hour, startMinute }: TimeBlockRenderProps) => (
       <TimeBlockButton
@@ -76,7 +106,7 @@ export function CalendarScrollColumnPublic(props: Omit<CalendarScrollColumnProps
     [],
   );
 
-  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} />;
+  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;
 }
 
 const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
@@ -90,6 +120,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   isLastColumn,
   currentDate,
   renderTimeBlock,
+  renderEventBlock,
 }: CalendarScrollColumnProps) {
   const validInterval = clampToValidInterval(interval);
   const totalBlocks = 60 / validInterval;
@@ -143,7 +174,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                 className="absolute p-1"
                 style={block.eventStyle}
               >
-                {<GridEventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />}
+                {renderEventBlock({ eventBlock: block, heightInPixels: block.eventHeight, userId })}
               </div>
             );
           })}
