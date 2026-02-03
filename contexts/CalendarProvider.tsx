@@ -21,6 +21,7 @@ interface ICalendarContext {
   setSelectedRoomId: (roomId: string) => void;
   visibleRooms: IRoom[] | undefined;
   visibleHours: TVisibleHours;
+  defaultHours: number[];
   interval: number;
   //setVisibleHours: Dispatch<SetStateAction<TVisibleHours>>;
 }
@@ -33,6 +34,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
 
   const visibleHours: TVisibleHours = configurationData ? configurationData.hours : VISIBLE_HOURS;
   const interval = configurationData ? configurationData.interval : 30;
+  const defaultHours = Array.from({ length: visibleHours.to - visibleHours.from }, (_, i) => i + visibleHours.from);
 
   const [isHeaderLoading, setIsHeaderLoading] = useState(true);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -57,6 +59,7 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
         setSelectedRoomId,
         visibleRooms,
         visibleHours,
+        defaultHours,
         interval,
       }}
     >
