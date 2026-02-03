@@ -88,7 +88,11 @@ export function CalendarScrollColumnPublic(
 
   const renderEventBlock = useCallback(
     ({ eventBlock, userId }: EventBlockRenderProps) => (
-      <PublicEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} viewportRef={viewportRef} />
+      <PublicEventBlockHybrid
+        eventBlock={eventBlock}
+        heightInPixels={eventBlock.eventHeight}
+        viewportRef={viewportRef}
+      />
     ),
     [viewportRef],
   );

@@ -41,14 +41,8 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
 
   return (
     <CalendarScrollProvider value={viewportRef}>
-      <ScrollArea className="w-full flex-1 min-h-0" type="always">
-        <div
-          className="relative flex min-w-0 w-full"
-          ref={(el) => {
-            // Try to find the radix viewport inside this ScrollArea
-            viewportRef.current = el?.querySelector("[data-radix-scroll-area-viewport]") as HTMLDivElement | null;
-          }}
-        >
+      <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={viewportRef}>
+        <div className="relative flex min-w-0 w-full">
           <HourColumn hours={hours} />
 
           <div className="flex w-full min-w-0 pr-4">{children}</div>
