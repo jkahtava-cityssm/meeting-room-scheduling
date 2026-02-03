@@ -23,6 +23,8 @@ import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { CalendarScrollContainerPublic } from "../components/calendar-scroll-container";
 import { CalendarScrollColumnPublic } from "../components/calendar-scroll-column";
+import { CalendarWeekViewSkeleton } from "../view-week/skeleton-calendar-week-view";
+import { useRoomFiltering } from "./use-room-filtering";
 
 export interface IPublicProcessData {
   events: PUBLIC_IEVENT[];
@@ -79,10 +81,10 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
   const [isRefreshed, setRefreshed] = useState(false);
   const [dayViews, setDayViews] = useState<IDayView>();
   const [data, setData] = useState([]);
-  const [hours, setHours] = useState<number[] | undefined>(undefined);
 
-  const { interval, visibleRooms, visibleHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
+  const { interval, visibleRooms, visibleHours, defaultHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
 
+  const [hours, setHours] = useState<number[] | undefined>(defaultHours);
   const workerRef = useRef<Worker | null>(null);
 
   const startDate: Date = startOfDay(dateValue);
@@ -94,9 +96,11 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 
   const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
 
+  const { checkedRooms, debouncedRooms, toggleRoom, filterByProjector, selectAll } = useRoomFiltering(rooms);
+
   const filteredRooms = useMemo(() => {
-    return selectedRoomIds.length > 0 ? rooms?.filter((room) => selectedRoomIds.includes(room.roomId)) : undefined;
-  }, [rooms, selectedRoomIds]);
+    return rooms?.filter((room) => debouncedRooms.includes(room.roomId));
+  }, [rooms, debouncedRooms]);
 
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
@@ -158,22 +162,10 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
     }
   }, [events, dateValue, isRefreshed, rooms, setIsHeaderLoading, visibleHours]);
 
-  const handleCheckedRoomsChange = useCallback((checkedIds: number[]) => {
-    setSelectedRoomIds(checkedIds);
-  }, []);
-
   const memoizedHours = useMemo(() => hours, [hours]);
 
-  /*if (isLoading || !filteredRooms || !events) {
-    return <CalendarWeekViewSkeleton />;
-  }
-
-  if (filteredRooms || events) {
-    <div>...</div>;
-  }
-*/
   const lastRoomId = filteredRooms?.length ? filteredRooms[filteredRooms.length - 1].roomId : undefined;
-  const isMounting = !dayViews || !hours;
+  const isMounting = !dayViews || !hours || !filteredRooms;
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 overflow-auto ">
       {/* LEFT CONTAINER */}
@@ -182,18 +174,24 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
         <div className="flex flex-wrap items-center justify-between">
           <label className="font-bold">Filter</label>
           <ButtonGroup>
-            <Button size="sm" className="text-xs" onClick={() => {}}>
+            <Button size="sm" className="text-xs" onClick={filterByProjector}>
               <FilterIcon></FilterIcon> Rooms with Projectors
             </Button>
             <ButtonGroupSeparator />
-            <Button size="sm" className="text-xs " onClick={() => {}}>
-              Clear
+            <Button size="sm" className="text-xs " onClick={selectAll}>
+              Reset
             </Button>
           </ButtonGroup>
         </div>
         {/* BODY: Checkboxes */}
         <div className="w-full shrink-0 border rounded-lg p-4 lg:w-72 ">
-          <RoomCategoryLayout onCheckedRoomsChange={handleCheckedRoomsChange} rooms={rooms || []}></RoomCategoryLayout>
+          {!isMounting && (
+            <RoomCategoryLayout
+              checkedRooms={checkedRooms}
+              onToggleRoom={toggleRoom}
+              rooms={rooms || []}
+            ></RoomCategoryLayout>
+          )}
         </div>
       </div>
 
@@ -204,31 +202,29 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
         <DateControls selectedDate={dateValue}></DateControls>
         {/* MAIN PANEL: Grows to take space */}
         <div className="flex border rounded-lg sm:p-4 min-h-125">
-          <CalendarPermissions.Provider session={undefined}>
-            <CalendarScrollContainerPublic
-              isLoading={isLoading}
-              hours={hours || []}
-              isMounting={isMounting}
-              skeleton={<CalendarDayViewSkeleton hours={hours} />}
-            >
-              {filteredRooms?.map((room) => {
-                return (
-                  <CalendarScrollColumnPublic
-                    key={room.roomId}
-                    loadingBlocks={isLoading}
-                    title={room.name}
-                    interval={interval}
-                    roomId={room.roomId}
-                    userId={undefined}
-                    hours={hours || []}
-                    eventBlocks={(dayViews?.eventBlocks.get(String(room.roomId)) as unknown as IBlock[]) || []}
-                    isLastColumn={room.roomId === lastRoomId}
-                    currentDate={dateValue}
-                  />
-                );
-              })}
-            </CalendarScrollContainerPublic>
-          </CalendarPermissions.Provider>
+          <CalendarScrollContainerPublic
+            isLoading={isLoading}
+            hours={hours || []}
+            isMounting={isMounting || filteredRooms.length === 0}
+            skeleton={<CalendarWeekViewSkeleton />}
+          >
+            {filteredRooms?.map((room) => {
+              return (
+                <CalendarScrollColumnPublic
+                  key={room.roomId}
+                  loadingBlocks={isLoading}
+                  title={room.name}
+                  interval={interval}
+                  roomId={room.roomId}
+                  userId={undefined}
+                  hours={hours || []}
+                  eventBlocks={(dayViews?.eventBlocks.get(String(room.roomId)) as unknown as IBlock[]) || []}
+                  isLastColumn={room.roomId === lastRoomId}
+                  currentDate={dateValue}
+                />
+              );
+            })}
+          </CalendarScrollContainerPublic>
         </div>
       </div>
     </div>
