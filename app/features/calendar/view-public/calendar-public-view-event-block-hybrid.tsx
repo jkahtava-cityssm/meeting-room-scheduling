@@ -1,15 +1,15 @@
 "use client";
 
-import * as React from "react";
 import { format } from "date-fns";
 import { IEventBlock } from "./calendar-public-view";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { TColors, TStatusKey } from "@/lib/types";
 import { PublicEventCard } from "./calendar-public-view-event-block";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 type Props = {
   viewportRef: React.RefObject<HTMLDivElement | null>;
@@ -17,143 +17,179 @@ type Props = {
   heightInPixels: number;
 };
 
+const CLOSE_ALL_POPOVERS = "calendar-public-close-all-tooltips";
+
 export function PublicEventBlockHybrid({ viewportRef, eventBlock, heightInPixels }: Props) {
-  const isTouch = useIsTouch();
   const [popoverIsOpen, setPopoverOpen] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const handleGlobalClose = () => {
+      setPopoverOpen(false);
+      setIsLocked(false);
+    };
+
+    window.addEventListener(CLOSE_ALL_POPOVERS, handleGlobalClose);
+    return () => window.removeEventListener(CLOSE_ALL_POPOVERS, handleGlobalClose);
+  }, []);
 
   if (!eventBlock?.event) return null;
 
+  const handleMouseEnter = () => {
+    // Clear any pending "close" timer from this block
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+
+    if (triggerRef.current && document.activeElement !== triggerRef.current) {
+      triggerRef.current.focus({ preventScroll: true });
+    }
+
+    if (!popoverIsOpen) {
+      //window.dispatchEvent(new CustomEvent(CLOSE_ALL_POPOVERS));
+      setPopoverOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // Wait 50ms before closing to see if we enter another block
+    if (!isLocked) {
+      closeTimeoutRef.current = setTimeout(() => {
+        setPopoverOpen(false);
+        if (document.activeElement === triggerRef.current) {
+          triggerRef.current?.blur();
+        }
+      }, 100);
+    }
+  };
+
+  const handleBlockClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Toggle the lock. If locking it, ensure it's open.
+    // If unlocking it, let it stay open until mouse leaves.
+    if (isLocked) {
+      // If already locked, clicking again should close it entirely
+      setPopoverOpen(false);
+      setIsLocked(false);
+    } else {
+      // If hovering (open but not locked) or closed, clicking locks it
+      window.dispatchEvent(new CustomEvent(CLOSE_ALL_POPOVERS));
+      setPopoverOpen(true);
+      setIsLocked(true);
+    }
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setPopoverOpen(isOpen);
+    // If Radix closes it (via Escape or clicking outside), reset the lock
+    if (!isOpen) {
+      setIsLocked(false);
+    }
+  };
   const isApproved = eventBlock.event.status.key === ("APPROVED" as TStatusKey);
   const color: TColors = isApproved ? (eventBlock.event.room.color as TColors) : ("disabled" as TColors);
 
-  const EventCardClasses = PublicEventCard({ color });
+  const eventCardClasses = PublicEventCard({ color });
   const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setPopoverOpen(false);
-      return;
-    }
-    // Open on Space / Enter and prevent Space from scrolling
-    if (e.key === " " || e.key === "Spacebar" || e.key === "Enter") {
-      e.preventDefault(); // blocks default scrolling for Space
-      setPopoverOpen((prev) => !prev);
-    }
-  };
-
-  const handleFocus = () => {
-    console.log("Focus Event");
-    setPopoverOpen(true);
-  };
-  const handleBlur = (e: React.FocusEvent) => {
-    // close only if focus truly leaves the trigger
-    const eventTarget = e.currentTarget;
-    setTimeout(() => {
-      const activeElement = document.activeElement;
-
-      const stillInside = !!activeElement && eventTarget.contains(activeElement);
-      if (!stillInside) {
-        console.log(
-          "Blur Event Active: ",
-          activeElement?.childNodes[1].childNodes[0].textContent,
-          "Target: ",
-          eventTarget?.childNodes[1].childNodes[0].textContent,
-        );
-        setPopoverOpen(false);
-      }
-    }, 50);
-  };
-
-  // Shared trigger markup
-  const Trigger = (
-    <button
-      type="button"
-      tabIndex={0}
-      className={cn(EventCardClasses, `w-full`)}
-      style={{ height: `${heightInPixels}px` }}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      onKeyDown={onKeyDown}
-    >
-      <div className="flex">
-        <p className="text-left font-semibold text-wrap">{isApproved ? "Booked" : "Requested"}</p>
-      </div>
-      <div className="flex text-wrap">
-        <p className="text-left">{timeRange}</p>
-      </div>
-      <div className="flex pt-1">
-        <p className="text-left text-wrap">{eventBlock.event.title}</p>
-      </div>
-    </button>
-  );
-
-  const OverlayContent = (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2 border-b border-muted-foreground h-8">
-        <p className="text-sm font-medium">{eventBlock.event.room.name}</p>
-      </div>
-
-      <p className="text-primary/80 text-sm font-normal">{isApproved ? "Booked" : "Requested"}</p>
-      <p className="text-primary/80 text-sm font-normal">{timeRange}</p>
-      <p className="text-primary/80 text-sm font-normal">{eventBlock.event.title}</p>
-    </div>
-  );
+  if (!viewportRef.current) return;
 
   return (
-    <Popover
-      modal={false}
-      open={popoverIsOpen}
-      onOpenChange={(value) => {
-        console.log("Popover onOpenChange: ", value);
-        //setPopoverOpen(value);
-      }}
-    >
-      <PopoverTrigger
-        asChild
-        onClick={() => {
-          console.log("PopoverTrigger OnClick: ");
-          //setPopoverOpen((prev) => !prev);
-        }}
+    <Popover open={popoverIsOpen} onOpenChange={handleOpenChange}>
+      {/* Wrapping the trigger in a div allows us to handle hover 
+         without breaking the underlying Shadcn/Radix button logic 
+      */}
+      <div
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleBlockClick}
+        onBlur={handleMouseLeave}
+        onFocus={handleMouseEnter}
+        className="w-full"
       >
-        {Trigger}
-      </PopoverTrigger>
-      {viewportRef.current && (
-        <PopoverContent
-          container={viewportRef.current ?? undefined}
-          className="w-fit max-w-64 px-3 py-1.5"
-          side="right"
-          sideOffset={8}
-          avoidCollisions
-          collisionBoundary={viewportRef.current ?? undefined}
-          collisionPadding={8}
-          // prevent autofocus jumps on open/close
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
-        >
-          {OverlayContent}
-        </PopoverContent>
-      )}
-    </Popover>
-  );
+        <PopoverTrigger asChild>
+          <button
+            ref={triggerRef}
+            type="button"
+            aria-label={`${isApproved ? "Booked" : "Requested"} from ${timeRange}, ${eventBlock.event.title}, in ${eventBlock.event.room.name}`}
+            className={cn(
+              eventCardClasses,
+              "w-full text-left overflow-hidden outline-none focus-visible:ring-2 ring-ring ring-offset-2 transition-shadow",
+            )}
+            style={{ height: `${heightInPixels}px` }}
+          >
+            <div className="flex flex-col gap-0.5" aria-hidden="true">
+              <p className="flex text-left font-semibold text-wrap">{isApproved ? "Booked" : "Requested"}</p>
+              <p className="flex text-wrap text-left">{timeRange}</p>
+              <p className="flex pt-1 text-left text-wrap">{eventBlock.event.title}</p>
+            </div>
+          </button>
+        </PopoverTrigger>
+      </div>
 
-  // --- Desktop mouse: HoverCard (delayed open/close, hover only)
-  return (
-    <HoverCard open={popoverIsOpen} onOpenChange={setPopoverOpen} openDelay={150} closeDelay={100}>
-      <HoverCardTrigger asChild>{Trigger}</HoverCardTrigger>
-
-      {/* Portal to the ScrollArea viewport */}
-
-      <HoverCardContent
-        container={viewportRef.current ?? undefined}
-        className="w-fit max-w-64 px-3 py-1.5"
+      <PopoverContent
+        container={viewportRef.current}
         side="right"
-        sideOffset={8}
-        avoidCollisions
-        collisionBoundary={viewportRef.current ?? undefined}
-        collisionPadding={8}
+        sideOffset={10}
+        align="start"
+        sticky="always"
+        collisionBoundary={viewportRef.current}
+        collisionPadding={{ top: 38, bottom: 10, left: 10, right: 10 }}
+        avoidCollisions={true}
+        hideWhenDetached={true}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onInteractOutside={(e) => {
+          if (isLocked) {
+            e.preventDefault();
+          }
+        }}
+        aria-hidden="true"
+        role="tooltip"
+        className={cn(
+          "w-64 p-3 shadow-xl z-5",
+
+          !isLocked && "pointer-events-none",
+        )}
       >
-        {OverlayContent}
-      </HoverCardContent>
-    </HoverCard>
+        {isLocked && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setPopoverOpen(false);
+              setIsLocked(false);
+            }}
+            tabIndex={-1} // Keeps it out of the tab flow since it's aria-hidden
+            className="absolute top-2 right-2 p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
+        )}
+        <div className="space-y-1 ">
+          <div className="flex items-center gap-2 border-b border-muted-foreground h-8">
+            <p className="text-sm font-medium">{eventBlock.event.room.name}</p>
+          </div>
+
+          <p className="text-primary/80 text-sm font-normal">{isApproved ? "Booked" : "Requested"}</p>
+          <p className="text-primary/80 text-sm font-normal">{timeRange}</p>
+          <p className="text-primary/80 text-sm font-normal">{eventBlock.event.title}</p>
+          <div
+            className={cn(
+              "pt-2 mt-2 border-t border-muted/50 flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground  tracking-wider",
+              !isLocked && "opacity-70",
+            )}
+          >
+            <div
+              className={cn("h-1.5 w-1.5 rounded-full", isLocked ? "bg-amber-500 animate-pulse" : "bg-primary/70")}
+            />
+            {isLocked ? "Click to unpin" : "Click to pin"}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
