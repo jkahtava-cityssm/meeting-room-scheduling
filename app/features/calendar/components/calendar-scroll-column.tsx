@@ -112,9 +112,7 @@ export function CalendarScrollColumnPublic(
 export function CalendarScrollColumnSkeleton(
   props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
 ) {
-  const viewportRef = useCalendarViewport();
-
-  const renderEventBlock = useCallback(({ eventBlock, userId }: EventBlockRenderProps) => <></>, [viewportRef]);
+  const renderEventBlock = useCallback(({ eventBlock, userId }: EventBlockRenderProps) => <></>, []);
 
   const renderTimeBlock = useCallback(
     ({ totalBlocks, blockIndex, showBottomSeparator, hour, startMinute }: TimeBlockRenderProps) => (
