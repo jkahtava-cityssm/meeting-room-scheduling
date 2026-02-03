@@ -31,7 +31,7 @@ export const PublicEventCard = cva(
   },
 );
 
-export function PublicEventBlockHybrid({ viewportRef, eventBlock, heightInPixels }: Props) {
+export function PublicEventBlock({ viewportRef, eventBlock, heightInPixels }: Props) {
   const [popoverIsOpen, setPopoverOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);

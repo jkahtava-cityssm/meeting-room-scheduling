@@ -5,9 +5,8 @@ import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallbac
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { TIME_BLOCK_SIZE } from "@/lib/types";
-import { PublicEventBlockHybrid } from "../view-public/calendar-public-view-event-block-hybrid";
-import { PublicEventBlock } from "../view-public/calendar-public-view-event-block";
 import { useCalendarViewport } from "./calendar-scroll-context";
+import { PublicEventBlock } from "../view-public/calendar-public-view-event-block";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -88,11 +87,7 @@ export function CalendarScrollColumnPublic(
 
   const renderEventBlock = useCallback(
     ({ eventBlock, userId }: EventBlockRenderProps) => (
-      <PublicEventBlockHybrid
-        eventBlock={eventBlock}
-        heightInPixels={eventBlock.eventHeight}
-        viewportRef={viewportRef}
-      />
+      <PublicEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} viewportRef={viewportRef} />
     ),
     [viewportRef],
   );
