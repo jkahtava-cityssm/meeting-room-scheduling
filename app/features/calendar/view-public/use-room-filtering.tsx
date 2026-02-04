@@ -11,12 +11,12 @@ export function useRoomFiltering(rooms: PUBLIC_IROOM[] | undefined) {
 
   // Initialize: When rooms first load, check them all
   useEffect(() => {
-    if (rooms && rooms.length > 0 && checkedRooms.size === 0) {
+    if (rooms && rooms.length > 0) {
       const allRooms = rooms.map((r) => r.roomId);
       setCheckedRooms(new Set(allRooms));
       setDebouncedRooms(allRooms);
     }
-  }, [rooms, checkedRooms]);
+  }, [rooms]);
 
   // Handle Debounce
   useEffect(() => {
