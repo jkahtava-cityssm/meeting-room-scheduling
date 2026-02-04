@@ -171,7 +171,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
       {/* LEFT CONTAINER */}
       <div className="w-full flex flex-col gap-2 p-4 sm:p-0 lg:w-72 ">
         {/* HEADER: Label & Button stack when tight */}
-        <div className="flex flex-wrap items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between py-2">
           <label className="font-bold">Filter</label>
           <ButtonGroup>
             <Button size="sm" className="text-xs" onClick={filterByProjector}>
