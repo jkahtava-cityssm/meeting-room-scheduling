@@ -9,9 +9,11 @@ function ScrollArea({
   className,
   children,
   viewportRef,
+  popoverLayerRef,
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
   viewportRef?: React.Ref<HTMLDivElement>;
+  popoverLayerRef?: React.Ref<HTMLDivElement>;
 }) {
   return (
     <ScrollAreaPrimitive.Root data-slot="scroll-area" className={cn("relative flex flex-col ", className)} {...props}>
@@ -20,6 +22,15 @@ function ScrollArea({
         data-slot="scroll-area-viewport"
         className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1 overflow-clip"
       >
+        <div
+          ref={popoverLayerRef}
+          className={cn(
+            "pointer-events-none absolute inset-0 overflow-clip",
+            // ✅ Force Radix popper wrapper to be absolute so it can be clipped
+            "[&_[data-radix-popper-content-wrapper]]:!absolute",
+          )}
+        />
+
         {children}
       </ScrollAreaPrimitive.Viewport>
       <ScrollBar />

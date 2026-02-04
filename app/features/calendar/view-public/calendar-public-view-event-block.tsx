@@ -10,9 +10,11 @@ import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
+import { useMeasuredPopoverSide } from "./use-popover-side";
 
 type Props = {
   viewportRef: React.RefObject<HTMLDivElement | null>;
+  popoverLayerRef: React.RefObject<HTMLDivElement | null>;
   eventBlock: IEventBlock;
   heightInPixels: number;
 };
@@ -31,11 +33,26 @@ export const PublicEventCard = cva(
   },
 );
 
-export function PublicEventBlock({ viewportRef, eventBlock, heightInPixels }: Props) {
+export function PublicEventBlock({ viewportRef, popoverLayerRef, eventBlock, heightInPixels }: Props) {
   const [popoverIsOpen, setPopoverOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const viewportElement = viewportRef.current ?? undefined;
+  const popoverElement = popoverLayerRef.current ?? undefined;
+
+  const side = useMeasuredPopoverSide({
+    open: popoverIsOpen,
+    triggerRef,
+    contentRef,
+    viewportElement,
+    sideOffset: 10,
+    collisionPadding: { top: 38, bottom: 10, left: 10, right: 10 },
+    preferOrder: ["right", "left", "bottom", "top"], // option 1 + fallback
+  });
 
   useEffect(() => {
     const handleGlobalClose = () => {
@@ -136,7 +153,7 @@ export function PublicEventBlock({ viewportRef, eventBlock, heightInPixels }: Pr
   const eventCardClasses = PublicEventCard({ color });
   const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;
 
-  if (!viewportRef.current) return;
+  if (!viewportElement || !popoverElement) return;
 
   return (
     <Popover open={popoverIsOpen} onOpenChange={handleOpenChange}>
@@ -172,15 +189,16 @@ export function PublicEventBlock({ viewportRef, eventBlock, heightInPixels }: Pr
       </div>
 
       <PopoverContent
-        container={viewportRef.current}
-        side="right"
+        ref={contentRef}
+        container={popoverElement}
+        collisionBoundary={viewportElement}
+        side={side}
         sideOffset={10}
         align="start"
         sticky="always"
-        collisionBoundary={viewportRef.current}
         collisionPadding={{ top: 38, bottom: 10, left: 10, right: 10 }}
         avoidCollisions={true}
-        hideWhenDetached={true}
+        //hideWhenDetached={true}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
@@ -193,7 +211,7 @@ export function PublicEventBlock({ viewportRef, eventBlock, heightInPixels }: Pr
         className={cn(
           "w-64 p-3 shadow-xl z-5",
 
-          !isLocked && "pointer-events-none",
+          isLocked ? "pointer-events-auto" : "pointer-events-none",
         )}
       >
         {isLocked && (

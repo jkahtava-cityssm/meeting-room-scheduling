@@ -35,45 +35,49 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
   children,
 }: CalendarScrollContainerProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const popoverLayerRef = useRef<HTMLDivElement | null>(null);
 
   if (isMounting) {
     return (
-      <CalendarScrollProvider value={viewportRef}>
-        <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={viewportRef}>
-          <div className="relative flex min-w-0 w-full">
-            <HourColumn hours={hours} />
+      <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={undefined}>
+        <div className="relative flex min-w-0 w-full">
+          <HourColumn hours={hours} />
 
-            <div className="flex w-full min-w-0 pr-4">
-              <CalendarScrollColumnSkeleton
-                hours={hours}
-                title={""}
-                loadingBlocks={false}
-                interval={0}
-                roomId={undefined}
-                userId={undefined}
-                eventBlocks={[]}
-                isLastColumn={false}
-                currentDate={new Date()}
-              ></CalendarScrollColumnSkeleton>
+          <div className="flex w-full min-w-0 pr-4">
+            <CalendarScrollColumnSkeleton
+              hours={hours}
+              title={""}
+              loadingBlocks={false}
+              interval={0}
+              roomId={undefined}
+              userId={undefined}
+              eventBlocks={[]}
+              isLastColumn={false}
+              currentDate={new Date()}
+            ></CalendarScrollColumnSkeleton>
+          </div>
+        </div>
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
+              <LoaderCircle className="animate-spin" />
             </div>
           </div>
-          {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
-                <LoaderCircle className="animate-spin" />
-              </div>
-            </div>
-          )}
-          <ScrollBar orientation="vertical" forceMount />
-          <ScrollBar orientation="horizontal" forceMount />
-        </ScrollArea>
-      </CalendarScrollProvider>
+        )}
+        <ScrollBar orientation="vertical" forceMount />
+        <ScrollBar orientation="horizontal" forceMount />
+      </ScrollArea>
     );
   }
 
   return (
-    <CalendarScrollProvider value={viewportRef}>
-      <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={viewportRef}>
+    <CalendarScrollProvider value={{ viewportRef, popoverLayerRef }}>
+      <ScrollArea
+        className="w-full flex-1 min-h-0"
+        type="always"
+        viewportRef={viewportRef}
+        popoverLayerRef={popoverLayerRef}
+      >
         <div className="relative flex min-w-0 w-full">
           <HourColumn hours={hours} />
 

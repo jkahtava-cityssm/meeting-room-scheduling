@@ -209,6 +209,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
             skeleton={<CalendarWeekViewSkeleton />}
           >
             {filteredRooms?.map((room) => {
+              //console.log(dayViews?.eventBlocks.get(String(room.roomId)));
               return (
                 <CalendarScrollColumnPublic
                   key={room.roomId}

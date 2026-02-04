@@ -1,7 +1,10 @@
 // calendar-scroll-context.tsx
 import { createContext, useContext, RefObject } from "react";
 
-const CalendarScrollContext = createContext<RefObject<HTMLDivElement | null> | null>(null);
+const CalendarScrollContext = createContext<{
+  viewportRef: RefObject<HTMLDivElement | null>;
+  popoverLayerRef: RefObject<HTMLDivElement | null>;
+} | null>(null);
 
 export const CalendarScrollProvider = CalendarScrollContext.Provider;
 
