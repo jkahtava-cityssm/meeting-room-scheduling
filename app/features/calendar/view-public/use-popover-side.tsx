@@ -20,7 +20,7 @@ export function useMeasuredPopoverSide({
   open,
   triggerRef,
   contentRef,
-  viewportElement,
+  viewport,
   sideOffset = 10,
   collisionPadding,
   preferOrder = ["right", "left", "bottom", "top"],
@@ -28,7 +28,7 @@ export function useMeasuredPopoverSide({
   open: boolean;
   triggerRef: React.RefObject<HTMLElement | null>;
   contentRef: React.RefObject<HTMLElement | null>;
-  viewportElement?: HTMLElement;
+  viewport?: HTMLDivElement | null;
   sideOffset?: number;
   collisionPadding?: number | Partial<Padding>;
   preferOrder?: Side[];
@@ -39,7 +39,7 @@ export function useMeasuredPopoverSide({
   const recompute = React.useCallback(() => {
     const trigger = triggerRef.current;
     const content = contentRef.current;
-    const boundary = viewportElement;
+    const boundary = viewport;
     if (!trigger || !content || !boundary) return;
 
     const t = trigger.getBoundingClientRect();
@@ -81,7 +81,7 @@ export function useMeasuredPopoverSide({
     ];
     options.sort((a, c) => c[1] - a[1]);
     return options[0][0];
-  }, [triggerRef, contentRef, viewportElement, sideOffset, padding, preferOrder]);
+  }, [triggerRef, contentRef, viewport, sideOffset, padding, preferOrder]);
 
   React.useLayoutEffect(() => {
     if (!open) return;
@@ -96,7 +96,7 @@ export function useMeasuredPopoverSide({
   React.useLayoutEffect(() => {
     if (!open) return;
     const content = contentRef.current;
-    const boundary = viewportElement;
+    const boundary = viewport;
     if (!content || !boundary) return;
 
     // Recompute on content resize (dynamic height/width changes)
@@ -120,7 +120,7 @@ export function useMeasuredPopoverSide({
       boundary.removeEventListener("scroll", onScrollOrResize);
       window.removeEventListener("resize", onScrollOrResize);
     };
-  }, [open, viewportElement, contentRef, recompute]);
+  }, [open, viewport, contentRef, recompute]);
 
   return side;
 }

@@ -13,8 +13,8 @@ import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import { useMeasuredPopoverSide } from "./use-popover-side";
 
 type Props = {
-  viewportRef: React.RefObject<HTMLDivElement | null>;
-  popoverLayerRef: React.RefObject<HTMLDivElement | null>;
+  viewport: HTMLDivElement | null;
+  popoverLayer: HTMLDivElement | null;
   eventBlock: IEventBlock;
   heightInPixels: number;
 };
@@ -33,7 +33,7 @@ export const PublicEventCard = cva(
   },
 );
 
-export function PublicEventBlock({ viewportRef, popoverLayerRef, eventBlock, heightInPixels }: Props) {
+export function PublicEventBlock({ viewport, popoverLayer, eventBlock, heightInPixels }: Props) {
   const [popoverIsOpen, setPopoverOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -41,14 +41,11 @@ export function PublicEventBlock({ viewportRef, popoverLayerRef, eventBlock, hei
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const viewportElement = viewportRef.current ?? undefined;
-  const popoverElement = popoverLayerRef.current ?? undefined;
-
   const side = useMeasuredPopoverSide({
     open: popoverIsOpen,
     triggerRef,
     contentRef,
-    viewportElement,
+    viewport,
     sideOffset: 10,
     collisionPadding: { top: 38, bottom: 10, left: 10, right: 10 },
     preferOrder: ["right", "left", "bottom", "top"], // option 1 + fallback
@@ -120,7 +117,7 @@ export function PublicEventBlock({ viewportRef, popoverLayerRef, eventBlock, hei
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLDivElement>) => {
-    const container = viewportRef.current;
+    const container = viewport;
     const element = e.currentTarget;
 
     if (container && element) {
@@ -153,7 +150,9 @@ export function PublicEventBlock({ viewportRef, popoverLayerRef, eventBlock, hei
   const eventCardClasses = PublicEventCard({ color });
   const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;
 
-  if (!viewportElement || !popoverElement) return;
+  //if (!viewportElement || !popoverElement) return;
+
+  if (!viewport || !popoverLayer) return null;
 
   return (
     <Popover open={popoverIsOpen} onOpenChange={handleOpenChange}>
@@ -190,8 +189,8 @@ export function PublicEventBlock({ viewportRef, popoverLayerRef, eventBlock, hei
 
       <PopoverContent
         ref={contentRef}
-        container={popoverElement}
-        collisionBoundary={viewportElement}
+        container={popoverLayer}
+        collisionBoundary={viewport}
         side={side}
         sideOffset={10}
         align="start"

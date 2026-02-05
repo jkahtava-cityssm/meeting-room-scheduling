@@ -2,8 +2,8 @@
 import { createContext, useContext, RefObject } from "react";
 
 const CalendarScrollContext = createContext<{
-  viewportRef: RefObject<HTMLDivElement | null>;
-  popoverLayerRef: RefObject<HTMLDivElement | null>;
+  viewport: HTMLDivElement | null;
+  popoverLayer: HTMLDivElement | null;
 } | null>(null);
 
 export const CalendarScrollProvider = CalendarScrollContext.Provider;

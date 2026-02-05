@@ -1,10 +1,10 @@
-import React, { useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { SharedEventDrawerProvider } from "../../event-drawer/shared-event-drawer-context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarHourTimeline } from "./calendar-hour-timeline";
 import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
-import { CalendarScrollProvider } from "./calendar-scroll-context";
+import { CalendarScrollProvider, useCalendarViewport } from "./calendar-scroll-context";
 import { CalendarScrollColumnSkeleton } from "./calendar-scroll-column";
 
 export type CalendarScrollContainerProps = {
@@ -34,8 +34,17 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
   skeleton,
   children,
 }: CalendarScrollContainerProps) {
-  const viewportRef = useRef<HTMLDivElement | null>(null);
-  const popoverLayerRef = useRef<HTMLDivElement | null>(null);
+  const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
+  const [popoverLayer, setPopoverLayer] = useState<HTMLDivElement | null>(null);
+
+  // 2. Memoize the value for the provider
+  const contextValue = useMemo(
+    () => ({
+      viewport,
+      popoverLayer,
+    }),
+    [viewport, popoverLayer],
+  );
 
   if (isMounting) {
     return (
@@ -71,12 +80,12 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
   }
 
   return (
-    <CalendarScrollProvider value={{ viewportRef, popoverLayerRef }}>
+    <CalendarScrollProvider value={contextValue}>
       <ScrollArea
         className="w-full flex-1 min-h-0"
         type="always"
-        viewportRef={viewportRef}
-        popoverLayerRef={popoverLayerRef}
+        viewportRef={setViewport}
+        popoverLayerRef={setPopoverLayer}
       >
         <div className="relative flex min-w-0 w-full">
           <HourColumn hours={hours} />

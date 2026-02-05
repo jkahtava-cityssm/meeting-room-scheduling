@@ -84,18 +84,18 @@ export function CalendarScrollColumnPrivate(
 export function CalendarScrollColumnPublic(
   props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
 ) {
-  const { viewportRef, popoverLayerRef } = useCalendarViewport();
+  const { viewport, popoverLayer } = useCalendarViewport();
 
   const renderEventBlock = useCallback(
     ({ eventBlock, userId }: EventBlockRenderProps) => (
       <PublicEventBlock
         eventBlock={eventBlock}
         heightInPixels={eventBlock.eventHeight}
-        viewportRef={viewportRef}
-        popoverLayerRef={popoverLayerRef}
+        viewport={viewport}
+        popoverLayer={popoverLayer}
       />
     ),
-    [viewportRef, popoverLayerRef],
+    [viewport, popoverLayer],
   );
 
   const renderTimeBlock = useCallback(
