@@ -27,28 +27,40 @@ import {
 import { uniq, uniqBy } from "lodash";
 import { rrulestr } from "rrule";
 import { date, z } from "zod/v4";
+import { CalendarAction, GroupingType, IEventBlock } from "./calendar-generic-webworker";
 
-export interface IEventBlock {
-  key: string;
-  groupIndex: number;
-  eventIndex: number;
-  eventStyle: { top: string; width: string; left: string };
-  eventHeight: number;
-  event: IEvent;
-  roomId?: number;
+export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[]) {
+  let minHour = config.from;
+  let maxHour = config.to;
+
+  events.forEach((event) => {
+    const start = new Date(event.startDate).getHours();
+    const endDoc = new Date(event.endDate);
+
+    // If it ends exactly on :00, don't round up (e.g., 10:00 is hour 10)
+    // If it ends at 10:05, we need to show hour 11
+    const endHour = endDoc.getHours() + (endDoc.getMinutes() > 0 ? 1 : 0);
+
+    if (start < minHour) minHour = start;
+    if (endHour > maxHour) maxHour = endHour;
+  });
+
+  return {
+    from: Math.max(0, minHour),
+    to: Math.min(24, maxHour),
+  };
 }
-export type GroupingType = "date" | "roomId" | "none";
-export type CalendarAction = "AGENDA" | "DAY" | "WEEK" | "MONTH" | "YEAR" | "PUBLIC";
 
 /** * Strategy for Timeline Views (Day, Public, Week)
  * Returns Record<string, IEventBlock[]>
  */
 export function transformToBlocks(
   events: IEvent[],
-  visibleHours: TVisibleHours,
+  earliestEventHour: number,
+  latestEventHour: number,
   action: CalendarAction,
 ): { totalEvents: number; hours: number[]; roomBlocks: Record<string, IEventBlock[]>; groupingType: GroupingType } {
-  const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, events);
+  const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
   const groupByEvents: Record<string, IEvent[]> = {};
   const blockRecords: Record<string, IEventBlock[]> = {};
