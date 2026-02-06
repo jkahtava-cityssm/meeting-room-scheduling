@@ -8,6 +8,17 @@ const EVENT_INCLUDE = {
   status: true,
 } as const satisfies Prisma.EventInclude;
 
+const PUBLIC_EVENT_SELECT = {
+  eventId: true,
+  endDate: true,
+  startDate: true,
+  recurrenceId: true,
+  recurrence: { select: { rule: true, endDate: true, startDate: true } },
+  roomId: true,
+  room: { select: { name: true, color: true } },
+  status: { select: { statusId: true, name: true, key: true } },
+} as const satisfies Prisma.EventSelect;
+
 // Create an event — the DAL controls which relations are included.
 export async function createEvent(data: Prisma.EventCreateInput) {
   return prisma.event.create({
@@ -43,6 +54,13 @@ export async function findManyEvents(where?: Prisma.EventWhereInput) {
   return prisma.event.findMany({
     where,
     include: EVENT_INCLUDE,
+  });
+}
+
+export async function findPublicManyEvents(where?: Prisma.EventWhereInput) {
+  return prisma.event.findMany({
+    where,
+    select: PUBLIC_EVENT_SELECT,
   });
 }
 
