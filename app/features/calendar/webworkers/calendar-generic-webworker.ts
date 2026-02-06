@@ -1,18 +1,28 @@
-import { IEvent, SEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 
-import { z } from "zod/v4";
 import {
+  calculateViewBoundaries,
   filterEventsByRoom,
   generateMultiDayEventsInPeriod,
   generateRecurringEventsInPeriod,
   getDateRange,
-  GroupingType,
-  IEventBlock,
   transformToBlocks,
   transformToGrid,
   transformToYearly,
 } from "./calendar-logic-utls";
+
+export interface IEventBlock {
+  key: string;
+  groupIndex: number;
+  eventIndex: number;
+  eventStyle: { top: string; width: string; left: string };
+  eventHeight: number;
+  event: IEvent;
+  roomId?: number;
+}
+export type GroupingType = "date" | "roomId" | "none";
+export type CalendarAction = "AGENDA" | "DAY" | "WEEK" | "MONTH" | "YEAR" | "PUBLIC";
 
 export interface ICalendarProcessData {
   events: IEvent[];
@@ -20,7 +30,7 @@ export interface ICalendarProcessData {
   selectedRoomId?: string | string[];
   visibleHours: TVisibleHours;
   multiDayEventsAtTop: boolean;
-  action: "AGENDA" | "DAY" | "WEEK" | "MONTH" | "YEAR" | "PUBLIC";
+  action: CalendarAction;
 }
 
 export interface IMonthDayView {
@@ -53,6 +63,43 @@ export interface IYearDayView {
   dayEvents: IEvent[];
 }
 
+export type TRawBlockData = { roomBlocks: Record<string, IEventBlock[]>; hours: number[] };
+export type TProcessedBlockData = { roomBlocks: Map<string, IEventBlock[]>; hours: number[] };
+
+export type TRawResponse =
+  | { action: "DAY"; data: TRawBlockData }
+  | { action: "WEEK"; data: TRawBlockData }
+  | { action: "PUBLIC"; data: TRawBlockData }
+  | { action: "MONTH"; data: TMonthData }
+  | { action: "YEAR"; data: TYearData }
+  | { action: "AGENDA"; data: TAgendaData };
+
+export type TBlockData = { roomBlocks: Map<string, IEventBlock[]>; hours: number[] };
+export type TMonthData = { dayViews: IMonthDayView[] };
+export type TYearData = { monthsViews: IYearMonthView[] };
+export type TAgendaData = { sortedEvents: IEvent[] };
+
+export type TCalendarResponse =
+  | { action: "DAY"; data: TBlockData }
+  | { action: "WEEK"; data: TBlockData }
+  | { action: "PUBLIC"; data: TBlockData }
+  | { action: "MONTH"; data: TMonthData }
+  | { action: "YEAR"; data: TYearData }
+  | { action: "AGENDA"; data: TAgendaData };
+
+export type IUnifiedResponseUnion = {
+  totalEvents: number;
+  groupingType: GroupingType;
+  requestId?: number;
+} & (
+  | { action: "DAY"; data: TProcessedBlockData }
+  | { action: "WEEK"; data: TProcessedBlockData }
+  | { action: "PUBLIC"; data: TProcessedBlockData }
+  | { action: "MONTH"; data: TMonthData }
+  | { action: "YEAR"; data: TYearData }
+  | { action: "AGENDA"; data: TAgendaData }
+);
+
 export type RawCalendarData =
   | { sortedEvents: IEvent[] }
   | { roomBlocks: Record<string, IEventBlock[]>; hours: number[] }
@@ -70,7 +117,7 @@ export interface IUnifiedResponse<T = RawCalendarData> {
   action: string;
   groupingType: GroupingType;
   data: T;
-  requestId?: number; // Added to help your hook handle stale requests
+  requestId?: number;
 }
 
 self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
@@ -91,13 +138,15 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
     // Get DateRange Based on View
     const range = getDateRange(action, selectedDate);
 
+    const viewBounds = calculateViewBoundaries(visibleHours, events as IEvent[]);
+
     const [multiDayEvents, recurringEvents] = await Promise.all([
       generateMultiDayEventsInPeriod(
         events as IEvent[],
         range.startDate,
         range.endDate,
-        visibleHours.from,
-        visibleHours.to,
+        viewBounds.from,
+        viewBounds.to,
       ),
       generateRecurringEventsInPeriod(events as IEvent[], range.startDate, range.endDate),
     ]);
@@ -118,7 +167,7 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
       case "WEEK":
       case "PUBLIC":
         // These all share the "Block" logic with different date ranges
-        const blockResult = transformToBlocks(sortedEvents, payload.visibleHours, action);
+        const blockResult = transformToBlocks(sortedEvents, viewBounds.from, viewBounds.to, action);
         resultData = {
           roomBlocks: blockResult.roomBlocks,
           hours: blockResult.hours,

@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { ICalendarProcessData, IUnifiedResponse, RawCalendarData } from "./calendar-generic-webworker"; // Update path
+import {
+  CalendarAction,
+  GroupingType,
+  ICalendarProcessData,
+  IUnifiedResponseUnion,
+  TRawResponse,
+} from "./calendar-generic-webworker"; // Update path
 
 // Define a type that maps actions to their specific data structures
 
-export function useCalendarWorker<T>() {
+export function useCalendarWorker<A extends CalendarAction>() {
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
 
-  const [data, setData] = useState<(IUnifiedResponse<T> & { error?: string }) | null>(null);
+  type SpecificResponse = Extract<IUnifiedResponseUnion, { action: A }>;
+
+  const [data, setData] = useState<SpecificResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
@@ -15,12 +23,15 @@ export function useCalendarWorker<T>() {
     // Point this to your new unified worker file
     workerRef.current = new Worker(new URL("./calendar-generic-webworker.ts", import.meta.url), { type: "module" });
 
-    const worker = workerRef.current;
-
-    worker.onmessage = (event: MessageEvent<ArrayBuffer>) => {
+    workerRef.current.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       const decoder = new TextDecoder();
       const json = decoder.decode(event.data);
-      const result: IUnifiedResponse<RawCalendarData> & { requestId?: number; error?: string } = JSON.parse(json);
+      const result = JSON.parse(json) as TRawResponse & {
+        totalEvents: number;
+        groupingType: GroupingType;
+        requestId?: number;
+        error?: string;
+      };
 
       if (result.requestId !== requestIdRef.current) return;
 
@@ -29,37 +40,42 @@ export function useCalendarWorker<T>() {
         setLoading(false);
         return;
       }
-      let processedData = result.data as unknown as T;
+      let processedResponse: IUnifiedResponseUnion;
 
-      // Convert Records to Maps for UI
-      if (result.data && "roomBlocks" in result.data) {
-        processedData = {
-          ...result.data,
-          roomBlocks: new Map(Object.entries(result.data.roomBlocks)),
-        } as unknown as T;
+      switch (result.action) {
+        case "DAY":
+        case "WEEK":
+        case "PUBLIC":
+          // TypeScript narrows 'result.data' to TRawBlockData here
+          processedResponse = {
+            ...result,
+            data: {
+              ...result.data,
+              roomBlocks: new Map(Object.entries(result.data.roomBlocks)),
+            },
+          };
+          break;
+        default:
+          // MONTH, YEAR, AGENDA: result.data is already compatible
+          processedResponse = result as IUnifiedResponseUnion;
+          break;
       }
 
-      setData({
-        totalEvents: result.totalEvents,
-        action: result.action,
-        requestId: result.requestId,
-        data: processedData,
-        groupingType: result.groupingType,
-      });
+      setData(processedResponse as SpecificResponse);
       setLoading(false);
     };
 
-    worker.onerror = (err) => {
+    workerRef.current.onerror = (err) => {
       setError(err);
       setLoading(false);
     };
 
     return () => {
-      worker.terminate();
+      workerRef.current?.terminate();
     };
   }, []);
 
-  const processEvents = useCallback((message: ICalendarProcessData) => {
+  const processEvents = useCallback((message: Omit<ICalendarProcessData, "action"> & { action: A }) => {
     if (!workerRef.current) return;
     setLoading(true);
     setError(null);
@@ -74,5 +90,5 @@ export function useCalendarWorker<T>() {
     workerRef.current.postMessage(buffer, [buffer]);
   }, []);
 
-  return { data: data as (IUnifiedResponse & { data: T }) | null, loading, error, processEvents };
+  return { data, loading, error, processEvents };
 }
