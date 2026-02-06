@@ -25,6 +25,9 @@ import { CalendarScrollContainerPublic } from "../components/calendar-scroll-con
 import { CalendarScrollColumnPublic } from "../components/calendar-scroll-column";
 import { CalendarWeekViewSkeleton } from "../view-week/skeleton-calendar-week-view";
 import { useRoomFiltering } from "./use-room-filtering";
+import { usePublicCalendar } from "../webworkers/use-calendar-public-events";
+import { useCalendarWorker } from "../webworkers/use-generic-webworker";
+import { usePrivateCalendar } from "../webworkers/use-calendar-private-events";
 
 export interface IPublicProcessData {
   events: PUBLIC_IEVENT[];
@@ -77,24 +80,12 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
     return getViewDate(dateParam);
   }, [dateParam]);
 
-  const [isLoading, setLoading] = useState(true);
-  const [isRefreshed, setRefreshed] = useState(false);
-  const [dayViews, setDayViews] = useState<IDayView>();
-  const [data, setData] = useState([]);
-
   const { interval, visibleRooms, visibleHours, defaultHours, setIsHeaderLoading, setTotalEvents } = useCalendar();
-
-  const [hours, setHours] = useState<number[] | undefined>(defaultHours);
-  const workerRef = useRef<Worker | null>(null);
-
-  const startDate: Date = startOfDay(dateValue);
-  const endDate: Date = endOfDay(dateValue);
-
-  const { data: events } = usePublicEventsQuery(startDate, endDate);
 
   const { data: rooms } = usePublicRoomsQuery();
 
-  const [selectedRoomIds, setSelectedRoomIds] = useState<number[]>([]);
+  const roomIds = useMemo(() => (rooms ? rooms.map((room) => room.roomId.toString()) : []), [rooms]);
+  const { result, isLoading } = usePublicCalendar("PUBLIC", dateValue, roomIds, visibleHours);
 
   const { checkedRooms, debouncedRooms, toggleRoom, filterByProjector, selectAll } = useRoomFiltering(rooms);
 
@@ -103,69 +94,18 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
   }, [rooms, debouncedRooms]);
 
   useEffect(() => {
-    //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
-    //nextjs cache's the route so this is my temporary fix
-    setRefreshed(true);
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-  }, [dateValue]);
-
-  useEffect(() => {
-    //This is mostly as an example for myself, technically this processing should likely be done on the server side.
-    //But this example will come in handy for other applications
-
-    if (workerRef.current) {
-      return;
-    }
-
-    const newWorker = new Worker(new URL("../webworkers/calendar-public-webworker.ts", import.meta.url));
-
-    newWorker.onmessage = (result) => {
-      setData(result.data);
-      setDayViews(result.data.dayView);
-      setHours(result.data.hours);
-      //setTotalEvents(result.totalEvents);
-      setIsHeaderLoading(false);
-      setLoading(false);
-    };
-
-    workerRef.current = newWorker;
-
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, [dateValue, setIsHeaderLoading, setTotalEvents]);
-
-  useEffect(() => {
-    if (!events || !rooms) {
-      return;
-    }
-
-    if (workerRef.current) {
-      const data: IPublicProcessData = {
-        events: events,
-        visibleHours: visibleHours ? visibleHours : { from: 1, to: 24 },
-        selectedDate: dateValue,
-        roomIdList: rooms.map((room) => room.roomId.toString()),
-        multiDayEventsAtTop: true,
-        pixelHeight: TIME_BLOCK_SIZE,
-      };
-      //setLoading(true);
+    if (isLoading) {
       setIsHeaderLoading(true);
-
-      workerRef.current.postMessage(data);
     }
-  }, [events, dateValue, isRefreshed, rooms, setIsHeaderLoading, visibleHours]);
 
-  const memoizedHours = useMemo(() => hours, [hours]);
+    if (result && !isLoading) {
+      setIsHeaderLoading(false);
+      setTotalEvents(result.totalEvents);
+    }
+  }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
   const lastRoomId = filteredRooms?.length ? filteredRooms[filteredRooms.length - 1].roomId : undefined;
-  const isMounting = !dayViews || !hours || !filteredRooms;
+  const isMounting = !result || !filteredRooms;
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 overflow-auto ">
       {/* LEFT CONTAINER */}
@@ -204,7 +144,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
         <div className="flex border rounded-lg sm:p-4 min-h-125">
           <CalendarScrollContainerPublic
             isLoading={isLoading}
-            hours={hours || []}
+            hours={result?.data.hours || defaultHours}
             isMounting={isMounting || filteredRooms.length === 0}
             skeleton={<CalendarWeekViewSkeleton />}
           >
@@ -218,8 +158,8 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
                   interval={interval}
                   roomId={room.roomId}
                   userId={undefined}
-                  hours={hours || []}
-                  eventBlocks={(dayViews?.eventBlocks.get(String(room.roomId)) as unknown as IBlock[]) || []}
+                  hours={result?.data.hours || []}
+                  eventBlocks={result?.data.roomBlocks.get(String(room.roomId)) || []}
                   isLastColumn={room.roomId === lastRoomId}
                   currentDate={dateValue}
                 />
