@@ -1,17 +1,24 @@
 import { usePublicEventsQuery } from "@/lib/services/public";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { useEffect, useMemo } from "react";
-import { getDateRange } from "./calendar-logic-utls";
 import { IEvent } from "@/lib/schemas/calendar";
+import { CalendarAction, IUnifiedResponseUnion, TCalendarResponse } from "./calendar-generic-webworker";
+import { TVisibleHours } from "@/lib/types";
+import { getDateRange } from "./calendar-logic-utls";
 
-export function usePublicCalendar(date: Date, roomIdList: string[]) {
+export function usePublicCalendar<T extends CalendarAction>(
+  action: T,
+  date: Date,
+  roomIdList: string[],
+  visibleHours: TVisibleHours,
+) {
   // Public view is almost always a single day view
-  const range = useMemo(() => getDateRange("PUBLIC", date), [date]);
+  const range = useMemo(() => getDateRange(action, date), [action, date]);
 
   // Fetching public-safe events
   const { data: events, isLoading, error } = usePublicEventsQuery(range.startDate, range.endDate);
 
-  const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker();
+  const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 
   useEffect(() => {
     if (events) {
@@ -19,12 +26,16 @@ export function usePublicCalendar(date: Date, roomIdList: string[]) {
         events: events as IEvent[],
         selectedDate: date,
         selectedRoomId: roomIdList,
-        action: "PUBLIC",
-        visibleHours: { from: 8, to: 20 },
+        action: action,
+        visibleHours: visibleHours,
         multiDayEventsAtTop: false,
       });
     }
-  }, [events, date, roomIdList, processEvents]);
+  }, [action, events, date, roomIdList, visibleHours, processEvents]);
 
-  return { data, isLoading: isLoading || isProcessing, error: error || workerError };
+  return {
+    result: data as Extract<IUnifiedResponseUnion, { action: T }> | null,
+    isLoading: isLoading || isProcessing,
+    error: error || workerError,
+  };
 }
