@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useEventsQuery } from "@/lib/services/events";
 import { useCalendarWorker } from "./use-generic-webworker";
@@ -16,26 +16,41 @@ export function usePrivateCalendar<T extends CalendarAction>(
 ) {
   const range = useMemo(() => getDateRange(action, date), [action, date]);
 
-  const { data: events, isLoading, error } = useEventsQuery(range.startDate, range.endDate, userId);
+  const { data: events, isLoading, isFetching, error } = useEventsQuery(range.startDate, range.endDate, userId);
 
   const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 
+  const viewKey = `${action}|${range.startDate.toISOString()}|${range.endDate.toISOString()}`;
+
+  const [hasProcessedForView, setHasProcessedForView] = useState(false);
+
   useEffect(() => {
-    if (events) {
-      processEvents({
-        events: events as IEvent[],
-        selectedDate: date,
-        selectedRoomId: roomId,
-        action: action,
-        visibleHours,
-        multiDayEventsAtTop: true,
-      });
-    }
+    setHasProcessedForView(false);
+  }, [viewKey]);
+
+  useEffect(() => {
+    if (!events) return;
+    processEvents({
+      events: events as IEvent[],
+      selectedDate: date,
+      selectedRoomId: roomId,
+      action: action,
+      visibleHours,
+      multiDayEventsAtTop: true,
+    });
   }, [events, action, date, roomId, processEvents, visibleHours]);
+
+  useEffect(() => {
+    if (!isProcessing && data) {
+      setHasProcessedForView(true);
+    }
+  }, [isProcessing, data]);
 
   return {
     result: data,
-    isLoading: isLoading || isProcessing,
+    isLoading: isLoading || !hasProcessedForView,
+    isRefetching: isFetching && !isLoading,
+    isBackgroundProcessing: hasProcessedForView && isProcessing,
     error: error || workerError,
   };
 }
