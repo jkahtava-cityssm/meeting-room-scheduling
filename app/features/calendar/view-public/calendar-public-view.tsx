@@ -10,7 +10,7 @@ import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
 import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/lib/services/public";
 import { useSearchParams } from "next/navigation";
 
-import { DateControls } from "./public-header";
+import { DateControls, DateControlSkeleton } from "./public-header";
 import { RoomCategoryLayout } from "./public-categories";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ import { useRoomFiltering } from "./use-room-filtering";
 import { usePublicCalendar } from "../webworkers/use-calendar-public-events";
 import { useCalendarWorker } from "../webworkers/use-generic-webworker";
 import { usePrivateCalendar } from "../webworkers/use-calendar-private-events";
+import { RoomCategorySkeleton } from "./public-categories-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface IPublicProcessData {
   events: PUBLIC_IEVENT[];
@@ -111,22 +113,36 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
     <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 overflow-auto ">
       {/* LEFT CONTAINER */}
       <div className="w-full flex flex-col gap-2 p-4 sm:p-0 lg:w-72 ">
-        {/* HEADER: Label & Button stack when tight */}
         <div className="flex flex-wrap items-center justify-between py-2">
-          <label className="font-bold">Filter</label>
-          <ButtonGroup>
-            <Button size="sm" className="text-xs" onClick={filterByProjector}>
-              <FilterIcon></FilterIcon> Rooms with Projectors
-            </Button>
-            <ButtonGroupSeparator />
-            <Button size="sm" className="text-xs " onClick={selectAll}>
-              Reset
-            </Button>
-          </ButtonGroup>
+          {isMounting ? (
+            <>
+              <Skeleton className="w-10 h-6"></Skeleton>
+              <ButtonGroup>
+                <Skeleton className="w-41 h-8"></Skeleton>
+                <ButtonGroupSeparator />
+                <Skeleton className="w-14 h-8"></Skeleton>
+              </ButtonGroup>
+            </>
+          ) : (
+            <>
+              <label className="font-bold">Filter</label>
+              <ButtonGroup>
+                <Button size="sm" className="text-xs" onClick={filterByProjector}>
+                  <FilterIcon></FilterIcon> Rooms with Projectors
+                </Button>
+                <ButtonGroupSeparator />
+                <Button size="sm" className="text-xs " onClick={selectAll}>
+                  Reset
+                </Button>
+              </ButtonGroup>
+            </>
+          )}
         </div>
-        {/* BODY: Checkboxes */}
+
         <div className="w-full shrink-0 border rounded-lg p-4 lg:w-72 ">
-          {!isMounting && (
+          {isMounting ? (
+            <RoomCategorySkeleton />
+          ) : (
             <RoomCategoryLayout
               checkedRooms={checkedRooms}
               onToggleRoom={toggleRoom}
@@ -140,7 +156,11 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
       <div className="flex-1 flex flex-col min-w-0 gap-2 min-h-0 ">
         {/* HEADER: Date Nav stacks middle item on top if narrow */}
 
-        <DateControls selectedDate={dateValue}></DateControls>
+        {isMounting ? (
+          <DateControlSkeleton selectedDate={dateValue} />
+        ) : (
+          <DateControls selectedDate={dateValue}></DateControls>
+        )}
         {/* MAIN PANEL: Grows to take space */}
         <div className="flex border rounded-lg sm:p-4 min-h-125">
           <CalendarScrollContainerPublic
