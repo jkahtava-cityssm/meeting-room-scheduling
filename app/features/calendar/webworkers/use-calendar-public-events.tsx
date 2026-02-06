@@ -2,7 +2,7 @@ import { usePublicEventsQuery } from "@/lib/services/public";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { useEffect, useMemo } from "react";
 import { IEvent } from "@/lib/schemas/calendar";
-import { CalendarAction, IUnifiedResponseUnion, TCalendarResponse } from "./calendar-generic-webworker";
+import { CalendarAction } from "./calendar-generic-webworker";
 import { TVisibleHours } from "@/lib/types";
 import { getDateRange } from "./calendar-logic-utls";
 
@@ -12,10 +12,8 @@ export function usePublicCalendar<T extends CalendarAction>(
   roomIdList: string[],
   visibleHours: TVisibleHours,
 ) {
-  // Public view is almost always a single day view
   const range = useMemo(() => getDateRange(action, date), [action, date]);
 
-  // Fetching public-safe events
   const { data: events, isLoading, error } = usePublicEventsQuery(range.startDate, range.endDate);
 
   const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
@@ -34,7 +32,7 @@ export function usePublicCalendar<T extends CalendarAction>(
   }, [action, events, date, roomIdList, visibleHours, processEvents]);
 
   return {
-    result: data as Extract<IUnifiedResponseUnion, { action: T }> | null,
+    result: data,
     isLoading: isLoading || isProcessing,
     error: error || workerError,
   };

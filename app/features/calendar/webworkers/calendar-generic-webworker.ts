@@ -1,6 +1,5 @@
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
-
 import {
   calculateViewBoundaries,
   filterEventsByRoom,
@@ -12,6 +11,10 @@ import {
   transformToYearly,
 } from "./calendar-logic-utls";
 
+// --- Base Interfaces ---
+export type GroupingType = "date" | "roomId" | "none";
+export type CalendarAction = "AGENDA" | "DAY" | "WEEK" | "MONTH" | "YEAR" | "PUBLIC";
+
 export interface IEventBlock {
   key: string;
   groupIndex: number;
@@ -21,16 +24,11 @@ export interface IEventBlock {
   event: IEvent;
   roomId?: number;
 }
-export type GroupingType = "date" | "roomId" | "none";
-export type CalendarAction = "AGENDA" | "DAY" | "WEEK" | "MONTH" | "YEAR" | "PUBLIC";
 
-export interface ICalendarProcessData {
-  events: IEvent[];
-  selectedDate: Date;
-  selectedRoomId?: string | string[];
-  visibleHours: TVisibleHours;
-  multiDayEventsAtTop: boolean;
-  action: CalendarAction;
+export interface IEventView {
+  index: number;
+  position: "none" | "middle" | "first" | "last";
+  event: IEvent | undefined;
 }
 
 export interface IMonthDayView {
@@ -42,82 +40,52 @@ export interface IMonthDayView {
   eventRecords: IEventView[];
 }
 
-export interface IEventView {
-  index: number;
-  position: "none" | "middle" | "first" | "last";
-  event: IEvent | undefined;
-}
-
 export interface IYearMonthView {
   month: number;
   monthDate: Date;
   monthName: string;
-  days: IYearDayView[];
-}
-
-export interface IYearDayView {
-  day: number;
-  dayDate: Date;
-  isBlank: boolean;
-  isToday: boolean;
-  dayEvents: IEvent[];
+  days: {
+    day: number;
+    dayDate: Date;
+    isBlank: boolean;
+    isToday: boolean;
+    dayEvents: IEvent[];
+  }[];
 }
 
 export type TRawBlockData = { roomBlocks: Record<string, IEventBlock[]>; hours: number[] };
 export type TProcessedBlockData = { roomBlocks: Map<string, IEventBlock[]>; hours: number[] };
 
-export type TRawResponse =
-  | { action: "DAY"; data: TRawBlockData }
-  | { action: "WEEK"; data: TRawBlockData }
-  | { action: "PUBLIC"; data: TRawBlockData }
-  | { action: "MONTH"; data: TMonthData }
-  | { action: "YEAR"; data: TYearData }
-  | { action: "AGENDA"; data: TAgendaData };
+export type CalendarDataMap = {
+  AGENDA: { sortedEvents: IEvent[] };
+  DAY: TRawBlockData;
+  WEEK: TRawBlockData;
+  PUBLIC: TRawBlockData;
+  MONTH: { dayViews: IMonthDayView[] };
+  YEAR: { monthsViews: IYearMonthView[] };
+};
 
-export type TBlockData = { roomBlocks: Map<string, IEventBlock[]>; hours: number[] };
-export type TMonthData = { dayViews: IMonthDayView[] };
-export type TYearData = { monthsViews: IYearMonthView[] };
-export type TAgendaData = { sortedEvents: IEvent[] };
+export type ProcessedDataMap = {
+  [K in keyof CalendarDataMap]: K extends "DAY" | "WEEK" | "PUBLIC" ? TProcessedBlockData : CalendarDataMap[K];
+};
 
-export type TCalendarResponse =
-  | { action: "DAY"; data: TBlockData }
-  | { action: "WEEK"; data: TBlockData }
-  | { action: "PUBLIC"; data: TBlockData }
-  | { action: "MONTH"; data: TMonthData }
-  | { action: "YEAR"; data: TYearData }
-  | { action: "AGENDA"; data: TAgendaData };
+export interface ICalendarProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId?: string | string[];
+  visibleHours: TVisibleHours;
+  multiDayEventsAtTop: boolean;
+  action: CalendarAction;
+  requestId?: number;
+}
 
-export type IUnifiedResponseUnion = {
+export interface IUnifiedResponse<A extends CalendarAction = CalendarAction> {
+  action: A;
+  data: CalendarDataMap[A];
   totalEvents: number;
   groupingType: GroupingType;
   requestId?: number;
-} & (
-  | { action: "DAY"; data: TProcessedBlockData }
-  | { action: "WEEK"; data: TProcessedBlockData }
-  | { action: "PUBLIC"; data: TProcessedBlockData }
-  | { action: "MONTH"; data: TMonthData }
-  | { action: "YEAR"; data: TYearData }
-  | { action: "AGENDA"; data: TAgendaData }
-);
-
-export type RawCalendarData =
-  | { sortedEvents: IEvent[] }
-  | { roomBlocks: Record<string, IEventBlock[]>; hours: number[] }
-  | { dayViews: IMonthDayView[] }
-  | { monthsViews: IYearMonthView[] };
-
-export type ProcessedCalendarData =
-  | { sortedEvents: IEvent[] }
-  | { roomBlocks: Map<string, IEventBlock[]>; hours: number[] }
-  | { dayViews: IMonthDayView[] }
-  | { monthsViews: IYearMonthView[] };
-
-export interface IUnifiedResponse<T = RawCalendarData> {
-  totalEvents: number;
-  action: string;
-  groupingType: GroupingType;
-  data: T;
-  requestId?: number;
+  error?: string;
 }
 
 self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
@@ -129,7 +97,7 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
     // 1. Decode the incoming Buffer
     const decoder = new TextDecoder();
     const json = decoder.decode(event.data);
-    const payload: ICalendarProcessData & { requestId?: number } = JSON.parse(json);
+    const payload: ICalendarProcessData = JSON.parse(json);
 
     requestId = payload.requestId;
 
@@ -155,7 +123,7 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
     const filtered = filterEventsByRoom(combinedEvents, payload.selectedRoomId || "-1");
     const sortedEvents = filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
     // 2. Generic Transformation Logic
-    let resultData: RawCalendarData;
+    let resultData: CalendarDataMap[CalendarAction];
     let groupingType: GroupingType = "none";
 
     switch (action) {

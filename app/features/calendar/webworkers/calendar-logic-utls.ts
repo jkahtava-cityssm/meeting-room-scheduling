@@ -24,9 +24,8 @@ import {
   startOfYear,
   subDays,
 } from "date-fns";
-import { uniq, uniqBy } from "lodash";
+
 import { rrulestr } from "rrule";
-import { date, z } from "zod/v4";
 import { CalendarAction, GroupingType, IEventBlock } from "./calendar-generic-webworker";
 
 export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[]) {
@@ -37,8 +36,7 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[])
     const start = new Date(event.startDate).getHours();
     const endDoc = new Date(event.endDate);
 
-    // If it ends exactly on :00, don't round up (e.g., 10:00 is hour 10)
-    // If it ends at 10:05, we need to show hour 11
+    // ROUND UP TO NEAREST HOUR
     const endHour = endDoc.getHours() + (endDoc.getMinutes() > 0 ? 1 : 0);
 
     if (start < minHour) minHour = start;
@@ -572,19 +570,14 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
 
   const startUTC = setPartsToUTCDate(periodStart);
   const endUTC = setPartsToUTCDate(periodEnd);
-  //let testA;
-  //let testB;
-  //let con;
+
   for (const event of events) {
     if (!event.recurrenceId || !event.recurrence?.rule) continue;
 
     const rrule = rrulestr(event.recurrence.rule, { cache: true });
-    //con = rrule.all()[0];
-    //const recurrenceDates2 = rrule.between(periodStart, periodEnd, true);
+
     const recurrenceDates = rrule.between(startUTC, endUTC, true);
 
-    //testA = recurrenceDates2;
-    //testB = recurrenceDates;
     for (const recurrenceDate of recurrenceDates) {
       const recurringUTC = setUTCPartsToDate(recurrenceDate);
 
