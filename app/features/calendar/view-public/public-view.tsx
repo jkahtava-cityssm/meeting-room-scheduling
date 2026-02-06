@@ -10,8 +10,8 @@ import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
 import { PUBLIC_IEVENT, usePublicEventsQuery, usePublicRoomsQuery } from "@/lib/services/public";
 import { useSearchParams } from "next/navigation";
 
-import { DateControls, DateControlSkeleton } from "./public-header";
-import { RoomCategoryLayout } from "./public-categories";
+import { DateControls, DateControlSkeleton } from "./public-date-control";
+import { RoomCategoryLayout } from "./public-room-filter";
 
 import { Button } from "@/components/ui/button";
 import { FilterIcon } from "lucide-react";
@@ -28,7 +28,7 @@ import { useRoomFiltering } from "./use-room-filtering";
 import { usePublicCalendar } from "../webworkers/use-calendar-public-events";
 import { useCalendarWorker } from "../webworkers/use-generic-webworker";
 import { usePrivateCalendar } from "../webworkers/use-calendar-private-events";
-import { RoomCategorySkeleton } from "./public-categories-skeleton";
+import { RoomCategorySkeleton } from "./public-room-filter-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export interface IPublicProcessData {

@@ -15,7 +15,7 @@ import {
 } from "date-fns";
 
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
-import { IDayView, IEventBlock, IPublicProcessData, IPublicResponseData } from "../view-public/calendar-public-view";
+import { IDayView, IEventBlock, IPublicProcessData, IPublicResponseData } from "../view-public/public-view";
 
 self.onmessage = async (event: MessageEvent<IPublicProcessData>) => {
   if (event.data) {

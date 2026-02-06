@@ -10,7 +10,7 @@ import { CalendarProvider } from "@/contexts/CalendarProvider";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { CalendarPublicView } from "./features/calendar/view-public/calendar-public-view";
+import { CalendarPublicView } from "./features/calendar/view-public/public-view";
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -22,38 +22,38 @@ export default async function Home() {
   }
 
   return (
-		<div className="[--header-height:calc(--spacing(14))]">
-			<PublicHeader
-				left={
-					<Image
-						src="/images/login_logo.svg"
-						alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-						width={32}
-						height={32}
-						style={{ width: "32px", height: "32px" }}
-						priority={true}
-					/>
-				}
-				right={
-					<div className="flex gap-2">
-						<ThemeButton />
-						<Button>
-							<Link href={"/login"}>Sign In</Link>
-						</Button>
-					</div>
-				}
-				title="Meeting Room Availability"
-			>
-				<div className="gap-4 sm:p-4 h-[calc(100vh-var(--header-height)-1px)] transition-[width] duration-300 min-w-0 flex flex-col overflow-y-auto">
-					<div className="overflow-hidden min-w-92 flex flex-1 flex-col min-h-0">
-						<Suspense fallback={<>...Loading</>}>
-							<CalendarProvider>
-								<CalendarPublicView></CalendarPublicView>
-							</CalendarProvider>
-						</Suspense>
-					</div>
-				</div>
-			</PublicHeader>
-		</div>
-	);
+    <div className="[--header-height:calc(--spacing(14))]">
+      <PublicHeader
+        left={
+          <Image
+            src="/images/login_logo.svg"
+            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+            width={32}
+            height={32}
+            style={{ width: "32px", height: "32px" }}
+            priority={true}
+          />
+        }
+        right={
+          <div className="flex gap-2">
+            <ThemeButton />
+            <Button>
+              <Link href={"/login"}>Sign In</Link>
+            </Button>
+          </div>
+        }
+        title="Meeting Room Availability"
+      >
+        <div className="gap-4 sm:p-4 h-[calc(100vh-var(--header-height)-1px)] transition-[width] duration-300 min-w-0 flex flex-col overflow-y-auto">
+          <div className="overflow-hidden min-w-92 flex flex-1 flex-col min-h-0">
+            <Suspense fallback={<>...Loading</>}>
+              <CalendarProvider>
+                <CalendarPublicView></CalendarPublicView>
+              </CalendarProvider>
+            </Suspense>
+          </div>
+        </div>
+      </PublicHeader>
+    </div>
+  );
 }

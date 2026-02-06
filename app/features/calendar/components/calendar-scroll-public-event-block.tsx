@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { IEventBlock } from "./calendar-public-view";
+import { IEventBlock } from "../view-public/public-view";
 
 import { TColors, TStatusKey } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
-import { useMeasuredPopoverSide } from "./use-popover-side";
+import { useScrollPopoverDirection } from "./use-scroll-popover-direction";
 
 type Props = {
   viewport: HTMLDivElement | null;
@@ -41,7 +41,7 @@ export function PublicEventBlock({ viewport, popoverLayer, eventBlock, heightInP
 
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const side = useMeasuredPopoverSide({
+  const side = useScrollPopoverDirection({
     open: popoverIsOpen,
     triggerRef,
     contentRef,

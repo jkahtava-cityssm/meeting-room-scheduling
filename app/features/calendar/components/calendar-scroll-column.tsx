@@ -6,7 +6,7 @@ import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-con
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { TIME_BLOCK_SIZE } from "@/lib/types";
 import { useCalendarViewport } from "./calendar-scroll-context";
-import { PublicEventBlock } from "../view-public/calendar-public-view-event-block";
+import { PublicEventBlock } from "./calendar-scroll-public-event-block";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export type PrivateCallback = {

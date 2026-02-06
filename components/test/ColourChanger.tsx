@@ -6,7 +6,7 @@ import { Button } from "../ui/button";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { ButtonColored } from "../ui/button-colored";
-import { PublicEventCard } from "@/app/features/calendar/view-public/calendar-public-view-event-block";
+import { PublicEventCard } from "@/app/features/calendar/components/calendar-scroll-public-event-block";
 
 export const ColorCycler = () => {
   const [index, setIndex] = useState(0);

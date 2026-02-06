@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { SharedEventDrawerProvider } from "../../event-drawer/shared-event-drawer-context";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { CalendarHourTimeline } from "./calendar-hour-timeline";
+import { CalendarHourTimeline } from "./calendar-scroll-hour-timeline";
 import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
 import { CalendarScrollProvider, useCalendarViewport } from "./calendar-scroll-context";

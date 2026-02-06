@@ -16,7 +16,7 @@ function normalizePadding(padding: number | Partial<Padding> | undefined): Paddi
   };
 }
 
-export function useMeasuredPopoverSide({
+export function useScrollPopoverDirection({
   open,
   triggerRef,
   contentRef,
