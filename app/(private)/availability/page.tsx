@@ -2,7 +2,8 @@
 
 import { CalendarPublicView } from "@/app/features/calendar/view-public/public-view";
 import { useSidebar } from "@/components/ui/sidebar";
-import { CalendarProviderPrivate } from "@/contexts/CalendarProviderPrivate";
+import { CalendarProviderPublic } from "@/contexts/CalendarProviderPublic";
+
 import { Suspense } from "react";
 
 export default function Availability() {
@@ -10,9 +11,9 @@ export default function Availability() {
 	return (
 		<div className="overflow-hidden min-w-92 flex flex-1 flex-col min-h-0">
 			<Suspense fallback={<>...Loading</>}>
-				<CalendarProviderPrivate>
+				<CalendarProviderPublic>
 					<CalendarPublicView sideBarOpen={open && !isMobile}></CalendarPublicView>
-				</CalendarProviderPrivate>
+				</CalendarProviderPublic>
 			</Suspense>
 		</div>
 	);
