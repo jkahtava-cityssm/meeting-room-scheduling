@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarAllViews } from "@/app/features/calendar/calendar-controller/calendar-all-views";
-import { CalendarProvider } from "@/contexts/CalendarProvider";
+import { CalendarProviderPrivate } from "@/contexts/CalendarProviderPrivate";
 import { useSession } from "@/contexts/SessionProvider";
 
 import { redirect } from "next/navigation";
@@ -19,8 +19,8 @@ export default function Home() {
 	}
 
 	return (
-		<CalendarProvider>
+		<CalendarProviderPrivate>
 			<CalendarAllViews userId={session?.user.id} />
-		</CalendarProvider>
+		</CalendarProviderPrivate>
 	);
 }

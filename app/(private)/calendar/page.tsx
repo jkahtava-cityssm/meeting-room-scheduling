@@ -1,10 +1,10 @@
 import { CalendarAllViews } from "@/app/features/calendar/calendar-controller/calendar-all-views";
-import { CalendarProvider } from "@/contexts/CalendarProvider";
+import { CalendarProviderPrivate } from "@/contexts/CalendarProviderPrivate";
 
 export default async function Calendar() {
-  return (
-    <CalendarProvider>
-      <CalendarAllViews />
-    </CalendarProvider>
-  );
+	return (
+		<CalendarProviderPrivate>
+			<CalendarAllViews />
+		</CalendarProviderPrivate>
+	);
 }

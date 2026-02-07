@@ -1,7 +1,7 @@
 "use client";
 
 import { parse, endOfDay, startOfDay } from "date-fns";
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 

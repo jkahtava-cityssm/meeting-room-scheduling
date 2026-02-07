@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { endOfYear, startOfYear } from "date-fns";
 
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 import YearViewMonth from "./calendar-year-view-month";
 import { IEvent } from "@/lib/schemas/calendar";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";

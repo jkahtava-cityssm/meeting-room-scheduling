@@ -28,7 +28,7 @@ interface ICalendarContext {
 
 const CalendarContext = createContext({} as ICalendarContext);
 
-export function CalendarProvider({ children }: { children: React.ReactNode }) {
+export function CalendarProviderPrivate({ children }: { children: React.ReactNode }) {
   const { data: configurationData } = usePublicConfiguration();
   const { data: visibleRooms } = useRoomsQuery();
 

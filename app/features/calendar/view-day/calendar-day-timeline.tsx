@@ -1,7 +1,7 @@
 "use client";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 import { TVisibleHours } from "@/lib/types";
 import { roundToPrecision } from "@/lib/helpers";
 

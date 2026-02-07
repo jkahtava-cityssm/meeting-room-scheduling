@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 import { IEvent } from "@/lib/schemas/calendar";

@@ -1,7 +1,7 @@
 "use client";
 
 import { startOfWeek, endOfWeek, format } from "date-fns";
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarTimeline } from "@/app/features/calendar/view-day/calendar-day-timeline";
 

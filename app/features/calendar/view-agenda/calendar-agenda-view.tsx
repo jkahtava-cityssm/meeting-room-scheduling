@@ -4,7 +4,7 @@ import { useReactToPrint } from "react-to-print";
 
 import { AgendaEventCard } from "@/app/features/calendar/view-agenda/calendar-agenda-event-block";
 
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 import { useEffect, useRef, useState } from "react";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Printer } from "lucide-react";

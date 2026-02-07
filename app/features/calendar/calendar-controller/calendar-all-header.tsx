@@ -6,7 +6,7 @@ import { RoomSelect } from "@/app/features/rooms/room-select";
 
 import type { TCalendarView } from "@/lib/types";
 import { navigateDate, navigateURL } from "@/lib/helpers";
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 import { useRouter } from "next/navigation";
 
 import EventDrawer from "@/app/features/event-drawer/event-drawer";

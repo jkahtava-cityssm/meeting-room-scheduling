@@ -1,6 +1,6 @@
 import { formatDate } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCalendar } from "@/contexts/CalendarProvider";
+import { useCalendar } from "@/contexts/CalendarProviderPrivate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { rangeText } from "@/lib/helpers";
