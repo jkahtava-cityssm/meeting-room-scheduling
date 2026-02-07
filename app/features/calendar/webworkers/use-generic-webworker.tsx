@@ -26,7 +26,7 @@ export function useCalendarWorker<A extends CalendarAction>() {
   const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
-    workerRef.current = new Worker(new URL("./calendar-generic-webworker.ts", import.meta.url), { type: "module" });
+    workerRef.current = new Worker(new URL("./generic-webworker.ts", import.meta.url), { type: "module" });
 
     workerRef.current.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       const decoder = new TextDecoder();
