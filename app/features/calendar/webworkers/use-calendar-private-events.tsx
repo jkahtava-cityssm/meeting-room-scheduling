@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useEventsQuery } from "@/lib/services/events";
 import { useCalendarWorker } from "./use-generic-webworker";
-import { CalendarAction } from "./generic-webworker";
+import { CalendarAction, ISODateString } from "./generic-webworker";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 import { getDateRange } from "./generic-webworker-utilities";
@@ -20,7 +20,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
 
 	const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 
-	const viewKey = `${action}|${range.startDate.toISOString()}|${range.endDate.toISOString()}`;
+	const viewKey = `${action}|${range.startDate.toISOString()}|${range.endDate.toISOString()}|${roomId}`;
 
 	const [hasProcessedForView, setHasProcessedForView] = useState(false);
 
@@ -32,7 +32,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
 		if (!events) return;
 		processEvents({
 			events: events as IEvent[],
-			selectedDate: date,
+			selectedDate: date.toISOString() as ISODateString,
 			selectedRoomId: roomId,
 			action: action,
 			visibleHours,
