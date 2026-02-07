@@ -2,9 +2,9 @@ import { usePublicEventsQuery } from "@/lib/services/public";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IEvent } from "@/lib/schemas/calendar";
-import { CalendarAction } from "./calendar-generic-webworker";
+import { CalendarAction } from "./generic-webworker";
 import { TVisibleHours } from "@/lib/types";
-import { getDateRange } from "./calendar-logic-utls";
+import { getDateRange } from "./generic-webworker-utilities";
 
 export function usePublicCalendarEvents<T extends CalendarAction>(action: T, date: Date, roomIdList: string[], visibleHours: TVisibleHours) {
 	const { data: events, isLoading, isFetching, error } = usePublicEventsQuery(date);

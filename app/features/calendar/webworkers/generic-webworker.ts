@@ -9,7 +9,7 @@ import {
   transformToBlocks,
   transformToGrid,
   transformToYearly,
-} from "./calendar-logic-utls";
+} from "./generic-webworker-utilities";
 
 // --- Base Interfaces ---
 export type GroupingType = "date" | "roomId" | "none";

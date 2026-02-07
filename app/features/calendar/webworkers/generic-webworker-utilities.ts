@@ -26,7 +26,7 @@ import {
 } from "date-fns";
 
 import { rrulestr } from "rrule";
-import { CalendarAction, GroupingType, IEventBlock } from "./calendar-generic-webworker";
+import { CalendarAction, GroupingType, IEventBlock } from "./generic-webworker";
 
 export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[]) {
   let minHour = config.from;

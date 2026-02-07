@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useEventsQuery } from "@/lib/services/events";
 import { useCalendarWorker } from "./use-generic-webworker";
-import { CalendarAction } from "./calendar-generic-webworker";
+import { CalendarAction } from "./generic-webworker";
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
-import { getDateRange } from "./calendar-logic-utls";
+import { getDateRange } from "./generic-webworker-utilities";
 
 export function usePrivateCalendarEvents<T extends CalendarAction>(
 	action: T,
