@@ -68,8 +68,8 @@ export function CalendarProviderPublic({ children }: { children: React.ReactNode
   );
 }
 
-export function useCalendar(): ICalendarContext {
-  const context = useContext(CalendarContext);
-  if (!context) throw new Error("useCalendar must be used within a CalendarProvider.");
-  return context;
+export function usePublicCalendar(): ICalendarContext {
+	const context = useContext(CalendarContext);
+	if (!context) throw new Error("useCalendar must be used within a CalendarProvider.");
+	return context;
 }

@@ -6,7 +6,7 @@ import { CalendarAction } from "./calendar-generic-webworker";
 import { TVisibleHours } from "@/lib/types";
 import { getDateRange } from "./calendar-logic-utls";
 
-export function usePublicCalendar<T extends CalendarAction>(action: T, date: Date, roomIdList: string[], visibleHours: TVisibleHours) {
+export function usePublicCalendarEvents<T extends CalendarAction>(action: T, date: Date, roomIdList: string[], visibleHours: TVisibleHours) {
 	const { data: events, isLoading, isFetching, error } = usePublicEventsQuery(date);
 
 	const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();

@@ -107,7 +107,8 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
 });
 
 const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }) {
-  const lastHour = hours.length > 0 ? hours[hours.length - 1] + 1 : 0;
+  const lastItem = hours?.at(-1);
+	const lastHour = lastItem == null ? 0 : lastItem + 1;
 
   return (
     <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0 pt-8">
