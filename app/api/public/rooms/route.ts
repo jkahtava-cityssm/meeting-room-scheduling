@@ -1,16 +1,22 @@
 import { prisma } from "@/prisma";
-import { findManyRooms } from "@/lib/data/rooms";
+
 
 import { NextRequest } from "next/server";
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from "@/lib/api-helpers";
 import { UTCDate } from "@date-fns/utc";
+import { findPublicRooms } from "@/lib/data/public";
+import { verifySecretHeader } from "@/lib/server/verifySecretHeader";
 
-export async function GET(req: NextRequest) {
-  const rooms = await findManyRooms({ roomScope: { name: "Public" } });
+export async function GET(request: NextRequest) {
+	if (!verifySecretHeader(request)) {
+		return UnauthorizedMessage();
+	}
 
-  if (!rooms) {
-    return InternalServerErrorMessage();
-  }
+	const rooms = await findPublicRooms({ roomScope: { name: "Public" } });
 
-  return SuccessMessage("Collected Rooms", rooms);
+	if (!rooms) {
+		return InternalServerErrorMessage();
+	}
+
+	return SuccessMessage("Collected Rooms", rooms);
 }

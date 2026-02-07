@@ -3,6 +3,7 @@ import { SEvent, SRecurrence, SRoom, SRoomCategory, SRoomProperty, SStatus } fro
 import { useQuery } from "@tanstack/react-query";
 import { formatISO } from "date-fns";
 import { z } from "zod";
+import { fetchPublicConfiguration, fetchPublicEvents, fetchPublicRooms } from "../server/public";
 
 const formatDate = (date: Date) => {
 	return formatISO(date);
@@ -45,14 +46,12 @@ const PUBLIC_SCONFIGURATION = z.object({
 export type PUBLIC_IEVENT = z.infer<typeof PUBLIC_SEVENT>;
 export type PUBLIC_IROOM = z.infer<typeof PUBLIC_SROOM>;
 
-export const usePublicEventsQuery = (startDate: Date, endDate: Date, enabled: boolean = true) =>
+export const usePublicEventsQuery = (date: Date, enabled: boolean = true) =>
 	useQuery({
-		queryKey: ["events", formatDate(startDate), formatDate(endDate)],
+		queryKey: ["public_events", formatDate(date)],
 		queryFn: async () => {
-			const result = await fetchGET("/api/public/events", {
-				startdate: formatDate(startDate),
-				enddate: formatDate(endDate),
-			});
+			const result = await fetchPublicEvents(formatDate(date));
+
 			const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
 
 			if (!parsedResult.success) throw new Error("Invalid event data");
@@ -64,9 +63,9 @@ export const usePublicEventsQuery = (startDate: Date, endDate: Date, enabled: bo
 
 export const usePublicRoomsQuery = (enabled: boolean = true) =>
 	useQuery({
-		queryKey: ["rooms"],
+		queryKey: ["public_rooms"],
 		queryFn: async () => {
-			const result = await fetchGET("/api/public/rooms", {});
+			const result = await fetchPublicRooms();
 			const parsedResult = z.array(PUBLIC_SROOM).safeParse(result.data);
 
 			if (!parsedResult.success) throw new Error("Invalid room data");
@@ -81,7 +80,7 @@ export const usePublicConfiguration = (enabled: boolean = true) =>
 	useQuery({
 		queryKey: ["public_configuration"],
 		queryFn: async () => {
-			const result = await fetchGET("/api/public/configuration", {}, 1440, ["public_configuration"]);
+			const result = await fetchPublicConfiguration();
 
 			const parsedResult = PUBLIC_SCONFIGURATION.safeParse(result.data);
 

@@ -1,45 +1,52 @@
-import { findPublicManyEvents } from "@/lib/data/events";
-
 import { NextRequest } from "next/server";
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from "@/lib/api-helpers";
 import { UTCDate } from "@date-fns/utc";
 import { TStatusKey } from "@/lib/types";
+import { findPublicEvents } from "@/lib/data/public";
+import { endOfDay, startOfDay } from "date-fns";
+import { verifySecretHeader } from "@/lib/server/verifySecretHeader";
+
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
 
-  const startDateParam = searchParams.get("startdate");
-  const endDateParam = searchParams.get("enddate");
+    if (!verifySecretHeader(request)) {
+      return UnauthorizedMessage();
+    }
+  
+    
+	const searchParams = request.nextUrl.searchParams;
 
-  if (!startDateParam || !endDateParam) {
-    return BadRequestMessage();
-  }
+	const date = searchParams.get("date");
 
-  const StartDate: UTCDate = new UTCDate(startDateParam);
-  const EndDate: UTCDate = new UTCDate(endDateParam);
+	if (!date) {
+		return BadRequestMessage();
+	}
 
-  const events = await findPublicManyEvents({
-    AND: [
-      {
-        OR: [
-          {
-            startDate: { lte: EndDate },
-            endDate: { gte: StartDate },
-          },
-          {
-            recurrence: {
-              startDate: { lte: EndDate },
-              endDate: { gte: StartDate },
-            },
-          },
-        ],
-        AND: [{ OR: [{ status: { key: "APPROVED" as TStatusKey } }, { status: { key: "PENDING" as TStatusKey } }] }],
-      },
-    ],
-  });
+	const StartDate: UTCDate = new UTCDate(startOfDay(date));
+	const EndDate: UTCDate = new UTCDate(endOfDay(date));
 
-  if (!events) {
-    return InternalServerErrorMessage();
-  }
+	const events = await findPublicEvents({
+		AND: [
+			{
+				OR: [
+					{
+						startDate: { lte: EndDate },
+						endDate: { gte: StartDate },
+					},
+					{
+						recurrence: {
+							startDate: { lte: EndDate },
+							endDate: { gte: StartDate },
+						},
+					},
+				],
+				AND: [{ OR: [{ status: { key: "APPROVED" as TStatusKey } }, { status: { key: "PENDING" as TStatusKey } }] }],
+			},
+		],
+	});
 
-  return SuccessMessage("Collected Events", events);
+	if (!events) {
+		return InternalServerErrorMessage();
+	}
+
+	return SuccessMessage("Collected Events", events);
 }
