@@ -31,7 +31,9 @@ export function useCalendarWorker<A extends CalendarAction>() {
     workerRef.current.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       const decoder = new TextDecoder();
       const json = decoder.decode(event.data);
-      const result = JSON.parse(json) as IUnifiedResponse<A>;
+      
+
+			const result = JSON.parse(json) as IUnifiedResponse<A>;
 
       if (result.requestId !== requestIdRef.current) return;
 
