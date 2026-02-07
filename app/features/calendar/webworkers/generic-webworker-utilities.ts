@@ -26,7 +26,17 @@ import {
 } from "date-fns";
 
 import { rrulestr } from "rrule";
-import { CalendarAction, GroupingType, IEventBlock, IMonthDayView, IMonthWeekView, ISODateString, IYearDayView, IYearMonthView } from "./generic-webworker";
+import {
+	CalendarAction,
+	GroupingType,
+	IEventBlock,
+	IEventView,
+	IMonthDayView,
+	IMonthWeekView,
+	ISODateString,
+	IYearDayView,
+	IYearMonthView,
+} from "./generic-webworker";
 
 export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[]) {
 	let minHour = config.from;
@@ -139,22 +149,27 @@ export function transformToGrid(events: IEvent[], selectedDate: Date, multiDayEv
 		}
 	});
 
-	// 1. Initialize the position map
-	const eventPositions: Record<string, (number | null)[]> = {};
+	// 1. compute maxEvents
 
 	let maxEvents = 0;
 	listOfDays.forEach(day => {
 		const key = format(day, "yyyy-MM-dd");
 		const count = eventsByDate[key]?.length || 0;
 		if (count > maxEvents) maxEvents = count;
+	});
+
+	// 2. initialize eventPositions
+	const eventPositions: Record<string, (number | null)[]> = {};
+	listOfDays.forEach(day => {
+		const key = format(day, "yyyy-MM-dd");
 		eventPositions[key] = Array(maxEvents).fill(null);
 	});
 
-	// 2. Pack the events (Mutation logic from your File 3)
+	// 3. Pack the events (Mutation logic from your File 3)
 	mutateMultiDayEventPositions(eventPositions, eventsByDate, eventByID, multiDayEventsAtTop);
 	mutateSingleDayEventPositions(eventPositions, eventsByDate, listOfDays);
 
-	// 3. Map to UI-friendly structure
+	// 4. Map to UI-friendly structure
 	const dayViews: IMonthDayView[] = [];
 	const weekViews: IMonthWeekView[] = [];
 
@@ -162,17 +177,17 @@ export function transformToGrid(events: IEvent[], selectedDate: Date, multiDayEv
 		const dateKey = format(date, "yyyy-MM-dd");
 		const dailyEvents = events.filter(e => format(e.startDate, "yyyy-MM-dd") === dateKey);
 
-		const eventRecords = eventPositions[dateKey]
-			.flatMap((id, index) => {
-				if (id === null || id === 0) return [];
-				const event = dailyEvents.find(e => e.eventId === id);
-				return {
-					index,
-					position: event?.multiDay?.position ?? ("none" as const),
-					event,
-				};
-			})
-			.filter(Boolean);
+		const eventRecords: IEventView[] = [];
+
+		const slots = eventPositions[dateKey];
+		for (let index = 0; index < slots.length; index++) {
+			const packedId = slots[index];
+			// Skip only true empty slots
+			if (packedId === null) continue;
+			// packedId may be 0 (blank filler) or an eventId
+			const matchingEvent = dailyEvents.find(e => e.eventId === packedId);
+			eventRecords.push({ index, position: matchingEvent?.multiDay?.position ?? "none", event: matchingEvent });
+		}
 
 		const dayView = {
 			day: date.getDate(),
@@ -227,10 +242,10 @@ function mutateMultiDayEventPositions(
 		//GET ALL THE EVENTS FOR THE DAY
 		const eventsOnThisDay = eventsByDate[dateKey];
 
-		eventsOnThisDay.forEach(event => {
-			//CHECK IF THE EVENT IS THE FIRST PART OF THE MULTI DAY EVENT, OR THE FIRST DAY THAT IT STARTS ON
-			if (event.multiDay?.position !== "first") return;
+		// Only place multi-day events that start today
+		const startingMultiDay = eventsOnThisDay.filter(e => e.multiDay && e.multiDay.position === "first");
 
+		startingMultiDay.forEach(event => {
 			const currentDaySlots = eventPositions[dateKey];
 			//IF THE CURRENT SLOT HAS DATA SKIP
 			if (!currentDaySlots) return;
@@ -271,12 +286,17 @@ function mutateMultiDayEventPositions(
 				if (daySlots[i] !== null) lastBusyIndex = i;
 			}
 
-			if (lastBusyIndex > -1) {
+			if (lastBusyIndex > 0) {
 				for (let i = 0; i <= lastBusyIndex; i++) {
 					if (daySlots[i] === null) daySlots[i] = 0;
 				}
 			}
 			maxMultiEventIndex = Math.max(maxMultiEventIndex, lastBusyIndex);
+		}
+		for (const dayKey in eventPositions) {
+			for (let i = 0; i < maxMultiEventIndex; i++) {
+				eventPositions[dayKey].push(null);
+			}
 		}
 	}
 }
