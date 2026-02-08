@@ -93,8 +93,6 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 		setTotalEvents(events.length);
 	}, [events, setTotalEvents]);
 
-	const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
-
 	const isMounting = !visibleRooms || !result;
 
 	return (
@@ -107,7 +105,7 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 					isMounting={isMounting}
 					skeleton={<CalendarWeekViewSkeleton />}
 				>
-					{roomsToRender?.map(room => {
+					{roomsToRender?.map((room, roomIndex) => {
 						return (
 							<CalendarScrollColumnPrivate
 								key={room.roomId}
@@ -118,7 +116,7 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 								userId={userId}
 								hours={result?.data.hours || []}
 								eventBlocks={room.blocks || []}
-								isLastColumn={room.roomId === lastRoomId}
+								isLastColumn={roomsToRender.length - 1 === roomIndex}
 								currentDate={date}
 							/>
 						);
