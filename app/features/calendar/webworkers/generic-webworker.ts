@@ -38,6 +38,7 @@ export interface IMonthDayView {
 	isToday: boolean;
 	isSunday: boolean;
 	isCurrentMonth: boolean;
+	totalEvents: number;
 	eventRecords: IEventView[];
 }
 

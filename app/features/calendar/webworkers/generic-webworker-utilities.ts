@@ -189,10 +189,13 @@ export function transformToGrid(events: IEvent[], selectedDate: Date, multiDayEv
 			eventRecords.push({ index, position: matchingEvent?.multiDay?.position ?? "none", event: matchingEvent });
 		}
 
+		const totalEventsInDay = slots.filter(id => id !== null && id !== 0).length;
+
 		const dayView = {
 			day: date.getDate(),
 			dayDate: date.toISOString() as ISODateString,
 			eventRecords,
+			totalEvents: totalEventsInDay,
 			isToday: isToday(date),
 			isSunday: isSunday(date),
 			isCurrentMonth: isSameMonth(selectedDate, date),
@@ -213,9 +216,6 @@ export function transformToGrid(events: IEvent[], selectedDate: Date, multiDayEv
 		weekViews[weekIndex].dayViews.push(dayView);
 	});
 
-	weekViews.forEach(week => {
-		week.maxDailyEvents = Math.max(...week.dayViews.map(d => d.eventRecords.length));
-	});
 
 	return { totalEvents: events.length, dayViews, weekViews };
 }
