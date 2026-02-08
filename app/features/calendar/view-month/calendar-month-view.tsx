@@ -36,7 +36,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
 	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
 	const isMounting = !result || isLoading;
-	console.log(result, isLoading, isMounting);
+
 	if (isMounting) {
 		return <MonthViewDayCellSkeleton date={date} />;
 	}
