@@ -71,7 +71,6 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 
 		if (result && !isLoading) {
 			setIsHeaderLoading(false);
-			setTotalEvents(result.totalEvents);
 		}
 	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
