@@ -18,6 +18,10 @@ import { IDayGrid } from "@/app/features/calendar/calendar-day-grid/calendar-day
 import { cn } from "@/lib/utils";
 import { CalendarDayColumnCalendar } from "../sidebar-day-picker/calendar-day-column-calendar";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
+import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
+import { CalendarScrollContainerPrivate } from "../components/calendar-scroll-container";
+import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-column";
+import { CalendarWeekViewSkeleton } from "../view-week/skeleton-calendar-week-view";
 
 export interface IDayProcessData {
 	events: IEvent[];
@@ -53,81 +57,75 @@ export interface IEventBlock {
 }
 
 export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date: Date; userId?: string; isSidebarOpen?: boolean }) {
-	const [isLoading, setLoading] = useState(true);
 	const { permissions, isVerifying } = CalendarPermissions.usePermissions();
-	const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
-	const [hours, setHours] = useState<number[] | undefined>(undefined);
-	// stable derived props for children — avoids passing new references each render
-	const visibleRoomsForGrid = useMemo(() => visibleRooms ?? [], [visibleRooms]);
-	const selectedRoomIdNumber = useMemo(() => Number(selectedRoomId), [selectedRoomId]);
+	const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
 
-	const startDate = useMemo(() => startOfDay(date), [date]);
-	const endDate = useMemo(() => endOfDay(date), [date]);
+	const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map(room => room.roomId.toString()) : []), [visibleRooms]);
 
-	const [dayViews, setDayViews] = useState<IDayGrid | undefined>(undefined);
-
-	const { data: events, error } = useEventsQuery(startDate, endDate, userId);
-	const { data: gridData, loading: gridLoading, error: gridError, postMessage } = useCalendarDayGrid();
-
-	// Derived mounting state — true while initial data hasn't arrived
-	const isMounting = !gridData || events === undefined;
+	const { result, isLoading } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
 
 	useEffect(() => {
-		setLoading(true);
-	}, [date]);
+		if (isLoading) {
+			setIsHeaderLoading(true);
+		}
 
-	useEffect(() => {
-		if (!gridError) return;
+		if (result && !isLoading) {
+			setIsHeaderLoading(false);
+			setTotalEvents(result.totalEvents);
+		}
+	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-		setTotalEvents(0);
+	const roomsToRender = useMemo(
+		() =>
+			visibleRooms
+				?.filter(room => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
+				.map(room => {
+					const blocks = result?.data.roomBlocks?.get(String(room.roomId)) ?? [];
+					return { roomId: room.roomId, roomName: room.name, blocks };
+				}),
+		[visibleRooms, selectedRoomId, result],
+	);
 
-		setIsHeaderLoading(false);
-		//setLoading(false);
-	}, [gridError, setIsHeaderLoading, setTotalEvents, visibleHours]);
+	const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
 
-	useEffect(() => {
-		if (!events) return;
-		setIsHeaderLoading(true);
-		// Pre-filter events by selected room when possible so the worker
-		// doesn't need to filter by room (reduces work and avoids reprocessing)
+	const isMounting = !visibleRooms || !result;
 
-		postMessage({
-			events: events,
-			currentDate: date,
-			startDate: startDate,
-			endDate: endDate,
-			selectedRooms: visibleRoomsForGrid.map(room => room.roomId.toString()),
-			visibleHours: visibleHours,
-		});
-	}, [events, date, visibleRoomsForGrid, visibleHours, postMessage, setIsHeaderLoading, visibleRooms, startDate, endDate]);
-
-	useEffect(() => {
-		if (!gridData) return;
-		setDayViews(gridData.dayView);
-		setHours(gridData.hours);
-		setTotalEvents(gridData.totalEvents);
-		setIsHeaderLoading(false);
-		setLoading(false);
-	}, [gridData, setIsHeaderLoading, setTotalEvents]);
-
-	if (false) {
-		return (
-			<div className="flex">
-				<CalendarDayViewSkeleton />
-				<CalendarDayColumnCalendar
-					date={date}
+	return (
+		<div className="flex flex-1 min-h-0">
+			<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+				<DayViewDayHeader currentDate={date} />
+				<CalendarScrollContainerPrivate
 					isLoading={isLoading}
-					events={events ?? []}
-					view={"day"}
-				></CalendarDayColumnCalendar>
+					hours={result?.data.hours || defaultHours}
+					isMounting={isMounting}
+					skeleton={<CalendarWeekViewSkeleton />}
+				>
+					{roomsToRender?.map(room => {
+						return (
+							<CalendarScrollColumnPrivate
+								key={room.roomId}
+								loadingBlocks={isLoading}
+								title={room.roomName}
+								interval={interval}
+								roomId={room.roomId}
+								userId={userId}
+								hours={result?.data.hours || []}
+								eventBlocks={room.blocks || []}
+								isLastColumn={room.roomId === lastRoomId}
+								currentDate={date}
+							/>
+						);
+					})}
+				</CalendarScrollContainerPrivate>
 			</div>
-		);
-	}
-
-	const breakpoints3 = isSidebarOpen ? "w-[calc(100dvw-var(--sidebar-width)-32px-300px)]" : "w-[calc(100dvw-300px)]";
-	//w-full
-	// transition-[width] duration-150 ease-linear
-
+			<CalendarDayColumnCalendar
+				date={date}
+				isLoading={isLoading}
+				events={[]}
+				view={"day"}
+			></CalendarDayColumnCalendar>
+		</div>
+	);
 	return (
 		<>
 			<div className="flex flex-1 min-h-0">
@@ -136,7 +134,7 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 
 					<CalendarDayGridProvider
 						value={{
-							hours,
+							hours: result?.data.hours,
 							currentDate: date,
 							userId,
 							interval,
@@ -146,7 +144,7 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 					>
 						<DailyTimeBlocks
 							isLoading={isLoading}
-							roomBlocks={dayViews?.roomBlocks}
+							roomBlocks={result?.data.roomBlocks}
 							dayIndex={"0"}
 							selectedRoomId={selectedRoomIdNumber}
 							visibleRooms={visibleRoomsForGrid}
@@ -156,7 +154,7 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 				<CalendarDayColumnCalendar
 					date={date}
 					isLoading={isLoading}
-					events={events ? events : []}
+					events={[]}
 					view={"day"}
 				></CalendarDayColumnCalendar>
 			</div>

@@ -81,6 +81,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
 	const { data: rooms } = usePublicRoomsQuery();
 
 	const roomIds = useMemo(() => (rooms ? rooms.map(room => room.roomId.toString()) : []), [rooms]);
+
 	const { result, isLoading } = usePublicCalendarEvents("PUBLIC", dateValue, roomIds, visibleHours);
 	//const { result:b, isLoading:d } = usePrivateCalendar("MONTH", dateValue,visibleHours,undefined, roomIds);
 
