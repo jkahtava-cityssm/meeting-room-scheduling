@@ -29,43 +29,48 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
 ): { permissions: PermissionResult<T>; cache: PermissionCache | null; isVerifying: boolean } {
   const roles = session?.user?.roles;
 
-  const initialState = useMemo(() => {
-    const entries = Object.keys(requirement).map((k) => [k, false] as const);
-    return Object.fromEntries(entries) as PermissionResult<T>;
-  }, [requirement]);
+  const stableRolesKey = useMemo(() => {
+		return roles ? JSON.stringify(roles) : null;
+	}, [roles]);
 
-  const [result, setResult] = useState<PermissionResult<T>>(initialState);
-  const [isVerifying, setVerifying] = useState<boolean>(true);
+	const initialState = useMemo(() => {
+		const entries = Object.keys(requirement).map(k => [k, false] as const);
+		return Object.fromEntries(entries) as PermissionResult<T>;
+	}, [requirement]);
 
-  const permissionCache = useMemo(() => {
-    if (!roles) return null;
-    return buildPermissionCache(roles);
-  }, [roles]);
+	const [result, setResult] = useState<PermissionResult<T>>(initialState);
+	const [isVerifying, setVerifying] = useState<boolean>(true);
 
-  useEffect(() => {
-    let active = true;
+	const permissionCache = useMemo(() => {
+		if (!stableRolesKey) return null;
+		const parsedRoles = JSON.parse(stableRolesKey);
+		return buildPermissionCache(parsedRoles);
+	}, [stableRolesKey]);
 
-    if (!roles || !permissionCache) {
-      setResult(initialState);
-      setVerifying(false);
-      return;
-    }
+	useEffect(() => {
+		let active = true;
 
-    setVerifying(true);
+		if (!stableRolesKey || !permissionCache) {
+			setResult(initialState);
+			setVerifying(false);
+			return;
+		}
 
-    (async () => {
-      const groupedResults = await isGroupRequirementMet(permissionCache, requirement);
+		setVerifying(true);
 
-      if (active) {
-        setResult(groupedResults as PermissionResult<T>);
-        setVerifying(false);
-      }
-    })();
+		(async () => {
+			const groupedResults = await isGroupRequirementMet(permissionCache, requirement);
 
-    return () => {
-      active = false;
-    };
-  }, [requirement, roles, permissionCache, initialState]);
+			if (active) {
+				setResult(groupedResults as PermissionResult<T>);
+				setVerifying(false);
+			}
+		})();
+
+		return () => {
+			active = false;
+		};
+	}, [requirement, stableRolesKey, permissionCache, initialState]);
 
   return { permissions: result, cache: permissionCache, isVerifying };
 }
