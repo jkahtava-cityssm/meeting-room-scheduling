@@ -75,16 +75,24 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 		}
 	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-	const roomsToRender = useMemo(
-		() =>
+	const { roomsToRender, events } = useMemo(() => {
+		const rooms =
 			visibleRooms
 				?.filter(room => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
 				.map(room => {
 					const blocks = result?.data.roomBlocks?.get(String(room.roomId)) ?? [];
 					return { roomId: room.roomId, roomName: room.name, blocks };
-				}),
-		[visibleRooms, selectedRoomId, result],
-	);
+				}) ?? []; // Flatten all events from all blocks
+		const events = rooms.flatMap(
+			room => room.blocks.map(block => block.event).filter(Boolean), // remove null/undefined
+		);
+
+		return { roomsToRender: rooms, events };
+	}, [visibleRooms, selectedRoomId, result]);
+
+	useEffect(() => {
+		setTotalEvents(events.length);
+	}, [events, setTotalEvents]);
 
 	const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
 
@@ -121,43 +129,9 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 			<CalendarDayColumnCalendar
 				date={date}
 				isLoading={isLoading}
-				events={[]}
+				events={events || []}
 				view={"day"}
 			></CalendarDayColumnCalendar>
 		</div>
-	);
-	return (
-		<>
-			<div className="flex flex-1 min-h-0">
-				<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
-					<DayViewDayHeader currentDate={date} />
-
-					<CalendarDayGridProvider
-						value={{
-							hours: result?.data.hours,
-							currentDate: date,
-							userId,
-							interval,
-							allowCreateEvent: permissions.CreateEvent,
-							isLoading,
-						}}
-					>
-						<DailyTimeBlocks
-							isLoading={isLoading}
-							roomBlocks={result?.data.roomBlocks}
-							dayIndex={"0"}
-							selectedRoomId={selectedRoomIdNumber}
-							visibleRooms={visibleRoomsForGrid}
-						/>
-					</CalendarDayGridProvider>
-				</div>
-				<CalendarDayColumnCalendar
-					date={date}
-					isLoading={isLoading}
-					events={[]}
-					view={"day"}
-				></CalendarDayColumnCalendar>
-			</div>
-		</>
 	);
 }
