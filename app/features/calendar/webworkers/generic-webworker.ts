@@ -165,7 +165,13 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
         };
         break;
       case "WEEK":
-        const weekResult = transformToWeekBlocks(sortedEvents, viewBounds.from, viewBounds.to);
+        const weekResult = transformToWeekBlocks(
+          sortedEvents,
+          viewBounds.from,
+          viewBounds.to,
+          range.startDate,
+          range.endDate,
+        );
 
         resultData = {
           dayBlocks: weekResult.dayBlocks, // This will be a Record for DAY/PUBLIC, and an Array for WEEK

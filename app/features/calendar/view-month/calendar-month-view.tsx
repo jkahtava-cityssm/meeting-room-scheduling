@@ -17,7 +17,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
   const { visibleHours, selectedRoomId, setTotalEvents, setIsHeaderLoading } = usePrivateCalendar();
   const { result, isLoading } = usePrivateCalendarEvents("MONTH", date, visibleHours, userId, selectedRoomId);
 
-  // ✅ hooks always run
+  //  hooks always run
   const outerScrollRef = useRef<HTMLDivElement | null>(null);
 
   const weekdayHeaderRef = useRef<HTMLDivElement | null>(null);
@@ -47,7 +47,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
     const viewport = outerScrollRef.current.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
     if (!viewport) return;
 
-    // ✅ This is the available height for "filling"
+    // This is the available height for "filling"
     const viewportH = viewport.clientHeight;
 
     const labelsH = weekdayHeaderRef.current.offsetHeight;
@@ -61,12 +61,12 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
 
     const innerScrollH = singleWeekBlockH - weekHeaderH - weekFooterH;
 
-    // ✅ enforce min 96px as requested
+    // enforce min 96px as requested
     setRowContentHeight(Math.max(innerScrollH - BORDER_COMPENSATION, MIN_INNER_HEIGHT - BORDER_COMPENSATION));
   }, [weekCount]);
 
   useLayoutEffect(() => {
-    // ✅ guard inside effect, not around hooks
+    // guard inside effect, not around hooks
     if (isLoading || weekCount === 0) return;
 
     recomputeHeights();
@@ -85,11 +85,11 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
     return () => ro.disconnect();
   }, [isLoading, recomputeHeights, weekCount]);
 
-  // ✅ conditional render AFTER hooks
+  //  conditional render AFTER hooks
   if (isLoading || !result) return <MonthViewDayCellSkeleton date={date} />;
 
   return (
-    // ✅ OUTER / MAIN scroll area (Option B)
+    //  OUTER / MAIN scroll area (Option B)
     <ScrollArea ref={outerScrollRef} className="h-full w-full min-h-0">
       {/* This wrapper is the scroll content */}
       <div className="flex flex-col pr-4 ">

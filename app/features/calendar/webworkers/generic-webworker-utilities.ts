@@ -27,152 +27,168 @@ import {
 
 import { rrulestr } from "rrule";
 import {
-	CalendarAction,
-	GroupingType,
-	IEventBlock,
-	IEventView,
-	IMonthDayView,
-	IMonthWeekView,
-	ISODateString,
-	IYearDayView,
-	IYearMonthView,
+  CalendarAction,
+  GroupingType,
+  IEventBlock,
+  IEventView,
+  IMonthDayView,
+  IMonthWeekView,
+  ISODateString,
+  IYearDayView,
+  IYearMonthView,
 } from "./generic-webworker";
+import { daysBetween } from "rrule/dist/esm/dateutil";
 
 export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[]) {
-	let minHour = config.from;
-	let maxHour = config.to;
+  let minHour = config.from;
+  let maxHour = config.to;
 
-	events.forEach(event => {
-		const start = new Date(event.startDate).getHours();
-		const endDoc = new Date(event.endDate);
+  events.forEach((event) => {
+    const start = new Date(event.startDate).getHours();
+    const endDoc = new Date(event.endDate);
 
-		// ROUND UP TO NEAREST HOUR
-		const endHour = endDoc.getHours() + (endDoc.getMinutes() > 0 ? 1 : 0);
+    // ROUND UP TO NEAREST HOUR
+    const endHour = endDoc.getHours() + (endDoc.getMinutes() > 0 ? 1 : 0);
 
-		if (start < minHour) minHour = start;
-		if (endHour > maxHour) maxHour = endHour;
-	});
+    if (start < minHour) minHour = start;
+    if (endHour > maxHour) maxHour = endHour;
+  });
 
-	return {
-		from: Math.max(0, minHour),
-		to: Math.min(24, maxHour),
-	};
+  return {
+    from: Math.max(0, minHour),
+    to: Math.min(24, maxHour),
+  };
 }
 
 /** * Strategy for Timeline Views (Day, Public, Week)
  * Returns Record<string, IEventBlock[]>
  */
 export function transformToRoomBlocks(
-	events: IEvent[],
-	earliestEventHour: number,
-	latestEventHour: number,
+  events: IEvent[],
+  earliestEventHour: number,
+  latestEventHour: number,
 ): { totalEvents: number; hours: number[]; roomBlocks: Record<string, IEventBlock[]> } {
-	const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
+  const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
-	const groupByEvents: Record<string, IEvent[]> = {};
-	const roomBlocks: Record<string, IEventBlock[]> = {};
+  const groupByEvents: Record<string, IEvent[]> = {};
+  const roomBlocks: Record<string, IEventBlock[]> = {};
 
-	events.forEach(event => {
-		const roomKey = String(event.roomId);
+  events.forEach((event) => {
+    const roomKey = String(event.roomId);
 
-		//Add Grouped Events into record
-		if (!groupByEvents[roomKey]) groupByEvents[roomKey] = [];
-		groupByEvents[roomKey].push(event);
+    //Add Grouped Events into record
+    if (!groupByEvents[roomKey]) groupByEvents[roomKey] = [];
+    groupByEvents[roomKey].push(event);
 
-		//Since we are collecting the data already might as well populate the output record
-		if (!roomBlocks[roomKey]) {
-			roomBlocks[roomKey] = [];
-		}
-	});
+    //Since we are collecting the data already might as well populate the output record
+    if (!roomBlocks[roomKey]) {
+      roomBlocks[roomKey] = [];
+    }
+  });
 
-	// Calculate coordinates for each group
-	for (const roomKey in groupByEvents) {
-		const bucketEvents = groupByEvents[roomKey];
+  // Calculate coordinates for each group
+  for (const roomKey in groupByEvents) {
+    const bucketEvents = groupByEvents[roomKey];
 
-		roomBlocks[roomKey] = buildEventBlocks(bucketEvents, earliestEventHour, latestEventHour);
-	}
+    roomBlocks[roomKey] = buildEventBlocks(bucketEvents, earliestEventHour, latestEventHour);
+  }
 
-	return { totalEvents: events.length, hours, roomBlocks: roomBlocks };
+  return { totalEvents: events.length, hours, roomBlocks: roomBlocks };
 }
 
-export function transformToWeekBlocks(events: IEvent[], earliestEventHour: number, latestEventHour: number) {
-	const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
+export function transformToWeekBlocks(
+  events: IEvent[],
+  earliestEventHour: number,
+  latestEventHour: number,
+  startDate: Date,
+  endDate: Date,
+) {
+  const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
-	// Step 1: Group events by date ONLY
-	const groupByDate: Record<string, IEvent[]> = {};
-	const dayBlocks: Record<string, Record<string, IEventBlock[]>> = {};
+  const totalDays = daysBetween(endDate, startDate);
+  // Step 1: Group events by date ONLY
+  const groupByDate: Record<string, IEvent[]> = {};
+  const dayBlocks: Record<string, Record<string, IEventBlock[]>> = {};
 
-	events.forEach(event => {
-		const dateKey = format(event.startDate, "yyyy-MM-dd");
+  Array.from({ length: totalDays }, (_, i) => {
+    const dateKey = format(addDays(startDate, i), "yyyy-MM-dd");
+    if (!dayBlocks[dateKey]) dayBlocks[dateKey] = {};
+  });
 
-		if (!groupByDate[dateKey]) groupByDate[dateKey] = [];
-		groupByDate[dateKey].push(event);
+  events.forEach((event) => {
+    const dateKey = format(event.startDate, "yyyy-MM-dd");
 
-		if (!dayBlocks[dateKey]) dayBlocks[dateKey] = {};
-	});
+    if (!groupByDate[dateKey]) groupByDate[dateKey] = [];
+    groupByDate[dateKey].push(event);
+  });
 
-	// Step 2: Build blocks for each date
-	for (const dateKey in groupByDate) {
-		const dailyEvents = groupByDate[dateKey];
+  // Step 2: Build blocks for each date
+  for (const dateKey in groupByDate) {
+    const dailyEvents = groupByDate[dateKey];
 
-		// --- FIRST PASS: All Rooms (-1) ---
-		const allBlocks = buildEventBlocks(dailyEvents, earliestEventHour, latestEventHour);
+    // --- FIRST PASS: All Rooms (-1) ---
+    const allBlocks = buildEventBlocks(dailyEvents, earliestEventHour, latestEventHour);
 
-		dayBlocks[dateKey]["-1"] = allBlocks; // All Rooms option
+    dayBlocks[dateKey]["-1"] = allBlocks; // All Rooms option
 
-		// --- SECOND PASS: Individual Rooms ---
-		const rooms: Record<string, IEvent[]> = {};
+    // --- SECOND PASS: Individual Rooms ---
+    const rooms: Record<string, IEvent[]> = {};
 
-		// Group events by room for this day
-		dailyEvents.forEach(event => {
-			const roomKey = String(event.roomId);
-			if (!rooms[roomKey]) rooms[roomKey] = [];
-			rooms[roomKey].push(event);
-		});
+    // Group events by room for this day
+    dailyEvents.forEach((event) => {
+      const roomKey = String(event.roomId);
+      if (!rooms[roomKey]) rooms[roomKey] = [];
+      rooms[roomKey].push(event);
+    });
 
-		// Build blocks per room
-		for (const roomKey in rooms) {
-			const roomEvents = rooms[roomKey];
+    // Build blocks per room
+    for (const roomKey in rooms) {
+      const roomEvents = rooms[roomKey];
 
-			dayBlocks[dateKey][roomKey] = buildEventBlocks(roomEvents, earliestEventHour, latestEventHour);
-		}
-	}
+      dayBlocks[dateKey][roomKey] = buildEventBlocks(roomEvents, earliestEventHour, latestEventHour);
+    }
+  }
 
-	return {
-		totalEvents: events.length,
-		hours,
-		dayBlocks,
-		groupingType: "date",
-	};
+  return {
+    totalEvents: events.length,
+    hours,
+    dayBlocks,
+    groupingType: "date",
+  };
 }
 
 function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, latestEventHour: number): IEventBlock[] {
-	const partitioned = groupEvents(bucketEvents);
+  const partitioned = groupEvents(bucketEvents);
 
-	return partitioned.flatMap((group, groupIndex) =>
-		group.map((event, eventIndex) => {
-			const hasOverlap = partitioned.some(
-				(neighborGroup, neighborIndex) =>
-					neighborIndex !== groupIndex &&
-					neighborGroup.some(o => areIntervalsOverlapping({ start: event.startDate, end: event.endDate }, { start: o.startDate, end: o.endDate })),
-			);
+  return partitioned.flatMap((group, groupIndex) =>
+    group.map((event, eventIndex) => {
+      const hasOverlap = partitioned.some(
+        (neighborGroup, neighborIndex) =>
+          neighborIndex !== groupIndex &&
+          neighborGroup.some((o) =>
+            areIntervalsOverlapping(
+              { start: event.startDate, end: event.endDate },
+              { start: o.startDate, end: o.endDate },
+            ),
+          ),
+      );
 
-			const currentDate = new Date(event.startDate);
+      const currentDate = new Date(event.startDate);
 
-			return {
-				key: `block-${event.eventId}-${currentDate.getTime()}`,
-				groupIndex,
-				eventIndex,
-				eventStyle: calculateEventBlockStyle(event, currentDate, groupIndex, partitioned.length, hasOverlap, {
-					from: earliestEventHour,
-					to: latestEventHour,
-				}),
-				eventHeight: (differenceInMinutes(event.endDate, event.startDate) / 60) * TIME_BLOCK_SIZE - 8,
-				event,
-				roomId: event.roomId,
-			};
-		}),
-	);
+      return {
+        key: `block-${event.eventId}-${currentDate.getTime()}`,
+        groupIndex,
+        eventIndex,
+        eventStyle: calculateEventBlockStyle(event, currentDate, groupIndex, partitioned.length, hasOverlap, {
+          from: earliestEventHour,
+          to: latestEventHour,
+        }),
+        eventHeight: (differenceInMinutes(event.endDate, event.startDate) / 60) * TIME_BLOCK_SIZE - 8,
+        event,
+        roomId: event.roomId,
+      };
+    }),
+  );
 }
 
 /**
@@ -180,273 +196,275 @@ function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, lat
  * Returns a record of days, each containing a list of event records with positions
  */
 export function transformToGrid(events: IEvent[], selectedDate: Date, multiDayEventsAtTop: boolean) {
-	const { startDate, endDate } = getDaysInView(selectedDate);
-	const listOfDays = eachDayOfInterval({ start: startDate, end: endDate });
+  const { startDate, endDate } = getDaysInView(selectedDate);
+  const listOfDays = eachDayOfInterval({ start: startDate, end: endDate });
 
-	const eventsByDate: Record<string, IEvent[]> = {};
-	const eventByID: Record<number, IEvent[]> = {};
+  const eventsByDate: Record<string, IEvent[]> = {};
+  const eventByID: Record<number, IEvent[]> = {};
 
-	events.forEach(event => {
-		const dateKey = format(new Date(event.startDate), "yyyy-MM-dd");
+  events.forEach((event) => {
+    const dateKey = format(new Date(event.startDate), "yyyy-MM-dd");
 
-		if (!eventsByDate[dateKey]) {
-			eventsByDate[dateKey] = [];
-		}
-		eventsByDate[dateKey].push(event);
+    if (!eventsByDate[dateKey]) {
+      eventsByDate[dateKey] = [];
+    }
+    eventsByDate[dateKey].push(event);
 
-		if (event.multiDay) {
-			if (!eventByID[event.eventId]) {
-				eventByID[event.eventId] = [];
-			}
-			eventByID[event.eventId].push(event);
-		}
-	});
+    if (event.multiDay) {
+      if (!eventByID[event.eventId]) {
+        eventByID[event.eventId] = [];
+      }
+      eventByID[event.eventId].push(event);
+    }
+  });
 
-	// 1. compute maxEvents
+  // 1. compute maxEvents
 
-	let maxEvents = 0;
-	listOfDays.forEach(day => {
-		const key = format(day, "yyyy-MM-dd");
-		const count = eventsByDate[key]?.length || 0;
-		if (count > maxEvents) maxEvents = count;
-	});
+  let maxEvents = 0;
+  listOfDays.forEach((day) => {
+    const key = format(day, "yyyy-MM-dd");
+    const count = eventsByDate[key]?.length || 0;
+    if (count > maxEvents) maxEvents = count;
+  });
 
-	// 2. initialize eventPositions
-	const eventPositions: Record<string, (number | null)[]> = {};
-	listOfDays.forEach(day => {
-		const key = format(day, "yyyy-MM-dd");
-		eventPositions[key] = Array(maxEvents).fill(null);
-	});
+  // 2. initialize eventPositions
+  const eventPositions: Record<string, (number | null)[]> = {};
+  listOfDays.forEach((day) => {
+    const key = format(day, "yyyy-MM-dd");
+    eventPositions[key] = Array(maxEvents).fill(null);
+  });
 
-	// 3. Pack the events (Mutation logic from your File 3)
-	mutateMultiDayEventPositions(eventPositions, eventsByDate, eventByID, multiDayEventsAtTop);
-	mutateSingleDayEventPositions(eventPositions, eventsByDate, listOfDays);
+  // 3. Pack the events (Mutation logic from your File 3)
+  mutateMultiDayEventPositions(eventPositions, eventsByDate, eventByID, multiDayEventsAtTop);
+  mutateSingleDayEventPositions(eventPositions, eventsByDate, listOfDays);
 
-	// 4. Map to UI-friendly structure
-	const dayViews: IMonthDayView[] = [];
-	const weekViews: IMonthWeekView[] = [];
+  // 4. Map to UI-friendly structure
+  const dayViews: IMonthDayView[] = [];
+  const weekViews: IMonthWeekView[] = [];
 
-	listOfDays.forEach((date, dayIndex) => {
-		const dateKey = format(date, "yyyy-MM-dd");
-		const dailyEvents = events.filter(e => format(e.startDate, "yyyy-MM-dd") === dateKey);
+  listOfDays.forEach((date, dayIndex) => {
+    const dateKey = format(date, "yyyy-MM-dd");
+    const dailyEvents = events.filter((e) => format(e.startDate, "yyyy-MM-dd") === dateKey);
 
-		const eventRecords: IEventView[] = [];
+    const eventRecords: IEventView[] = [];
 
-		const slots = eventPositions[dateKey];
-		for (let index = 0; index < slots.length; index++) {
-			const packedId = slots[index];
-			// Skip only true empty slots
-			if (packedId === null) continue;
-			// packedId may be 0 (blank filler) or an eventId
-			const matchingEvent = dailyEvents.find(e => e.eventId === packedId);
-			eventRecords.push({ index, position: matchingEvent?.multiDay?.position ?? "none", event: matchingEvent });
-		}
+    const slots = eventPositions[dateKey];
+    for (let index = 0; index < slots.length; index++) {
+      const packedId = slots[index];
+      // Skip only true empty slots
+      if (packedId === null) continue;
+      // packedId may be 0 (blank filler) or an eventId
+      const matchingEvent = dailyEvents.find((e) => e.eventId === packedId);
+      eventRecords.push({ index, position: matchingEvent?.multiDay?.position ?? "none", event: matchingEvent });
+    }
 
-		const totalEventsInDay = slots.filter(id => id !== null && id !== 0).length;
+    const totalEventsInDay = slots.filter((id) => id !== null && id !== 0).length;
 
-		const dayView = {
-			day: date.getDate(),
-			dayDate: date.toISOString() as ISODateString,
-			eventRecords,
-			totalEvents: totalEventsInDay,
-			isToday: isToday(date),
-			isSunday: isSunday(date),
-			isCurrentMonth: isSameMonth(selectedDate, date),
-		};
+    const dayView = {
+      day: date.getDate(),
+      dayDate: date.toISOString() as ISODateString,
+      eventRecords,
+      totalEvents: totalEventsInDay,
+      isToday: isToday(date),
+      isSunday: isSunday(date),
+      isCurrentMonth: isSameMonth(selectedDate, date),
+    };
 
-		dayViews.push(dayView);
+    dayViews.push(dayView);
 
-		const weekIndex = Math.floor(dayIndex / 7);
+    const weekIndex = Math.floor(dayIndex / 7);
 
-		if (!weekViews[weekIndex]) {
-			weekViews[weekIndex] = {
-				week: weekIndex,
-				maxDailyEvents: 0,
-				dayViews: [],
-			};
-		}
+    if (!weekViews[weekIndex]) {
+      weekViews[weekIndex] = {
+        week: weekIndex,
+        maxDailyEvents: 0,
+        dayViews: [],
+      };
+    }
 
-		weekViews[weekIndex].dayViews.push(dayView);
-	});
+    weekViews[weekIndex].dayViews.push(dayView);
+  });
 
-
-	return { totalEvents: events.length, dayViews, weekViews };
+  return { totalEvents: events.length, dayViews, weekViews };
 }
 
 export function groupEventsByDate(events: IEvent[]): Record<string, IEvent[]> {
-	const map: Record<string, IEvent[]> = {};
+  const map: Record<string, IEvent[]> = {};
 
-	events.forEach(event => {
-		const key = format(new Date(event.startDate), "yyyy-MM-dd");
-		if (!map[key]) map[key] = [];
-		map[key].push(event);
-	});
+  events.forEach((event) => {
+    const key = format(new Date(event.startDate), "yyyy-MM-dd");
+    if (!map[key]) map[key] = [];
+    map[key].push(event);
+  });
 
-	return map;
+  return map;
 }
 
 function mutateMultiDayEventPositions(
-	eventPositions: Record<string, (number | null)[]>,
-	eventsByDate: Record<string, IEvent[]>,
-	eventsByID: Record<number, IEvent[]>,
-	multiDayEventsAtTop: boolean = false,
+  eventPositions: Record<string, (number | null)[]>,
+  eventsByDate: Record<string, IEvent[]>,
+  eventsByID: Record<number, IEvent[]>,
+  multiDayEventsAtTop: boolean = false,
 ) {
-	for (const dateKey in eventsByDate) {
-		//GET ALL THE EVENTS FOR THE DAY
-		const eventsOnThisDay = eventsByDate[dateKey];
+  for (const dateKey in eventsByDate) {
+    //GET ALL THE EVENTS FOR THE DAY
+    const eventsOnThisDay = eventsByDate[dateKey];
 
-		// Only place multi-day events that start today
-		const startingMultiDay = eventsOnThisDay.filter(e => e.multiDay && e.multiDay.position === "first");
+    // Only place multi-day events that start today
+    const startingMultiDay = eventsOnThisDay.filter((e) => e.multiDay && e.multiDay.position === "first");
 
-		startingMultiDay.forEach(event => {
-			const currentDaySlots = eventPositions[dateKey];
-			//IF THE CURRENT SLOT HAS DATA SKIP
-			if (!currentDaySlots) return;
+    startingMultiDay.forEach((event) => {
+      const currentDaySlots = eventPositions[dateKey];
+      //IF THE CURRENT SLOT HAS DATA SKIP
+      if (!currentDaySlots) return;
 
-			//LOOK FOR THE FIRST AVAILABLE SLOT
-			for (let slotIndex = 0; slotIndex < currentDaySlots.length; slotIndex++) {
-				//IF ITS NULL THEN ITS AVAILABLE
-				if (currentDaySlots[slotIndex] === null) {
-					//GET EACH PORTION OF THE MULTI DAY EVENT
-					const seriesParts = eventsByID[event.eventId] || [];
-					seriesParts.forEach(part => {
-						const partDateKey = format(new Date(part.startDate), "yyyy-MM-dd");
+      //LOOK FOR THE FIRST AVAILABLE SLOT
+      for (let slotIndex = 0; slotIndex < currentDaySlots.length; slotIndex++) {
+        //IF ITS NULL THEN ITS AVAILABLE
+        if (currentDaySlots[slotIndex] === null) {
+          //GET EACH PORTION OF THE MULTI DAY EVENT
+          const seriesParts = eventsByID[event.eventId] || [];
+          seriesParts.forEach((part) => {
+            const partDateKey = format(new Date(part.startDate), "yyyy-MM-dd");
 
-						if (eventPositions[partDateKey]) {
-							//ADD THE EVENTID INTO THAT SLOT IF THE SLOT EXISTS
-							eventPositions[partDateKey][slotIndex] = part.eventId;
-						}
-					});
-					// Series placed, move to next multi-day event
-					break;
-				}
-			}
-		});
-	}
+            if (eventPositions[partDateKey]) {
+              //ADD THE EVENTID INTO THAT SLOT IF THE SLOT EXISTS
+              eventPositions[partDateKey][slotIndex] = part.eventId;
+            }
+          });
+          // Series placed, move to next multi-day event
+          break;
+        }
+      }
+    });
+  }
 
-	//IF ALL THE MULTI DAY EVENTS ARE AT THE TOP WE NEED TO ADD IN SOME BLANK VALUES
-	//TO ENSURE THAT THE SYSTEM DOESNT INSERT EVENTS
-	//WE ALSO THEN NEED TO EXTEND THE EVENTPOSITION ARRAY BECAUSE SOME EVENTS WILL NO LONGER FIT
+  //IF ALL THE MULTI DAY EVENTS ARE AT THE TOP WE NEED TO ADD IN SOME BLANK VALUES
+  //TO ENSURE THAT THE SYSTEM DOESNT INSERT EVENTS
+  //WE ALSO THEN NEED TO EXTEND THE EVENTPOSITION ARRAY BECAUSE SOME EVENTS WILL NO LONGER FIT
 
-	if (multiDayEventsAtTop) {
-		let maxMultiEventIndex = 0;
+  if (multiDayEventsAtTop) {
+    let maxMultiEventIndex = 0;
 
-		for (const dayKey in eventPositions) {
-			const daySlots = eventPositions[dayKey];
-			let lastBusyIndex = -1;
+    for (const dayKey in eventPositions) {
+      const daySlots = eventPositions[dayKey];
+      let lastBusyIndex = -1;
 
-			for (let i = 0; i < daySlots.length; i++) {
-				if (daySlots[i] !== null) lastBusyIndex = i;
-			}
+      for (let i = 0; i < daySlots.length; i++) {
+        if (daySlots[i] !== null) lastBusyIndex = i;
+      }
 
-			if (lastBusyIndex > 0) {
-				for (let i = 0; i <= lastBusyIndex; i++) {
-					if (daySlots[i] === null) daySlots[i] = 0;
-				}
-			}
-			maxMultiEventIndex = Math.max(maxMultiEventIndex, lastBusyIndex);
-		}
-		for (const dayKey in eventPositions) {
-			for (let i = 0; i < maxMultiEventIndex; i++) {
-				eventPositions[dayKey].push(null);
-			}
-		}
-	}
+      if (lastBusyIndex > 0) {
+        for (let i = 0; i <= lastBusyIndex; i++) {
+          if (daySlots[i] === null) daySlots[i] = 0;
+        }
+      }
+      maxMultiEventIndex = Math.max(maxMultiEventIndex, lastBusyIndex);
+    }
+    for (const dayKey in eventPositions) {
+      for (let i = 0; i < maxMultiEventIndex; i++) {
+        eventPositions[dayKey].push(null);
+      }
+    }
+  }
 }
 
 function mutateSingleDayEventPositions(
-	eventPositions: { [key: string]: (number | null)[] },
-	eventsByDate: Record<string, IEvent[]>,
-	listOfDaysInMonth: Date[],
+  eventPositions: { [key: string]: (number | null)[] },
+  eventsByDate: Record<string, IEvent[]>,
+  listOfDaysInMonth: Date[],
 ) {
-	listOfDaysInMonth.forEach(currentDate => {
-		const dateString = format(currentDate, "yyyy-MM-dd");
-		//GET THE POSITION LIST
-		const currentDayPositions = eventPositions[dateString];
+  listOfDaysInMonth.forEach((currentDate) => {
+    const dateString = format(currentDate, "yyyy-MM-dd");
+    //GET THE POSITION LIST
+    const currentDayPositions = eventPositions[dateString];
 
-		//GET ALL THE EVENTS THAT OCCUR TODAY INCLUDING THE MULTI DAY EVENTS
-		const eventsToday = eventsByDate[dateString] || [];
+    //GET ALL THE EVENTS THAT OCCUR TODAY INCLUDING THE MULTI DAY EVENTS
+    const eventsToday = eventsByDate[dateString] || [];
 
-		//ADD ALL THE EVENTS INTO THEIR POSITIONS
-		eventsToday.forEach(currentEvent => {
-			//IF THE EVENT ALREADY EXISTS IN THE CURRENT POSITION LIST SKIP IT
-			if (currentDayPositions.includes(currentEvent.eventId)) {
-				return;
-			}
+    //ADD ALL THE EVENTS INTO THEIR POSITIONS
+    eventsToday.forEach((currentEvent) => {
+      //IF THE EVENT ALREADY EXISTS IN THE CURRENT POSITION LIST SKIP IT
+      if (currentDayPositions.includes(currentEvent.eventId)) {
+        return;
+      }
 
-			for (let index = 0; index < currentDayPositions.length; index++) {
-				//IF THE POSITION IS EMPTY ADD AN EVENT
-				if (currentDayPositions[index] === null) {
-					//CHECK IF THE EVENT BEING ADDED IS A MULTI-DAY EVENT
-					eventPositions[dateString][index] = currentEvent.eventId;
-					return;
-				}
-			}
-		});
-	});
+      for (let index = 0; index < currentDayPositions.length; index++) {
+        //IF THE POSITION IS EMPTY ADD AN EVENT
+        if (currentDayPositions[index] === null) {
+          //CHECK IF THE EVENT BEING ADDED IS A MULTI-DAY EVENT
+          eventPositions[dateString][index] = currentEvent.eventId;
+          return;
+        }
+      }
+    });
+  });
 }
 
 /**
  * Strategy for Year View
  * Groups events by date and nests them inside a 12-month structure
  */
-export function transformToYearly(events: IEvent[], selectedDate: Date): { totalEvents: number; monthViews: IYearMonthView[] } {
-	// 1. Group events by date string for O(1) lookup during nesting
-	const eventsByDate: Record<string, IEvent[]> = {};
+export function transformToYearly(
+  events: IEvent[],
+  selectedDate: Date,
+): { totalEvents: number; monthViews: IYearMonthView[] } {
+  // 1. Group events by date string for O(1) lookup during nesting
+  const eventsByDate: Record<string, IEvent[]> = {};
 
-	events.forEach(event => {
-		const key = format(event.startDate, "yyyy-MM-dd");
-		if (!eventsByDate[key]) eventsByDate[key] = [];
-		eventsByDate[key].push(event);
-	});
+  events.forEach((event) => {
+    const key = format(event.startDate, "yyyy-MM-dd");
+    if (!eventsByDate[key]) eventsByDate[key] = [];
+    eventsByDate[key].push(event);
+  });
 
-	// 2. Generate the 12 month objects
-	const yearStart = startOfYear(selectedDate);
-	const monthData: IYearMonthView[] = Array.from({ length: 12 }, (_, monthIndex) => {
-		const monthDate = addMonths(yearStart, monthIndex);
-		const monthName = format(monthDate, "MMMM");
+  // 2. Generate the 12 month objects
+  const yearStart = startOfYear(selectedDate);
+  const monthData: IYearMonthView[] = Array.from({ length: 12 }, (_, monthIndex) => {
+    const monthDate = addMonths(yearStart, monthIndex);
+    const monthName = format(monthDate, "MMMM");
 
-		// 3. Generate days including leading blanks for grid alignment
-		const totalDays = getDaysInMonth(monthDate);
-		const firstDayOffset = startOfMonth(monthDate).getDay(); // 0 for Sunday, etc.
+    // 3. Generate days including leading blanks for grid alignment
+    const totalDays = getDaysInMonth(monthDate);
+    const firstDayOffset = startOfMonth(monthDate).getDay(); // 0 for Sunday, etc.
 
-		const days:IYearDayView[] = [];
+    const days: IYearDayView[] = [];
 
-		// Add blank/padding days
+    // Add blank/padding days
     const blankDay = new Date(0).toISOString() as ISODateString;
-		for (let i = 0; i < firstDayOffset; i++) {
-			days.push({
-				day: -i,
-				dayDate: blankDay,
-				isBlank: true,
-				isToday: false,
-				dayEvents: [],
-			});
-		}
+    for (let i = 0; i < firstDayOffset; i++) {
+      days.push({
+        day: -i,
+        dayDate: blankDay,
+        isBlank: true,
+        isToday: false,
+        dayEvents: [],
+      });
+    }
 
-		// Add actual days
-		for (let d = 1; d <= totalDays; d++) {
-			const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), d);
-			const key = format(date, "yyyy-MM-dd");
+    // Add actual days
+    for (let d = 1; d <= totalDays; d++) {
+      const date = new Date(monthDate.getFullYear(), monthDate.getMonth(), d);
+      const key = format(date, "yyyy-MM-dd");
 
-			days.push({
-				day: d,
-				dayDate: date.toISOString() as ISODateString,
-				isBlank: false,
-				isToday: isToday(date),
-				dayEvents: eventsByDate[key] || [],
-			});
-		}
+      days.push({
+        day: d,
+        dayDate: date.toISOString() as ISODateString,
+        isBlank: false,
+        isToday: isToday(date),
+        dayEvents: eventsByDate[key] || [],
+      });
+    }
 
-		return {
-			month: monthIndex,
-			monthDate: monthDate.toISOString() as ISODateString,
-			monthName,
-			days,
-		};
-	});
+    return {
+      month: monthIndex,
+      monthDate: monthDate.toISOString() as ISODateString,
+      monthName,
+      days,
+    };
+  });
 
-	return { totalEvents: events.length, monthViews: monthData };
+  return { totalEvents: events.length, monthViews: monthData };
 }
 
 export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | string) {

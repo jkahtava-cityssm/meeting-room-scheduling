@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -92,14 +92,14 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                   <CalendarScrollColumnPrivate
                     key={day.date}
                     loadingBlocks={isLoading}
-                    title={format(day.date, "EE d")}
+                    title={format(parse(day.date, "yyyy-MM-dd", new Date()), "EE d")}
                     interval={interval}
                     roomId={undefined}
                     userId={userId}
                     hours={result?.data.hours || []}
                     eventBlocks={day.blocks || []}
                     isLastColumn={daysToRender.length - 1 === dayIndex}
-                    currentDate={new Date(day.date)}
+                    currentDate={parse(day.date, "yyyy-MM-dd", new Date())}
                   />
                 );
               })}
