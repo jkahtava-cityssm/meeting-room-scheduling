@@ -1,11 +1,39 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 
 import { addMonths, endOfYear, format, getDaysInMonth, isToday, startOfMonth, startOfYear } from "date-fns";
-import { IDayView, IMonthView, IYearProcessData, IYearResponseData } from "../view-year/calendar-year-view";
+
 import { createEventMapByDay, filterEventsByRoom } from "@/lib/helpers";
 
 import z from "zod/v4";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
+import { TVisibleHours } from "@/lib/types";
+
+export interface IMonthView {
+  month: number;
+  monthDate: Date;
+  monthName: string;
+  days: IDayView[];
+}
+
+export interface IDayView {
+  day: number;
+  dayDate: Date;
+  isBlank: boolean;
+  isToday: boolean;
+  dayEvents: IEvent[];
+}
+
+export interface IYearProcessData {
+  eventList: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  visibleHours: TVisibleHours;
+}
+
+export interface IYearResponseData {
+  totalEvents: number;
+  monthsViews: IMonthView[];
+}
 
 self.onmessage = async (event: MessageEvent<IYearProcessData>) => {
   if (event.data) {

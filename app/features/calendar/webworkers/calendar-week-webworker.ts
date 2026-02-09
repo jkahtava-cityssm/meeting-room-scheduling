@@ -4,7 +4,6 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { z } from "zod/v4";
 
 import { calculateEventBlockStyle, filterEventsByRoom, getVisibleHours, groupEvents } from "@/lib/helpers";
-import { IDayView, IEventBlock, IWeekProcessData, IWeekResponseData } from "../view-week/calendar-week-view";
 import {
   addDays,
   areIntervalsOverlapping,
@@ -15,6 +14,40 @@ import {
   startOfWeek,
 } from "date-fns";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
+import { TVisibleHours } from "@/lib/types";
+
+export interface IWeekProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  pixelHeight: number;
+  visibleHours: TVisibleHours;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface IWeekResponseData {
+  totalEvents: number;
+  dayViews: IDayView[];
+  hours: number[];
+  //weekViews: WeekView[];
+}
+
+export interface IDayView {
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  eventBlocks: IEventBlock[];
+}
+
+export interface IEventBlock {
+  groupIndex: number;
+  eventIndex: number;
+  eventStyle: { top: string; width: string; left: string };
+  eventHeight: number;
+  event: IEvent;
+  roomId: number;
+}
+
 //event: MessageEvent<IWeekProcessData>
 self.onmessage = async (event) => {
   if (event.data) {

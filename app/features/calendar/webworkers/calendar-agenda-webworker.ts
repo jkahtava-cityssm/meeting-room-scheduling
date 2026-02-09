@@ -3,9 +3,23 @@ import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { z } from "zod/v4";
 
 import { filterEventsByRoom } from "@/lib/helpers";
-import { IAgendaProcessData, IAgendaResponseData } from "../view-agenda/calendar-agenda-view";
+
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
 import { endOfDay, startOfDay } from "date-fns";
+import { TVisibleHours } from "@/lib/types";
+
+export interface IAgendaProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  multiDayEventsAtTop: boolean;
+  visibleHours: TVisibleHours;
+}
+
+export interface IAgendaResponseData {
+  totalEvents: number;
+  sortedEvents: IEvent[];
+}
 
 self.onmessage = async (event: MessageEvent<IAgendaProcessData>) => {
   if (event.data) {

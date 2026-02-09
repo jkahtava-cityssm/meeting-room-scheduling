@@ -1,18 +1,47 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { eachDayOfInterval, format, isSameDay, isSameMonth, isSunday, isToday, parse } from "date-fns";
 
-import {
-  IDayView,
-  IEventView,
-  IMonthProcessData,
-  IMonthResponseData,
-  IWeekView,
-} from "../view-month/calendar-month-view";
 import { z } from "zod/v4";
 import { uniq, uniqBy } from "lodash";
 
 import { filterEventsByRoom, getDaysInView } from "@/lib/helpers";
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
+import { TVisibleHours } from "@/lib/types";
+
+export interface IMonthProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  multiDayEventsAtTop: boolean;
+  visibleHours: TVisibleHours;
+}
+
+export interface IMonthResponseData {
+  totalEvents: number;
+  dayViews: IDayView[];
+  weekViews: IWeekView[];
+}
+
+export interface IWeekView {
+  week: number;
+  maxDailyEvents: number;
+  dayViews: IDayView[];
+}
+
+export interface IDayView {
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  isSunday: boolean;
+  isCurrentMonth: boolean;
+  eventRecords: IEventView[];
+}
+
+export interface IEventView {
+  index: number;
+  position: "none" | "middle" | "first" | "last";
+  event: IEvent | undefined;
+}
 
 self.onmessage = async (event: MessageEvent<IMonthProcessData>) => {
   if (event.data) {

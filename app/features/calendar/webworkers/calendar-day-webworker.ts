@@ -13,8 +13,42 @@ import {
 } from "@/lib/helpers";
 
 import { areIntervalsOverlapping, differenceInMinutes, endOfDay, isSameDay, isToday, startOfDay } from "date-fns";
-import { IDayProcessData, IDayResponseData, IDayView, IEventBlock } from "../view-day/calendar-day-view";
+
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
+import { TVisibleHours } from "@/lib/types";
+
+export interface IDayProcessData {
+  events: IEvent[];
+  selectedDate: Date;
+  selectedRoomId: string;
+  pixelHeight: number;
+  visibleHours: TVisibleHours;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface IDayResponseData {
+  totalEvents: number;
+  dayViews: IDayView[];
+  hours: number[];
+  filteredEvents: IEvent[];
+  roomIds: number[];
+}
+
+export interface IDayView {
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  eventBlocks: IEventBlock[];
+}
+
+export interface IEventBlock {
+  groupIndex: number;
+  eventIndex: number;
+  eventStyle: { top: string; width: string; left: string };
+  eventHeight: number;
+  event: IEvent;
+  roomId: number;
+}
 
 self.onmessage = async (event: MessageEvent<IDayProcessData>) => {
   if (event.data) {

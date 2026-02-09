@@ -15,7 +15,42 @@ import {
 } from "date-fns";
 
 import { generateMultiDayEventsInPeriod, generateRecurringEventsInPeriod } from "@/lib/event-helpers";
-import { IDayView, IEventBlock, IPublicProcessData, IPublicResponseData } from "../view-public/public-view";
+import { PUBLIC_IEVENT } from "@/lib/services/public";
+import { TVisibleHours } from "@/lib/types";
+
+export interface IPublicProcessData {
+  events: PUBLIC_IEVENT[];
+  selectedDate: Date;
+  roomIdList: string[];
+  pixelHeight: number;
+  visibleHours: TVisibleHours;
+  multiDayEventsAtTop: boolean;
+}
+
+export interface IPublicResponseData {
+  totalEvents: number;
+  dayView: IDayView;
+  hours: number[];
+  //weekViews: WeekView[];
+}
+
+export type IEventList = Map<string, IEventBlock[]>;
+
+export interface IDayView {
+  day: number;
+  dayDate: Date;
+  isToday: boolean;
+  eventBlocks: IEventList;
+}
+
+export interface IEventBlock {
+  key: string;
+  groupIndex: number;
+  eventIndex: number;
+  eventStyle: { top: string; width: string; left: string };
+  eventHeight: number;
+  event: IEvent;
+}
 
 self.onmessage = async (event: MessageEvent<IPublicProcessData>) => {
   if (event.data) {
