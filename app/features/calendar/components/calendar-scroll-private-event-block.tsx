@@ -5,7 +5,7 @@ import { TColors } from "@/lib/types";
 
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
-import { IBlock } from "./calendar-day-grid-webworker";
+import { IEventBlock } from "../webworkers/generic-webworker";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -24,7 +24,7 @@ export function GridEventBlock({
   heightInPixels,
   userId,
 }: {
-  eventBlock: IBlock;
+  eventBlock: IEventBlock;
   heightInPixels: number;
   userId?: string;
 }) {

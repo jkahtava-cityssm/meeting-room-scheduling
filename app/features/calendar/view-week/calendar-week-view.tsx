@@ -8,13 +8,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { CalendarScrollContainerPrivate } from "../components/calendar-scroll-container";
 import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-column";
-import { CalendarDayViewSkeleton } from "../view-day/skeleton-calendar-day-view";
+
 import { cn } from "@/lib/utils";
 import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
 import { IEventBlock } from "../webworkers/generic-webworker";
+import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
-  const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
+  const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
     usePrivateCalendar();
 
   const roomIds = useMemo(
@@ -22,7 +23,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     [visibleRooms],
   );
 
-  const { result, isLoading } = usePrivateCalendarEvents("WEEK", date, visibleHours, userId, roomIds);
+  const { result, isLoading } = usePrivateCalendarEvents("WEEK", date, visibleHours, userId, selectedRoomId);
 
   useEffect(() => {
     if (isLoading) {
@@ -74,21 +75,18 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     return { daysToRender };
   }, [result, selectedRoomId]);
 
-  const isMounting = !visibleRooms || !result;
+  const isMounting = !visibleRooms || !result || false;
 
   return (
     <>
       <div className="flex flex-1 min-h-0">
         <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
-          {isLoading ? (
-            <CalendarWeekViewSkeleton />
+          {isMounting ? (
+            <>
+              <CalendarScrollContainerSkeleton hours={defaultHours} totalColumns={7} interval={interval} />
+            </>
           ) : (
-            <CalendarScrollContainerPrivate
-              isLoading={isLoading}
-              hours={result?.data.hours || []}
-              isMounting={isMounting}
-              skeleton={<CalendarDayViewSkeleton hours={result?.data.hours} />}
-            >
+            <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours || []}>
               {daysToRender.map((day, dayIndex) => {
                 return (
                   <CalendarScrollColumnPrivate

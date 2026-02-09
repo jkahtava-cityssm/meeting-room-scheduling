@@ -1,20 +1,10 @@
 "use client";
-
-import { startOfDay, endOfDay, format, isToday } from "date-fns";
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo } from "react";
 
-import { CalendarDayViewSkeleton } from "./skeleton-calendar-day-view";
-import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
-
-import { useEventsQuery } from "@/lib/services/events";
-import { DailyTimeBlocks } from "@/app/features/calendar/calendar-day-grid/calendar-day-grid";
-import { CalendarDayGridProvider } from "@/app/features/calendar/calendar-day-grid/calendar-day-grid-context";
 import { DayViewDayHeader } from "./calendar-day-view-day-header";
-import { useCalendarDayGrid } from "@/app/features/calendar/calendar-day-grid/use-calendar-day-grid";
-import { IDayGrid } from "@/app/features/calendar/calendar-day-grid/calendar-day-grid-webworker";
+
 import { cn } from "@/lib/utils";
 import { CalendarDayColumnCalendar } from "../sidebar-day-picker/calendar-day-column-calendar";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
@@ -22,6 +12,7 @@ import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-eve
 import { CalendarScrollContainerPrivate } from "../components/calendar-scroll-container";
 import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-column";
 import { CalendarWeekViewSkeleton } from "../view-week/skeleton-calendar-week-view";
+import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
 
 export function CalendarDayView({
   date,
@@ -77,30 +68,38 @@ export function CalendarDayView({
   return (
     <div className="flex flex-1 min-h-0">
       <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
-        <DayViewDayHeader currentDate={date} />
-        <CalendarScrollContainerPrivate
-          isLoading={isLoading}
-          hours={result?.data.hours || defaultHours}
-          isMounting={isMounting}
-          skeleton={<CalendarWeekViewSkeleton />}
-        >
-          {roomsToRender?.map((room, roomIndex) => {
-            return (
-              <CalendarScrollColumnPrivate
-                key={room.roomId}
-                loadingBlocks={isLoading}
-                title={room.roomName}
-                interval={interval}
-                roomId={room.roomId}
-                userId={userId}
-                hours={result?.data.hours || []}
-                eventBlocks={room.blocks || []}
-                isLastColumn={roomsToRender.length - 1 === roomIndex}
-                currentDate={date}
-              />
-            );
-          })}
-        </CalendarScrollContainerPrivate>
+        {isMounting ? (
+          <>
+            <DayViewDayHeader currentDate={date} />
+            <CalendarScrollContainerSkeleton
+              hours={defaultHours}
+              totalColumns={visibleRooms ? visibleRooms.length : 10}
+              interval={interval}
+            />
+          </>
+        ) : (
+          <>
+            <DayViewDayHeader currentDate={date} />
+            <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours || defaultHours}>
+              {roomsToRender?.map((room, roomIndex) => {
+                return (
+                  <CalendarScrollColumnPrivate
+                    key={room.roomId}
+                    loadingBlocks={isLoading}
+                    title={room.roomName}
+                    interval={interval}
+                    roomId={room.roomId}
+                    userId={userId}
+                    hours={result?.data.hours || []}
+                    eventBlocks={room.blocks || []}
+                    isLastColumn={roomsToRender.length - 1 === roomIndex}
+                    currentDate={date}
+                  />
+                );
+              })}
+            </CalendarScrollContainerPrivate>
+          </>
+        )}
       </div>
       <CalendarDayColumnCalendar
         date={date}

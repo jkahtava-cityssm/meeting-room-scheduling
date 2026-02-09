@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
-import { GridEventBlock } from "../calendar-day-grid/calendar-day-grid-event-block";
+
+import { GridEventBlock } from "./calendar-scroll-private-event-block";
 import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from "react";
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
@@ -8,6 +8,7 @@ import { TIME_BLOCK_SIZE } from "@/lib/types";
 import { useCalendarViewport } from "./calendar-scroll-context";
 import { PublicEventBlock } from "./calendar-scroll-public-event-block";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IEventBlock } from "../webworkers/generic-webworker";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -35,7 +36,7 @@ export type CalendarScrollColumnProps = {
   roomId: number | undefined;
   userId: string | undefined;
   hours: number[];
-  eventBlocks: IBlock[];
+  eventBlocks: IEventBlock[];
   isLastColumn: boolean;
   currentDate: Date;
   renderTimeBlock: (p: TimeBlockRenderProps) => ReactNode;
@@ -43,7 +44,7 @@ export type CalendarScrollColumnProps = {
 };
 
 export type EventBlockRenderProps = {
-  eventBlock: IBlock;
+  eventBlock: IEventBlock;
   heightInPixels: number;
   userId: string | undefined;
 };
@@ -107,28 +108,6 @@ export function CalendarScrollColumnPublic(
         disabled={true}
         aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, "0")}`}
       />
-    ),
-    [],
-  );
-
-  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;
-}
-
-export function CalendarScrollColumnSkeleton(
-  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
-) {
-  const renderEventBlock = useCallback(({ eventBlock, userId }: EventBlockRenderProps) => <></>, []);
-
-  const renderTimeBlock = useCallback(
-    ({ totalBlocks, blockIndex, showBottomSeparator, hour, startMinute }: TimeBlockRenderProps) => (
-      <div key={hour} className={cn("relative")} style={{ height: `${TIME_BLOCK_SIZE}px` }}>
-        {blockIndex !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b"></div>}
-        <Skeleton className="absolute inset-x-0 top-[2px] h-[44px] transition-colors hover:bg-accent rounded-none"></Skeleton>
-
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 border-b border-dashed border-1"></div>
-
-        <Skeleton className="absolute inset-x-0 top-[52px] h-[42px] transition-colors rounded-none"></Skeleton>
-      </div>
     ),
     [],
   );

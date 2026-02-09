@@ -24,6 +24,7 @@ import { usePublicCalendarEvents } from "../webworkers/use-calendar-public-event
 import { RoomCategorySkeleton } from "./public-room-filter-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePublicCalendar } from "@/contexts/CalendarProviderPublic";
+import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
 
 function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -125,30 +126,37 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
         )}
         {/* MAIN PANEL: Grows to take space */}
         <div className="flex border rounded-lg sm:p-4 min-h-125">
-          <CalendarScrollContainerPublic
-            isLoading={isLoading}
-            hours={result?.data.hours || defaultHours}
-            isMounting={isMounting || filteredRooms.length === 0}
-            skeleton={<CalendarWeekViewSkeleton />}
-          >
-            {filteredRooms?.map((room) => {
-              //console.log(dayViews?.eventBlocks.get(String(room.roomId)));
-              return (
-                <CalendarScrollColumnPublic
-                  key={room.roomId}
-                  loadingBlocks={isLoading}
-                  title={room.name}
-                  interval={interval}
-                  roomId={room.roomId}
-                  userId={undefined}
-                  hours={result?.data.hours || []}
-                  eventBlocks={result?.data.roomBlocks.get(String(room.roomId)) || []}
-                  isLastColumn={room.roomId === lastRoomId}
-                  currentDate={dateValue}
-                />
-              );
-            })}
-          </CalendarScrollContainerPublic>
+          {isMounting ? (
+            <>
+              <CalendarScrollContainerSkeleton
+                hours={defaultHours}
+                totalColumns={visibleRooms ? visibleRooms.length : 10}
+                interval={interval}
+              />
+            </>
+          ) : (
+            <>
+              <CalendarScrollContainerPublic isLoading={isLoading} hours={result?.data.hours || defaultHours}>
+                {filteredRooms?.map((room) => {
+                  //console.log(dayViews?.eventBlocks.get(String(room.roomId)));
+                  return (
+                    <CalendarScrollColumnPublic
+                      key={room.roomId}
+                      loadingBlocks={isLoading}
+                      title={room.name}
+                      interval={interval}
+                      roomId={room.roomId}
+                      userId={undefined}
+                      hours={result?.data.hours || []}
+                      eventBlocks={result?.data.roomBlocks.get(String(room.roomId)) || []}
+                      isLastColumn={room.roomId === lastRoomId}
+                      currentDate={dateValue}
+                    />
+                  );
+                })}
+              </CalendarScrollContainerPublic>
+            </>
+          )}
         </div>
       </div>
     </div>

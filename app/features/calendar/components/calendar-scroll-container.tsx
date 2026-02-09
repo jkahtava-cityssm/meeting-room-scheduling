@@ -5,13 +5,12 @@ import { CalendarHourTimeline } from "./calendar-scroll-hour-timeline";
 import { format } from "date-fns";
 import { LoaderCircle } from "lucide-react";
 import { CalendarScrollProvider, useCalendarViewport } from "./calendar-scroll-context";
-import { CalendarScrollColumnSkeleton } from "./calendar-scroll-column";
+import { CalendarScrollColumnSkeleton } from "./calendar-scroll-column-skeleton";
 
 export type CalendarScrollContainerProps = {
   isLoading: boolean;
   hours: number[];
-  isMounting: boolean;
-  skeleton: React.ReactNode;
+
   children: React.ReactNode;
 };
 
@@ -29,9 +28,8 @@ export function CalendarScrollContainerPublic(props: CalendarScrollContainerProp
 
 const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerBase({
   isLoading,
-  isMounting,
   hours,
-  skeleton,
+
   children,
 }: CalendarScrollContainerProps) {
   const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
@@ -45,39 +43,6 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
     }),
     [viewport, popoverLayer],
   );
-
-  if (isMounting) {
-    return (
-      <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={undefined}>
-        <div className="relative flex min-w-0 w-full">
-          <HourColumn hours={hours} />
-
-          <div className="flex w-full min-w-0 pr-4">
-            <CalendarScrollColumnSkeleton
-              hours={hours}
-              title={""}
-              loadingBlocks={false}
-              interval={0}
-              roomId={undefined}
-              userId={undefined}
-              eventBlocks={[]}
-              isLastColumn={false}
-              currentDate={new Date()}
-            ></CalendarScrollColumnSkeleton>
-          </div>
-        </div>
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
-              <LoaderCircle className="animate-spin" />
-            </div>
-          </div>
-        )}
-        <ScrollBar orientation="vertical" forceMount />
-        <ScrollBar orientation="horizontal" forceMount />
-      </ScrollArea>
-    );
-  }
 
   return (
     <CalendarScrollProvider value={contextValue}>
@@ -108,7 +73,7 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
 
 const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }) {
   const lastItem = hours?.at(-1);
-	const lastHour = lastItem == null ? 0 : lastItem + 1;
+  const lastHour = lastItem == null ? 0 : lastItem + 1;
 
   return (
     <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0 pt-8">
