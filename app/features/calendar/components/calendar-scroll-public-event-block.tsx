@@ -1,7 +1,6 @@
 "use client";
 
 import { format } from "date-fns";
-import { IEventBlock } from "../view-public/public-view";
 
 import { TColors, TStatusKey } from "@/lib/types";
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +10,7 @@ import { X } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import { useScrollPopoverDirection } from "./use-scroll-popover-direction";
+import { IEventBlock } from "../webworkers/generic-webworker";
 
 type Props = {
   viewport: HTMLDivElement | null;

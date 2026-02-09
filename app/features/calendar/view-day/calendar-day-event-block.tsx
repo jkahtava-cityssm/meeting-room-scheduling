@@ -2,10 +2,10 @@ import { cva } from "class-variance-authority";
 import { format } from "date-fns";
 
 import { TColors } from "@/lib/types";
-import { IEventBlock } from "./calendar-day-view";
 
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
+import { IEventBlock } from "../webworkers/generic-webworker";
 
 const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

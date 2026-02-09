@@ -1,4 +1,3 @@
-import { fetchGET } from "@/lib/fetch";
 import { SEvent, SRecurrence, SRoom, SRoomCategory, SRoomProperty, SStatus } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { formatISO } from "date-fns";
@@ -6,88 +5,88 @@ import { z } from "zod";
 import { fetchPublicConfiguration, fetchPublicEvents, fetchPublicRooms } from "../server/public";
 
 const formatDate = (date: Date) => {
-	return formatISO(date);
+  return formatISO(date);
 };
 
 const PUBLIC_SROOM = z.object({
-	roomId: SRoom.shape.roomId,
-	name: SRoom.shape.name,
-	color: SRoom.shape.color,
-	roomCategory: SRoomCategory.pick({
-		roomCategoryId: true,
-		name: true,
-	}),
-	roomProperty: SRoomProperty.pick({
-		name: true,
-		value: true,
-	}).array(),
+  roomId: SRoom.shape.roomId,
+  name: SRoom.shape.name,
+  color: SRoom.shape.color,
+  roomCategory: SRoomCategory.pick({
+    roomCategoryId: true,
+    name: true,
+  }),
+  roomProperty: SRoomProperty.pick({
+    name: true,
+    value: true,
+  }).array(),
 });
 
 const PUBLIC_SEVENT = z.object({
-	eventId: SEvent.shape.eventId,
-	endDate: SEvent.shape.endDate,
-	startDate: SEvent.shape.startDate,
-	recurrenceId: SEvent.shape.recurrenceId,
-	recurrence: SRecurrence.pick({ rule: true, endDate: true, startDate: true }).nullish(),
-	roomId: SEvent.shape.roomId,
-	room: SRoom.pick({ name: true, color: true }),
-	status: SStatus.pick({ statusId: true, name: true, key: true }),
+  eventId: SEvent.shape.eventId,
+  endDate: SEvent.shape.endDate,
+  startDate: SEvent.shape.startDate,
+  recurrenceId: SEvent.shape.recurrenceId,
+  recurrence: SRecurrence.pick({ rule: true, endDate: true, startDate: true }).nullish(),
+  roomId: SEvent.shape.roomId,
+  room: SRoom.pick({ name: true, color: true }),
+  status: SStatus.pick({ statusId: true, name: true, key: true }),
 });
 
 const PUBLIC_SCONFIGURATION = z.object({
-	hours: z.object({
-		from: z.number(),
-		to: z.number(),
-	}),
-	useSSO: z.string(),
-	interval: z.number(),
+  hours: z.object({
+    from: z.number(),
+    to: z.number(),
+  }),
+  useSSO: z.string(),
+  interval: z.number(),
 });
 
 export type PUBLIC_IEVENT = z.infer<typeof PUBLIC_SEVENT>;
 export type PUBLIC_IROOM = z.infer<typeof PUBLIC_SROOM>;
 
 export const usePublicEventsQuery = (date: Date, enabled: boolean = true) =>
-	useQuery({
-		queryKey: ["public_events", formatDate(date)],
-		queryFn: async () => {
-			const result = await fetchPublicEvents(formatDate(date));
+  useQuery({
+    queryKey: ["public_events", formatDate(date)],
+    queryFn: async () => {
+      const result = await fetchPublicEvents(formatDate(date));
 
-			const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
+      const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
 
-			if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) throw new Error("Invalid event data");
 
-			return parsedResult.data;
-		},
-		enabled: enabled,
-	});
+      return parsedResult.data;
+    },
+    enabled: enabled,
+  });
 
 export const usePublicRoomsQuery = (enabled: boolean = true) =>
-	useQuery({
-		queryKey: ["public_rooms"],
-		queryFn: async () => {
-			const result = await fetchPublicRooms();
-			const parsedResult = z.array(PUBLIC_SROOM).safeParse(result.data);
+  useQuery({
+    queryKey: ["public_rooms"],
+    queryFn: async () => {
+      const result = await fetchPublicRooms();
+      const parsedResult = z.array(PUBLIC_SROOM).safeParse(result.data);
 
-			if (!parsedResult.success) throw new Error("Invalid room data");
+      if (!parsedResult.success) throw new Error("Invalid room data");
 
-			return parsedResult.data;
-		},
-		enabled: enabled,
-		staleTime: 1000 * 60 * 60, // 1 hour
-	});
+      return parsedResult.data;
+    },
+    enabled: enabled,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
 
 export const usePublicConfiguration = (enabled: boolean = true) =>
-	useQuery({
-		queryKey: ["public_configuration"],
-		queryFn: async () => {
-			const result = await fetchPublicConfiguration();
+  useQuery({
+    queryKey: ["public_configuration"],
+    queryFn: async () => {
+      const result = await fetchPublicConfiguration();
 
-			const parsedResult = PUBLIC_SCONFIGURATION.safeParse(result.data);
+      const parsedResult = PUBLIC_SCONFIGURATION.safeParse(result.data);
 
-			if (!parsedResult.success) throw new Error("Invalid public configuration data");
+      if (!parsedResult.success) throw new Error("Invalid public configuration data");
 
-			return parsedResult.data;
-		},
-		enabled: enabled,
-		staleTime: 1000 * 60 * 60 * 3, // 1 hour
-	});
+      return parsedResult.data;
+    },
+    enabled: enabled,
+    staleTime: 1000 * 60 * 60 * 3, // 1 hour
+  });

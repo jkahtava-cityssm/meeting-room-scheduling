@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { IDayView } from "../view-week/calendar-week-view";
+
 import { navigateURL } from "@/lib/helpers";
 
 export function DayViewDayHeader({ currentDate }: { currentDate: Date }) {
