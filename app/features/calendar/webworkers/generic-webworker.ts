@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 import {
@@ -118,9 +120,8 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
 
   try {
     // 1. Decode the incoming Buffer
-    const decoder = new TextDecoder();
-    const json = decoder.decode(event.data);
-    const payload: ICalendarProcessData = JSON.parse(json);
+    const json = new TextDecoder().decode(new Uint8Array(event.data));
+    const payload = JSON.parse(json) as ICalendarProcessData;
 
     requestId = payload.requestId;
 
@@ -193,10 +194,9 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
       requestId,
     };
 
-    const encoder = new TextEncoder();
-    const resultBuffer = encoder.encode(JSON.stringify(response)).buffer;
+    const bytes = new TextEncoder().encode(JSON.stringify(response));
+    const resultBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 
-    // The second argument [resultBuffer] tells the browser to MOVE the memory, not copy it.
     self.postMessage(resultBuffer, [resultBuffer]);
   } catch (error) {
     const errorPayload = {
@@ -204,8 +204,9 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
       requestId,
     };
 
-    const encoder = new TextEncoder();
-    const errorBuffer = encoder.encode(JSON.stringify(errorPayload)).buffer;
+    const bytes = new TextEncoder().encode(JSON.stringify(errorPayload));
+    const errorBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+
     self.postMessage(errorBuffer, [errorBuffer]);
   }
 };
