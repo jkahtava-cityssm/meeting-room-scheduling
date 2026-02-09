@@ -1,163 +1,106 @@
 "use client";
-import { endOfDay, format, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { useReactToPrint } from "react-to-print";
 
 import { AgendaEventCard } from "@/app/features/calendar/view-agenda/calendar-agenda-event-block";
 
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { IEvent } from "@/lib/schemas/calendar";
-
-import { useEventsQuery } from "@/lib/services/events";
-import { TVisibleHours } from "@/lib/types";
 import { CalendarDayColumnCalendar } from "@/app/features/calendar/sidebar-day-picker/calendar-day-column-calendar";
 import { Button } from "@/components/ui/button";
-
-export interface IAgendaProcessData {
-	events: IEvent[];
-	selectedDate: Date;
-	selectedRoomId: string;
-	multiDayEventsAtTop: boolean;
-	visibleHours: TVisibleHours;
-}
-
-export interface IAgendaResponseData {
-	totalEvents: number;
-	sortedEvents: IEvent[];
-}
+import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
 
 export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
-	const [isLoading, setLoading] = useState(true);
-	const [isRefreshed, setRefreshed] = useState(false);
-	const [filteredEvents, setFilteredEvents] = useState<IEvent[]>([]);
+  const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
+    usePrivateCalendar();
 
-	const { visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
+  const roomIds = useMemo(
+    () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
+    [visibleRooms],
+  );
 
-	const workerRef = useRef<Worker | null>(null);
+  const { result, isLoading } = usePrivateCalendarEvents("AGENDA", date, visibleHours, userId, roomIds);
 
-	const startDate: Date = startOfDay(date);
-	const endDate: Date = endOfDay(date);
-	//const { data: events } = useSWR<IEvent[]>();
+  useEffect(() => {
+    if (isLoading) {
+      setIsHeaderLoading(true);
+    }
 
-	const { data: events } = useEventsQuery(startDate, endDate, userId);
+    if (result && !isLoading) {
+      setIsHeaderLoading(false);
+    }
+  }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-	useEffect(() => {
-		//The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
-		//nextjs cache's the route so this is my temporary fix
-		setRefreshed(true);
-	}, []);
+  const eventsToRender = useMemo(() => {
+    if (!result) return [];
 
-	useEffect(() => {
-		setLoading(true);
-	}, [date]);
+    return result?.data.sortedEvents.filter(
+      (room) => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId,
+    );
+  }, [selectedRoomId, result]);
 
-	useEffect(() => {
-		//This is mostly as an example for myself, technically this processing should likely be done on the server side.
-		//But this example will come in handy for other applications
+  useEffect(() => {
+    setTotalEvents(eventsToRender.length);
+  }, [eventsToRender, setTotalEvents]);
 
-		if (workerRef.current) {
-			return;
-		}
+  const isMounting = !visibleRooms || !result;
 
-		const newWorker = new Worker(new URL("../webworkers/calendar-agenda-webworker.ts", import.meta.url));
+  const printContentRef = useRef<HTMLDivElement>(null);
+  const reactPrintFunction = useReactToPrint({
+    contentRef: printContentRef,
+    documentTitle: `Agenda: ${format(date, "EEEE, MMMM d, yyyy")}`,
+    pageStyle: "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
+  });
 
-		newWorker.onmessage = (event: MessageEvent<IAgendaResponseData>) => {
-			setFilteredEvents(event.data.sortedEvents);
-			setTotalEvents(event.data.totalEvents);
-			setIsHeaderLoading(false);
-			setLoading(false);
-		};
+  return (
+    <>
+      <div className="flex">
+        {isLoading ? (
+          <AgendaEventSkeleton selectedDate={date}></AgendaEventSkeleton>
+        ) : (
+          <div className="flex flex-1 flex-col space-y-2">
+            <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
+              <div ref={printContentRef}>
+                <div className="sticky top-0 flex items-center gap-4 bg-accent p-2">
+                  <Label className="flex-1 text-md font-semibold">{format(date, "EEEE, MMMM d, yyyy")}</Label>
+                  <Button className="no-print mr-2" onClick={reactPrintFunction}>
+                    <Printer /> Print Agenda
+                  </Button>
+                </div>
 
-		workerRef.current = newWorker;
-
-		return () => {
-			if (workerRef.current) {
-				workerRef.current.terminate();
-				workerRef.current = null;
-			}
-		};
-	}, [date, setIsHeaderLoading, setTotalEvents]);
-
-	useEffect(() => {
-		if (!events) {
-			return;
-		}
-
-		if (workerRef.current) {
-			const data: IAgendaProcessData = {
-				events: events,
-				selectedDate: date,
-				selectedRoomId: selectedRoomId,
-				multiDayEventsAtTop: true,
-				visibleHours: visibleHours,
-			};
-			//setLoading(true);
-			setIsHeaderLoading(true);
-
-			workerRef.current.postMessage(data);
-		}
-	}, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
-
-	const printContentRef = useRef<HTMLDivElement>(null);
-	const reactPrintFunction = useReactToPrint({
-		contentRef: printContentRef,
-		documentTitle: `Agenda: ${format(date, "EEEE, MMMM d, yyyy")}`,
-		pageStyle: "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
-	});
-
-	return (
-		<>
-			<div className="flex">
-				{isLoading ? (
-					<AgendaEventSkeleton selectedDate={date}></AgendaEventSkeleton>
-				) : (
-					<div className="flex flex-1 flex-col space-y-2">
-						<ScrollArea
-							className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]"
-							type="always"
-						>
-							<div ref={printContentRef}>
-								<div className="sticky top-0 flex items-center gap-4 bg-accent p-2">
-									<Label className="flex-1 text-md font-semibold">{format(date, "EEEE, MMMM d, yyyy")}</Label>
-									<Button
-										className="no-print mr-2"
-										onClick={reactPrintFunction}
-									>
-										<Printer /> Print Agenda
-									</Button>
-								</div>
-
-								<div className="space-y-2 m-2">
-									{filteredEvents.length > 0 &&
-										filteredEvents.map(event => (
-											<div
-												key={`break-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
-												className="break-inside-avoid"
-											>
-												<AgendaEventCard
-													key={`agenda-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
-													event={event}
-													userId={userId}
-												/>
-											</div>
-										))}
-								</div>
-							</div>
-						</ScrollArea>
-					</div>
-				)}
-				<CalendarDayColumnCalendar
-					date={date}
-					isLoading={isLoading}
-					events={filteredEvents}
-					view={"agenda"}
-				></CalendarDayColumnCalendar>
-			</div>
-		</>
-	);
+                <div className="space-y-2 m-2">
+                  {eventsToRender.length > 0 &&
+                    eventsToRender.map((event) => {
+                      return (
+                        <div
+                          key={`break-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                          className="break-inside-avoid"
+                        >
+                          <AgendaEventCard
+                            key={`agenda-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                            event={event}
+                            userId={userId}
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+        <CalendarDayColumnCalendar
+          date={date}
+          isLoading={isLoading}
+          events={eventsToRender}
+          view={"agenda"}
+        ></CalendarDayColumnCalendar>
+      </div>
+    </>
+  );
 }
