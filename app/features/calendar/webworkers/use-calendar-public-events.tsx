@@ -2,7 +2,7 @@ import { usePublicEventsQuery } from "@/lib/services/public";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IEvent } from "@/lib/schemas/calendar";
-import { CalendarAction } from "./generic-webworker";
+import { CalendarAction, ISODateString } from "./generic-webworker";
 import { TVisibleHours } from "@/lib/types";
 import { getDateRange } from "./generic-webworker-utilities";
 
@@ -24,7 +24,7 @@ export function usePublicCalendarEvents<T extends CalendarAction>(action: T, dat
 
 		processEvents({
 			events: events as IEvent[],
-			selectedDate: date,
+			selectedDate: date.toISOString() as ISODateString,
 			selectedRoomId: roomIdList,
 			action: action,
 			visibleHours: visibleHours,
