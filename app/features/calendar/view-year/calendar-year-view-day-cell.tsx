@@ -5,16 +5,17 @@ import { cn } from "@/lib/utils";
 
 import { IconDot } from "@/components/ui/icon-dot";
 import { TColors } from "@/lib/types";
-import { IDayView } from "./calendar-year-view";
-import { navigateURL } from "@/lib/helpers";
 
-const YearViewDayCell = ({ day }: { day: IDayView }) => {
+import { navigateURL } from "@/lib/helpers";
+import { IYearDayView } from "../webworkers/generic-webworker";
+
+const YearViewDayCell = ({ day }: { day: IYearDayView }) => {
   const { push } = useRouter();
 
   const maxIndicators = 3;
 
   const handleClick = () => {
-    push(navigateURL(day.dayDate, "day"));
+    push(navigateURL(new Date(day.dayDate), "day"));
   };
 
   return (
@@ -26,7 +27,7 @@ const YearViewDayCell = ({ day }: { day: IDayView }) => {
       <div
         className={cn(
           "flex size-6 items-center justify-center rounded-full text-xs font-medium",
-          day.isToday && "bg-primary font-semibold text-primary-foreground"
+          day.isToday && "bg-primary font-semibold text-primary-foreground",
         )}
       >
         {day.day}
