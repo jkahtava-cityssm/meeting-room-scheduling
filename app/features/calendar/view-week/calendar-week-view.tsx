@@ -9,7 +9,7 @@ import { DayHourlyEventDialogs } from "../view-day/calendar-day-event-block-add-
 import { HourColumn } from "../view-day/calendar-day-column-hourly";
 import { WeekViewDayHeader } from "./calendar-week-view-day-header";
 import { EventBlock } from "../view-day/calendar-day-event-block";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
 import { IEvent } from "@/lib/schemas/calendar";
@@ -21,128 +21,67 @@ import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-colum
 import { CalendarDayViewSkeleton } from "../view-day/skeleton-calendar-day-view";
 import { IBlock } from "../calendar-day-grid/calendar-day-grid-webworker";
 import { cn } from "@/lib/utils";
-
-export interface IWeekProcessData {
-	events: IEvent[];
-	selectedDate: Date;
-	selectedRoomId: string;
-	pixelHeight: number;
-	visibleHours: TVisibleHours;
-	multiDayEventsAtTop: boolean;
-}
-
-export interface IWeekResponseData {
-	totalEvents: number;
-	dayViews: IDayView[];
-	hours: number[];
-	//weekViews: WeekView[];
-}
-
-export interface IDayView {
-	day: number;
-	dayDate: Date;
-	isToday: boolean;
-	eventBlocks: IEventBlock[];
-}
-
-export interface IEventBlock {
-	groupIndex: number;
-	eventIndex: number;
-	eventStyle: { top: string; width: string; left: string };
-	eventHeight: number;
-	event: IEvent;
-	roomId: number;
-}
+import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
+import { IEventBlock } from "../webworkers/generic-webworker";
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
-	const [isLoading, setLoading] = useState(true);
-	const [isRefreshed, setRefreshed] = useState(false);
-	const [dayViews, setDayViews] = useState<IDayView[]>([]);
-	const [hours, setHours] = useState<number[]>([]);
+	const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
 
-	const { interval, visibleHours, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
+	const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map(room => room.roomId.toString()) : []), [visibleRooms]);
 
-	const workerRef = useRef<Worker | null>(null);
-
-	const startDate: Date = startOfWeek(date);
-	const endDate: Date = endOfWeek(date);
-
-	const { data: events } = useEventsQuery(startDate, endDate, userId);
+	const { result, isLoading } = usePrivateCalendarEvents("WEEK", date, visibleHours, userId, roomIds);
 
 	useEffect(() => {
-		//The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
-		//nextjs cache's the route so this is my temporary fix
-		setRefreshed(true);
-	}, []);
-
-	useEffect(() => {
-		setLoading(true);
-	}, [date]);
-
-	useEffect(() => {
-		//This is mostly as an example for myself, technically this processing should likely be done on the server side.
-		//But this example will come in handy for other applications
-
-		if (workerRef.current) {
-			return;
-		}
-
-		const newWorker = new Worker(new URL("../webworkers/calendar-week-webworker.ts", import.meta.url));
-
-		newWorker.onmessage = e => {
-			const buffer = e.data;
-			const decoder = new TextDecoder();
-			const json = decoder.decode(buffer);
-			const result = JSON.parse(json);
-
-			setDayViews(result.dayViews);
-			setHours(result.hours);
-			setTotalEvents(result.totalEvents);
-			setIsHeaderLoading(false);
-			setLoading(false);
-		};
-
-		workerRef.current = newWorker;
-
-		return () => {
-			if (workerRef.current) {
-				workerRef.current.terminate();
-				workerRef.current = null;
-			}
-		};
-	}, [date, setIsHeaderLoading, setTotalEvents]);
-
-	useEffect(() => {
-		if (!events) {
-			return;
-		}
-
-		if (workerRef.current) {
-			const data: IWeekProcessData = {
-				events: events,
-				visibleHours: visibleHours,
-				selectedDate: date,
-				selectedRoomId: selectedRoomId,
-				multiDayEventsAtTop: true,
-				pixelHeight: TIME_BLOCK_SIZE,
-			};
-			//setLoading(true);
+		if (isLoading) {
 			setIsHeaderLoading(true);
-
-			const encoder = new TextEncoder();
-			const serialized = encoder.encode(JSON.stringify(data)); // weekDataResult is the output of processWeekEvents_2
-			const buffer = serialized.buffer;
-
-			workerRef.current.postMessage(buffer, [buffer]);
-			//workerRef.current.postMessage(data);
 		}
-	}, [events, date, selectedRoomId, isRefreshed, setIsHeaderLoading, visibleHours]);
 
-	/*if (isLoading) {
-    return <CalendarWeekViewSkeleton />;
-  }*/
+		if (result && !isLoading) {
+			setIsHeaderLoading(false);
+		}
+	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-	const isMounting = !dayViews || !hours;
+	useEffect(() => {
+		if (!result) return;
+
+		setTotalEvents(result.totalEvents);
+	}, [result, setTotalEvents]);
+
+	//const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
+
+	const { daysToRender } = useMemo(() => {
+		if (!result?.data || result.action !== "WEEK") {
+			return { daysToRender: [] };
+		}
+
+		const daysToRender = Array.from(result.data.dayBlocks.entries()).map(([dateKey, roomMap]) => {
+			// roomMap is a Map<string, IEventBlock[]>
+
+			let filteredRooms: [string, IEventBlock[]][];
+
+			if (selectedRoomId === "-1") {
+				// Only include the "-1" (All Rooms) entry
+				const allRoomsEntry = roomMap.get("-1");
+				filteredRooms = allRoomsEntry ? [["-1", allRoomsEntry]] : [];
+			} else {
+				// Only include the selected room
+				const roomEntry = roomMap.get(selectedRoomId);
+				filteredRooms = roomEntry ? [[selectedRoomId, roomEntry]] : [];
+			}
+
+			// Flatten blocks
+			const flatBlocks = filteredRooms.flatMap(([_, blocks]) => blocks);
+
+			return {
+				date: dateKey,
+				blocks: flatBlocks,
+			};
+		});
+
+		return { daysToRender };
+	}, [result, selectedRoomId]);
+
+	const isMounting = !visibleRooms || !result;
 
 	return (
 		<>
@@ -153,23 +92,23 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
 					) : (
 						<CalendarScrollContainerPrivate
 							isLoading={isLoading}
-							hours={hours || []}
+							hours={result?.data.hours || []}
 							isMounting={isMounting}
-							skeleton={<CalendarDayViewSkeleton hours={hours} />}
+							skeleton={<CalendarDayViewSkeleton hours={result?.data.hours} />}
 						>
-							{dayViews?.map((day, dayIndex) => {
+							{daysToRender.map((day, dayIndex) => {
 								return (
 									<CalendarScrollColumnPrivate
-										key={day.day}
+										key={day.date}
 										loadingBlocks={isLoading}
-										title={format(day.dayDate, "EE d")}
+										title={format(day.date, "EE d")}
 										interval={interval}
 										roomId={undefined}
 										userId={userId}
-										hours={hours || []}
-										eventBlocks={(day.eventBlocks as unknown as IBlock[]) || []}
-										isLastColumn={dayViews.length - 1 === dayIndex}
-										currentDate={day.dayDate}
+										hours={result?.data.hours || []}
+										eventBlocks={day.blocks || []}
+										isLastColumn={daysToRender.length - 1 === dayIndex}
+										currentDate={new Date(day.date)}
 									/>
 								);
 							})}
