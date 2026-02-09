@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
 import { MonthViewDayEvents } from "./calendar-month-view-day-events";
@@ -41,7 +41,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
     }
   }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-  const recomputeHeights = () => {
+  const recomputeHeights = useCallback(() => {
     if (!outerScrollRef.current || !weekdayHeaderRef.current || weekCount === 0) return;
 
     const viewport = outerScrollRef.current.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
@@ -63,7 +63,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
 
     // ✅ enforce min 96px as requested
     setRowContentHeight(Math.max(innerScrollH - BORDER_COMPENSATION, MIN_INNER_HEIGHT - BORDER_COMPENSATION));
-  };
+  }, [weekCount]);
 
   useLayoutEffect(() => {
     // ✅ guard inside effect, not around hooks
@@ -83,7 +83,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
     if (weekFooterProbeRef.current) ro.observe(weekFooterProbeRef.current);
 
     return () => ro.disconnect();
-  }, [isLoading, weekCount]);
+  }, [isLoading, recomputeHeights, weekCount]);
 
   // ✅ conditional render AFTER hooks
   if (isLoading || !result) return <MonthViewDayCellSkeleton date={date} />;
@@ -96,7 +96,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
         {/* Weekday labels */}
         <div
           ref={weekdayHeaderRef}
-          className="sticky top-0 z-20 grid grid-cols-7 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80  border-r"
+          className="sticky top-0 z-20 grid grid-cols-7 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80  border-r"
         >
           {WEEK_DAYS.map((day) => (
             <div key={day} className="flex items-center justify-center py-2 border-l first:border-l-0">
@@ -106,14 +106,14 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
         </div>
 
         {/* Weeks */}
-        <div className="flex flex-col border-r-1 ">
+        <div className="flex flex-col border-r ">
           {weeks.map((week, weekIndex) => {
             const isProbe = weekIndex === 0;
 
             return (
               <div key={`week-${week.week}`} className="flex flex-col border-b last:border-b-0">
                 {/* Row Header */}
-                <div ref={isProbe ? weekHeaderProbeRef : undefined} className="grid grid-cols-7 flex-shrink-0">
+                <div ref={isProbe ? weekHeaderProbeRef : undefined} className="grid grid-cols-7 shrink-0">
                   {week.dayViews.map((day, i) => (
                     <MonthViewDayHeader key={`h-${week.week}-${i}`} dayRecord={day} />
                   ))}
@@ -135,7 +135,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
                 </ScrollArea>
 
                 {/* Row Footer */}
-                <div ref={isProbe ? weekFooterProbeRef : undefined} className="grid grid-cols-7 flex-shrink-0">
+                <div ref={isProbe ? weekFooterProbeRef : undefined} className="grid grid-cols-7 shrink-0">
                   {week.dayViews.map((day, i) => (
                     <MonthViewDayFooter key={`f-${week.week}-${i}`} dayRecord={day} />
                   ))}
