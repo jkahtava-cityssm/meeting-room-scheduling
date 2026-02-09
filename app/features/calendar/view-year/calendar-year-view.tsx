@@ -10,6 +10,7 @@ import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TVisibleHours } from "@/lib/types";
 import { useEventsQuery } from "@/lib/services/events";
 import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export function CalendarYearView({ date, userId }: { date: Date; userId?: string }) {
   const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
@@ -46,13 +47,16 @@ export function CalendarYearView({ date, userId }: { date: Date; userId?: string
 
   return (
     <>
-      <div className="p-4">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {result?.data.monthViews.map((month) => {
-            return <YearViewMonth key={month.month.toString()} month={month} />;
-          })}
+      <ScrollArea className="h-full w-full min-h-0 bg-background">
+        <div className="p-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {result?.data.monthViews.map((month) => {
+              return <YearViewMonth key={month.month.toString()} month={month} />;
+            })}
+          </div>
         </div>
-      </div>
+        <ScrollBar orientation="vertical" />
+      </ScrollArea>
     </>
   );
 }
