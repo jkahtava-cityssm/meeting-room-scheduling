@@ -23,112 +23,91 @@ import { CalendarScrollContainerPrivate } from "../components/calendar-scroll-co
 import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-column";
 import { CalendarWeekViewSkeleton } from "../view-week/skeleton-calendar-week-view";
 
-export interface IDayProcessData {
-	events: IEvent[];
-	selectedDate: Date;
-	selectedRoomId: string;
-	pixelHeight: number;
-	visibleHours: TVisibleHours;
-	multiDayEventsAtTop: boolean;
-}
+export function CalendarDayView({
+  date,
+  userId,
+  isSidebarOpen = false,
+}: {
+  date: Date;
+  userId?: string;
+  isSidebarOpen?: boolean;
+}) {
+  const { permissions, isVerifying } = CalendarPermissions.usePermissions();
+  const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
+    usePrivateCalendar();
 
-export interface IDayResponseData {
-	totalEvents: number;
-	dayViews: IDayView[];
-	hours: number[];
-	filteredEvents: IEvent[];
-	roomIds: number[];
-}
+  const roomIds = useMemo(
+    () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
+    [visibleRooms],
+  );
 
-export interface IDayView {
-	day: number;
-	dayDate: Date;
-	isToday: boolean;
-	eventBlocks: IEventBlock[];
-}
+  const { result, isLoading } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
 
-export interface IEventBlock {
-	groupIndex: number;
-	eventIndex: number;
-	eventStyle: { top: string; width: string; left: string };
-	eventHeight: number;
-	event: IEvent;
-	roomId: number;
-}
+  useEffect(() => {
+    if (isLoading) {
+      setIsHeaderLoading(true);
+    }
 
-export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date: Date; userId?: string; isSidebarOpen?: boolean }) {
-	const { permissions, isVerifying } = CalendarPermissions.usePermissions();
-	const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
+    if (result && !isLoading) {
+      setIsHeaderLoading(false);
+    }
+  }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-	const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map(room => room.roomId.toString()) : []), [visibleRooms]);
+  const { roomsToRender, events } = useMemo(() => {
+    const rooms =
+      visibleRooms
+        ?.filter((room) => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
+        .map((room) => {
+          const blocks = result?.data.roomBlocks?.get(String(room.roomId)) ?? [];
+          return { roomId: room.roomId, roomName: room.name, blocks };
+        }) ?? []; // Flatten all events from all blocks
+    const events = rooms.flatMap(
+      (room) => room.blocks.map((block) => block.event).filter(Boolean), // remove null/undefined
+    );
 
-	const { result, isLoading } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
+    return { roomsToRender: rooms, events };
+  }, [visibleRooms, selectedRoomId, result]);
 
-	useEffect(() => {
-		if (isLoading) {
-			setIsHeaderLoading(true);
-		}
+  useEffect(() => {
+    setTotalEvents(events.length);
+  }, [events, setTotalEvents]);
 
-		if (result && !isLoading) {
-			setIsHeaderLoading(false);
-		}
-	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
+  const isMounting = !visibleRooms || !result;
 
-	const { roomsToRender, events } = useMemo(() => {
-		const rooms =
-			visibleRooms
-				?.filter(room => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
-				.map(room => {
-					const blocks = result?.data.roomBlocks?.get(String(room.roomId)) ?? [];
-					return { roomId: room.roomId, roomName: room.name, blocks };
-				}) ?? []; // Flatten all events from all blocks
-		const events = rooms.flatMap(
-			room => room.blocks.map(block => block.event).filter(Boolean), // remove null/undefined
-		);
-
-		return { roomsToRender: rooms, events };
-	}, [visibleRooms, selectedRoomId, result]);
-
-	useEffect(() => {
-		setTotalEvents(events.length);
-	}, [events, setTotalEvents]);
-
-	const isMounting = !visibleRooms || !result;
-
-	return (
-		<div className="flex flex-1 min-h-0">
-			<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
-				<DayViewDayHeader currentDate={date} />
-				<CalendarScrollContainerPrivate
-					isLoading={isLoading}
-					hours={result?.data.hours || defaultHours}
-					isMounting={isMounting}
-					skeleton={<CalendarWeekViewSkeleton />}
-				>
-					{roomsToRender?.map((room, roomIndex) => {
-						return (
-							<CalendarScrollColumnPrivate
-								key={room.roomId}
-								loadingBlocks={isLoading}
-								title={room.roomName}
-								interval={interval}
-								roomId={room.roomId}
-								userId={userId}
-								hours={result?.data.hours || []}
-								eventBlocks={room.blocks || []}
-								isLastColumn={roomsToRender.length - 1 === roomIndex}
-								currentDate={date}
-							/>
-						);
-					})}
-				</CalendarScrollContainerPrivate>
-			</div>
-			<CalendarDayColumnCalendar
-				date={date}
-				isLoading={isLoading}
-				events={events || []}
-				view={"day"}
-			></CalendarDayColumnCalendar>
-		</div>
-	);
+  return (
+    <div className="flex flex-1 min-h-0">
+      <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+        <DayViewDayHeader currentDate={date} />
+        <CalendarScrollContainerPrivate
+          isLoading={isLoading}
+          hours={result?.data.hours || defaultHours}
+          isMounting={isMounting}
+          skeleton={<CalendarWeekViewSkeleton />}
+        >
+          {roomsToRender?.map((room, roomIndex) => {
+            return (
+              <CalendarScrollColumnPrivate
+                key={room.roomId}
+                loadingBlocks={isLoading}
+                title={room.roomName}
+                interval={interval}
+                roomId={room.roomId}
+                userId={userId}
+                hours={result?.data.hours || []}
+                eventBlocks={room.blocks || []}
+                isLastColumn={roomsToRender.length - 1 === roomIndex}
+                currentDate={date}
+              />
+            );
+          })}
+        </CalendarScrollContainerPrivate>
+      </div>
+      <CalendarDayColumnCalendar
+        date={date}
+        isLoading={isLoading}
+        events={events || []}
+        view={"day"}
+      ></CalendarDayColumnCalendar>
+    </div>
+  );
 }
