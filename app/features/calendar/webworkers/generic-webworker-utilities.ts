@@ -62,64 +62,117 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[])
 /** * Strategy for Timeline Views (Day, Public, Week)
  * Returns Record<string, IEventBlock[]>
  */
-export function transformToBlocks(
+export function transformToRoomBlocks(
 	events: IEvent[],
 	earliestEventHour: number,
 	latestEventHour: number,
-	action: CalendarAction,
-): { totalEvents: number; hours: number[]; roomBlocks: Record<string, IEventBlock[]>; groupingType: GroupingType } {
+): { totalEvents: number; hours: number[]; roomBlocks: Record<string, IEventBlock[]> } {
 	const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
 	const groupByEvents: Record<string, IEvent[]> = {};
-	const blockRecords: Record<string, IEventBlock[]> = {};
-
-	// Determine Grouping Key: Public/Day use RoomID, Week uses Date
-
-	const groupingType: GroupingType = action === "WEEK" ? "date" : "roomId";
+	const roomBlocks: Record<string, IEventBlock[]> = {};
 
 	events.forEach(event => {
-		const key = groupingType === "date" ? format(event.startDate, "yyyy-MM-dd") : String(event.roomId);
+		const roomKey = String(event.roomId);
 
 		//Add Grouped Events into record
-		if (!groupByEvents[key]) groupByEvents[key] = [];
-		groupByEvents[key].push(event);
+		if (!groupByEvents[roomKey]) groupByEvents[roomKey] = [];
+		groupByEvents[roomKey].push(event);
 
 		//Since we are collecting the data already might as well populate the output record
-		if (!blockRecords[key]) {
-			blockRecords[key] = [];
+		if (!roomBlocks[roomKey]) {
+			roomBlocks[roomKey] = [];
 		}
 	});
 
 	// Calculate coordinates for each group
-	for (const key in groupByEvents) {
-		const bucketEvents = groupByEvents[key];
-		const partitionedEvents = groupEvents(bucketEvents);
+	for (const roomKey in groupByEvents) {
+		const bucketEvents = groupByEvents[roomKey];
 
-		blockRecords[key] = partitionedEvents.flatMap((group, groupIndex) =>
-			group.map((event, eventIndex) => {
-				const hasOverlap = partitionedEvents.some(
-					(neighborGroup, neighborIndex) =>
-						neighborIndex !== groupIndex &&
-						neighborGroup.some(o => areIntervalsOverlapping({ start: event.startDate, end: event.endDate }, { start: o.startDate, end: o.endDate })),
-				);
-				const currentDate = new Date(event.startDate);
-				return {
-					key: `block-${event.eventId}-${currentDate.getTime()}`,
-					groupIndex: groupIndex,
-					eventIndex: eventIndex,
-					eventStyle: calculateEventBlockStyle(event, currentDate, groupIndex, partitionedEvents.length, hasOverlap, {
-						from: earliestEventHour,
-						to: latestEventHour,
-					}),
-					eventHeight: (differenceInMinutes(event.endDate, event.startDate) / 60) * TIME_BLOCK_SIZE - 8,
-					event: event,
-					roomId: event.roomId,
-				};
-			}),
-		);
+		roomBlocks[roomKey] = buildEventBlocks(bucketEvents, earliestEventHour, latestEventHour);
 	}
 
-	return { totalEvents: events.length, hours, roomBlocks: blockRecords, groupingType };
+	return { totalEvents: events.length, hours, roomBlocks: roomBlocks };
+}
+
+export function transformToWeekBlocks(events: IEvent[], earliestEventHour: number, latestEventHour: number) {
+	const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
+
+	// Step 1: Group events by date ONLY
+	const groupByDate: Record<string, IEvent[]> = {};
+	const dayBlocks: Record<string, Record<string, IEventBlock[]>> = {};
+
+	events.forEach(event => {
+		const dateKey = format(event.startDate, "yyyy-MM-dd");
+
+		if (!groupByDate[dateKey]) groupByDate[dateKey] = [];
+		groupByDate[dateKey].push(event);
+
+		if (!dayBlocks[dateKey]) dayBlocks[dateKey] = {};
+	});
+
+	// Step 2: Build blocks for each date
+	for (const dateKey in groupByDate) {
+		const dailyEvents = groupByDate[dateKey];
+
+		// --- FIRST PASS: All Rooms (-1) ---
+		const allBlocks = buildEventBlocks(dailyEvents, earliestEventHour, latestEventHour);
+
+		dayBlocks[dateKey]["-1"] = allBlocks; // All Rooms option
+
+		// --- SECOND PASS: Individual Rooms ---
+		const rooms: Record<string, IEvent[]> = {};
+
+		// Group events by room for this day
+		dailyEvents.forEach(event => {
+			const roomKey = String(event.roomId);
+			if (!rooms[roomKey]) rooms[roomKey] = [];
+			rooms[roomKey].push(event);
+		});
+
+		// Build blocks per room
+		for (const roomKey in rooms) {
+			const roomEvents = rooms[roomKey];
+
+			dayBlocks[dateKey][roomKey] = buildEventBlocks(roomEvents, earliestEventHour, latestEventHour);
+		}
+	}
+
+	return {
+		totalEvents: events.length,
+		hours,
+		dayBlocks,
+		groupingType: "date",
+	};
+}
+
+function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, latestEventHour: number): IEventBlock[] {
+	const partitioned = groupEvents(bucketEvents);
+
+	return partitioned.flatMap((group, groupIndex) =>
+		group.map((event, eventIndex) => {
+			const hasOverlap = partitioned.some(
+				(neighborGroup, neighborIndex) =>
+					neighborIndex !== groupIndex &&
+					neighborGroup.some(o => areIntervalsOverlapping({ start: event.startDate, end: event.endDate }, { start: o.startDate, end: o.endDate })),
+			);
+
+			const currentDate = new Date(event.startDate);
+
+			return {
+				key: `block-${event.eventId}-${currentDate.getTime()}`,
+				groupIndex,
+				eventIndex,
+				eventStyle: calculateEventBlockStyle(event, currentDate, groupIndex, partitioned.length, hasOverlap, {
+					from: earliestEventHour,
+					to: latestEventHour,
+				}),
+				eventHeight: (differenceInMinutes(event.endDate, event.startDate) / 60) * TIME_BLOCK_SIZE - 8,
+				event,
+				roomId: event.roomId,
+			};
+		}),
+	);
 }
 
 /**

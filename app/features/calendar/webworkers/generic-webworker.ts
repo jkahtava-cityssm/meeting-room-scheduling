@@ -1,19 +1,20 @@
 import { IEvent } from "@/lib/schemas/calendar";
 import { TVisibleHours } from "@/lib/types";
 import {
-  calculateViewBoundaries,
-  filterEventsByRoom,
-  generateMultiDayEventsInPeriod,
-  generateRecurringEventsInPeriod,
-  getDateRange,
-  transformToBlocks,
-  transformToGrid,
-  transformToYearly,
+	calculateViewBoundaries,
+	filterEventsByRoom,
+	generateMultiDayEventsInPeriod,
+	generateRecurringEventsInPeriod,
+	getDateRange,
+	transformToGrid,
+	transformToRoomBlocks,
+	transformToWeekBlocks,
+	transformToYearly,
 } from "./generic-webworker-utilities";
 
 // --- Base Interfaces ---
 export type GroupingType = "date" | "roomId" | "none";
-export type CalendarAction = "AGENDA" | "DAY" | "WEEK" | "MONTH" | "YEAR" | "PUBLIC";
+export type CalendarAction = "AGENDA" | "DAY" | "WEEK" | "MONTH" | "YEAR";
 export type ISODateString = string & { __brand: "ISODateString" };
 
 export interface IEventBlock {
@@ -63,20 +64,29 @@ export interface IYearDayView {
 	dayEvents: IEvent[];
 }
 
-export type TRawBlockData = { roomBlocks: Record<string, IEventBlock[]>; hours: number[] };
 export type TProcessedBlockData = { roomBlocks: Map<string, IEventBlock[]>; hours: number[] };
+export type TProcessedWeekData = { dayBlocks: Map<string, Map<string, IEventBlock[]>>; hours: number[] };
+
+export interface IDayRoomBlock {
+	roomBlocks: Record<string, IEventBlock[]>;
+	hours: number[];
+}
+
+export interface IWeekData {
+	dayBlocks: Record<string, Record<string, IEventBlock[]>>;
+	hours: number[];
+}
 
 export type CalendarDataMap = {
 	AGENDA: { sortedEvents: IEvent[] };
-	DAY: TRawBlockData;
-	WEEK: TRawBlockData;
-	PUBLIC: TRawBlockData;
+	DAY: IDayRoomBlock;
+	WEEK: IWeekData;
 	MONTH: { dayViews: IMonthDayView[]; weekViews: IMonthWeekView[] };
 	YEAR: { monthViews: IYearMonthView[] };
 };
 
 export type ProcessedDataMap = {
-	[K in keyof CalendarDataMap]: K extends "DAY" | "WEEK" | "PUBLIC" ? TProcessedBlockData : CalendarDataMap[K];
+	[K in keyof CalendarDataMap]: K extends "DAY" ? TProcessedBlockData : K extends "WEEK" ? TProcessedWeekData : CalendarDataMap[K];
 };
 
 export interface ICalendarProcessData {
@@ -93,7 +103,6 @@ export interface IUnifiedResponse<A extends CalendarAction = CalendarAction> {
 	action: A;
 	data: CalendarDataMap[A];
 	totalEvents: number;
-	groupingType: GroupingType;
 	requestId?: number;
 	error?: string;
 }
@@ -130,7 +139,6 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
 		const sortedEvents = filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 		// 2. Generic Transformation Logic
 		let resultData: CalendarDataMap[CalendarAction];
-		let groupingType: GroupingType = "none";
 
 		switch (action) {
 			case "AGENDA":
@@ -138,17 +146,21 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
 				break;
 
 			case "DAY":
-			case "WEEK":
-			case "PUBLIC":
 				// These all share the "Block" logic with different date ranges
-				const blockResult = transformToBlocks(sortedEvents, viewBounds.from, viewBounds.to, action);
+				const blockResult = transformToRoomBlocks(sortedEvents, viewBounds.from, viewBounds.to);
 				resultData = {
 					roomBlocks: blockResult.roomBlocks,
 					hours: blockResult.hours,
 				};
-				groupingType = blockResult.groupingType;
 				break;
+			case "WEEK":
+				const weekResult = transformToWeekBlocks(sortedEvents, viewBounds.from, viewBounds.to);
 
+				resultData = {
+					dayBlocks: weekResult.dayBlocks, // This will be a Record for DAY/PUBLIC, and an Array for WEEK
+					hours: weekResult.hours,
+				};
+				break;
 			case "MONTH":
 				const gridResult = transformToGrid(sortedEvents, currentDate, payload.multiDayEventsAtTop);
 				resultData = { dayViews: gridResult.dayViews, weekViews: gridResult.weekViews };
@@ -169,7 +181,6 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
 			action,
 			data: resultData,
 			requestId,
-			groupingType,
 		};
 
 		const encoder = new TextEncoder();
