@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarDayColumnCalendar } from "@/app/features/calendar/sidebar-day-picker/calendar-day-column-calendar";
 import { Button } from "@/components/ui/button";
 import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
+import { cn } from "@/lib/utils";
 
 export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
   const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
@@ -59,12 +60,12 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
 
   return (
     <>
-      <div className="flex">
+      <div className="flex flex-1 min-h-0">
         {isLoading ? (
           <AgendaEventSkeleton selectedDate={date}></AgendaEventSkeleton>
         ) : (
-          <div className="flex flex-1 flex-col space-y-2">
-            <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
+          <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+            <ScrollArea className="w-full flex-1 min-h-0" type="always">
               <div ref={printContentRef}>
                 <div className="sticky top-0 flex items-center gap-4 bg-accent p-2">
                   <Label className="flex-1 text-md font-semibold">{format(date, "EEEE, MMMM d, yyyy")}</Label>
