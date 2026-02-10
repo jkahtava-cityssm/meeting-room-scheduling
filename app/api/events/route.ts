@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       }
 
       return CreatedMessage("Created Event", event);
-    }
+    },
   );
 }
 
@@ -134,7 +134,7 @@ export async function PUT(request: NextRequest) {
       }
 
       return CreatedMessage("Created Event", event);
-    }
+    },
   );
 }
 
@@ -194,14 +194,14 @@ export async function PATCH(request: NextRequest) {
       }
 
       return SuccessMessage("Event updated successfully", event);
-    }
+    },
   );
 }
 
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { ReadEvent: { type: "permission", resource: "Event", action: "Read" } },
+    { ReadEvent: { type: "permission", resource: "Event", action: "Read All" } },
 
     async (userId, roles) => {
       const searchParams = request.nextUrl.searchParams;
@@ -243,6 +243,6 @@ export async function GET(request: NextRequest) {
       }
 
       return SuccessMessage("Collected Events", events);
-    }
+    },
   );
 }
