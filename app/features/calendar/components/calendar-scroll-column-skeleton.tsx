@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { GridEventBlock } from "./calendar-scroll-private-event-block";
 import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from "react";
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
-import { CalendarPermissions } from "../permissions/calendar.permissions";
+
 import { TIME_BLOCK_SIZE } from "@/lib/types";
 import { useCalendarViewport } from "./calendar-scroll-context";
 import { PublicEventBlock } from "./calendar-scroll-public-event-block";

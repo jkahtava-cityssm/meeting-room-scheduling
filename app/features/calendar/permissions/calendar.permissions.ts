@@ -2,6 +2,8 @@ import { createSecurityContext } from "@/lib/auth-permission-security-context";
 
 const PAGE_PERMISSIONS = {
   CreateEvent: { type: "permission", resource: "Event", action: "Create" },
+  ReadAllEvent: { type: "permission", resource: "Event", action: "Read All" },
+  ReadSelfEvent: { type: "permission", resource: "Event", action: "Read Self" },
   AllowDayView: { type: "permission", resource: "Calendar", action: "View Day" },
   AllowWeekView: { type: "permission", resource: "Calendar", action: "View Week" },
   AllowMonthView: { type: "permission", resource: "Calendar", action: "View Month" },

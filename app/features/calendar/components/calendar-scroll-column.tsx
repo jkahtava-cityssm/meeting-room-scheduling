@@ -3,12 +3,13 @@ import { cn } from "@/lib/utils";
 import { GridEventBlock } from "./calendar-scroll-private-event-block";
 import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from "react";
 import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
-import { CalendarPermissions } from "../permissions/calendar.permissions";
+
 import { TIME_BLOCK_SIZE } from "@/lib/types";
 import { useCalendarViewport } from "./calendar-scroll-context";
 import { PublicEventBlock } from "./calendar-scroll-public-event-block";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IEventBlock } from "../webworkers/generic-webworker";
+import { useCalendarSecurity } from "../permissions/calendar-security-map";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -52,20 +53,30 @@ export type EventBlockRenderProps = {
 export function CalendarScrollColumnPrivate(
   props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
 ) {
-  const { can, isVerifying } = CalendarPermissions.usePermissions();
+  const { can, isVerifying } = useCalendarSecurity();
   const createEventAllowed = !isVerifying && can("CreateEvent");
-  const editEventAllowed = !isVerifying && can("CreateEvent");
+
+  const readAllEventAllowed = !isVerifying && can("ReadAllEvent");
+  const readSelfEventAllowed = !isVerifying && can("ReadSelfEvent");
+
+  const { openEventDrawer } = useSharedEventDrawer();
 
   const renderEventBlock = useCallback(
     ({ eventBlock, userId }: EventBlockRenderProps) => (
       <GridEventBlock
-        editEventAllowed={editEventAllowed}
         eventBlock={eventBlock}
         heightInPixels={eventBlock.eventHeight}
         userId={userId}
+        onClick={(e) => {
+          e.preventDefault();
+
+          if (readAllEventAllowed || (readSelfEventAllowed && String(eventBlock.event.userId) === userId)) {
+            openEventDrawer({ event: eventBlock.event, userId });
+          }
+        }}
       />
     ),
-    [editEventAllowed],
+    [openEventDrawer, readAllEventAllowed, readSelfEventAllowed],
   );
 
   const renderTimeBlock = useCallback(

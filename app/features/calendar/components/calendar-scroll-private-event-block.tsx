@@ -24,12 +24,12 @@ const EventCard = cva(
 interface MonthEventBadgeProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color"> {
   eventBlock: IEventBlock;
   heightInPixels: number;
-  editEventAllowed: boolean;
+
   userId?: string;
 }
 
 export const GridEventBlock = forwardRef<HTMLButtonElement, MonthEventBadgeProps>(function GridEventBlock(
-  { eventBlock, heightInPixels, editEventAllowed, userId, ...buttonProps },
+  { eventBlock, heightInPixels, userId, ...buttonProps },
   ref,
 ) {
   if (!eventBlock?.event) {

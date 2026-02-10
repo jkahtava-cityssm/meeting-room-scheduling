@@ -13,6 +13,10 @@ import { CalendarScrollContainerPrivate } from "../components/calendar-scroll-co
 import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-column";
 import { CalendarWeekViewSkeleton } from "../view-week/skeleton-calendar-week-view";
 import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
+import { CalendarAccessDenied } from "../calendar-controller/calendar-all-views";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
+import { useCalendarSecurity } from "../permissions/calendar-security-map";
 
 export function CalendarDayView({
   date,
@@ -23,7 +27,7 @@ export function CalendarDayView({
   userId?: string;
   isSidebarOpen?: boolean;
 }) {
-  const { permissions, isVerifying } = CalendarPermissions.usePermissions();
+  const { can, isVerifying } = useCalendarSecurity();
   const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
     usePrivateCalendar();
 
@@ -32,7 +36,16 @@ export function CalendarDayView({
     [visibleRooms],
   );
 
-  const { result, isLoading } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
+  const allowDayView = can("AllowDayView");
+
+  const { result, isLoading, error } = usePrivateCalendarEvents(
+    "DAY",
+    date,
+    visibleHours,
+    userId,
+    roomIds,
+    allowDayView,
+  );
 
   useEffect(() => {
     if (isLoading) {
@@ -64,6 +77,22 @@ export function CalendarDayView({
   }, [events, setTotalEvents]);
 
   const isMounting = !visibleRooms || !result;
+
+  if (!allowDayView || error) {
+    return (
+      <div className="flex flex-1 min-h-0">
+        <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1 p-4")}>
+          <Alert variant="destructive" className="mt-4 ">
+            <Terminal className="h-4 w-4" />
+            <AlertTitle>{allowDayView ? error?.name : "Permission Denied"}</AlertTitle>
+            <AlertDescription>
+              {allowDayView ? error?.message : "You do not have permission to view this content"}
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 min-h-0">

@@ -23,6 +23,8 @@ import { CalendarAgendaView } from "@/app/features/calendar/view-agenda/calendar
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
+import { SecurityAdapter } from "../permissions/calendar-security-map";
+import { UserBookingPermissions } from "../permissions/user-booking.permissions";
 //import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null) {
@@ -57,9 +59,13 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
     redirect("/");
   }
 
+  const securityConfig = userId
+    ? { provider: UserBookingPermissions.Provider, useHook: UserBookingPermissions.usePermissions }
+    : { provider: CalendarPermissions.Provider, useHook: CalendarPermissions.usePermissions };
+
   if (session) {
     return (
-      <CalendarPermissions.Provider session={session}>
+      <SecurityAdapter provider={securityConfig.provider} useHook={securityConfig.useHook} session={session}>
         <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
           <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} userId={userId} />
 
@@ -69,7 +75,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
           {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
           {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
         </div>
-      </CalendarPermissions.Provider>
+      </SecurityAdapter>
     );
   }
 }

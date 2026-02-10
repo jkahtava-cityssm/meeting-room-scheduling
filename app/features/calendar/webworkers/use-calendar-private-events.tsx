@@ -14,10 +14,16 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   visibleHours: TVisibleHours,
   userId?: string,
   roomId?: string | string[],
+  enabled: boolean = false,
 ) {
   const range = useMemo(() => getDateRange(action, date), [action, date]);
 
-  const { data: events, isLoading, isFetching, error } = useEventsQuery(range.startDate, range.endDate, userId);
+  const {
+    data: events,
+    isLoading,
+    isFetching,
+    error,
+  } = useEventsQuery(range.startDate, range.endDate, userId, enabled);
 
   const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 
