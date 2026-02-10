@@ -26,82 +26,52 @@ import { CalendarPermissions } from "../permissions/calendar.permissions";
 //import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null) {
-	return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
+  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
 }
 
 function removeTimeFromDate(date: Date) {
-	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 export function CalendarAllViews({ userId }: { userId?: string }) {
-	const searchParams = useSearchParams();
-	const dateParam = searchParams.get("selectedDate");
-	const viewParam = searchParams.get("view");
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("selectedDate");
+  const viewParam = searchParams.get("view");
 
-	const view = viewParam === null ? "day" : viewParam;
+  const view = viewParam === null ? "day" : viewParam;
 
-	const dateValue = useMemo(() => {
-		return getViewDate(dateParam);
-	}, [dateParam]);
+  const dateValue = useMemo(() => {
+    return getViewDate(dateParam);
+  }, [dateParam]);
 
-	const { session, isPending } = useSession();
+  const { session, isPending } = useSession();
 
-	const { open, openMobile, isMobile } = useSidebar();
+  const { open, openMobile, isMobile } = useSidebar();
 
-	if (isPending) {
-		return <div>Verifying Access</div>;
-	}
+  if (isPending) {
+    return <div>Verifying Access</div>;
+  }
 
-	if (!session) {
-		//console.log("Calendar-All-Views No session, redirecting to login");
-		redirect("/");
-	}
+  if (!session) {
+    //console.log("Calendar-All-Views No session, redirecting to login");
+    redirect("/");
+  }
 
-	if (session) {
-		return (
-			<CalendarPermissions.Provider session={session}>
-				<div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
-					<CalendarHeader
-						view={view as TCalendarView}
-						selectedDate={dateValue}
-						userId={userId}
-					/>
+  if (session) {
+    return (
+      <CalendarPermissions.Provider session={session}>
+        <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
+          <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} userId={userId} />
 
-					{view === "day" && (
-						<CalendarDayView
-							date={dateValue}
-							userId={userId}
-							isSidebarOpen={open}
-						/>
-					)}
-					{view === "month" && (
-						<CalendarMonthView
-							date={dateValue}
-							userId={userId}
-						/>
-					)}
-					{view === "week" && (
-						<CalendarWeekView
-							date={dateValue}
-							userId={userId}
-						/>
-					)}
-					{view === "year" && (
-						<CalendarYearView
-							date={dateValue}
-							userId={userId}
-						/>
-					)}
-					{view === "agenda" && (
-						<CalendarAgendaView
-							date={dateValue}
-							userId={userId}
-						/>
-					)}
-				</div>
-			</CalendarPermissions.Provider>
-		);
-	}
+          {view === "day" && <CalendarDayView date={dateValue} userId={userId} isSidebarOpen={open} />}
+          {view === "month" && <CalendarMonthView key={dateValue.toISOString()} date={dateValue} userId={userId} />}
+          {view === "week" && <CalendarWeekView date={dateValue} userId={userId} />}
+          {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
+          {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
+        </div>
+      </CalendarPermissions.Provider>
+    );
+  }
 }
 
 export function CalendarAccessDenied({

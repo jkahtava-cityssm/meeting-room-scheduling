@@ -3,7 +3,15 @@ import { eventBadgeVariants, MonthEventBadge } from "@/app/features/calendar/vie
 import { cn } from "@/lib/utils";
 import { IMonthDayView } from "../webworkers/generic-webworker";
 
-export function MonthViewDayEvents({ dayRecord, userId }: { dayRecord: IMonthDayView; userId?: string }) {
+export function MonthViewDayEvents({
+  dayRecord,
+  userId,
+  isLoading,
+}: {
+  dayRecord: IMonthDayView;
+  userId?: string;
+  isLoading: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -13,34 +21,35 @@ export function MonthViewDayEvents({ dayRecord, userId }: { dayRecord: IMonthDay
       )}
     >
       <div className="flex flex-col gap-1 ">
-        {dayRecord.eventRecords.map((record, index) => {
-          //const event = cellEvents.find((e) => e.position === position);
-          const eventKey = record.event
-            ? `event-${record.event.eventId}-${dayRecord.dayDate}-${index}`
-            : `empty-${record.index}`;
+        {!isLoading &&
+          dayRecord.eventRecords.map((record, index) => {
+            //const event = cellEvents.find((e) => e.position === position);
+            const eventKey = record.event
+              ? `event-${record.event.eventId}-${dayRecord.dayDate}-${index}`
+              : `empty-${record.index}`;
 
-          if (record.event) {
-            return (
-              <div key={eventKey} className="flex-1">
-                {record.event && (
-                  <MonthEventBadge
-                    //className="hidden sm:flex"
-                    event={record.event}
-                    cellDate={startOfDay(dayRecord.dayDate)}
-                    position={record.position}
-                    userId={userId}
-                  />
-                )}
-              </div>
-            );
-          } else {
-            return (
-              <div key={eventKey} className="flex-1">
-                <div className={cn(eventBadgeVariants({ color: "invisible" }))}></div>
-              </div>
-            );
-          }
-        })}
+            if (record.event) {
+              return (
+                <div key={eventKey} className="flex-1">
+                  {record.event && (
+                    <MonthEventBadge
+                      //className="hidden sm:flex"
+                      event={record.event}
+                      cellDate={startOfDay(dayRecord.dayDate)}
+                      position={record.position}
+                      userId={userId}
+                    />
+                  )}
+                </div>
+              );
+            } else {
+              return (
+                <div key={eventKey} className="flex-1">
+                  <div className={cn(eventBadgeVariants({ color: "invisible" }))}></div>
+                </div>
+              );
+            }
+          })}
       </div>
     </div>
   );

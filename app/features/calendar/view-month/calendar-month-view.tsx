@@ -8,6 +8,8 @@ import { MonthViewDayHeader } from "./calendar-month-view-day-header";
 import { MonthViewDayFooter } from "./calendar-month-view-day-footer";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
+import { LoaderCircle } from "lucide-react";
+import { isSameMonth, startOfMonth } from "date-fns";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MIN_INNER_HEIGHT = 96;
@@ -86,17 +88,19 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
   }, [isLoading, recomputeHeights, weekCount]);
 
   //  conditional render AFTER hooks
-  if (isLoading || !result) return <MonthViewDayCellSkeleton date={date} />;
+
+  const isMounting = !result;
+  if (isMounting) return <MonthViewDayCellSkeleton date={date} />;
 
   return (
     //  OUTER / MAIN scroll area (Option B)
     <ScrollArea ref={outerScrollRef} className="h-full w-full min-h-0">
       {/* This wrapper is the scroll content */}
-      <div className="flex flex-col pr-4 ">
+      <div className="flex flex-col px-4 bg-accent">
         {/* Weekday labels */}
         <div
           ref={weekdayHeaderRef}
-          className="sticky top-0 z-20 grid grid-cols-7 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80  border-r"
+          className="sticky top-0 z-20 grid grid-cols-7 border-b bg-background backdrop-blur supports-backdrop-filter:bg-background/80 border-x"
         >
           {WEEK_DAYS.map((day) => (
             <div key={day} className="flex items-center justify-center py-2 border-l first:border-l-0">
@@ -106,7 +110,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
         </div>
 
         {/* Weeks */}
-        <div className="flex flex-col border-r ">
+        <div className="flex flex-col border-x  bg-background">
           {weeks.map((week, weekIndex) => {
             const isProbe = weekIndex === 0;
 
@@ -126,9 +130,9 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
                   style={{ height: rowContentHeight }}
                   viewportClassName="[&>div]:h-full"
                 >
-                  <div className="grid grid-cols-7 min-h-full">
+                  <div className="grid grid-cols-7 min-h-full h-full">
                     {week.dayViews.map((day) => (
-                      <MonthViewDayEvents key={day.dayDate} dayRecord={day} userId={userId} />
+                      <MonthViewDayEvents key={day.dayDate} isLoading={isLoading} dayRecord={day} userId={userId} />
                     ))}
                   </div>
                   <ScrollBar orientation="vertical" forceMount />
@@ -145,7 +149,13 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
           })}
         </div>
       </div>
-
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
+            <LoaderCircle className="animate-spin" />
+          </div>
+        </div>
+      )}
       {/* MAIN scrollbar */}
       <ScrollBar orientation="vertical" forceMount />
     </ScrollArea>
