@@ -14,7 +14,6 @@ import {
 type CalendarState<A extends CalendarAction> = {
   action: A;
   totalEvents: number;
-  groupingType: GroupingType;
   requestId?: number;
   data: ProcessedDataMap[A];
 };
@@ -90,7 +89,7 @@ export function useCalendarWorker<A extends CalendarAction>() {
     };
   }, []);
 
-  const processEvents = useCallback((message: Omit<ICalendarProcessData, "action"> & { action: A }) => {
+  const processEvents = useCallback((message: Omit<ICalendarProcessData, "action" | "requestId"> & { action: A }) => {
     if (!workerRef.current) return;
     setLoading(true);
     setError(null);

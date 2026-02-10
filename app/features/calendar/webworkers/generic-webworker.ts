@@ -102,14 +102,15 @@ export interface ICalendarProcessData {
   visibleHours: TVisibleHours;
   multiDayEventsAtTop: boolean;
   action: CalendarAction;
-  requestId?: number;
+  requestId: number;
+  userId?: string;
 }
 
 export interface IUnifiedResponse<A extends CalendarAction = CalendarAction> {
   action: A;
   data: CalendarDataMap[A];
   totalEvents: number;
-  requestId?: number;
+  requestId: number;
   error?: string;
 }
 
@@ -125,7 +126,7 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
 
     requestId = payload.requestId;
 
-    const { action, events, selectedDate, visibleHours } = payload;
+    const { action, events, selectedDate, visibleHours, userId } = payload;
 
     const currentDate = new Date(selectedDate);
 
@@ -207,7 +208,7 @@ self.onmessage = async (event: MessageEvent<ArrayBuffer>) => {
   } catch (error) {
     const errorPayload = {
       error: error instanceof Error ? error.message : "Unknown Worker Error",
-      requestId,
+      requestId: requestId ? requestId : -1,
     };
 
     const bytes = new TextEncoder().encode(JSON.stringify(errorPayload));
