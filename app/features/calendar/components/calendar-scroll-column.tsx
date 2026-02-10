@@ -53,13 +53,19 @@ export function CalendarScrollColumnPrivate(
   props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
 ) {
   const { can, isVerifying } = CalendarPermissions.usePermissions();
-  const allowed = !isVerifying && can("CreateEvent");
+  const createEventAllowed = !isVerifying && can("CreateEvent");
+  const editEventAllowed = !isVerifying && can("CreateEvent");
 
   const renderEventBlock = useCallback(
     ({ eventBlock, userId }: EventBlockRenderProps) => (
-      <GridEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} userId={userId} />
+      <GridEventBlock
+        editEventAllowed={editEventAllowed}
+        eventBlock={eventBlock}
+        heightInPixels={eventBlock.eventHeight}
+        userId={userId}
+      />
     ),
-    [],
+    [editEventAllowed],
   );
 
   const renderTimeBlock = useCallback(
@@ -73,10 +79,10 @@ export function CalendarScrollColumnPrivate(
         totalBlocks={p.totalBlocks}
         blockIndex={p.blockIndex}
         showBottomSeparator={p.showBottomSeparator}
-        createEventAllowed={allowed}
+        createEventAllowed={createEventAllowed}
       />
     ),
-    [allowed],
+    [createEventAllowed],
   );
 
   return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;
