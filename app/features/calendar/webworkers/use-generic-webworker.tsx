@@ -24,7 +24,7 @@ export function useCalendarWorker<A extends CalendarAction>() {
 
   const [data, setData] = useState<CalendarState<A> | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<unknown>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     workerRef.current = new Worker(new URL("./generic-webworker.ts", import.meta.url), { type: "module" });
@@ -36,7 +36,7 @@ export function useCalendarWorker<A extends CalendarAction>() {
       if (result.requestId !== requestIdRef.current) return;
 
       if (result.error) {
-        setError(result.error);
+        setError(new Error(result.error));
         setLoading(false);
         return;
       }
@@ -80,7 +80,15 @@ export function useCalendarWorker<A extends CalendarAction>() {
     };
 
     workerRef.current.onerror = (err) => {
-      setError(err);
+      if (err.error instanceof Error) {
+        setError(err.error);
+      } else {
+        const newError = new Error(err.message || "Unknown Worker Error");
+        newError.name = "WebWorkerError";
+
+        setError(newError);
+      }
+
       setLoading(false);
     };
 
