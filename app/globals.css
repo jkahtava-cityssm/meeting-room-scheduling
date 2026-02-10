@@ -5,11 +5,35 @@
 @source inline("{dark:bg,dark:text,dark:border}-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,slate,gray,zinc,neutral,stone}-{900,800,700}");
 @source inline("[&_.event-dot]:fill-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,slate,gray,zinc,neutral,stone}-600");
 
-@source inline("{bg,text,border,fill}-{silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-{50,100,200,300,400,500,600,700,800,900}");
-@source inline("{dark:bg,dark:text,dark:border}-{silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-{900,800,700}");
-@source inline("[&_.event-dot]:fill-{silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-600");
+@source inline("{bg,text,border,fill}-{approved,rejected,silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-{50,100,200,300,400,500,600,700,800,900}");
+@source inline("{dark:bg,dark:text,dark:border}-{approved,rejected,silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-{900,800,700}");
+@source inline("[&_.event-dot]:fill-{approved,rejected,silver-chalice,razzmatazz,viola,havelock-blue,scooter,watercourse,camarone,malachite,sulu,manz,harvest-gold,japonica}-600");
 
 @theme {
+  --color-approved-50: #eefff0;
+  --color-approved-100: #d6ffdd;
+  --color-approved-200: #b0ffbd;
+  --color-approved-300: #74ff8b;
+  --color-approved-400: #4ef96a;
+  --color-approved-500: #05e22a;
+  --color-approved-600: #00bc1e;
+  --color-approved-700: #02931b;
+  --color-approved-800: #08731b;
+  --color-approved-900: #095e1a;
+  --color-approved-950: #00350a;
+
+  /* color-rejected */
+  --color-rejected-50: #fef2f2;
+  --color-rejected-100: #ffdfdf;
+  --color-rejected-200: #ffc8c8;
+  --color-rejected-300: #ffa2a2;
+  --color-rejected-400: #fd6c6c;
+  --color-rejected-500: #f53e3e;
+  --color-rejected-600: #e32020;
+  --color-rejected-700: #bf1616;
+  --color-rejected-800: #9d1717;
+  --color-rejected-900: #831a1a;
+  --color-rejected-950: #470808;
   /* color-silver-chalice */
 
   --color-silver-chalice-50: #f7f7f7;

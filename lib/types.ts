@@ -22,6 +22,8 @@ export const colorOptions = [
   "cyan",
   "scooter",
   "disabled",
+  "approved",
+  "rejected",
   "sky",
   "blue",
   "havelockBlue",
@@ -69,7 +71,7 @@ export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
 export const DEFAULT_RESOURCE_ACTIONS = [
   {
     RESOURCE: "Event",
-    ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"],
+    ACTIONS: ["Read All", "Read Self", "Create", "Update", "Delete", "Change Status", "Change Assigned"],
   },
   {
     RESOURCE: "Room",
@@ -115,7 +117,10 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
   {
     ROLE: "Clerk",
     SET: [
-      { RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update", "Delete", "Change Status", "Change Assigned"] },
+      {
+        RESOURCE: "Event",
+        ACTIONS: ["Read Self", "Read All", "Create", "Update", "Delete", "Change Status", "Change Assigned"],
+      },
       { RESOURCE: "Room", ACTIONS: ["Read", "Create", "Update", "Delete", "View Hidden"] },
       { RESOURCE: "User", ACTIONS: ["Read All"] },
       { RESOURCE: "Calendar", ACTIONS: ["Read", "Update"] },
@@ -126,7 +131,7 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
   {
     ROLE: "User",
     SET: [
-      { RESOURCE: "Event", ACTIONS: ["Read", "Create", "Update"] },
+      { RESOURCE: "Event", ACTIONS: ["Read Self", "Create", "Update"] },
       { RESOURCE: "Room", ACTIONS: ["Read"] },
       { RESOURCE: "User", ACTIONS: ["Read Self"] },
       { RESOURCE: "Calendar", ACTIONS: [] },
