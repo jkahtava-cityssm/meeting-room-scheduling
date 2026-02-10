@@ -90,7 +90,6 @@ export function MonthViewDayCellSkeleton({ date }: { date: Date }) {
     return () => ro.disconnect();
   }, [recomputeHeights, weekCount]);
 
-  //145 bottom border 1 so 144
   return (
     <ScrollArea ref={outerScrollRef} className="h-full w-full min-h-0">
       <div className="flex flex-col px-4 bg-accent">
@@ -114,9 +113,6 @@ export function MonthViewDayCellSkeleton({ date }: { date: Date }) {
                 key={`${dayRecord.type}-${dayRecord.day}`}
                 className={cn("flex h-full flex-col border-l border-b overflow-hidden", isSunday && "border-l-0")}
               >
-                {
-                  //24, 16 text, 4 padding
-                }
                 <div ref={isProbe ? weekHeaderProbeRef : undefined} className="shrink-0 py-1">
                   <span
                     className={cn(
@@ -127,16 +123,11 @@ export function MonthViewDayCellSkeleton({ date }: { date: Date }) {
                     {dayRecord.day}
                   </span>
                 </div>
-                {
-                  //94
-                }
+
                 <Skeleton
                   className={cn("flex h-6 gap-1 px-2  sm:flex-col sm:px-0", !isCurrentMonth && "opacity-50")}
                   style={{ height: rowContentHeight }}
                 ></Skeleton>
-                {
-                  //26
-                }
 
                 <div
                   ref={isProbe ? weekFooterProbeRef : undefined}
