@@ -131,13 +131,12 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
               <CalendarScrollContainerSkeleton
                 hours={defaultHours}
                 totalColumns={visibleRooms ? visibleRooms.length : 10}
-                interval={interval}
               />
             </>
           ) : (
             <>
               <CalendarScrollContainerPublic isLoading={isLoading} hours={result?.data.hours || defaultHours}>
-                {filteredRooms?.map((room) => {
+                {filteredRooms?.map((room, index) => {
                   //console.log(dayViews?.eventBlocks.get(String(room.roomId)));
                   return (
                     <CalendarScrollColumnPublic
@@ -149,7 +148,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
                       userId={undefined}
                       hours={result?.data.hours || []}
                       eventBlocks={result?.data.roomBlocks.get(String(room.roomId)) || []}
-                      isLastColumn={room.roomId === lastRoomId}
+                      isLastColumn={filteredRooms.length - 1 === index}
                       currentDate={dateValue}
                     />
                   );
