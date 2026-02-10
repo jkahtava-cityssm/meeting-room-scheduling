@@ -5,17 +5,22 @@ import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH } from "@/lib/fetch";
 import z from "zod/v4";
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import { Prisma } from "@prisma/client";
+import { processEventsAsync } from "@/app/features/calendar/webworkers/generic-webworker-client";
+import { CalendarAction, ISODateString } from "@/app/features/calendar/webworkers/generic-webworker";
+import { getDateRange } from "@/app/features/calendar/webworkers/generic-webworker-utilities";
+import { TVisibleHours } from "../types";
 
 //const queryClient = new QueryClient();
 const formatDate = (date: Date) => {
   return formatISO(date);
 };
 
-export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) =>
-  useQuery({
+export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) => {
+  const endpoint = userId ? "/api/events/my-events" : "/api/events";
+  return useQuery({
     queryKey: ["events", formatDate(startDate), formatDate(endDate), "user", userId],
     queryFn: async () => {
-      const result = await fetchGET("/api/events", {
+      const result = await fetchGET(endpoint, {
         startdate: formatDate(startDate),
         enddate: formatDate(endDate),
         userId: userId,
@@ -28,6 +33,45 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
     },
     enabled: enabled,
   });
+};
+
+export const useMyEventsQuery = (
+  action: CalendarAction,
+  date: Date,
+  userId: string,
+  visibleHours: TVisibleHours,
+  roomId?: string | string[],
+  enabled: boolean = true,
+) => {
+  const range = getDateRange(action, date);
+  return useQuery({
+    queryKey: ["events", formatDate(range.startDate), formatDate(range.endDate), "user", userId],
+    queryFn: async () => {
+      const result = await fetchGET("/api/events/my-events", {
+        startdate: formatDate(range.startDate),
+        enddate: formatDate(range.endDate),
+        userId: userId,
+      });
+      const parsedResult = z.array(SEvent).safeParse(result.data);
+
+      if (!parsedResult.success) throw new Error("Invalid my event data");
+
+      return await processEventsAsync({
+        events: result.data as IEvent[],
+        selectedDate: date.toISOString() as ISODateString,
+        selectedRoomId: roomId,
+        action: action,
+        visibleHours,
+        multiDayEventsAtTop: true,
+        userId: userId,
+        // ... any other worker params
+      });
+
+      return parsedResult.data;
+    },
+    enabled: enabled,
+  });
+};
 
 export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) =>
   useQuery({
@@ -51,7 +95,7 @@ export const useTotalEventsByStatusQuery = (
   statusId: string,
   startDate?: Date,
   endDate?: Date,
-  enabled: boolean = true
+  enabled: boolean = true,
 ) =>
   useQuery({
     queryKey: ["total_events", "status", statusId],
@@ -173,8 +217,8 @@ export const useEventPatchMutation = () => {
                   // Apply only known fields from updates
                   statusId: variables.updates.status?.connect?.statusId ?? event.statusId,
                 }
-              : event
-          )
+              : event,
+          ),
         );
       }
 
