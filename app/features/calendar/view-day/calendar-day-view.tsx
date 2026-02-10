@@ -74,7 +74,6 @@ export function CalendarDayView({
             <CalendarScrollContainerSkeleton
               hours={defaultHours}
               totalColumns={visibleRooms ? visibleRooms.length : 10}
-              interval={interval}
             />
           </>
         ) : (

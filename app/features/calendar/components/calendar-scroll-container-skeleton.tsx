@@ -1,22 +1,12 @@
-import React, { useMemo, useRef, useState } from "react";
-import { SharedEventDrawerProvider } from "../../event-drawer/shared-event-drawer-context";
+import React from "react";
+
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarHourTimeline } from "./calendar-scroll-hour-timeline";
 import { format } from "date-fns";
-import { LoaderCircle } from "lucide-react";
-import { CalendarScrollProvider, useCalendarViewport } from "./calendar-scroll-context";
 import { CalendarScrollColumnSkeleton } from "./calendar-scroll-column-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function CalendarScrollContainerSkeleton({
-  hours,
-  interval,
-  totalColumns,
-}: {
-  hours: number[];
-  totalColumns: number;
-  interval: number;
-}) {
+export function CalendarScrollContainerSkeleton({ hours, totalColumns }: { hours: number[]; totalColumns: number }) {
   return (
     <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={undefined}>
       <div className="relative flex min-w-0 w-full">

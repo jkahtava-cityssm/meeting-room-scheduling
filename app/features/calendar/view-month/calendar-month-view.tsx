@@ -14,6 +14,7 @@ import { IMonthDayView } from "../webworkers/generic-webworker";
 import { Button } from "@/components/ui/button";
 import { navigateURL } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
+import { SharedEventDrawerProvider } from "../../event-drawer/shared-event-drawer-context";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MIN_INNER_HEIGHT = 96;
@@ -114,44 +115,52 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
         </div>
 
         {/* Weeks */}
-        <div className="flex flex-col border-x  bg-background">
-          {weeks.map((week, weekIndex) => {
-            const isProbe = weekIndex === 0;
+        <SharedEventDrawerProvider>
+          <div className="flex flex-col border-x  bg-background">
+            {weeks.map((week, weekIndex) => {
+              const isProbe = weekIndex === 0;
 
-            return (
-              <div key={`week-${week.week}`} className="flex flex-col border-b last:border-b-0">
-                {/* Row Header */}
-                <div ref={isProbe ? weekHeaderProbeRef : undefined} className="grid grid-cols-7 shrink-0">
-                  {week.dayViews.map((day, i) => (
-                    <MonthViewDayHeader key={`h-${week.week}-${i}`} dayRecord={day} />
-                  ))}
-                </div>
-
-                {/* Row Content (INNER scroll stays) */}
-                <ScrollArea
-                  type="auto"
-                  className="overflow-hidden"
-                  style={{ height: rowContentHeight }}
-                  viewportClassName="[&>div]:h-full"
-                >
-                  <div className="grid grid-cols-7 min-h-full h-full">
-                    {week.dayViews.map((day) => (
-                      <MonthViewDayEvents key={day.dayDate} isLoading={isLoading} dayRecord={day} userId={userId} />
+              return (
+                <div key={`week-${week.week}`} className="flex flex-col border-b last:border-b-0">
+                  {/* Row Header */}
+                  <div ref={isProbe ? weekHeaderProbeRef : undefined} className="grid grid-cols-7 shrink-0">
+                    {week.dayViews.map((day, i) => (
+                      <MonthViewDayHeader key={`h-${week.week}-${i}`} dayRecord={day} />
                     ))}
                   </div>
-                  <ScrollBar orientation="vertical" forceMount />
-                </ScrollArea>
 
-                {/* Row Footer */}
-                <div ref={isProbe ? weekFooterProbeRef : undefined} className="grid grid-cols-7 shrink-0">
-                  {week.dayViews.map((day, i) => (
-                    <MonthViewDayFooter key={`f-${week.week}-${i}`} dayRecord={day} />
-                  ))}
+                  {/* Row Content (INNER scroll stays) */}
+                  <ScrollArea
+                    type="auto"
+                    className="overflow-hidden"
+                    style={{ height: rowContentHeight }}
+                    viewportClassName="[&>div]:h-full"
+                  >
+                    <div className="grid grid-cols-7 min-h-full h-full">
+                      {week.dayViews.map((day) => (
+                        <MonthViewDayEvents
+                          key={day.dayDate}
+                          isLoading={isLoading}
+                          dayRecord={day}
+                          userId={userId}
+                          readEventAllowed={true}
+                        />
+                      ))}
+                    </div>
+                    <ScrollBar orientation="vertical" forceMount />
+                  </ScrollArea>
+
+                  {/* Row Footer */}
+                  <div ref={isProbe ? weekFooterProbeRef : undefined} className="grid grid-cols-7 shrink-0">
+                    {week.dayViews.map((day, i) => (
+                      <MonthViewDayFooter key={`f-${week.week}-${i}`} dayRecord={day} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </SharedEventDrawerProvider>
       </div>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
