@@ -12,9 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { SignOutMenuItem } from "./sign-out-button";
-import { Skeleton } from "./ui/skeleton";
-import { Switch } from "./ui/switch";
+import { SignOutMenuItem } from "../../../components/sign-out-button";
+import { Skeleton } from "../../../components/ui/skeleton";
+import { Switch } from "../../../components/ui/switch";
 import { useTheme } from "next-themes";
 import { IUser } from "./nav-header";
 import { authClient, getSessionRoles, Session, useVerifySessionRequirement } from "@/lib/auth-client";
@@ -22,7 +22,7 @@ import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 import { RoleSelect } from "@/app/features/roles/role-select";
 import { useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../../../components/ui/button";
 import { fetchDELETE, fetchPOST } from "@/lib/fetch";
 import { useRouter } from "next/navigation";
 

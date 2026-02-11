@@ -29,7 +29,7 @@ function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
 }
 
-function getDefaultView(permissions: Record<TCalendarView, boolean>): TCalendarView {
+function getDefaultView(permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>): TCalendarView {
   if (permissions.day) return "day";
   else if (permissions.week) return "week";
   else if (permissions.month) return "month";
@@ -71,7 +71,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   return (
     <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
       <CalendarHeader
-        view={view as TCalendarView}
+        view={view as Exclude<TCalendarView, "all" | "public">}
         selectedDate={dateValue}
         userId={userId}
         permissions={viewPermissions}

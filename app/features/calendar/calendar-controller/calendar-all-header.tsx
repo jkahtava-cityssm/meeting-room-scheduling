@@ -20,10 +20,10 @@ export function CalendarHeader({
   userId,
   permissions,
 }: {
-  view: TCalendarView;
+  view: Exclude<TCalendarView, "all" | "public">;
   selectedDate: Date;
   userId?: string;
-  permissions: Record<TCalendarView, boolean>;
+  permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>;
 }) {
   const { day, week, month, year, agenda } = permissions;
   //const { session, isPending } = useSession();
