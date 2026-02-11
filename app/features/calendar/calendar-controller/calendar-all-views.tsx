@@ -29,6 +29,15 @@ function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
 }
 
+function getDefaultView(permissions: Record<TCalendarView, boolean>): TCalendarView {
+  if (permissions.day) return "day";
+  else if (permissions.week) return "week";
+  else if (permissions.month) return "month";
+  else if (permissions.year) return "year";
+  else if (permissions.agenda) return "agenda";
+  else return "day";
+}
+
 function removeTimeFromDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -37,12 +46,6 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get("selectedDate");
   const viewParam = searchParams.get("view");
-
-  const view = viewParam === null ? "day" : viewParam;
-
-  const dateValue = useMemo(() => {
-    return getViewDate(dateParam);
-  }, [dateParam]);
 
   const { can, canAny } = CalendarPermissions.usePermissions();
 
@@ -53,6 +56,13 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   const viewAgenda = userId ? can("ViewMyBookingAgenda") : can("ViewCalendarAgenda");
 
   const hasAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda);
+  const viewPermissions = { day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda };
+
+  const view = viewParam === null ? getDefaultView(viewPermissions) : viewParam;
+
+  const dateValue = useMemo(() => {
+    return getViewDate(dateParam);
+  }, [dateParam]);
 
   if (!hasAccess) {
     return <RequirePermission allowed={hasAccess}></RequirePermission>;
@@ -64,7 +74,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
         view={view as TCalendarView}
         selectedDate={dateValue}
         userId={userId}
-        permissions={{ day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda }}
+        permissions={viewPermissions}
       />
 
       {view === "day" && (
