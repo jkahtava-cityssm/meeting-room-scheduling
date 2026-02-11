@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatISO } from "date-fns";
-import { fetchGET } from "../fetch";
+import { fetchGET, fetchPUT } from "../fetch";
 import { useSession } from "../auth-client";
 import { SStatus } from "../schemas/calendar";
 import { SPermissionSet, SRole } from "../data/permissions";
@@ -29,15 +29,34 @@ export const usePermissionsQuery = (enabled: boolean = true) => {
 export const useRolesQuery = (enabled: boolean = true) => {
   const session = useSession();
   return useQuery({
-		queryKey: ["roles"],
-		queryFn: async () => {
-			const result = await fetchGET("/api/admin/permissions/roles");
-			const parsedResult = z.array(SRole).safeParse(result.data);
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const result = await fetchGET("/api/admin/permissions/roles");
+      const parsedResult = z.array(SRole).safeParse(result.data);
 
-			if (!parsedResult.success) throw new Error("Invalid status data");
+      if (!parsedResult.success) throw new Error("Invalid status data");
 
-			return parsedResult.data;
-		},
-		enabled: enabled,
-	});
+      return parsedResult.data;
+    },
+    enabled: enabled,
+  });
+};
+
+type rolePermissionMutations = {
+  roleId: string;
+  actionId: string;
+  resourceId: string;
+  permit: boolean;
+};
+
+export const usePermissionMutationUpsert = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: rolePermissionMutations[]) => fetchPUT(`/api/admin/permissions`, data),
+    onSuccess: (response) => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["permissions"] });
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+    },
+  });
 };
