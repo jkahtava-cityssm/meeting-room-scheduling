@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarAllViews } from "@/app/features/calendar/calendar-controller/calendar-all-views";
+import { CalendarPermissions } from "@/app/features/calendar/permissions/calendar.permissions";
 import { CalendarProviderPrivate } from "@/contexts/CalendarProviderPrivate";
 import { useSession } from "@/contexts/SessionProvider";
 
@@ -19,8 +20,10 @@ export default function Home() {
   }
 
   return (
-    <CalendarProviderPrivate>
-      <CalendarAllViews userId={session?.user.id} />
-    </CalendarProviderPrivate>
+    <CalendarPermissions.Provider session={session}>
+      <CalendarProviderPrivate>
+        <CalendarAllViews userId={session?.user.id} />
+      </CalendarProviderPrivate>
+    </CalendarPermissions.Provider>
   );
 }

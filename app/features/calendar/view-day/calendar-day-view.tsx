@@ -16,7 +16,6 @@ import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-c
 import { CalendarAccessDenied } from "../calendar-controller/calendar-all-views";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
-import { useCalendarSecurity } from "../permissions/calendar-security-map";
 
 export function CalendarDayView({
   date,
@@ -27,7 +26,7 @@ export function CalendarDayView({
   userId?: string;
   isSidebarOpen?: boolean;
 }) {
-  const { can, isVerifying } = useCalendarSecurity();
+  const { can } = CalendarPermissions.usePermissions();
   const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
     usePrivateCalendar();
 
@@ -36,16 +35,7 @@ export function CalendarDayView({
     [visibleRooms],
   );
 
-  const allowDayView = can("AllowDayView");
-
-  const { result, isLoading, error } = usePrivateCalendarEvents(
-    "DAY",
-    date,
-    visibleHours,
-    userId,
-    roomIds,
-    allowDayView,
-  );
+  const { result, isLoading, error } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
 
   useEffect(() => {
     if (isLoading) {
@@ -78,15 +68,15 @@ export function CalendarDayView({
 
   const isMounting = !visibleRooms || !result;
 
-  if (!allowDayView || error) {
+  if (error) {
     return (
       <div className="flex flex-1 min-h-0">
         <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1 p-4")}>
           <Alert variant="destructive" className="mt-4 ">
             <Terminal className="h-4 w-4" />
-            <AlertTitle>{allowDayView ? error?.name : "Permission Denied"}</AlertTitle>
+            <AlertTitle>{error ? error.name : "Permission Denied"}</AlertTitle>
             <AlertDescription>
-              {allowDayView ? error?.message : "You do not have permission to view this content"}
+              {error ? error.message : "You do not have permission to view this content"}
             </AlertDescription>
           </Alert>
         </div>

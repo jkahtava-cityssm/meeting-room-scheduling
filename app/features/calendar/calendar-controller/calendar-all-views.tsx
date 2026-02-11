@@ -23,9 +23,6 @@ import { CalendarAgendaView } from "@/app/features/calendar/view-agenda/calendar
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
-import { SecurityAdapter } from "../permissions/calendar-security-map";
-import { UserBookingPermissions } from "../permissions/user-booking.permissions";
-//import { hasPermission } from "@/lib/auth";
 
 function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -46,38 +43,27 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
     return getViewDate(dateParam);
   }, [dateParam]);
 
-  const { session, isPending } = useSession();
+  const { can } = CalendarPermissions.usePermissions();
 
-  const { open, openMobile, isMobile } = useSidebar();
+  const viewDay = userId ? can("ViewMyBookingDay") : can("ViewCalendarDay");
+  const viewMonth = userId ? can("ViewMyBookingMonth") : can("ViewCalendarMonth");
+  const viewWeek = userId ? can("ViewMyBookingWeek") : can("ViewCalendarWeek");
+  const viewYear = userId ? can("ViewMyBookingYear") : can("ViewCalendarYear");
+  const viewAgenda = userId ? can("ViewMyBookingAgenda") : can("ViewCalendarAgenda");
 
-  if (isPending) {
-    return <div>Verifying Access</div>;
-  }
+  return (
+    <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
+      <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} userId={userId} />
 
-  if (!session) {
-    //console.log("Calendar-All-Views No session, redirecting to login");
-    redirect("/");
-  }
-
-  const securityConfig = userId
-    ? { provider: UserBookingPermissions.Provider, useHook: UserBookingPermissions.usePermissions }
-    : { provider: CalendarPermissions.Provider, useHook: CalendarPermissions.usePermissions };
-
-  if (session) {
-    return (
-      <SecurityAdapter provider={securityConfig.provider} useHook={securityConfig.useHook} session={session}>
-        <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
-          <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} userId={userId} />
-
-          {view === "day" && <CalendarDayView date={dateValue} userId={userId} isSidebarOpen={open} />}
-          {view === "month" && <CalendarMonthView key={dateValue.toISOString()} date={dateValue} userId={userId} />}
-          {view === "week" && <CalendarWeekView date={dateValue} userId={userId} />}
-          {view === "year" && <CalendarYearView date={dateValue} userId={userId} />}
-          {view === "agenda" && <CalendarAgendaView date={dateValue} userId={userId} />}
-        </div>
-      </SecurityAdapter>
-    );
-  }
+      {view === "day" && viewDay && <CalendarDayView date={dateValue} userId={userId} />}
+      {view === "month" && viewMonth && (
+        <CalendarMonthView key={dateValue.toISOString()} date={dateValue} userId={userId} />
+      )}
+      {view === "week" && viewWeek && <CalendarWeekView date={dateValue} userId={userId} />}
+      {view === "year" && viewYear && <CalendarYearView date={dateValue} userId={userId} />}
+      {view === "agenda" && viewAgenda && <CalendarAgendaView date={dateValue} userId={userId} />}
+    </div>
+  );
 }
 
 export function CalendarAccessDenied({

@@ -83,7 +83,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
         <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
           {isMounting ? (
             <>
-              <CalendarScrollContainerSkeleton hours={defaultHours} totalColumns={7} interval={interval} />
+              <CalendarScrollContainerSkeleton hours={defaultHours} totalColumns={7} />
             </>
           ) : (
             <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours || []}>

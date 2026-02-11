@@ -10,12 +10,9 @@ import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import { useRouter } from "next/navigation";
 
 import EventDrawer from "@/app/features/event-drawer/event-drawer";
-import { useSession } from "@/contexts/SessionProvider";
-import { useVerifySessionRequirement } from "@/lib/auth-client";
-import { GroupedPermissionRequirement, PermissionResult } from "@/lib/auth-permission-checks";
 import { DateNavigator } from "./calendar-all-header-date-navigator";
 import { TodayButton } from "./calendar-all-header-today-button";
-import { useCalendarSecurity } from "../permissions/calendar-security-map";
+import { CalendarPermissions } from "../permissions/calendar.permissions";
 
 export function CalendarHeader({
   view,
@@ -27,7 +24,7 @@ export function CalendarHeader({
   userId?: string;
 }) {
   //const { session, isPending } = useSession();
-  const { can, isVerifying } = useCalendarSecurity();
+  const { can, isVerifying } = CalendarPermissions.usePermissions();
   const { setSelectedRoomId, selectedRoomId } = usePrivateCalendar();
   const { push } = useRouter();
 

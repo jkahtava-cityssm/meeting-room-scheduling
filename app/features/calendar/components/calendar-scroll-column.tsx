@@ -9,7 +9,7 @@ import { useCalendarViewport } from "./calendar-scroll-context";
 import { PublicEventBlock } from "./calendar-scroll-public-event-block";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IEventBlock } from "../webworkers/generic-webworker";
-import { useCalendarSecurity } from "../permissions/calendar-security-map";
+import { CalendarPermissions } from "../permissions/calendar.permissions";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -53,11 +53,11 @@ export type EventBlockRenderProps = {
 export function CalendarScrollColumnPrivate(
   props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
 ) {
-  const { can, isVerifying } = useCalendarSecurity();
-  const createEventAllowed = !isVerifying && can("CreateEvent");
+  const { can } = CalendarPermissions.usePermissions();
+  const createEventAllowed = can("CreateEvent");
 
-  const readAllEventAllowed = !isVerifying && can("ReadAllEvent");
-  const readSelfEventAllowed = !isVerifying && can("ReadSelfEvent");
+  const readAllEventAllowed = can("ReadAllEvent");
+  const readSelfEventAllowed = can("ReadSelfEvent");
 
   const { openEventDrawer } = useSharedEventDrawer();
 
