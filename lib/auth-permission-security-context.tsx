@@ -7,11 +7,17 @@ export function createSecurityContext<const T extends Readonly<GroupedPermission
   type Result = PermissionResult<T>;
   type Key = keyof Result;
 
+  type Evaluatable = Key | boolean | (() => boolean) | Evaluatable[];
+  type Predicate = () => boolean;
+
   type CtxValue = {
     cache: PermissionCache | null;
     permissions: Result;
     isVerifying: boolean;
     can: (key: Key) => boolean;
+    isAllowed: (value: Evaluatable) => boolean;
+    canAny: (...items: Evaluatable[]) => boolean;
+    canAll: (...items: Evaluatable[]) => boolean;
   };
 
   const Ctx = React.createContext<CtxValue | null>(null);
@@ -20,11 +26,23 @@ export function createSecurityContext<const T extends Readonly<GroupedPermission
     const { permissions, cache, isVerifying } = useVerifySessionRequirement(session, PERMISSIONS);
 
     const value = React.useMemo<CtxValue>(() => {
+      const can = (key: Key) => Boolean(permissions[key]);
+
+      const isAllowed = (value: Evaluatable): boolean => {
+        if (typeof value === "boolean") return value;
+        if (typeof value === "function") return value();
+        if (Array.isArray(value)) return value.every((v) => isAllowed(v));
+        return can(value);
+      };
+
       return {
         cache,
         permissions,
         isVerifying,
-        can: (key) => Boolean(permissions[key]),
+        can,
+        isAllowed,
+        canAny: (...values: Evaluatable[]) => values.some((v) => isAllowed(v)),
+        canAll: (...values: Evaluatable[]) => values.every((v) => isAllowed(v)),
       };
     }, [cache, permissions, isVerifying]);
 
@@ -56,13 +74,27 @@ export function createSecurityContext<const T extends Readonly<GroupedPermission
 
   function CanRender({
     permissionKey,
+    resolve,
+    loadingFallback = null,
     children,
   }: {
-    permissionKey: Key;
+    permissionKey?: Key;
+    resolve?: (helpers: ReturnType<typeof usePermissions>) => boolean;
+    loadingFallback?: React.ReactNode;
     children: (allowed: boolean) => React.ReactNode;
   }) {
-    const { can, isVerifying } = usePermissions();
-    return <>{children(!isVerifying && can(permissionKey))}</>;
+    const { can, isAllowed, canAny, canAll, cache, isVerifying, permissions } = usePermissions();
+    if (isVerifying) {
+      return <>{loadingFallback}</>;
+    }
+
+    const allowed = permissionKey
+      ? can(permissionKey)
+      : resolve
+        ? resolve({ cache, permissions, isVerifying, can, isAllowed, canAny, canAll })
+        : false;
+
+    return <>{children(allowed)}</>;
   }
 
   return {
