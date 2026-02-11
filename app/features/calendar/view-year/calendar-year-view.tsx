@@ -51,7 +51,7 @@ export function CalendarYearView({ date, userId }: { date: Date; userId?: string
         <div className="p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {result?.data.monthViews.map((month) => {
-              return <YearViewMonth key={month.month.toString()} month={month} />;
+              return <YearViewMonth userId={userId} key={month.month.toString()} month={month} />;
             })}
           </div>
         </div>

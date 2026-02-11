@@ -14,7 +14,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   visibleHours: TVisibleHours,
   userId?: string,
   roomId?: string | string[],
-  enabled: boolean = false,
+  enabled: boolean = true,
 ) {
   const range = useMemo(() => getDateRange(action, date), [action, date]);
 

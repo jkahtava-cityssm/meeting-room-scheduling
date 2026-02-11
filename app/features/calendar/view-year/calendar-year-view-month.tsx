@@ -8,7 +8,7 @@ import { IYearMonthView } from "../webworkers/generic-webworker";
 
 //const YearViewDayCell = React.lazy(() => import("@/components/calendar/calendar-year-view-day-cell"));
 
-export default function YearViewMonth({ month }: { month: IYearMonthView }) {
+export default function YearViewMonth({ month, userId }: { month: IYearMonthView; userId?: string }) {
   const { push } = useRouter();
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -39,7 +39,7 @@ export default function YearViewMonth({ month }: { month: IYearMonthView }) {
         <div className="grid grid-cols-7 gap-x-0.5 gap-y-2">
           {month.days.map((day, index) => {
             if (day.isBlank) return <div key={`blank-${index}`} className="h-10" />;
-            return <YearViewDayCell key={`day-${day.day}`} day={day} />;
+            return <YearViewDayCell userId={userId} key={`day-${day.day}`} day={day} />;
           })}
         </div>
       </div>

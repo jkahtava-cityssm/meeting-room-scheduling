@@ -53,11 +53,7 @@ export type EventBlockRenderProps = {
 export function CalendarScrollColumnPrivate(
   props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
 ) {
-  const { can } = CalendarPermissions.usePermissions();
-  const createEventAllowed = can("CreateEvent");
-
-  const readAllEventAllowed = can("ReadAllEvent");
-  const readSelfEventAllowed = can("ReadSelfEvent");
+  const { can, canAny } = CalendarPermissions.usePermissions();
 
   const { openEventDrawer } = useSharedEventDrawer();
 
@@ -69,14 +65,15 @@ export function CalendarScrollColumnPrivate(
         userId={userId}
         onClick={(e) => {
           e.preventDefault();
+          const canReadEvent = canAny("ReadAllEvent", ["ReadSelfEvent", String(eventBlock.event.userId) === userId]);
 
-          if (readAllEventAllowed || (readSelfEventAllowed && String(eventBlock.event.userId) === userId)) {
+          if (canReadEvent) {
             openEventDrawer({ event: eventBlock.event, userId });
           }
         }}
       />
     ),
-    [openEventDrawer, readAllEventAllowed, readSelfEventAllowed],
+    [openEventDrawer, canAny],
   );
 
   const renderTimeBlock = useCallback(
@@ -90,10 +87,10 @@ export function CalendarScrollColumnPrivate(
         totalBlocks={p.totalBlocks}
         blockIndex={p.blockIndex}
         showBottomSeparator={p.showBottomSeparator}
-        createEventAllowed={createEventAllowed}
+        createEventAllowed={can("CreateEvent")}
       />
     ),
-    [createEventAllowed],
+    [can],
   );
 
   return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;

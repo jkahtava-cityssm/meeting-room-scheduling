@@ -9,7 +9,7 @@ import { TColors } from "@/lib/types";
 import { navigateURL } from "@/lib/helpers";
 import { IYearDayView } from "../webworkers/generic-webworker";
 
-const YearViewDayCell = ({ day }: { day: IYearDayView }) => {
+const YearViewDayCell = ({ day, userId }: { day: IYearDayView; userId?: string }) => {
   const { push } = useRouter();
 
   const maxIndicators = 3;
@@ -17,6 +17,8 @@ const YearViewDayCell = ({ day }: { day: IYearDayView }) => {
   const handleClick = () => {
     push(navigateURL(new Date(day.dayDate), "day"));
   };
+
+  const indicatorList = userId ? day.dayEvents.filter((event) => String(event.userId) === userId) : day.dayEvents;
 
   return (
     <button
@@ -34,20 +36,20 @@ const YearViewDayCell = ({ day }: { day: IYearDayView }) => {
       </div>
       {
         <div className="mt-0.5 flex gap-0.5">
-          {day.dayEvents.length <= maxIndicators ? (
-            day.dayEvents.map((event, index) => (
+          {indicatorList.length <= maxIndicators ? (
+            indicatorList.map((event, index) => (
               <IconDot key={`day-${day.day}-${event.eventId}-${index}`} color={event.room.color as TColors}></IconDot>
             ))
           ) : (
             <>
               <div className="flex justify-center items-center">
                 <IconDot
-                  key={`day-${day.day}-${day.dayEvents[0].eventId}`}
-                  color={day.dayEvents[0].room.color as TColors}
+                  key={`day-${day.day}-${indicatorList[0].eventId}`}
+                  color={indicatorList[0].room.color as TColors}
                 ></IconDot>
               </div>
 
-              <span className="text-[0.5rem] ">+ {day.dayEvents.length - 1}</span>
+              <span className="text-[0.5rem] ">+ {indicatorList.length - 1}</span>
             </>
           )}
         </div>

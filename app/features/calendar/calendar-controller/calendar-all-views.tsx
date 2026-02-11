@@ -23,6 +23,7 @@ import { CalendarAgendaView } from "@/app/features/calendar/view-agenda/calendar
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
+import { cn } from "@/lib/utils";
 
 function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -43,7 +44,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
     return getViewDate(dateParam);
   }, [dateParam]);
 
-  const { can } = CalendarPermissions.usePermissions();
+  const { can, canAny } = CalendarPermissions.usePermissions();
 
   const viewDay = userId ? can("ViewMyBookingDay") : can("ViewCalendarDay");
   const viewMonth = userId ? can("ViewMyBookingMonth") : can("ViewCalendarMonth");
@@ -51,17 +52,71 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   const viewYear = userId ? can("ViewMyBookingYear") : can("ViewCalendarYear");
   const viewAgenda = userId ? can("ViewMyBookingAgenda") : can("ViewCalendarAgenda");
 
+  const hasAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda);
+
+  if (!hasAccess) {
+    return <RequirePermission allowed={hasAccess}></RequirePermission>;
+  }
+
   return (
     <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
-      <CalendarHeader view={view as TCalendarView} selectedDate={dateValue} userId={userId} />
+      <CalendarHeader
+        view={view as TCalendarView}
+        selectedDate={dateValue}
+        userId={userId}
+        permissions={{ day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda }}
+      />
 
-      {view === "day" && viewDay && <CalendarDayView date={dateValue} userId={userId} />}
-      {view === "month" && viewMonth && (
-        <CalendarMonthView key={dateValue.toISOString()} date={dateValue} userId={userId} />
+      {view === "day" && (
+        <RequirePermission allowed={viewDay}>
+          <CalendarDayView date={dateValue} userId={userId} />
+        </RequirePermission>
       )}
-      {view === "week" && viewWeek && <CalendarWeekView date={dateValue} userId={userId} />}
-      {view === "year" && viewYear && <CalendarYearView date={dateValue} userId={userId} />}
-      {view === "agenda" && viewAgenda && <CalendarAgendaView date={dateValue} userId={userId} />}
+      {view === "month" && (
+        <RequirePermission allowed={viewMonth}>
+          <CalendarMonthView key={dateValue.toISOString()} date={dateValue} userId={userId} />
+        </RequirePermission>
+      )}
+      {view === "week" && (
+        <RequirePermission allowed={viewWeek}>
+          <CalendarWeekView date={dateValue} userId={userId} />
+        </RequirePermission>
+      )}
+      {view === "year" && (
+        <RequirePermission allowed={viewYear}>
+          <CalendarYearView date={dateValue} userId={userId} />
+        </RequirePermission>
+      )}
+      {view === "agenda" && (
+        <RequirePermission allowed={viewAgenda}>
+          <CalendarAgendaView date={dateValue} userId={userId} />
+        </RequirePermission>
+      )}
+    </div>
+  );
+}
+
+export function RequirePermission({
+  allowed,
+  title,
+  message,
+  children,
+}: {
+  allowed: boolean;
+  title?: string;
+  message?: string;
+  children?: React.ReactNode;
+}) {
+  if (allowed) return <>{children}</>;
+  return (
+    <div className="flex flex-1 min-h-0">
+      <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1 p-4")}>
+        <Alert variant="destructive" className="mt-4 ">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>{title ? title : "Permission Denied"}</AlertTitle>
+          <AlertDescription>{message ? message : "You do not have permission to view this content"}</AlertDescription>
+        </Alert>
+      </div>
     </div>
   );
 }
