@@ -83,11 +83,11 @@ export const DEFAULT_RESOURCE_ACTIONS = [
   },
   {
     RESOURCE: "Calendar",
-    ACTIONS: ["Read", "Update", "Delete", "View Day", "View Week", "View Month", "View Year", "View Agenda"],
+    ACTIONS: ["View Day", "View Week", "View Month", "View Year", "View Agenda"],
   },
   {
     RESOURCE: "My Bookings",
-    ACTIONS: ["Create", "Read", "Update", "Delete", "View Day", "View Week", "View Month", "View Year", "View Agenda"],
+    ACTIONS: ["View Day", "View Week", "View Month", "View Year", "View Agenda"],
   },
   {
     RESOURCE: "Settings",
@@ -123,20 +123,10 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
       },
       { RESOURCE: "Room", ACTIONS: ["Read", "Create", "Update", "Delete", "View Hidden"] },
       { RESOURCE: "User", ACTIONS: ["Read All"] },
-      { RESOURCE: "Calendar", ACTIONS: ["Read", "Update"] },
+      { RESOURCE: "Calendar", ACTIONS: ["View Day", "View Month", "View Year", "View Agenda", "View Week"] },
       {
         RESOURCE: "My Bookings",
-        ACTIONS: [
-          "View Day",
-          "View Month",
-          "View Year",
-          "View Agenda",
-          "View Week",
-          "Create",
-          "Read",
-          "Update",
-          "Delete",
-        ],
+        ACTIONS: ["View Day", "View Month", "View Year", "View Agenda", "View Week"],
       },
       { RESOURCE: "Settings", ACTIONS: ["Edit Rooms"] },
     ],
@@ -150,7 +140,7 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
       { RESOURCE: "Calendar", ACTIONS: [] },
       {
         RESOURCE: "My Bookings",
-        ACTIONS: ["View Day", "View Month", "View Year", "View Agenda", "View Week", "Create", "Read"],
+        ACTIONS: ["View Day", "View Month", "View Year", "View Agenda", "View Week"],
       },
       { RESOURCE: "Settings", ACTIONS: [] },
     ],

@@ -11,7 +11,7 @@ import { useSession } from "@/contexts/SessionProvider";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 import { useVerifySessionRequirement } from "@/lib/auth-client";
 
-import { Terminal } from "lucide-react";
+import { LoaderCircle, Terminal } from "lucide-react";
 
 import { CalendarDayColumnCalendar } from "@/app/features/calendar/sidebar-day-picker/calendar-day-column-calendar";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -24,6 +24,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CalendarHeader } from "./calendar-all-header";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -47,7 +48,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   const dateParam = searchParams.get("selectedDate");
   const viewParam = searchParams.get("view");
 
-  const { can, canAny } = CalendarPermissions.usePermissions();
+  const { isVerifying, can, canAny } = CalendarPermissions.usePermissions();
 
   const viewDay = userId ? can("ViewMyBookingDay") : can("ViewCalendarDay");
   const viewMonth = userId ? can("ViewMyBookingMonth") : can("ViewCalendarMonth");
@@ -63,6 +64,23 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   const dateValue = useMemo(() => {
     return getViewDate(dateParam);
   }, [dateParam]);
+
+  if (isVerifying) {
+    return (
+      <>
+        <div className="gap-4 border-b p-4 h-22">
+          <Skeleton className="p-4 h-full flex justify-center  items-center">
+            <LoaderCircle className="animate-spin" />
+          </Skeleton>
+        </div>
+        <div className="p-4 h-[80vh]">
+          <Skeleton className="p-4 h-full  flex justify-center  items-center">
+            <LoaderCircle className="animate-spin" />
+          </Skeleton>
+        </div>
+      </>
+    );
+  }
 
   if (!hasAccess) {
     return <RequirePermission allowed={hasAccess}></RequirePermission>;

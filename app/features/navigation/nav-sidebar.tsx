@@ -32,48 +32,11 @@ import { useTotalEventsByStatusQuery } from "@/lib/services/events";
 import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
-
-const PAGE_PERMISSIONS = {
-  CalendarAccess: {
-    type: "permission",
-    resource: "Calendar",
-    action: "Read",
-  },
-  SettingsAccess: {
-    type: "resource",
-    resource: "Settings",
-  },
-  PermissionsAccess: {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Permissions",
-  },
-  RoomsAccess: {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Rooms",
-  },
-  ConfigurationAccess: {
-    type: "permission",
-    resource: "Settings",
-    action: "Edit Configuration",
-  },
-} as const satisfies GroupedPermissionRequirement;
+import { useSearchParams } from "next/navigation";
+import { SidebarPermissions } from "./permissions/navigation.permissions";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, isPending } = useSession();
-
-  const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
-
-  const today = format(new Date(), "yyyy-MM-dd");
-
-  const { startDate, endDate } = useMemo(() => {
-    const parsedDate = parse(today, "yyyy-MM-dd", new Date());
-    const startDate = startOfDay(parsedDate);
-    const endDate = endOfDay(parsedDate);
-    return { startDate, endDate };
-  }, [today]);
-  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery("1");
 
   if (isPending) {
     return (
@@ -110,6 +73,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
+    <SidebarPermissions.Provider session={session}>
+      <PrivateSidebar />
+    </SidebarPermissions.Provider>
+  );
+}
+
+function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { can, canAny, isVerifying } = SidebarPermissions.usePermissions();
+
+  const searchParams = useSearchParams();
+
+  const dateParam = searchParams.get("selectedDate");
+
+  const dateValue = useMemo(() => {
+    return dateParam ? parse(dateParam, "yyyy-MM-dd", new Date()) : null;
+  }, [dateParam]);
+
+  const viewDay = can("ViewCalendarDay");
+  const viewMonth = can("ViewCalendarMonth");
+  const viewWeek = can("ViewCalendarWeek");
+  const viewYear = can("ViewCalendarYear");
+  const viewAgenda = can("ViewCalendarAgenda");
+
+  const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda);
+
+  const editPermissions = can("EditPermissions");
+  const editRooms = can("EditRooms");
+  const editConfiguration = can("EditConfiguration");
+  const editUsers = can("EditUsers");
+
+  const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
+
+  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery("1");
+
+  return (
     <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
       <SideBarHeaderGroup
         imagePath="/images/menu_logo.svg"
@@ -123,7 +121,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SideBarGroup title="Application">
           <SideBarPrimaryMenuItem title={"Availability"} iconName={"NotebookPen"} url={"/availability"} />
           <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"Send"} url={"/bookings/user-view"} />
-          {permissions.CalendarAccess && (
+          {hasCalendarAccess && (
             <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="Calendar">
               <SideBarSubMenuItem
                 title={"Staff Requests"}
@@ -133,36 +131,50 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
                 }
               />
-              <SideBarSubMenuItem
-                title={"Agenda View"}
-                url={"/calendar" + navigateURL(null, "agenda")}
-                iconName="CalendarRange"
-              />
-              <SideBarSubMenuItem title={"Day View"} url={"/calendar" + navigateURL(null, "day")} iconName="List" />
-              <SideBarSubMenuItem
-                title={"Week View"}
-                url={"/calendar" + navigateURL(null, "week")}
-                iconName="Columns"
-              />
-              <SideBarSubMenuItem
-                title={"Month View"}
-                url={"/calendar" + navigateURL(null, "month")}
-                iconName="Grid2x2"
-              />
-              <SideBarSubMenuItem
-                title={"Year View"}
-                url={"/calendar" + navigateURL(null, "year")}
-                iconName="Grid3x3"
-              />
+              {viewAgenda && (
+                <SideBarSubMenuItem
+                  title={"Agenda View"}
+                  url={"/calendar" + navigateURL(dateValue, "agenda")}
+                  iconName="CalendarRange"
+                />
+              )}
+              {viewDay && (
+                <SideBarSubMenuItem
+                  title={"Day View"}
+                  url={"/calendar" + navigateURL(dateValue, "day")}
+                  iconName="List"
+                />
+              )}
+              {viewWeek && (
+                <SideBarSubMenuItem
+                  title={"Week View"}
+                  url={"/calendar" + navigateURL(dateValue, "week")}
+                  iconName="Columns"
+                />
+              )}
+              {viewMonth && (
+                <SideBarSubMenuItem
+                  title={"Month View"}
+                  url={"/calendar" + navigateURL(dateValue, "month")}
+                  iconName="Grid2x2"
+                />
+              )}
+              {viewYear && (
+                <SideBarSubMenuItem
+                  title={"Year View"}
+                  url={"/calendar" + navigateURL(dateValue, "year")}
+                  iconName="Grid3x3"
+                />
+              )}
             </SideBarCollapsibleGroup>
           )}
-          {permissions.SettingsAccess && (
+          {hasSettingsAccess && (
             <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="Settings2">
-              {permissions.RoomsAccess && <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />}
-              {permissions.PermissionsAccess && (
+              {editRooms && <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />}
+              {editPermissions && (
                 <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
               )}
-              {permissions.ConfigurationAccess && (
+              {editConfiguration && (
                 <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
               )}
             </SideBarCollapsibleGroup>
