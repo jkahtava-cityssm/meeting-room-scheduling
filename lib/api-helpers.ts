@@ -10,11 +10,11 @@ export async function SuccessMessage(message: string, data: object) {
 }
 
 export async function NoContentMessage() {
-	return NextResponse.json(null, { status: 204 }); // No Content
+	return NextResponse.json({ status: 204 }); // No Content
 }
 
 export async function DeleteMessage() {
-	return NextResponse.json(null, { status: 204 }); // No content
+	return NextResponse.json({ status: 204 }); // No content
 }
 
 export async function InternalServerErrorMessage(message: string = "Internal Server Error") {
