@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { isEqual } from "lodash";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type ResourceActions = {
   resourceId: string;
@@ -70,7 +71,7 @@ export function PermissionGrid({
   const putPermission = usePermissionMutationUpsert();
 
   if (isLoading || error || !workingPermissions || !resourceActions) {
-    return <>...Loading</>;
+    return <Skeleton className="w-full h-full" />;
   }
 
   return (
