@@ -30,7 +30,7 @@ export async function fetchGET(url: string, params: object = {}, revalidate: num
 		const errorData = await res.json().catch(() => ({})); // Catch if body isn't JSON
 		const message = errorData.message || res.statusText;
 
-		throw new Error(`Network Response Error: ${res.status}, Status Text: ${res.statusText}, Details: ${message}, URL: ${url}`);
+		throw new Error(`${res.status} - ${res.statusText}, ${url} [${message}]`);
 	});
 }
 
