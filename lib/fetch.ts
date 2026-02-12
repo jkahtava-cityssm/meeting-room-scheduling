@@ -15,20 +15,23 @@ export async function fetchGET(url: string, params: object = {}, revalidate: num
     .join("&");
 
   return fetch(`${url}?${queryString}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    //cache: revalidate === 0 ? "no-store" : "force-cache", // Disable caching
-    next: {
-      revalidate: revalidate, // Revalidate every 60 seconds
-      tags: tags,
-    },
-  }).then((res) => {
-    if (!res.ok) throw Error(`Network Response Error: ${res.status}, Details: ${res.statusText}, URL: ${url}`);
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		//cache: revalidate === 0 ? "no-store" : "force-cache", // Disable caching
+		next: {
+			revalidate: revalidate, // Revalidate every 60 seconds
+			tags: tags,
+		},
+	}).then(async res => {
+		if (res.ok) return res.json();
 
-    return res.json();
-  });
+		const errorData = await res.json().catch(() => ({})); // Catch if body isn't JSON
+		const message = errorData.message || res.statusText;
+
+		throw new Error(`Network Response Error: ${res.status}, Status Text: ${res.statusText}, Details: ${message}, URL: ${url}`);
+	});
 }
 
 export function fetchPUT(url: string, data: object) {
