@@ -25,6 +25,7 @@ import { CalendarHeader } from "./calendar-all-header";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarLoadingPage } from "@/app/(private)/calendar/loading";
 
 function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -66,20 +67,7 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   }, [dateParam]);
 
   if (isVerifying) {
-    return (
-      <>
-        <div className="gap-4 border-b p-4 h-22">
-          <Skeleton className="p-4 h-full flex justify-center  items-center">
-            <LoaderCircle className="animate-spin" />
-          </Skeleton>
-        </div>
-        <div className="p-4 h-[80vh]">
-          <Skeleton className="p-4 h-full  flex justify-center  items-center">
-            <LoaderCircle className="animate-spin" />
-          </Skeleton>
-        </div>
-      </>
-    );
+    return <CalendarLoadingPage />;
   }
 
   if (!hasAccess) {

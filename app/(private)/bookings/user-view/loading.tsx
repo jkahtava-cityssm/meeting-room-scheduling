@@ -1,20 +1,8 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoaderCircle } from "lucide-react";
+import { CalendarLoadingPage } from "../../calendar/loading";
 
 export default function Loading() {
   // You can add any UI inside Loading, including a Skeleton.
-  return (
-    <>
-      <div className="gap-4 border-b p-4 h-22">
-        <Skeleton className="p-4 h-full flex justify-center  items-center">
-          <LoaderCircle className="animate-spin" />
-        </Skeleton>
-      </div>
-      <div className="p-4 h-[80vh]">
-        <Skeleton className="p-4 h-full  flex justify-center  items-center">
-          <LoaderCircle className="animate-spin" />
-        </Skeleton>
-      </div>
-    </>
-  );
+  return <CalendarLoadingPage />;
 }
