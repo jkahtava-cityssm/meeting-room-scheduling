@@ -10,22 +10,22 @@ export async function SuccessMessage(message: string, data: object) {
 }
 
 export async function NoContentMessage() {
-  return NextResponse.json({ status: 204 }); // No Content
+	return NextResponse.json({ status: 204 }); // No Content
 }
 
 export async function DeleteMessage() {
-  return NextResponse.json({ status: 204 }); // No content
+	return NextResponse.json({ status: 204 }); // No content
 }
 
 export async function InternalServerErrorMessage(message: string = "Internal Server Error") {
-  return NextResponse.json({ message: message }, { status: 500 }); // Internal Server Error
+	return NextResponse.json({ message: message }, { status: 500 }); // Internal Server Error
 }
 
 export async function BadRequestMessage(message: string = "Bad Request") {
-  return NextResponse.json({ message: message }, { status: 400 }); // Bad Request
+	return NextResponse.json({ message: message }, { status: 400 }); // Bad Request
 }
 export async function UnauthorizedMessage() {
-  return NextResponse.json({ status: 401 }); // Not Found
+	return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); // Not Found
 }
 export async function ForbiddenMessage(message: string = "Requested Resource is Forbidden") {
   return NextResponse.json({ message: message }, { status: 403 }); // Not Found
