@@ -83,7 +83,7 @@ export const DEFAULT_RESOURCE_ACTIONS = [
   },
   {
     RESOURCE: "Calendar",
-    ACTIONS: ["View Day", "View Week", "View Month", "View Year", "View Agenda"],
+    ACTIONS: ["View Day", "View Week", "View Month", "View Year", "View Agenda", "View Staff Requests"],
   },
   {
     RESOURCE: "My Bookings",

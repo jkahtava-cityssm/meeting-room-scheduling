@@ -7,6 +7,8 @@ const PAGE_PERMISSIONS = {
   ViewCalendarMonth: { type: "permission", resource: "Calendar", action: "View Month" },
   ViewCalendarYear: { type: "permission", resource: "Calendar", action: "View Year" },
   ViewCalendarAgenda: { type: "permission", resource: "Calendar", action: "View Agenda" },
+  ViewStaffRequests: { type: "permission", resource: "Calendar", action: "View Staff Requests" },
+
   ViewMyBookingDay: { type: "permission", resource: "My Bookings", action: "View Day" },
   ViewMyBookingWeek: { type: "permission", resource: "My Bookings", action: "View Week" },
   ViewMyBookingMonth: { type: "permission", resource: "My Bookings", action: "View Month" },

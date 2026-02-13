@@ -95,8 +95,9 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const viewWeek = can("ViewCalendarWeek");
   const viewYear = can("ViewCalendarYear");
   const viewAgenda = can("ViewCalendarAgenda");
+  const viewStaffRequests = can("ViewStaffRequests");
 
-  const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda);
+  const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
 
   const editPermissions = can("EditPermissions");
   const editRooms = can("EditRooms");
@@ -123,14 +124,16 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"Send"} url={"/bookings/user-view"} />
           {hasCalendarAccess && (
             <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="Calendar">
-              <SideBarSubMenuItem
-                title={"Staff Requests"}
-                url={"/bookings/user-requests"}
-                iconName="CircleQuestionMark"
-                rightIndicator={
-                  <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
-                }
-              />
+              {viewStaffRequests && (
+                <SideBarSubMenuItem
+                  title={"Staff Requests"}
+                  url={"/bookings/user-requests"}
+                  iconName="CircleQuestionMark"
+                  rightIndicator={
+                    <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
+                  }
+                />
+              )}
               {viewAgenda && (
                 <SideBarSubMenuItem
                   title={"Agenda View"}
