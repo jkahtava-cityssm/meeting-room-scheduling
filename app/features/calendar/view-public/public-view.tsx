@@ -147,7 +147,7 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
                       roomId={room.roomId}
                       userId={undefined}
                       hours={result?.data.hours || []}
-                      eventBlocks={result?.data.roomBlocks.get(String(room.roomId)) || []}
+                      eventBlocks={result?.data.roomBlocks[String(room.roomId)] || []}
                       isLastColumn={filteredRooms.length - 1 === index}
                       currentDate={dateValue}
                     />

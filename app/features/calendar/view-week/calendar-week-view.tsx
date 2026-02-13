@@ -16,36 +16,55 @@ import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-c
 import { GenericCalendarError } from "../components/calendar-generic-error";
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
-	const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
+  const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
+    usePrivateCalendar();
 
-	const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map(room => room.roomId.toString()) : []), [visibleRooms]);
+  const roomIds = useMemo(
+    () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
+    [visibleRooms],
+  );
 
-	const { result, isLoading, error } = usePrivateCalendarEvents("WEEK", date, visibleHours, userId, selectedRoomId);
+  const { result, isLoading, error } = usePrivateCalendarEvents("WEEK", date, visibleHours, userId, selectedRoomId);
 
-	useEffect(() => {
-		if (isLoading) {
-			setIsHeaderLoading(true);
-		}
+  useEffect(() => {
+    if (isLoading) {
+      setIsHeaderLoading(true);
+    }
 
-		if (result && !isLoading) {
-			setIsHeaderLoading(false);
-		}
-	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
+    if (result && !isLoading) {
+      setIsHeaderLoading(false);
+    }
+  }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-	useEffect(() => {
-		if (!result) return;
+  useEffect(() => {
+    if (!result) return;
 
-		setTotalEvents(result.totalEvents);
-	}, [result, setTotalEvents]);
+    setTotalEvents(result.totalEvents);
+  }, [result, setTotalEvents]);
 
-	//const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
+  //const lastRoomId = roomsToRender?.length ? roomsToRender[roomsToRender.length - 1].roomId : undefined;
 
-	const { daysToRender } = useMemo(() => {
-		if (!result?.data || result.action !== "WEEK") {
-			return { daysToRender: [] };
-		}
+  const daysToRender = useMemo(() => {
+    const daysToRender: { date: string; blocks: IEventBlock[] }[] = [];
 
-		const daysToRender = Array.from(result.data.dayBlocks.entries()).map(([dateKey, roomMap]) => {
+    for (const dateKey in result?.data.dayBlocks) {
+      const dayBlock = result?.data.dayBlocks[dateKey];
+
+      let filteredRooms: [string, IEventBlock[]][];
+
+      if (selectedRoomId === "-1") {
+        filteredRooms = dayBlock["-1"] ? [["-1", dayBlock["-1"]]] : [];
+      } else {
+        // Only include the selected room
+        filteredRooms = dayBlock[selectedRoomId] ? [[selectedRoomId, dayBlock[selectedRoomId]]] : [];
+      }
+
+      const flatBlocks = filteredRooms.flatMap(([_, blocks]) => blocks);
+      daysToRender.push({ date: dateKey, blocks: flatBlocks });
+    }
+
+    return daysToRender;
+    /*const daysToRender = result.data.dayBlocks.map(([dateKey, roomMap]) => {
 			// roomMap is a Map<string, IEventBlock[]>
 
 			let filteredRooms: [string, IEventBlock[]][];
@@ -69,50 +88,44 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
 			};
 		});
 
-		return { daysToRender };
-	}, [result, selectedRoomId]);
+		return { daysToRender };*/
+  }, [result, selectedRoomId]);
 
-	const isMounting = !visibleRooms || !result || false;
+  const isMounting = !visibleRooms || !result || false;
 
-	if (error) {
-		return <GenericCalendarError error={error} />;
-	}
+  if (error) {
+    return <GenericCalendarError error={error} />;
+  }
 
-	return (
-		<>
-			<div className="flex flex-1 min-h-0">
-				<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
-					{isMounting ? (
-						<>
-							<CalendarScrollContainerSkeleton
-								hours={defaultHours}
-								totalColumns={7}
-							/>
-						</>
-					) : (
-						<CalendarScrollContainerPrivate
-							isLoading={isLoading}
-							hours={result?.data.hours || []}
-						>
-							{daysToRender.map((day, dayIndex) => {
-								return (
-									<CalendarScrollColumnPrivate
-										key={day.date}
-										loadingBlocks={isLoading}
-										title={format(parse(day.date, "yyyy-MM-dd", new Date()), "EE d")}
-										interval={interval}
-										roomId={undefined}
-										userId={userId}
-										hours={result?.data.hours || []}
-										eventBlocks={day.blocks || []}
-										isLastColumn={daysToRender.length - 1 === dayIndex}
-										currentDate={parse(day.date, "yyyy-MM-dd", new Date())}
-									/>
-								);
-							})}
-						</CalendarScrollContainerPrivate>
-					)}
-					{/* 
+  return (
+    <>
+      <div className="flex flex-1 min-h-0">
+        <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+          {isMounting ? (
+            <>
+              <CalendarScrollContainerSkeleton hours={defaultHours} totalColumns={7} />
+            </>
+          ) : (
+            <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours || []}>
+              {daysToRender?.map((day, dayIndex) => {
+                return (
+                  <CalendarScrollColumnPrivate
+                    key={day.date}
+                    loadingBlocks={isLoading}
+                    title={format(parse(day.date, "yyyy-MM-dd", new Date()), "EE d")}
+                    interval={interval}
+                    roomId={undefined}
+                    userId={userId}
+                    hours={result?.data.hours || []}
+                    eventBlocks={day.blocks || []}
+                    isLastColumn={daysToRender.length - 1 === dayIndex}
+                    currentDate={parse(day.date, "yyyy-MM-dd", new Date())}
+                  />
+                );
+              })}
+            </CalendarScrollContainerPrivate>
+          )}
+          {/* 
               <>
                 <div className="relative z-20 flex border-b">
                   <div className="w-18"></div>
@@ -158,8 +171,8 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                 </ScrollArea>
               </>
               */}
-				</div>
-			</div>
-		</>
-	);
+        </div>
+      </div>
+    </>
+  );
 }
