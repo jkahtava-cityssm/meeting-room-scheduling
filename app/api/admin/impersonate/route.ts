@@ -9,48 +9,51 @@ import { prisma } from "@/prisma";
 import { request } from "https";
 
 export async function POST(req: NextRequest) {
-	return guardRoute(
-		req,
-		{ EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
-		async (userId, roles, authorization, sessionId) => {
-			const { roleId } = await req.json();
+  return guardRoute(
+    req,
+    { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
+    async (userId, roles, authorization, sessionId) => {
+      const { roleId } = await req.json();
 
-			if (!roleId || !sessionId) {
-				return BadRequestMessage();
-			}
+      if (!roleId || !sessionId) {
+        return BadRequestMessage();
+      }
 
-			const roleName = await prisma.role.findFirst({
-				select: { name: true },
-				where: { roleId: Number(roleId) },
-			});
+      const roleName = await prisma.role.findFirst({
+        select: { name: true },
+        where: { roleId: Number(roleId) },
+      });
 
-			const session = await prisma.session.update({
-				data: { impersonatedRole: roleName?.name || null },
-				where: { id: sessionId },
-			});
+      const session = await prisma.session.update({
+        data: { impersonatedRole: roleName?.name || null },
+        where: { id: sessionId },
+      });
 
-			return SuccessMessage("Created Impersonation", { sessionId: session.id, impersonatedRole: session.impersonatedRole });
-		},
-	);
+      return SuccessMessage("Created Impersonation", {
+        sessionId: session.id,
+        impersonatedRole: session.impersonatedRole,
+      });
+    },
+  );
 }
 
 export async function DELETE(req: NextRequest) {
-	const session = await getServerSession();
+  const session = await getServerSession();
 
-	return guardRoute(
-		req,
-		{ isImpersonating: { type: "function", check: () => Boolean(session?.session?.impersonatedRole) } },
-		async (userId, roles, authorization, sessionId) => {
-			if (!sessionId) {
-				return BadRequestMessage();
-			}
+  return guardRoute(
+    req,
+    { isImpersonating: { type: "function", check: () => Boolean(session?.session?.impersonatedRole) } },
+    async (userId, roles, authorization, sessionId) => {
+      if (!sessionId) {
+        return BadRequestMessage();
+      }
 
-			const session = await prisma.session.update({
-				data: { impersonatedRole: null },
-				where: { id: sessionId },
-			});
+      const session = await prisma.session.update({
+        data: { impersonatedRole: null },
+        where: { id: sessionId },
+      });
 
-			return DeleteMessage();
-		},
-	);
+      return DeleteMessage();
+    },
+  );
 }

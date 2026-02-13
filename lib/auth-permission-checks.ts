@@ -91,14 +91,28 @@ export type LabeledRequirements = {
 };
 
 // The top-level type passed to guardRoute
-export type GuardRequirement = { AnyOf: GuardRequirement[] } | { AllOf: GuardRequirement[] } | LabeledRequirements;
+export type GuardRequirement =
+  | { AnyOf: GuardRequirement[] }
+  | { AllOf: GuardRequirement[] }
+  | { Passthrough: GuardRequirement[] }
+  | LabeledRequirements;
 
-export type ExtractLabels<T> =
-  T extends Record<string, unknown> ? { [K in keyof T]: T[K] extends GuardRequirement ? never : K }[keyof T] : never;
+type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
 
-export type PermissionResult<T> = {
-  [K in keyof T as T[K] extends GuardRequirement ? never : K]: boolean;
-};
+export type PermissionResult<T> = UnionToIntersection<ExtractLabels<T>>;
+
+// A helper to flatten the labels from a nested GuardRequirement
+export type ExtractLabels<T> = T extends readonly unknown[]
+  ? ExtractLabels<T[number]>
+  : T extends infer O
+    ?
+        | (O extends { AnyOf: infer U } ? ExtractLabels<U> : never)
+        | (O extends { AllOf: infer U } ? ExtractLabels<U> : never)
+        | (O extends { Passthrough: infer U } ? ExtractLabels<U> : never)
+        | {
+            [K in keyof O as K extends "AnyOf" | "AllOf" | "Passthrough" ? never : K]: boolean;
+          }
+    : never;
 
 export function buildPermissionCache(roles: Role[] | undefined): PermissionCache {
   const roleSet = new Set<SessionRole>();
@@ -189,7 +203,7 @@ export async function isGroupRequirementMet<T extends GuardRequirement>(
   // 1. Admin bypass - if admin, we still process to fill the 'results' map,
   // but the ultimate 'authorized' status is guaranteed true.
   const isAdmin = cache.isAdmin;
-  const unauthorizedMessages: string[] = [];
+  const missingMessages: string[] = [];
 
   const evaluate = async (r: GuardRequirement): Promise<boolean> => {
     // 1. Handle AnyOf
@@ -204,11 +218,16 @@ export async function isGroupRequirementMet<T extends GuardRequirement>(
       return outcomes.every((v: boolean) => v);
     }
 
+    if ("Passthrough" in r && Array.isArray(r.Passthrough)) {
+      await Promise.all((r.Passthrough as GuardRequirement[]).map(evaluate));
+      return true;
+    }
+
     // 3. Handle Labeled Leaf Nodes
     let allLabelsPassed = true;
     const leaf = r as GroupedPermissionRequirement;
 
-    for (const [label, requirement] of Object.entries(leaf)) {
+    for (const [label, requirement] of Object.entries(leaf as LabeledRequirements)) {
       const items = Array.isArray(requirement) ? requirement : [requirement];
 
       // Check every individual requirement in the list for this label
@@ -222,7 +241,7 @@ export async function isGroupRequirementMet<T extends GuardRequirement>(
         allLabelsPassed = false;
         items.forEach((item, index) => {
           if (!outcomes[index]) {
-            unauthorizedMessages.push(getRequirementMessage(item));
+            missingMessages.push(getRequirementMessage(item));
           }
         });
       }
@@ -233,10 +252,27 @@ export async function isGroupRequirementMet<T extends GuardRequirement>(
 
   const authorized = await evaluate(req);
 
+  const keys = Object.keys(req) as (keyof GuardRequirement)[];
+  let overallAuthorized = true;
+
+  for (const key of keys) {
+    const value = req[key];
+
+    // We call evaluate on a fragment of the request
+    // e.g., evaluate({ AllOf: [...] }) or evaluate({ Passthrough: [...] })
+    const isFragmentMet = await evaluate({ [key]: value } as GuardRequirement);
+
+    // Passthrough never fails the route, so we only update
+    // overallAuthorized for structural keys like AllOf or AnyOf
+    if (key !== "Passthrough") {
+      if (!isFragmentMet) overallAuthorized = false;
+    }
+  }
+
   return {
     authorized: isAdmin || authorized,
     permissions: results as PermissionResult<T>,
-    unauthorizedMessages: Array.from(new Set(unauthorizedMessages)),
+    unauthorizedMessages: Array.from(new Set(missingMessages)),
   };
 }
 

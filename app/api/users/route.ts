@@ -6,52 +6,61 @@ import { NextRequest } from "next/server";
 import { isGroupRequirementMet } from "@/lib/auth-permission-checks";
 
 export async function GET(request: NextRequest) {
-	return guardRoute(
-		request,
-		{
-			ReadUser: {
-				type: "or",
-				requirements: [
-					{ type: "permission", resource: "User", action: "Read All" },
-					{ type: "permission", resource: "User", action: "Read Self" },
-				],
-			},
-		},
+  return guardRoute(
+    request,
+    {
+      AnyOf: [
+        {
+          ReadAll: { type: "permission", resource: "User", action: "Read All" },
+          ReadSelf: { type: "permission", resource: "User", action: "Read Self" },
+        },
+        {
+          AnyOf: [
+            {
+              ReadAllTwo: { type: "permission", resource: "User", action: "Read All" },
+              ReadSelfTwo: { type: "permission", resource: "User", action: "Read Self" },
+            },
+          ],
+        },
+      ],
+    },
 
-		async (userId, roles, authorization) => {
-			const permissions = await isGroupRequirementMet(roles, {
-				ReadAll: {
-					type: "permission",
-					resource: "User",
-					action: "Read All",
-				},
-				ReadSelf: {
-					type: "permission",
-					resource: "User",
-					action: "Read Self",
-				},
-			});
+    async (userId, roles, authorization) => {
+      const { permissions } = await isGroupRequirementMet(roles, {
+        ReadAll: {
+          type: "permission",
+          resource: "User",
+          action: "Read All",
+        },
+        ReadSelf: {
+          type: "permission",
+          resource: "User",
+          action: "Read Self",
+        },
+      });
 
-			const users = permissions.ReadAll
-				? await findManyUsers({ employeeActive: true })
-				: permissions.ReadSelf
-					? await findManyUsers({ id: userId, employeeActive: true })
-					: null;
+      console.log(authorization.ReadAll);
 
-			if (!users) {
-				return NotFoundMessage();
-			}
+      const users = permissions.ReadAll
+        ? await findManyUsers({ employeeActive: true })
+        : permissions.ReadSelf
+          ? await findManyUsers({ id: userId, employeeActive: true })
+          : null;
 
-			const flatUsers =
-				users.map(user => {
-					return {
-						userId: user.id,
-						name: user.name,
-						email: user.email,
-					};
-				}) || [];
+      if (!users) {
+        return NotFoundMessage();
+      }
 
-			return SuccessMessage("Collected Users", flatUsers);
-		},
-	);
+      const flatUsers =
+        users.map((user) => {
+          return {
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+          };
+        }) || [];
+
+      return SuccessMessage("Collected Users", flatUsers);
+    },
+  );
 }

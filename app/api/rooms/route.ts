@@ -4,22 +4,26 @@ import { prisma } from "@/prisma";
 import { findManyRooms } from "@/lib/data/rooms";
 import { NextRequest } from "next/server";
 import { isGroupRequirementMet } from "@/lib/auth-permission-checks";
+import { PassThrough } from "stream";
 
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
-    { ReadRoom: { type: "permission", resource: "Room", action: "Read" } },
-
-    async (userId, roles) => {
-      const permissions = await isGroupRequirementMet(roles, {
-        ViewPrivate: {
-          type: "permission",
-          resource: "Room",
-          action: "View Hidden",
+    {
+      AllOf: [{ ReadRoom: { type: "permission", resource: "Room", action: "Read" } }],
+      Passthrough: [
+        {
+          ViewPrivate: {
+            type: "permission",
+            resource: "Room",
+            action: "View Hidden",
+          },
         },
-      });
+      ],
+    },
 
-      const roomScopeFilter = permissions.ViewPrivate ? { name: { in: ["Public", "Private"] } } : { name: "Public" };
+    async (userId, roles, authorization) => {
+      const roomScopeFilter = authorization.ViewPrivate ? { name: { in: ["Public", "Private"] } } : { name: "Public" };
 
       const rooms = await findManyRooms({ roomScope: roomScopeFilter });
 
@@ -28,6 +32,6 @@ export async function GET(req: NextRequest) {
       }
 
       return SuccessMessage("Collected Rooms", rooms);
-    }
+    },
   );
 }

@@ -21,7 +21,7 @@ import {
 
 import { getRolesByUserId } from "./data/permissions";
 
-export async function guardRoute<T extends GuardRequirement>(
+export async function guardRoute<const T extends GuardRequirement>(
   req: NextRequest,
   groupedRequirements: T,
   handler: (
