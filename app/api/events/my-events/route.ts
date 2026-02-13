@@ -8,14 +8,15 @@ import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessM
 import { guardRoute } from "@/lib/api-guard";
 import { findManyEvents } from "@/lib/data/events";
 import { TColors, TStatusKey } from "@/lib/types";
-import { isGroupRequirementMet } from "@/lib/auth-permission-checks";
+import { GuardRequest, isGroupRequirementMet } from "@/lib/auth-permission-checks";
 
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { ReadEvent: { type: "permission", resource: "Event", action: "Read Self" } },
 
-    async (userId, roles) => {
+    { ReadEvent: GuardRequest.permit("Event", "Read Self") },
+
+    async (userId, roles, authorization) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
 
       const events = await findManyEvents(whereClause);
 
-      const permission = await isGroupRequirementMet(roles, {
+      const { permissions } = await isGroupRequirementMet(roles, {
         hasReadAll: { type: "permission", resource: "Event", action: "Read All" },
         hasReadSelf: { type: "permission", resource: "Event", action: "Read Self" },
       });
@@ -73,9 +74,9 @@ export async function GET(request: NextRequest) {
         }
         return {
           ...event, // Keep IDs, Dates, and Room/Status structures
-          title: permission.hasReadAll ? event.title : event.status?.key === "APPROVED" ? "Booked" : "Requested",
-          description: permission.hasReadAll ? event.description : "",
-          userId: permission.hasReadAll ? event.userId : null,
+          title: permissions.hasReadAll ? event.title : event.status?.key === "APPROVED" ? "Booked" : "Requested",
+          description: permissions.hasReadAll ? event.description : "",
+          userId: permissions.hasReadAll ? event.userId : null,
           room: { ...event.room, color: event.status?.key === "APPROVED" ? "approved" : ("disabled" as TColors) },
         };
       });
