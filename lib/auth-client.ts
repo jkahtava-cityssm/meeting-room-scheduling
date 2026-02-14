@@ -69,7 +69,7 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
 		setVerifying(true);
 
 		(async () => {
-			const groupedResults = await isGroupRequirementMet(permissionCache, requirement);
+			const { byGroup: groupedResults } = await isGroupRequirementMet(permissionCache, requirement);
 
 			if (active) {
 				setResult(groupedResults as PermissionResult<T>);

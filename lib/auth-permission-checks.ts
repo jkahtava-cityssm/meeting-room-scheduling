@@ -7,7 +7,7 @@ import { DEFAULT_RESOURCE_ACTIONS, ROLES_ENUM, SessionAction, SessionResource, S
  * Example: { "User": "Create" | "Delete"; "Post": "Read" | "Edit" }
  */
 type ResourceActionMap = {
-  [E in (typeof DEFAULT_RESOURCE_ACTIONS)[number] as E["RESOURCE"]]: E["ACTIONS"][number];
+	[E in (typeof DEFAULT_RESOURCE_ACTIONS)[number] as E["RESOURCE"]]: E["ACTIONS"][number];
 };
 
 /**
@@ -21,10 +21,10 @@ type ActionsFor<R extends SessionResource> = ResourceActionMap[R];
  * It iterates through the config and creates records like "User::Create" | "Post::Read".
  */
 type AnyPairKey = (typeof DEFAULT_RESOURCE_ACTIONS)[number] extends infer E
-  ? E extends { RESOURCE: infer R; ACTIONS: readonly (infer A)[] }
-    ? `${Extract<R, SessionResource>}::${Extract<A, SessionAction>}`
-    : never
-  : never;
+	? E extends { RESOURCE: infer R; ACTIONS: readonly (infer A)[] }
+		? `${Extract<R, SessionResource>}::${Extract<A, SessionAction>}`
+		: never
+	: never;
 
 /**
  * 4. A Resource/Action pair, that ensures a key like "User::Publish" cant exist
@@ -38,10 +38,10 @@ type PairKey<R extends SessionResource, A extends ActionsFor<R>> = `${R}::${A}`;
  * Example: { resource: "User", action: "Create" } | { resource: "Post", action: "Read" }
  */
 type ValidPermissionPair = (typeof DEFAULT_RESOURCE_ACTIONS)[number] extends infer E
-  ? E extends { RESOURCE: infer R; ACTIONS: readonly (infer A)[] }
-    ? { resource: Extract<R, SessionResource>; action: Extract<A, SessionAction> }
-    : never
-  : never;
+	? E extends { RESOURCE: infer R; ACTIONS: readonly (infer A)[] }
+		? { resource: Extract<R, SessionResource>; action: Extract<A, SessionAction> }
+		: never
+	: never;
 
 /**
  * A type-safe utility to generate a unique lookup key for a permission.
@@ -52,14 +52,14 @@ type ValidPermissionPair = (typeof DEFAULT_RESOURCE_ACTIONS)[number] extends inf
  * @returns A string in the format "Resource::Action".
  */
 function keyOf<R extends SessionResource, A extends ActionsFor<R>>(resource: R, action: A): PairKey<R, A> {
-  return `${resource}::${action}` as PairKey<R, A>;
+	return `${resource}::${action}` as PairKey<R, A>;
 }
 
 export type PermissionCache = {
-  readonly isAdmin: boolean;
-  readonly roleSet: Set<SessionRole>;
-  readonly permitSet: Set<AnyPairKey>;
-  readonly resourceSet: Set<SessionResource>;
+	readonly isAdmin: boolean;
+	readonly roleSet: Set<SessionRole>;
+	readonly permitSet: Set<AnyPairKey>;
+	readonly resourceSet: Set<SessionResource>;
 };
 
 /**
@@ -73,279 +73,209 @@ export type PermissionCache = {
  * Key-Value object where each value is a Set for fast lookups.
  */
 const RESOURCE_TO_ACTIONS: Readonly<Record<SessionResource, ReadonlySet<SessionAction>>> = Object.fromEntries(
-  DEFAULT_RESOURCE_ACTIONS.map(({ RESOURCE, ACTIONS }) => [RESOURCE, new Set(ACTIONS)]),
+	DEFAULT_RESOURCE_ACTIONS.map(({ RESOURCE, ACTIONS }) => [RESOURCE, new Set(ACTIONS)]),
 ) as never;
 
-type PermissionRequirement =
-  | ({ type: "permission" } & ValidPermissionPair)
-  | { type: "resource"; resource: SessionResource }
-  | { type: "role"; role: SessionRole }
-  | { type: "function"; check: (roles: PermissionCache | undefined) => boolean | Promise<boolean> }
-  | { type: "and"; requirements: PermissionRequirement[] }
-  | { type: "or"; requirements: PermissionRequirement[] };
+export type PermissionRequirement =
+	| ({ type: "permission" } & ValidPermissionPair)
+	| { type: "resource"; resource: SessionResource }
+	| { type: "role"; role: SessionRole }
+	| { type: "function"; check: (roles: PermissionCache | undefined) => boolean | Promise<boolean> }
+	| { type: "and"; requirements: PermissionRequirement[] }
+	| { type: "or"; requirements: PermissionRequirement[] };
 
 export type GroupedPermissionRequirement = Record<string, PermissionRequirement | PermissionRequirement[]>;
 
-export type LabeledRequirements = {
-  [label: string]: PermissionRequirement | PermissionRequirement[];
+export type PermissionResult<T extends Record<string, unknown>> = {
+	[K in keyof T]: boolean;
 };
 
-// The top-level type passed to guardRoute
-export type GuardRequirement =
-  | { AnyOf: GuardRequirement[] }
-  | { AllOf: GuardRequirement[] }
-  | { Passthrough: GuardRequirement[] }
-  | LabeledRequirements;
-
-type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
-
-export type PermissionResult<T> = UnionToIntersection<ExtractLabels<T>>;
-
-// A helper to flatten the labels from a nested GuardRequirement
-export type ExtractLabels<T> = T extends readonly unknown[]
-  ? ExtractLabels<T[number]>
-  : T extends infer O
-    ?
-        | (O extends { AnyOf: infer U } ? ExtractLabels<U> : never)
-        | (O extends { AllOf: infer U } ? ExtractLabels<U> : never)
-        | (O extends { Passthrough: infer U } ? ExtractLabels<U> : never)
-        | {
-            [K in keyof O as K extends "AnyOf" | "AllOf" | "Passthrough" ? never : K]: boolean;
-          }
-    : never;
-
 export function buildPermissionCache(roles: Role[] | undefined): PermissionCache {
-  const roleSet = new Set<SessionRole>();
-  const permitSet = new Set<AnyPairKey>();
-  const resourceSet = new Set<SessionResource>();
-  let isAdmin = false;
+	const roleSet = new Set<SessionRole>();
+	const permitSet = new Set<AnyPairKey>();
+	const resourceSet = new Set<SessionResource>();
+	let isAdmin = false;
 
-  for (const role of roles ?? []) {
-    const roleName = role.name as SessionRole;
-    roleSet.add(roleName);
-    if (roleName === ROLES_ENUM.Admin) isAdmin = true;
+	for (const role of roles ?? []) {
+		const roleName = role.name as SessionRole;
+		roleSet.add(roleName);
+		if (roleName === ROLES_ENUM.Admin) isAdmin = true;
 
-    for (const p of role.permissions ?? []) {
-      if (p.permit) {
-        const resource = p.resource as SessionResource;
-        const action = p.action as SessionAction;
+		for (const p of role.permissions ?? []) {
+			if (p.permit) {
+				const resource = p.resource as SessionResource;
+				const action = p.action as SessionAction;
 
-        const allowed = RESOURCE_TO_ACTIONS[resource];
+				const allowed = RESOURCE_TO_ACTIONS[resource];
 
-        if (!allowed) {
-          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== "production") {
-            console.warn(`[Permission Warning]: Unknown resource "${resource}" found on role "${roleName}".`);
-          }
-          continue;
-        }
+				if (!allowed) {
+					if (process.env.NEXT_PUBLIC_ENVIRONMENT !== "production") {
+						console.warn(`[Permission Warning]: Unknown resource "${resource}" found on role "${roleName}".`);
+					}
+					continue;
+				}
 
-        if (!allowed.has(action)) {
-          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== "production") {
-            console.warn(
-              `[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`,
-            );
-          }
-          continue;
-        }
+				if (!allowed.has(action)) {
+					if (process.env.NEXT_PUBLIC_ENVIRONMENT !== "production") {
+						console.warn(`[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`);
+					}
+					continue;
+				}
 
-        permitSet.add(keyOf(resource, action) as AnyPairKey);
-        resourceSet.add(resource);
-      }
-    }
-  }
+				permitSet.add(keyOf(resource, action) as AnyPairKey);
+				resourceSet.add(resource);
+			}
+		}
+	}
 
-  return { isAdmin, roleSet, permitSet, resourceSet };
+	return { isAdmin, roleSet, permitSet, resourceSet };
 }
 
 async function isRequirementMet(permissionCache: PermissionCache, permission: PermissionRequirement): Promise<boolean> {
-  switch (permission.type) {
-    case "permission":
-      return hasPermission(permissionCache, permission.resource, permission.action);
+	switch (permission.type) {
+		case "permission":
+			return hasPermission(permissionCache, permission.resource, permission.action);
 
-    case "resource":
-      return hasResource(permissionCache, permission.resource);
+		case "resource":
+			return hasResource(permissionCache, permission.resource);
 
-    case "role":
-      return hasRole(permissionCache, permission.role);
+		case "role":
+			return hasRole(permissionCache, permission.role);
 
-    case "function":
-      try {
-        if (typeof permission.check !== "function") return false;
-        return await Promise.resolve(permission.check(permissionCache));
-      } catch {
-        return false;
-      }
+		case "function":
+			try {
+				if (typeof permission.check !== "function") return false;
+				return await Promise.resolve(permission.check(permissionCache));
+			} catch {
+				return false;
+			}
 
-    case "and":
-      for (const requirement of permission.requirements) {
-        const result = await isRequirementMet(permissionCache, requirement);
-        if (!result) return false; // short-circuit on first failure
-      }
-      return true;
+		case "and":
+			for (const requirement of permission.requirements) {
+				const result = await isRequirementMet(permissionCache, requirement);
+				if (!result) return false; // short-circuit on first failure
+			}
+			return true;
 
-    case "or":
-      for (const requirement of permission.requirements) {
-        const result = await isRequirementMet(permissionCache, requirement);
-        if (result) return true; // short-circuit on first success
-      }
-      return false;
+		case "or":
+			for (const requirement of permission.requirements) {
+				const result = await isRequirementMet(permissionCache, requirement);
+				if (result) return true; // short-circuit on first success
+			}
+			return false;
 
-    default:
-      return false;
-  }
+		default:
+			return false;
+	}
 }
 
-export async function isGroupRequirementMet<T extends GuardRequirement>(
-  cache: PermissionCache,
-  req: T,
-  results: Record<string, boolean> = {},
-): Promise<{ authorized: boolean; permissions: PermissionResult<T>; unauthorizedMessages: string[] }> {
-  // 1. Admin bypass - if admin, we still process to fill the 'results' map,
-  // but the ultimate 'authorized' status is guaranteed true.
-  const isAdmin = cache.isAdmin;
-  const missingMessages: string[] = [];
+export interface GroupRequirementResult<T extends Readonly<GroupedPermissionRequirement>> {
+	byGroup: PermissionResult<T>;
+	unauthorizedMessages: string[];
+}
 
-  const evaluate = async (r: GuardRequirement): Promise<boolean> => {
-    // 1. Handle AnyOf
-    if ("AnyOf" in r && Array.isArray(r.AnyOf)) {
-      const outcomes = await Promise.all((r.AnyOf as GuardRequirement[]).map(evaluate));
-      return outcomes.some((v: boolean) => v);
-    }
+export async function isGroupRequirementMet<T extends Readonly<GroupedPermissionRequirement>>(
+	permissionCache: PermissionCache,
+	groupedRequirements: T,
+): Promise<GroupRequirementResult<T>> {
+	const labels = Object.keys(groupedRequirements) as (keyof T)[];
+	const byGroup = {} as PermissionResult<T>;
+	const unauthorizedMessages: string[] = [];
 
-    // 2. Handle AllOf
-    if ("AllOf" in r && Array.isArray(r.AllOf)) {
-      const outcomes = await Promise.all((r.AllOf as GuardRequirement[]).map(evaluate));
-      return outcomes.every((v: boolean) => v);
-    }
+	if (permissionCache.isAdmin) {
+		// Admin: all groups pass
+		for (const label of labels) byGroup[label] = true;
+		return { byGroup, unauthorizedMessages };
+	}
 
-    if ("Passthrough" in r && Array.isArray(r.Passthrough)) {
-      await Promise.all((r.Passthrough as GuardRequirement[]).map(evaluate));
-      return true;
-    }
+	// Evaluate each group independently (no cross-group short-circuiting)
+	for (const label of labels) {
+		const value = groupedRequirements[label];
+		const items = Array.isArray(value) ? value : [value];
 
-    // 3. Handle Labeled Leaf Nodes
-    let allLabelsPassed = true;
-    const leaf = r as GroupedPermissionRequirement;
+		let groupResult = true;
+		for (const item of items) {
+			const ok = await isRequirementMet(permissionCache, item);
+			if (!ok) {
+				groupResult = false;
+				unauthorizedMessages.push(getRequirementMessage(item));
+				break;
+			}
+		}
 
-    for (const [label, requirement] of Object.entries(leaf as LabeledRequirements)) {
-      const items = Array.isArray(requirement) ? requirement : [requirement];
+		byGroup[label] = groupResult;
+	}
 
-      // Check every individual requirement in the list for this label
-      const outcomes = await Promise.all(items.map((i) => isRequirementMet(cache, i)));
-      const labelPassed = outcomes.every((v: boolean) => v);
-
-      const finalStatus = isAdmin || labelPassed;
-      results[label] = finalStatus;
-
-      if (!finalStatus) {
-        allLabelsPassed = false;
-        items.forEach((item, index) => {
-          if (!outcomes[index]) {
-            missingMessages.push(getRequirementMessage(item));
-          }
-        });
-      }
-    }
-
-    return allLabelsPassed;
-  };
-
-  const authorized = await evaluate(req);
-
-  const keys = Object.keys(req) as (keyof GuardRequirement)[];
-  let overallAuthorized = true;
-
-  for (const key of keys) {
-    const value = req[key];
-
-    // We call evaluate on a fragment of the request
-    // e.g., evaluate({ AllOf: [...] }) or evaluate({ Passthrough: [...] })
-    const isFragmentMet = await evaluate({ [key]: value } as GuardRequirement);
-
-    // Passthrough never fails the route, so we only update
-    // overallAuthorized for structural keys like AllOf or AnyOf
-    if (key !== "Passthrough") {
-      if (!isFragmentMet) overallAuthorized = false;
-    }
-  }
-
-  return {
-    authorized: isAdmin || authorized,
-    permissions: results as PermissionResult<T>,
-    unauthorizedMessages: Array.from(new Set(missingMessages)),
-  };
+	return { byGroup, unauthorizedMessages };
 }
 
 function hasPermission(permissionCache: PermissionCache, resource: SessionResource, action: SessionAction) {
-  return permissionCache.permitSet.has(keyOf(resource, action) as AnyPairKey);
+	return permissionCache.permitSet.has(keyOf(resource, action) as AnyPairKey);
 }
 
 function hasRole(permissionCache: PermissionCache, role: SessionRole) {
-  //If it is a public requirement just return true we dont need to check anything
-  if (role === ROLES_ENUM.Public) return true;
+	//If it is a public requirement just return true we dont need to check anything
+	if (role === ROLES_ENUM.Public) return true;
 
-  if (permissionCache.roleSet.size === 0) return false;
+	if (permissionCache.roleSet.size === 0) return false;
 
-  //if it is a Private requirement we can return true if roles has a value since the user has atleast 1 role
-  //we dont care which role
-  if (role === ROLES_ENUM.Private) return true;
+	//if it is a Private requirement we can return true if roles has a value since the user has atleast 1 role
+	//we dont care which role
+	if (role === ROLES_ENUM.Private) return true;
 
-  return permissionCache.roleSet.has(role);
+	return permissionCache.roleSet.has(role);
 }
 
 function hasResource(permissionCache: PermissionCache, resource: SessionResource): boolean {
-  return permissionCache.resourceSet.has(resource);
+	return permissionCache.resourceSet.has(resource);
+}
+
+export function getRequirementMessage(req: PermissionRequirement): string {
+	switch (req.type) {
+		case "permission":
+			return `${req.action} on ${req.resource}`;
+		case "resource":
+			return `Access to ${req.resource}`;
+		case "role":
+			return `Role: ${req.role}`;
+		case "function":
+			return `Custom logic check (${req.check.name || "anonymous"})`;
+		case "and":
+			return `All of: [${req.requirements.map(getRequirementMessage).join(", ")}]`;
+		case "or":
+			return `One of: [${req.requirements.map(getRequirementMessage).join(", ")}]`;
+		default:
+			return "Unknown Requirement";
+	}
 }
 
 export const GuardRequest = {
-  permit: <R extends SessionResource, A extends ActionsFor<R>>(resource: R, action: A): PermissionRequirement => ({
-    type: "permission",
-    ...({ resource, action } as ValidPermissionPair),
-  }),
+	permit: <R extends SessionResource, A extends ActionsFor<R>>(resource: R, action: A): PermissionRequirement => ({
+		type: "permission",
+		...({ resource, action } as ValidPermissionPair),
+	}),
 
-  resource: (resource: SessionResource): PermissionRequirement => ({
-    type: "resource",
-    resource,
-  }),
+	resource: (resource: SessionResource): PermissionRequirement => ({
+		type: "resource",
+		resource,
+	}),
 
-  role: (role: SessionRole): PermissionRequirement => ({
-    type: "role",
-    role,
-  }),
+	role: (role: SessionRole): PermissionRequirement => ({
+		type: "role",
+		role,
+	}),
 
-  all: (...requirements: PermissionRequirement[]): PermissionRequirement => ({
-    type: "and",
-    requirements,
-  }),
+	all: (...requirements: PermissionRequirement[]): PermissionRequirement => ({
+		type: "and",
+		requirements,
+	}),
 
-  any: (...requirements: PermissionRequirement[]): PermissionRequirement => ({
-    type: "or",
-    requirements,
-  }),
-  custom: (
-    check: (cache: PermissionCache | undefined) => boolean | Promise<boolean>,
-    name?: string,
-  ): PermissionRequirement => ({
-    type: "function",
-    check: name ? Object.defineProperty(check, "name", { value: name }) : check,
-  }),
+	any: (...requirements: PermissionRequirement[]): PermissionRequirement => ({
+		type: "or",
+		requirements,
+	}),
+	custom: (check: (cache: PermissionCache | undefined) => boolean | Promise<boolean>, name?: string): PermissionRequirement => ({
+		type: "function",
+		check: name ? Object.defineProperty(check, "name", { value: name }) : check,
+	}),
 };
-
-export function getRequirementMessage(req: PermissionRequirement): string {
-  switch (req.type) {
-    case "permission":
-      return `${req.action} on ${req.resource}`;
-    case "resource":
-      return `Access to ${req.resource}`;
-    case "role":
-      return `Role: ${req.role}`;
-    case "function":
-      return `Custom logic check (${req.check.name || "anonymous"})`;
-    case "and":
-      return `All of: [${req.requirements.map(getRequirementMessage).join(", ")}]`;
-    case "or":
-      return `One of: [${req.requirements.map(getRequirementMessage).join(", ")}]`;
-    default:
-      return "Unknown Requirement";
-  }
-}

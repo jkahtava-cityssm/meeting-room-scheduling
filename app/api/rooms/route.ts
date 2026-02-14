@@ -1,10 +1,8 @@
 import { guardRoute } from "@/lib/api-guard";
 import { InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { prisma } from "@/prisma";
+
 import { findManyRooms } from "@/lib/data/rooms";
 import { NextRequest } from "next/server";
-import { isGroupRequirementMet } from "@/lib/auth-permission-checks";
-import { PassThrough } from "stream";
 
 export async function GET(req: NextRequest) {
   return guardRoute(
