@@ -14,6 +14,7 @@ import { isEqual } from "lodash";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GenericSelect } from "@/components/shared/GenericSelect";
 import { Input } from "@/components/ui/input";
+import { EmployeeAssignmentTable, generateEmployees } from "./permission-table";
 
 export type ResourceActions = {
 	resourceId: string;
@@ -311,6 +312,15 @@ export function PermissionGrid({ yesLabel = "YES", noLabel = "NO", tooltipForDen
 					</div>
 				</div>
 			</div>
+			<EmployeeAssignmentTable
+				employees={generateEmployees()}
+				assignedIds={[]}
+				onToggle={() => {}}
+				filter={() => {}}
+				setFilter={undefined}
+				search={""}
+				setSearch={undefined}
+			></EmployeeAssignmentTable>
 			<footer className="flex h-14 items-center border-t bg-background px-4 shrink-0">
 				<div className="flex w-full items-center justify-end gap-2">
 					<Button variant="ghost">Cancel</Button>
