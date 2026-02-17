@@ -11,7 +11,6 @@ const formatDate = (date: Date) => {
 };
 
 export const usePermissionsQuery = (enabled: boolean = true) => {
-  const session = useSession();
   return useQuery({
     queryKey: ["permissions"],
     queryFn: async () => {
@@ -27,7 +26,6 @@ export const usePermissionsQuery = (enabled: boolean = true) => {
 };
 
 export const useRolesQuery = (enabled: boolean = true) => {
-  const session = useSession();
   return useQuery({
     queryKey: ["roles"],
     queryFn: async () => {
