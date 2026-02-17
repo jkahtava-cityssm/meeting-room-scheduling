@@ -123,9 +123,6 @@ export function PermissionGrid({
 
   return (
     <div className="flex flex-col h-full w-full">
-      <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
-        <h1 className="font-bold">Permission Management</h1>
-      </header>
       <div className="h-full md:hidden">
         <Tabs defaultValue="list" className="flex flex-col h-full">
           <div className="px-4 py-2 border-b">
@@ -135,6 +132,9 @@ export function PermissionGrid({
             </TabsList>
           </div>
           <TabsContent value="list" className="flex-1 overflow-auto m-0">
+            <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
+              <h1 className="font-bold">Permission Management</h1>
+            </header>
             <PermissionListContent />
           </TabsContent>
           <TabsContent value="roles" className="flex-1 overflow-auto m-0">

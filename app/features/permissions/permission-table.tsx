@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { GenericSelect } from "@/components/shared/GenericSelect";
+import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
+import { useRolesQuery } from "@/lib/services/permissions";
+import { GenericComboBox } from "@/components/shared/GenericComboBox";
+import { RoleComboBox } from "../roles/role-combobox";
 
 export interface Employee {
   id: number;
@@ -21,6 +26,7 @@ interface EmployeeTableSectionProps {
 
 export function PermissionGroupList({ employees, onToggleAssigned }: EmployeeTableSectionProps) {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [currentRole, setCurrentRole] = useState<string | undefined>(undefined);
 
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({
@@ -32,17 +38,12 @@ export function PermissionGroupList({ employees, onToggleAssigned }: EmployeeTab
   return (
     <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
       {/* Header / Search Controls */}
+      <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
+        <h1 className="font-bold">Role Assignment</h1>
+      </header>
       <div className="shrink-0 p-4 pb-0">
         <div className="flex flex-col gap-3 mb-4">
-          <Input placeholder="Select Role" className="w-full" />
-          <Input placeholder="Search employees..." className="w-full" />
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {["All", "Assigned", "Unassigned"].map((f) => (
-              <Button key={f} size="sm" variant="outline" className="whitespace-nowrap">
-                {f}
-              </Button>
-            ))}
-          </div>
+          <RoleComboBox selectedRoleId={currentRole} onRoleChange={setCurrentRole} className={"w-50"} />
         </div>
       </div>
 

@@ -46,6 +46,9 @@ export function PermissionList({
 }: PermissionTableWithActionsProps) {
   return (
     <div className="flex flex-col h-full w-full min-h-0">
+      <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
+        <h1 className="font-bold">Role Permissions</h1>
+      </header>
       <div className="relative flex-1 min-h-0 w-full overflow-hidden">
         <ScrollArea className="h-full w-full  pr-4" type="always">
           <TooltipProvider>
