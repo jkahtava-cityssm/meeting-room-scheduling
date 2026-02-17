@@ -15,6 +15,9 @@ model User {
   emailVerified  Boolean  @default(false) @map("email_verified")
   image          String?
   employeeNumber String?  @map("employee_number")
+  department     String?  @map("department")
+  jobTitle       String?  @map("job_title")
+  supervisorId   Int?     @map("supervisor_id")
   employeeActive Boolean  @default(true) @map("employee_active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -25,19 +28,22 @@ model User {
   event       Event[]
   ssoprovider SSOProvider[]
 
+  supervisor User?  @relation("EmployeeToSupervisor", fields: [supervisorId], references: [id])
+  employees  User[] @relation("EmployeeToSupervisor")
+
   @@map("user")
 }
 
 model Session {
-  id        Int      @id @default(autoincrement()) @map("user_session_id")
-  userId    Int      @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  impersonatedRole String? @map("impersonated_role")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement()) @map("user_session_id")
+  userId           Int      @map("user_id")
+  token            String   @unique
+  expiresAt        DateTime @map("expires_at")
+  ipAddress        String?  @map("ip_address")
+  userAgent        String?  @map("user_agent")
+  impersonatedRole String?  @map("impersonated_role")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
