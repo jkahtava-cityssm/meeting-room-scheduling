@@ -68,14 +68,13 @@ export function PermissionGrid({
       actionName: string,
       next: boolean | "indeterminate",
     ) => {
-      if (!workingPermissions) return;
       setChanged(true);
       const isChecked = next === true;
       setWorkingPermissions((prev) =>
         prev ? setPermit(prev, roleId, resourceId, resourceName, actionId, actionName, isChecked) : prev,
       );
     },
-    [workingPermissions],
+    [],
   );
 
   const putPermission = usePermissionMutationUpsert();
@@ -89,37 +88,9 @@ export function PermissionGrid({
     }));
   };
 
-  const employees = useMemo(() => generateEmployees(500), []);
-
   if (isLoading || error || !workingPermissions || !resourceActions) {
     return <Skeleton className="w-full h-full" />;
   }
-
-  const PermissionListContent = () => (
-    <PermissionList
-      workingPermissions={workingPermissions}
-      serverPermissions={serverPermissions ?? []}
-      resourceActions={resourceActions ?? []}
-      isChanged={isChanged}
-      onToggle={onToggle}
-      onReset={(original) => {
-        setWorkingPermissions(original);
-        setChanged(false);
-      }}
-      onSave={(diffs) => {
-        putPermission.mutate(diffs, {
-          onSuccess: () => setChanged(false),
-        });
-      }}
-    />
-  );
-
-  const RoleAssignmentContent = () => (
-    <PermissionGroupList
-      employees={employees as Employee[]}
-      onToggleAssigned={(id, next) => console.log("Assigning", id, next)}
-    />
-  );
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -135,19 +106,49 @@ export function PermissionGrid({
             <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
               <h1 className="font-bold">Permission Management</h1>
             </header>
-            <PermissionListContent />
+            <PermissionList
+              workingPermissions={workingPermissions}
+              serverPermissions={serverPermissions ?? []}
+              resourceActions={resourceActions ?? []}
+              isChanged={isChanged}
+              onToggle={onToggle}
+              onReset={(original) => {
+                setWorkingPermissions(original);
+                setChanged(false);
+              }}
+              onSave={(diffs) => {
+                putPermission.mutate(diffs, {
+                  onSuccess: () => setChanged(false),
+                });
+              }}
+            />
           </TabsContent>
           <TabsContent value="roles" className="flex-1 overflow-auto m-0">
-            <RoleAssignmentContent />
+            <PermissionGroupList onToggleAssigned={(id, next) => console.log("Assigning", id, next)} />
           </TabsContent>
         </Tabs>
       </div>
       <div className="hidden md:flex h-full">
         <div className="flex border-r overflow-auto">
-          <PermissionListContent />
+          <PermissionList
+            workingPermissions={workingPermissions}
+            serverPermissions={serverPermissions ?? []}
+            resourceActions={resourceActions ?? []}
+            isChanged={isChanged}
+            onToggle={onToggle}
+            onReset={(original) => {
+              setWorkingPermissions(original);
+              setChanged(false);
+            }}
+            onSave={(diffs) => {
+              putPermission.mutate(diffs, {
+                onSuccess: () => setChanged(false),
+              });
+            }}
+          />
         </div>
         <div className="flex-1 overflow-auto">
-          <RoleAssignmentContent />
+          <PermissionGroupList onToggleAssigned={(id, next) => console.log("Assigning", id, next)} />
         </div>
       </div>
     </div>
@@ -223,30 +224,3 @@ function setPermit(
     return { ...set, permissions: updated };
   });
 }
-
-/*
-function getDistinctResources(permissionSets: IPermissionSet[]) {
-  const resourceActions: {
-    resourceId: string;
-    resourceName: string;
-    actions: { actionId: string; actionName: string }[];
-  }[] = [];
-
-  permissionSets.forEach((permissionSet) => {
-    permissionSet.permissions.map((permission) => {
-      let element = resourceActions.find((item) => item.resourceId === permission.resourceId);
-
-      if (!element) {
-        element = { resourceId: permission.resourceId, resourceName: permission.resource, actions: [] };
-        resourceActions.push(element);
-      }
-
-      if (!element.actions.some((action) => action.actionId === permission.actionId)) {
-        element.actions.push({ actionId: permission.actionId, actionName: permission.action });
-      }
-    });
-  });
-
-  return resourceActions;
-}
-*/

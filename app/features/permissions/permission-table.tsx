@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { GenericSelect } from "@/components/shared/GenericSelect";
 import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
-import { useRolesQuery } from "@/lib/services/permissions";
+import { usePermissionUserQuery, useRolesQuery } from "@/lib/services/permissions";
 import { GenericComboBox } from "@/components/shared/GenericComboBox";
 import { RoleComboBox } from "../roles/role-combobox";
+import { useUsersQuery } from "@/lib/services/users";
+import { cn } from "@/lib/utils";
+import { useDebounce } from "@/hooks/use-debounce";
+import React from "react";
 
 export interface Employee {
   id: number;
@@ -20,13 +24,71 @@ export interface Employee {
 }
 
 interface EmployeeTableSectionProps {
-  employees: Employee[];
   onToggleAssigned: (id: number, next: boolean) => void;
 }
 
-export function PermissionGroupList({ employees, onToggleAssigned }: EmployeeTableSectionProps) {
+interface UserFilters {
+  name: string;
+  email: string;
+  employeeNumber: string;
+  department: string[];
+  status: string[];
+  assigned: string[];
+}
+
+const STATUS_OPTIONS = [
+  { label: "Enabled", value: "true" },
+  { label: "Disabled", value: "false" },
+];
+
+const ASSIGNED_OPTIONS = [
+  { label: "Assigned", value: "true" },
+  { label: "Not Assigned", value: "false" },
+];
+
+export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionProps) {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [currentRole, setCurrentRole] = useState<string | undefined>(undefined);
+
+  const [filters, setFilters] = useState<UserFilters>({
+    name: "",
+    email: "",
+    employeeNumber: "",
+    department: [],
+    status: [],
+    assigned: [],
+  });
+
+  const { data } = usePermissionUserQuery();
+
+  const departmentList = useMemo(() => {
+    return data ? getDistinctValuesByKey(data, "department") : [];
+  }, [data]);
+
+  const debouncedFilters = useDebounce(filters, 300);
+
+  const filteredEmployee = useMemo(() => {
+    if (!data) return [];
+
+    return data.filter((user) => {
+      // Check every active filter. If any filter doesn't match, exclude the user (AND logic).
+      return Object.entries(debouncedFilters).every(([key, filterValue]) => {
+        if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0)) return true;
+
+        let mappedValue: string;
+
+        if (key === "status") mappedValue = String(user.employeeActive);
+        else if (key === "assigned") mappedValue = String(user.isAssigned);
+        else mappedValue = String(user[key as keyof typeof user] || "").toLowerCase();
+
+        if (Array.isArray(filterValue)) {
+          return filterValue.some((v) => v.toLowerCase() === mappedValue);
+        }
+
+        return mappedValue.includes(filterValue.toLowerCase());
+      });
+    });
+  }, [data, debouncedFilters]);
 
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({
@@ -34,6 +96,23 @@ export function PermissionGroupList({ employees, onToggleAssigned }: EmployeeTab
       [id]: !prev[id],
     }));
   };
+
+  const onFilter = useCallback((value: string, key: keyof UserFilters) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const onToggleFilterList = useCallback((value: string, key: keyof UserFilters) => {
+    setFilters((prev) => {
+      const currentList = prev[key];
+      if (!Array.isArray(currentList)) return prev;
+
+      const newList = currentList.includes(value)
+        ? currentList.filter((item) => item !== value) // Remove if exists
+        : [...currentList, value]; // Add if new
+
+      return { ...prev, [key]: newList };
+    });
+  }, []);
 
   return (
     <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
@@ -53,15 +132,43 @@ export function PermissionGroupList({ employees, onToggleAssigned }: EmployeeTab
           {/* Table Header */}
           <div className="grid grid-cols-2 md:grid-cols-6 items-center border-b p-2 sticky top-0 bg-background z-10">
             <FilterHeader title="Name">
-              <Input placeholder="Search names..." />
+              <DebouncedInput
+                placeholder="Search names..."
+                onChange={(value) => onFilter(value, "name")}
+                value={filters.name}
+              />
             </FilterHeader>
 
             <div className="hidden md:block">
               <FilterHeader title="Email">
+                <DebouncedInput
+                  placeholder="Search emails..."
+                  value={filters.email}
+                  onChange={(value) => onFilter(value, "email")}
+                />
+              </FilterHeader>
+            </div>
+
+            <div className="font-bold min-w-0 hidden md:block text-center">
+              <FilterHeader title="Employee #">
+                <DebouncedInput
+                  placeholder="Search numbers..."
+                  value={filters.employeeNumber}
+                  onChange={(value) => onFilter(value, "employeeNumber")}
+                />
+              </FilterHeader>
+            </div>
+            <div className="font-bold min-w-0 hidden md:block text-center">
+              <FilterHeader title="Department">
                 <div className="flex flex-col gap-2">
-                  {["Engineering", "Sales", "HR"].map((dept) => (
+                  {departmentList?.map((dept) => (
                     <div key={dept} className="flex flex-row items-center gap-2 text-sm">
-                      <Checkbox />
+                      <Checkbox
+                        checked={filters.department.includes(dept)}
+                        onCheckedChange={(value) =>
+                          onToggleFilterList(Boolean(value) && dept ? dept : "", "department")
+                        }
+                      />
                       {dept}
                     </div>
                   ))}
@@ -69,58 +176,69 @@ export function PermissionGroupList({ employees, onToggleAssigned }: EmployeeTab
               </FilterHeader>
             </div>
 
-            <div className="font-bold min-w-0 hidden md:block text-center">
-              Employee #
-              <Button variant={"ghost"} size={"icon"}>
-                <Filter />
-              </Button>
-            </div>
-            <div className="font-bold min-w-0 hidden md:block text-center">
-              Dept
-              <Button variant={"ghost"} size={"icon"}>
-                <Filter />
-              </Button>
-            </div>
-            <div className="font-bold min-w-0 hidden md:block text-center">
-              Status
-              <Button variant={"ghost"} size={"icon"}>
-                <Filter />
-              </Button>
+            <div className="hidden md:block content-center">
+              <FilterHeader title="Status">
+                <div className="flex flex-col gap-2">
+                  {STATUS_OPTIONS.map((option) => (
+                    <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={filters.status.includes(option.value)}
+                        onCheckedChange={() => onToggleFilterList(option.value, "status")}
+                      />
+                      {option.label}
+                    </div>
+                  ))}
+                </div>
+              </FilterHeader>
             </div>
             <div className="font-bold min-w-0 text-center">
-              Assigned
-              <Button variant={"ghost"} size={"icon"}>
-                <Filter />
-              </Button>
+              <FilterHeader title="Assigned" center>
+                <div className="flex flex-col gap-2">
+                  {ASSIGNED_OPTIONS.map((option) => (
+                    <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={filters.department.includes(option.value)}
+                        onCheckedChange={() => onToggleFilterList(option.value, "assigned")}
+                      />
+                      {option.label}
+                    </div>
+                  ))}
+                </div>
+              </FilterHeader>
             </div>
           </div>
 
           {/* Table Body */}
-          <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto">
-            {employees.map((employee) => {
-              const isExpanded = !!expandedRows[employee.id];
+          <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto px-2">
+            {filteredEmployee?.map((employee) => {
+              const isExpanded = !!expandedRows[employee.userId];
 
               return (
-                <div key={employee.id} className="contents">
+                <div key={employee.userId} className="contents">
                   {/* Name Column */}
                   <div className="flex items-center gap-2 py-2">
-                    <button onClick={() => toggleRow(employee.id)} className="md:hidden p-1 hover:bg-slate-100 rounded">
+                    <button
+                      onClick={() => toggleRow(employee.userId)}
+                      className="md:hidden p-1 hover:bg-slate-100 rounded"
+                    >
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                     <span className="font-medium truncate">{employee.name}</span>
                   </div>
 
                   {/* Desktop Columns */}
-                  <div className="hidden md:block text-center text-sm truncate px-2">{employee.email}</div>
-                  <div className="hidden md:block text-center text-sm truncate">{employee.employeeNumber}</div>
-                  <div className="hidden md:block text-center text-sm truncate">Engineering</div>
-                  <div className="hidden md:block text-center text-sm truncate">Active</div>
+                  <div className="hidden md:block text-sm truncate px-2">{employee.email}</div>
+                  <div className="hidden md:block text-sm truncate">{employee.employeeNumber}</div>
+                  <div className="hidden md:block text-sm truncate">{employee.department}</div>
+                  <div className="hidden md:block text-sm truncate">
+                    {employee.employeeActive ? "Enabled" : "Disabled"}
+                  </div>
 
                   {/* Toggle Column */}
                   <div className="flex justify-center py-2">
                     <Switch
                       checked={false} // Connect to your actual state logic
-                      onCheckedChange={(next) => onToggleAssigned(employee.id, next)}
+                      onCheckedChange={(next) => onToggleAssigned(employee.userId, next)}
                     />
                   </div>
 
@@ -151,8 +269,8 @@ export function PermissionGroupList({ employees, onToggleAssigned }: EmployeeTab
   );
 }
 
-const FilterHeader = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="flex items-center gap-1 font-bold min-w-0">
+const FilterHeader = ({ title, center, children }: { title: string; center?: boolean; children: React.ReactNode }) => (
+  <div className={cn("flex items-center gap-1 font-bold min-w-0", center && " justify-center")}>
     <span className="truncate">{title}</span>
     <Popover>
       <PopoverTrigger asChild>
@@ -169,6 +287,41 @@ const FilterHeader = ({ title, children }: { title: string; children: React.Reac
     </Popover>
   </div>
 );
+
+interface DebouncedInputProps extends Omit<React.ComponentProps<typeof Input>, "onChange"> {
+  value: string;
+  onChange: (value: string) => void;
+  debounce?: number;
+}
+
+const DebouncedInput = ({ value, onChange, debounce = 150, ...props }: DebouncedInputProps) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
+
+  // Sync local state if the prop changes (e.g. clearing filters)
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (localValue === value) return;
+
+    const timeout = setTimeout(() => {
+      onChangeRef.current(localValue);
+    }, debounce);
+    return () => clearTimeout(timeout);
+  }, [localValue, value, debounce]);
+
+  return <Input {...props} value={localValue} onChange={(e) => setLocalValue(e.target.value)} />;
+};
+
+function getDistinctValuesByKey<T, K extends keyof T>(list: T[], key: K): T[K][] {
+  if (!list) return [];
+
+  return [...new Set(list.map((item) => item[key]))];
+}
 
 export function generateEmployees(count = 30) {
   const firstNames = [

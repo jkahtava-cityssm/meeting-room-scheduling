@@ -53,6 +53,10 @@ export const SUser = z.object({
   userId: z.number(),
   name: z.string(),
   email: z.string(),
+  department: z.string().optional().nullable(),
+  jobTitle: z.string().optional().nullable(),
+  employeeNumber: z.string().optional().nullable(),
+  employeeActive: z.boolean(),
 });
 
 export const SMultiDay = z.object({

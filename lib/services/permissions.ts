@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatISO } from "date-fns";
 import { fetchGET, fetchPUT } from "../fetch";
 import { useSession } from "../auth-client";
-import { SStatus } from "../schemas/calendar";
+import { SStatus, SUser } from "../schemas/calendar";
 import { SPermissionSet, SRole } from "../data/permissions";
 import z from "zod/v4";
 
@@ -56,5 +56,20 @@ export const usePermissionMutationUpsert = () => {
       queryClient.invalidateQueries({ queryKey: ["permissions"] });
       queryClient.invalidateQueries({ queryKey: ["roles"] });
     },
+  });
+};
+
+export const usePermissionUserQuery = (roleId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ["users_permissions", roleId],
+    queryFn: async () => {
+      const result = await fetchGET("/api/admin/permissions/users", { roleId: roleId });
+      const parsedResult = z.array(SUser).safeParse(result.data);
+
+      if (!parsedResult.success) throw new Error("Invalid User data");
+
+      return parsedResult.data;
+    },
+    enabled: enabled,
   });
 };
