@@ -1,21 +1,29 @@
 import { guardRoute } from "@/lib/api-guard";
-import { NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
+import { BadRequestMessage, NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
 import { findManyUsersWithRoles } from "@/lib/data/users";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
-  return guardRoute(
-    request,
-    { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
+	return guardRoute(
+		request,
+		{ EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
 
-    async (userId, roles, permissions) => {
-      const users = await findManyUsersWithRoles({ userRole: { every: { roleId } } });
+		async (userId, roles, permissions) => {
+			const searchParams = request.nextUrl.searchParams;
 
-      if (!users) {
-        return NotFoundMessage();
-      }
+			const roleId = searchParams.get("roleId");
 
-      return SuccessMessage("Collected Users", users);
-    },
-  );
+			if (!roleId) {
+				return BadRequestMessage();
+			}
+
+			const users = await findManyUsersWithRoles(Number(roleId));
+
+			if (!users) {
+				return NotFoundMessage();
+			}
+
+			return SuccessMessage("Collected Users", users);
+		},
+	);
 }
