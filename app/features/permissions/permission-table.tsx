@@ -15,6 +15,7 @@ import { useUsersQuery } from "@/lib/services/users";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import React from "react";
+import { GenericCalendarError } from "../calendar/components/calendar-generic-error";
 
 export interface Employee {
   id: number;
@@ -48,7 +49,7 @@ const ASSIGNED_OPTIONS = [
 
 export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionProps) {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-  const [currentRole, setCurrentRole] = useState<string | undefined>(undefined);
+  const [currentRole, setCurrentRole] = useState<{ id: string; label: string } | undefined>(undefined);
 
   const [filters, setFilters] = useState<UserFilters>({
     name: "",
@@ -61,7 +62,7 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
 
   const putUserRole = usePermissionUserRoleMutationUpsert();
 
-  const { data, isPending } = usePermissionUserQuery(currentRole);
+  const { data, isPending, error } = usePermissionUserQuery(currentRole?.id, currentRole !== undefined);
 
   const departmentList = useMemo(() => {
     return data ? getDistinctValuesByKey(data, "department") : [];
@@ -73,24 +74,44 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
     if (!data) return [];
 
     return data.filter((user) => {
-      // Check every active filter. If any filter doesn't match, exclude the user (AND logic).
       return Object.entries(debouncedFilters).every(([key, filterValue]) => {
-        if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0)) return true;
-
-        let mappedValue: string;
-
-        if (key === "status") mappedValue = String(user.employeeActive);
-        else if (key === "assigned") mappedValue = String(user.isAssigned);
-        else mappedValue = String(user[key as keyof typeof user] || "").toLowerCase();
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.some((v) => v.toLowerCase() === mappedValue);
+        // 1. Skip if the filter is empty
+        if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0)) {
+          return true;
         }
 
-        return mappedValue.includes(filterValue.toLowerCase());
+        // 2. Extract value from the user object based on the key
+        switch (key) {
+          case "name":
+          case "email":
+          case "employeeNumber":
+            const userVal = String(user[key as keyof typeof user] || "").toLowerCase();
+            return userVal.includes(String(filterValue).toLowerCase());
+
+          case "department":
+            // Expects filterValue to be an array of strings
+            return (filterValue as string[]).includes(user.department || "");
+
+          case "status":
+            // status: ["true"] or ["false"]
+            return (filterValue as string[]).includes(String(user.employeeActive));
+
+          case "assigned": {
+            const isAssigned = user.roles.some((r) => String(r.roleId) === currentRole?.id);
+            const filterArr = filterValue as string[];
+
+            // Logic: If both true and false are selected (length 2), show everyone.
+            // Otherwise, check if the calculated 'isAssigned' matches the selected toggle.
+            if (filterArr.includes("true") && filterArr.includes("false")) return true;
+            return filterArr.includes(String(isAssigned));
+          }
+
+          default:
+            return true;
+        }
       });
     });
-  }, [data, debouncedFilters]);
+  }, [currentRole?.id, data, debouncedFilters]);
 
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({
@@ -116,6 +137,10 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
     });
   }, []);
 
+  if (error) {
+    return <GenericCalendarError error={error} />;
+  }
+
   return (
     <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
       {/* Header / Search Controls */}
@@ -124,7 +149,11 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
       </header>
       <div className="shrink-0 p-4 pb-0">
         <div className="flex flex-col gap-3 mb-4">
-          <RoleComboBox selectedRoleId={currentRole} onRoleChange={setCurrentRole} className={"w-50"} />
+          <RoleComboBox
+            selectedRoleId={currentRole?.id}
+            onRoleChange={(id, label) => setCurrentRole({ id, label })}
+            className={"w-50"}
+          />
         </div>
       </div>
 
@@ -199,7 +228,7 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
                   {ASSIGNED_OPTIONS.map((option) => (
                     <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
                       <Checkbox
-                        checked={filters.department.includes(option.value)}
+                        checked={filters.assigned.includes(option.value)}
                         onCheckedChange={() => onToggleFilterList(option.value, "assigned")}
                       />
                       {option.label}
@@ -242,14 +271,15 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
                     {/* Toggle Column */}
                     <div className="flex justify-center py-2">
                       <Switch
-                        defaultChecked={employee.roles.some((r) => String(r.roleId) === currentRole)}
-                        checked={employee.roles.some((r) => String(r.roleId) === currentRole)}
+                        defaultChecked={employee.roles.some((r) => String(r.roleId) === currentRole?.id)}
+                        checked={employee.roles.some((r) => String(r.roleId) === currentRole?.id)}
                         onCheckedChange={(next) => {
                           if (!currentRole) return;
                           putUserRole.mutate({
                             userId: String(employee.userId),
-                            roleId: currentRole,
+                            roleId: currentRole?.id,
                             assignRole: next,
+                            roleName: currentRole?.label,
                           });
                         }}
                       />
