@@ -20,7 +20,7 @@ type DataSelectProps<T> = {
   placeholderText: string;
   searchText: string;
   noResultText: string;
-  onSelect: (value: string) => void;
+  onSelect: (id: string, label: string) => void;
   getId: (item: T) => string;
   getLabel: (item: T) => string;
   //getColor?: (item: T) => TColors;
@@ -49,7 +49,7 @@ export function GenericComboBox<T>({
 
   if (isLoading || !list) {
     return (
-      <Button variant={"outline"} disabled>
+      <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
         {isError ? <CircleX /> : <Loader2Icon className="animate-spin" />}
         {loadingLabel}
       </Button>
@@ -88,7 +88,7 @@ export function GenericComboBox<T>({
                     key={id}
                     value={label}
                     onSelect={() => {
-                      onSelect(id);
+                      onSelect(id, label);
                       setOpen(false);
                     }}
                   >
