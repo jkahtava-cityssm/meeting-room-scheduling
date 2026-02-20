@@ -8,7 +8,7 @@ export function RoleComboBox({
   className,
 }: {
   selectedRoleId: string | undefined;
-  onRoleChange: (value: string) => void;
+  onRoleChange: (id: string, label: string) => void;
   excludeRoleNames?: string[];
   className: string;
 }) {
@@ -23,8 +23,8 @@ export function RoleComboBox({
       isLoading={isPending}
       isError={!!error}
       loadingLabel={error ? "Error: Collecting Roles" : "Collecting Roles"}
-      onSelect={(value) => {
-        onRoleChange(value);
+      onSelect={(id, label) => {
+        onRoleChange(id, label);
       }}
       getId={(role) => role.roleId.toString()}
       getLabel={(role) => role.name}
