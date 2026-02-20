@@ -192,17 +192,19 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
             <div className="font-bold min-w-0 hidden md:block text-center">
               <FilterHeader title="Department">
                 <div className="flex flex-col gap-2">
-                  {departmentList?.map((dept) => (
-                    <div key={dept} className="flex flex-row items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={filters.department.includes(dept)}
-                        onCheckedChange={(value) =>
-                          onToggleFilterList(Boolean(value) && dept ? dept : "", "department")
-                        }
-                      />
-                      {dept}
-                    </div>
-                  ))}
+                  {departmentList?.map((dept) => {
+                    return (
+                      <div key={dept} className="flex flex-row items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={filters.department.includes(dept ? dept : "")}
+                          onCheckedChange={(value) =>
+                            onToggleFilterList(Boolean(value) && dept ? dept : "", "department")
+                          }
+                        />
+                        {dept}
+                      </div>
+                    );
+                  })}
                 </div>
               </FilterHeader>
             </div>
