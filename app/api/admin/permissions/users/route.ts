@@ -53,8 +53,8 @@ export async function PUT(request: NextRequest) {
 
       if (assignRole) {
         const userRole = await prisma.userRole.upsert({
-          where: { userId_roleId: { userId: userId, roleId: roleId } },
-          create: { userId: userId, roleId: roleId },
+          where: { userId_roleId: { userId: Number(userId), roleId: Number(roleId) } },
+          create: { userId: Number(userId), roleId: Number(roleId) },
           update: {},
         });
         return SuccessMessage("User Role Assigned", userRole);
@@ -62,7 +62,7 @@ export async function PUT(request: NextRequest) {
 
       try {
         await prisma.userRole.delete({
-          where: { userId_roleId: { userId: userId, roleId: roleId } },
+          where: { userId_roleId: { userId: Number(userId), roleId: Number(roleId) } },
         });
         return DeleteMessage();
       } catch (e: unknown) {
