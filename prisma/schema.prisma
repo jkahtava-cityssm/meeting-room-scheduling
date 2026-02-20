@@ -327,6 +327,7 @@ model Configuration {
   key             String   @unique
   description     String?
   value           String
+  type            String
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

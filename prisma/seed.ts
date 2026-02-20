@@ -186,14 +186,14 @@ async function FindCreateUserRole(roleId: number, userId: number) {
   return record;
 }
 
-async function FindCreateConfigurationSetting(name: TConfigurationKeys, value: string) {
+async function FindCreateConfigurationSetting(name: TConfigurationKeys, value: string, type: string) {
   let record = await prisma.configuration.findFirst({
     where: { key: name },
   });
 
   if (!record) {
     record = await prisma.configuration.create({
-      data: { key: name, value: value },
+      data: { key: name, value: value, type: type },
     });
   }
   return record;
@@ -749,11 +749,6 @@ async function main() {
     });
   }
 
-  await FindCreateConfigurationSetting("visibleHoursStart", VISIBLE_HOUR_START.toString());
-  await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString());
-  await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
-  await FindCreateConfigurationSetting("singleSignOnEnabled", "false");
-
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();
@@ -784,6 +779,12 @@ async function main() {
       }
     }
   }
+
+  await FindCreateConfigurationSetting("visibleHoursStart", VISIBLE_HOUR_START.toString(), "number");
+  await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString(), "number");
+  await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString(), "number");
+  await FindCreateConfigurationSetting("singleSignOnEnabled", "false", "boolean");
+  await FindCreateConfigurationSetting("defaultUserRole", String(roles["User"].roleId), "number");
 
   const roomList: {
     roomId: number;
