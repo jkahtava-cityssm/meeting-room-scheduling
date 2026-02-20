@@ -57,6 +57,7 @@ export const CONFIGURATION_KEYS = [
   "visibleHoursEnd",
   "timeSlotIntervalMinutes",
   "singleSignOnEnabled",
+  "defaultUserRole",
 ] as const;
 
 export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];

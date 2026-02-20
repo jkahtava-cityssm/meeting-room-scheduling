@@ -15,7 +15,7 @@ function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[]
 
   // Filter invalid values and narrow to TConfigurationKeys
   const valid = keysParams.filter((k): k is TConfigurationKeys =>
-    (CONFIGURATION_KEYS as readonly string[]).includes(k)
+    (CONFIGURATION_KEYS as readonly string[]).includes(k),
   );
 
   // If after filtering there are none, default to all
@@ -23,15 +23,19 @@ function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[]
 }
 
 export async function GET(request: NextRequest) {
-  return guardRoute(request, { IsPublic: { type: "role", role: "Public" } }, async () => {
-    const requestedKeys = parseRequestedKeys(request);
+  return guardRoute(
+    request,
+    { EditConfiguration: { type: "permission", resource: "Settings", action: "Edit Configuration" } },
+    async () => {
+      const requestedKeys = parseRequestedKeys(request);
 
-    const configEntries = await findManyConfiguration(requestedKeys);
+      const configEntries = await findManyConfiguration(requestedKeys);
 
-    if (!configEntries) {
-      return InternalServerErrorMessage();
-    }
+      if (!configEntries) {
+        return InternalServerErrorMessage();
+      }
 
-    return SuccessMessage("Collected Configuration", configEntries);
-  });
+      return SuccessMessage("Collected Configuration", configEntries);
+    },
+  );
 }
