@@ -51,7 +51,7 @@ export async function guardRoute<const T extends GuardRequirement>(
   handler: (
     userId: number,
     roles: PermissionCache,
-    authorization: PermissionResult<T>,
+    permissions: PermissionResult<T>,
     sessionId: number | null,
   ) => Promise<Response>,
 ): Promise<Response> {
