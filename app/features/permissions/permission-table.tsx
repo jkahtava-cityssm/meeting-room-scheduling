@@ -62,13 +62,13 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
 
   const putUserRole = usePermissionUserRoleMutationUpsert();
 
-  const { data, isPending, error } = usePermissionUserQuery(currentRole?.id, currentRole !== undefined);
+  const { data, isPending, isFetching, error } = usePermissionUserQuery(currentRole?.id, currentRole !== undefined);
 
   const departmentList = useMemo(() => {
     return data ? getDistinctValuesByKey(data, "department") : [];
   }, [data]);
 
-  const debouncedFilters = useDebounce(filters, 300);
+  const debouncedFilters = useDebounce(filters, 500);
 
   const filteredEmployee = useMemo(() => {
     if (!data) return [];
@@ -137,6 +137,9 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
     });
   }, []);
 
+  const isLoading = isFetching && !data;
+  const noData = !currentRole || (!isLoading && filteredEmployee.length === 0);
+
   if (error) {
     return <GenericCalendarError error={error} />;
   }
@@ -193,13 +196,12 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
               <FilterHeader title="Department">
                 <div className="flex flex-col gap-2">
                   {departmentList?.map((dept) => {
+                    if (!dept) return null;
                     return (
                       <div key={dept} className="flex flex-row items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={filters.department.includes(dept ? dept : "")}
-                          onCheckedChange={(value) =>
-                            onToggleFilterList(Boolean(value) && dept ? dept : "", "department")
-                          }
+                        <DebouncedCheckbox
+                          checked={filters.department.includes(dept)}
+                          onCheckedChange={(value) => onToggleFilterList(dept, "department")}
                         />
                         {dept}
                       </div>
@@ -214,7 +216,7 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
                 <div className="flex flex-col gap-2">
                   {STATUS_OPTIONS.map((option) => (
                     <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
-                      <Checkbox
+                      <DebouncedCheckbox
                         checked={filters.status.includes(option.value)}
                         onCheckedChange={() => onToggleFilterList(option.value, "status")}
                       />
@@ -229,7 +231,7 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
                 <div className="flex flex-col gap-2">
                   {ASSIGNED_OPTIONS.map((option) => (
                     <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
-                      <Checkbox
+                      <DebouncedCheckbox
                         checked={filters.assigned.includes(option.value)}
                         onCheckedChange={() => onToggleFilterList(option.value, "assigned")}
                       />
@@ -243,8 +245,8 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
 
           {/* Table Body */}
           <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto px-2">
-            {!data && (!currentRole || !isPending) && <div>NO DATA</div>}
-            {!data && isPending && <div>LOADING</div>}
+            {noData && <div>NO DATA</div>}
+            {isLoading && <div>LOADING</div>}
             {data &&
               filteredEmployee?.map((employee) => {
                 const isExpanded = !!expandedRows[employee.userId];
@@ -360,6 +362,37 @@ const DebouncedInput = ({ value, onChange, debounce = 150, ...props }: Debounced
   }, [localValue, value, debounce]);
 
   return <Input {...props} value={localValue} onChange={(e) => setLocalValue(e.target.value)} />;
+};
+
+interface DebouncedCheckboxProps extends Omit<React.ComponentProps<typeof Checkbox>, "onCheckedChange"> {
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+  debounce?: number;
+}
+
+const DebouncedCheckbox = ({ checked, onCheckedChange, debounce = 150, ...props }: DebouncedCheckboxProps) => {
+  const [localValue, setLocalValue] = useState(checked);
+
+  const onChangeRef = React.useRef(onCheckedChange);
+  onChangeRef.current = onCheckedChange;
+
+  // Sync local state if the prop changes (e.g. clearing filters)
+  useEffect(() => {
+    setLocalValue(checked);
+  }, [checked]);
+
+  useEffect(() => {
+    if (localValue === checked) return;
+
+    const timeout = setTimeout(() => {
+      onChangeRef.current(localValue);
+    }, debounce);
+    return () => clearTimeout(timeout);
+  }, [localValue, checked, debounce]);
+
+  return <Checkbox {...props} checked={localValue} onCheckedChange={() => onCheckedChange(!localValue)} />;
+
+  //return <Input {...props} value={localValue} onChange={(e) => setLocalValue(e.target.value)} />;
 };
 
 function getDistinctValuesByKey<T, K extends keyof T>(list: T[], key: K): T[K][] {

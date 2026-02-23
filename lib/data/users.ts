@@ -57,7 +57,7 @@ export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.Use
       userId: user.id,
       name: user.name,
       email: user.email,
-      department: user.department,
+      department: user.department ?? "No Department",
       jobTitle: user.jobTitle,
       employeeNumber: user.employeeNumber,
       employeeActive: user.employeeActive,

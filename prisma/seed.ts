@@ -664,6 +664,7 @@ async function createLinkedServer() {
 
   await prismaAdmin.$executeRawUnsafe(`CREATE FOREIGN TABLE IF NOT EXISTS public.avanti_z_ex_emp_data (
                                                     employee_number text,
+                                                    location_description text,
                                                     active text
                                                   )
                                                   SERVER ${process.env.LINKED_SERVER_NAME}
@@ -685,11 +686,12 @@ async function createLinkedServer() {
     LANGUAGE 'sql'
     AS $BODY$
     INSERT INTO public.user
-    (name, email, image, employee_number,employee_active,created_at, updated_at)
+    (name, email, image, employee_number,department,employee_active,created_at, updated_at)
     SELECT employee_full_name,
         work_email,
         image,
         employee_number,
+		    location_description,
         employee_active,
         created_at,
         updated_at
@@ -699,6 +701,7 @@ async function createLinkedServer() {
         work_email,
         image,
         employee_number,
+		location_description,
         created_at,
         updated_at,
         CASE WHEN active = 'Yes' THEN true ELSE false END AS employee_active,
@@ -711,6 +714,7 @@ async function createLinkedServer() {
         END AS work_email,
         'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAADzUlEQVR4AXyVPYiVRxSG37PZYCBokBQmmgSScquAgS2EJEUICVmygTVN4oakCiSghfiD1gqCFv6ChRaua2XhxdVCBbGwELxgZangD2ghyG4jqIzPe2a+6yf+DHPmvHPmPe+Zme9+3x0L0XLAv6u/kxOKXm4fjxUv5GDwmn1MZCMJCyq6J8UzSTbjBeIbmcMpLIOyE01fh7HqPL66QGQX9hDbT/1f8Guk8h7eBpZj+5mbsyuzc4BFsPZQr0CpxwxNSLoOdwcesRiAZ8FfYe9j4xi4zBZpAIajHeDrHIPcIviE3Uu/QFaegHSBpbXYEOb3+N+wk9htzNfzHG/smNfMGSLqHOdOFAhdrw85Z1CkE0AffwBpkmJXmOP0Bx4cT/BPKAzOGFMZT8IfKORcaziOhfpX5Dv3LoaSZjDvFFf2MsyT/C1nXAZeRkVwzLOlvcQJ6Tl4hrhz14KtRZwrorIg8UvQNtW2GdfEc5eeo63/pVghyQbOX85mRH06nJwDN4ytZc12gqI/SfTDGuA5MnsA0P/F3BHUEaosMVliQ+BwTOCOY0xu8Y/CWmiGumfwo2BKOo3R81wiNKna5qoLQqBcLnMBZLsdh/oO6HQuS2h2VyR97VUSrqrfGpN4PzrCbZl51MIgeqeBZqh7yJ+otjvVjcZrRgj5PQCCGKtazEbFcPJ5eGa72+KpWQtkxGeoqWY1O9r8Yfx/2HJKLMeDi2NAdRy17AInxTzUAkUP2urnerWdkuKQakMwFoGL3DvY6ToINqdqp7K+aPtFU6MrukGiSes8GKeFfkbm98iJh6pgpEqcwf0AhzpqLdY1FpoxKsArnve4vmMi6o/ZeUmrSDiL/wZbmRYCl3Pg1fAv4n/CRDHR1mPuqVmvSJon4hdlGtJ3UqxE9BjJou3BfiXut/Qx+DFx4yk2sY84IR0HryBObpkmYC1rjk7wiOAeSDjt48j/AFZhl7Ht2Bt6vrFbEL3E4qfY3xi54ZreFJrRCoRosZNdD0ngexS88oQkvinhBGrmvOKExdgDohnYykiuhkXaCabzojG2Tlj6i8l91Fbj3T8AUxMYGD1ZePfERR+KUuA1kpxrDWDt9RmwWqe6CZdXXEs5Dy1IcUbSBqp8ifc3xn84xhuYey0/LyEtttybxFsP1W8Rq+paoUj9Yu5GlIeVD22O5FtQnkF9ijeew08Th6Pd4I/gvxSH6NO/9U+fdd+jH/Qmkv2T5PhhMZuxY5sQhVPMhdbr7VbqFfXi7ChnbZ1fgg4QmELoM3Y0TnwcjvEUca+ZwzKz1tmc4EgKvQAAAP//gA35VgAAAAZJREFUAwBM+gdFlgRZNQAAAABJRU5ErkJggg==' as image,
         avanti_z_ex_emp_pers.employee_number,
+		avanti_z_ex_emp_data.location_description,
         now() as created_at,
         now() as updated_at,
         avanti_z_ex_emp_data.active
@@ -726,6 +730,7 @@ async function createLinkedServer() {
       name = EXCLUDED.name,
       email = EXCLUDED.email,
       employee_number = EXCLUDED.employee_number,
+      department = EXCLUDED.department,
       employee_active = EXCLUDED.employee_active,
       image = EXCLUDED.image,
       updated_at = now();
