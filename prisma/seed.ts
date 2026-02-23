@@ -186,14 +186,20 @@ async function FindCreateUserRole(roleId: number, userId: number) {
   return record;
 }
 
-async function FindCreateConfigurationSetting(name: TConfigurationKeys, value: string, type: string) {
+async function FindCreateConfigurationSetting(
+  key: TConfigurationKeys,
+  name: string,
+  description: string,
+  value: string,
+  type: string,
+) {
   let record = await prisma.configuration.findFirst({
-    where: { key: name },
+    where: { key: key },
   });
 
   if (!record) {
     record = await prisma.configuration.create({
-      data: { key: name, value: value, type: type },
+      data: { key: key, name: name, description: description, value: value, type: type },
     });
   }
   return record;
@@ -780,11 +786,41 @@ async function main() {
     }
   }
 
-  await FindCreateConfigurationSetting("visibleHoursStart", VISIBLE_HOUR_START.toString(), "number");
-  await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString(), "number");
-  await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString(), "number");
-  await FindCreateConfigurationSetting("singleSignOnEnabled", "false", "boolean");
-  await FindCreateConfigurationSetting("defaultUserRole", String(roles["User"].roleId), "number");
+  await FindCreateConfigurationSetting(
+    "visibleHoursStart",
+    "Earliest Visible Hour",
+    "The earliest hour that is visible in the calendar view.",
+    VISIBLE_HOUR_START.toString(),
+    "number",
+  );
+  await FindCreateConfigurationSetting(
+    "visibleHoursEnd",
+    "Latest Visible Hour",
+    "The latest hour that is visible in the calendar view.",
+    VISIBLE_HOUR_END.toString(),
+    "number",
+  );
+  await FindCreateConfigurationSetting(
+    "timeSlotIntervalMinutes",
+    "Event Time Slots",
+    "The time interval (in minutes) for each event slot in the calendar view.",
+    TIME_SLOT_INTERVAL_MINUTES.toString(),
+    "number",
+  );
+  await FindCreateConfigurationSetting(
+    "singleSignOnEnabled",
+    "Single Sign On",
+    "Whether Single Sign On is enabled for the application.",
+    "false",
+    "boolean",
+  );
+  await FindCreateConfigurationSetting(
+    "defaultUserRole",
+    "Default Role",
+    "The default role assigned to new users.",
+    String(roles["User"].roleId),
+    "number",
+  );
 
   const roomList: {
     roomId: number;

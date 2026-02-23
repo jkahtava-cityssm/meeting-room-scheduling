@@ -325,6 +325,7 @@ model Status {
 model Configuration {
   configurationId Int      @id @default(autoincrement()) @map("configuration_id")
   key             String   @unique
+  name            String
   description     String?
   value           String
   type            String
