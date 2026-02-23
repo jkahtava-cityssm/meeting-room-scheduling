@@ -243,7 +243,7 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
 
           {/* Table Body */}
           <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto px-2">
-            {!data && !isPending && <div>NO DATA</div>}
+            {!data && (!currentRole || !isPending) && <div>NO DATA</div>}
             {!data && isPending && <div>LOADING</div>}
             {data &&
               filteredEmployee?.map((employee) => {

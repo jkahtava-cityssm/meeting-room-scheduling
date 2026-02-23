@@ -103,9 +103,6 @@ export function PermissionGrid({
             </TabsList>
           </div>
           <TabsContent value="list" className="flex-1 overflow-auto m-0">
-            <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
-              <h1 className="font-bold">Permission Management</h1>
-            </header>
             <PermissionList
               workingPermissions={workingPermissions}
               serverPermissions={serverPermissions ?? []}
