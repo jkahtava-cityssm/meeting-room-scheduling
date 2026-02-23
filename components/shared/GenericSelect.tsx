@@ -7,79 +7,61 @@ import { BadgeColored } from "../ui/badge-colored";
 import { cn } from "@/lib/utils";
 
 type DataSelectProps<T> = {
-	list: T[] | undefined;
-	selectedValue: string;
-	isLoading: boolean;
-	isError?: boolean;
-	loadingLabel?: string;
-	onChange: (value: string) => void;
-	getId: (item: T) => string;
-	getLabel: (item: T) => string;
-	getColor?: (item: T) => TColors;
-	getIcon?: (item: T) => IconName;
-	className?: string;
+  list: T[] | undefined;
+  selectedValue: string;
+  isLoading: boolean;
+  isError?: boolean;
+  loadingLabel?: string;
+  onChange: (value: string) => void;
+  getId: (item: T) => string;
+  getLabel: (item: T) => string;
+  getColor?: (item: T) => TColors;
+  getIcon?: (item: T) => IconName;
+  className?: string;
 };
 
 export function GenericSelect<T>({
-	list,
-	selectedValue,
-	isLoading,
-	isError,
-	loadingLabel = "Collecting Data",
-	onChange,
-	getId,
-	getLabel,
-	getColor,
-	getIcon,
-	className,
+  list,
+  selectedValue,
+  isLoading,
+  isError,
+  loadingLabel = "Collecting Data",
+  onChange,
+  getId,
+  getLabel,
+  getColor,
+  getIcon,
+  className,
 }: DataSelectProps<T>) {
-	if (isLoading || !list) {
-		return (
-			<Button
-				variant={"outline"}
-				disabled
-				//className="flex w-fit items-center justify-between gap-2 shrink-0 h-9 flex-1 md:w-60"
-			>
-				{isError ? <CircleX /> : <Loader2Icon className="animate-spin" />}
-				{loadingLabel}
-			</Button>
-		);
-	}
+  if (isLoading || !list) {
+    return (
+      <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
+        {isError ? <CircleX /> : <Loader2Icon className="animate-spin " />}
+        {loadingLabel}
+      </Button>
+    );
+  }
 
-	return (
-		<Select
-			value={selectedValue}
-			onValueChange={onChange}
-		>
-			<SelectTrigger className={cn(className, "flex-1 w-full")}>
-				<SelectValue />
-			</SelectTrigger>
+  return (
+    <Select value={selectedValue} onValueChange={onChange}>
+      <SelectTrigger className={cn("min-w-[200px]", className)}>
+        <SelectValue />
+      </SelectTrigger>
 
-			<SelectContent align="end">
-				{list.map(item => (
-					<SelectItem
-						key={getId(item)}
-						value={getId(item)}
-						className="flex-1"
-					>
-						<div className="flex items-center gap-2 w-full text-sm">
-							{getColor && getIcon && (
-								<BadgeColored
-									color={getColor(item)}
-									className="h-6 w-6"
-								>
-									<DynamicIcon
-										hideBackground={true}
-										color={getColor(item)}
-										name={getIcon(item)}
-									></DynamicIcon>
-								</BadgeColored>
-							)}
-							{getLabel(item)}
-						</div>
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
-	);
+      <SelectContent align="end">
+        {list.map((item) => (
+          <SelectItem key={getId(item)} value={getId(item)} className="flex-1">
+            <div className="flex items-center gap-2 w-full text-sm">
+              {getColor && getIcon && (
+                <BadgeColored color={getColor(item)} className="h-6 w-6">
+                  <DynamicIcon hideBackground={true} color={getColor(item)} name={getIcon(item)}></DynamicIcon>
+                </BadgeColored>
+              )}
+              {getLabel(item)}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }

@@ -21,7 +21,7 @@ export default async function Home() {
   }
 
   const configEntries = await findManyConfiguration(["singleSignOnEnabled"]);
-  const useSSO = configEntries.singleSignOnEnabled === "true";
+  const useSSO = configEntries.find((entry) => entry.key === "singleSignOnEnabled")?.value === "true";
 
   return (
     <div className="[--header-height:calc(--spacing(14))]">

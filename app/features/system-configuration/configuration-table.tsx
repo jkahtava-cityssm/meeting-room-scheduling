@@ -20,11 +20,13 @@ export function ConfigurationPage() {
     return <Skeleton className="w-full h-full" />;
   }
 
-  const handleSave = (key: string, newValue: any) => {
+  console.log("Configuration Data:", data);
+
+  const handleSave = (key: string, newValue: string) => {
     // Cross-field validation logic
     if (key === "visibleHoursStart") {
       const end = data?.find((c) => c.key === "visibleHoursEnd")?.value;
-      if (newValue >= (end as number)) {
+      if (Number(newValue) >= (end as number)) {
         return console.error("Start hour must be before end hour");
       }
     }
@@ -43,9 +45,7 @@ export function ConfigurationPage() {
             <React.Fragment key={entry.key}>
               {/* Left Column: Label & Description */}
               <div className="min-h-[70px] border-b flex flex-col justify-center min-w-max pr-4 ">
-                <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">
-                  {entry.key.replace(/([A-Z])/g, " $1")}
-                </label>
+                <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">{entry.name}</label>
                 {entry.description && (
                   <p className="text-xs text-muted-foreground mt-1 max-w-sm">{entry.description}</p>
                 )}
@@ -63,7 +63,7 @@ export function ConfigurationPage() {
   );
 }
 
-const ConfigField = ({ entry, onChange }: { entry: TConfigurationEntry; onChange: (val: any) => void }) => {
+const ConfigField = ({ entry, onChange }: { entry: TConfigurationEntry; onChange: (val: string) => void }) => {
   // 1. Check if we have a special component for this key
   const Override = CONFIG_OVERRIDES[entry.key];
   if (Override) return <Override entry={entry} onChange={onChange} />;
@@ -71,15 +71,35 @@ const ConfigField = ({ entry, onChange }: { entry: TConfigurationEntry; onChange
   // 2. Fallback to standard types
   switch (entry.type) {
     case "boolean":
-      return <Switch checked={entry.value as boolean} onCheckedChange={onChange} />;
+      return (
+        <Switch
+          checked={entry.value as boolean}
+          onCheckedChange={(checked) => onChange(String(checked))}
+          className="min-w-[200px]"
+        />
+      );
     case "number":
-      return <Input type="number" value={entry.value as number} onChange={(e) => onChange(Number(e.target.value))} />;
+      return (
+        <Input
+          type="number"
+          value={entry.value as number}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-[200px]"
+        />
+      );
     default:
-      return <Input type="text" value={entry.value as string} onChange={(e) => onChange(e.target.value)} />;
+      return (
+        <Input
+          type="text"
+          value={entry.value as string}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-[200px]"
+        />
+      );
   }
 };
 
-const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; onChange: (val: any) => void }>> = {
+const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; onChange: (val: string) => void }>> = {
   // SSO requires a custom button action instead of a simple toggle
   singleSignOnEnabled: ({ entry, onChange }) => {
     return (
