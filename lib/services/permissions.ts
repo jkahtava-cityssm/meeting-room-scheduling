@@ -59,7 +59,9 @@ export const usePermissionMutationUpsert = () => {
   });
 };
 
-export const SUserWithRoles = SUser.extend({ roles: z.array(z.object({ roleId: z.number(), name: z.string() })) });
+export const SUserWithRoles = SUser.extend({
+  roles: z.array(z.object({ roleId: z.number(), name: z.string(), granted: z.boolean() })),
+});
 export type IUserWithRoles = z.infer<typeof SUserWithRoles>;
 
 export const usePermissionUserQuery = (roleId?: string, enabled: boolean = true) => {
@@ -101,12 +103,21 @@ export const usePermissionUserRoleMutationUpsert = () => {
           return old.map((user) => {
             if (String(user.userId) !== String(vars.userId)) return user;
 
-            const otherRoles = user.roles.filter((r) => String(r.roleId) !== String(vars.roleId));
-            const updatedRoles = vars.assignRole
-              ? [...otherRoles, { roleId: Number(vars.roleId), name: vars.roleName }]
-              : otherRoles;
+            const idx = user.roles.findIndex((r) => String(r.roleId) === String(vars.roleId));
 
-            return { ...user, roles: updatedRoles };
+            if (idx >= 0) {
+              // Update granted flag in place (keep role name as-is)
+              const updatedRoles = [...user.roles];
+              updatedRoles[idx] = {
+                ...updatedRoles[idx],
+                granted: vars.assignRole,
+              };
+              return { ...user, roles: updatedRoles };
+            }
+
+            const tempRole = { roleId: Number(vars.roleId), name: vars.roleName, granted: vars.assignRole };
+
+            return { ...user, roles: [...user.roles, tempRole] };
           });
         });
       }

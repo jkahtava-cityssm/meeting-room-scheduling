@@ -125,7 +125,7 @@ export async function getRolesByName(name: string) {
 }
 
 export async function getRolesByUserId(userId: number) {
-  return await findManyUserRoles({ userRole: { some: { userId } } });
+  return await findManyUserRoles({ userRole: { some: { userId, granted: true } } });
 }
 
 export async function upsertRoleResourceAction(params: {

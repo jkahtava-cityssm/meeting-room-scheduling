@@ -9,138 +9,151 @@ import { SessionAction, SessionResource, SessionRole } from "./types";
 
 import { getCachedUserRoles } from "./auth-role-cache";
 import { nextCookies } from "better-auth/next-js";
+import { getDefaultRole } from "./data/users";
 
 export type User = {
-	userId: string | undefined | null;
-	roles: Role[] | undefined;
-	id: string;
-	email: string;
-	emailVerified: boolean;
-	name: string;
-	createdAt: Date;
-	updatedAt: Date;
-	image?: string | null | undefined;
+  userId: string | undefined | null;
+  roles: Role[] | undefined;
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  image?: string | null | undefined;
 };
 
 export type Role = {
-	roleId: number;
-	name: SessionRole;
-	permissions: Permission[];
+  roleId: number;
+  name: SessionRole;
+  permissions: Permission[];
 };
 
 export type Permission = {
-	permit: boolean;
-	resource: SessionResource;
-	action: SessionAction;
+  permit: boolean;
+  resource: SessionResource;
+  action: SessionAction;
 };
 
 export const auth = betterAuth({
-	database: prismaAdapter(prisma, {
-		provider: "postgresql",
-	}),
-	advanced: {
-		database: { useNumberId: true, generateId: false },
-	},
-	socialProviders: {
-		github: {
-			clientId: process.env.GITHUB_ID as string,
-			clientSecret: process.env.GITHUB_SECRET as string,
-		},
-		microsoft: {
-			clientId: process.env.AZURE_AD_CLIENT_ID as string,
-			clientSecret: process.env.AZURE_AD_CLIENT_SECRET as string,
-			tenantId: process.env.AZURE_AD_TENANT_ID as string,
-			disableProfilePhoto: false,
-			overrideUserInfoOnSignIn: true,
-		},
-	},
-	session: {
-		expiresIn: 60 * 60 * 24 * 7, // 7 days
-		updateAge: 60 * 60 * 24, // 1 day
-		additionalFields: { impersonatedRole: { type: "string", required: false } },
-		cookieCache: {
-			enabled: true,
-			maxAge: 10 * 60, // 5 Minutes
-			strategy: "compact",
-			refreshCache: { updateAge: 60 * 2 },
-		},
-	},
-	account: {
-		accountLinking: {
-			enabled: true,
-			trustedProviders: ["microsoft", "github"],
-			updateUserInfoOnLink: true,
-		},
-	},
-	trustedOrigins: ["http://192.168.50.33", "https://192.168.50.33", "http://localhost:3000", "https://exampledomain.home"],
-	databaseHooks: {
-		session: {
-			create: {
-				after: async session => {
-					createDefaultRole(Number(session.userId));
-				},
-			},
-		},
-		user: {
-			update: {
-				after: async user => {
-					createDefaultRole(Number(user.id));
-				},
-			},
-			create: {
-				after: async user => {
-					createDefaultRole(Number(user.id));
-				},
-			},
-		},
-	},
-	/*user: {
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+  advanced: {
+    database: { useNumberId: true, generateId: false },
+  },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
+    },
+    microsoft: {
+      clientId: process.env.AZURE_AD_CLIENT_ID as string,
+      clientSecret: process.env.AZURE_AD_CLIENT_SECRET as string,
+      tenantId: process.env.AZURE_AD_TENANT_ID as string,
+      disableProfilePhoto: false,
+      overrideUserInfoOnSignIn: true,
+    },
+  },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    additionalFields: { impersonatedRole: { type: "string", required: false } },
+    cookieCache: {
+      enabled: true,
+      maxAge: 10 * 60, // 5 Minutes
+      strategy: "compact",
+      refreshCache: { updateAge: 60 * 2 },
+    },
+  },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["microsoft", "github"],
+      updateUserInfoOnLink: true,
+    },
+  },
+  trustedOrigins: [
+    "http://192.168.50.33",
+    "https://192.168.50.33",
+    "http://localhost:3000",
+    "https://exampledomain.home",
+  ],
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          createDefaultRole(Number(session.userId));
+        },
+      },
+    },
+    user: {
+      update: {
+        after: async (user) => {
+          createDefaultRole(Number(user.id));
+        },
+      },
+      create: {
+        after: async (user) => {
+          createDefaultRole(Number(user.id));
+        },
+      },
+    },
+  },
+  /*user: {
     additionalFields: {
       userId: { type: "string", required:true, defaultValue: null },
       roles: { type: "number[]"},
     },
   },*/
 
-	plugins: [
-		sso({
-			modelName: "SSOProvider",
-		}),
+  plugins: [
+    sso({
+      modelName: "SSOProvider",
+    }),
 
-		customSession(async ({ user, session }) => {
-			const currentSession = session as Session & { impersonatedRole?: string };
-			const token = session.token;
-			const userId = Number(user.id);
-			const roles = await getCachedUserRoles(token, userId, currentSession.impersonatedRole);
-			return {
-				user: {
-					...user,
-					roles: roles,
-				},
-				session: currentSession,
-			};
-		}),
-		nextCookies(), // make sure this is the last plugin in the array
-	],
+    customSession(async ({ user, session }) => {
+      const currentSession = session as Session & { impersonatedRole?: string };
+      const token = session.token;
+      const userId = Number(user.id);
+      const roles = await getCachedUserRoles(token, userId, currentSession.impersonatedRole);
+      return {
+        user: {
+          ...user,
+          roles: roles,
+        },
+        session: currentSession,
+      };
+    }),
+    nextCookies(), // make sure this is the last plugin in the array
+  ],
 });
 
-
 export async function getServerSession() {
-	const session = await auth.api.getSession({
-		headers: await headers(),
-	});
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-	return session;
+  return session;
 }
 
 async function createDefaultRole(userId: number) {
-	const userRole = await prisma.userRole.count({ where: { userId: userId } });
-	if (userRole > 0) return;
+  const userRole = await prisma.userRole.count({ where: { userId: userId } });
+  if (userRole > 0) return;
 
-	const role = await prisma.role.findFirst({ where: { name: "User" } });
+  const defaultRole = await getDefaultRole();
 
-	if (role) {
-		await prisma.userRole.create({
-			data: { userId: userId, roleId: role.roleId },
-		});
-	}
+  const roleId = Number(defaultRole.roleId);
+  if (!Number.isFinite(roleId)) {
+    console.warn("Default role ID is not set or invalid. Skipping default role assignment.");
+    return;
+  }
+
+  const role = await prisma.role.findFirst({ where: { roleId: roleId } });
+
+  if (role) {
+    await prisma.userRole.create({
+      data: { userId: userId, roleId: role.roleId, granted: true },
+    });
+  }
 }

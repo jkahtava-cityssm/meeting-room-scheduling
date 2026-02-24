@@ -156,6 +156,7 @@ model UserRole {
   userRoleId Int      @id @default(autoincrement()) @map("user_role_id")
   userId     Int      @map("user_id")
   roleId     Int      @map("role_id")
+  granted    Boolean  @default(true)
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
@@ -231,13 +232,6 @@ model Action {
 
   @@map("action")
 }
-
-/**
- * type = frequency
- * pattern = "ByDay"
- * totalOccurrences = Count
- * daySpan/week/month/year = Interval
- */
 
 model Recurrence {
   recurrenceId             Int      @id @default(autoincrement()) @map("recurrence_id")
@@ -334,30 +328,3 @@ model Configuration {
 
   @@map("configuration")
 }
-
-/**
- * export interface IEvent {
- * id: number;
- * key: string;
- * startDate: string;
- * endDate: string;
- * title: string;
- * description: string;
- * room: IRoom;
- * parentEvent: IEvent | null;
- * }
- */
-
-/**
- * //Resource 1 or Many Attributes
- * model Attribute {
- * attributeId Int      @id @default(autoincrement())
- * name        String
- * resourceId  Int
- * actionId    Int
- * createdAt   DateTime @default(now())
- * updatedAt   DateTime @updatedAt
- * resource Resource @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
- * action   Action   @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
- * }
- */

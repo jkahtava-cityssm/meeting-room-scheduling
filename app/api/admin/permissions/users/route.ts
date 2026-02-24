@@ -45,32 +45,25 @@ export async function PUT(request: NextRequest) {
       EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" },
     },
     async () => {
-      const { userId, roleId, assignRole } = await request.json();
-      //{ data: permissionList }: { data: rolePermissionMutations[] }
-      if (!userId || !roleId || assignRole === undefined) {
+      const body = await request.json().catch(() => null);
+      const userId = Number(body?.userId);
+      const roleId = Number(body?.roleId);
+      const assignRole: boolean | undefined = body?.assignRole;
+
+      if (!Number.isFinite(userId) || !Number.isFinite(roleId) || typeof assignRole !== "boolean") {
         return BadRequestMessage();
       }
 
-      if (assignRole) {
-        const userRole = await prisma.userRole.upsert({
-          where: { userId_roleId: { userId: Number(userId), roleId: Number(roleId) } },
-          create: { userId: Number(userId), roleId: Number(roleId) },
-          update: {},
-        });
-        return SuccessMessage("User Role Assigned", userRole);
-      }
-
       try {
-        await prisma.userRole.delete({
-          where: { userId_roleId: { userId: Number(userId), roleId: Number(roleId) } },
+        const userRole = await prisma.userRole.upsert({
+          where: { userId_roleId: { userId, roleId } },
+          create: { userId, roleId, granted: assignRole },
+          update: { granted: assignRole },
         });
-        return DeleteMessage();
-      } catch (e: unknown) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError) {
-          if (e?.code === "P2025") return NoContentMessage();
-        }
 
-        return InternalServerErrorMessage("Failed to remove user role.");
+        return SuccessMessage(assignRole ? "User role granted." : "User role revoked.", userRole);
+      } catch (e: unknown) {
+        return InternalServerErrorMessage("Failed to update user role.");
       }
     },
   );

@@ -20,6 +20,7 @@ const SESSION_SELECT = {
 
 const USER_ROLE_SELECT = {
   roleId: true,
+  granted: true,
   role: { select: { name: true } },
 } as const satisfies Prisma.UserRoleSelect;
 
@@ -52,7 +53,19 @@ export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.Use
     return [];
   }
 
+  const defaultRole = await getDefaultRole();
+
   return userList.map((user) => {
+    const roleList = user.userRole.map((userRole) => {
+      return { roleId: userRole.roleId, name: userRole.role.name, granted: userRole.granted };
+    });
+
+    const hasDefaultRole = roleList.some((role) => role.roleId === defaultRole.roleId);
+
+    if (defaultRole.roleId && !hasDefaultRole) {
+      roleList.push({ roleId: defaultRole.roleId, name: defaultRole.name ?? "Default Role", granted: true });
+    }
+
     return {
       userId: user.id,
       name: user.name,
@@ -61,11 +74,26 @@ export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.Use
       jobTitle: user.jobTitle,
       employeeNumber: user.employeeNumber,
       employeeActive: user.employeeActive,
-      roles: user.userRole.map((userRole) => {
-        return { roleId: userRole.roleId, name: userRole.role.name };
-      }),
+      roles: roleList,
     };
   });
+}
+
+export async function getDefaultRole(): Promise<{ roleId: number | null; name: string | null }> {
+  const defaultRole = await prisma.configuration.findFirst({ where: { key: "defaultUserRole" } });
+
+  const defaultRoleID = Number(defaultRole?.value);
+  if (!Number.isFinite(defaultRoleID)) {
+    console.warn("Default role ID is not set or invalid. Skipping default role assignment.");
+    return { roleId: null, name: null };
+  }
+
+  const role = await prisma.role.findUnique({
+    where: { roleId: defaultRoleID },
+    select: { roleId: true, name: true },
+  });
+
+  return role ? { roleId: role.roleId, name: role.name } : { roleId: null, name: null };
 }
 
 export async function findSession(where: Prisma.SessionWhereInput) {
