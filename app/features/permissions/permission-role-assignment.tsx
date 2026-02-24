@@ -1,5 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Filter, LoaderCircle, LucideShieldUser } from "lucide-react";
+import {
+  ArrowDownAz,
+  ArrowUpAz,
+  CheckCheck,
+  ChevronDown,
+  ChevronUp,
+  Dot,
+  Filter,
+  FilterX,
+  ListFilter,
+  ListFilterPlus,
+  LoaderCircle,
+  LucideShieldUser,
+  Minus,
+  X,
+} from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -167,7 +182,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
         <div className="px-4">
           {/* Table Header */}
           <div className="grid grid-cols-2 md:grid-cols-6 items-center border-b p-2 sticky top-0 bg-background z-10">
-            <FilterHeader title="Name">
+            <FilterHeader title="Name" isSortedAsc={true} isFiltered={filters.name.length > 0}>
               <DebouncedInput
                 placeholder="Search names..."
                 onChange={(value) => onFilter(value, "name")}
@@ -176,7 +191,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
             </FilterHeader>
 
             <div className="hidden md:block">
-              <FilterHeader title="Email">
+              <FilterHeader title="Email" isFiltered={filters.email.length > 0}>
                 <DebouncedInput
                   placeholder="Search emails..."
                   value={filters.email}
@@ -186,7 +201,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
             </div>
 
             <div className="font-bold min-w-0 hidden md:block text-center">
-              <FilterHeader title="Employee #">
+              <FilterHeader title="Employee #" isFiltered={filters.employeeNumber.length > 0}>
                 <DebouncedInput
                   placeholder="Search numbers..."
                   value={filters.employeeNumber}
@@ -195,7 +210,11 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
               </FilterHeader>
             </div>
             <div className="font-bold min-w-0 hidden md:block text-center">
-              <FilterHeader title="Department">
+              <FilterHeader
+                title="Department"
+                isFiltered={filters.department.length > 0}
+                totalSelected={filters.department.length}
+              >
                 <div className="flex flex-col gap-2">
                   {departmentList?.map((dept) => {
                     if (!dept) return null;
@@ -214,7 +233,12 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
             </div>
 
             <div className="hidden md:block content-center">
-              <FilterHeader title="Status">
+              <FilterHeader
+                title="Status"
+                center
+                isFiltered={filters.status.length > 0}
+                totalSelected={filters.status.length}
+              >
                 <div className="flex flex-col gap-2">
                   {STATUS_OPTIONS.map((option) => (
                     <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
@@ -229,7 +253,12 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
               </FilterHeader>
             </div>
             <div className="font-bold min-w-0 text-center">
-              <FilterHeader title="Assigned" center>
+              <FilterHeader
+                title="Assigned"
+                center
+                isFiltered={filters.assigned.length > 0}
+                totalSelected={filters.assigned.length}
+              >
                 <div className="flex flex-col gap-2">
                   {ASSIGNED_OPTIONS.map((option) => (
                     <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
@@ -291,7 +320,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
                     <div className="hidden md:block text-sm truncate px-2">{employee.email}</div>
                     <div className="hidden md:block text-sm truncate">{employee.employeeNumber}</div>
                     <div className="hidden md:block text-sm truncate">{employee.department}</div>
-                    <div className="hidden md:block text-sm truncate">
+                    <div className="hidden md:block text-sm truncate text-center">
                       {employee.employeeActive ? "Enabled" : "Disabled"}
                     </div>
 
@@ -314,7 +343,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
 
                     {/* Mobile Detail Panel */}
                     {isExpanded && (
-                      <div className="col-span-2 md:hidden bg-slate-50 p-3 rounded-lg text-sm space-y-2 border border-slate-200 mb-2 mx-2">
+                      <div className="col-span-2 md:hidden  p-3 rounded-lg text-sm space-y-2 border  mb-2 mx-2">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Email:</span>
                           <span>{employee.email}</span>
@@ -327,7 +356,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
                     )}
 
                     {/* Row Divider */}
-                    <div className="col-span-2 md:col-span-6 border-b border-slate-100" />
+                    <div className="col-span-2 md:col-span-6 border-b" />
                   </div>
                 );
               })}
@@ -340,24 +369,90 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
   );
 }
 
-const FilterHeader = ({ title, center, children }: { title: string; center?: boolean; children: React.ReactNode }) => (
-  <div className={cn("flex items-center gap-1 font-bold min-w-0", center && " justify-center")}>
-    <span className="truncate">{title}</span>
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7">
-          <Filter size={14} />
+const FilterHeader = ({
+  title,
+  center,
+  isFiltered,
+  totalSelected,
+  isSortedAsc,
+  isSortedDesc,
+  onClearFilter,
+  onToggleSort,
+  children,
+}: {
+  title: string;
+  center?: boolean;
+  isFiltered?: boolean;
+  totalSelected?: number;
+  isSortedAsc?: boolean;
+  isSortedDesc?: boolean;
+  onClearFilter?: () => void;
+  onToggleSort?: () => void;
+  children: React.ReactNode;
+}) => {
+  const sortIcon = isSortedAsc ? (
+    <ArrowDownAz className="h-4 w-4 shrink-0" aria-hidden />
+  ) : isSortedDesc ? (
+    <ArrowUpAz className="h-4 w-4 shrink-0" aria-hidden />
+  ) : null;
+  //<Dot className="fill-background outline-background stroke-background" />
+  const isCountVisible = Boolean(isFiltered && (totalSelected ?? 0) > 0);
+
+  return (
+    <div className="min-w-0 flex items-center font-bold">
+      <div className={cn("min-w-0 inline-flex items-center ", center && "mx-auto")}>
+        <Button
+          variant="link"
+          size={"sm"}
+          className={cn(
+            "min-w-0  h-7 px-2 text-sm font-semibold gap-1",
+            center ? "justify-center text-center" : "justify-start text-left",
+          )}
+          title={isSortedAsc || isSortedDesc ? `Sort by ${title}` : title}
+          onClick={onToggleSort}
+        >
+          <span className={cn("block truncate", center && "mx-auto text-center")}>{title}</span>
+          {sortIcon && <span className="ml-0.5">{sortIcon}</span>}
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-60 p-3" align="start">
-        <div className="space-y-2">
-          <h4 className="font-medium leading-none text-sm">Filter {title}</h4>
-          {children}
-        </div>
-      </PopoverContent>
-    </Popover>
-  </div>
-);
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant={"ghost"}
+              size={"icon"}
+              className={cn("h-7 w-7 shrink-0", isFiltered && "text-primary")}
+              title={isFiltered ? `${totalSelected} filters applied` : `Filter by ${title}`}
+              aria-pressed={isFiltered}
+            >
+              {isFiltered ? <FilterX /> : <Filter />}
+            </Button>
+          </PopoverTrigger>
+
+          <PopoverContent className="w-60 p-3" align="start">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-medium leading-none text-sm">Filter {title}</h4>
+                <Button variant={"ghost"} size={"icon"} className="size-6" onClick={onClearFilter}>
+                  <X />
+                </Button>
+              </div>
+              {children}
+            </div>
+          </PopoverContent>
+        </Popover>
+        {isCountVisible && (
+          <span
+            className="hidden lg:inline-flex shrink-0 items-center rounded-full bg-muted px-1.5 py-0.5 text-sm leading-none text-muted-foreground ml-0.5"
+            aria-label={`${totalSelected} selected`}
+            title={`${totalSelected} selected`}
+          >
+            {totalSelected}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 interface DebouncedInputProps extends Omit<React.ComponentProps<typeof Input>, "onChange"> {
   value: string;
@@ -423,88 +518,4 @@ function getDistinctValuesByKey<T, K extends keyof T>(list: T[], key: K): T[K][]
   if (!list) return [];
 
   return [...new Set(list.map((item) => item[key]))];
-}
-
-export function generateEmployees(count = 30) {
-  const firstNames = [
-    "Jordan",
-    "Ava",
-    "Liam",
-    "Sophia",
-    "Noah",
-    "Emma",
-    "Oliver",
-    "Mia",
-    "Elijah",
-    "Charlotte",
-    "James",
-    "Amelia",
-    "Benjamin",
-    "Harper",
-    "Lucas",
-    "Evelyn",
-    "Henry",
-    "Isabella",
-    "Alexander",
-    "Luna",
-    "William",
-    "Ella",
-    "Jack",
-    "Scarlett",
-    "Daniel",
-    "Grace",
-    "Matthew",
-    "Chloe",
-    "Samuel",
-    "Victoria",
-  ];
-
-  const lastNames = [
-    "Kahtava",
-    "Thompson",
-    "Chen",
-    "Patel",
-    "Williams",
-    "Johnson",
-    "Brown",
-    "Davis",
-    "Wilson",
-    "Garcia",
-    "Martinez",
-    "Rodriguez",
-    "Lee",
-    "Walker",
-    "Hall",
-    "Young",
-    "King",
-    "Wright",
-    "Scott",
-    "Green",
-    "Adams",
-    "Baker",
-    "Nelson",
-    "Carter",
-    "Mitchell",
-    "Perez",
-    "Roberts",
-    "Turner",
-    "Phillips",
-    "Campbell",
-  ];
-
-  const employees = [];
-
-  for (let i = 0; i < count; i++) {
-    const first = firstNames[i % firstNames.length];
-    const last = lastNames[i % lastNames.length];
-
-    employees.push({
-      id: i + 1,
-      name: `${first} ${last}`,
-      email: `${first.toLowerCase()}.${last.toLowerCase()}@example.com`,
-      employeeNumber: 10000 + i,
-    });
-  }
-
-  return employees;
 }
