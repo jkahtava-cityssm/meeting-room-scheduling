@@ -2,7 +2,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Terminal } from "lucide-react";
 
-export function GenericCalendarError({ error }: { error: Error | null }) {
+export function GenericError({ error }: { error: Error | null }) {
   return (
     <div className="flex flex-1 min-h-0">
       <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1 p-4")}>

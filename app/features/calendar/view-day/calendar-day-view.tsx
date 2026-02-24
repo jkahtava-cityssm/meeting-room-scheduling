@@ -16,7 +16,7 @@ import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-c
 import { CalendarAccessDenied } from "../calendar-controller/calendar-all-views";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
-import { GenericCalendarError } from "../components/calendar-generic-error";
+import { GenericError } from "../../../../components/shared/generic-error";
 
 export function CalendarDayView({
   date,
@@ -70,7 +70,7 @@ export function CalendarDayView({
   const isMounting = !visibleRooms || !result;
 
   if (error) {
-    return <GenericCalendarError error={error} />;
+    return <GenericError error={error} />;
   }
 
   return (

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
 import { IEventBlock } from "../webworkers/generic-webworker";
 import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
-import { GenericCalendarError } from "../components/calendar-generic-error";
+import { GenericError } from "../../../../components/shared/generic-error";
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
@@ -94,7 +94,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
   const isMounting = !visibleRooms || !result || false;
 
   if (error) {
-    return <GenericCalendarError error={error} />;
+    return <GenericError error={error} />;
   }
 
   return (
