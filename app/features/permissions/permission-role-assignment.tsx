@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { ChevronDown, ChevronUp, Filter, LoaderCircle, LucideShieldUser } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,9 @@ import { useUsersQuery } from "@/lib/services/users";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import React from "react";
-import { GenericCalendarError } from "../calendar/components/calendar-generic-error";
+import { GenericError } from "../../../components/shared/generic-error";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface Employee {
   id: number;
@@ -47,18 +49,20 @@ const ASSIGNED_OPTIONS = [
   { label: "Not Assigned", value: "false" },
 ];
 
-export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionProps) {
+const defaultFilters: UserFilters = {
+  name: "",
+  email: "",
+  employeeNumber: "",
+  department: [],
+  status: ["true"],
+  assigned: [],
+};
+
+export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectionProps) {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [currentRole, setCurrentRole] = useState<{ id: string; label: string } | undefined>(undefined);
 
-  const [filters, setFilters] = useState<UserFilters>({
-    name: "",
-    email: "",
-    employeeNumber: "",
-    department: [],
-    status: ["true"],
-    assigned: [],
-  });
+  const [filters, setFilters] = useState<UserFilters>(defaultFilters);
 
   const putUserRole = usePermissionUserRoleMutationUpsert();
 
@@ -141,15 +145,13 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
   const noData = !currentRole || (!isLoading && filteredEmployee.length === 0);
 
   if (error) {
-    return <GenericCalendarError error={error} />;
+    return <GenericError error={error} />;
   }
 
   return (
     <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
       {/* Header / Search Controls */}
-      <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
-        <h1 className="font-bold">Role Assignment</h1>
-      </header>
+
       <div className="shrink-0 p-4 pb-0">
         <div className="flex flex-col gap-3 mb-4">
           <RoleComboBox
@@ -244,11 +246,32 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
           </div>
 
           {/* Table Body */}
-          <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto px-2">
-            {noData && <div>NO DATA</div>}
-            {isLoading && <div>LOADING</div>}
-            {data &&
-              filteredEmployee?.map((employee) => {
+          {noData && (
+            <Empty className="border border-dashed mt-4">
+              <EmptyHeader>
+                <EmptyMedia>
+                  <LucideShieldUser />
+                </EmptyMedia>
+                <EmptyTitle>No Users Found</EmptyTitle>
+                <EmptyDescription>Please select a Role or adjust Filters</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" size="sm" onClick={() => setFilters(defaultFilters)}>
+                  Reset Filters to Default
+                </Button>
+              </EmptyContent>
+            </Empty>
+          )}
+          {isLoading && (
+            <div className="mt-4 h-65">
+              <Skeleton className="p-4 h-full flex justify-center  items-center">
+                <LoaderCircle className="animate-spin" />
+              </Skeleton>
+            </div>
+          )}
+          {data && (
+            <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto px-2">
+              {filteredEmployee?.map((employee) => {
                 const isExpanded = !!expandedRows[employee.userId];
 
                 return (
@@ -275,8 +298,8 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
                     {/* Toggle Column */}
                     <div className="flex justify-center py-2">
                       <Switch
-                        defaultChecked={employee.roles.some((r) => String(r.roleId) === currentRole?.id)}
-                        checked={employee.roles.some((r) => String(r.roleId) === currentRole?.id)}
+                        defaultChecked={employee.roles.some((r) => String(r.roleId) === currentRole?.id && r.granted)}
+                        checked={employee.roles.some((r) => String(r.roleId) === currentRole?.id && r.granted)}
                         onCheckedChange={(next) => {
                           if (!currentRole) return;
                           putUserRole.mutate({
@@ -308,7 +331,8 @@ export function PermissionGroupList({ onToggleAssigned }: EmployeeTableSectionPr
                   </div>
                 );
               })}
-          </div>
+            </div>
+          )}
         </div>
         <ScrollBar orientation="vertical" />
       </ScrollArea>

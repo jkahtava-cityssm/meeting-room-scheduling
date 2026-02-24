@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { IPermissionSet } from "@/lib/data/permissions";
-import { ResourceActions } from "./permission-grid";
+import { ResourceActions } from "./permission-layout";
 import { Button } from "@/components/ui/button";
 
 interface PermissionTableWithActionsProps {
@@ -33,7 +33,7 @@ interface PermissionTableWithActionsProps {
   noLabel?: string;
 }
 
-export function PermissionList({
+export function RolePermissionGrid({
   workingPermissions,
   serverPermissions,
   resourceActions,
@@ -46,9 +46,6 @@ export function PermissionList({
 }: PermissionTableWithActionsProps) {
   return (
     <div className="flex flex-col h-full w-full min-h-0">
-      <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
-        <h1 className="font-bold">Role Permissions</h1>
-      </header>
       <div className="relative flex-1 min-h-0 w-full overflow-hidden">
         <ScrollArea className="h-full w-full  pr-4" type="always">
           <TooltipProvider>

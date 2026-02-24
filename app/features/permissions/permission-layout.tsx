@@ -14,11 +14,12 @@ import { isEqual } from "lodash";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GenericSelect } from "@/components/shared/GenericSelect";
 import { Input } from "@/components/ui/input";
-import { PermissionList } from "./permission-left-column";
-import { Employee, generateEmployees, PermissionGroupList } from "./permission-table";
+import { RolePermissionGrid } from "./permission-role-permission";
+import { Employee, generateEmployees, UserRoleAssignmentList } from "./permission-role-assignment";
 import { Switch } from "@/components/ui/switch";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GenericError } from "@/components/shared/generic-error";
 
 export type ResourceActions = {
   resourceId: string;
@@ -88,22 +89,29 @@ export function PermissionGrid({
     }));
   };
 
-  if (isLoading || error || !workingPermissions || !resourceActions) {
-    return <Skeleton className="w-full h-full" />;
+  if (error) {
+    return <GenericError error={error} />;
   }
 
+  if (isLoading || !workingPermissions || !resourceActions) {
+    return (
+      <div className="flex flex-col h-full w-full">
+        <Skeleton className="w-full h-full" />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="h-full md:hidden">
+      <div className="h-full xl:hidden">
         <Tabs defaultValue="list" className="flex flex-col h-full">
           <div className="px-4 py-2 border-b">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list">Permissions</TabsTrigger>
-              <TabsTrigger value="roles">Roles</TabsTrigger>
+              <TabsTrigger value="roles">Assign User Roles</TabsTrigger>
             </TabsList>
           </div>
           <TabsContent value="list" className="flex-1 overflow-auto m-0">
-            <PermissionList
+            <RolePermissionGrid
               workingPermissions={workingPermissions}
               serverPermissions={serverPermissions ?? []}
               resourceActions={resourceActions ?? []}
@@ -121,31 +129,41 @@ export function PermissionGrid({
             />
           </TabsContent>
           <TabsContent value="roles" className="flex-1 overflow-auto m-0">
-            <PermissionGroupList onToggleAssigned={(id, next) => console.log("Assigning", id, next)} />
+            <UserRoleAssignmentList onToggleAssigned={(id, next) => console.log("Assigning", id, next)} />
           </TabsContent>
         </Tabs>
       </div>
-      <div className="hidden md:flex h-full">
+      <div className="hidden xl:flex h-full">
         <div className="flex border-r overflow-auto">
-          <PermissionList
-            workingPermissions={workingPermissions}
-            serverPermissions={serverPermissions ?? []}
-            resourceActions={resourceActions ?? []}
-            isChanged={isChanged}
-            onToggle={onToggle}
-            onReset={(original) => {
-              setWorkingPermissions(original);
-              setChanged(false);
-            }}
-            onSave={(diffs) => {
-              putPermission.mutate(diffs, {
-                onSuccess: () => setChanged(false),
-              });
-            }}
-          />
+          <div className="flex flex-col h-full w-full min-h-0">
+            <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
+              <h1 className="font-bold">Permissions</h1>
+            </header>
+            <RolePermissionGrid
+              workingPermissions={workingPermissions}
+              serverPermissions={serverPermissions ?? []}
+              resourceActions={resourceActions ?? []}
+              isChanged={isChanged}
+              onToggle={onToggle}
+              onReset={(original) => {
+                setWorkingPermissions(original);
+                setChanged(false);
+              }}
+              onSave={(diffs) => {
+                putPermission.mutate(diffs, {
+                  onSuccess: () => setChanged(false),
+                });
+              }}
+            />
+          </div>
         </div>
         <div className="flex-1 overflow-auto">
-          <PermissionGroupList onToggleAssigned={(id, next) => console.log("Assigning", id, next)} />
+          <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
+            <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
+              <h1 className="font-bold">Assign User Roles</h1>
+            </header>
+            <UserRoleAssignmentList onToggleAssigned={(id, next) => console.log("Assigning", id, next)} />
+          </div>
         </div>
       </div>
     </div>
