@@ -23,7 +23,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { GenericSelect } from "@/components/shared/GenericSelect";
 import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
-import { usePermissionUserQuery, usePermissionUserRoleMutationUpsert, useRolesQuery } from "@/lib/services/permissions";
+import {
+  IUserWithRoles,
+  usePermissionUserQuery,
+  usePermissionUserRoleMutationUpsert,
+  useRolesQuery,
+} from "@/lib/services/permissions";
 import { GenericComboBox } from "@/components/shared/GenericComboBox";
 import { RoleComboBox } from "../roles/role-combobox";
 import { useUsersQuery } from "@/lib/services/users";
@@ -154,20 +159,20 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
 
   // Helper: value extraction for the active sort key
   const getSortValue = useCallback(
-    (u: any, key: SortColumn) => {
+    (user: IUserWithRoles, key: SortColumn) => {
       switch (key) {
         case "name":
-          return (u.name ?? "") as string;
+          return (user.name ?? "") as string;
         case "email":
-          return (u.email ?? "") as string;
+          return (user.email ?? "") as string;
         case "employeeNumber":
-          return Number(u.employeeNumber ?? 0);
+          return Number(user.employeeNumber ?? 0);
         case "department":
-          return (u.department ?? "") as string;
+          return (user.department ?? "") as string;
         case "status":
-          return u.employeeActive ? 1 : 0; // 1 enabled, 0 disabled
+          return user.employeeActive ? 1 : 0; // 1 enabled, 0 disabled
         case "assigned": {
-          const isAssigned = u.roles?.some((r: any) => String(r.roleId) === currentRole?.id && r.granted);
+          const isAssigned = user.roles?.some((role) => String(role.roleId) === currentRole?.id && role.granted);
           return isAssigned ? 1 : 0;
         }
       }
@@ -184,9 +189,9 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
 
     const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
 
-    const cmp = (a: any, b: any) => {
-      const va = getSortValue(a, key);
-      const vb = getSortValue(b, key);
+    const cmp = (userA: IUserWithRoles, userB: IUserWithRoles) => {
+      const va = getSortValue(userA, key);
+      const vb = getSortValue(userB, key);
 
       if (typeof va === "string" && typeof vb === "string") {
         return collator.compare(va, vb);

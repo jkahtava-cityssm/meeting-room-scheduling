@@ -1,23 +1,15 @@
 "use client";
 
-import { useEffect, useState, Fragment, useMemo, useCallback } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState, useMemo, useCallback } from "react";
+
 import { usePermissionMutationUpsert, usePermissionsQuery } from "@/lib/services/permissions";
 import { IPermissionSet } from "@/lib/data/permissions";
-import { cn } from "@/lib/utils";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { isEqual } from "lodash";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import { GenericSelect } from "@/components/shared/GenericSelect";
-import { Input } from "@/components/ui/input";
+
 import { RolePermissionGrid } from "./permission-role-permission";
-import { Employee, generateEmployees, UserRoleAssignmentList } from "./permission-role-assignment";
-import { Switch } from "@/components/ui/switch";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { UserRoleAssignmentList } from "./permission-role-assignment";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GenericError } from "@/components/shared/generic-error";
 
@@ -30,18 +22,7 @@ export type ResourceActions = {
   }[];
 };
 
-type PermissionGridProps = {
-  yesLabel?: string; // default YES
-  noLabel?: string; // default NO
-  // Optional: show tips on hover to explain permission
-  tooltipForDenied?: string; // e.g., "Ask an admin for access"
-};
-
-export function PermissionGrid({
-  yesLabel = "YES",
-  noLabel = "NO",
-  tooltipForDenied = "Insufficient permissions",
-}: PermissionGridProps) {
+export function PermissionGrid() {
   const { data: serverPermissions, isLoading, error } = usePermissionsQuery();
 
   const [workingPermissions, setWorkingPermissions] = useState<IPermissionSet[] | undefined>(undefined);
