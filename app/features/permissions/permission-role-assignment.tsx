@@ -73,15 +73,35 @@ const defaultFilters: UserFilters = {
   assigned: [],
 };
 
+type SortColumn = "name" | "email" | "employeeNumber" | "department" | "status" | "assigned";
+
+type SortDirection = "desc" | "asc" | null;
+
 export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectionProps) {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [currentRole, setCurrentRole] = useState<{ id: string; label: string } | undefined>(undefined);
-
   const [filters, setFilters] = useState<UserFilters>(defaultFilters);
 
   const putUserRole = usePermissionUserRoleMutationUpsert();
 
   const { data, isPending, isFetching, error } = usePermissionUserQuery(currentRole?.id, currentRole !== undefined);
+
+  const [sort, setSort] = useState<{ key: SortColumn | null; dir: SortDirection }>({
+    key: null,
+    dir: null,
+  });
+
+  const toggleSort = useCallback((key: SortColumn) => {
+    setSort((prev) => {
+      if (prev.key !== key) return { key, dir: "desc" };
+      if (prev.dir === "desc") return { key, dir: "asc" };
+
+      return { key: null, dir: null };
+    });
+  }, []);
+
+  const isSortedAsc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "asc", [sort]);
+  const isSortedDesc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "desc", [sort]);
 
   const departmentList = useMemo(() => {
     return data ? getDistinctValuesByKey(data, "department") : [];
@@ -132,6 +152,55 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
     });
   }, [currentRole?.id, data, debouncedFilters]);
 
+  // Helper: value extraction for the active sort key
+  const getSortValue = useCallback(
+    (u: any, key: SortColumn) => {
+      switch (key) {
+        case "name":
+          return (u.name ?? "") as string;
+        case "email":
+          return (u.email ?? "") as string;
+        case "employeeNumber":
+          return Number(u.employeeNumber ?? 0);
+        case "department":
+          return (u.department ?? "") as string;
+        case "status":
+          return u.employeeActive ? 1 : 0; // 1 enabled, 0 disabled
+        case "assigned": {
+          const isAssigned = u.roles?.some((r: any) => String(r.roleId) === currentRole?.id && r.granted);
+          return isAssigned ? 1 : 0;
+        }
+      }
+    },
+    [currentRole?.id],
+  );
+
+  const sortedEmployees = useMemo(() => {
+    if (!filteredEmployee) return [];
+    if (!sort.key || !sort.dir) return filteredEmployee;
+
+    const key = sort.key;
+    const dir = sort.dir;
+
+    const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+
+    const cmp = (a: any, b: any) => {
+      const va = getSortValue(a, key);
+      const vb = getSortValue(b, key);
+
+      if (typeof va === "string" && typeof vb === "string") {
+        return collator.compare(va, vb);
+      }
+      // number/boolean compare
+      return va === vb ? 0 : va > vb ? 1 : -1;
+    };
+
+    const factor = dir === "asc" ? 1 : -1;
+
+    // slice() to avoid mutating original; modern JS sort is stable.
+    return filteredEmployee.slice().sort((a, b) => factor * cmp(a, b));
+  }, [filteredEmployee, sort, getSortValue]);
+
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => ({
       ...prev,
@@ -156,8 +225,12 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
     });
   }, []);
 
+  const clearFilter = useCallback(<K extends keyof UserFilters>(key: K) => {
+    setFilters((prev) => ({ ...prev, [key]: defaultFilters[key] }));
+  }, []);
+
   const isLoading = isFetching && !data;
-  const noData = !currentRole || (!isLoading && filteredEmployee.length === 0);
+  const noData = !currentRole || (!isLoading && sortedEmployees.length === 0);
 
   if (error) {
     return <GenericError error={error} />;
@@ -182,7 +255,14 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
         <div className="px-4">
           {/* Table Header */}
           <div className="grid grid-cols-2 md:grid-cols-6 items-center border-b p-2 sticky top-0 bg-background z-10">
-            <FilterHeader title="Name" isSortedAsc={true} isFiltered={filters.name.length > 0}>
+            <FilterHeader
+              title="Name"
+              isSortedAsc={isSortedAsc("name")}
+              isSortedDesc={isSortedDesc("name")}
+              onToggleSort={() => toggleSort("name")}
+              onClearFilter={() => clearFilter("name")}
+              isFiltered={filters.name.length > 0}
+            >
               <DebouncedInput
                 placeholder="Search names..."
                 onChange={(value) => onFilter(value, "name")}
@@ -191,7 +271,14 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
             </FilterHeader>
 
             <div className="hidden md:block">
-              <FilterHeader title="Email" isFiltered={filters.email.length > 0}>
+              <FilterHeader
+                title="Email"
+                isSortedAsc={isSortedAsc("email")}
+                isSortedDesc={isSortedDesc("email")}
+                onToggleSort={() => toggleSort("email")}
+                onClearFilter={() => clearFilter("email")}
+                isFiltered={filters.email.length > 0}
+              >
                 <DebouncedInput
                   placeholder="Search emails..."
                   value={filters.email}
@@ -201,7 +288,14 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
             </div>
 
             <div className="font-bold min-w-0 hidden md:block text-center">
-              <FilterHeader title="Employee #" isFiltered={filters.employeeNumber.length > 0}>
+              <FilterHeader
+                title="Employee #"
+                isSortedAsc={isSortedAsc("employeeNumber")}
+                isSortedDesc={isSortedDesc("employeeNumber")}
+                onToggleSort={() => toggleSort("employeeNumber")}
+                onClearFilter={() => clearFilter("employeeNumber")}
+                isFiltered={filters.employeeNumber.length > 0}
+              >
                 <DebouncedInput
                   placeholder="Search numbers..."
                   value={filters.employeeNumber}
@@ -212,6 +306,10 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
             <div className="font-bold min-w-0 hidden md:block text-center">
               <FilterHeader
                 title="Department"
+                isSortedAsc={isSortedAsc("department")}
+                isSortedDesc={isSortedDesc("department")}
+                onToggleSort={() => toggleSort("department")}
+                onClearFilter={() => clearFilter("department")}
                 isFiltered={filters.department.length > 0}
                 totalSelected={filters.department.length}
               >
@@ -236,6 +334,10 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
               <FilterHeader
                 title="Status"
                 center
+                isSortedAsc={isSortedAsc("status")}
+                isSortedDesc={isSortedDesc("status")}
+                onToggleSort={() => toggleSort("status")}
+                onClearFilter={() => clearFilter("status")}
                 isFiltered={filters.status.length > 0}
                 totalSelected={filters.status.length}
               >
@@ -256,6 +358,10 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
               <FilterHeader
                 title="Assigned"
                 center
+                isSortedAsc={isSortedAsc("assigned")}
+                isSortedDesc={isSortedDesc("assigned")}
+                onToggleSort={() => toggleSort("assigned")}
+                onClearFilter={() => clearFilter("assigned")}
                 isFiltered={filters.assigned.length > 0}
                 totalSelected={filters.assigned.length}
               >
@@ -300,7 +406,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
           )}
           {data && (
             <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto px-2">
-              {filteredEmployee?.map((employee) => {
+              {sortedEmployees?.map((employee) => {
                 const isExpanded = !!expandedRows[employee.userId];
 
                 return (
