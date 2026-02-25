@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     request,
     { CreateEvent: { type: "permission", resource: "Event", action: "Create" } },
 
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate, userId } =
         await request.json();
 
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
     {
       UpdateEvent: { type: "permission", resource: "Event", action: "Update" },
     },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { eventData, ruleData } = await request.json();
 
       if (!eventData) {
@@ -144,7 +144,7 @@ export async function PATCH(request: NextRequest) {
     {
       UpdateEvent: { type: "permission", resource: "Event", action: "Update" },
     },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { eventData, ruleData } = await request.json();
 
       if (!eventData || !eventData.eventId) {
@@ -203,7 +203,7 @@ export async function GET(request: NextRequest) {
     request,
     { ReadEvent: { type: "permission", resource: "Event", action: "Read All" } },
 
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");

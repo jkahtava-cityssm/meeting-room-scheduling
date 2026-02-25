@@ -7,7 +7,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return guardRoute(
     request,
     { ReadEvent: { type: "permission", resource: "Event", action: "Read All" } },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { eventId } = await params;
       if (!eventId || isNaN(Number(eventId))) {
         return BadRequestMessage();
@@ -29,7 +29,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     request,
     { DeleteEvent: { type: "permission", resource: "Event", action: "Delete" } },
 
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { eventId } = await params;
       if (!eventId || isNaN(Number(eventId))) {
         return BadRequestMessage();

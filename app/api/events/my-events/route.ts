@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
         { hasReadSelf: { type: "permission", resource: "Event", action: "Read Self" } },
       ],
     },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");

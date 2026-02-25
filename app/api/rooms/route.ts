@@ -20,12 +20,17 @@ export async function GET(req: NextRequest) {
       ],
     },
 
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
-      const roleIds = permissionCache.roleIdSet ? Array.from(permissionCache.roleIdSet) : [];
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+      const roomFilter = permissionCache.isAdmin
+        ? {}
+        : {
+            OR: [
+              { roomRoles: { some: { roleId: { in: Array.from(permissionCache.roleIdSet || []) } } } },
+              { roomRoles: { none: {} } },
+            ],
+          };
 
-      const rooms = await findManyRooms({
-        OR: [{ roomRoles: { some: { roleId: { in: roleIds } } } }, { roomRoles: { none: {} } }],
-      });
+      const rooms = await findManyRooms(roomFilter);
 
       if (!rooms) {
         return InternalServerErrorMessage();

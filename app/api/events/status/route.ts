@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     request,
     { IsPublic: { type: "role", role: "Public" } },
 
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");

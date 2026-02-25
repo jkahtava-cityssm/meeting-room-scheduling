@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   return guardRoute(
     req,
     { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const roles = await findManyRoles();
 
       if (!roles) {

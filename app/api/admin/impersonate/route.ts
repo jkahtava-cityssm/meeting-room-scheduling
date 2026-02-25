@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   return guardRoute(
     req,
     { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { roleId } = await req.json();
 
       if (!roleId || !sessionId) {
@@ -43,7 +43,7 @@ export async function DELETE(req: NextRequest) {
   return guardRoute(
     req,
     { isImpersonating: { type: "function", check: () => Boolean(session?.session?.impersonatedRole) } },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       if (!sessionId) {
         return BadRequestMessage();
       }

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   return guardRoute(
     request,
     { EditConfiguration: { type: "permission", resource: "Settings", action: "Edit Configuration" } },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const requestedKeys = parseRequestedKeys(request);
 
       const configEntries = await findManyConfiguration(requestedKeys);

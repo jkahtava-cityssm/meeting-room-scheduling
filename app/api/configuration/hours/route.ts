@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   return guardRoute(
     request,
     { IsPublic: { type: "role", role: "Public" } },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const config = await findManyConfiguration(["visibleHoursStart", "visibleHoursEnd"]);
 
       if (!config) {

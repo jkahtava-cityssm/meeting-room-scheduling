@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   return guardRoute(
     req,
     { IsDevelopment: { type: "function", check: () => process.env.NEXT_PUBLIC_ENVIRONMENT === "development" } },
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { paths, tags } = await req.json();
 
       for (const path of paths) {

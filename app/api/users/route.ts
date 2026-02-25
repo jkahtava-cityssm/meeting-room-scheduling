@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       ],
     },
 
-    async (sessionUserId, permissionCache, permissions, sessionId) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const users = permissions.ReadAll
         ? await findManyUsers({ employeeActive: true })
         : permissions.ReadSelf
