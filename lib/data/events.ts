@@ -3,11 +3,10 @@ import type { Prisma } from "@prisma/client";
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
-  room: { include: { roomScope: true, roomCategory: true, roomProperty: true } },
+  room: { include: { roomCategory: true, roomProperty: true } },
   recurrence: true,
   status: true,
 } as const satisfies Prisma.EventInclude;
-
 
 // Create an event — the DAL controls which relations are included.
 export async function createEvent(data: Prisma.EventCreateInput) {
@@ -46,7 +45,6 @@ export async function findManyEvents(where?: Prisma.EventWhereInput) {
     include: EVENT_INCLUDE,
   });
 }
-
 
 export async function deleteManyEvents(where?: Prisma.EventWhereInput) {
   return prisma.event.deleteMany({ where });

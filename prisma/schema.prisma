@@ -103,15 +103,15 @@ model Room {
   name           String
   color          String
   icon           String?  @default("none")
+  publicFacing   Boolean  @default(false) @map("public_facing")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
-  roomScopeId    Int      @default(1) @map("room_scope_id")
-  roomCategoryId Int      @default(1) @map("room_category_id")
+  roomCategoryId Int      @map("room_category_id")
 
   roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
-  roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
   events       Event[]
   roomProperty RoomProperty[]
+  roomRoles    RoomRole[]
 
   @@map("room")
 }
@@ -139,15 +139,20 @@ model RoomProperty {
   @@map("room_property")
 }
 
-model RoomScope {
-  roomScopeId Int      @id @default(autoincrement()) @map("room_scope_id")
-  name        String
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  accessLevel Int      @default(1) @map("access_level")
-  room        Room[]
+model RoomRole {
+  roomRoleId Int      @id @default(autoincrement()) @map("room_role_id")
+  roomId     Int      @map("room_id")
+  roleId     Int      @map("role_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  @@map("room_scope")
+  room Room @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+
+  @@unique([roomId, roleId], name: "roomId_roleId_unique")
+  @@index([roleId], name: "roomrole_role_idx")
+  @@index([roomId], name: "roomrole_room_idx")
+  @@map("room_role")
 }
 
 //Member 1 or Many Roles, MemberRole
@@ -175,7 +180,7 @@ model Role {
 
   userRole           UserRole[]
   roleResourceAction RoleResourceAction[]
-  // RolePermission     RolePermission[]
+  roomRoles          RoomRole[]
 
   @@map("role")
 }

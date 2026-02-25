@@ -205,19 +205,6 @@ async function FindCreateConfigurationSetting(
   return record;
 }
 
-async function FindCreateRoomScope(name: string) {
-  let record = await prisma.roomScope.findFirst({
-    where: { name: name },
-  });
-
-  if (!record) {
-    record = await prisma.roomScope.create({
-      data: { name: name },
-    });
-  }
-  return record;
-}
-
 async function FindCreateRoomCategory(name: string) {
   let record = await prisma.roomCategory.findFirst({
     where: { name: name },
@@ -248,8 +235,10 @@ async function FindCreateRooms(
   name: string,
   color: TColors,
   icon: IconName,
+
   roomCategoryId: number = 1,
-  roomScopeId: number = 1,
+  isPublicFacing: boolean = false,
+  roomRoleId?: number[],
 ) {
   let record = await prisma.room.findFirst({
     where: { name: name },
@@ -257,8 +246,20 @@ async function FindCreateRooms(
 
   if (!record) {
     record = await prisma.room.create({
-      data: { name: name, color: color, icon: icon, roomScopeId: roomScopeId, roomCategoryId: roomCategoryId },
+      data: { name: name, color: color, icon: icon, roomCategoryId: roomCategoryId, publicFacing: isPublicFacing },
     });
+  }
+
+  if (roomRoleId) {
+    for (const roleId of roomRoleId) {
+      let roomRole = await prisma.roomRole.findFirst({ where: { roomId: record!.roomId, roleId: roleId } });
+
+      if (!roomRole) {
+        roomRole = await prisma.roomRole.create({
+          data: { roomId: record!.roomId, roleId: roleId },
+        });
+      }
+    }
   }
   return record;
 }
@@ -832,15 +833,11 @@ async function main() {
     name: string;
     color: string;
     icon: string | null;
-    roomScopeId: number;
+    publicFacing: boolean;
     createdAt: Date;
     updatedAt: Date;
     roomCategoryId: number;
   }[] = [];
-
-  console.log("Seeding Room Scopes...");
-  await FindCreateRoomScope("Public");
-  await FindCreateRoomScope("Private");
 
   console.log("Seeding Room Sizes...");
   const { roomCategoryId: category_none } = await FindCreateRoomCategory("None");
@@ -851,20 +848,23 @@ async function main() {
   //await FindCreateRooms("All", "zinc", "Asterisk");
 
   console.log("Seeding Default Rooms...");
-  roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("IT Training Room", "pink", "BookKey", category_large));
-  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "BookKey", category_special));
-  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "BookKey", category_special));
 
-  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey", category_special, 2));
-  roomList.push(await FindCreateRooms("Cafeteria", "amber", "BookKey", category_special, 2));
-  roomList.push(await FindCreateRooms("Penthouse", "violet", "BookKey", category_special, 2));
-  roomList.push(await FindCreateRooms("Korah Room", "green", "BookKey", category_small));
-  roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey", category_small));
-  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey", category_small));
+  const ClerkOnlyRooms = [roles["Clerk"].roleId];
+
+  roomList.push(await FindCreateRooms("Biggings Room", "orange", "BookKey", category_large, true));
+  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "BookKey", category_large, true));
+  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "BookKey", category_large, true));
+  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "BookKey", category_large, true));
+  roomList.push(await FindCreateRooms("IT Training Room", "pink", "BookKey", category_large, true));
+  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "BookKey", category_special, true));
+  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "BookKey", category_special, true));
+
+  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "BookKey", category_special, false, ClerkOnlyRooms));
+  roomList.push(await FindCreateRooms("Cafeteria", "amber", "BookKey", category_special, false, ClerkOnlyRooms));
+  roomList.push(await FindCreateRooms("Penthouse", "violet", "BookKey", category_special, false, ClerkOnlyRooms));
+  roomList.push(await FindCreateRooms("Korah Room", "green", "BookKey", category_small, true));
+  roomList.push(await FindCreateRooms("Steelton Room", "slate", "BookKey", category_small, true));
+  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "BookKey", category_small, true));
 
   const projectorRooms: string[] = [
     "Biggings Room",
