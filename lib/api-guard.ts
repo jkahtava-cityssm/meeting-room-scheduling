@@ -18,6 +18,7 @@ import {
 } from "./auth-permission-checks";
 
 import { getRolesByUserId } from "./data/permissions";
+import { prettifyError, ZodType } from "zod/v4";
 
 export type LabeledRequirements = {
   [label: string]: PermissionRequirement | PermissionRequirement[];
@@ -45,15 +46,18 @@ export type ExtractLabels<T> = T extends { AllOf?: unknown } | { AnyOf?: unknown
       | (T extends { Passthrough: Array<infer U> } ? U : never)
   : T;
 
-export async function guardRoute<const T extends GuardRequirement>(
+export async function guardRoute<const T extends GuardRequirement, S = undefined>(
   req: NextRequest,
   groupedRequirements: T,
+
   handler: (args: {
     sessionUserId: number;
     permissionCache: PermissionCache;
     permissions: PermissionResult<T>;
     sessionId: number | null;
+    data: S;
   }) => Promise<Response>,
+  schema?: ZodType<S>,
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
@@ -73,11 +77,36 @@ export async function guardRoute<const T extends GuardRequirement>(
     return ForbiddenMessage(`Missing permissions: ${unauthorizedMessages.join(", ")}`);
   }
 
+  let validatedData = undefined;
+
+  const hasBody = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
+
+  if (!!schema) {
+    let rawData;
+    if (hasBody) {
+      try {
+        rawData = await req.json();
+      } catch {
+        return BadRequestMessage("Invalid JSON body");
+      }
+    } else {
+      // Optional: Pull from searchParams for GET requests
+      rawData = Object.fromEntries(req.nextUrl.searchParams);
+    }
+
+    const result = schema.safeParse(rawData);
+    if (!result.success) {
+      return BadRequestMessage("Validation Failed: " + prettifyError(result.error));
+    }
+    validatedData = result.data;
+  }
+
   return handler({
     sessionUserId: user.userId,
     permissionCache,
     permissions,
     sessionId: user.sessionId,
+    data: validatedData as S,
   });
 }
 

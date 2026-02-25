@@ -22,3 +22,25 @@ export async function findManyRooms(where?: Prisma.RoomWhereInput) {
     select: ROOM_SELECT,
   });
 }
+
+export async function deleteManyRooms(where?: Prisma.RoomWhereInput) {
+  return prisma.room.deleteMany({
+    where,
+  });
+}
+
+export async function upsertRoom(
+  params: {
+    where: Prisma.RoomWhereUniqueInput;
+    create: Prisma.RoomCreateInput;
+    update: Prisma.RoomUpdateInput;
+  },
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.room.upsert({
+    where: params.where,
+    create: params.create,
+    update: params.update,
+    select: ROOM_SELECT,
+  });
+}

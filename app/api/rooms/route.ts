@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       ],
     },
 
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
       const roomFilter = permissionCache.isAdmin
         ? {}
         : {
