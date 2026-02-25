@@ -4,20 +4,24 @@ import { guardRoute } from "@/lib/api-guard";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
-  return guardRoute(request, { ReadEvent: { type: "permission", resource: "Event", action: "Read All" } }, async () => {
-    const { eventId } = await params;
-    if (!eventId || isNaN(Number(eventId))) {
-      return BadRequestMessage();
-    }
+  return guardRoute(
+    request,
+    { ReadEvent: { type: "permission", resource: "Event", action: "Read All" } },
+    async (sessionUserId, permissionCache, permissions, sessionId) => {
+      const { eventId } = await params;
+      if (!eventId || isNaN(Number(eventId))) {
+        return BadRequestMessage();
+      }
 
-    const events = await findManyEvents({ eventId: parseInt(eventId) });
+      const events = await findManyEvents({ eventId: parseInt(eventId) });
 
-    if (!events) {
-      return InternalServerErrorMessage();
-    }
+      if (!events) {
+        return InternalServerErrorMessage();
+      }
 
-    return SuccessMessage("Collected Events", events);
-  });
+      return SuccessMessage("Collected Events", events);
+    },
+  );
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
@@ -25,7 +29,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     request,
     { DeleteEvent: { type: "permission", resource: "Event", action: "Delete" } },
 
-    async () => {
+    async (sessionUserId, permissionCache, permissions, sessionId) => {
       const { eventId } = await params;
       if (!eventId || isNaN(Number(eventId))) {
         return BadRequestMessage();

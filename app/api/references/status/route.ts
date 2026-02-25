@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     req,
     { IsPublic: { type: "role", role: "Public" } },
 
-    async (userId, roles) => {
+    async (sessionUserId, permissionCache, permissions, sessionId) => {
       const status = await findManyStatus();
 
       if (!status) {
@@ -18,6 +18,6 @@ export async function GET(req: NextRequest) {
       }
 
       return SuccessMessage("Collected Status", status);
-    }
+    },
   );
 }

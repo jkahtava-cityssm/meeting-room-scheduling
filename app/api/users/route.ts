@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
       ],
     },
 
-    async (userId, roles, permissions) => {
+    async (sessionUserId, permissionCache, permissions, sessionId) => {
       const users = permissions.ReadAll
         ? await findManyUsers({ employeeActive: true })
         : permissions.ReadSelf
-          ? await findManyUsers({ id: userId, employeeActive: true })
+          ? await findManyUsers({ id: sessionUserId, employeeActive: true })
           : null;
 
       if (!users) {

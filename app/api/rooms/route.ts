@@ -20,10 +20,12 @@ export async function GET(req: NextRequest) {
       ],
     },
 
-    async (userId, roles, authorization) => {
-      const roomScopeFilter = authorization.ViewPrivate ? { name: { in: ["Public", "Private"] } } : { name: "Public" };
+    async (sessionUserId, permissionCache, permissions, sessionId) => {
+      const roleIds = permissionCache.roleIdSet ? Array.from(permissionCache.roleIdSet) : [];
 
-      const rooms = await findManyRooms({ roomScope: roomScopeFilter });
+      const rooms = await findManyRooms({
+        OR: [{ roomRoles: { some: { roleId: { in: roleIds } } } }, { roomRoles: { none: {} } }],
+      });
 
       if (!rooms) {
         return InternalServerErrorMessage();

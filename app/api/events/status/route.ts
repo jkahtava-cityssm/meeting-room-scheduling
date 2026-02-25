@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     request,
     { IsPublic: { type: "role", role: "Public" } },
 
-    async (userId, roles) => {
+    async (sessionUserId, permissionCache, permissions, sessionId) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");
@@ -57,6 +57,6 @@ export async function GET(request: NextRequest) {
       }
 
       return SuccessMessage("Collected Events", events);
-    }
+    },
   );
 }

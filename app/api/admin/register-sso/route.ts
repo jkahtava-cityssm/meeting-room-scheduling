@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   return guardRoute(
     req,
     { IsDevelopment: { type: "function", check: () => process.env.NEXT_PUBLIC_ENVIRONMENT === "development" } },
-    async () => {
+    async (sessionUserId, permissionCache, permissions, sessionId) => {
       try {
         const session_headers = await headers();
         const domain = process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, "") ?? "localhost:3000";
