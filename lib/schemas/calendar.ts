@@ -2,7 +2,6 @@ import { z } from "zod/v4";
 
 export const SRoomRoles = z.object({
   roomRoleId: z.number(),
-  roomId: z.number(),
   roleId: z.number(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -17,7 +16,6 @@ export const SRoomCategory = z.object({
 
 export const SRoomProperty = z.object({
   roomPropertyId: z.number(),
-  roomId: z.number(),
   name: z.string().min(1, "Name is required"),
   value: z.string().min(1, "Value is required"),
   createdAt: z.string(),
@@ -32,7 +30,8 @@ export const SRoom = z.object({
   publicFacing: z.boolean().default(false),
   roomCategoryId: z.number(),
   roomCategory: SRoomCategory,
-  RoomProperty: z.array(SRoomProperty).optional(),
+  roomRoles: z.array(SRoomRoles).optional(),
+  roomProperty: z.array(SRoomProperty).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

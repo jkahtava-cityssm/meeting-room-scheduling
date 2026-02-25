@@ -10,7 +10,8 @@ const ROOM_SELECT = {
   publicFacing: true,
   roomCategoryId: true,
   roomCategory: { select: { roomCategoryId: true, name: true, createdAt: true, updatedAt: true } },
-  roomProperty: true,
+  roomRoles: { select: { roomRoleId: true, roleId: true, createdAt: true, updatedAt: true } },
+  roomProperty: { select: { roomPropertyId: true, name: true, value: true, createdAt: true, updatedAt: true } },
   createdAt: true,
   updatedAt: true,
 } as const satisfies Prisma.RoomSelect;
