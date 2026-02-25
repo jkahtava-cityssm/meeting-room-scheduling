@@ -48,12 +48,12 @@ export type ExtractLabels<T> = T extends { AllOf?: unknown } | { AnyOf?: unknown
 export async function guardRoute<const T extends GuardRequirement>(
   req: NextRequest,
   groupedRequirements: T,
-  handler: (
-    sessionUserId: number,
-    permissionCache: PermissionCache,
-    permissions: PermissionResult<T>,
-    sessionId: number | null,
-  ) => Promise<Response>,
+  handler: (args: {
+    sessionUserId: number;
+    permissionCache: PermissionCache;
+    permissions: PermissionResult<T>;
+    sessionId: number | null;
+  }) => Promise<Response>,
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
@@ -73,7 +73,12 @@ export async function guardRoute<const T extends GuardRequirement>(
     return ForbiddenMessage(`Missing permissions: ${unauthorizedMessages.join(", ")}`);
   }
 
-  return handler(user.userId, permissionCache, permissions, user.sessionId);
+  return handler({
+    sessionUserId: user.userId,
+    permissionCache,
+    permissions,
+    sessionId: user.sessionId,
+  });
 }
 
 async function getUserFromRequest(
