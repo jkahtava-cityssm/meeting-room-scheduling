@@ -125,7 +125,7 @@ export function RolePermissionGrid({
       </div>
 
       {/* Grid-specific Footer */}
-      <footer className="flex h-14 items-center border-t bg-background px-4 shrink-0">
+      <footer className="flex h-14 items-center border-t  px-4 shrink-0">
         <div className="flex w-full items-center justify-end gap-2">
           <Button disabled={!isChanged} variant="ghost" onClick={() => onReset(structuredClone(serverPermissions))}>
             Cancel

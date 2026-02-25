@@ -82,7 +82,7 @@ export function PermissionGrid() {
     );
   }
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full rounded-lg border">
       <div className="h-full xl:hidden">
         <Tabs defaultValue="list" className="flex flex-col h-full">
           <div className="px-4 py-2 border-b">
@@ -117,8 +117,8 @@ export function PermissionGrid() {
       <div className="hidden xl:flex h-full">
         <div className="flex border-r overflow-auto">
           <div className="flex flex-col h-full w-full min-h-0">
-            <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
-              <h1 className="font-bold">Permissions</h1>
+            <header className="p-4 border-b flex items-center px-6 shrink-0 ">
+              <h1 className="flex items-center font-bold h-14">Permissions</h1>
             </header>
             <RolePermissionGrid
               workingPermissions={workingPermissions}
@@ -140,8 +140,8 @@ export function PermissionGrid() {
         </div>
         <div className="flex-1 overflow-auto">
           <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
-            <header className="h-16 border-b bg-background flex items-center px-6 shrink-0">
-              <h1 className="font-bold">Assign User Roles</h1>
+            <header className=" p-4 border-b flex items-center px-6 shrink-0">
+              <h1 className="flex items-center font-bold h-14">Assign User Roles</h1>
             </header>
             <UserRoleAssignmentList onToggleAssigned={(id, next) => console.log("Assigning", id, next)} />
           </div>
