@@ -17,7 +17,13 @@ import { useContext } from "react";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
 
-import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/lib/services/events";
+import {
+  IEventPUT,
+  SEventPUT,
+  useEventQuery,
+  useEventsMutationDelete,
+  useEventsMutationUpsert,
+} from "@/lib/services/events";
 import React from "react";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useEventStore } from "@/lib/zustand/new-event-store";
@@ -225,10 +231,40 @@ export const MultiStepForm = ({
 
     if (!allData) return;
 
-    const eventParse = z.safeParse(eventObject, allData);
-    const ruleParse = z.safeParse(ruleObject, allData);
+    const apiPayload: z.input<IEventPUT> = {
+      eventId: formData.eventId ? Number(formData.eventId) : undefined,
+      roomId: Number(formData.roomId),
+      userId: formData.userId ? Number(formData.userId) : null,
+      statusId: Number(formData.statusId),
+      title: formData.title,
+      description: formData.description || "",
+      startDate: formData.startDate,
+      endDate: formData.endDate,
 
-    if (eventParse.success && (isRecurring ? ruleParse.success : true)) {
+      recurrenceId: formData.recurrenceId ? Number(formData.recurrenceId) : null,
+      rule: isRecurring ? formData.rule : undefined,
+      ruleStartDate: isRecurring ? formData.ruleStartDate : undefined,
+      ruleEndDate: isRecurring ? formData.ruleEndDate : undefined,
+    };
+
+    const result = SEventPUT.safeParse(apiPayload);
+
+    if (!result.success) {
+      console.error("API Data Mismatch:", z.prettifyError(result.error));
+      return;
+    }
+
+    mutationUpsert.mutate(result.data, {
+      onSuccess: () => {
+        resetForm();
+        onClose();
+      },
+    });
+
+    //const eventParse = z.safeParse(eventObject, allData);
+    //const ruleParse = z.safeParse(ruleObject, allData);
+
+    /*if (eventParse.success && (isRecurring ? ruleParse.success : true)) {
       mutationUpsert.mutate(
         {
           eventData: eventParse.data,
@@ -242,7 +278,7 @@ export const MultiStepForm = ({
           onError: () => {}, // Optional: handle error
         },
       );
-    }
+    }*/
   };
 
   const onOpenChange = (open: boolean) => {
@@ -328,6 +364,7 @@ export const MultiStepForm = ({
             status={status}
             session={session}
             userId={userId}
+            isSaving={mutationUpsert.isPending}
             onSave={onSave}
             onOpenChange={onOpenChange}
             currentStepIndex={currentStepIndex}
@@ -338,6 +375,7 @@ export const MultiStepForm = ({
             backButtonDestructive={backButtonDestructive}
             nextButtonDestructive={nextButtonDestructive}
             onDelete={onDelete}
+            isDeleting={mutationDelete.isPending}
             setStatus={setStatus}
           ></FormFooter>
         </SheetContent>

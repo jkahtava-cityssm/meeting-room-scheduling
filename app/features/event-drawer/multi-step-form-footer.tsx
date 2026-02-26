@@ -22,6 +22,7 @@ type FormFooterProps = {
   session: Session | null;
   userId?: string;
   onSave: () => void;
+  isSaving: boolean;
   onOpenChange: (open: boolean) => void;
   currentStepIndex: number;
   formSteps: FormStep[];
@@ -31,6 +32,7 @@ type FormFooterProps = {
   backButtonDestructive?: boolean;
   nextButtonDestructive?: boolean;
   onDelete: () => void;
+  isDeleting: boolean;
   setStatus: (status: FormStatus) => void;
 };
 
@@ -54,6 +56,7 @@ const FormFooter: React.FC<FormFooterProps> = ({
   session,
   userId,
   onSave,
+  isSaving,
   onOpenChange,
   currentStepIndex,
   formSteps,
@@ -63,11 +66,9 @@ const FormFooter: React.FC<FormFooterProps> = ({
   backButtonDestructive,
   nextButtonDestructive,
   onDelete,
+  isDeleting,
   setStatus,
 }) => {
-  const [isSaving, setSaving] = useState(false);
-  const [isDeleting, setDeleting] = useState(false);
-
   const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const isSaveDisabled = useMemo(() => {
@@ -86,7 +87,6 @@ const FormFooter: React.FC<FormFooterProps> = ({
         <Button
           variant="default"
           onClick={() => {
-            setSaving(true);
             onSave();
           }}
           className="md:w-24"
@@ -149,7 +149,6 @@ const FormFooter: React.FC<FormFooterProps> = ({
               variant="outline_destructive"
               className="grow md:w-24"
               onClick={() => {
-                setDeleting(true);
                 onDelete();
               }}
               disabled={isSaving}
