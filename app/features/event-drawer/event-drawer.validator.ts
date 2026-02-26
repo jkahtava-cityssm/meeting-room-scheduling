@@ -35,9 +35,7 @@ export const step2Schema = z
     yearWeekdayValue: z.string(),
 
     weekValue: z.string(),
-    weekdays: z.array(z.string()).refine((value) => value.some((item) => item), {
-      message: "You have to select at least one item.",
-    }),
+    weekdays: z.array(z.string()),
 
     durationType: z.string().min(1, "Please select a duration type"),
     occurrences: z.string(),
