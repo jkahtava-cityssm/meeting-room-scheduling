@@ -3,7 +3,7 @@ import { formatISO } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH } from "@/lib/fetch";
 import z from "zod/v4";
-import { IEvent, SEvent } from "@/lib/schemas/calendar";
+import { IEvent, SEvent, utcDateSchema } from "@/lib/schemas/calendar";
 import { Prisma } from "@prisma/client";
 import { processEventsAsync } from "@/app/features/calendar/webworkers/generic-webworker-client";
 import { CalendarAction, ISODateString } from "@/app/features/calendar/webworkers/generic-webworker";
@@ -132,31 +132,27 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
     staleTime: 0,
   });
 
-type eventObject = {
-  eventId?: number;
-  roomId: number;
-  startDate: string;
-  endDate: string;
-  title: string;
-  description?: string;
-  recurrenceId?: number;
-};
+export const SEventPUT = z.object({
+  eventId: z.coerce.number().optional(),
+  roomId: z.coerce.number().gt(0, "Room is required"),
+  userId: z.coerce.number().nullable().optional(),
+  statusId: z.coerce.number(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().default(""),
+  startDate: utcDateSchema,
+  endDate: utcDateSchema,
+  recurrenceId: z.coerce.number().nullable().optional(),
+  rule: z.string().optional(),
+  ruleStartDate: utcDateSchema.optional(),
+  ruleEndDate: utcDateSchema.optional(),
+});
 
-type ruleObject = {
-  rule: string;
-  ruleStartDate: string;
-  ruleEndDate: string;
-};
-
-type mutationObject = {
-  eventData: eventObject;
-  ruleData: ruleObject | null;
-};
+export type IEventPUT = z.infer<typeof SEventPUT>;
 
 export const useEventsMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: mutationObject) => fetchPUT(`/api/events`, data),
+    mutationFn: async (data: IEventPUT) => fetchPUT(`/api/events`, data),
     onSuccess: (response) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["events"] });
