@@ -1,5 +1,18 @@
 import { z } from "zod/v4";
 
+export const utcDateSchema = z.coerce.date().transform((d) => {
+  return new Date(
+    Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+    ),
+  );
+});
+
 export const SRoomRoles = z.object({
   roomRoleId: z.number(),
   roleId: z.number(),
