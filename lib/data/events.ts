@@ -9,20 +9,23 @@ const EVENT_INCLUDE = {
 } as const satisfies Prisma.EventInclude;
 
 // Create an event — the DAL controls which relations are included.
-export async function createEvent(data: Prisma.EventCreateInput) {
-  return prisma.event.create({
+export async function createEvent(data: Prisma.EventCreateInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.event.create({
     data,
     include: EVENT_INCLUDE,
   });
 }
 
 // Upsert — accept explicit where/create/update; include relations internally
-export async function upsertEvent(params: {
-  where: Prisma.EventWhereUniqueInput;
-  create: Prisma.EventCreateInput;
-  update: Prisma.EventUpdateInput;
-}) {
-  return prisma.event.upsert({
+export async function upsertEvent(
+  params: {
+    where: Prisma.EventWhereUniqueInput;
+    create: Prisma.EventCreateInput;
+    update: Prisma.EventUpdateInput;
+  },
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.event.upsert({
     where: params.where,
     create: params.create,
     update: params.update,
@@ -30,8 +33,11 @@ export async function upsertEvent(params: {
   });
 }
 
-export async function updateEvent(params: { where: Prisma.EventWhereUniqueInput; data: Prisma.EventUpdateInput }) {
-  return prisma.event.update({
+export async function updateEvent(
+  params: { where: Prisma.EventWhereUniqueInput; data: Prisma.EventUpdateInput },
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.event.update({
     where: params.where,
     data: params.data,
     include: EVENT_INCLUDE,

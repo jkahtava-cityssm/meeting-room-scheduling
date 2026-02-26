@@ -24,8 +24,8 @@ const USER_ROLE_SELECT = {
   role: { select: { name: true } },
 } as const satisfies Prisma.UserRoleSelect;
 
-export async function findManyUsers(where?: Prisma.UserWhereInput) {
-  const userList = await prisma.user.findMany({ where, select: USER_SELECT });
+export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
+  const userList = await tx.user.findMany({ where, select: USER_SELECT });
   if (!userList || userList.length === 0) {
     return [];
   }
@@ -43,8 +43,12 @@ export async function findManyUsers(where?: Prisma.UserWhereInput) {
   });
 }
 
-export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.UserWhereInput) {
-  const userList = await prisma.user.findMany({
+export async function findManyUsersWithRoles(
+  roleId?: number,
+  where?: Prisma.UserWhereInput,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  const userList = await tx.user.findMany({
     where,
     select: { ...USER_SELECT, userRole: { where: roleId ? { roleId } : undefined, select: { ...USER_ROLE_SELECT } } },
     orderBy: { name: "asc" },
@@ -79,8 +83,10 @@ export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.Use
   });
 }
 
-export async function getDefaultRole(): Promise<{ roleId: number | null; name: string | null }> {
-  const defaultRole = await prisma.configuration.findFirst({ where: { key: "defaultUserRole" } });
+export async function getDefaultRole(
+  tx: Prisma.TransactionClient = prisma,
+): Promise<{ roleId: number | null; name: string | null }> {
+  const defaultRole = await tx.configuration.findFirst({ where: { key: "defaultUserRole" } });
 
   const defaultRoleID = Number(defaultRole?.value);
   if (!Number.isFinite(defaultRoleID)) {
@@ -88,7 +94,7 @@ export async function getDefaultRole(): Promise<{ roleId: number | null; name: s
     return { roleId: null, name: null };
   }
 
-  const role = await prisma.role.findUnique({
+  const role = await tx.role.findUnique({
     where: { roleId: defaultRoleID },
     select: { roleId: true, name: true },
   });
@@ -96,6 +102,6 @@ export async function getDefaultRole(): Promise<{ roleId: number | null; name: s
   return role ? { roleId: role.roleId, name: role.name } : { roleId: null, name: null };
 }
 
-export async function findSession(where: Prisma.SessionWhereInput) {
-  return prisma.session.findFirst({ where, select: SESSION_SELECT });
+export async function findSession(where: Prisma.SessionWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.session.findFirst({ where, select: SESSION_SELECT });
 }

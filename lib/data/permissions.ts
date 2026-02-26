@@ -32,9 +32,10 @@ const PERMISSION_SET_SELECT = {
 
 export async function findManyExpandedPermissionSets(
   where?: Prisma.RoleWhereInput,
+  tx: Prisma.TransactionClient = prisma,
 ): Promise<IPermissionSet[] | undefined> {
-  const roles = await prisma.role.findMany({ where, include: PERMISSION_SET_SELECT });
-  const allResourceActions = await prisma.resourceAction.findMany({
+  const roles = await tx.role.findMany({ where, include: PERMISSION_SET_SELECT });
+  const allResourceActions = await tx.resourceAction.findMany({
     include: { resource: true, action: true },
   });
 
@@ -86,13 +87,13 @@ const USER_ROLE_SELECT = {
   roleResourceAction: { include: { resourceAction: { include: { resource: true, action: true } } } },
 } as const satisfies Prisma.RoleSelect;
 
-export async function findManyRoles(where?: Prisma.RoleWhereInput) {
-  const roles = await prisma.role.findMany({ where, select: ROLE_SELECT });
+export async function findManyRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma) {
+  const roles = await tx.role.findMany({ where, select: ROLE_SELECT });
 
   return roles;
 }
-async function findManyUserRoles(where?: Prisma.RoleWhereInput) {
-  const roles = await prisma.role.findMany({ where, select: USER_ROLE_SELECT });
+async function findManyUserRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma) {
+  const roles = await tx.role.findMany({ where, select: USER_ROLE_SELECT });
 
   if (!roles || roles.length === 0) {
     return [];
@@ -128,12 +129,15 @@ export async function getRolesByUserId(userId: number) {
   return await findManyUserRoles({ userRole: { some: { userId, granted: true } } });
 }
 
-export async function upsertRoleResourceAction(params: {
-  where: Prisma.RoleResourceActionWhereUniqueInput;
-  create: Prisma.RoleResourceActionCreateInput;
-  update: Prisma.RoleResourceActionUpdateInput;
-}) {
-  return prisma.roleResourceAction.upsert({
+export async function upsertRoleResourceAction(
+  params: {
+    where: Prisma.RoleResourceActionWhereUniqueInput;
+    create: Prisma.RoleResourceActionCreateInput;
+    update: Prisma.RoleResourceActionUpdateInput;
+  },
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.roleResourceAction.upsert({
     where: params.where,
     create: params.create,
     update: params.update,
@@ -149,18 +153,24 @@ const RESOURCE_ACTION_SELECT = {
   action: true,
 } as const satisfies Prisma.ResourceActionSelect;
 
-export async function findManyResourceAction(where?: Prisma.ResourceActionWhereInput) {
-  const resourceActions = await prisma.resourceAction.findMany({ where, select: RESOURCE_ACTION_SELECT });
+export async function findManyResourceAction(
+  where?: Prisma.ResourceActionWhereInput,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  const resourceActions = await tx.resourceAction.findMany({ where, select: RESOURCE_ACTION_SELECT });
 
   return resourceActions;
 }
 
-export async function upsertResourceAction(params: {
-  where: Prisma.ResourceActionWhereUniqueInput;
-  create: Prisma.ResourceActionCreateInput;
-  update: Prisma.ResourceActionUpdateInput;
-}) {
-  return prisma.resourceAction.upsert({
+export async function upsertResourceAction(
+  params: {
+    where: Prisma.ResourceActionWhereUniqueInput;
+    create: Prisma.ResourceActionCreateInput;
+    update: Prisma.ResourceActionUpdateInput;
+  },
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.resourceAction.upsert({
     where: params.where,
     create: params.create,
     update: params.update,

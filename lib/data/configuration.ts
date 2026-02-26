@@ -47,11 +47,14 @@ export interface IConfigurationRecord {
   description: string;
 }
 
-export async function findManyConfiguration(keys: readonly TConfigurationKeys[]): Promise<IConfigurationRecord[]> {
+export async function findManyConfiguration(
+  keys: readonly TConfigurationKeys[],
+  tx: Prisma.TransactionClient = prisma,
+): Promise<IConfigurationRecord[]> {
   const where = {
     OR: keys.map((key) => ({ key })),
   };
-  const configEntries = await prisma.configuration.findMany({ where, select: CONFIGURATION_SELECT });
+  const configEntries = await tx.configuration.findMany({ where, select: CONFIGURATION_SELECT });
 
   return configEntries.map((entry) => ({
     key: entry.key as TConfigurationKeys,

@@ -16,15 +16,15 @@ const ROOM_SELECT = {
   updatedAt: true,
 } as const satisfies Prisma.RoomSelect;
 
-export async function findManyRooms(where?: Prisma.RoomWhereInput) {
-  return prisma.room.findMany({
+export async function findManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.room.findMany({
     where,
     select: ROOM_SELECT,
   });
 }
 
-export async function deleteManyRooms(where?: Prisma.RoomWhereInput) {
-  return prisma.room.deleteMany({
+export async function deleteManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.room.deleteMany({
     where,
   });
 }

@@ -12,24 +12,24 @@ const PUBLIC_EVENT_SELECT = {
   status: { select: { statusId: true, name: true, key: true } },
 } as const satisfies Prisma.EventSelect;
 
-export async function findPublicEvents(where?: Prisma.EventWhereInput) {
-  return prisma.event.findMany({
+export async function findPublicEvents(where?: Prisma.EventWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.event.findMany({
     where,
     select: PUBLIC_EVENT_SELECT,
   });
 }
 
 const ROOM_SELECT = {
-	roomId: true,
-	name: true,
-	color: true,
-    roomCategory: {select: {roomCategoryId: true, name: true}},
-    roomProperty: {select: {name: true, value: true}}
+  roomId: true,
+  name: true,
+  color: true,
+  roomCategory: { select: { roomCategoryId: true, name: true } },
+  roomProperty: { select: { name: true, value: true } },
 } as const satisfies Prisma.RoomSelect;
 
-export async function findPublicRooms(where?: Prisma.RoomWhereInput) {
-	return prisma.room.findMany({
-		where,
-		select: ROOM_SELECT,
-	});
+export async function findPublicRooms(where?: Prisma.RoomWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.room.findMany({
+    where,
+    select: ROOM_SELECT,
+  });
 }

@@ -10,6 +10,6 @@ const STATUS_SELECT = {
   color: true,
 } as const satisfies Prisma.StatusSelect;
 
-export async function findManyStatus(where?: Prisma.StatusWhereInput) {
-  return prisma.status.findMany({ where, select: STATUS_SELECT });
+export async function findManyStatus(where?: Prisma.StatusWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.status.findMany({ where, select: STATUS_SELECT });
 }
