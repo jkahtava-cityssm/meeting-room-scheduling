@@ -8,11 +8,12 @@ import {
 } from "@/lib/api-helpers";
 import { guardRoute } from "@/lib/api-guard";
 import { NextRequest } from "next/server";
-import { deleteManyRooms, findManyRooms, upsertRoom } from "@/lib/data/rooms";
+import { deleteManyRooms, findFirstRoom, findManyRooms, upsertRoom } from "@/lib/data/rooms";
 import z from "zod/v4";
 import { ZRoomForm } from "@/app/features/room-drawer/room-drawer.validator";
 import { SRoom } from "@/lib/schemas/calendar";
 import { prisma } from "@/prisma";
+import { SRoomPUT } from "@/lib/services/rooms";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   return guardRoute(
@@ -117,11 +118,11 @@ export async function PUT(request: NextRequest) {
           );
         }
 
-        return updatedRoom;
+        return await findFirstRoom({ roomId }, tx);
       });
 
       if (!room) {
-        InternalServerErrorMessage();
+        return InternalServerErrorMessage();
       }
 
       if (room.roomId === data.roomId) {
@@ -130,6 +131,6 @@ export async function PUT(request: NextRequest) {
 
       return CreatedMessage("Created Event", room);
     },
-    SRoom,
+    SRoomPUT,
   );
 }

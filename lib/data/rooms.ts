@@ -23,6 +23,13 @@ export async function findManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   });
 }
 
+export async function findFirstRoom(where?: Prisma.RoomWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.room.findFirst({
+    where,
+    select: ROOM_SELECT,
+  });
+}
+
 export async function deleteManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.TransactionClient = prisma) {
   return tx.room.deleteMany({
     where,
