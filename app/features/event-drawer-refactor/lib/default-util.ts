@@ -39,7 +39,7 @@ export const getFormDefaults = (
     dailyPattern: "daily", // Default to daily for the form
     dayValue: "1",
 
-    durationType: "until" as DurationType,
+    durationType: "" as DurationType,
     occurrences: "1",
 
     // Optional fields for other union members

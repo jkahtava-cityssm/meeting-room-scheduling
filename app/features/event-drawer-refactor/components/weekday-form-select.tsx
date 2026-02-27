@@ -8,11 +8,13 @@ export function WeekDayFormSelection<TFieldValues extends FieldValues>({
   name,
   disabled,
   hideDayWeekday = true,
+  showError = true,
 }: {
   control: Control<TFieldValues>;
   name: FieldPath<TFieldValues>;
   disabled: boolean;
   hideDayWeekday?: boolean;
+  showError?: boolean;
 }) {
   return (
     <FormField
@@ -30,7 +32,12 @@ export function WeekDayFormSelection<TFieldValues extends FieldValues>({
               disabled={disabled}
             >
               <FormControl>
-                <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-31"}>
+                <SelectTrigger
+                  id={field.name}
+                  data-invalid={fieldState.invalid && showError}
+                  aria-invalid={fieldState.invalid && showError}
+                  className={"min-w-31"}
+                >
                   <SelectValue placeholder="Select a weekday" />
                 </SelectTrigger>
               </FormControl>

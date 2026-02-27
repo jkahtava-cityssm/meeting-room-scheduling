@@ -10,7 +10,6 @@ import { useDisclosure } from "@/hooks/use-disclosure";
 
 import React from "react";
 import { IEvent } from "@/lib/schemas/calendar";
-import { useEventStore } from "@/lib/zustand/new-event-store";
 
 import FormFooter from "./form-footer";
 import UnsavedChangesDialog from "./dialog-unsaved-changes";
@@ -63,8 +62,6 @@ export const MultiStepForm = ({
     currentStep: formSteps[logic.currentStepIndex],
     isFirstStep: logic.currentStepIndex === 0,
     isLastStep: logic.currentStepIndex === formSteps.length - 1 || logic.ignoreLastStep,
-    nextStep: () => logic.nextStep,
-    previousStep: () => logic.previousStep,
   };
 
   return (

@@ -52,8 +52,10 @@ export const useMultiStepFormLogic = (props: {
     defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
   );
 
-  const [previousStepHasError, setpreviousStepHasError] = useState(false);
-  const [nextStepHasError, setnextStepHasError] = useState(false);
+  const [navigationStatus, setNavigationStatus] = useState({
+    prevError: false,
+    nextError: false,
+  });
 
   const [errors, setErrors] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
@@ -79,6 +81,7 @@ export const useMultiStepFormLogic = (props: {
     setStartDate(
       defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
     );
+    setNavigationStatus({ prevError: false, nextError: false });
   }, [methods, defaultFormValues]);
 
   const onSave = async () => {
@@ -153,14 +156,18 @@ export const useMultiStepFormLogic = (props: {
 
       // 2. Set destructive states based on direction
       if (isMovingNext) {
-        setpreviousStepHasError(isCurrentInvalid);
-        // If moving to the very last step, reset the next button's warning
-        if (currentStepIndex + 1 === props.formSteps.length - 1) setnextStepHasError(false);
+        setNavigationStatus((prev) => ({
+          prevError: isCurrentInvalid,
+          nextError: currentStepIndex + 1 === props.formSteps.length - 1 ? false : prev.nextError,
+        }));
+
         setCurrentStepIndex((prev) => prev + 1);
       } else {
-        setnextStepHasError(isCurrentInvalid);
-        // If moving to the very first step, reset the back button's warning
-        if (currentStepIndex - 1 === 0) setpreviousStepHasError(false);
+        setNavigationStatus((prev) => ({
+          prevError: currentStepIndex - 1 === 0 ? false : prev.prevError,
+          nextError: isCurrentInvalid,
+        }));
+
         setCurrentStepIndex((prev) => prev - 1);
       }
     },
@@ -188,7 +195,7 @@ export const useMultiStepFormLogic = (props: {
     defaultFormValues,
     nextStep: () => handleStepChange("next"),
     previousStep: () => handleStepChange("back"),
-    previousStepHasError,
-    nextStepHasError,
+    previousStepHasError: navigationStatus.prevError,
+    nextStepHasError: navigationStatus.nextError,
   };
 };

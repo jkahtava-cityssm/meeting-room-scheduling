@@ -1,17 +1,20 @@
 import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { Control, FieldPath, FieldPathByValue, FieldValues } from "react-hook-form";
+import { Control, FieldPath, FieldPathByValue, FieldValues, useFormContext } from "react-hook-form";
 
 export function PeriodFormSelection<TFieldValues extends FieldValues>({
   control,
   name,
   disabled,
+  showError = true,
 }: {
   control: Control<TFieldValues>;
   name: FieldPath<TFieldValues>;
   disabled: boolean;
+  showError?: boolean;
 }) {
+  const { clearErrors } = useFormContext();
   return (
     <FormField
       control={control}
@@ -23,11 +26,19 @@ export function PeriodFormSelection<TFieldValues extends FieldValues>({
               name={field.name}
               value={field.value}
               key={field.value}
-              onValueChange={field.onChange}
+              onValueChange={(value) => {
+                field.onChange(value);
+                clearErrors(name);
+              }}
               disabled={disabled}
             >
               <FormControl>
-                <SelectTrigger id={field.name} data-invalid={fieldState.invalid} className={"min-w-23"}>
+                <SelectTrigger
+                  id={field.name}
+                  data-invalid={fieldState.invalid && showError}
+                  aria-invalid={fieldState.invalid && showError}
+                  className={"min-w-23"}
+                >
                   <SelectValue placeholder="Select a period" />
                 </SelectTrigger>
               </FormControl>

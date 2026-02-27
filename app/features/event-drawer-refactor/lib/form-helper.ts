@@ -7,18 +7,20 @@ export const isStepValid = async (
   formStep: FormStep,
   methods: UseFormReturn<CombinedSchema>,
 ): Promise<{ status: boolean; errorList: string[] }> => {
-  const formValues = getFormValues(formStep, methods);
+  const formValues = methods.getValues();
 
   if (formStep.validationSchema) {
     const validationResult = formStep.validationSchema.safeParse(formValues);
     const errorList: string[] = [];
+
     if (!validationResult.success) {
       validationResult.error.issues.forEach((err) => {
         methods.setError(err.path.join(".") as keyof CombinedSchema, {
           type: "manual",
           message: err.message,
         });
-        if (err.message !== "Invalid input") errorList.push(err.message);
+
+        errorList.push(err.message);
       });
       return { status: false, errorList: errorList };
     }
@@ -33,26 +35,19 @@ export const isFormValid = async (
   skipSteps: number[] = [],
 ): Promise<{ status: boolean; errorList: string[] }> => {
   let isValid = true;
-  let errorList: string[] = [];
+  const totalErrorList = new Set<string>(); // Use a Set to auto-deduplicate
+
   for (let step = 0; step < formSteps.length; step++) {
-    if (skipSteps.includes(step)) {
-      continue;
-    }
+    if (skipSteps.includes(step)) continue;
 
     const stepValid = await isStepValid(formSteps[step], methods);
     if (!stepValid.status) {
       isValid = false;
-      errorList = [...errorList, ...stepValid.errorList];
+      stepValid.errorList.forEach((msg) => totalErrorList.add(msg));
     }
   }
-  return { status: isValid, errorList: errorList };
-};
 
-export const getFormValues = <T>(formStep: FormStep, methods: UseFormReturn<CombinedSchema>): T => {
-  const currentStepValues = methods.getValues(formStep.fields as (keyof CombinedSchema)[]);
-  const formValues = Object.fromEntries(formStep.fields.map((field, index) => [field, currentStepValues[index] || ""]));
-
-  return formValues as T;
+  return { status: isValid, errorList: Array.from(totalErrorList) };
 };
 
 export const updateRRuleIfNecessary = async (allData: CombinedSchema): Promise<CombinedSchema | null> => {
