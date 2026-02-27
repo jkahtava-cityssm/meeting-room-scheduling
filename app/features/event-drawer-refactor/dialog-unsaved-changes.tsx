@@ -11,7 +11,7 @@ import {
   AlertDialogSave,
 } from "@/components/ui/alert-dialog";
 
-import { useMultiStepForm } from "./step-0-form";
+import { useMultiStepForm } from "./multi-step-form-shell";
 import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
 
 interface UnsavedChangesDialogProps {

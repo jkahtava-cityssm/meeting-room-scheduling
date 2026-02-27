@@ -3,11 +3,11 @@ import { FieldKeys, FormStep } from "./types";
 
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
 import React from "react";
-import { Step1 } from "./step-1-event";
-import { Step2 } from "./step-2-rrule";
+import { Step1 } from "./step-event-details";
+import { Step2 } from "./step-event-recurrence";
 
 import { step1Schema, Step2Fields, step2Schema } from "./event-drawer-schema.validator";
-import { MultiStepForm } from "./step-0-form";
+import { MultiStepForm } from "./multi-step-form-shell";
 
 export default function EventDrawer({
   creationDate,

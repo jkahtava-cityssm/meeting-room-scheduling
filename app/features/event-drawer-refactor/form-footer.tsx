@@ -15,7 +15,7 @@ import { useVerifySessionRequirement, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 import { useSession } from "@/contexts/SessionProvider";
-import { useMultiStepForm } from "./step-0-form";
+import { useMultiStepForm } from "./multi-step-form-shell";
 
 const PAGE_PERMISSIONS = {
   UpdateEvent: {

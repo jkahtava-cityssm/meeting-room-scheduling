@@ -20,7 +20,7 @@ import { MonthlyForm } from "./sub-forms/rrule-monthly-form";
 import { WeeklyForm } from "./sub-forms/rrule-weekly-form";
 import { YearlyForm } from "./sub-forms/rrule-yearly-form";
 import { FormStatus } from "./types";
-import { useMultiStepForm } from "./step-0-form";
+import { useMultiStepForm } from "./multi-step-form-shell";
 import { step2Schema } from "./event-drawer-schema.validator";
 import { RRulePreview } from "./rrule-preview";
 

@@ -46,9 +46,6 @@ export function YearlyForm({
                     className="flex flex-col "
                     disabled={isReadOnly}
                   >
-                    <FormControl className="mx-5.5">
-                      <RadioGroupItem value="dayInMonthInYear" />
-                    </FormControl>
                     {/* Option 1: Day X of every Y months */}
                     <YearlyDayRow
                       control={control}

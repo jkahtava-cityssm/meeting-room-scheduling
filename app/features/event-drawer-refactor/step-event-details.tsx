@@ -23,9 +23,10 @@ import { Session } from "@/lib/auth-client";
 import { getDurationText } from "@/lib/helpers";
 import { FormStatus } from "./types";
 import { step1Schema } from "./event-drawer-schema.validator";
-import { useMultiStepForm } from "./step-0-form";
+import { useMultiStepForm } from "./multi-step-form-shell";
 import { RoomSelect } from "../rooms/room-select";
 import { StatusSelect } from "../status/status-select";
+import { UserComboBox } from "../users/user-combobox";
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
@@ -66,6 +67,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                     selectedRoomId={field.value}
                     includeAllOption={false}
                     onRoomChange={(value) => field.onChange(value)}
+                    dataInvalid={fieldState.invalid}
                   />
                 </FormControl>
               </FormItem>
@@ -130,36 +132,11 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 ) : (
                   <FormLabel htmlFor={undefined}>Requesting User</FormLabel>
                 )}
-
-                <ComboBox
-                  value={field.value}
-                  list={userList}
-                  noResultText={"No User Found"}
-                  searchText={"Search User"}
-                  onSelect={(value: string) => field.onChange(value)}
-                >
-                  {users && !userId && (
-                    <FormControl>
-                      <ComboBoxTrigger
-                        disabled={isReadOnly}
-                        value={field.value}
-                        list={userList}
-                        placeholderText={"Select Member"}
-                      ></ComboBoxTrigger>
-                    </FormControl>
-                  )}
-                </ComboBox>
-                {!users && (
-                  <Button variant={"outline"} disabled>
-                    <Loader2Icon className="animate-spin" />
-                    Collecting Users
-                  </Button>
-                )}
-                {userId && users && (
-                  <Button variant={"outline"} disabled>
-                    {users?.find((user) => String(user.userId) === field.value)?.name}
-                  </Button>
-                )}
+                <UserComboBox
+                  selectedUserId={field.value}
+                  onUserChange={(id: string, label: string) => field.onChange(id)}
+                  dataInvalid={fieldState.invalid}
+                ></UserComboBox>
               </FormItem>
             )}
           />
@@ -203,6 +180,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                   includeAllOption={false}
                   onStatusChange={field.onChange}
                   isDisabled={isReadOnly}
+                  dataInvalid={fieldState.invalid}
                 />
               </FormItem>
             )}

@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { DateNavigator } from "./calendar-all-header-date-navigator";
 import { TodayButton } from "./calendar-all-header-today-button";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
-import EventDrawer from "../../event-drawer-refactor/event-drawer";
+import EventDrawer from "../../event-drawer-refactor/event-drawer-root";
 
 export function CalendarHeader({
   view,
