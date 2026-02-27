@@ -54,7 +54,7 @@ export function GenericComboBox<T>({
       <Button
         data-invalid={dataInvalid}
         aria-invalid={dataInvalid}
-        variant={"outline"}
+        variant={"combobox"}
         disabled
         className={cn("min-w-[200px]", className)}
       >
@@ -69,7 +69,7 @@ export function GenericComboBox<T>({
       <Button
         data-invalid={dataInvalid}
         aria-invalid={dataInvalid}
-        variant={"outline"}
+        variant={"combobox"}
         disabled
         className={cn("min-w-[200px]", className)}
       >
@@ -82,7 +82,7 @@ export function GenericComboBox<T>({
     <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="combobox"
           role="combobox"
           className={cn(
             "min-w-[200px] justify-between text-sm font-normal",

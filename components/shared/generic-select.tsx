@@ -41,7 +41,13 @@ export function GenericSelect<T>({
 }: DataSelectProps<T>) {
   if (isLoading || !list) {
     return (
-      <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
+      <Button
+        data-invalid={dataInvalid}
+        aria-invalid={dataInvalid}
+        variant={"combobox"}
+        disabled
+        className={cn("min-w-[200px]", className)}
+      >
         {isError ? <CircleX /> : <Loader2Icon className="animate-spin " />}
         {loadingLabel}
       </Button>
@@ -51,7 +57,13 @@ export function GenericSelect<T>({
   if (isDisabled) {
     const selectedItem = list.find((item) => getId(item) === selectedValue);
     return (
-      <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
+      <Button
+        data-invalid={dataInvalid}
+        aria-invalid={dataInvalid}
+        variant={"combobox"}
+        disabled
+        className={cn("min-w-[200px]", className)}
+      >
         {selectedItem && getColor && getIcon && (
           <BadgeColored color={getColor(selectedItem)} className="h-6 w-6">
             <DynamicIcon
