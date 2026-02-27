@@ -1,0 +1,148 @@
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod/v4";
+import { CombinedEventSchema, CombinedSchema } from "./event-drawer-schema.validator";
+
+import { usePublicConfiguration } from "@/lib/services/public";
+import {
+  useEventQuery,
+  useEventsMutationUpsert,
+  useEventsMutationDelete,
+  SEventPUT,
+  IEventPUT,
+} from "@/lib/services/events";
+import { isFormValid, isStepValid, updateRRuleIfNecessary } from "./lib/form-helper";
+import { FormStatus, FormStep } from "./types";
+import { IEvent } from "@/lib/schemas/calendar";
+import { getFormDefaults, mapEventToSchema } from "./lib/default-util";
+import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
+
+export const useMultiStepFormLogic = (props: {
+  event?: IEvent;
+  creationDate?: Date;
+  userId?: string;
+  formSteps: FormStep[];
+  onClose: () => void;
+}) => {
+  const { data: config } = usePublicConfiguration();
+  const { getEventState } = useEventStore();
+  const mutationUpsert = useEventsMutationUpsert();
+  const mutationDelete = useEventsMutationDelete();
+
+  // 1. Resolve Initial Values
+  const defaultFormValues = useMemo(() => {
+    if (props.event) return mapEventToSchema(props.event);
+    if (props.creationDate) return getFormDefaults(props.creationDate, props.userId, config?.interval);
+    const stored = getEventState().event;
+    return stored || getFormDefaults(undefined, props.userId, config?.interval);
+  }, [props.event, props.creationDate, props.userId, config, getEventState]);
+
+  // 2. Form & Navigation State
+  const methods = useForm<CombinedSchema>({
+    resolver: zodResolver(CombinedEventSchema),
+    defaultValues: defaultFormValues,
+    mode: "onChange",
+  });
+
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
+  const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues.isRecurring === "false");
+  const [errors, setErrors] = useState<string[]>([]);
+  const [showError, setShowError] = useState(false);
+
+  // 3. Data Fetching Sync
+  const { data: collectedEvent, isFetching } = useEventQuery(Number(defaultFormValues.eventId), status === "Loading");
+
+  useEffect(() => {
+    if (status === "Loading" && collectedEvent && !isFetching) {
+      methods.reset(mapEventToSchema(collectedEvent));
+      setTimeout(() => setStatus("Edit"), 100);
+    }
+  }, [status, collectedEvent, isFetching, methods]);
+
+  // 4. Handlers
+  const resetForm = useCallback(() => {
+    methods.reset(defaultFormValues);
+    setCurrentStepIndex(0);
+    setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+    setIgnoreLastStep(defaultFormValues.isRecurring === "false");
+  }, [methods, defaultFormValues]);
+
+  const onSave = async () => {
+    const formData = methods.getValues();
+    const isRecurring = formData.isRecurring === "true";
+    const formState = await isFormValid(props.formSteps, methods, isRecurring ? [] : [1]);
+
+    if (!formState.status) {
+      setErrors(formState.errorList);
+      setShowError(true);
+      return;
+    }
+
+    const allData = await updateRRuleIfNecessary(formData);
+    if (!allData) return;
+
+    const apiPayload: z.input<IEventPUT> = {
+      ...formData,
+      eventId: formData.eventId ? Number(formData.eventId) : undefined,
+      roomId: Number(formData.roomId),
+      userId: formData.userId ? Number(formData.userId) : null,
+      statusId: Number(formData.statusId),
+      rule: isRecurring ? formData.rule : undefined,
+    };
+
+    mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
+      onSuccess: () => {
+        resetForm();
+        props.onClose();
+      },
+    });
+  };
+
+  const goToStep = useCallback(
+    (position: number) => {
+      // Basic bounds checking
+      if (position >= 0 && position < props.formSteps.length) {
+        setCurrentStepIndex(position);
+      }
+    },
+    [props.formSteps.length],
+  );
+
+  const onDelete = useCallback(() => {
+    // If eventId is "0", it only exists in local state/draft
+    if (defaultFormValues.eventId === "0") {
+      resetForm();
+      props.onClose();
+    } else {
+      // If it exists on the server, call the mutation
+      mutationDelete.mutate(Number(defaultFormValues.eventId), {
+        onSuccess: () => {
+          resetForm();
+          props.onClose();
+        },
+      });
+    }
+  }, [defaultFormValues.eventId, mutationDelete, resetForm, props]);
+
+  return {
+    goToStep,
+    onDelete,
+    methods,
+    currentStepIndex,
+    setCurrentStepIndex,
+    status,
+    setStatus,
+    ignoreLastStep,
+    setIgnoreLastStep,
+    resetForm,
+    onSave,
+    mutationUpsert,
+    mutationDelete,
+    errors,
+    showError,
+    setShowError,
+    defaultFormValues,
+  };
+};
