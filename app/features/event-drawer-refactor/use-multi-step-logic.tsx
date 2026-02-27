@@ -98,8 +98,14 @@ export const useMultiStepFormLogic = (props: {
     const allData = await updateRRuleIfNecessary(formData);
     if (!allData) return;
 
+    let finalStartDate = formData.startDate;
+    if (isRecurring && formData.ruleStartDate && formData.startDate !== formData.ruleStartDate) {
+      finalStartDate = formData.ruleStartDate;
+    }
+
     const apiPayload: z.input<IEventPUT> = {
       ...formData,
+      startDate: finalStartDate,
       eventId: formData.eventId ? Number(formData.eventId) : undefined,
       roomId: Number(formData.roomId),
       userId: formData.userId ? Number(formData.userId) : null,
