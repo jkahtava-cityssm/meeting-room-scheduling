@@ -1,6 +1,7 @@
 import { Control } from "react-hook-form";
-import { step2Schema } from "../../event-drawer/event-drawer.validator";
+
 import z from "zod/v4";
+import { step2Schema } from "../event-drawer-schema.validator";
 
 export function ErrorMessage({
   control,

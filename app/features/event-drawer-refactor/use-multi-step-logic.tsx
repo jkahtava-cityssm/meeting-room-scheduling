@@ -48,6 +48,10 @@ export const useMultiStepFormLogic = (props: {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
   const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues.isRecurring === "false");
+  const [startDate, setStartDate] = useState(
+    defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
+  );
+
   const [errors, setErrors] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
 
@@ -56,7 +60,9 @@ export const useMultiStepFormLogic = (props: {
 
   useEffect(() => {
     if (status === "Loading" && collectedEvent && !isFetching) {
-      methods.reset(mapEventToSchema(collectedEvent));
+      const parsedData = mapEventToSchema(collectedEvent);
+      methods.reset(parsedData);
+      setStartDate(parsedData.isRecurring === "true" ? parsedData.ruleStartDate : parsedData.startDate);
       setTimeout(() => setStatus("Edit"), 100);
     }
   }, [status, collectedEvent, isFetching, methods]);
@@ -67,6 +73,9 @@ export const useMultiStepFormLogic = (props: {
     setCurrentStepIndex(0);
     setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
     setIgnoreLastStep(defaultFormValues.isRecurring === "false");
+    setStartDate(
+      defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
+    );
   }, [methods, defaultFormValues]);
 
   const onSave = async () => {
@@ -127,6 +136,8 @@ export const useMultiStepFormLogic = (props: {
   }, [defaultFormValues.eventId, mutationDelete, resetForm, props]);
 
   return {
+    startDate,
+    setStartDate,
     goToStep,
     onDelete,
     methods,

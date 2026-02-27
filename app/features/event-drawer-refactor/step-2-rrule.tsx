@@ -10,16 +10,19 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { CalendarDayPopover } from "@/components/calendar-day-popover/calendar-day-popover";
 import { Session } from "@/lib/auth-client";
-import { useMultiStepForm } from "../event-drawer/multi-step-form";
+
 import { useRRulePreview } from "./use-rrule-preview";
-import { step2Schema } from "../event-drawer/event-drawer.validator";
-import { FormStatus } from "../event-drawer/types";
+
 import { NumberFormInput } from "./components/number-form-input";
 import { DailyForm } from "./sub-forms/rrule-day-form";
-import { RRulePreview } from "../event-drawer/rrule-preview";
+
 import { MonthlyForm } from "./sub-forms/rrule-monthly-form";
 import { WeeklyForm } from "./sub-forms/rrule-weekly-form";
 import { YearlyForm } from "./sub-forms/rrule-yearly-form";
+import { FormStatus } from "./types";
+import { useMultiStepForm } from "./step-0-form";
+import { step2Schema } from "./event-drawer-schema.validator";
+import { RRulePreview } from "./rrule-preview";
 
 // Import your newly created sub-forms and hooks
 

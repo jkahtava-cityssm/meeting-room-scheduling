@@ -1,12 +1,17 @@
 import { FormField, FormItem, FormControl } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { Control, FieldPathByValue, FieldValues } from "react-hook-form";
+import { Control, FieldPath, FieldPathByValue, FieldValues } from "react-hook-form";
 
-export function PeriodFormSelection<
-  TFieldValues extends FieldValues,
-  TPath extends FieldPathByValue<TFieldValues, string>,
->({ control, name, disabled }: { control: Control<TFieldValues>; name: TPath; disabled: boolean }) {
+export function PeriodFormSelection<TFieldValues extends FieldValues>({
+  control,
+  name,
+  disabled,
+}: {
+  control: Control<TFieldValues>;
+  name: FieldPath<TFieldValues>;
+  disabled: boolean;
+}) {
   return (
     <FormField
       control={control}

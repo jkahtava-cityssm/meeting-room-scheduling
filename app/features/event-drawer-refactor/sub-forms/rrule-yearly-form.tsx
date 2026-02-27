@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@radix-ui/react-radio-group";
-import { step2Schema } from "../../event-drawer/event-drawer.validator";
+import { step2Schema } from "../event-drawer-schema.validator";
 import { NumberFormInput } from "../components/number-form-input";
 import { PeriodFormSelection } from "../components/period-form-select";
 import { WeekDayFormSelection } from "../components/weekday-form-select";
@@ -69,7 +69,7 @@ export function YearlyForm({
         </div>
 
         <div className="flex flex-col gap-1">
-          {[
+          {/*[
             "ruleEndDate",
             "yearValue",
             "yearlyPattern",
@@ -78,7 +78,8 @@ export function YearlyForm({
             "yearWeekdayValue",
             "yearMonthValue",
           ].map((field) => (
-            <ErrorMessage
+            
+<ErrorMessage
               key={field}
               control={control}
               fieldName={
@@ -91,8 +92,10 @@ export function YearlyForm({
                   | "yearWeekdayValue"
                   | "yearMonthValue"
               }
+      }
+            
             />
-          ))}
+          ))*/}
         </div>
       </div>
     </div>
@@ -133,7 +136,7 @@ function YearlyPatternRow({
   control: Control<z.infer<typeof step2Schema>>;
   isActive: boolean;
   isReadOnly: boolean;
-  yearPeriodValue: string;
+  yearPeriodValue: string | undefined;
 }) {
   const disabled = !isActive || isReadOnly;
   const showSpecificDays = yearPeriodValue === "1" || yearPeriodValue === "-1";

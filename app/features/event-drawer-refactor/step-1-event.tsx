@@ -2,19 +2,17 @@ import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { z } from "zod/v4";
 
-import { TColors } from "@/lib/types";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookKey, Loader2Icon } from "lucide-react";
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { IconColored } from "@/components/ui/icon-colored";
+
 import { ScrollBar } from "@/components/ui/scroll-area";
 
 import { Textarea } from "@/components/ui/textarea";
 import { useRoomsQuery } from "@/lib/services/rooms";
-import { Select } from "@/components/ui/select";
 
 import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
 
@@ -25,9 +23,9 @@ import { DateTimePicker, DateTimePickerRef } from "@/components/ui/datetimepicke
 import { useRef } from "react";
 import { Session } from "@/lib/auth-client";
 import { getDurationText } from "@/lib/helpers";
-import { FormStatus } from "../event-drawer/types";
-import { step1Schema } from "../event-drawer/event-drawer.validator";
-import { useMultiStepForm } from "../event-drawer/multi-step-form";
+import { FormStatus } from "./types";
+import { step1Schema } from "./event-drawer-schema.validator";
+import { useMultiStepForm } from "./step-0-form";
 import { RoomSelect } from "../rooms/room-select";
 import { StatusSelect } from "../status/status-select";
 

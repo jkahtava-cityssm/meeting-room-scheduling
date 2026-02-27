@@ -2,15 +2,12 @@ import { useWatch, Control } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@radix-ui/react-radio-group";
-import { step2Schema } from "../../event-drawer/event-drawer.validator";
+
 import { NumberFormInput } from "../components/number-form-input";
-import { PeriodFormSelection } from "../components/period-form-select";
-import { WeekDayFormSelection } from "../components/weekday-form-select";
-import { MonthFormSelection } from "../components/month-form-select";
-import { Separator } from "@/components/ui/separator";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { ErrorMessage } from "../components/error-message";
+import { step2Schema } from "../event-drawer-schema.validator";
 
 export function WeeklyForm({
   control,
@@ -31,7 +28,9 @@ export function WeeklyForm({
           <WeekdayCheckbox key={day.id} day={day} control={control} isReadOnly={isReadOnly} />
         ))}
       </div>
-      <ErrorMessage control={control} fieldName="weekdays" />
+      {
+        //<ErrorMessage control={control} fieldName="weekdays" />
+      }
     </div>
   );
 }

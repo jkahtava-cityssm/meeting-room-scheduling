@@ -30,6 +30,7 @@ export interface MultiStepFormContextProps {
   defaultFormValues: CombinedSchema;
   methods: UseFormReturn<CombinedSchema>;
   status: FormStatus;
+
   setStatus: (status: FormStatus) => void;
   ignoreLastStep: boolean;
   setIgnoreLastStep: (value: boolean) => void;
@@ -49,6 +50,9 @@ export interface MultiStepFormContextProps {
   errors: string[];
   showError: boolean;
   setShowError: (value: boolean) => void;
+
+  startDate: string;
+  setStartDate: (value: string) => void;
 }
 
 export type FormStatus = "New" | "Read" | "Edit" | "Loading";

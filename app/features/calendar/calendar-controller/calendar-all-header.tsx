@@ -9,10 +9,10 @@ import { navigateDate, navigateURL } from "@/lib/helpers";
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import { useRouter } from "next/navigation";
 
-import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { DateNavigator } from "./calendar-all-header-date-navigator";
 import { TodayButton } from "./calendar-all-header-today-button";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
+import EventDrawer from "../../event-drawer-refactor/event-drawer";
 
 export function CalendarHeader({
   view,
