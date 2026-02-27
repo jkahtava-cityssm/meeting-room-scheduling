@@ -53,10 +53,18 @@ const FormFooter = ({ userId }: { userId?: string }) => {
       )}
 
       <div className="flex gap-4 grow justify-center">
-        <Button variant="outline" onClick={ctx.previousStep} disabled={ctx.isFirstStep}>
+        <Button
+          variant={ctx.previousStepHasError ? "outline_destructive" : "outline"}
+          onClick={ctx.previousStep}
+          disabled={ctx.isFirstStep}
+        >
           <ArrowLeftCircle /> Back
         </Button>
-        <Button variant="outline" onClick={ctx.nextStep} disabled={ctx.isLastStep}>
+        <Button
+          variant={ctx.nextStepHasError ? "outline_destructive" : "outline"}
+          onClick={ctx.nextStep}
+          disabled={ctx.isLastStep}
+        >
           Next <ArrowRightCircle />
         </Button>
       </div>

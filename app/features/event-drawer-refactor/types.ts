@@ -26,6 +26,8 @@ export interface MultiStepFormContextProps {
   goToStep: (step: number) => void;
   nextStep: () => void;
   previousStep: () => void;
+  previousStepHasError: boolean;
+  nextStepHasError: boolean;
 
   defaultFormValues: CombinedSchema;
   methods: UseFormReturn<CombinedSchema>;

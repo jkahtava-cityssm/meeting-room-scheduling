@@ -63,8 +63,8 @@ export const MultiStepForm = ({
     currentStep: formSteps[logic.currentStepIndex],
     isFirstStep: logic.currentStepIndex === 0,
     isLastStep: logic.currentStepIndex === formSteps.length - 1 || logic.ignoreLastStep,
-    nextStep: () => logic.setCurrentStepIndex((i) => i + 1),
-    previousStep: () => logic.setCurrentStepIndex((i) => i - 1),
+    nextStep: () => logic.nextStep,
+    previousStep: () => logic.previousStep,
   };
 
   return (

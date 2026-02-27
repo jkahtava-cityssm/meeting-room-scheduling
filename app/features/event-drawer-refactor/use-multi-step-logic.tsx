@@ -52,6 +52,9 @@ export const useMultiStepFormLogic = (props: {
     defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
   );
 
+  const [previousStepHasError, setpreviousStepHasError] = useState(false);
+  const [nextStepHasError, setnextStepHasError] = useState(false);
+
   const [errors, setErrors] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
 
@@ -135,6 +138,35 @@ export const useMultiStepFormLogic = (props: {
     }
   }, [defaultFormValues.eventId, mutationDelete, resetForm, props]);
 
+  const handleStepChange = useCallback(
+    async (direction: "next" | "back") => {
+      const isMovingNext = direction === "next";
+      const canMove = isMovingNext
+        ? currentStepIndex < props.formSteps.length - 1 && !ignoreLastStep
+        : currentStepIndex > 0;
+
+      if (!canMove) return;
+
+      // 1. Validate the step we are currently on BEFORE moving
+      const validation = await isStepValid(props.formSteps[currentStepIndex], methods);
+      const isCurrentInvalid = !validation.status;
+
+      // 2. Set destructive states based on direction
+      if (isMovingNext) {
+        setpreviousStepHasError(isCurrentInvalid);
+        // If moving to the very last step, reset the next button's warning
+        if (currentStepIndex + 1 === props.formSteps.length - 1) setnextStepHasError(false);
+        setCurrentStepIndex((prev) => prev + 1);
+      } else {
+        setnextStepHasError(isCurrentInvalid);
+        // If moving to the very first step, reset the back button's warning
+        if (currentStepIndex - 1 === 0) setpreviousStepHasError(false);
+        setCurrentStepIndex((prev) => prev - 1);
+      }
+    },
+    [currentStepIndex, props.formSteps, ignoreLastStep, methods],
+  );
+
   return {
     startDate,
     setStartDate,
@@ -142,7 +174,6 @@ export const useMultiStepFormLogic = (props: {
     onDelete,
     methods,
     currentStepIndex,
-    setCurrentStepIndex,
     status,
     setStatus,
     ignoreLastStep,
@@ -155,5 +186,9 @@ export const useMultiStepFormLogic = (props: {
     showError,
     setShowError,
     defaultFormValues,
+    nextStep: () => handleStepChange("next"),
+    previousStep: () => handleStepChange("back"),
+    previousStepHasError,
+    nextStepHasError,
   };
 };
