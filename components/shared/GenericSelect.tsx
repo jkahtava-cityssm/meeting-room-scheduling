@@ -11,6 +11,7 @@ type DataSelectProps<T> = {
   selectedValue: string;
   isLoading: boolean;
   isError?: boolean;
+  isDisabled?: boolean;
   loadingLabel?: string;
   onChange: (value: string) => void;
   getId: (item: T) => string;
@@ -25,6 +26,7 @@ export function GenericSelect<T>({
   selectedValue,
   isLoading,
   isError,
+  isDisabled,
   loadingLabel = "Collecting Data",
   onChange,
   getId,
@@ -38,6 +40,15 @@ export function GenericSelect<T>({
       <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
         {isError ? <CircleX /> : <Loader2Icon className="animate-spin " />}
         {loadingLabel}
+      </Button>
+    );
+  }
+
+  if (isDisabled) {
+    const value = list.find((item) => getId(item) === selectedValue);
+    return (
+      <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
+        {getLabel(value!)}
       </Button>
     );
   }
