@@ -1,6 +1,6 @@
-import { fetchGET } from "@/lib/fetch";
-import { IRoom, SRoom } from "@/lib/schemas/calendar";
-import { useQuery } from "@tanstack/react-query";
+import { fetchGET, fetchPUT } from "@/lib/fetch";
+import { IRoom, SRoom, SRoomProperty, SRoomRoles } from "@/lib/schemas/calendar";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod/v4";
 
 const AllRooms: IRoom = {
@@ -39,3 +39,46 @@ export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolea
     //staleTime: 0,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
+
+export const SRoomPUT = SRoom.omit({
+  createdAt: true,
+  updatedAt: true,
+  roomCategory: true,
+  roomRoles: true,
+  roomProperty: true,
+}).extend({
+  roomId: z.coerce.number().optional(),
+  roomRoles: z
+    .array(
+      SRoomRoles.pick({ roleId: true }).extend({
+        roleId: z.coerce.number(),
+      }),
+    )
+    .optional(),
+  roomProperty: z
+    .array(
+      SRoomProperty.omit({
+        createdAt: true,
+        updatedAt: true,
+      }).extend({
+        roomPropertyId: z.coerce.number().optional().nullable(),
+        name: z.string(),
+        value: z.string(),
+      }),
+    )
+    .optional(),
+});
+
+export type IRoomPUT = z.infer<typeof SRoomPUT>;
+
+export const useRoomsMutationUpsert = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: IRoomPUT) => fetchPUT(`/api/events`, data),
+    onSuccess: (response) => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
+    },
+  });
+};
