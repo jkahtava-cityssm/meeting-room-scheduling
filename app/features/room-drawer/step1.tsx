@@ -5,14 +5,14 @@ import { useMultiStepForm } from "./multi-step-form";
 import { step1Schema } from "./room-drawer.validator";
 
 import { TColors } from "@/lib/types";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+
 import { SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookKey, Loader2Icon } from "lucide-react";
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { IconColored } from "@/components/ui/icon-colored";
-import { ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { Textarea } from "@/components/ui/textarea";
 import { useRoomsQuery } from "@/lib/services/rooms";

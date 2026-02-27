@@ -6,7 +6,7 @@ import { AgendaEventCard } from "@/app/features/calendar/view-agenda/calendar-ag
 
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Label } from "@radix-ui/react-dropdown-menu";
+
 import { Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
 import { cn } from "@/lib/utils";
 import { GenericError } from "../../../../components/shared/generic-error";
+import { Label } from "@/components/ui/label";
 
 export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
   const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =

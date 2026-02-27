@@ -2,14 +2,12 @@ import { useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { z } from "zod/v4";
 
-import { ScrollArea } from "@radix-ui/react-scroll-area";
-
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookKey, Loader2Icon } from "lucide-react";
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 
-import { ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { Textarea } from "@/components/ui/textarea";
 import { useRoomsQuery } from "@/lib/services/rooms";
