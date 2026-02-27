@@ -8,7 +8,7 @@ import { Select, SelectItem } from "@/components/ui/select";
 import { RoleComboBox } from "../roles/role-combobox";
 import { TConfigurationEntry } from "@/lib/data/configuration";
 import { Input } from "@/components/ui/input";
-import { GenericSelect } from "@/components/shared/GenericSelect";
+import { GenericSelect } from "@/components/shared/generic-select";
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 

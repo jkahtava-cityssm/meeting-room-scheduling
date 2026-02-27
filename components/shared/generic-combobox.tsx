@@ -20,6 +20,7 @@ type DataSelectProps<T> = {
   placeholderText: string;
   searchText: string;
   noResultText: string;
+  dataInvalid?: boolean;
   onSelect: (id: string, label: string) => void;
   getId: (item: T) => string;
   getLabel: (item: T) => string;
@@ -38,6 +39,7 @@ export function GenericComboBox<T>({
   placeholderText = "Click to Select",
   searchText = "Search...",
   noResultText = "No Item Found",
+  dataInvalid = false,
   onSelect,
   getId,
   getLabel,
@@ -49,9 +51,29 @@ export function GenericComboBox<T>({
 
   if (isLoading || !list) {
     return (
-      <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
+      <Button
+        data-invalid={dataInvalid}
+        aria-invalid={dataInvalid}
+        variant={"outline"}
+        disabled
+        className={cn("min-w-[200px]", className)}
+      >
         {isError ? <CircleX /> : <Loader2Icon className="animate-spin" />}
         {loadingLabel}
+      </Button>
+    );
+  }
+
+  if (isDisabled) {
+    return (
+      <Button
+        data-invalid={dataInvalid}
+        aria-invalid={dataInvalid}
+        variant={"outline"}
+        disabled
+        className={cn("min-w-[200px]", className)}
+      >
+        {selectedItem ? getLabel(selectedItem) : ""}
       </Button>
     );
   }
@@ -65,9 +87,12 @@ export function GenericComboBox<T>({
           className={cn(
             "min-w-[200px] justify-between text-sm font-normal",
             !selectedValue && "text-muted-foreground",
+            dataInvalid && "",
             className,
           )}
           disabled={isDisabled}
+          data-invalid={dataInvalid}
+          aria-invalid={dataInvalid}
         >
           <span className="truncate">{selectedItem ? getLabel(selectedItem) : placeholderText}</span>
 

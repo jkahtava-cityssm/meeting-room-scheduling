@@ -1,4 +1,4 @@
-import { GenericComboBox } from "@/components/shared/GenericComboBox";
+import { GenericComboBox } from "@/components/shared/generic-combobox";
 import { useRolesQuery } from "@/lib/services/permissions";
 
 export function RoleComboBox({
@@ -6,11 +6,13 @@ export function RoleComboBox({
   onRoleChange,
   excludeRoleNames,
   className,
+  dataInvalid = false,
 }: {
   selectedRoleId: string | undefined;
   onRoleChange: (id: string, label: string) => void;
   excludeRoleNames?: string[];
-  className: string;
+  className?: string;
+  dataInvalid?: boolean;
 }) {
   const { isPending, data, error } = useRolesQuery();
 
@@ -33,6 +35,7 @@ export function RoleComboBox({
       placeholderText={"Select Role"}
       searchText={"Search Roles"}
       noResultText={"No Roles Found"}
+      dataInvalid={dataInvalid}
     />
   );
 }

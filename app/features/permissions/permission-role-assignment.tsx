@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { GenericSelect } from "@/components/shared/GenericSelect";
+import { GenericSelect } from "@/components/shared/generic-select";
 import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
 import {
   IUserWithRoles,
@@ -29,7 +29,7 @@ import {
   usePermissionUserRoleMutationUpsert,
   useRolesQuery,
 } from "@/lib/services/permissions";
-import { GenericComboBox } from "@/components/shared/GenericComboBox";
+import { GenericComboBox } from "@/components/shared/generic-combobox";
 import { RoleComboBox } from "../roles/role-combobox";
 import { useUsersQuery } from "@/lib/services/users";
 import { cn } from "@/lib/utils";

@@ -13,6 +13,8 @@ type DataSelectProps<T> = {
   isError?: boolean;
   isDisabled?: boolean;
   loadingLabel?: string;
+  placeholderText?: string;
+  dataInvalid?: boolean;
   onChange: (value: string) => void;
   getId: (item: T) => string;
   getLabel: (item: T) => string;
@@ -28,6 +30,8 @@ export function GenericSelect<T>({
   isError,
   isDisabled,
   loadingLabel = "Collecting Data",
+  placeholderText = "Select an option",
+  dataInvalid = false,
   onChange,
   getId,
   getLabel,
@@ -45,18 +49,27 @@ export function GenericSelect<T>({
   }
 
   if (isDisabled) {
-    const value = list.find((item) => getId(item) === selectedValue);
+    const selectedItem = list.find((item) => getId(item) === selectedValue);
     return (
       <Button variant={"outline"} disabled className={cn("min-w-[200px]", className)}>
-        {getLabel(value!)}
+        {selectedItem && getColor && getIcon && (
+          <BadgeColored color={getColor(selectedItem)} className="h-6 w-6">
+            <DynamicIcon
+              hideBackground={true}
+              color={getColor(selectedItem)}
+              name={getIcon(selectedItem)}
+            ></DynamicIcon>
+          </BadgeColored>
+        )}
+        {selectedItem ? getLabel(selectedItem) : ""}
       </Button>
     );
   }
 
   return (
     <Select value={selectedValue} onValueChange={onChange}>
-      <SelectTrigger className={cn("min-w-[200px]", className)}>
-        <SelectValue />
+      <SelectTrigger aria-invalid={dataInvalid} data-invalid={dataInvalid} className={cn("min-w-[200px]", className)}>
+        <SelectValue placeholder={placeholderText} />
       </SelectTrigger>
 
       <SelectContent align="end">

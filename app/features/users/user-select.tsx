@@ -2,35 +2,32 @@ import { GenericSelect } from "@/components/shared/generic-select";
 import { IconName } from "@/components/ui/icon-dynamic";
 import { TColors } from "@/lib/types";
 import { useRoomsQuery } from "@/lib/services/rooms";
+import { useUsersQuery } from "@/lib/services/users";
 
-export function RoomSelect({
-  selectedRoomId,
-  includeAllOption = true,
+export function UserSelect({
+  selectedUserId,
   onRoomChange,
   dataInvalid = false,
 }: {
-  selectedRoomId: string;
-  includeAllOption: boolean;
+  selectedUserId: string;
   onRoomChange: (value: string) => void;
   dataInvalid?: boolean;
 }) {
-  const { isPending, data, error } = useRoomsQuery(includeAllOption);
+  const { isPending, data, error } = useUsersQuery();
 
   return (
     <GenericSelect
       list={data}
-      selectedValue={selectedRoomId}
+      selectedValue={selectedUserId}
       isLoading={isPending}
       isError={!!error}
-      loadingLabel={error ? "Error: Collecting Rooms" : "Collecting Rooms"}
-      placeholderText="Select Room"
+      loadingLabel={error ? "Error: Collecting Members" : "Collecting Members"}
+      placeholderText="Select Member"
       onChange={(value) => {
         onRoomChange(value);
       }}
-      getId={(room) => room.roomId.toString()}
-      getLabel={(room) => room.name}
-      getColor={(room) => room.color as TColors}
-      getIcon={(room) => room.icon as IconName}
+      getId={(user) => user.userId.toString()}
+      getLabel={(user) => user.name}
       dataInvalid={dataInvalid}
       className="min-w-60"
     />
