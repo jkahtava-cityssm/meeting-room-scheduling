@@ -56,9 +56,12 @@ export function useRRulePreview(startDate: string) {
         if (isCancelled) return;
 
         if (data.ruleString) {
-          // Update hidden form fields used for submission
+          const temp_firstDate = new Date(data.firstDate!).getTime();
+          const temp_startDate = new Date(startDate).getTime();
+
           setValue("rule", data.ruleString);
-          setValue("ruleStartDate", startDate);
+          setValue("ruleStartDate", data.firstDate);
+
           setValue("ruleEndDate", data.lastDate ?? "");
           trigger(["rule", "ruleStartDate", "ruleEndDate"]);
         }

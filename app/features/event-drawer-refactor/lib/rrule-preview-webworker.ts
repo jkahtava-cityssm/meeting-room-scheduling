@@ -4,24 +4,19 @@ import { ParsedOptions } from "rrule/dist/esm/types";
 
 self.onmessage = (response: MessageEvent<ParsedOptions>) => {
   if (response.data) {
-    const rrule: RRule = new RRule(response.data);
-    //This iterates over every rrule, so for some options it takes seconds
+    const rrule = new RRule(response.data);
+
+    // Calculate values inside the worker
     const total = rrule.count();
-
-    const ruleList = rrule.all((date, len) => {
-      return len < 500;
-    });
-
+    const ruleList = rrule.all((_, len) => len < 500);
     const lastDate = rrule.all().at(-1);
 
-    const convertedRuleList = ruleList.map(convertRRuleDateToDate);
-
     self.postMessage({
-      rrule: rrule,
+      ruleString: rrule.toString(), // Send the string directly
       count: total,
-      firstDate: ruleList[0],
-      lastDate: lastDate ? convertRRuleDateToDate(lastDate) : undefined,
-      localDates: convertedRuleList,
+      firstDate: ruleList[0]?.toISOString(),
+      lastDate: lastDate ? convertRRuleDateToDate(lastDate).toISOString() : undefined,
+      localDates: ruleList.map(convertRRuleDateToDate),
     });
   }
 };
