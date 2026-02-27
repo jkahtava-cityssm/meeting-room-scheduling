@@ -5,5 +5,8 @@
     "*.css": "tailwindcss"
   },
   "css.lint.unknownAtRules": "ignore",
-  "prisma.pinToPrisma6": true
+  "prisma.pinToPrisma6": true,
+
+  "typescript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@radix-ui/**"],
+  "javascript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@radix-ui/**"]
 }

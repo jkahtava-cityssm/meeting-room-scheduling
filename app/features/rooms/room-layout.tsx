@@ -26,8 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverTrigger, PopoverContent } from "@radix-ui/react-popover";
-import { Switch } from "@radix-ui/react-switch";
+
 import { id } from "date-fns/locale";
 import { type } from "os";
 import EventCard from "../bookings/components/event-card";
@@ -38,6 +37,7 @@ import { BadgeColored } from "@/components/ui/badge-colored";
 import { TColors } from "@/lib/types";
 import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type SortColumn = "icon" | "publicFacing" | "color" | "roomCategory" | "name";
 

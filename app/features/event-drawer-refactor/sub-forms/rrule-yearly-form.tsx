@@ -2,13 +2,14 @@ import { useWatch, Control } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@radix-ui/react-radio-group";
+
 import { step2Schema } from "../event-drawer-schema.validator";
 import { NumberFormInput } from "../components/number-form-input";
 import { PeriodFormSelection } from "../components/period-form-select";
 import { WeekDayFormSelection } from "../components/weekday-form-select";
 import { MonthFormSelection } from "../components/month-form-select";
 import { ErrorMessage } from "../components/error-message";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export function YearlyForm({
   control,
