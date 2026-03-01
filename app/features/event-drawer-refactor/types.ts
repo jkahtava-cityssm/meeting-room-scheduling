@@ -58,7 +58,9 @@ export interface MultiStepFormContextProps {
 		description: string;
 		errors?: string[];
 		actionType: "dismiss" | "save" | "none" | "restore";
-		showSaveForLater: boolean;
+		showCancelButton?: boolean;
+		showConfirmButton?: boolean;
+		showLeftButton?: boolean;
 		confirmText?: string;
 		cancelText?: string;
 	} | null;

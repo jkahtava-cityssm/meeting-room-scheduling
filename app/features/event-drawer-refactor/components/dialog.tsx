@@ -22,11 +22,14 @@ interface EventDialogProps {
 	title: string;
 	description: string;
 	errors?: string[];
-	onSaveForLater?: () => void;
-	onConfirm: () => void; // Used for "Dismiss Form" or generic action
+	onLeftButtonClick?: () => void;
+	onCancel?: () => void;
+	onConfirm?: () => void; // Used for "Dismiss Form" or generic action
 	confirmText?: string;
 	cancelText?: string;
-	showSaveForLater?: boolean;
+	showLeftButton?: boolean;
+	showCancelButton?: boolean;
+	showConfirmButton?: boolean;
 }
 
 export const EventDialog: React.FC<EventDialogProps> = ({
@@ -36,11 +39,14 @@ export const EventDialog: React.FC<EventDialogProps> = ({
 	title,
 	description,
 	errors,
-	onSaveForLater,
+	onLeftButtonClick,
+	onCancel,
 	onConfirm,
 	confirmText = "Confirm",
 	cancelText = "Cancel",
-	showSaveForLater = false,
+	showLeftButton = false,
+	showCancelButton = true,
+	showConfirmButton = true,
 }) => {
 	const isDestructive = variant === "error" || variant === "warning";
 	const isInformational = variant === "info" || variant === "success";
@@ -103,9 +109,9 @@ export const EventDialog: React.FC<EventDialogProps> = ({
 				)}
 
 				<AlertDialogFooter>
-					{showSaveForLater && onSaveForLater && (
+					{showLeftButton && onLeftButtonClick && (
 						<AlertDialogSave
-							onClick={onSaveForLater}
+							onClick={onLeftButtonClick}
 							className="sm:mr-auto"
 						>
 							Save for later
@@ -114,7 +120,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
 					{!isInformational && <AlertDialogCancel onClick={onClose}>{cancelText}</AlertDialogCancel>}
 
 					{isInformational ? (
-						<AlertDialogCancel onClick={onClose}>{confirmText}</AlertDialogCancel>
+						<AlertDialogCancel onClick={onConfirm}>{confirmText}</AlertDialogCancel>
 					) : (
 						<AlertDialogAction
 							onClick={onConfirm}

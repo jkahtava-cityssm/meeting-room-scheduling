@@ -71,7 +71,6 @@ export const useMultiStepFormLogic = (props: {
 				confirmText: "Restore Draft",
 				cancelText: "Start New",
 				actionType: "restore",
-				showSaveForLater: false,
 			});
 		}
 	}, [storedEvent, props.event, methods, props.isOpen]);
@@ -108,7 +107,6 @@ export const useMultiStepFormLogic = (props: {
 				confirmText: "Continue Editing",
 				errors: formState.errorList,
 				actionType: "none", // Errors usually just close the dialog
-				showSaveForLater: false,
 			});
 
 			return;

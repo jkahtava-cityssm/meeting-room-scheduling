@@ -56,7 +56,7 @@ export const MultiStepForm = ({
 					confirmText: "Dismiss Form",
 					cancelText: "Continue Editing",
 					actionType: "dismiss",
-					showSaveForLater: true,
+					showLeftButton: true,
 				});
 			} else {
 				logic.resetForm();
@@ -121,8 +121,8 @@ export const MultiStepForm = ({
 						onConfirm={() => logic.handleDialogAction(logic.dialogConfig!.actionType)}
 						confirmText={logic.dialogConfig.confirmText ?? "Confirm"}
 						cancelText={logic.dialogConfig.cancelText ?? "Cancel"}
-						showSaveForLater={logic.dialogConfig.showSaveForLater}
-						onSaveForLater={() => logic.handleDialogAction("save")}
+						showLeftButton={logic.dialogConfig.showLeftButton}
+						onLeftButtonClick={() => logic.handleDialogAction("save")}
 					/>
 				</>
 			)}
