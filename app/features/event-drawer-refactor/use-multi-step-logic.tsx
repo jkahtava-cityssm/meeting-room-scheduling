@@ -5,203 +5,256 @@ import { z } from "zod/v4";
 import { CombinedEventSchema, CombinedSchema } from "./event-drawer-schema.validator";
 
 import { usePublicConfiguration } from "@/lib/services/public";
-import {
-  useEventQuery,
-  useEventsMutationUpsert,
-  useEventsMutationDelete,
-  SEventPUT,
-  IEventPUT,
-} from "@/lib/services/events";
+import { useEventQuery, useEventsMutationUpsert, useEventsMutationDelete, SEventPUT, IEventPUT } from "@/lib/services/events";
 import { isFormValid, isStepValid, updateRRuleIfNecessary } from "./lib/form-helper";
-import { FormStatus, FormStep } from "./types";
+import { FormStatus, FormStep, MultiStepFormContextProps } from "./types";
 import { IEvent } from "@/lib/schemas/calendar";
 import { getFormDefaults, mapEventToSchema } from "./lib/default-util";
 import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
 
 export const useMultiStepFormLogic = (props: {
-  event?: IEvent;
-  creationDate?: Date;
-  userId?: string;
-  formSteps: FormStep[];
-  onClose: () => void;
+	event?: IEvent;
+	creationDate?: Date;
+	userId?: string;
+	formSteps: FormStep[];
+	onClose: () => void;
+	isOpen: boolean;
 }) => {
-  const { data: config } = usePublicConfiguration();
-  const { getEventState } = useEventStore();
-  const mutationUpsert = useEventsMutationUpsert();
-  const mutationDelete = useEventsMutationDelete();
+	const { data: config } = usePublicConfiguration();
+	const storedEvent = useEventStore(state => state.event);
+	const { setEvent } = useEventStore();
+	const mutationUpsert = useEventsMutationUpsert();
+	const mutationDelete = useEventsMutationDelete();
 
-  // 1. Resolve Initial Values
-  const defaultFormValues = useMemo(() => {
-    if (props.event) return mapEventToSchema(props.event);
-    if (props.creationDate) return getFormDefaults(props.creationDate, props.userId, config?.interval);
-    const stored = getEventState().event;
-    return stored || getFormDefaults(undefined, props.userId, config?.interval);
-  }, [props.event, props.creationDate, props.userId, config, getEventState]);
+	// 1. Resolve Initial Values
+	const defaultFormValues = useMemo(() => {
+		if (props.event) return mapEventToSchema(props.event);
+		if (props.creationDate) return getFormDefaults(props.creationDate, props.userId, config?.interval);
 
-  // 2. Form & Navigation State
-  const methods = useForm<CombinedSchema>({
-    resolver: zodResolver(CombinedEventSchema),
-    defaultValues: defaultFormValues,
-    mode: "onChange",
-  });
+		return getFormDefaults(undefined, props.userId, config?.interval);
+	}, [props.event, props.creationDate, props.userId, config]);
 
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
-  const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues.isRecurring === "false");
-  const [startDate, setStartDate] = useState(
-    defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
-  );
+	// 2. Form & Navigation State
+	const methods = useForm<CombinedSchema>({
+		resolver: zodResolver(CombinedEventSchema),
+		defaultValues: defaultFormValues,
+		mode: "onChange",
+	});
 
-  const [navigationStatus, setNavigationStatus] = useState({
-    prevError: false,
-    nextError: false,
-  });
+	const [currentStepIndex, setCurrentStepIndex] = useState(0);
+	const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
+	const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues.isRecurring === "false");
+	const [startDate, setStartDate] = useState(
+		defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
+	);
 
-  const [errors, setErrors] = useState<string[]>([]);
-  const [showError, setShowError] = useState(false);
+	const [navigationStatus, setNavigationStatus] = useState({
+		prevError: false,
+		nextError: false,
+	});
 
-  // 3. Data Fetching Sync
-  const { data: collectedEvent, isFetching } = useEventQuery(Number(defaultFormValues.eventId), status === "Loading");
+	const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
 
-  useEffect(() => {
-    if (status === "Loading" && collectedEvent && !isFetching) {
-      const parsedData = mapEventToSchema(collectedEvent);
-      methods.reset(parsedData);
-      setStartDate(parsedData.isRecurring === "true" ? parsedData.ruleStartDate : parsedData.startDate);
-      setTimeout(() => setStatus("Edit"), 100);
-    }
-  }, [status, collectedEvent, isFetching, methods]);
+	// 3. Data Fetching Sync
+	const { data: collectedEvent, isFetching } = useEventQuery(Number(defaultFormValues.eventId), status === "Loading");
 
-  // 4. Handlers
-  const resetForm = useCallback(() => {
-    methods.reset(defaultFormValues);
-    setCurrentStepIndex(0);
-    setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
-    setIgnoreLastStep(defaultFormValues.isRecurring === "false");
-    setStartDate(
-      defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
-    );
-    setNavigationStatus({ prevError: false, nextError: false });
-  }, [methods, defaultFormValues]);
+	useEffect(() => {
+		// Only prompt if:
+		// - There is a stored event
+		// - We aren't editing a specific existing event (props.event)
+		// - We haven't already loaded data into the form
+		if (props.isOpen && storedEvent && !props.event && methods.getValues().eventId === "0") {
+			setDialogConfig({
+				variant: "info",
+				title: "Draft Found",
+				description: "You have a saved draft. Would you like to edit it?",
+				confirmText: "Restore Draft",
+				cancelText: "Start New",
+				actionType: "restore",
+				showSaveForLater: false,
+			});
+		}
+	}, [storedEvent, props.event, methods, props.isOpen]);
 
-  const onSave = async () => {
-    const formData = methods.getValues();
-    const isRecurring = formData.isRecurring === "true";
-    const formState = await isFormValid(props.formSteps, methods, isRecurring ? [] : [1]);
+	useEffect(() => {
+		if (status === "Loading" && collectedEvent && !isFetching) {
+			const parsedData = mapEventToSchema(collectedEvent);
+			methods.reset(parsedData);
+			setStartDate(parsedData.isRecurring === "true" ? parsedData.ruleStartDate : parsedData.startDate);
+			setTimeout(() => setStatus("Edit"), 100);
+		}
+	}, [status, collectedEvent, isFetching, methods]);
 
-    if (!formState.status) {
-      setErrors(formState.errorList);
-      setShowError(true);
-      return;
-    }
+	// 4. Handlers
+	const resetForm = useCallback(() => {
+		methods.reset(defaultFormValues);
+		setCurrentStepIndex(0);
+		setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+		setIgnoreLastStep(defaultFormValues.isRecurring === "false");
+		setStartDate(defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate);
+		setNavigationStatus({ prevError: false, nextError: false });
+	}, [methods, defaultFormValues]);
 
-    const allData = await updateRRuleIfNecessary(formData);
-    if (!allData) return;
+	const onSave = async () => {
+		const formData = methods.getValues();
+		const isRecurring = formData.isRecurring === "true";
+		const formState = await isFormValid(props.formSteps, methods, isRecurring ? [] : [1]);
 
-    let finalStartDate = formData.startDate;
-    if (isRecurring && formData.ruleStartDate && formData.startDate !== formData.ruleStartDate) {
-      finalStartDate = formData.ruleStartDate;
-    }
+		if (!formState.status) {
+			setDialogConfig({
+				variant: "info",
+				title: "Submission Incomplete",
+				description: "Errors have been identified, and they must be fixed before submission can occur",
+				confirmText: "Continue Editing",
+				errors: formState.errorList,
+				actionType: "none", // Errors usually just close the dialog
+				showSaveForLater: false,
+			});
 
-    const apiPayload: z.input<IEventPUT> = {
-      ...formData,
-      startDate: finalStartDate,
-      eventId: formData.eventId ? Number(formData.eventId) : undefined,
-      roomId: Number(formData.roomId),
-      userId: formData.userId ? Number(formData.userId) : null,
-      statusId: Number(formData.statusId),
-      rule: isRecurring ? formData.rule : undefined,
-    };
+			return;
+		}
 
-    mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
-      onSuccess: () => {
-        resetForm();
-        props.onClose();
-      },
-    });
-  };
+		const allData = await updateRRuleIfNecessary(formData);
+		if (!allData) return;
 
-  const goToStep = useCallback(
-    (position: number) => {
-      // Basic bounds checking
-      if (position >= 0 && position < props.formSteps.length) {
-        setCurrentStepIndex(position);
-      }
-    },
-    [props.formSteps.length],
-  );
+		let finalStartDate = formData.startDate;
+		if (isRecurring && formData.ruleStartDate && formData.startDate !== formData.ruleStartDate) {
+			finalStartDate = formData.ruleStartDate;
+		}
 
-  const onDelete = useCallback(() => {
-    // If eventId is "0", it only exists in local state/draft
-    if (defaultFormValues.eventId === "0") {
-      resetForm();
-      props.onClose();
-    } else {
-      // If it exists on the server, call the mutation
-      mutationDelete.mutate(Number(defaultFormValues.eventId), {
-        onSuccess: () => {
-          resetForm();
-          props.onClose();
-        },
-      });
-    }
-  }, [defaultFormValues.eventId, mutationDelete, resetForm, props]);
+		const apiPayload: z.input<IEventPUT> = {
+			...formData,
+			startDate: finalStartDate,
+			eventId: formData.eventId ? Number(formData.eventId) : undefined,
+			roomId: Number(formData.roomId),
+			userId: formData.userId ? Number(formData.userId) : null,
+			statusId: Number(formData.statusId),
+			rule: isRecurring ? formData.rule : undefined,
+		};
 
-  const handleStepChange = useCallback(
-    async (direction: "next" | "back") => {
-      const isMovingNext = direction === "next";
-      const canMove = isMovingNext
-        ? currentStepIndex < props.formSteps.length - 1 && !ignoreLastStep
-        : currentStepIndex > 0;
+		mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
+			onSuccess: () => {
+				resetForm();
+				props.onClose();
+			},
+		});
+	};
 
-      if (!canMove) return;
+	const goToStep = useCallback(
+		(position: number) => {
+			// Basic bounds checking
+			if (position >= 0 && position < props.formSteps.length) {
+				setCurrentStepIndex(position);
+			}
+		},
+		[props.formSteps.length],
+	);
 
-      // 1. Validate the step we are currently on BEFORE moving
-      const validation = await isStepValid(props.formSteps[currentStepIndex], methods);
-      const isCurrentInvalid = !validation.status;
+	const onDelete = useCallback(() => {
+		// If eventId is "0", it only exists in local state/draft
+		if (defaultFormValues.eventId === "0") {
+			resetForm();
+			props.onClose();
+		} else {
+			// If it exists on the server, call the mutation
+			mutationDelete.mutate(Number(defaultFormValues.eventId), {
+				onSuccess: () => {
+					resetForm();
+					props.onClose();
+				},
+			});
+		}
+	}, [defaultFormValues.eventId, mutationDelete, resetForm, props]);
 
-      // 2. Set destructive states based on direction
-      if (isMovingNext) {
-        setNavigationStatus((prev) => ({
-          prevError: isCurrentInvalid,
-          nextError: currentStepIndex + 1 === props.formSteps.length - 1 ? false : prev.nextError,
-        }));
+	const handleStepChange = useCallback(
+		async (direction: "next" | "back") => {
+			const isMovingNext = direction === "next";
+			const canMove = isMovingNext ? currentStepIndex < props.formSteps.length - 1 && !ignoreLastStep : currentStepIndex > 0;
 
-        setCurrentStepIndex((prev) => prev + 1);
-      } else {
-        setNavigationStatus((prev) => ({
-          prevError: currentStepIndex - 1 === 0 ? false : prev.prevError,
-          nextError: isCurrentInvalid,
-        }));
+			if (!canMove) return;
 
-        setCurrentStepIndex((prev) => prev - 1);
-      }
-    },
-    [currentStepIndex, props.formSteps, ignoreLastStep, methods],
-  );
+			// 1. Validate the step we are currently on BEFORE moving
+			const validation = await isStepValid(props.formSteps[currentStepIndex], methods);
+			const isCurrentInvalid = !validation.status;
 
-  return {
-    startDate,
-    setStartDate,
-    goToStep,
-    onDelete,
-    methods,
-    currentStepIndex,
-    status,
-    setStatus,
-    ignoreLastStep,
-    setIgnoreLastStep,
-    resetForm,
-    onSave,
-    mutationUpsert,
-    mutationDelete,
-    errors,
-    showError,
-    setShowError,
-    defaultFormValues,
-    nextStep: () => handleStepChange("next"),
-    previousStep: () => handleStepChange("back"),
-    previousStepHasError: navigationStatus.prevError,
-    nextStepHasError: navigationStatus.nextError,
-  };
+			// 2. Set destructive states based on direction
+			if (isMovingNext) {
+				setNavigationStatus(prev => ({
+					prevError: isCurrentInvalid,
+					nextError: currentStepIndex + 1 === props.formSteps.length - 1 ? false : prev.nextError,
+				}));
+
+				setCurrentStepIndex(prev => prev + 1);
+			} else {
+				setNavigationStatus(prev => ({
+					prevError: currentStepIndex - 1 === 0 ? false : prev.prevError,
+					nextError: isCurrentInvalid,
+				}));
+
+				setCurrentStepIndex(prev => prev - 1);
+			}
+		},
+		[currentStepIndex, props.formSteps, ignoreLastStep, methods],
+	);
+
+	const handleDialogAction = useCallback(
+		(actionType: "dismiss" | "save" | "none" | "restore") => {
+			if (!dialogConfig) return;
+
+			if (actionType === "dismiss") {
+				// Logic for deleting/dismissing
+				if (defaultFormValues.eventId === "0") {
+					resetForm();
+					props.onClose();
+				} else {
+					mutationDelete.mutate(Number(defaultFormValues.eventId), {
+						onSuccess: () => {
+							resetForm();
+							props.onClose();
+						},
+					});
+				}
+			}
+
+			if (actionType === "save") {
+				setEvent(methods.getValues());
+				props.onClose();
+			}
+
+			if (actionType === "restore") {
+				if (storedEvent) {
+					methods.reset(storedEvent);
+					setStartDate(storedEvent.isRecurring === "true" ? storedEvent.ruleStartDate : storedEvent.startDate);
+				}
+			}
+
+			setDialogConfig(null); // Close dialog
+		},
+		[dialogConfig, defaultFormValues.eventId, resetForm, props, mutationDelete, setEvent, methods, storedEvent],
+	);
+
+	return {
+		startDate,
+		setStartDate,
+		goToStep,
+		onDelete,
+		methods,
+		currentStepIndex,
+		status,
+		setStatus,
+		ignoreLastStep,
+		setIgnoreLastStep,
+		resetForm,
+		onSave,
+		mutationUpsert,
+		mutationDelete,
+		dialogConfig,
+		setDialogConfig,
+		handleDialogAction,
+		defaultFormValues,
+		nextStep: () => handleStepChange("next"),
+		previousStep: () => handleStepChange("back"),
+		previousStepHasError: navigationStatus.prevError,
+		nextStepHasError: navigationStatus.nextError,
+	};
 };

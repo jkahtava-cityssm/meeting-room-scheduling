@@ -1,80 +1,98 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SheetFooter } from "@/components/ui/sheet";
-import {
-  SaveIcon,
-  CalendarPlus,
-  Loader2Icon,
-  PenBoxIcon,
-  CircleX,
-  ArrowLeftCircle,
-  ArrowRightCircle,
-  Trash2,
-} from "lucide-react";
+import { SaveIcon, CalendarPlus, Loader2Icon, PenBoxIcon, CircleX, ArrowLeftCircle, ArrowRightCircle, Trash2 } from "lucide-react";
 import { useVerifySessionRequirement, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 import { useSession } from "@/contexts/SessionProvider";
 import { useMultiStepForm } from "./multi-step-form-shell";
+import { cn } from "@/lib/utils";
 
 const PAGE_PERMISSIONS = {
-  UpdateEvent: {
-    type: "permission",
-    resource: "Event",
-    action: "Update",
-  },
-  CreateEvent: {
-    type: "permission",
-    resource: "Event",
-    action: "Create",
-  },
+	UpdateEvent: {
+		type: "permission",
+		resource: "Event",
+		action: "Update",
+	},
+	CreateEvent: {
+		type: "permission",
+		resource: "Event",
+		action: "Create",
+	},
 } as const satisfies GroupedPermissionRequirement;
 
 const FormFooter = ({ userId }: { userId?: string }) => {
-  const { session } = useSession();
-  const ctx = useMultiStepForm();
-  const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
+	const { session } = useSession();
+	const ctx = useMultiStepForm();
+	const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
-  const isSaveDisabled = ctx.status === "Edit" ? !permissions.UpdateEvent : !permissions.CreateEvent;
+	const isSaveDisabled = ctx.status === "Edit" ? !permissions.UpdateEvent : !permissions.CreateEvent;
+	const isDeleteDisabled = !permissions.UpdateEvent;
 
-  return (
-    <SheetFooter className="flex md:flex-row gap-6">
-      {ctx.status !== "Read" && (
-        <Button onClick={ctx.onSave} disabled={isSaveDisabled || ctx.mutationUpsert.isPending}>
-          {ctx.mutationUpsert.isPending ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
-          {ctx.status === "Edit" ? "Save" : "Create"}
-        </Button>
-      )}
+	return (
+		<SheetFooter className="flex md:flex-row gap-6">
+			{ctx.status !== "Read" && (
+				<Button
+					onClick={ctx.onSave}
+					disabled={isSaveDisabled || ctx.mutationUpsert.isPending}
+					className="md:w-24"
+				>
+					{ctx.mutationUpsert.isPending ? <Loader2Icon className="animate-spin" /> : ctx.status === "Edit" ? <SaveIcon /> : <CalendarPlus />}
+					{ctx.status === "Edit" ? "Save" : "Create"}
+				</Button>
+			)}
+			<Button
+				variant="outline"
+				className="md:w-24"
+				onClick={ctx.onClose}
+			>
+				<CircleX />
+				Cancel
+			</Button>
 
-      {ctx.status === "Read" && (
-        <Button onClick={() => ctx.setStatus("Loading")} disabled={!permissions.UpdateEvent}>
-          <PenBoxIcon /> Edit
-        </Button>
-      )}
+			{ctx.status === "Read" && (
+				<Button
+					onClick={() => ctx.setStatus("Loading")}
+					disabled={!permissions.UpdateEvent}
+					className="md:w-24"
+				>
+					<PenBoxIcon /> Edit
+				</Button>
+			)}
 
-      <div className="flex gap-4 grow justify-center">
-        <Button
-          variant={ctx.previousStepHasError ? "outline_destructive" : "outline"}
-          onClick={ctx.previousStep}
-          disabled={ctx.isFirstStep}
-        >
-          <ArrowLeftCircle /> Back
-        </Button>
-        <Button
-          variant={ctx.nextStepHasError ? "outline_destructive" : "outline"}
-          onClick={ctx.nextStep}
-          disabled={ctx.isLastStep}
-        >
-          Next <ArrowRightCircle />
-        </Button>
-      </div>
+			<div className="flex flex-row md:gap-6 md:grow md:justify-center">
+				<Button
+					variant={ctx.previousStepHasError ? "outline_destructive" : "outline"}
+					className="basis-[48%] mr-auto md:basis-24 md:mr-0"
+					onClick={ctx.previousStep}
+					disabled={ctx.isFirstStep}
+				>
+					<ArrowLeftCircle /> Back
+				</Button>
+				<Button
+					variant={ctx.nextStepHasError ? "outline_destructive" : "outline"}
+					className="basis-[48%] ml-auto md:basis-24 md:ml-0"
+					onClick={ctx.nextStep}
+					disabled={ctx.isLastStep}
+				>
+					Next <ArrowRightCircle />
+				</Button>
+			</div>
 
-      {ctx.status === "Edit" && (
-        <Button variant="destructive" onClick={() => ctx.onDelete()} disabled={ctx.mutationDelete.isPending}>
-          <Trash2 /> Delete
-        </Button>
-      )}
-    </SheetFooter>
-  );
+			<div className={cn("flex flex-row h-9 md:w-24", ctx.status !== "Edit" && "invisible")}>
+				<Button
+					variant="outline_destructive"
+					className={"grow md:w-24"}
+					onClick={ctx.onDelete}
+					disabled={isDeleteDisabled || ctx.mutationDelete.isPending}
+					tabIndex={ctx.status === "Edit" ? 0 : -1}
+				>
+					{ctx.mutationDelete.isPending ? <Loader2Icon className="animate-spin" /> : <Trash2 />}
+					Delete
+				</Button>
+			</div>
+		</SheetFooter>
+	);
 };
 export default FormFooter;
