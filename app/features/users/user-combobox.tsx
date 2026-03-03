@@ -6,11 +6,13 @@ export function UserComboBox({
   onUserChange,
   className,
   dataInvalid = false,
+  isDisabled = false,
 }: {
   selectedUserId: string | undefined;
   onUserChange: (id: string, label: string) => void;
   className?: string;
   dataInvalid?: boolean;
+  isDisabled: boolean;
 }) {
   const { isPending, data, error } = useUsersQuery();
 
@@ -27,7 +29,7 @@ export function UserComboBox({
       getId={(user) => user.userId.toString()}
       getLabel={(user) => user.name}
       className={className}
-      isDisabled={false}
+      isDisabled={isDisabled}
       placeholderText={"Select Member"}
       searchText={"Search Members"}
       noResultText={"No Member Found"}

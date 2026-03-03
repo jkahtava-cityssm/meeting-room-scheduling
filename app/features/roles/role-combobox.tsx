@@ -7,12 +7,14 @@ export function RoleComboBox({
   excludeRoleNames,
   className,
   dataInvalid = false,
+  isDisabled = false,
 }: {
   selectedRoleId: string | undefined;
   onRoleChange: (id: string, label: string) => void;
   excludeRoleNames?: string[];
   className?: string;
   dataInvalid?: boolean;
+  isDisabled: boolean;
 }) {
   const { isPending, data, error } = useRolesQuery();
 
@@ -31,7 +33,7 @@ export function RoleComboBox({
       getId={(role) => role.roleId.toString()}
       getLabel={(role) => role.name}
       className={className}
-      isDisabled={false}
+      isDisabled={isDisabled}
       placeholderText={"Select Role"}
       searchText={"Search Roles"}
       noResultText={"No Roles Found"}

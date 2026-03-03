@@ -9,11 +9,13 @@ export function RoleSelect({
   onRoleChange,
   excludeRoleNames,
   dataInvalid = false,
+  isDisabled = false,
 }: {
   selectedRoleId: string;
   onRoleChange: (value: string) => void;
   excludeRoleNames?: string[];
   dataInvalid?: boolean;
+  isDisabled?: boolean;
 }) {
   const { isPending, data, error } = useRolesQuery();
 
@@ -34,6 +36,7 @@ export function RoleSelect({
       getColor={(role) => "invisible" as TColors}
       getIcon={(role) => "" as IconName}
       dataInvalid={dataInvalid}
+      isDisabled={isDisabled}
       className="min-w-20"
     />
   );

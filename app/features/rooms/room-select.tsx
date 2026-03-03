@@ -8,11 +8,13 @@ export function RoomSelect({
   includeAllOption = true,
   onRoomChange,
   dataInvalid = false,
+  isDisabled = false,
 }: {
   selectedRoomId: string;
   includeAllOption: boolean;
   onRoomChange: (value: string) => void;
   dataInvalid?: boolean;
+  isDisabled?: boolean;
 }) {
   const { isPending, data, error } = useRoomsQuery(includeAllOption);
 
@@ -32,6 +34,7 @@ export function RoomSelect({
       getColor={(room) => room.color as TColors}
       getIcon={(room) => room.icon as IconName}
       dataInvalid={dataInvalid}
+      isDisabled={isDisabled}
       className="min-w-60"
     />
   );

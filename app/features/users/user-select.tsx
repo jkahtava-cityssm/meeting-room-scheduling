@@ -8,10 +8,12 @@ export function UserSelect({
   selectedUserId,
   onRoomChange,
   dataInvalid = false,
+  isDisabled = false,
 }: {
   selectedUserId: string;
   onRoomChange: (value: string) => void;
   dataInvalid?: boolean;
+  isDisabled?: boolean;
 }) {
   const { isPending, data, error } = useUsersQuery();
 
@@ -29,6 +31,7 @@ export function UserSelect({
       getId={(user) => user.userId.toString()}
       getLabel={(user) => user.name}
       dataInvalid={dataInvalid}
+      isDisabled={isDisabled}
       className="min-w-60"
     />
   );
