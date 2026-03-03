@@ -3,7 +3,7 @@ import { CombinedSchema, DurationType } from "../event-drawer-schema.validator";
 import { getValidMinuteAndRolledHour } from "./form-helper";
 import { getDurationText } from "@/lib/helpers";
 import { IEvent } from "@/lib/schemas/calendar";
-import { parseRRule } from "./rrule-utils";
+import { FlatRRuleSchema, parseRRule } from "./rrule-utils";
 
 export const getFormDefaults = (
   creationDate: Date = new Date(),
@@ -37,10 +37,10 @@ export const getFormDefaults = (
     // Initializing with a valid union discriminant to satisfy TypeScript
     repeatingType: "daily",
     dailyPattern: "daily", // Default to daily for the form
-    dayValue: "1",
+    dayValue: "",
 
     durationType: "" as DurationType,
-    occurrences: "1",
+    occurrences: "",
 
     // Optional fields for other union members
     monthlyPattern: "dayInMonth",
@@ -77,7 +77,7 @@ export const mapEventToSchema = (event: IEvent): CombinedSchema => {
   };
 
   // Default recurrence structure
-  const SRecurrenceDefaults = {
+  let SRecurrenceDefaults: FlatRRuleSchema = {
     rule: event.recurrence?.rule ?? "",
     ruleStartDate: event.recurrence?.startDate ?? event.startDate,
     ruleEndDate: event.recurrence?.endDate ?? event.endDate,
@@ -105,7 +105,7 @@ export const mapEventToSchema = (event: IEvent): CombinedSchema => {
   if (event.recurrence) {
     // This function should mutate SRecurrenceDefaults
     // or return a merged object with the correct repeatingType
-    parseRRule(event.recurrence.rule, SRecurrenceDefaults);
+    SRecurrenceDefaults = parseRRule(event.recurrence.rule, SRecurrenceDefaults);
   }
 
   return { ...SEventFormDefaults, ...SRecurrenceDefaults } as CombinedSchema;
