@@ -55,8 +55,10 @@ export const MultiStepForm = ({
 					description: "You have unsaved changes. Are you sure you want to close?",
 					confirmText: "Dismiss Form",
 					cancelText: "Continue Editing",
-					actionType: "dismiss",
-					showLeftButton: true,
+					confirmAction: "dismiss",
+					showConfirm: true,
+					showCancel: true,
+					showSave: true,
 				});
 			} else {
 				logic.resetForm();
@@ -109,23 +111,29 @@ export const MultiStepForm = ({
 					<FormFooter userId={userId}></FormFooter>
 				</SheetContent>
 			</Sheet>
-			{logic.dialogConfig && (
-				<>
-					<EventDialog
-						variant={logic.dialogConfig.variant}
-						isOpen={!!logic.dialogConfig}
-						onClose={() => logic.setDialogConfig(null)}
-						title={logic.dialogConfig.title}
-						description={logic.dialogConfig.description}
-						errors={logic.dialogConfig.errors}
-						onConfirm={() => logic.handleDialogAction(logic.dialogConfig!.actionType)}
-						confirmText={logic.dialogConfig.confirmText ?? "Confirm"}
-						cancelText={logic.dialogConfig.cancelText ?? "Cancel"}
-						showLeftButton={logic.dialogConfig.showLeftButton}
-						onLeftButtonClick={() => logic.handleDialogAction("save")}
-					/>
-				</>
-			)}
+			{logic.dialogConfig && (() => {
+				const dialogConfig = logic.dialogConfig;
+				return (
+					<>
+						<EventDialog
+							variant={dialogConfig.variant}
+							isOpen={!!dialogConfig}
+							onClose={() => logic.setDialogConfig(null)}
+							title={dialogConfig.title}
+							description={dialogConfig.description}
+							errors={dialogConfig.errors}
+							onConfirm={() => logic.handleDialogAction(dialogConfig.confirmAction)}
+							onCancel={() => logic.handleDialogAction(dialogConfig.cancelAction)}
+							onSave={() => logic.handleDialogAction(dialogConfig.saveAction)}
+							confirmText={dialogConfig.confirmText ?? "Confirm"}
+							cancelText={dialogConfig.cancelText ?? "Cancel"}
+							showSave={dialogConfig.showSave}
+							showConfirm={dialogConfig.showConfirm}
+							showCancel={dialogConfig.showCancel}
+						/>
+					</>
+				);
+			})()}
 
 			<UnsavedChangesDialog
 				showAlert={false}

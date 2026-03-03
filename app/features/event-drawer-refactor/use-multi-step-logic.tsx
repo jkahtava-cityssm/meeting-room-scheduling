@@ -7,7 +7,7 @@ import { CombinedEventSchema, CombinedSchema } from "./event-drawer-schema.valid
 import { usePublicConfiguration } from "@/lib/services/public";
 import { useEventQuery, useEventsMutationUpsert, useEventsMutationDelete, SEventPUT, IEventPUT } from "@/lib/services/events";
 import { isFormValid, isStepValid, updateRRuleIfNecessary } from "./lib/form-helper";
-import { FormStatus, FormStep, MultiStepFormContextProps } from "./types";
+import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
 import { IEvent } from "@/lib/schemas/calendar";
 import { getFormDefaults, mapEventToSchema } from "./lib/default-util";
 import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
@@ -70,7 +70,7 @@ export const useMultiStepFormLogic = (props: {
 				description: "You have a saved draft. Would you like to edit it?",
 				confirmText: "Restore Draft",
 				cancelText: "Start New",
-				actionType: "restore",
+				confirmAction: "restore",
 			});
 		}
 	}, [storedEvent, props.event, methods, props.isOpen]);
@@ -106,7 +106,8 @@ export const useMultiStepFormLogic = (props: {
 				description: "Errors have been identified, and they must be fixed before submission can occur",
 				confirmText: "Continue Editing",
 				errors: formState.errorList,
-				actionType: "none", // Errors usually just close the dialog
+				showConfirm: true,
+				confirmAction: "none",
 			});
 
 			return;
@@ -196,7 +197,7 @@ export const useMultiStepFormLogic = (props: {
 	);
 
 	const handleDialogAction = useCallback(
-		(actionType: "dismiss" | "save" | "none" | "restore") => {
+		(actionType: ButtonActions) => {
 			if (!dialogConfig) return;
 
 			if (actionType === "dismiss") {

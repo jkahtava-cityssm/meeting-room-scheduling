@@ -57,15 +57,19 @@ export interface MultiStepFormContextProps {
 		title: string;
 		description: string;
 		errors?: string[];
-		actionType: "dismiss" | "save" | "none" | "restore";
-		showCancelButton?: boolean;
-		showConfirmButton?: boolean;
-		showLeftButton?: boolean;
+		cancelAction?: ButtonActions;
+		confirmAction?: ButtonActions;
+		saveAction?: ButtonActions;
+		showCancel?: boolean;
+		showConfirm?: boolean;
+		showSave?: boolean;
 		confirmText?: string;
 		cancelText?: string;
 	} | null;
 	setDialogConfig: (config: MultiStepFormContextProps["dialogConfig"]) => void;
-	handleDialogAction: (value: "dismiss" | "save" | "none" | "restore") => void;
+	handleDialogAction: (value: ButtonActions) => void;
 }
+
+export type ButtonActions = "dismiss" | "save" | "none" | "restore" | undefined;
 
 export type FormStatus = "New" | "Read" | "Edit" | "Loading";
