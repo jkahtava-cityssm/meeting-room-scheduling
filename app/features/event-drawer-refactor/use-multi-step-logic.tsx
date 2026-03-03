@@ -23,7 +23,7 @@ export const useMultiStepFormLogic = (props: {
 }) => {
 	const { data: config } = usePublicConfiguration();
 	const storedEvent = useEventStore(state => state.event);
-	const { setEvent } = useEventStore();
+	const { setEvent, resetEvent } = useEventStore();
 	const mutationUpsert = useEventsMutationUpsert();
 	const mutationDelete = useEventsMutationDelete();
 
@@ -206,8 +206,10 @@ export const useMultiStepFormLogic = (props: {
 
 			if (actionType === "restore") {
 				if (storedEvent) {
-					methods.reset(storedEvent);
+					methods.reset(storedEvent, { keepDefaultValues: true });
 					setStartDate(storedEvent.isRecurring === "true" ? storedEvent.ruleStartDate : storedEvent.startDate);
+					resetEvent();
+
 					props.onOpen();
 				}
 			}
