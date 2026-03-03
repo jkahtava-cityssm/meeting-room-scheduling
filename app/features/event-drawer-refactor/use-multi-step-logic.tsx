@@ -56,7 +56,7 @@ export const useMultiStepFormLogic = (props: {
   const watchRuleStartDate = methods.watch("ruleStartDate");
 
   const isRecurring = watchIsRecurring === "true";
-  const startDate = isRecurring ? watchRuleStartDate : watchStartDate;
+  const startDate = isRecurring && status !== "Edit" ? watchRuleStartDate : watchStartDate;
   const ignoreLastStep = !isRecurring;
 
   const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
