@@ -2,8 +2,9 @@ import { startOfDay } from "date-fns";
 import { eventBadgeVariants, MonthEventBadge } from "@/app/features/calendar/view-month/calendar-month-event-badge";
 import { cn } from "@/lib/utils";
 import { IMonthDayView } from "../webworkers/generic-webworker";
-import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
+
 import { useCallback } from "react";
+import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 export function MonthViewDayEvents({
   dayRecord,

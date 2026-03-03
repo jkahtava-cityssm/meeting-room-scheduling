@@ -14,8 +14,9 @@ import { IMonthDayView } from "../webworkers/generic-webworker";
 import { Button } from "@/components/ui/button";
 import { navigateURL } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
-import { SharedEventDrawerProvider } from "../../event-drawer/shared-event-drawer-context";
+
 import { GenericError } from "../../../../components/shared/generic-error";
+import { SharedEventDrawerProvider } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MIN_INNER_HEIGHT = 96;
