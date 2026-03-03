@@ -1,5 +1,5 @@
 import { fetchGET, fetchPUT } from "@/lib/fetch";
-import { IRoom, SRoom, SRoomProperty, SRoomRoles } from "@/lib/schemas/calendar";
+import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from "@/lib/schemas/calendar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod/v4";
 
@@ -82,3 +82,20 @@ export const useRoomsMutationUpsert = () => {
     },
   });
 };
+
+export const useRoomCategoryQuery = (enabled: boolean = true) =>
+  useQuery({
+    queryKey: ["rooms-categories"],
+    queryFn: async () => {
+      const result = await fetchGET("/api/rooms/categories");
+
+      const parsedResult = z.array(SRoomCategory).safeParse(result.data);
+
+      if (!parsedResult.success) throw new Error("Invalid room category data");
+
+      return parsedResult.data;
+    },
+    enabled: enabled,
+    //staleTime: 0,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
