@@ -11,7 +11,7 @@ export const WEEKDAY_MAP: Record<number, string> = {
 export const RECURRENCE_TYPES = ["daily", "weekly", "monthly", "yearly", ""] as const;
 export const DURATION_TYPES = ["until", "forever", "count", ""] as const;
 
-type FlatSchema = z.infer<typeof BaseRecurrence> & {
+export type FlatRRuleSchema = z.infer<typeof BaseRecurrence> & {
   repeatingType?: string;
   dailyPattern?: string;
   dayValue?: string;
@@ -32,7 +32,7 @@ type FlatSchema = z.infer<typeof BaseRecurrence> & {
 
 import { RRule, rrulestr } from "rrule";
 import { differenceInYears, endOfDay, startOfDay } from "date-fns";
-import { BaseRecurrence, DurationType, Step2Schema } from "../event-drawer-schema.validator";
+import { BaseRecurrence, DurationType } from "../event-drawer-schema.validator";
 import z from "zod/v4";
 
 export function getDurationType(rrule: RRule): DurationType {
@@ -45,11 +45,11 @@ export function getDurationType(rrule: RRule): DurationType {
   return diff >= 200 ? "forever" : "until";
 }
 
-export function parseRRule(ruleString: string, defaults: Step2Schema): Step2Schema {
+export function parseRRule(ruleString: string, defaults: FlatRRuleSchema): FlatRRuleSchema {
   const rrule = rrulestr(ruleString);
 
   // 1. Generic values shared by all types
-  const result: FlatSchema = {
+  const result: FlatRRuleSchema = {
     ...defaults,
     rule: ruleString,
     durationType: getDurationType(rrule),
@@ -84,5 +84,5 @@ export function parseRRule(ruleString: string, defaults: Step2Schema): Step2Sche
     result.yearWeekdayValue = String(rrule.options.byweekday?.[0] || "");
   }
 
-  return result as Step2Schema;
+  return result as FlatRRuleSchema;
 }
