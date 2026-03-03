@@ -1,14 +1,10 @@
 import { cn } from "@/lib/utils";
 
-import { GridEventBlock } from "./calendar-scroll-private-event-block";
-import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from "react";
-import { useSharedEventDrawer } from "../../event-drawer/shared-event-drawer-context";
+import { useMemo } from "react";
 
 import { TIME_BLOCK_SIZE } from "@/lib/types";
-import { useCalendarViewport } from "./calendar-scroll-context";
-import { PublicEventBlock } from "./calendar-scroll-public-event-block";
+
 import { Skeleton } from "@/components/ui/skeleton";
-import { IEventBlock } from "../webworkers/generic-webworker";
 
 export function CalendarScrollColumnSkeleton({ hours, isLastColumn }: { hours: number[]; isLastColumn: boolean }) {
   const totalBlocks = 2;
