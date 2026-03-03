@@ -1,6 +1,7 @@
 import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
-import EventDrawer from "./room-drawer-parent";
+
 import { IEvent } from "@/lib/schemas/calendar";
+import EventDrawerRefactor from "./room-drawer-root";
 
 export type EventDrawerPayload = { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number };
 
@@ -9,7 +10,7 @@ const SharedDrawerContext = createContext<{
   openEventDrawer: (payload: EventDrawerPayload) => void;
 } | null>(null);
 
-export function SharedRoomDrawerProvider({ children }: { children: React.ReactNode }) {
+export function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   const [payload, setPayload] = useState<EventDrawerPayload | null>(null);
@@ -31,9 +32,9 @@ export function SharedRoomDrawerProvider({ children }: { children: React.ReactNo
       {children}
       {/* Offscreen trigger wrapped by the single EventDrawer instance */}
 
-      <EventDrawer {...payload}>
+      <EventDrawerRefactor {...payload}>
         <button ref={triggerRef} aria-hidden tabIndex={-1} onClick={(e) => e.stopPropagation()} />
-      </EventDrawer>
+      </EventDrawerRefactor>
     </SharedDrawerContext.Provider>
   );
 }

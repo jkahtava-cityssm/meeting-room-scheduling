@@ -1,14 +1,20 @@
 import { addYears } from "date-fns";
 import { ByWeekday, RRule } from "rrule";
-import { CombinedSchema } from "./room-drawer.validator";
 
-export function getRRuleData({
-  startDate,
-  fieldValues,
-}: {
-  startDate: string;
-  fieldValues: RRuleFieldValues;
-}): Promise<{
+import { CombinedSchema, FlatCombinedSchema, step1Schema, Step2Fields } from "../room-drawer-schema.validator";
+import z from "zod/v4";
+
+let lastOptionsString: string | null = null;
+let cachedResult: {
+  RRuleText: string;
+  ruleString?: string;
+  firstDate?: string;
+  lastDate?: string;
+  count?: number;
+  localDates?: Date[];
+} | null = null;
+
+export function getRRuleData({ startDate, values }: { startDate: string; values: RRuleFieldValues }): Promise<{
   RRuleText: string;
   ruleString?: string;
   firstDate?: string;
@@ -16,39 +22,50 @@ export function getRRuleData({
   count?: number;
   localDates?: Date[];
 }> {
-  const rule = createRRule(startDate, ...fieldValues);
+  const rule = createRRule(startDate, values);
   const RRuleText = rule ? rule.toText() : "Incomplete Recurrence Pattern";
   const RRuleOptions = rule?.options;
 
   if (!RRuleOptions) {
     return Promise.resolve({ RRuleText });
   }
+  const currentOptionsString = JSON.stringify(RRuleOptions);
+
+  if (currentOptionsString === lastOptionsString && cachedResult) {
+    return Promise.resolve(cachedResult);
+  }
 
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./rrule-preview-webworker.ts", import.meta.url));
 
     worker.onmessage = (
-      response: MessageEvent<{ rrule: RRule; count: number; firstDate: Date; lastDate: Date; localDates: Date[] }>,
+      response: MessageEvent<{
+        RRuleText: string;
+        ruleString: string;
+        count: number;
+        firstDate: string;
+        lastDate: string;
+        localDates: Date[];
+      }>,
     ) => {
       try {
-        const strippedObject = response.data.rrule;
-        const original = Object.getPrototypeOf(new RRule());
-        Object.setPrototypeOf(strippedObject, original);
+        //const strippedObject = response.data.rrule;
+        //const original = Object.getPrototypeOf(new RRule());
+        //Object.setPrototypeOf(strippedObject, original);
 
-        const ruleString = strippedObject.toString();
-        const firstDate = response.data.firstDate?.toISOString();
-        const lastDate = response.data.lastDate?.toISOString();
-        const count = response.data.count;
-        const localDates = response.data.localDates;
-
-        resolve({
+        const result = {
           RRuleText,
-          ruleString,
-          firstDate,
-          lastDate,
-          count,
-          localDates,
-        });
+          ruleString: response.data.ruleString,
+          firstDate: response.data.firstDate,
+          lastDate: response.data.lastDate,
+          count: response.data.count,
+          localDates: response.data.localDates,
+        };
+
+        lastOptionsString = currentOptionsString;
+        cachedResult = result;
+
+        resolve(result);
       } catch (err) {
         reject(err);
       } finally {
@@ -64,130 +81,48 @@ export function getRRuleData({
     worker.postMessage(RRuleOptions);
   });
 }
-/*
-export function getRRuleDataWithCallback({
-  startDate,
-  fieldValues,
-  onComplete,
-  onError,
-}: {
-  startDate: string;
-  fieldValues: RRuleFieldValues;
-  onComplete: (data: {
-    RRuleText: string;
-    ruleString?: string;
-    lastDate?: string;
-    count?: number;
-    localDates?: Date[];
-  }) => void;
-  onError?: (error: unknown) => void;
-}) {
-  const rule = createRRule(startDate, ...fieldValues);
-  const RRuleText = rule ? rule.toText() : "Incomplete Recurrence Pattern";
-  const RRuleOptions = rule?.options;
-
-  if (!RRuleOptions) {
-    onComplete({ RRuleText });
-    return;
-  }
-
-  const worker = new Worker(new URL("./rrule-preview-webworker.ts", import.meta.url));
-
-  worker.onmessage = (response: MessageEvent<{ rrule: RRule; count: number; lastDate: Date; localDates: Date[] }>) => {
-    try {
-      const strippedObject = response.data.rrule;
-      const original = Object.getPrototypeOf(new RRule());
-      Object.setPrototypeOf(strippedObject, original);
-
-      const ruleString = strippedObject.toString();
-      const lastDate = response.data.lastDate.toISOString();
-      const count = response.data.count;
-      const localDates = response.data.localDates;
-
-      onComplete({
-        RRuleText,
-        ruleString,
-        lastDate,
-        count,
-        localDates,
-      });
-    } catch (err) {
-      onError?.(err);
-    } finally {
-      worker.terminate();
-    }
-  };
-
-  worker.onerror = (err) => {
-    onError?.(err);
-    worker.terminate();
-  };
-
-  worker.postMessage(RRuleOptions);
-}*/
 
 function IsDateLessThenEqual(firstDate: Date, secondDate: Date | null) {
-  if (!secondDate) {
-    return true;
-  }
-  if (
-    firstDate.getFullYear() >= secondDate.getFullYear() &&
-    firstDate.getMonth() >= secondDate.getMonth() &&
-    firstDate.getDate() >= secondDate.getDate()
-  ) {
-    return true;
-  }
-  return false;
+  if (!secondDate) return true;
+
+  return firstDate.getTime() >= secondDate.getTime();
 }
 
-function createRRule(
-  ruleStartDate: string,
-  untilDate: string,
-  repeatingType: string,
-  weekdays: string[],
-  dailyPattern: string,
-  monthlyPattern: string,
-  yearlyPattern: string,
-  dayValue: string,
-  weekValue: string,
-  monthValue: string,
-  monthDayValue: string,
-  monthPeriodValue: string,
-  monthWeekdayValue: string,
-  yearValue: string,
-  yearDayValue: string,
-  yearMonthValue: string,
-  yearPeriodValue: string,
-  yearWeekdayValue: string,
-  occurrences: string,
-  durationType: string,
-) {
+function createRRule(startDate: string, values: RRuleFieldValues) {
+  const { repeatingType, dailyPattern, monthlyPattern, yearlyPattern, durationType, untilDate, occurrences } = values;
+
   const repeatingPattern = getRepeatingPatternValue(repeatingType, dailyPattern, monthlyPattern, yearlyPattern);
-  const weekdayArray = getWeekdayArray(repeatingPattern, weekdays, monthWeekdayValue, yearWeekdayValue);
+  const weekdayArray = getWeekdayArray(
+    repeatingPattern,
+    values.weekdays,
+    values.monthWeekdayValue,
+    values.yearWeekdayValue,
+  );
 
-  const dayInterval = parseNumber(dayValue);
-  const weekInterval = parseNumber(weekValue);
-  const monthInterval = parseNumber(monthValue);
-  const yearInterval = parseNumber(yearValue);
+  const dayInterval = parseNumber(values.dayValue);
+  const weekInterval = parseNumber(values.weekValue);
+  const monthInterval = parseNumber(values.monthValue);
+  const yearInterval = parseNumber(values.yearValue);
 
-  const monthByMonthDay = parseNumber(monthDayValue);
-  const monthBySetPos = parseNumber(monthPeriodValue);
+  const monthByMonthDay = parseNumber(values.monthDayValue);
+  const monthBySetPos = parseNumber(values.monthPeriodValue);
 
-  const yearByMonth = parseNumber(yearMonthValue);
-  const yearBySetPos = parseNumber(yearPeriodValue);
+  const yearByMonth = parseNumber(values.yearMonthValue);
+  const yearBySetPos = parseNumber(values.yearPeriodValue);
 
-  const yearByYearDay = parseNumber(yearDayValue);
+  const yearByYearDay = parseNumber(values.yearDayValue);
 
-  const parsedStartDate = new Date(ruleStartDate); // parse(ruleStartDate, "yyyy-MM-dd", new Date());
-  //const parsedEndDate = new Date(ruleEndDate); //parse(ruleEndDate, "yyyy-MM-dd", new Date(ruleEndDate));
+  const parsedStartDate = new Date(startDate);
 
-  const count = durationType === "forever" || durationType === "until" ? null : parseNumber(occurrences);
-  const convertedEndDate =
-    durationType === "forever"
-      ? addYears(parsedStartDate, 200) //convertDateToRRuleDate(addYears(parsedStartDate, 200))
-      : durationType === "count"
-        ? null
-        : new Date(untilDate); //convertDateToRRuleDate(parsedEndDate);
+  const count = durationType === "count" ? parseNumber(occurrences) : null;
+
+  let convertedEndDate = null;
+
+  if (durationType === "forever") {
+    convertedEndDate = addYears(parsedStartDate, 200);
+  } else if (durationType === "until") {
+    convertedEndDate = new Date(untilDate);
+  }
 
   if (
     (durationType === "count" && count === 0) ||
@@ -361,27 +296,27 @@ function getWeekdayArray(
   return weekdayArray;
 }
 
-export type RRuleFieldValues = [
-  string, // untilDate
-  string, // repeatingType
-  string[], // weekdays
-  string, // dailyPattern
-  string, // monthlyPattern
-  string, // yearlyPattern
-  string, // dayValue
-  string, // weekValue
-  string, // monthValue
-  string, // monthDayValue
-  string, // monthPeriodValue
-  string, // monthWeekdayValue
-  string, // yearValue
-  string, // yearDayValue
-  string, // yearMonthValue
-  string, // yearPeriodValue
-  string, // yearWeekdayValue
-  string, // occurrences
-  string, // durationType
-];
+export type RRuleFieldValues = {
+  untilDate: string;
+  repeatingType: string;
+  weekdays: string[];
+  dailyPattern: string;
+  monthlyPattern: string;
+  yearlyPattern: string;
+  dayValue: string;
+  weekValue: string;
+  monthValue: string;
+  monthDayValue: string;
+  monthPeriodValue: string;
+  monthWeekdayValue: string;
+  yearValue: string;
+  yearDayValue: string;
+  yearMonthValue: string;
+  yearPeriodValue: string;
+  yearWeekdayValue: string;
+  occurrences: string;
+  durationType: string;
+};
 
 export function getFieldValuesArray(formValues: CombinedSchema): RRuleFieldValues {
   const fieldNames = [
@@ -404,7 +339,19 @@ export function getFieldValuesArray(formValues: CombinedSchema): RRuleFieldValue
     "yearWeekdayValue",
     "occurrences",
     "durationType",
-  ];
+  ] as const;
 
-  return fieldNames.map((key) => formValues[key as keyof CombinedSchema]) as RRuleFieldValues;
+  const result = {} as Record<(typeof fieldNames)[number], string | string[]>;
+
+  const flatValues = formValues as FlatCombinedSchema;
+
+  fieldNames.forEach((key) => {
+    const value = flatValues[key as keyof CombinedSchema];
+    if (key === "weekdays") {
+      result[key] = Array.isArray(value) ? value : [];
+    } else {
+      result[key] = typeof value === "string" ? value : "";
+    }
+  });
+  return result as RRuleFieldValues;
 }

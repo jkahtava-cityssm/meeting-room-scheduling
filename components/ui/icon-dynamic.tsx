@@ -1,7 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { cva } from "class-variance-authority";
 import { sharedIconBackgrounVariants, sharedIconColorVariants } from "../../lib/theme/colorVariants";
 import { TColors } from "@/lib/types";
@@ -9,8 +8,12 @@ import { cn } from "@/lib/utils";
 import { BadgeColored } from "./badge-colored";
 import { Skeleton } from "./skeleton";
 
-import * as Icons from "lucide-react";
-export type IconName = keyof typeof Icons;
+//import type { LucideIcon } from "lucide-react";
+//import * as Icons from "lucide-react";
+export type IconName = keyof typeof dynamicIconImports;
+
+import dynamic from "next/dynamic";
+import dynamicIconImports from "lucide-react/dynamicIconImports";
 
 const IconColors = cva("", {
   variants: {
@@ -31,7 +34,7 @@ const BackgroundColors = cva("", {
 });
 
 interface DynamicIconProps extends React.SVGProps<SVGSVGElement> {
-  name: IconName;
+  name: keyof typeof dynamicIconImports;
   color?: TColors;
   showBorder?: boolean;
   hideBackground?: boolean;
@@ -41,11 +44,24 @@ const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ..
   const iconClasses = IconColors({ color: color });
   const backgroundClasses = BackgroundColors({ background: hideBackground ? "invisible" : color });
 
-  const Icon = Icons[name as keyof typeof Icons] as LucideIcon;
+  const Icon = useMemo(
+    () =>
+      dynamic(dynamicIconImports[name], {
+        loading: () => (
+          <svg
+            {...props}
+            className={cn("animate-pulse bg-muted rounded-md shrink-0", props.className)}
+            width={props.width || 24}
+            height={props.height || 24}
+          />
+        ),
+        ssr: false,
+      }),
+    [name, props],
+  );
 
   if (!Icon) return null;
 
-  //<Skeleton className="min-w-6 min-h-6" />
   return hideBackground ? (
     <Icon {...props} className={cn(iconClasses, props.className)} />
   ) : (

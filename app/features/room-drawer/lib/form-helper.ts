@@ -1,24 +1,26 @@
 import { UseFormReturn } from "react-hook-form";
-import { CombinedSchema } from "./room-drawer.validator";
-import { FormStep } from "./types";
+import { CombinedSchema } from "../room-drawer-schema.validator";
+import { FormStep } from "../types";
 import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
 
 export const isStepValid = async (
   formStep: FormStep,
   methods: UseFormReturn<CombinedSchema>,
 ): Promise<{ status: boolean; errorList: string[] }> => {
-  const formValues = getFormValues(formStep, methods);
+  const formValues = methods.getValues();
 
   if (formStep.validationSchema) {
     const validationResult = formStep.validationSchema.safeParse(formValues);
     const errorList: string[] = [];
+
     if (!validationResult.success) {
       validationResult.error.issues.forEach((err) => {
         methods.setError(err.path.join(".") as keyof CombinedSchema, {
           type: "manual",
           message: err.message,
         });
-        if (err.message !== "Invalid input") errorList.push(err.message);
+
+        errorList.push(err.message);
       });
       return { status: false, errorList: errorList };
     }
@@ -33,48 +35,48 @@ export const isFormValid = async (
   skipSteps: number[] = [],
 ): Promise<{ status: boolean; errorList: string[] }> => {
   let isValid = true;
-  let errorList: string[] = [];
+  const totalErrorList = new Set<string>(); // Use a Set to auto-deduplicate
+
   for (let step = 0; step < formSteps.length; step++) {
-    if (skipSteps.includes(step)) {
-      continue;
-    }
+    if (skipSteps.includes(step)) continue;
 
     const stepValid = await isStepValid(formSteps[step], methods);
     if (!stepValid.status) {
       isValid = false;
-      errorList = [...errorList, ...stepValid.errorList];
+      stepValid.errorList.forEach((msg) => totalErrorList.add(msg));
     }
   }
-  return { status: isValid, errorList: errorList };
+
+  return { status: isValid, errorList: Array.from(totalErrorList) };
 };
 
-export const getFormValues = <T>(formStep: FormStep, methods: UseFormReturn<CombinedSchema>): T => {
-  const currentStepValues = methods.getValues(formStep.fields as (keyof CombinedSchema)[]);
-  const formValues = Object.fromEntries(formStep.fields.map((field, index) => [field, currentStepValues[index] || ""]));
-
-  return formValues as T;
-};
-
-export const updateRRuleIfNecessary = async (allData: CombinedSchema): Promise<CombinedSchema | null> => {
-  const needsRRuleUpdate = allData.isRecurring === "true" && allData.startDate !== allData.ruleStartDate;
+export const reconcileRecurringEventDates = async (formData: CombinedSchema): Promise<CombinedSchema | null> => {
+  const needsRRuleUpdate = formData.isRecurring === "true" && formData.startDate !== formData.ruleStartDate;
 
   if (!needsRRuleUpdate) {
-    return allData;
+    return formData;
   }
 
   const rruleData = await getRRuleData({
-    startDate: allData.startDate,
-    fieldValues: getFieldValuesArray(allData),
+    startDate: formData.startDate,
+    values: getFieldValuesArray(formData),
   });
 
   if (!rruleData.ruleString || !rruleData.lastDate || !rruleData.firstDate) {
     return null;
   }
 
+  const tempStartDate = new Date(rruleData.firstDate);
+  const tempEndDate = new Date(formData.endDate);
+  tempEndDate.setUTCFullYear(tempStartDate.getUTCFullYear());
+  tempEndDate.setUTCMonth(tempStartDate.getUTCMonth());
+  tempEndDate.setUTCDate(tempStartDate.getUTCDate());
+
   return {
-    ...allData,
+    ...formData,
     //The event StartDate should always match the first recurrence
-    startDate: rruleData.firstDate !== allData.startDate ? rruleData.firstDate : allData.startDate,
+    startDate: rruleData.firstDate,
+    endDate: tempEndDate.toISOString(),
     rule: rruleData.ruleString,
     ruleEndDate: rruleData.lastDate,
     ruleStartDate: rruleData.firstDate,

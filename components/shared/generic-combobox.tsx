@@ -24,8 +24,8 @@ type DataSelectProps<T> = {
   onSelect: (id: string, label: string) => void;
   getId: (item: T) => string;
   getLabel: (item: T) => string;
-  //getColor?: (item: T) => TColors;
-  // getIcon?: (item: T) => IconName;
+  getColor?: (item: T) => TColors;
+  getIcon?: (item: T) => IconName;
   className?: string;
 };
 
@@ -43,6 +43,8 @@ export function GenericComboBox<T>({
   onSelect,
   getId,
   getLabel,
+  getColor,
+  getIcon,
   className,
 }: DataSelectProps<T>) {
   const selectedItem = list?.find((item) => getId(item) === selectedValue);

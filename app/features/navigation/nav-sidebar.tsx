@@ -120,15 +120,15 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <SideBarGroup title="Application">
-          <SideBarPrimaryMenuItem title={"Availability"} iconName={"NotebookPen"} url={"/availability"} />
-          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"Send"} url={"/bookings/user-view"} />
+          <SideBarPrimaryMenuItem title={"Availability"} iconName={"notebook-pen"} url={"/availability"} />
+          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"send"} url={"/bookings/user-view"} />
           {hasCalendarAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="Calendar">
+            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="calendar">
               {viewStaffRequests && (
                 <SideBarSubMenuItem
-                  title={"Staff Requests"}
+                  title={"Requests"}
                   url={"/bookings/user-requests"}
-                  iconName="CircleQuestionMark"
+                  iconName="circle-question-mark"
                   rightIndicator={
                     <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
                   }
@@ -138,41 +138,41 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SideBarSubMenuItem
                   title={"Agenda View"}
                   url={"/calendar" + navigateURL(dateValue, "agenda")}
-                  iconName="CalendarRange"
+                  iconName="calendar-range"
                 />
               )}
               {viewDay && (
                 <SideBarSubMenuItem
                   title={"Day View"}
                   url={"/calendar" + navigateURL(dateValue, "day")}
-                  iconName="List"
+                  iconName="list"
                 />
               )}
               {viewWeek && (
                 <SideBarSubMenuItem
                   title={"Week View"}
                   url={"/calendar" + navigateURL(dateValue, "week")}
-                  iconName="Columns"
+                  iconName="columns"
                 />
               )}
               {viewMonth && (
                 <SideBarSubMenuItem
                   title={"Month View"}
                   url={"/calendar" + navigateURL(dateValue, "month")}
-                  iconName="Grid2x2"
+                  iconName="grid-2x2"
                 />
               )}
               {viewYear && (
                 <SideBarSubMenuItem
                   title={"Year View"}
                   url={"/calendar" + navigateURL(dateValue, "year")}
-                  iconName="Grid3x3"
+                  iconName="grid-3x3"
                 />
               )}
             </SideBarCollapsibleGroup>
           )}
           {hasSettingsAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="Settings2">
+            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
               {editRooms && <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />}
               {editPermissions && (
                 <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
@@ -187,7 +187,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SideBarGroup title="">
-          <SideBarPrimaryMenuItem title={"Support"} iconName={"LifeBuoy"} url={"#"} />
+          <SideBarPrimaryMenuItem title={"Support"} iconName={"life-buoy"} url={"#"} />
         </SideBarGroup>
       </SidebarFooter>
     </Sidebar>
