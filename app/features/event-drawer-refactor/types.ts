@@ -70,6 +70,6 @@ export interface MultiStepFormContextProps {
 	handleDialogAction: (value: ButtonActions) => void;
 }
 
-export type ButtonActions = "dismiss" | "save" | "none" | "restore" | undefined;
+export type ButtonActions = "dismiss" | "save" | "none" | "restore" | "startNew" | undefined;
 
 export type FormStatus = "New" | "Read" | "Edit" | "Loading";

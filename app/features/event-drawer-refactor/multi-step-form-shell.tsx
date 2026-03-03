@@ -19,6 +19,7 @@ import { ConfirmErrorDialog } from "./dialog-confirm-prompt";
 import { useMultiStepFormLogic } from "./use-multi-step-logic";
 import { useSession } from "@/contexts/SessionProvider";
 import { EventDialog } from "./components/dialog";
+import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -40,11 +41,28 @@ export const MultiStepForm = ({
 	const [showAlert, setShowAlert] = useState(false);
 	const originRef = useRef<HTMLElement | null>(null);
 
-	const logic = useMultiStepFormLogic({ event, creationDate, userId, formSteps, onClose, isOpen });
+	const logic = useMultiStepFormLogic({ event, creationDate, userId, formSteps, onClose, isOpen, onOpen });
 
 	const handleOpenChange = (open: boolean) => {
 		if (open) {
 			originRef.current = document.activeElement as HTMLElement;
+
+			const storedEvent = useEventStore.getState().event;
+			if (storedEvent && !event) {
+				logic.setDialogConfig({
+					variant: "info",
+					title: "Draft Found",
+					description: "You have a saved draft. Would you like to edit it?",
+					confirmText: "Restore Draft",
+					cancelText: "Start New",
+					confirmAction: "restore",
+					cancelAction: "startNew",
+					showCancel: true,
+					showConfirm: true,
+				});
+				return;
+			}
+
 			logic.resetForm();
 			onOpen();
 		} else {
@@ -56,6 +74,8 @@ export const MultiStepForm = ({
 					confirmText: "Dismiss Form",
 					cancelText: "Continue Editing",
 					confirmAction: "dismiss",
+					saveAction: "save",
+					cancelAction: "none",
 					showConfirm: true,
 					showCancel: true,
 					showSave: true,
@@ -111,29 +131,30 @@ export const MultiStepForm = ({
 					<FormFooter userId={userId}></FormFooter>
 				</SheetContent>
 			</Sheet>
-			{logic.dialogConfig && (() => {
-				const dialogConfig = logic.dialogConfig;
-				return (
-					<>
-						<EventDialog
-							variant={dialogConfig.variant}
-							isOpen={!!dialogConfig}
-							onClose={() => logic.setDialogConfig(null)}
-							title={dialogConfig.title}
-							description={dialogConfig.description}
-							errors={dialogConfig.errors}
-							onConfirm={() => logic.handleDialogAction(dialogConfig.confirmAction)}
-							onCancel={() => logic.handleDialogAction(dialogConfig.cancelAction)}
-							onSave={() => logic.handleDialogAction(dialogConfig.saveAction)}
-							confirmText={dialogConfig.confirmText ?? "Confirm"}
-							cancelText={dialogConfig.cancelText ?? "Cancel"}
-							showSave={dialogConfig.showSave}
-							showConfirm={dialogConfig.showConfirm}
-							showCancel={dialogConfig.showCancel}
-						/>
-					</>
-				);
-			})()}
+			{logic.dialogConfig &&
+				(() => {
+					const dialogConfig = logic.dialogConfig;
+					return (
+						<>
+							<EventDialog
+								variant={dialogConfig.variant}
+								isOpen={!!dialogConfig}
+								onClose={() => logic.setDialogConfig(null)}
+								title={dialogConfig.title}
+								description={dialogConfig.description}
+								errors={dialogConfig.errors}
+								onConfirm={() => logic.handleDialogAction(dialogConfig.confirmAction)}
+								onCancel={() => logic.handleDialogAction(dialogConfig.cancelAction)}
+								onSave={() => logic.handleDialogAction(dialogConfig.saveAction)}
+								confirmText={dialogConfig.confirmText ?? "Confirm"}
+								cancelText={dialogConfig.cancelText ?? "Cancel"}
+								showSave={dialogConfig.showSave}
+								showConfirm={dialogConfig.showConfirm}
+								showCancel={dialogConfig.showCancel}
+							/>
+						</>
+					);
+				})()}
 
 			<UnsavedChangesDialog
 				showAlert={false}

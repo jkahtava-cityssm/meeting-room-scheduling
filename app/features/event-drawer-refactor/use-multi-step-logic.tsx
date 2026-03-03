@@ -18,6 +18,7 @@ export const useMultiStepFormLogic = (props: {
 	userId?: string;
 	formSteps: FormStep[];
 	onClose: () => void;
+	onOpen: () => void;
 	isOpen: boolean;
 }) => {
 	const { data: config } = usePublicConfiguration();
@@ -57,23 +58,6 @@ export const useMultiStepFormLogic = (props: {
 
 	// 3. Data Fetching Sync
 	const { data: collectedEvent, isFetching } = useEventQuery(Number(defaultFormValues.eventId), status === "Loading");
-
-	useEffect(() => {
-		// Only prompt if:
-		// - There is a stored event
-		// - We aren't editing a specific existing event (props.event)
-		// - We haven't already loaded data into the form
-		if (props.isOpen && storedEvent && !props.event && methods.getValues().eventId === "0") {
-			setDialogConfig({
-				variant: "info",
-				title: "Draft Found",
-				description: "You have a saved draft. Would you like to edit it?",
-				confirmText: "Restore Draft",
-				cancelText: "Start New",
-				confirmAction: "restore",
-			});
-		}
-	}, [storedEvent, props.event, methods, props.isOpen]);
 
 	useEffect(() => {
 		if (status === "Loading" && collectedEvent && !isFetching) {
@@ -224,9 +208,14 @@ export const useMultiStepFormLogic = (props: {
 				if (storedEvent) {
 					methods.reset(storedEvent);
 					setStartDate(storedEvent.isRecurring === "true" ? storedEvent.ruleStartDate : storedEvent.startDate);
+					props.onOpen();
 				}
 			}
 
+			if (actionType === "startNew") {
+				resetForm();
+				props.onOpen();
+			}
 			setDialogConfig(null); // Close dialog
 		},
 		[dialogConfig, defaultFormValues.eventId, resetForm, props, mutationDelete, setEvent, methods, storedEvent],

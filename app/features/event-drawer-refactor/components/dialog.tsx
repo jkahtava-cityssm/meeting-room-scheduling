@@ -118,7 +118,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
 						</AlertDialogSave>
 					)}
 
-					{showCancel && <AlertDialogCancel onClick={onConfirm}>{confirmText}</AlertDialogCancel>}
+					{showCancel && <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>}
 					{showConfirm && (
 						<AlertDialogAction
 							onClick={onConfirm}
