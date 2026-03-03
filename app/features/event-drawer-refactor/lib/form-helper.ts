@@ -50,26 +50,33 @@ export const isFormValid = async (
   return { status: isValid, errorList: Array.from(totalErrorList) };
 };
 
-export const updateRRuleIfNecessary = async (allData: CombinedSchema): Promise<CombinedSchema | null> => {
-  const needsRRuleUpdate = allData.isRecurring === "true" && allData.startDate !== allData.ruleStartDate;
+export const reconcileRecurringEventDates = async (formData: CombinedSchema): Promise<CombinedSchema | null> => {
+  const needsRRuleUpdate = formData.isRecurring === "true" && formData.startDate !== formData.ruleStartDate;
 
   if (!needsRRuleUpdate) {
-    return allData;
+    return formData;
   }
 
   const rruleData = await getRRuleData({
-    startDate: allData.startDate,
-    values: getFieldValuesArray(allData),
+    startDate: formData.startDate,
+    values: getFieldValuesArray(formData),
   });
 
   if (!rruleData.ruleString || !rruleData.lastDate || !rruleData.firstDate) {
     return null;
   }
 
+  const tempStartDate = new Date(rruleData.firstDate);
+  const tempEndDate = new Date(formData.endDate);
+  tempEndDate.setUTCFullYear(tempStartDate.getUTCFullYear());
+  tempEndDate.setUTCMonth(tempStartDate.getUTCMonth());
+  tempEndDate.setUTCDate(tempStartDate.getUTCDate());
+
   return {
-    ...allData,
+    ...formData,
     //The event StartDate should always match the first recurrence
-    startDate: rruleData.firstDate !== allData.startDate ? rruleData.firstDate : allData.startDate,
+    startDate: rruleData.firstDate,
+    endDate: tempEndDate.toISOString(),
     rule: rruleData.ruleString,
     ruleEndDate: rruleData.lastDate,
     ruleStartDate: rruleData.firstDate,
