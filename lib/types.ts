@@ -1,6 +1,6 @@
 export type TCalendarView = "day" | "week" | "month" | "year" | "agenda" | "all" | "public";
 export type TStatusKey = "PENDING" | "APPROVED" | "REJECTED" | "INFORMATION";
-export const colorOptions = [
+export const COLOR_OPTIONS = [
   "red",
   "rose",
   "razzmatazz",
@@ -37,7 +37,7 @@ export const colorOptions = [
   "invisible",
 ] as const;
 
-export type TColors = (typeof colorOptions)[number];
+export type TColors = (typeof COLOR_OPTIONS)[number];
 
 export type TWorkingHours = { [key: number]: { from: number; to: number } };
 export type TVisibleHours = { from: number; to: number };

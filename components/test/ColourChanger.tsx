@@ -1,6 +1,6 @@
 "use client";
 
-import { colorOptions, TColors } from "@/lib/types";
+import { COLOR_OPTIONS, TColors } from "@/lib/types";
 import { useState } from "react";
 import { Button } from "../ui/button";
 
@@ -13,11 +13,11 @@ export const ColorCycler = () => {
 
   const handleClick = (direction: "next" | "back") => {
     const offset = direction === "next" ? 1 : -1;
-    const nextIndex = (index + offset + colorOptions.length) % colorOptions.length;
+    const nextIndex = (index + offset + COLOR_OPTIONS.length) % COLOR_OPTIONS.length;
     setIndex(nextIndex);
   };
 
-  const currentColor: TColors = colorOptions[index];
+  const currentColor: TColors = COLOR_OPTIONS[index];
 
   return (
     <div className="mb-4 flex flex-col gap-4">
@@ -29,7 +29,7 @@ export const ColorCycler = () => {
         <Button onClick={() => handleClick("back")}>Previous Color</Button>
       </div>
       <div className="grid grid-cols-12 gap-1">
-        {colorOptions.map((color) => {
+        {COLOR_OPTIONS.map((color) => {
           const EventCardClasses = PublicEventCard({ color });
           return (
             <Tooltip key={color}>
@@ -45,7 +45,7 @@ export const ColorCycler = () => {
       </div>
       <div>
         <div className="grid grid-cols-6 gap-1">
-          {colorOptions.map((color) => {
+          {COLOR_OPTIONS.map((color) => {
             return (
               <Tooltip key={color}>
                 <TooltipTrigger asChild>

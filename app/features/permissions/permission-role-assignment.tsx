@@ -112,7 +112,7 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
     return data ? getDistinctValuesByKey(data, "department") : [];
   }, [data]);
 
-  const debouncedFilters = useDebounce(filters, 500);
+  const { debouncedValue: debouncedFilters } = useDebounce(filters, 500);
 
   const filteredEmployee = useMemo(() => {
     if (!data) return [];
