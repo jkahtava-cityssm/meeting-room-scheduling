@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { BadgeColored } from "./badge-colored";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { DynamicIcon as LucideDynamicIcon } from "lucide-react/dynamic";
+import { Bug } from "lucide-react";
 
 export type IconName = keyof typeof dynamicIconImports;
 
@@ -38,6 +39,8 @@ interface DynamicIconProps extends React.SVGProps<SVGSVGElement> {
 
 const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ...props }: DynamicIconProps) => {
   const iconClasses = IconColors({ color: color });
+
+  if (!Object.hasOwn(dynamicIconImports, name)) return <Bug />;
 
   const iconElement = (
     <LucideDynamicIcon
