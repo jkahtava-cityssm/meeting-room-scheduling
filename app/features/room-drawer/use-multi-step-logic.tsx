@@ -4,207 +4,166 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
 import { CombinedEventSchema, CombinedSchema } from "./room-drawer-schema.validator";
 
-import { usePublicConfiguration } from "@/lib/services/public";
-import {
-  useEventQuery,
-  useEventsMutationUpsert,
-  useEventsMutationDelete,
-  SEventPUT,
-  IEventPUT,
-} from "@/lib/services/events";
-import { isFormValid, isStepValid, reconcileRecurringEventDates } from "./lib/form-helper";
+import { useEventQuery, useEventsMutationUpsert, useEventsMutationDelete } from "@/lib/services/events";
+import { isFormValid, isStepValid } from "./lib/form-helper";
 import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
-import { IEvent, IRoom } from "@/lib/schemas/calendar";
-import { getFormDefaults, mapEventToSchema } from "./lib/default-util";
-import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
-import { useStepNavigation } from "./use-step-navigation";
+import { IRoom } from "@/lib/schemas/calendar";
+import { getFormDefaults, mapRoomToSchema } from "./lib/default-util";
+import { useStepNavigation } from "../event-drawer-refactor/use-step-navigation";
+import { IRoomPUT, SRoomPUT, useRoomQuery, useRoomsMutationDelete, useRoomsMutationUpsert } from "@/lib/services/rooms";
 
 export const useRoomFormLogic = (props: {
-  room?: IRoom;
-  creationDate?: Date;
-  formSteps: FormStep[];
-  onClose: () => void;
-  onOpen: () => void;
-  isOpen: boolean;
+	room?: IRoom;
+	creationDate?: Date;
+	formSteps: FormStep[];
+	onClose: () => void;
+	onOpen: () => void;
+	isOpen: boolean;
 }) => {
-  const { data: config } = usePublicConfiguration();
-  const { event: storedEvent, setEvent, resetEvent } = useEventStore();
+	const mutationUpsert = useRoomsMutationUpsert();
+	const mutationDelete = useRoomsMutationDelete();
 
-  const mutationUpsert = useEventsMutationUpsert();
-  const mutationDelete = useEventsMutationDelete();
+	// 1. Resolve Initial Values
+	const defaultFormValues = useMemo(() => {
+		if (props.room) return mapRoomToSchema(props.room);
+		return getFormDefaults();
+	}, [props.room]);
 
-  // 1. Resolve Initial Values
-  const defaultFormValues = useMemo(() => {
-    if (props.room) return mapEventToSchema(props.room);
-    if (props.creationDate) return getFormDefaults(props.creationDate, props.userId, config?.interval);
+	// 2. Form & Navigation State
+	const methods = useForm<CombinedSchema>({
+		resolver: zodResolver(CombinedEventSchema),
+		defaultValues: defaultFormValues,
+		mode: "onChange",
+	});
 
-    return getFormDefaults(undefined, props.userId, config?.interval);
-  }, [props.event, props.creationDate, props.userId, config]);
+	const [status, setStatus] = useState<FormStatus>(defaultFormValues.roomId === "0" ? "New" : "Read");
 
-  // 2. Form & Navigation State
-  const methods = useForm<CombinedSchema>({
-    resolver: zodResolver(CombinedEventSchema),
-    defaultValues: defaultFormValues,
-    mode: "onChange",
-  });
+	const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
 
-  const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
+	// 3. Data Fetching Sync
+	const { data: collectedEvent, isFetching } = useRoomQuery(Number(defaultFormValues.roomId), status === "Loading");
 
-  const watchIsRecurring = methods.watch("isRecurring");
-  const watchStartDate = methods.watch("startDate");
-  const watchRuleStartDate = methods.watch("ruleStartDate");
+	const validateStep = async (index: number) => {
+		const result = await isStepValid(props.formSteps[index], methods);
+		return result.status;
+	};
 
-  const isRecurring = watchIsRecurring === "true";
-  const startDate = isRecurring && status !== "Edit" ? watchRuleStartDate : watchStartDate;
-  const ignoreLastStep = !isRecurring;
+	const { currentStepIndex, navigationStatus, nextStep, previousStep, resetNavigation, goToStep } = useStepNavigation(
+		props.formSteps.length,
+		validateStep,
+	);
 
-  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
+	useEffect(() => {
+		methods.reset(defaultFormValues);
+		setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
+	}, [defaultFormValues, methods]);
 
-  // 3. Data Fetching Sync
-  const { data: collectedEvent, isFetching } = useEventQuery(Number(defaultFormValues.eventId), status === "Loading");
+	useEffect(() => {
+		if (status === "Loading" && collectedEvent && !isFetching) {
+			const parsedData = mapRoomToSchema(collectedEvent);
+			methods.reset(parsedData);
 
-  const validateStep = async (index: number) => {
-    const result = await isStepValid(props.formSteps[index], methods);
-    return result.status;
-  };
+			setTimeout(() => setStatus("Edit"), 100);
+		}
+		if (status === "Loading" && !isFetching && !collectedEvent) {
+			setStatus("Read");
+		}
+	}, [status, collectedEvent, isFetching, methods]);
 
-  const { currentStepIndex, navigationStatus, nextStep, previousStep, resetNavigation, goToStep } = useStepNavigation(
-    props.formSteps.length,
-    validateStep,
-  );
+	// 4. Handlers
+	const resetForm = useCallback(() => {
+		methods.reset(defaultFormValues);
 
-  useEffect(() => {
-    methods.reset(defaultFormValues);
-    setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
-  }, [defaultFormValues, methods]);
+		setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
 
-  useEffect(() => {
-    if (status === "Loading" && collectedEvent && !isFetching) {
-      const parsedData = mapEventToSchema(collectedEvent);
-      methods.reset(parsedData);
+		resetNavigation();
+	}, [methods, defaultFormValues, resetNavigation]);
 
-      setTimeout(() => setStatus("Edit"), 100);
-    }
-    if (status === "Loading" && !isFetching && !collectedEvent) {
-      setStatus("Read");
-    }
-  }, [status, collectedEvent, isFetching, methods]);
+	const onSave = async () => {
+		const formData = methods.getValues();
 
-  // 4. Handlers
-  const resetForm = useCallback(() => {
-    methods.reset(defaultFormValues);
+		const formState = await isFormValid(props.formSteps, methods);
 
-    setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+		if (!formState.status) {
+			setDialogConfig({
+				variant: "info",
+				title: "Submission Incomplete",
+				description: "Errors have been identified, and they must be fixed before submission can occur",
+				confirmText: "Continue Editing",
+				errors: formState.errorList,
+				showConfirm: true,
+				confirmAction: "none",
+			});
 
-    resetNavigation();
-  }, [methods, defaultFormValues, resetNavigation]);
+			return;
+		}
 
-  const onSave = async () => {
-    const formData = methods.getValues();
-    const isRecurring = formData.isRecurring === "true";
-    const validationStepsToSkip = isRecurring ? [] : [1];
-    const formState = await isFormValid(props.formSteps, methods, validationStepsToSkip);
+		const apiPayload: z.input<IRoomPUT> = {
+			...formData,
+		};
 
-    if (!formState.status) {
-      setDialogConfig({
-        variant: "info",
-        title: "Submission Incomplete",
-        description: "Errors have been identified, and they must be fixed before submission can occur",
-        confirmText: "Continue Editing",
-        errors: formState.errorList,
-        showConfirm: true,
-        confirmAction: "none",
-      });
+		mutationUpsert.mutate(SRoomPUT.parse(apiPayload), {
+			onSuccess: () => {
+				resetForm();
+				props.onClose();
+			},
+		});
+	};
 
-      return;
-    }
+	const onDelete = useCallback(() => {
+		// If eventId is "0", it only exists in local state/draft
+		if (defaultFormValues.roomId === "0") {
+			resetForm();
+			props.onClose();
+		} else {
+			// If it exists on the server, call the mutation
+			mutationDelete.mutate(Number(defaultFormValues.roomId), {
+				onSuccess: () => {
+					resetForm();
+					props.onClose();
+				},
+			});
+		}
+	}, [defaultFormValues.roomId, mutationDelete, resetForm, props]);
 
-    const updatedData = await reconcileRecurringEventDates(formData);
-    if (!updatedData) return;
+	const handleDialogAction = useCallback(
+		(actionType: ButtonActions) => {
+			if (!dialogConfig || !actionType) return;
 
-    const apiPayload: z.input<IEventPUT> = {
-      ...updatedData,
-      eventId: updatedData.eventId ? Number(updatedData.eventId) : undefined,
-      roomId: Number(updatedData.roomId),
-      userId: updatedData.userId ? Number(updatedData.userId) : null,
-      statusId: Number(updatedData.statusId),
-      rule: isRecurring ? updatedData.rule : undefined,
-    };
+			const actions: Record<Exclude<ButtonActions, undefined>, () => void> = {
+				dismiss: onDelete,
 
-    mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
-      onSuccess: () => {
-        resetForm();
-        props.onClose();
-      },
-    });
-  };
+				startNew: () => {
+					resetForm();
+					props.onClose();
+				},
+				none: () => {},
+			};
 
-  const onDelete = useCallback(() => {
-    // If eventId is "0", it only exists in local state/draft
-    if (defaultFormValues.eventId === "0") {
-      resetForm();
-      props.onClose();
-    } else {
-      // If it exists on the server, call the mutation
-      mutationDelete.mutate(Number(defaultFormValues.eventId), {
-        onSuccess: () => {
-          resetForm();
-          props.onClose();
-        },
-      });
-    }
-  }, [defaultFormValues.eventId, mutationDelete, resetForm, props]);
+			actions[actionType]?.();
+			setDialogConfig(null); // Close dialog
+		},
+		[dialogConfig, onDelete, props, resetForm],
+	);
 
-  const handleDialogAction = useCallback(
-    (actionType: ButtonActions) => {
-      if (!dialogConfig || !actionType) return;
-
-      const actions: Record<Exclude<ButtonActions, undefined>, () => void> = {
-        dismiss: onDelete,
-        save: () => {
-          setEvent(methods.getValues());
-          props.onClose();
-        },
-        restore: () => {
-          if (storedEvent) {
-            methods.reset(storedEvent, { keepDefaultValues: true });
-            resetEvent();
-            props.onOpen();
-          }
-        },
-        startNew: () => {
-          resetForm();
-          props.onClose();
-        },
-        none: () => {},
-      };
-
-      actions[actionType]?.();
-      setDialogConfig(null); // Close dialog
-    },
-    [dialogConfig, onDelete, setEvent, methods, props, storedEvent, resetEvent, resetForm],
-  );
-
-  return {
-    startDate,
-    goToStep,
-    onDelete,
-    methods,
-    currentStepIndex,
-    status,
-    setStatus,
-    ignoreLastStep,
-    resetForm,
-    onSave,
-    mutationUpsert,
-    mutationDelete,
-    dialogConfig,
-    setDialogConfig,
-    handleDialogAction,
-    defaultFormValues,
-    nextStep,
-    previousStep,
-    previousStepHasError: navigationStatus.prevError,
-    nextStepHasError: navigationStatus.nextError,
-  };
+	return {
+		goToStep,
+		onDelete,
+		methods,
+		currentStepIndex,
+		status,
+		setStatus,
+		resetForm,
+		onSave,
+		mutationUpsert,
+		mutationDelete,
+		dialogConfig,
+		setDialogConfig,
+		handleDialogAction,
+		defaultFormValues,
+		nextStep,
+		previousStep,
+		previousStepHasError: navigationStatus.prevError,
+		nextStepHasError: navigationStatus.nextError,
+	};
 };

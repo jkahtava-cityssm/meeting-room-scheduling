@@ -24,147 +24,134 @@ import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
 export const RoomMultiStepForm = ({
-  formSteps,
-  creationDate,
-  room,
-  children,
+	formSteps,
+	creationDate,
+	room,
+	children,
 }: {
-  formSteps: FormStep[];
-  creationDate?: Date;
-  room?: IRoom;
-  children: React.ReactNode;
+	formSteps: FormStep[];
+	creationDate?: Date;
+	room?: IRoom;
+	children: React.ReactNode;
 }) => {
-  const { session } = useSession();
-  const { isOpen, onClose, onOpen } = useDisclosure();
-  const [showAlert, setShowAlert] = useState(false);
-  const originRef = useRef<HTMLElement | null>(null);
+	const { session } = useSession();
+	const { isOpen, onClose, onOpen } = useDisclosure();
+	const [showAlert, setShowAlert] = useState(false);
+	const originRef = useRef<HTMLElement | null>(null);
 
-  const logic = useRoomFormLogic({ room, creationDate, userId, formSteps, onClose, isOpen, onOpen });
+	const logic = useRoomFormLogic({ room, creationDate, formSteps, onClose, isOpen, onOpen });
 
-  const handleOpenChange = (open: boolean) => {
-    if (open) {
-      originRef.current = document.activeElement as HTMLElement;
+	const handleOpenChange = (open: boolean) => {
+		if (open) {
+			originRef.current = document.activeElement as HTMLElement;
 
-      const storedEvent = useEventStore.getState().event;
-      if (storedEvent && !event) {
-        logic.setDialogConfig({
-          variant: "info",
-          title: "Draft Found",
-          description: "You have a saved draft. Would you like to edit it?",
-          confirmText: "Restore Draft",
-          cancelText: "Start New",
-          confirmAction: "restore",
-          cancelAction: "startNew",
-          showCancel: true,
-          showConfirm: true,
-        });
-        return;
-      }
+			logic.resetForm();
+			onOpen();
+		} else {
+			if (logic.methods.formState.isDirty && logic.status !== "Read") {
+				logic.setDialogConfig({
+					variant: "warning",
+					title: "Unsaved Changes",
+					description: "You have unsaved changes. Are you sure you want to close?",
+					confirmText: "Dismiss Form",
+					cancelText: "Continue Editing",
+					confirmAction: "dismiss",
+					saveAction: "save",
+					cancelAction: "none",
+					showConfirm: true,
+					showCancel: true,
+					showSave: false,
+				});
+			} else {
+				logic.resetForm();
+				onClose();
+			}
+		}
+	};
 
-      logic.resetForm();
-      onOpen();
-    } else {
-      if (logic.methods.formState.isDirty && logic.status !== "Read") {
-        logic.setDialogConfig({
-          variant: "warning",
-          title: "Unsaved Changes",
-          description: "You have unsaved changes. Are you sure you want to close?",
-          confirmText: "Dismiss Form",
-          cancelText: "Continue Editing",
-          confirmAction: "dismiss",
-          saveAction: "save",
-          cancelAction: "none",
-          showConfirm: true,
-          showCancel: true,
-          showSave: event ? false : true,
-        });
-      } else {
-        logic.resetForm();
-        onClose();
-      }
-    }
-  };
+	const contextValue = {
+		...logic,
+		steps: formSteps,
+		currentStep: formSteps[logic.currentStepIndex],
+		isFirstStep: logic.currentStepIndex === 0,
+		isLastStep: logic.currentStepIndex === formSteps.length - 1 || logic.ignoreLastStep,
+		onClose: () => handleOpenChange(false),
+	};
 
-  const contextValue = {
-    ...logic,
-    steps: formSteps,
-    currentStep: formSteps[logic.currentStepIndex],
-    isFirstStep: logic.currentStepIndex === 0,
-    isLastStep: logic.currentStepIndex === formSteps.length - 1 || logic.ignoreLastStep,
-    onClose: () => handleOpenChange(false),
-  };
+	return (
+		<MultiStepFormContext.Provider value={contextValue}>
+			<Sheet
+				open={isOpen}
+				onOpenChange={handleOpenChange}
+			>
+				<SheetTrigger asChild>{children}</SheetTrigger>
 
-  return (
-    <MultiStepFormContext.Provider value={contextValue}>
-      <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-        <SheetTrigger asChild>{children}</SheetTrigger>
+				<SheetContent
+					onCloseAutoFocus={e => {
+						if (originRef.current) {
+							e.preventDefault();
+							originRef.current.focus();
+						}
+					}}
+					className="w-full md:w-4xl p-4"
+				>
+					<SheetHeader>
+						<SheetTitle>{contextValue.currentStep.title}</SheetTitle>
+						<SheetDescription>
+							This form will add an event/appointment to the calendar for the given room and assign it to an individual.
+						</SheetDescription>
+					</SheetHeader>
 
-        <SheetContent
-          onCloseAutoFocus={(e) => {
-            if (originRef.current) {
-              e.preventDefault();
-              originRef.current.focus();
-            }
-          }}
-          className="w-full md:w-4xl p-4"
-        >
-          <SheetHeader>
-            <SheetTitle>{contextValue.currentStep.title}</SheetTitle>
-            <SheetDescription>
-              This form will add an event/appointment to the calendar for the given room and assign it to an individual.
-            </SheetDescription>
-          </SheetHeader>
+					<FormProvider {...logic.methods}>
+						<Form>
+							<contextValue.currentStep.component
+								formStatus={contextValue.status}
+								session={session}
+							></contextValue.currentStep.component>
+						</Form>
+					</FormProvider>
+					<FormFooter userId={userId}></FormFooter>
+				</SheetContent>
+			</Sheet>
+			{logic.dialogConfig &&
+				(() => {
+					const dialogConfig = logic.dialogConfig;
+					return (
+						<>
+							<EventDialog
+								variant={dialogConfig.variant}
+								isOpen={!!dialogConfig}
+								onClose={() => logic.setDialogConfig(null)}
+								title={dialogConfig.title}
+								description={dialogConfig.description}
+								errors={dialogConfig.errors}
+								onConfirm={() => logic.handleDialogAction(dialogConfig.confirmAction)}
+								onCancel={() => logic.handleDialogAction(dialogConfig.cancelAction)}
+								onSave={() => logic.handleDialogAction(dialogConfig.saveAction)}
+								confirmText={dialogConfig.confirmText ?? "Confirm"}
+								cancelText={dialogConfig.cancelText ?? "Cancel"}
+								showSave={dialogConfig.showSave}
+								showConfirm={dialogConfig.showConfirm}
+								showCancel={dialogConfig.showCancel}
+							/>
+						</>
+					);
+				})()}
 
-          <FormProvider {...logic.methods}>
-            <Form>
-              <contextValue.currentStep.component
-                formStatus={contextValue.status}
-                session={session}
-              ></contextValue.currentStep.component>
-            </Form>
-          </FormProvider>
-          <FormFooter userId={userId}></FormFooter>
-        </SheetContent>
-      </Sheet>
-      {logic.dialogConfig &&
-        (() => {
-          const dialogConfig = logic.dialogConfig;
-          return (
-            <>
-              <EventDialog
-                variant={dialogConfig.variant}
-                isOpen={!!dialogConfig}
-                onClose={() => logic.setDialogConfig(null)}
-                title={dialogConfig.title}
-                description={dialogConfig.description}
-                errors={dialogConfig.errors}
-                onConfirm={() => logic.handleDialogAction(dialogConfig.confirmAction)}
-                onCancel={() => logic.handleDialogAction(dialogConfig.cancelAction)}
-                onSave={() => logic.handleDialogAction(dialogConfig.saveAction)}
-                confirmText={dialogConfig.confirmText ?? "Confirm"}
-                cancelText={dialogConfig.cancelText ?? "Cancel"}
-                showSave={dialogConfig.showSave}
-                showConfirm={dialogConfig.showConfirm}
-                showCancel={dialogConfig.showCancel}
-              />
-            </>
-          );
-        })()}
-
-      <UnsavedChangesDialog
-        showAlert={false}
-        setShowAlert={setShowAlert}
-        onClose={onClose}
-        {...logic}
-      ></UnsavedChangesDialog>
-    </MultiStepFormContext.Provider>
-  );
+			<UnsavedChangesDialog
+				showAlert={false}
+				setShowAlert={setShowAlert}
+				onClose={onClose}
+				{...logic}
+			></UnsavedChangesDialog>
+		</MultiStepFormContext.Provider>
+	);
 };
 
 export const useMultiStepForm = () => {
-  const context = useContext(MultiStepFormContext);
-  if (!context) {
-    throw new Error("useMultiStepForm must be used within MultiStepForm.Provider");
-  }
-  return context;
+	const context = useContext(MultiStepFormContext);
+	if (!context) {
+		throw new Error("useMultiStepForm must be used within MultiStepForm.Provider");
+	}
+	return context;
 };
