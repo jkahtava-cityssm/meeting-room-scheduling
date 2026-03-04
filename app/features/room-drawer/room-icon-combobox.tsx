@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useDeferredValue, useEffect } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import React, { useState, useMemo, useDeferredValue, useEffect, useRef } from "react";
 import { icons } from "lucide-react";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import type { LucideIcon, LucideProps } from "lucide-react";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import DynamicIcon from "@/components/ui/icon-dynamic";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type RoomIconComboBoxProps = {
   selectedValue: string | undefined;
@@ -47,7 +49,7 @@ function pascalToKebab(name: string) {
       // 4) digit -> Uppercase letter (start of new word)
       //    e.g., 2Plus -> 2-Plus (but won't touch 3d or 2x2 because 'd'/'x' are lowercase)
       .replace(/(\d)([A-Z])/g, "$1-$2")
-      // 5) done
+
       .toLowerCase()
   );
 }
@@ -73,18 +75,17 @@ function useIconData() {
       .filter(Boolean) as IconItem[];
 
     if (process.env.NODE_ENV !== "production" && failures.length) {
-      // eslint-disable-next-line no-console
       console.warn(`Unmatched Lucide icons (${failures.length})`, failures);
     }
-
-    // O(1) selection lookup
     const byId = new Map<string, IconItem>(items.map((it) => [it.id, it]));
-
-    // Nice to have: stable alphabetical order
     items.sort((a, b) => a.id.localeCompare(b.id));
 
     return { items, byId };
   }, []);
+}
+
+function chunkArray<T>(array: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) => array.slice(i * size, i * size + size));
 }
 
 //Might want to look at precomputed JSON for the list of icon names
@@ -100,25 +101,29 @@ export function RoomIconComboBox({
   const [open, setOpen] = useState(false);
 
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
 
   const { items: allIcons, byId } = useIconData();
   const selectedRecord = selectedValue ? byId.get(selectedValue) : undefined;
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 500); // 350ms delay
+  const { debouncedValue, isPending } = useDebounce(query, 500);
 
-    return () => clearTimeout(handler); // Cancel if user types again before 350ms
-  }, [query]);
+  const parentRef = useRef(null);
 
   const filtered = useMemo(() => {
-    const q = debouncedQuery.trim().toLowerCase();
+    const q = debouncedValue.trim().toLowerCase();
     if (!q) return allIcons;
 
     return allIcons.filter((it) => it.name.toLowerCase().includes(q));
-  }, [allIcons, debouncedQuery]);
+  }, [allIcons, debouncedValue]);
+
+  const rows = useMemo(() => chunkArray(filtered, 3), [filtered]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 76, // Height of one row (p-2 + size-8 icon + text)
+    overscan: 5, // Pre-render rows outside of view for smoother scrolling
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
@@ -143,9 +148,9 @@ export function RoomIconComboBox({
       </PopoverTrigger>
 
       <PopoverContent className="w-[300px] p-0" align="start">
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput placeholder="Search icons..." className="h-9" value={query} onValueChange={setQuery} />
-          <CommandList className="max-h-[350px]">
+          <CommandList ref={parentRef} className="max-h-[350px]">
             <CommandEmpty>No icon found.</CommandEmpty>
             <CommandGroup>
               <div className="grid grid-cols-3 gap-0.5 p-1">
