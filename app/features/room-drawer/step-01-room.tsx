@@ -17,21 +17,21 @@ import { StatusSelect } from "../status/status-select";
 
 import { RoomCategorySelect } from "../rooms/room-category-select";
 
-import { colorOptions } from "@/lib/types";
+import { COLOR_OPTIONS, TColors } from "@/lib/types";
 
 import { RoomIconComboBox } from "./room-icon-combobox";
 import { RoleMultiSelect } from "../roles/role-multiselect";
 import { RoomPropertyMultiSelect } from "../rooms/room-property-multiselect";
+import { RoomColorSelect } from "./room-color-select";
+import { BadgeColored } from "@/components/ui/badge-colored";
+import { method } from "lodash";
 
 export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
 
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
 
-  const colorList = colorOptions.map((color) => {
-    return { value: color, label: color };
-  });
-  //const iconList = //IconName.map((color) => {return {value: color, label: color}})
+  const currentColor = watch("color");
 
   return (
     <ScrollArea type="always">
@@ -60,11 +60,32 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
               </FormItem>
             )}
           />
+
+          <FormField
+            control={control}
+            name="roomCategoryId"
+            render={({ field, fieldState }) => (
+              <FormItem className="col-span-1 row-2">
+                {fieldState.invalid ? (
+                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+                ) : (
+                  <FormLabel htmlFor={undefined}>Categories</FormLabel>
+                )}
+                <RoomCategorySelect
+                  selectedUserId={field.value}
+                  onCategoryChange={(value: string) => field.onChange(value)}
+                  dataInvalid={fieldState.invalid}
+                  isDisabled={isReadOnly}
+                  className="min-w-0 w-full"
+                ></RoomCategorySelect>
+              </FormItem>
+            )}
+          />
           <FormField
             control={control}
             name="publicFacing"
             render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 xs:justify-items-center">
+              <FormItem className="row-2 col-span-1 xs:justify-items-center">
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
@@ -92,26 +113,6 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
                     </TabsList>
                   </Tabs>
                 </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="roomCategoryId"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-2">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-                ) : (
-                  <FormLabel htmlFor={undefined}>Categories</FormLabel>
-                )}
-                <RoomCategorySelect
-                  selectedUserId={field.value}
-                  onCategoryChange={(value: string) => field.onChange(value)}
-                  dataInvalid={fieldState.invalid}
-                  isDisabled={isReadOnly}
-                  className="min-w-0 w-full"
-                ></RoomCategorySelect>
               </FormItem>
             )}
           />
@@ -183,10 +184,10 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
                   <FormLabel>Color</FormLabel>
                 )}
 
-                <StatusSelect
-                  selectedStatusId={field.value}
+                <RoomColorSelect
+                  selectedColorId={field.value}
                   includeAllOption={false}
-                  onStatusChange={field.onChange}
+                  onColorChange={field.onChange}
                   isDisabled={isReadOnly}
                   dataInvalid={fieldState.invalid}
                   className="min-w-0 w-full"
@@ -194,6 +195,11 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
               </FormItem>
             )}
           />
+          {currentColor && (
+            <div className="row-start-2 row-span-2 col-start-3">
+              <BadgeColored className="w-full h-full" color={currentColor as TColors} />
+            </div>
+          )}
         </div>
 
         <div className="grid col-span-2 gap-2 grid-rows-3"></div>

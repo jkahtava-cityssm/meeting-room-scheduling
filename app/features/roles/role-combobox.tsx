@@ -14,7 +14,7 @@ export function RoleComboBox({
   excludeRoleNames?: string[];
   className?: string;
   dataInvalid?: boolean;
-  isDisabled: boolean;
+  isDisabled?: boolean;
 }) {
   const { isPending, data, error } = useRolesQuery();
 
