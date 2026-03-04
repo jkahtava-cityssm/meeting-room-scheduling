@@ -49,8 +49,6 @@ export interface MultiStepFormContextProps {
     isPending: boolean;
   };
 
-  startDate: string;
-
   dialogConfig: {
     variant: "warning" | "error" | "info";
     title: string;
@@ -69,6 +67,6 @@ export interface MultiStepFormContextProps {
   handleDialogAction: (value: ButtonActions) => void;
 }
 
-export type ButtonActions = "dismiss" | "save" | "none" | "restore" | "startNew" | undefined;
+export type ButtonActions = "dismiss" | "none" | undefined;
 
 export type FormStatus = "New" | "Read" | "Edit" | "Loading";

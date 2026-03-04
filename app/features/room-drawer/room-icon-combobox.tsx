@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import * as Icons from "lucide-react";
-import { LucideProps } from "lucide-react";
+import React, { useState, useMemo, useDeferredValue, useEffect } from "react";
+import { icons } from "lucide-react";
+import dynamicIconImports from "lucide-react/dynamicIconImports";
+import type { LucideIcon, LucideProps } from "lucide-react";
 
 import { Check, ChevronDownIcon, CircleX, Loader2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,22 +13,8 @@ import { sharedIconColorVariants } from "@/lib/theme/colorVariants";
 import { cva } from "class-variance-authority";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "cmdk";
-
-// 1. Icon Color Logic (Matching your existing theme system)
-const IconColors = cva("", {
-  variants: {
-    color: sharedIconColorVariants,
-  },
-  defaultVariants: {
-    color: "invisible",
-  },
-});
-
-// 2. Filter the icons once outside the component to avoid re-calculating
-const ALL_ICONS = Object.keys(Icons)
-  .filter((key) => /^[A-Z]/.test(key) && key !== "createLucideIcon")
-  .map((name) => ({ id: name, name }));
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import DynamicIcon from "@/components/ui/icon-dynamic";
 
 type RoomIconComboBoxProps = {
   selectedValue: string | undefined;
@@ -39,10 +26,72 @@ type RoomIconComboBoxProps = {
   placeholderText?: string;
 };
 
+type IconName = keyof typeof icons;
+type IconValue = keyof typeof dynamicIconImports;
+
+type IconItem = {
+  id: IconValue;
+  name: IconName;
+  Component: LucideIcon;
+};
+
+function pascalToKebab(name: string) {
+  return (
+    name
+      .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+      // 2) acronym -> Capital+lower (HTMLParser -> HTML-Parser)
+      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1-$2")
+      // 3) letter -> numeric chunk (optionally 'x' groups) as a single token
+      //    e.g., Grid2x2 -> Grid-2x2, ArrowDown01 -> ArrowDown-01
+      .replace(/([A-Za-z])(\d+(?:x\d+)*)/g, "$1-$2")
+      // 4) digit -> Uppercase letter (start of new word)
+      //    e.g., 2Plus -> 2-Plus (but won't touch 3d or 2x2 because 'd'/'x' are lowercase)
+      .replace(/(\d)([A-Z])/g, "$1-$2")
+      // 5) done
+      .toLowerCase()
+  );
+}
+
+function useIconData() {
+  return useMemo(() => {
+    const dynamicSet = new Set(Object.keys(dynamicIconImports) as IconValue[]);
+    const failures: string[] = [];
+
+    const items: IconItem[] = (Object.keys(icons) as IconName[])
+      .map((pascal) => {
+        const kebab = pascalToKebab(pascal);
+        if (!dynamicSet.has(kebab as IconValue)) {
+          failures.push(`${pascal} → ${kebab}`);
+          return null;
+        }
+        return {
+          id: kebab as IconValue,
+          name: pascal,
+          Component: icons[pascal],
+        };
+      })
+      .filter(Boolean) as IconItem[];
+
+    if (process.env.NODE_ENV !== "production" && failures.length) {
+      // eslint-disable-next-line no-console
+      console.warn(`Unmatched Lucide icons (${failures.length})`, failures);
+    }
+
+    // O(1) selection lookup
+    const byId = new Map<string, IconItem>(items.map((it) => [it.id, it]));
+
+    // Nice to have: stable alphabetical order
+    items.sort((a, b) => a.id.localeCompare(b.id));
+
+    return { items, byId };
+  }, []);
+}
+
+//Might want to look at precomputed JSON for the list of icon names
+
 export function RoomIconComboBox({
   selectedValue,
   onSelect,
-  color = "invisible",
   isDisabled = false,
   dataInvalid = false,
   className,
@@ -50,9 +99,26 @@ export function RoomIconComboBox({
 }: RoomIconComboBoxProps) {
   const [open, setOpen] = useState(false);
 
-  // Find selected icon component
-  const SelectedIcon = selectedValue ? (Icons[selectedValue as keyof typeof Icons] as React.FC<LucideProps>) : null;
-  const iconColorClass = IconColors({ color });
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  const { items: allIcons, byId } = useIconData();
+  const selectedRecord = selectedValue ? byId.get(selectedValue) : undefined;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 500); // 350ms delay
+
+    return () => clearTimeout(handler); // Cancel if user types again before 350ms
+  }, [query]);
+
+  const filtered = useMemo(() => {
+    const q = debouncedQuery.trim().toLowerCase();
+    if (!q) return allIcons;
+
+    return allIcons.filter((it) => it.name.toLowerCase().includes(q));
+  }, [allIcons, debouncedQuery]);
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
@@ -69,51 +135,63 @@ export function RoomIconComboBox({
           )}
         >
           <div className="flex items-center gap-2 truncate">
-            {SelectedIcon && <SelectedIcon className={cn("h-4 w-4 shrink-0", iconColorClass)} />}
-            <span className="truncate">{selectedValue || placeholderText}</span>
+            {selectedRecord && <DynamicIcon name={selectedRecord.id} className={cn("h-4 w-4 shrink-0")} />}
+            <span className="truncate">{selectedRecord?.name || placeholderText}</span>
           </div>
           <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
 
       <PopoverContent className="w-[300px] p-0" align="start">
-        <Icons.Command>
-          <CommandInput placeholder="Search 1,400+ icons..." className="h-9" />
+        <Command>
+          <CommandInput placeholder="Search icons..." className="h-9" value={query} onValueChange={setQuery} />
           <CommandList className="max-h-[350px]">
             <CommandEmpty>No icon found.</CommandEmpty>
             <CommandGroup>
-              {/* Note: We render icons directly here. 
-                  React.createElement is used because we are mapping strings to components.
-              */}
-              <div className="grid grid-cols-4 gap-0.5 p-1">
-                {ALL_ICONS.map((icon) => {
-                  const IconComponent = Icons[icon.id as keyof typeof Icons] as React.FC<LucideProps>;
-                  const isSelected = selectedValue === icon.id;
-
+              <div className="grid grid-cols-3 gap-0.5 p-1">
+                {filtered?.map((icon) => {
                   return (
-                    <CommandItem
-                      key={icon.id}
-                      value={icon.name}
-                      onSelect={() => {
-                        onSelect(icon.id, icon.name);
-                        setOpen(false);
-                      }}
-                      className={cn(
-                        "flex flex-col items-center justify-center gap-1.5 p-2 rounded-md cursor-pointer",
-                        "hover:bg-accent hover:text-accent-foreground",
-                        isSelected && "bg-accent text-accent-foreground ring-1 ring-ring",
-                      )}
-                    >
-                      <IconComponent className={cn("h-5 w-5", isSelected ? iconColorClass : "text-muted-foreground")} />
-                      <span className="text-[10px] w-full truncate text-center leading-none">{icon.name}</span>
-                    </CommandItem>
+                    <IconItem key={icon.id} icon={icon} isSelected={selectedValue === icon.id} onSelect={onSelect} />
                   );
                 })}
               </div>
             </CommandGroup>
           </CommandList>
-        </Icons.Command>
+        </Command>
       </PopoverContent>
     </Popover>
   );
 }
+
+const IconItem = React.memo(
+  ({
+    icon,
+    isSelected,
+    onSelect,
+  }: {
+    icon: IconItem;
+    isSelected: boolean;
+    onSelect: (id: string, label: string) => void;
+  }) => {
+    const { Component } = icon;
+
+    return (
+      <CommandItem
+        key={icon.id}
+        value={icon.name}
+        onSelect={() => onSelect(icon.id, icon.name)}
+        className={cn(
+          "flex flex-col items-center justify-center gap-1.5 p-2 rounded-md cursor-pointer",
+          "hover:bg-accent hover:text-accent-foreground",
+          isSelected && "bg-accent text-accent-foreground ring-1 ring-ring",
+          "",
+        )}
+      >
+        <Component className={cn("size-8", isSelected && "text-muted-foreground")} />
+        <span className="text-[10px] w-full truncate text-center leading-none">{icon.name}</span>
+      </CommandItem>
+    );
+  },
+);
+
+IconItem.displayName = "IconItem";

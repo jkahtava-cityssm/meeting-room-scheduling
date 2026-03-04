@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "radix-ui"],
   },
+  transpilePackages: ["lucide-react"],
   devIndicators: {
     position: "top-right", // Moves the development indicator to the top-right
     // Set to false to hide the indicator entirely:

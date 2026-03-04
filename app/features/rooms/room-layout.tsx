@@ -38,6 +38,7 @@ import { TColors } from "@/lib/types";
 import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SharedRoomDrawerProvider, useSharedRoomDrawer } from "../room-drawer/shared-room-drawer-context";
 
 type SortColumn = "icon" | "publicFacing" | "color" | "roomCategory" | "name";
 
@@ -45,6 +46,8 @@ type SortDirection = "desc" | "asc" | null;
 
 export default function RoomLayout() {
   const { data, isPending, error } = useRoomsQuery();
+
+  const { openRoomDrawer } = useSharedRoomDrawer();
 
   const [sort, setSort] = useState<{ key: SortColumn | null; dir: SortDirection }>({
     key: null,
@@ -258,7 +261,7 @@ export default function RoomLayout() {
                       </div>
                       <div className="flex justify-center py-2">
                         <div className="flex items-center gap-2">
-                          <Button variant={"outline"}>
+                          <Button variant={"outline"} onClick={() => openRoomDrawer({ room: room })}>
                             <Pencil />
                             Edit
                           </Button>

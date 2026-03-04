@@ -10,12 +10,14 @@ export function StatusSelect({
   includeAllOption = true,
   isDisabled = false,
   dataInvalid = false,
+  className = "min-w-60",
   onStatusChange,
 }: {
   selectedStatusId: string;
   includeAllOption: boolean;
   isDisabled?: boolean;
   dataInvalid?: boolean;
+  className?: string;
   onStatusChange: (value: string) => void;
 }) {
   const { isPending, data, error } = useStatusQuery(includeAllOption);
@@ -36,7 +38,7 @@ export function StatusSelect({
       getColor={(status) => status.color as TColors}
       getIcon={(status) => status.icon as IconName}
       dataInvalid={dataInvalid}
-      className="min-w-60"
+      className={className}
     />
   );
 }

@@ -32,7 +32,7 @@ interface EventDialogProps {
   showConfirm?: boolean;
 }
 
-export const EventDialog: React.FC<EventDialogProps> = ({
+export const DrawerDialog: React.FC<EventDialogProps> = ({
   variant,
   isOpen,
   onClose,

@@ -6,14 +6,10 @@ import { sharedIconBackgrounVariants, sharedIconColorVariants } from "../../lib/
 import { TColors } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BadgeColored } from "./badge-colored";
-import { Skeleton } from "./skeleton";
-
-//import type { LucideIcon } from "lucide-react";
-//import * as Icons from "lucide-react";
-export type IconName = keyof typeof dynamicIconImports;
-
-import dynamic from "next/dynamic";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { DynamicIcon as LucideDynamicIcon } from "lucide-react/dynamic";
+
+export type IconName = keyof typeof dynamicIconImports;
 
 const IconColors = cva("", {
   variants: {
@@ -42,31 +38,29 @@ interface DynamicIconProps extends React.SVGProps<SVGSVGElement> {
 
 const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ...props }: DynamicIconProps) => {
   const iconClasses = IconColors({ color: color });
-  const backgroundClasses = BackgroundColors({ background: hideBackground ? "invisible" : color });
 
-  const Icon = useMemo(
-    () =>
-      dynamic(dynamicIconImports[name], {
-        loading: () => (
-          <svg
-            {...props}
-            className={cn("animate-pulse bg-muted rounded-md shrink-0", props.className)}
-            width={props.width || 24}
-            height={props.height || 24}
+  const iconElement = (
+    <LucideDynamicIcon
+      name={name}
+      {...props}
+      className={cn(iconClasses, props.className)}
+      fallback={() => {
+        return (
+          <div
+            style={{ width: props.width || 24, height: props.height || 24 }}
+            className="animate-pulse bg-muted rounded-md"
           />
-        ),
-        ssr: false,
-      }),
-    [name, props],
+        );
+      }}
+    />
   );
 
-  if (!Icon) return null;
+  if (!iconElement) return null;
 
-  return hideBackground ? (
-    <Icon {...props} className={cn(iconClasses, props.className)} />
-  ) : (
+  if (hideBackground) return iconElement;
+  return (
     <BadgeColored color={color} className="h-full aspect-square">
-      <Icon {...props} className={cn(iconClasses, props.className)} />
+      {iconElement}
     </BadgeColored>
   );
 });
@@ -74,17 +68,3 @@ const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ..
 DynamicIcon.displayName = "DynamicIcon";
 
 export default DynamicIcon;
-
-/*
-        <div
-          className={cn(
-            backgroundClasses,
-            !hideBackground
-              ? "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              : "",
-            "inline-flex items-center justify-center"
-          )}
-        >     
-            <LazyIcon {...props} className={cn(iconClasses, props.className)} />
-        </div>
-*/

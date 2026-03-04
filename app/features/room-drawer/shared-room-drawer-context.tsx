@@ -1,23 +1,23 @@
 import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
 
-import { IEvent } from "@/lib/schemas/calendar";
-import EventDrawerRefactor from "./room-drawer-root";
+import { IRoom } from "@/lib/schemas/calendar";
 
-export type EventDrawerPayload = { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number };
+import RoomDrawer from "./room-drawer-root";
 
-// Shared drawer context to avoid mounting many drawers — mount a single EventDrawer
+export type RoomDrawerPayload = { room?: IRoom };
+
 const SharedDrawerContext = createContext<{
-  openEventDrawer: (payload: EventDrawerPayload) => void;
+  openRoomDrawer: (payload: RoomDrawerPayload) => void;
 } | null>(null);
 
-export function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) {
+export function SharedRoomDrawerProvider({ children }: { children: React.ReactNode }) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const [payload, setPayload] = useState<EventDrawerPayload | null>(null);
+  const [payload, setPayload] = useState<RoomDrawerPayload | null>(null);
 
-  const openEventDrawer = useCallback((payload: EventDrawerPayload) => {
+  const openRoomDrawer = useCallback((payload: RoomDrawerPayload) => {
     setPayload(payload || null);
-    // click the hidden trigger to open the sheet inside EventDrawer
+
     try {
       triggerRef.current?.click();
     } catch (e) {
@@ -25,22 +25,21 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
     }
   }, []);
 
-  const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
+  const ctxValue = useMemo(() => ({ openRoomDrawer }), [openRoomDrawer]);
 
   return (
     <SharedDrawerContext.Provider value={ctxValue}>
       {children}
-      {/* Offscreen trigger wrapped by the single EventDrawer instance */}
 
-      <EventDrawerRefactor {...payload}>
+      <RoomDrawer {...payload}>
         <button ref={triggerRef} aria-hidden tabIndex={-1} onClick={(e) => e.stopPropagation()} />
-      </EventDrawerRefactor>
+      </RoomDrawer>
     </SharedDrawerContext.Provider>
   );
 }
 
-export function useSharedEventDrawer() {
+export function useSharedRoomDrawer() {
   const ctx = useContext(SharedDrawerContext);
-  if (!ctx) throw new Error("useSharedDrawer must be used within SharedEventDrawerProvider");
+  if (!ctx) throw new Error("useSharedDrawer must be used within SharedRoomDrawerProvider");
   return ctx;
 }

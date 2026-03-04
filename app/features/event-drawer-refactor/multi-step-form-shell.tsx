@@ -128,30 +128,24 @@ export const MultiStepForm = ({
           <FormFooter userId={userId}></FormFooter>
         </SheetContent>
       </Sheet>
-      {logic.dialogConfig &&
-        (() => {
-          const dialogConfig = logic.dialogConfig;
-          return (
-            <>
-              <EventDialog
-                variant={dialogConfig.variant}
-                isOpen={!!dialogConfig}
-                onClose={() => logic.setDialogConfig(null)}
-                title={dialogConfig.title}
-                description={dialogConfig.description}
-                errors={dialogConfig.errors}
-                onConfirm={() => logic.handleDialogAction(dialogConfig.confirmAction)}
-                onCancel={() => logic.handleDialogAction(dialogConfig.cancelAction)}
-                onSave={() => logic.handleDialogAction(dialogConfig.saveAction)}
-                confirmText={dialogConfig.confirmText ?? "Confirm"}
-                cancelText={dialogConfig.cancelText ?? "Cancel"}
-                showSave={dialogConfig.showSave}
-                showConfirm={dialogConfig.showConfirm}
-                showCancel={dialogConfig.showCancel}
-              />
-            </>
-          );
-        })()}
+      {logic.dialogConfig && (
+        <EventDialog
+          variant={logic.dialogConfig.variant}
+          isOpen={!!logic.dialogConfig}
+          onClose={() => logic.setDialogConfig(null)}
+          title={logic.dialogConfig.title}
+          description={logic.dialogConfig.description}
+          errors={logic.dialogConfig.errors}
+          onConfirm={() => logic.handleDialogAction(logic.dialogConfig?.confirmAction)}
+          onCancel={() => logic.handleDialogAction(logic.dialogConfig?.cancelAction)}
+          onSave={() => logic.handleDialogAction(logic.dialogConfig?.saveAction)}
+          confirmText={logic.dialogConfig.confirmText ?? "Confirm"}
+          cancelText={logic.dialogConfig.cancelText ?? "Cancel"}
+          showSave={logic.dialogConfig.showSave}
+          showConfirm={logic.dialogConfig.showConfirm}
+          showCancel={logic.dialogConfig.showCancel}
+        />
+      )}
 
       <UnsavedChangesDialog
         showAlert={false}

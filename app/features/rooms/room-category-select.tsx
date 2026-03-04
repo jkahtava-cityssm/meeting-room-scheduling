@@ -9,11 +9,13 @@ export function RoomCategorySelect({
   onCategoryChange,
   dataInvalid = false,
   isDisabled = false,
+  className = "min-w-60",
 }: {
   selectedUserId: string;
   onCategoryChange: (value: string) => void;
   dataInvalid?: boolean;
   isDisabled?: boolean;
+  className?: string;
 }) {
   const { isPending, data, error } = useRoomCategoryQuery();
 
@@ -32,7 +34,7 @@ export function RoomCategorySelect({
       getLabel={(category) => category.name}
       dataInvalid={dataInvalid}
       isDisabled={isDisabled}
-      className="min-w-60"
+      className={className}
     />
   );
 }

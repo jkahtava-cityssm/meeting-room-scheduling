@@ -94,11 +94,10 @@ export const useMultiStepFormLogic = (props: {
   // 4. Handlers
   const resetForm = useCallback(() => {
     methods.reset(defaultFormValues);
-
     setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
-
     resetNavigation();
-  }, [methods, defaultFormValues, resetNavigation]);
+    props.onClose();
+  }, [methods, defaultFormValues, resetNavigation, props]);
 
   const onSave = async () => {
     const formData = methods.getValues();
@@ -135,7 +134,6 @@ export const useMultiStepFormLogic = (props: {
     mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
       onSuccess: () => {
         resetForm();
-        props.onClose();
       },
     });
   };
@@ -144,27 +142,25 @@ export const useMultiStepFormLogic = (props: {
     // If eventId is "0", it only exists in local state/draft
     if (defaultFormValues.eventId === "0") {
       resetForm();
-      props.onClose();
     } else {
       // If it exists on the server, call the mutation
       mutationDelete.mutate(Number(defaultFormValues.eventId), {
         onSuccess: () => {
           resetForm();
-          props.onClose();
         },
       });
     }
-  }, [defaultFormValues.eventId, mutationDelete, resetForm, props]);
+  }, [defaultFormValues.eventId, mutationDelete, resetForm]);
 
   const handleDialogAction = useCallback(
     (actionType: ButtonActions) => {
       if (!dialogConfig || !actionType) return;
 
       const actions: Record<Exclude<ButtonActions, undefined>, () => void> = {
-        dismiss: onDelete,
+        dismiss: resetForm,
         save: () => {
           setEvent(methods.getValues());
-          props.onClose();
+          resetForm();
         },
         restore: () => {
           if (storedEvent) {
@@ -175,7 +171,6 @@ export const useMultiStepFormLogic = (props: {
         },
         startNew: () => {
           resetForm();
-          props.onClose();
         },
         none: () => {},
       };
@@ -183,7 +178,7 @@ export const useMultiStepFormLogic = (props: {
       actions[actionType]?.();
       setDialogConfig(null); // Close dialog
     },
-    [dialogConfig, onDelete, setEvent, methods, props, storedEvent, resetEvent, resetForm],
+    [dialogConfig, setEvent, methods, props, storedEvent, resetEvent, resetForm],
   );
 
   return {
