@@ -1,105 +1,112 @@
 import { z } from "zod/v4";
 
-export const utcDateSchema = z.coerce.date().transform(d => {
-	return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()));
+export const utcDateSchema = z.coerce.date().transform((d) => {
+  return new Date(
+    Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+    ),
+  );
 });
 
 export const SRoomRoles = z.object({
-	roomRoleId: z.number(),
-	roleId: z.number(),
-	createdAt: z.string(),
-	updatedAt: z.string(),
+  roomRoleId: z.number(),
+  roleId: z.number(),
+  createdAt: z.union([z.date(), z.string()]),
+  updatedAt: z.union([z.date(), z.string()]),
 });
 
 export const SRoomCategory = z.object({
-	roomCategoryId: z.number(),
-	name: z.string().min(1, "Name is required"),
-	createdAt: z.string(),
-	updatedAt: z.string(),
+  roomCategoryId: z.number(),
+  name: z.string().min(1, "Name is required"),
+  createdAt: z.union([z.date(), z.string()]),
+  updatedAt: z.union([z.date(), z.string()]),
 });
 
 export const SRoomProperty = z.object({
-	roomPropertyId: z.number(),
-	value: z.string().min(1, "Value is required"),
-	createdAt: z.coerce.date().or(z.string()),
-	updatedAt: z.coerce.date().or(z.string()),
-	property: z.object({
-		name: z.string(),
-		type: z.string(),
-	}),
+  roomPropertyId: z.number(),
+  name: z.string(),
+  value: z.string(),
+  type: z.string(),
+  createdAt: z.union([z.date(), z.string()]),
+  updatedAt: z.union([z.date(), z.string()]),
 });
 
 export const SRoom = z.object({
-	roomId: z.number(),
-	name: z.string().min(1, "Name is required"),
-	color: z.string().min(1, "Color is required"),
-	icon: z.string().nullable(),
-	publicFacing: z.boolean().default(false),
-	roomCategoryId: z.number(),
-	roomCategory: SRoomCategory,
-	roomRoles: z.array(SRoomRoles).optional(),
-	roomProperty: z.array(SRoomProperty).optional(),
-	createdAt: z.string(),
-	updatedAt: z.string(),
+  roomId: z.number(),
+  name: z.string().min(1, "Name is required"),
+  color: z.string().min(1, "Color is required"),
+  icon: z.string().nullable(),
+  publicFacing: z.boolean().default(false),
+  roomCategoryId: z.number(),
+  roomCategory: SRoomCategory,
+  roomRoles: z.array(SRoomRoles).optional(),
+  roomProperty: z.array(SRoomProperty).optional(),
+  createdAt: z.union([z.date(), z.string()]),
+  updatedAt: z.union([z.date(), z.string()]),
 });
 
 export const SRecurrence = z.object({
-	recurrenceId: z.number(),
-	recurrenceCancellationId: z.number().nullable(),
-	recurrenceExceptionId: z.number().nullable(),
-	rule: z.string(),
-	startDate: z.string(),
-	endDate: z.string(),
-	createdAt: z.string(),
-	updatedAt: z.string(),
+  recurrenceId: z.number(),
+  recurrenceCancellationId: z.number().nullable(),
+  recurrenceExceptionId: z.number().nullable(),
+  rule: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 export const SUser = z.object({
-	userId: z.number(),
-	name: z.string(),
-	email: z.string(),
-	department: z.string().optional().nullable(),
-	jobTitle: z.string().optional().nullable(),
-	employeeNumber: z.string().optional().nullable(),
-	employeeActive: z.boolean(),
+  userId: z.number(),
+  name: z.string(),
+  email: z.string(),
+  department: z.string().optional().nullable(),
+  jobTitle: z.string().optional().nullable(),
+  employeeNumber: z.string().optional().nullable(),
+  employeeActive: z.boolean(),
 });
 
 export const SMultiDay = z.object({
-	position: z.enum(["first", "last", "middle"]),
+  position: z.enum(["first", "last", "middle"]),
 });
 
 export const SStatus = z.object({
-	statusId: z.number(),
-	key: z.string(),
-	name: z.string(),
-	icon: z.string(),
-	color: z.string(),
+  statusId: z.number(),
+  key: z.string(),
+  name: z.string(),
+  icon: z.string(),
+  color: z.string(),
 });
 
 export const SEvent = z.object({
-	eventId: z.number(),
-	roomId: z.number().gt(0, "Room is required"),
-	userId: z.number().nullable().optional(),
-	statusId: z.number(),
-	recurrenceId: z.number().nullable(),
-	startDate: z.coerce.string({
-		error: issue => (issue.input === undefined ? "Start date is required" : "Not a valid Start Date"),
-	}),
-	//I hate this, but its the only way to fix the zodResolver
-	//Others have similar issues see https://github.com/colinhacks/zod/issues/3537
-	endDate: z.coerce.string({
-		error: issue => (issue.input === undefined ? "End date is required" : "Not a valid End Date"),
-	}),
+  eventId: z.number(),
+  roomId: z.number().gt(0, "Room is required"),
+  userId: z.number().nullable().optional(),
+  statusId: z.number(),
+  recurrenceId: z.number().nullable(),
+  startDate: z.coerce.string({
+    error: (issue) => (issue.input === undefined ? "Start date is required" : "Not a valid Start Date"),
+  }),
+  //I hate this, but its the only way to fix the zodResolver
+  //Others have similar issues see https://github.com/colinhacks/zod/issues/3537
+  endDate: z.coerce.string({
+    error: (issue) => (issue.input === undefined ? "End date is required" : "Not a valid End Date"),
+  }),
 
-	title: z.string().min(1, "Title is required"),
-	description: z.string(),
-	parentEventId: z.number().nullable().optional(),
-	room: SRoom,
-	status: SStatus,
-	recurrence: SRecurrence.nullish(),
-	createdAt: z.coerce.string(),
-	updatedAt: z.coerce.string(),
-	multiDay: SMultiDay.optional(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string(),
+  parentEventId: z.number().nullable().optional(),
+  room: SRoom,
+  status: SStatus,
+  recurrence: SRecurrence.nullish(),
+  createdAt: z.coerce.string(),
+  updatedAt: z.coerce.string(),
+  multiDay: SMultiDay.optional(),
 });
 
 export type IStatus = z.infer<typeof SStatus>;
