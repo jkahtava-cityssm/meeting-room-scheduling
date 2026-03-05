@@ -35,7 +35,7 @@ export function RoomPropertyMultiSelect({
 			dataInvalid={dataInvalid}
 			onValueChange={onPropertyChange}
 			getId={property => property.roomPropertyId.toString()}
-			getLabel={property => property.name}
+			getLabel={property => property.property.name}
 			className={className}
 			maxCount={maxCount}
 			hideSelectAll={true}

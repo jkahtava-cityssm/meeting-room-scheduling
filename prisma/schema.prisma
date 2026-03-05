@@ -129,13 +129,16 @@ model RoomCategory {
 model RoomProperty {
   roomPropertyId Int      @id @default(autoincrement()) @map("room_property_id")
   roomId         Int      @map("room_id")
-  name           String
-  value          String
+  propertyId     Int      @map("property_id")
+  value          String?
+  
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   room Room @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [propertyId])
 
+  @@unique([roomId, propertyId], name: "roomId_propertyId")
   @@map("room_property")
 }
 
@@ -155,6 +158,16 @@ model RoomRole {
   @@map("room_role")
 }
 
+model Property {
+
+  propertyId Int @id @default(autoincrement()) @map("property_id")
+  name           String @unique
+  type           String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  roomProperty   RoomProperty[]
+  @@map("property")
+}
 //Member 1 or Many Roles, MemberRole
 
 model UserRole {
