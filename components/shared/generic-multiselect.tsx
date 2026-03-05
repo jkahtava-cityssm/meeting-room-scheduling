@@ -80,6 +80,13 @@ export function GenericMultiSelect<T>({
         placeholder={placeholderText}
         searchText={searchText}
         noResultText={noResultText}
+        animationConfig={{
+          badgeAnimation: "none",
+          optionHoverAnimation: "none",
+          popoverAnimation: "none",
+          duration: 100,
+          delay: 100,
+        }}
         disabled={isDisabled}
         maxCount={maxCount}
         hideSelectAll={hideSelectAll}
