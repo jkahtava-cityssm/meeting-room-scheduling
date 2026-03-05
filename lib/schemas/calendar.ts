@@ -13,6 +13,14 @@ export const utcDateSchema = z.coerce.date().transform((d) => {
   );
 });
 
+export const SProperty = z.object({
+  propertyId: z.number(),
+  name: z.string(),
+  type: z.string(),
+  createdAt: z.union([z.date(), z.string()]),
+  updatedAt: z.union([z.date(), z.string()]),
+});
+
 export const SRoomRoles = z.object({
   roomRoleId: z.number(),
   roleId: z.number(),

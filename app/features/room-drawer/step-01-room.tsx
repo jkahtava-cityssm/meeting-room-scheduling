@@ -25,6 +25,9 @@ import { RoomPropertyMultiSelect } from "../rooms/room-property-multiselect";
 import { RoomColorSelect } from "./room-color-select";
 import { BadgeColored } from "@/components/ui/badge-colored";
 import { method } from "lodash";
+import { cn } from "@/lib/utils";
+import { EventCard } from "../calendar/components/calendar-scroll-private-event-block";
+import { addHours, format } from "date-fns";
 
 export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
@@ -122,7 +125,7 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
             name="roomRoles"
             render={({ field }) => (
               <FormItem className="col-span-3 row-5">
-                <FormLabel>Limit Room Booking to Specific Roles</FormLabel>
+                <FormLabel>Room Booking Access</FormLabel>
                 <FormControl>
                   <RoleMultiSelect
                     selectedRoleIds={field.value}
@@ -196,8 +199,8 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
             )}
           />
           {currentColor && (
-            <div className="row-start-2 row-span-2 col-start-3">
-              <BadgeColored className="w-full h-full" color={currentColor as TColors} />
+            <div className="row-start-1 row-span-3 col-start-3 mt-5.5 ">
+              <EventBlockPreview color={currentColor as TColors} />
             </div>
           )}
         </div>
@@ -208,3 +211,26 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
     </ScrollArea>
   );
 };
+
+function EventBlockPreview({ color }: { color: TColors }) {
+  const EventCardClasses = EventCard({ color });
+  const startDate = new Date();
+  const endDate = addHours(startDate, 1);
+  return (
+    <button
+      type="button"
+      tabIndex={0}
+      className={cn("w-full h-full", EventCardClasses)}
+      aria-label={"Example Room Event"}
+    >
+      <div className="flex items-center gap-1.5 ">
+        <p className="truncate font-semibold">{"Example Room Event"}</p>
+      </div>
+      <div className="flex items-center gap-1.5 truncate">
+        <p className="truncate">
+          {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
+        </p>
+      </div>
+    </button>
+  );
+}

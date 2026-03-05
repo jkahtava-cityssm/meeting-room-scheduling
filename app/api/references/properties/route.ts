@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("Collected Room Categories", roomProperties);
+      return SuccessMessage("Collected Room Properties", roomProperties);
     },
   );
 }

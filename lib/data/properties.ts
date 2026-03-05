@@ -1,19 +1,17 @@
 import { prisma } from "@/prisma";
 import { Prisma } from "@prisma/client";
 
-const ROOM_PROPERTY_SELECT = {
-  roomPropertyId: true,
+const PROPERTY_SELECT = {
+  propertyId: true,
   name: true,
+  type: true,
   createdAt: true,
   updatedAt: true,
-} as Prisma.RoomPropertySelect;
+} as Prisma.PropertySelect;
 
-export async function findManyRoomProperties(
-  where?: Prisma.RoomPropertyWhereInput,
-  tx: Prisma.TransactionClient = prisma,
-) {
-  return tx.roomProperty.findMany({
+export async function findManyProperties(where?: Prisma.PropertyWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.property.findMany({
     where,
-    select: ROOM_PROPERTY_SELECT,
+    select: PROPERTY_SELECT,
   });
 }
