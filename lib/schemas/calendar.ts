@@ -37,6 +37,7 @@ export const SRoomCategory = z.object({
 
 export const SRoomProperty = z.object({
   roomPropertyId: z.number(),
+  propertyId: z.number(),
   name: z.string(),
   value: z.string(),
   type: z.string(),
@@ -49,7 +50,7 @@ export const SRoom = z.object({
   name: z.string().min(1, "Name is required"),
   color: z.string().min(1, "Color is required"),
   icon: z.string().nullable(),
-  publicFacing: z.boolean().default(false),
+  publicFacing: z.union([z.boolean(), z.stringbool()]).default(false),
   roomCategoryId: z.number(),
   roomCategory: SRoomCategory,
   roomRoles: z.array(SRoomRoles).optional(),
@@ -76,7 +77,7 @@ export const SUser = z.object({
   department: z.string().optional().nullable(),
   jobTitle: z.string().optional().nullable(),
   employeeNumber: z.string().optional().nullable(),
-  employeeActive: z.boolean(),
+  employeeActive: z.union([z.boolean(), z.stringbool()]),
 });
 
 export const SMultiDay = z.object({

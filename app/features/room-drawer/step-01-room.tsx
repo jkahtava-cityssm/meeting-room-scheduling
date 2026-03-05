@@ -107,10 +107,10 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
                       data-invalid={fieldState.invalid}
                       aria-invalid={fieldState.invalid}
                     >
-                      <TabsTrigger value="false" disabled={isReadOnly}>
+                      <TabsTrigger value="true" disabled={isReadOnly}>
                         Show
                       </TabsTrigger>
-                      <TabsTrigger value="true" disabled={isReadOnly}>
+                      <TabsTrigger value="false" disabled={isReadOnly}>
                         Hide
                       </TabsTrigger>
                     </TabsList>

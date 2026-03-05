@@ -60,7 +60,7 @@ export const usePermissionMutationUpsert = () => {
 };
 
 export const SUserWithRoles = SUser.extend({
-  roles: z.array(z.object({ roleId: z.number(), name: z.string(), granted: z.boolean() })),
+  roles: z.array(z.object({ roleId: z.number(), name: z.string(), granted: z.union([z.boolean(), z.stringbool()]) })),
 });
 export type IUserWithRoles = z.infer<typeof SUserWithRoles>;
 

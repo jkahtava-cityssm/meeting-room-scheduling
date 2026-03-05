@@ -58,35 +58,15 @@ export const useRoomQuery = (roomId: number | undefined, enabled: boolean = true
     staleTime: 0,
   });
 
-export const SRoomPUT = SRoom.omit({
-  createdAt: true,
-  updatedAt: true,
-  roomCategory: true,
-  roomRoles: true,
-  roomProperty: true,
-}).extend({
+export const SRoomPUT = z.object({
   roomId: z.coerce.number().optional(),
-  roomRoles: z
-    .array(
-      SRoomRoles.pick({ roleId: true }).extend({
-        roleId: z.coerce.number(),
-      }),
-    )
-    .optional(),
-  roomProperty: z
-    .array(
-      SRoomProperty.omit({
-        createdAt: true,
-        updatedAt: true,
-        property: true,
-      }).extend({
-        roomPropertyId: z.coerce.number().optional().nullable(),
-        propertyId: z.coerce.number(),
-        name: z.string(),
-        value: z.string(),
-      }),
-    )
-    .optional(),
+  name: z.string(),
+  color: z.string(),
+  icon: z.string(),
+  publicFacing: z.union([z.boolean(), z.stringbool()]),
+  roomCategoryId: z.coerce.number(),
+  roomProperty: z.array(z.object({ propertyId: z.coerce.number(), value: z.string() })).optional(),
+  roomRoles: z.array(z.object({ roleId: z.coerce.number() })).optional(),
 });
 
 export type IRoomPUT = z.infer<typeof SRoomPUT>;

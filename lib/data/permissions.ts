@@ -6,7 +6,7 @@ import { ROLES_ENUM, SessionAction, SessionResource, SessionRole } from "../type
 
 export const SPermission = z.object({
   permissionId: z.string(),
-  permit: z.boolean(),
+  permit: z.union([z.boolean(), z.stringbool()]),
   actionId: z.string(),
   action: z.string(),
   resourceId: z.string(),

@@ -519,7 +519,8 @@ export function calculateYearlyRecurrenceEndDate(
   return addYears(firstYear, years * iterations);
 }
 
-/**
- *
- *
- */
+export function getDistinctValuesByKey<T, K extends keyof T>(list: T[], key: K): T[K][] {
+  if (!list) return [];
+
+  return [...new Set(list.map((item) => item[key]))];
+}

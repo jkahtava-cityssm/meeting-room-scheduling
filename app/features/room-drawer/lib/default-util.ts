@@ -24,7 +24,9 @@ export const mapRoomToSchema = (room: IRoom): CombinedSchema => {
     icon: String(room.icon),
     publicFacing: room.publicFacing ? "true" : "false",
     roomCategoryId: String(room.roomCategoryId),
-    roomProperty: (room.roomProperty ?? []).map((p) => String(p.roomPropertyId)),
+    roomProperty: (room.roomProperty ?? [])
+      .filter((p) => p.type === "boolean" && p.value === "true")
+      .map((p) => String(p.propertyId)),
     roomRoles: (room.roomRoles ?? []).map((r) => String(r.roleId)),
   };
 

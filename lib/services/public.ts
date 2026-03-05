@@ -39,7 +39,7 @@ const PUBLIC_SCONFIGURATION = z.object({
     from: z.number(),
     to: z.number(),
   }),
-  useSSO: z.boolean(),
+  useSSO: z.union([z.boolean(), z.stringbool()]),
   interval: z.number(),
 });
 

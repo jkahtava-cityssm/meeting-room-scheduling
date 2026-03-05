@@ -38,6 +38,7 @@ import React from "react";
 import { GenericError } from "../../../components/shared/generic-error";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDistinctValuesByKey } from "@/lib/helpers";
 
 export interface Employee {
   id: number;
@@ -624,9 +625,3 @@ const DebouncedCheckbox = ({ checked, onCheckedChange, debounce = 150, ...props 
 
   //return <Input {...props} value={localValue} onChange={(e) => setLocalValue(e.target.value)} />;
 };
-
-function getDistinctValuesByKey<T, K extends keyof T>(list: T[], key: K): T[K][] {
-  if (!list) return [];
-
-  return [...new Set(list.map((item) => item[key]))];
-}

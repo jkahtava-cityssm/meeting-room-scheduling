@@ -8,7 +8,7 @@ export const SConfigurationEntry = z.discriminatedUnion("type", [
     key: z.string(),
     name: z.string(),
     type: z.literal("boolean"),
-    value: z.preprocess((val) => val === "true" || val === true, z.boolean()),
+    value: z.union([z.boolean(), z.stringbool()]), //z.preprocess((val) => val === "true" || val === true, z.boolean()),
     description: z.string().nullable(),
   }),
 

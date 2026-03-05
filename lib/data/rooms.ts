@@ -93,6 +93,7 @@ function flattenRoom(data: RoomWithRelations | RoomWithRelations[]): IRoom | IRo
       roomProperty: room.roomProperty.map((roomProperty) => {
         return {
           roomPropertyId: roomProperty.roomPropertyId,
+          propertyId: roomProperty.property.propertyId,
           name: roomProperty.property.name,
           value: roomProperty.value ?? "",
           type: roomProperty.property.type,

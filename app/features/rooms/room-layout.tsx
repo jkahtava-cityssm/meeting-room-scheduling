@@ -19,7 +19,7 @@ import {
 
 import { useEventPatchMutation } from "@/lib/services/events";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRoomsQuery } from "@/lib/services/rooms";
 import RoomCard from "./room-card";
 import { Button } from "@/components/ui/button";
@@ -39,12 +39,37 @@ import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SharedRoomDrawerProvider, useSharedRoomDrawer } from "../room-drawer/shared-room-drawer-context";
+import { getDistinctValuesByKey } from "@/lib/helpers";
+import { useDebounce } from "@/hooks/use-debounce";
+import { IRoom } from "@/lib/schemas/calendar";
 
-type SortColumn = "icon" | "publicFacing" | "color" | "roomCategory" | "name";
+interface RoomFilters {
+  name: string;
+  roomCategory: string[];
+  color: string[];
+  icon: string[];
+  publicFacing: string[];
+  properties: string[];
+}
+
+const defaultFilters: RoomFilters = {
+  name: "",
+  roomCategory: [],
+  color: [],
+  icon: [],
+  publicFacing: ["true"],
+  properties: [],
+};
+
+type SortColumn = "icon" | "publicFacing" | "color" | "roomCategory" | "name" | "properties";
 
 type SortDirection = "desc" | "asc" | null;
 
 export default function RoomLayout() {
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [currentRole, setCurrentRole] = useState<{ id: string; label: string } | undefined>(undefined);
+  const [filters, setFilters] = useState<RoomFilters>(defaultFilters);
+
   const { data, isPending, error } = useRoomsQuery();
 
   const { openRoomDrawer } = useSharedRoomDrawer();
@@ -66,6 +91,144 @@ export default function RoomLayout() {
   const isSortedAsc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "asc", [sort]);
   const isSortedDesc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "desc", [sort]);
 
+  const colorList = useMemo(() => getDistinctValuesByKey(data ?? [], "color"), [data]);
+
+  const iconList = useMemo(() => getDistinctValuesByKey(data ?? [], "icon"), [data]);
+
+  const propertyList = useMemo(() => {
+    const allProperties = data?.flatMap((r) => r.roomProperty ?? []) ?? [];
+    return getDistinctValuesByKey(allProperties, "name");
+  }, [data]);
+
+  const categoryList = useMemo(() => {
+    const allCategories = data?.map((r) => r.roomCategory).filter(Boolean) ?? [];
+    return getDistinctValuesByKey(allCategories, "name");
+  }, [data]);
+
+  const { debouncedValue: debouncedFilters } = useDebounce(filters, 500);
+
+  const filteredEmployee = useMemo(() => {
+    if (!data) return [];
+
+    return data.filter((room) => {
+      return Object.entries(debouncedFilters).every(([key, filterValue]) => {
+        // 1. Skip if the filter is empty
+        if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0)) {
+          return true;
+        }
+
+        // 2. Extract value from the user object based on the key
+        switch (key) {
+          case "name":
+            const roomValue = String(room[key as keyof typeof room] || "").toLowerCase();
+            return roomValue.includes(String(filterValue).toLowerCase());
+
+          case "roomCategory":
+            return (filterValue as string[]).includes(room.roomCategory.name || "");
+          case "icon":
+            return (filterValue as string[]).includes(room.icon || "");
+          case "color":
+            return (filterValue as string[]).includes(room.color || "");
+          case "properties":
+            return (filterValue as string[]).includes(room.roomCategory.name || "");
+
+          case "publicFacing":
+            // status: ["true"] or ["false"]
+            return (filterValue as string[]).includes(String(room.publicFacing));
+
+          case "assigned": {
+            const isAssigned = room.roomRoles?.some((r) => String(r.roleId) === currentRole?.id);
+            const filterArr = filterValue as string[];
+
+            if (filterArr.includes("true") && filterArr.includes("false")) return true;
+            return filterArr.includes(String(isAssigned));
+          }
+
+          default:
+            return true;
+        }
+      });
+    });
+  }, [currentRole?.id, data, debouncedFilters]);
+
+  // Helper: value extraction for the active sort key
+  const getSortValue = useCallback(
+    (room: IRoom, key: SortColumn) => {
+      switch (key) {
+        case "name":
+          return (room.name ?? "") as string;
+        case "color":
+          return (room.color ?? "") as string;
+        case "icon":
+          return (room.icon ?? "") as string;
+        case "publicFacing":
+          return room.publicFacing ? 1 : 0;
+
+        case "roomCategory":
+          return (room.roomCategory.name ?? "") as string; // 1 enabled, 0 disabled
+        case "properties": {
+          const isAssigned = room.roomProperty?.some((property) => String(property.propertyId) === currentRole?.id);
+          return isAssigned ? 1 : 0;
+        }
+      }
+    },
+    [currentRole?.id],
+  );
+
+  const sortedEmployees = useMemo(() => {
+    if (!filteredEmployee) return [];
+    if (!sort.key || !sort.dir) return filteredEmployee;
+
+    const key = sort.key;
+    const dir = sort.dir;
+
+    const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+
+    const cmp = (roomA: IRoom, roomB: IRoom) => {
+      const va = getSortValue(roomA, key);
+      const vb = getSortValue(roomB, key);
+
+      if (typeof va === "string" && typeof vb === "string") {
+        return collator.compare(va, vb);
+      }
+      // number/boolean compare
+      return va === vb ? 0 : va > vb ? 1 : -1;
+    };
+
+    const factor = dir === "asc" ? 1 : -1;
+
+    // slice() to avoid mutating original; modern JS sort is stable.
+    return filteredEmployee.slice().sort((a, b) => factor * cmp(a, b));
+  }, [filteredEmployee, sort, getSortValue]);
+
+  const toggleRow = (id: number) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const onFilter = useCallback((value: string, key: keyof IRoom) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const onToggleFilterList = useCallback((value: string, key: keyof RoomFilters) => {
+    setFilters((prev) => {
+      const currentList = prev[key];
+      if (!Array.isArray(currentList)) return prev;
+
+      const newList = currentList.includes(value)
+        ? currentList.filter((item) => item !== value) // Remove if exists
+        : [...currentList, value]; // Add if new
+
+      return { ...prev, [key]: newList };
+    });
+  }, []);
+
+  const clearFilter = useCallback(<K extends keyof RoomFilters>(key: K) => {
+    setFilters((prev) => ({ ...prev, [key]: defaultFilters[key] }));
+  }, []);
+
   const isMounting = !data && isPending;
   const noData = data && data.length === 0;
   const isLoading = isPending;
@@ -80,7 +243,7 @@ export default function RoomLayout() {
         <div className="flex items-center gap-3 h-14 font-bold">Available Rooms</div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
-          <Button> Add Room</Button>
+          <Button onClick={() => openRoomDrawer({})}> Add Room</Button>
         </div>
       </div>
       <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
@@ -93,10 +256,14 @@ export default function RoomLayout() {
                 isSortedAsc={isSortedAsc("name")}
                 isSortedDesc={isSortedDesc("name")}
                 onToggleSort={() => toggleSort("name")}
-                onClearFilter={() => {}}
-                isFiltered={false}
+                onClearFilter={() => clearFilter("name")}
+                isFiltered={filters.name.length > 0}
               >
-                <DebouncedInput placeholder="Search room name..." onChange={(value) => {}} value={""} />
+                <DebouncedInput
+                  placeholder="Search room name..."
+                  onChange={(value) => onFilter(value, "name")}
+                  value={filters.name}
+                />
               </FilterHeader>
 
               <div className="hidden md:block">
@@ -105,10 +272,20 @@ export default function RoomLayout() {
                   isSortedAsc={isSortedAsc("roomCategory")}
                   isSortedDesc={isSortedDesc("roomCategory")}
                   onToggleSort={() => toggleSort("roomCategory")}
-                  onClearFilter={() => {}}
-                  isFiltered={false}
+                  onClearFilter={() => clearFilter("roomCategory")}
+                  isFiltered={filters.roomCategory.length > 0}
                 >
-                  <DebouncedInput placeholder="Search Category..." value={""} onChange={(value) => {}} />
+                  <div className="flex flex-col gap-2">
+                    {categoryList.map((option) => (
+                      <div key={option} className="flex flex-row items-center gap-2 text-sm">
+                        <DebouncedCheckbox
+                          checked={filters.roomCategory.includes(option)}
+                          onCheckedChange={(value) => onToggleFilterList(option, "roomCategory")}
+                        />
+                        {option}
+                      </div>
+                    ))}
+                  </div>
                 </FilterHeader>
               </div>
 
@@ -118,10 +295,20 @@ export default function RoomLayout() {
                   isSortedAsc={isSortedAsc("color")}
                   isSortedDesc={isSortedDesc("color")}
                   onToggleSort={() => toggleSort("color")}
-                  onClearFilter={() => {}}
-                  isFiltered={false}
+                  onClearFilter={() => clearFilter("color")}
+                  isFiltered={filters.color.length > 0}
                 >
-                  <DebouncedInput placeholder="Search numbers..." value={""} onChange={(value) => {}} />
+                  <div className="flex flex-col gap-2">
+                    {colorList.map((option) => (
+                      <div key={option} className="flex flex-row items-center gap-2 text-sm">
+                        <DebouncedCheckbox
+                          checked={filters.color.includes(option)}
+                          onCheckedChange={(value) => onToggleFilterList(option, "color")}
+                        />
+                        {option}
+                      </div>
+                    ))}
+                  </div>
                 </FilterHeader>
               </div>
               <div className="font-bold min-w-0 hidden md:block text-center">
@@ -130,17 +317,20 @@ export default function RoomLayout() {
                   isSortedAsc={isSortedAsc("icon")}
                   isSortedDesc={isSortedDesc("icon")}
                   onToggleSort={() => toggleSort("icon")}
-                  onClearFilter={() => {}}
-                  isFiltered={false}
+                  onClearFilter={() => clearFilter("icon")}
+                  isFiltered={filters.icon.length > 0}
                   totalSelected={0}
                 >
                   <div className="flex flex-col gap-2">
-                    {[...Array(5).keys()]?.map((dept) => {
-                      if (!dept) return null;
+                    {iconList?.map((icon) => {
+                      if (!icon) return null;
                       return (
-                        <div key={dept} className="flex flex-row items-center gap-2 text-sm">
-                          <DebouncedCheckbox checked={false} onCheckedChange={(value) => {}} />
-                          {dept}
+                        <div key={icon} className="flex flex-row items-center gap-2 text-sm">
+                          <DebouncedCheckbox
+                            checked={filters.icon.includes(icon)}
+                            onCheckedChange={(value) => onToggleFilterList(icon, "icon")}
+                          />
+                          {icon}
                         </div>
                       );
                     })}
@@ -155,14 +345,20 @@ export default function RoomLayout() {
                   isSortedAsc={isSortedAsc("publicFacing")}
                   isSortedDesc={isSortedDesc("publicFacing")}
                   onToggleSort={() => toggleSort("publicFacing")}
-                  onClearFilter={() => {}}
-                  isFiltered={false}
+                  onClearFilter={() => clearFilter("publicFacing")}
+                  isFiltered={filters.publicFacing.length > 0}
                   totalSelected={0}
                 >
                   <div className="flex flex-col gap-2">
-                    {[{ value: false, label: "Visible" }].map((option) => (
+                    {[
+                      { value: "false", label: "No" },
+                      { value: "true", label: "Yes" },
+                    ].map((option) => (
                       <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
-                        <DebouncedCheckbox checked={false} onCheckedChange={() => {}} />
+                        <DebouncedCheckbox
+                          checked={filters.publicFacing.includes(option.value)}
+                          onCheckedChange={(value) => onToggleFilterList(option.value, "publicFacing")}
+                        />
                         {option.label}
                       </div>
                     ))}
@@ -173,18 +369,21 @@ export default function RoomLayout() {
                 <FilterHeader
                   title="Properties"
                   center
-                  isSortedAsc={undefined}
-                  isSortedDesc={undefined}
-                  onToggleSort={() => {}}
-                  onClearFilter={() => {}}
-                  isFiltered={false}
+                  isSortedAsc={isSortedAsc("properties")}
+                  isSortedDesc={isSortedDesc("properties")}
+                  onToggleSort={() => toggleSort("properties")}
+                  onClearFilter={() => clearFilter("properties")}
+                  isFiltered={filters.properties.length > 0}
                   totalSelected={0}
                 >
                   <div className="flex flex-col gap-2">
-                    {[{ value: false, label: "Visible" }].map((option) => (
-                      <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
-                        <DebouncedCheckbox checked={false} onCheckedChange={() => {}} />
-                        {option.label}
+                    {propertyList.map((option) => (
+                      <div key={option} className="flex flex-row items-center gap-2 text-sm">
+                        <DebouncedCheckbox
+                          checked={filters.properties.includes(option)}
+                          onCheckedChange={(value) => onToggleFilterList(option, "properties")}
+                        />
+                        {option}
                       </div>
                     ))}
                   </div>

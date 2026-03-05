@@ -181,6 +181,7 @@ export function RoomIconComboBox({
           role="combobox"
           disabled={isDisabled}
           data-invalid={dataInvalid}
+          aria-invalid={dataInvalid}
           className={cn(
             "min-w-[240px] justify-between text-sm font-normal",
             !selectedValue && "text-muted-foreground",

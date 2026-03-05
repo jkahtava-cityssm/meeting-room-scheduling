@@ -98,13 +98,27 @@ export const useRoomFormLogic = (props: {
 
     const apiPayload: z.input<IRoomPUT> = {
       ...formData,
+      roomProperty: formData.roomProperty.map((id) => {
+        return { propertyId: id, value: "true" };
+      }),
+      roomRoles: formData.roomRoles.map((id) => {
+        return { roleId: id };
+      }),
     };
 
-    mutationUpsert.mutate(SRoomPUT.parse(apiPayload), {
-      onSuccess: () => {
-        resetForm();
-      },
-    });
+    const b = SRoomPUT.safeParse(apiPayload);
+
+    if (!b.success) {
+      console.error(z.prettifyError(b.error));
+    }
+
+    if (b.success) {
+      mutationUpsert.mutate(b.data, {
+        onSuccess: () => {
+          resetForm();
+        },
+      });
+    }
   };
 
   const onDelete = useCallback(() => {
