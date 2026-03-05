@@ -11,6 +11,7 @@ import {
   FilterX,
   LoaderCircle,
   LoaderIcon,
+  LucideDoorOpen,
   LucideShieldUser,
   Pencil,
   Terminal,
@@ -42,6 +43,7 @@ import { SharedRoomDrawerProvider, useSharedRoomDrawer } from "../room-drawer/sh
 import { getDistinctValuesByKey } from "@/lib/helpers";
 import { useDebounce } from "@/hooks/use-debounce";
 import { IRoom } from "@/lib/schemas/calendar";
+import { GenericError } from "@/components/shared/generic-error";
 
 interface RoomFilters {
   name: string;
@@ -57,20 +59,20 @@ const defaultFilters: RoomFilters = {
   roomCategory: [],
   color: [],
   icon: [],
-  publicFacing: ["true"],
+  publicFacing: [],
   properties: [],
 };
 
-type SortColumn = "icon" | "publicFacing" | "color" | "roomCategory" | "name" | "properties";
+type SortColumn = "icon" | "publicFacing" | "color" | "roomCategory" | "name";
 
 type SortDirection = "desc" | "asc" | null;
 
 export default function RoomLayout() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-  const [currentRole, setCurrentRole] = useState<{ id: string; label: string } | undefined>(undefined);
+
   const [filters, setFilters] = useState<RoomFilters>(defaultFilters);
 
-  const { data, isPending, error } = useRoomsQuery();
+  const { data, isFetching, error } = useRoomsQuery();
 
   const { openRoomDrawer } = useSharedRoomDrawer();
 
@@ -130,52 +132,41 @@ export default function RoomLayout() {
           case "color":
             return (filterValue as string[]).includes(room.color || "");
           case "properties":
-            return (filterValue as string[]).includes(room.roomCategory.name || "");
+            if (!room.roomProperty) return false;
+            return room.roomProperty.some((property) => {
+              return (filterValue as string[]).some(
+                (filter) => filter === property.name && property.value === "true" && property.type === "boolean",
+              );
+            });
 
           case "publicFacing":
-            // status: ["true"] or ["false"]
             return (filterValue as string[]).includes(String(room.publicFacing));
-
-          case "assigned": {
-            const isAssigned = room.roomRoles?.some((r) => String(r.roleId) === currentRole?.id);
-            const filterArr = filterValue as string[];
-
-            if (filterArr.includes("true") && filterArr.includes("false")) return true;
-            return filterArr.includes(String(isAssigned));
-          }
 
           default:
             return true;
         }
       });
     });
-  }, [currentRole?.id, data, debouncedFilters]);
+  }, [data, debouncedFilters]);
 
   // Helper: value extraction for the active sort key
-  const getSortValue = useCallback(
-    (room: IRoom, key: SortColumn) => {
-      switch (key) {
-        case "name":
-          return (room.name ?? "") as string;
-        case "color":
-          return (room.color ?? "") as string;
-        case "icon":
-          return (room.icon ?? "") as string;
-        case "publicFacing":
-          return room.publicFacing ? 1 : 0;
+  const getSortValue = useCallback((room: IRoom, key: SortColumn) => {
+    switch (key) {
+      case "name":
+        return (room.name ?? "") as string;
+      case "color":
+        return (room.color ?? "") as string;
+      case "icon":
+        return (room.icon ?? "") as string;
+      case "publicFacing":
+        return room.publicFacing ? 1 : 0;
 
-        case "roomCategory":
-          return (room.roomCategory.name ?? "") as string; // 1 enabled, 0 disabled
-        case "properties": {
-          const isAssigned = room.roomProperty?.some((property) => String(property.propertyId) === currentRole?.id);
-          return isAssigned ? 1 : 0;
-        }
-      }
-    },
-    [currentRole?.id],
-  );
+      case "roomCategory":
+        return (room.roomCategory.name ?? "") as string; // 1 enabled, 0 disabled
+    }
+  }, []);
 
-  const sortedEmployees = useMemo(() => {
+  const sortedRooms = useMemo(() => {
     if (!filteredEmployee) return [];
     if (!sort.key || !sort.dir) return filteredEmployee;
 
@@ -229,12 +220,11 @@ export default function RoomLayout() {
     setFilters((prev) => ({ ...prev, [key]: defaultFilters[key] }));
   }, []);
 
-  const isMounting = !data && isPending;
-  const noData = data && data.length === 0;
-  const isLoading = isPending;
+  const isLoading = isFetching && !data;
+  const noData = !isLoading && sortedRooms.length === 0;
 
-  if (isMounting) {
-    return <>...Loading</>;
+  if (error) {
+    return <GenericError error={error} />;
   }
 
   return (
@@ -274,6 +264,7 @@ export default function RoomLayout() {
                   onToggleSort={() => toggleSort("roomCategory")}
                   onClearFilter={() => clearFilter("roomCategory")}
                   isFiltered={filters.roomCategory.length > 0}
+                  totalSelected={filters.roomCategory.length}
                 >
                   <div className="flex flex-col gap-2">
                     {categoryList.map((option) => (
@@ -297,6 +288,7 @@ export default function RoomLayout() {
                   onToggleSort={() => toggleSort("color")}
                   onClearFilter={() => clearFilter("color")}
                   isFiltered={filters.color.length > 0}
+                  totalSelected={filters.color.length}
                 >
                   <div className="flex flex-col gap-2">
                     {colorList.map((option) => (
@@ -319,7 +311,7 @@ export default function RoomLayout() {
                   onToggleSort={() => toggleSort("icon")}
                   onClearFilter={() => clearFilter("icon")}
                   isFiltered={filters.icon.length > 0}
-                  totalSelected={0}
+                  totalSelected={filters.icon.length}
                 >
                   <div className="flex flex-col gap-2">
                     {iconList?.map((icon) => {
@@ -347,7 +339,7 @@ export default function RoomLayout() {
                   onToggleSort={() => toggleSort("publicFacing")}
                   onClearFilter={() => clearFilter("publicFacing")}
                   isFiltered={filters.publicFacing.length > 0}
-                  totalSelected={0}
+                  totalSelected={filters.publicFacing.length}
                 >
                   <div className="flex flex-col gap-2">
                     {[
@@ -369,12 +361,12 @@ export default function RoomLayout() {
                 <FilterHeader
                   title="Properties"
                   center
-                  isSortedAsc={isSortedAsc("properties")}
-                  isSortedDesc={isSortedDesc("properties")}
-                  onToggleSort={() => toggleSort("properties")}
+                  isSortedAsc={undefined}
+                  isSortedDesc={undefined}
+                  onToggleSort={undefined}
                   onClearFilter={() => clearFilter("properties")}
                   isFiltered={filters.properties.length > 0}
-                  totalSelected={0}
+                  totalSelected={filters.properties.length}
                 >
                   <div className="flex flex-col gap-2">
                     {propertyList.map((option) => (
@@ -401,13 +393,13 @@ export default function RoomLayout() {
               <Empty className="border border-dashed mt-4">
                 <EmptyHeader>
                   <EmptyMedia>
-                    <LucideShieldUser />
+                    <LucideDoorOpen />
                   </EmptyMedia>
-                  <EmptyTitle>No Users Found</EmptyTitle>
-                  <EmptyDescription>Please select a Role or adjust Filters</EmptyDescription>
+                  <EmptyTitle>No Rooms Found</EmptyTitle>
+                  <EmptyDescription>Please add a room or adjust Filters</EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <Button variant="outline" size="sm" onClick={() => {}}>
+                  <Button variant="outline" size="sm" onClick={() => setFilters(defaultFilters)}>
                     Reset Filters to Default
                   </Button>
                 </EmptyContent>
@@ -422,7 +414,7 @@ export default function RoomLayout() {
             )}
             {data && (
               <div className="grid grid-cols-2 md:grid-cols-7 items-center w-auto px-2">
-                {data?.map((room) => {
+                {sortedRooms?.map((room) => {
                   const isExpanded = false; //!!expandedRows[employee.userId];
 
                   return (

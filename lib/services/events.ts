@@ -27,7 +27,12 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        if (process.env.NODE_ENV === "development") {
+          console.error(`useEventsQuery, ${z.prettifyError(parsedResult.error)}`);
+        }
+        throw new Error("Invalid event data");
+      }
 
       return parsedResult.data;
     },
