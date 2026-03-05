@@ -19,6 +19,7 @@ type DataSelectProps<T> = {
   isError?: boolean;
   loadingLabel: string;
   placeholderText: string;
+  placeholderBadge?: { label: string };
   searchText: string;
   noResultText: string;
   dataInvalid?: boolean;
@@ -38,6 +39,7 @@ export function GenericMultiSelect<T>({
   isError,
   loadingLabel = "Collecting Data",
   placeholderText = "Click to Select",
+  placeholderBadge,
   searchText = "Search...",
   noResultText = "No Item Found",
   dataInvalid = false,
@@ -78,6 +80,7 @@ export function GenericMultiSelect<T>({
         onValueChange={onValueChange}
         defaultValue={selectedValues}
         placeholder={placeholderText}
+        placeholderBadge={placeholderBadge}
         searchText={searchText}
         noResultText={noResultText}
         animationConfig={{

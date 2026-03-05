@@ -125,6 +125,12 @@ interface MultiSelectProps
   placeholder?: string;
 
   /**
+   * A Placeholder Badge that will be displayed when no items are selected.
+   * Optional, defaults to undefined.
+   */
+  placeholderBadge?: { label: string };
+
+  /**
    * Search Text Placeholder to be displayed in the Command Input Search Box.
    * Optional, defaults to "Search options...".
    */
@@ -315,6 +321,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       variant,
       defaultValue = [],
       placeholder = "Select options",
+      placeholderBadge,
       searchText = "Search options...",
       noResultText = "No results found.",
       animation = 0,
@@ -928,7 +935,33 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                 </div>
               ) : (
                 <div className="flex items-center justify-between w-full mx-auto">
-                  <span className="text-sm text-muted-foreground mx-3">{placeholder}</span>
+                  <div>
+                    {placeholderBadge && selectedValues.length === 0 && (
+                      <Badge
+                        aria-readonly={disabled}
+                        className={cn(
+                          multiSelectVariants({
+                            variant,
+                            badgeAnimation: animationConfig?.badgeAnimation,
+                            isAnimating: isAnimating,
+                          }),
+
+                          responsiveSettings.compactMode && "text-xs px-1.5 py-0.5",
+                          screenSize === "mobile" && "max-w-[120px] truncate",
+                          singleLine && "flex-shrink-0 whitespace-nowrap",
+                          "[&>svg]:pointer-events-auto",
+                          "aria-readonly:cursor-auto",
+                        )}
+                        style={{
+                          animationDuration: `${animationConfig?.duration || animation}s`,
+                          animationDelay: `${animationConfig?.delay || 0}s`,
+                        }}
+                      >
+                        <span className={cn(screenSize === "mobile" && "truncate")}>{placeholderBadge.label}</span>
+                      </Badge>
+                    )}
+                    <span className="text-sm text-muted-foreground mx-3">{placeholder}</span>
+                  </div>
                   <ChevronDown
                     aria-readonly={disabled}
                     className="h-4 cursor-pointer text-muted-foreground mx-2 aria-readonly:cursor-auto"

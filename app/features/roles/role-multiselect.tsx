@@ -31,7 +31,8 @@ export function RoleMultiSelect({
       isDisabled={isDisabled}
       isError={!!error}
       loadingLabel={error ? "Error: Loading Roles" : "Collecting Roles"}
-      placeholderText="Select Roles"
+      placeholderText="Select Roles to Limit Access"
+      placeholderBadge={{ label: "Everyone" }}
       searchText="Search roles..."
       noResultText="No roles found"
       dataInvalid={dataInvalid}
