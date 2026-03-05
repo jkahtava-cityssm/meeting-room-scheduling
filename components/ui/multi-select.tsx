@@ -53,10 +53,15 @@ const multiSelectVariants = cva("m-1 transition-all duration-300 ease-in-out", {
       slide: "hover:translate-x-1",
       none: "",
     },
+    isAnimating: {
+      true: "animate-bounce",
+      false: "",
+    },
   },
   defaultVariants: {
     variant: "default",
     badgeAnimation: "bounce",
+    isAnimating: false,
   },
 });
 
@@ -472,27 +477,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
     const responsiveSettings = getResponsiveSettings();
 
-    const getBadgeAnimationClass = () => {
-      if (animationConfig?.badgeAnimation) {
-        switch (animationConfig.badgeAnimation) {
-          case "bounce":
-            return isAnimating ? "animate-bounce" : "hover:-translate-y-1 hover:scale-110";
-          case "pulse":
-            return "hover:animate-pulse";
-          case "wiggle":
-            return "hover:animate-wiggle";
-          case "fade":
-            return "hover:opacity-80";
-          case "slide":
-            return "hover:translate-x-1";
-          case "none":
-            return "";
-          default:
-            return "";
-        }
-      }
-      return isAnimating ? "animate-bounce" : "";
-    };
+    // Removed getBadgeAnimationClass; handled by multiSelectVariants isAnimating variant
 
     const getPopoverAnimationClass = () => {
       if (animationConfig?.popoverAnimation) {
@@ -807,14 +792,20 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         return (
                           <Badge
                             key={value}
+                            aria-readonly={disabled}
                             className={cn(
-                              getBadgeAnimationClass(),
-                              multiSelectVariants({ variant }),
+                              multiSelectVariants({
+                                variant,
+                                badgeAnimation: animationConfig?.badgeAnimation,
+                                isAnimating: isAnimating,
+                              }),
+
                               customStyle?.gradient && "text-white border-transparent",
                               responsiveSettings.compactMode && "text-xs px-1.5 py-0.5",
                               screenSize === "mobile" && "max-w-[120px] truncate",
                               singleLine && "flex-shrink-0 whitespace-nowrap",
                               "[&>svg]:pointer-events-auto",
+                              "aria-readonly:cursor-auto",
                             )}
                             style={{
                               ...badgeStyle,
@@ -835,38 +826,49 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                               />
                             )}
                             <span className={cn(screenSize === "mobile" && "truncate")}>{option.label}</span>
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleOption(value);
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
+                            {!disabled && (
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={(event) => {
                                   event.stopPropagation();
                                   toggleOption(value);
-                                }
-                              }}
-                              aria-label={`Remove ${option.label} from selection`}
-                              className="ml-2 h-4 w-4 cursor-pointer hover:bg-white/20 rounded-sm p-0.5 -m-0.5 focus:outline-none focus:ring-1 focus:ring-white/50"
-                            >
-                              <XCircle className={cn("h-3 w-3", responsiveSettings.compactMode && "h-2.5 w-2.5")} />
-                            </div>
+                                }}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    toggleOption(value);
+                                  }
+                                }}
+                                aria-disabled={disabled}
+                                aria-label={`Remove ${option.label} from selection`}
+                                className={cn(
+                                  "ml-2 h-4 w-4 cursor-auto text-muted-foreground rounded-sm ",
+                                  !disabled && "cursor-pointer hover:text-foreground",
+                                )}
+                              >
+                                <XCircle className={cn("h-3 w-3 ", responsiveSettings.compactMode && "h-2.5 w-2.5")} />
+                              </div>
+                            )}
                           </Badge>
                         );
                       })
                       .filter(Boolean)}
                     {selectedValues.length > responsiveSettings.maxCount && (
                       <Badge
+                        aria-readonly={disabled}
                         className={cn(
                           "bg-transparent text-foreground border-foreground/1 hover:bg-transparent",
-                          getBadgeAnimationClass(),
-                          multiSelectVariants({ variant }),
+                          multiSelectVariants({
+                            variant,
+                            badgeAnimation: animationConfig?.badgeAnimation,
+                            isAnimating: isAnimating,
+                          }),
                           responsiveSettings.compactMode && "text-xs px-1.5 py-0.5",
                           singleLine && "flex-shrink-0 whitespace-nowrap",
                           "[&>svg]:pointer-events-auto",
+                          "aria-readonly:cursor-auto",
                         )}
                         style={{
                           animationDuration: `${animationConfig?.duration || animation}s`,
@@ -874,16 +876,20 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         }}
                       >
                         {`+ ${selectedValues.length - responsiveSettings.maxCount} more`}
-                        <XCircle
-                          className={cn(
-                            "ml-2 h-4 w-4 cursor-pointer",
-                            responsiveSettings.compactMode && "ml-1 h-3 w-3",
-                          )}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            clearExtraOptions();
-                          }}
-                        />
+                        {!disabled && (
+                          <XCircle
+                            aria-readonly={disabled}
+                            className={cn(
+                              "ml-2 h-4 w-4 cursor-auto text-muted-foreground",
+                              !disabled && " cursor-pointer hover:text-foreground",
+                              responsiveSettings.compactMode && "ml-1 h-3 w-3",
+                            )}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              clearExtraOptions();
+                            }}
+                          />
+                        )}
                       </Badge>
                     )}
                   </div>
@@ -902,19 +908,31 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           handleClear();
                         }
                       }}
+                      aria-disabled={disabled}
                       aria-label={`Clear all ${selectedValues.length} selected options`}
-                      className="flex items-center justify-center h-4 w-4 mx-2 cursor-pointer text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded-sm"
+                      className={cn(
+                        "flex items-center justify-center h-4 w-4 mx-2 text-muted-foreground rounded-sm cursor-auto",
+                        !disabled &&
+                          "cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ",
+                      )}
                     >
                       <XIcon className="h-4 w-4" />
                     </div>
                     <Separator orientation="vertical" className="flex min-h-6 h-full" />
-                    <ChevronDown className="h-4 mx-2 cursor-pointer text-muted-foreground" aria-hidden="true" />
+                    <ChevronDown
+                      aria-readonly={disabled}
+                      className="h-4 mx-2 cursor-pointer text-muted-foreground aria-readonly:cursor-auto"
+                      aria-hidden="true"
+                    />
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between w-full mx-auto">
                   <span className="text-sm text-muted-foreground mx-3">{placeholder}</span>
-                  <ChevronDown className="h-4 cursor-pointer text-muted-foreground mx-2" />
+                  <ChevronDown
+                    aria-readonly={disabled}
+                    className="h-4 cursor-pointer text-muted-foreground mx-2 aria-readonly:cursor-auto"
+                  />
                 </div>
               )}
             </Button>
