@@ -235,6 +235,8 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
     setFilters((prev) => ({ ...prev, [key]: defaultFilters[key] }));
   }, []);
 
+  const hasFilters = useMemo(() => JSON.stringify(filters) !== JSON.stringify(defaultFilters), [filters]);
+
   const isLoading = isFetching && !data;
   const noData = !currentRole || (!isLoading && sortedEmployees.length === 0);
 
@@ -247,12 +249,24 @@ export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectio
       {/* Header / Search Controls */}
 
       <div className="shrink-0 p-4 pb-0">
-        <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-row gap-3 mb-4 items-center ">
           <RoleComboBox
             selectedRoleId={currentRole?.id}
             onRoleChange={(id, label) => setCurrentRole({ id, label })}
             className={"w-50"}
           />
+
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFilters(defaultFilters)}
+              className="h-7 text-destructive hover:bg-destructive/10 animate-in fade-in zoom-in duration-200"
+            >
+              <FilterX className="h-4 w-4 mr-1" />
+              <span className="text-[10px] uppercase">Clear</span>
+            </Button>
+          )}
         </div>
       </div>
 
