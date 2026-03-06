@@ -31,8 +31,7 @@ function ScrollArea({
           ref={popoverLayerRef}
           className={cn(
             "pointer-events-none absolute inset-0 overflow-clip",
-            // ✅ Force Radix popper wrapper to be absolute so it can be clipped
-            "[&_[data-radix-popper-content-wrapper]]:!absolute",
+            "**:data-radix-popper-content-wrapper:absolute!",
           )}
         />
 

@@ -93,7 +93,7 @@ const GroupRow = ({
       onCheckedChange={() => toggleRoom(room.roomId)}
       className="mt-0.5 shrink-0"
     />
-    <Label htmlFor={`room-${room.roomId}`} className="text-sm font-medium leading-tight cursor-pointer break-words">
+    <Label htmlFor={`room-${room.roomId}`} className="text-sm font-medium leading-tight cursor-pointer wrap-break-word">
       {room.name}
     </Label>
   </div>

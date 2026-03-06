@@ -159,8 +159,8 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
               className={cn(
                 "grid w-full h-24 relative",
                 index !== 0 && "border-t-2 ",
-                "after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-[1px]",
-                "after:bg-[linear-gradient(to_right,theme(colors.border)_50%,transparent_50%)] after:bg-[length:8px_1px] after:bg-repeat-x",
+                "after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-px",
+                "after:bg-[linear-gradient(to_right,var(--color-border)_50%,transparent_50%)] after:bg-size-[8px_1px] after:bg-repeat-x",
               )}
               style={{
                 gridTemplateRows: `repeat(${totalBlocks}, 1fr)`,
