@@ -64,10 +64,10 @@ export const SRecurrence = z.object({
   recurrenceCancellationId: z.number().nullable(),
   recurrenceExceptionId: z.number().nullable(),
   rule: z.string(),
-  startDate: z.string(),
-  endDate: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  startDate: z.union([z.date(), z.string()]),
+  endDate: z.union([z.date(), z.string()]),
+  createdAt: z.union([z.date(), z.string()]),
+  updatedAt: z.union([z.date(), z.string()]),
 });
 
 export const SUser = z.object({
@@ -88,8 +88,8 @@ export const SStatus = z.object({
   statusId: z.number(),
   key: z.string(),
   name: z.string(),
-  icon: z.string(),
-  color: z.string(),
+  icon: z.string().nullable().default("none"),
+  color: z.string().nullable().default("none"),
 });
 
 export const SEvent = z.object({
@@ -98,23 +98,16 @@ export const SEvent = z.object({
   userId: z.number().nullable().optional(),
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
-  startDate: z.coerce.string({
-    error: (issue) => (issue.input === undefined ? "Start date is required" : "Not a valid Start Date"),
-  }),
-  //I hate this, but its the only way to fix the zodResolver
-  //Others have similar issues see https://github.com/colinhacks/zod/issues/3537
-  endDate: z.coerce.string({
-    error: (issue) => (issue.input === undefined ? "End date is required" : "Not a valid End Date"),
-  }),
-
+  startDate: z.union([z.date(), z.string()]),
+  endDate: z.union([z.date(), z.string()]),
   title: z.string().min(1, "Title is required"),
   description: z.string(),
   parentEventId: z.number().nullable().optional(),
   room: SRoom,
-  status: SStatus,
+  status: SStatus.nullish(),
   recurrence: SRecurrence.nullish(),
-  createdAt: z.coerce.string(),
-  updatedAt: z.coerce.string(),
+  createdAt: z.union([z.date(), z.string()]),
+  updatedAt: z.union([z.date(), z.string()]),
   multiDay: SMultiDay.optional(),
 });
 
