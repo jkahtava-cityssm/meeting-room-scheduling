@@ -220,6 +220,8 @@ export default function RoomLayout() {
     setFilters((prev) => ({ ...prev, [key]: defaultFilters[key] }));
   }, []);
 
+  const hasFilters = useMemo(() => JSON.stringify(filters) !== JSON.stringify(defaultFilters), [filters]);
+
   const isLoading = isFetching && !data;
   const noData = !isLoading && sortedRooms.length === 0;
 
@@ -383,7 +385,21 @@ export default function RoomLayout() {
               </div>
               <div className="font-bold min-w-0 text-center">
                 <div className="min-w-0 flex items-center font-bold">
-                  <div className={cn("min-w-0 inline-flex items-center mx-auto")}>Actions</div>
+                  <div className={cn("min-w-0 inline-flex items-center mx-auto")}>
+                    {hasFilters ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFilters(defaultFilters)}
+                        className="h-7 text-destructive hover:bg-destructive/10 animate-in fade-in zoom-in duration-200"
+                      >
+                        <FilterX className="h-4 w-4 mr-1" />
+                        <span className="text-[10px] uppercase">Clear</span>
+                      </Button>
+                    ) : (
+                      <span className="text-sm  animate-in fade-in zoom-in duration-200">Actions</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
