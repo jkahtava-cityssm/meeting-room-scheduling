@@ -17,6 +17,7 @@ export async function findPublicEvents(where?: Prisma.EventWhereInput, tx: Prism
   return tx.event.findMany({
     where,
     select: PUBLIC_EVENT_SELECT,
+    orderBy: { eventId: "asc" },
   });
 }
 
@@ -37,6 +38,7 @@ export async function findPublicRooms(where?: Prisma.RoomWhereInput, tx: Prisma.
   const rooms = await tx.room.findMany({
     where,
     select: ROOM_SELECT,
+    orderBy: { roomId: "asc" },
   });
 
   return flattenPublicRoom(rooms);

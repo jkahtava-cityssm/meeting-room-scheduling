@@ -15,5 +15,6 @@ export async function findManyRoomCategories(
   return tx.roomCategory.findMany({
     where,
     select: ROOM_CATEGORY_SELECT,
+    orderBy: { roomCategoryId: "asc" },
   });
 }

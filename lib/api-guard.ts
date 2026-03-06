@@ -124,6 +124,7 @@ async function getUserFromRequest(
     const account = await prisma.account.findFirst({
       select: { userId: true },
       where: { accountId },
+      orderBy: { userId: "asc" },
     });
 
     if (!account?.userId) return null;

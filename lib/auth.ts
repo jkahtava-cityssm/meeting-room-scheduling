@@ -149,7 +149,7 @@ async function createDefaultRole(userId: number) {
     return;
   }
 
-  const role = await prisma.role.findFirst({ where: { roleId: roleId } });
+  const role = await prisma.role.findFirst({ where: { roleId: roleId }, orderBy: { roleId: "asc" } });
 
   if (role) {
     await prisma.userRole.create({

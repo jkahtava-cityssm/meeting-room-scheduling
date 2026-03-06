@@ -25,7 +25,7 @@ const USER_ROLE_SELECT = {
 } as const satisfies Prisma.UserRoleSelect;
 
 export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
-  const userList = await tx.user.findMany({ where, select: USER_SELECT });
+  const userList = await tx.user.findMany({ where, select: USER_SELECT, orderBy: { id: "asc" } });
   if (!userList || userList.length === 0) {
     return [];
   }
@@ -86,7 +86,10 @@ export async function findManyUsersWithRoles(
 export async function getDefaultRole(
   tx: Prisma.TransactionClient = prisma,
 ): Promise<{ roleId: number | null; name: string | null }> {
-  const defaultRole = await tx.configuration.findFirst({ where: { key: "defaultUserRole" } });
+  const defaultRole = await tx.configuration.findFirst({
+    where: { key: "defaultUserRole" },
+    orderBy: { configurationId: "asc" },
+  });
 
   const defaultRoleID = Number(defaultRole?.value);
   if (!Number.isFinite(defaultRoleID)) {
@@ -103,5 +106,5 @@ export async function getDefaultRole(
 }
 
 export async function findSession(where: Prisma.SessionWhereInput, tx: Prisma.TransactionClient = prisma) {
-  return tx.session.findFirst({ where, select: SESSION_SELECT });
+  return tx.session.findFirst({ where, select: SESSION_SELECT, orderBy: { userId: "asc" } });
 }

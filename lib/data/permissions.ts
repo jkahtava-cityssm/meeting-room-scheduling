@@ -34,9 +34,10 @@ export async function findManyExpandedPermissionSets(
   where?: Prisma.RoleWhereInput,
   tx: Prisma.TransactionClient = prisma,
 ): Promise<IPermissionSet[] | undefined> {
-  const roles = await tx.role.findMany({ where, include: PERMISSION_SET_SELECT });
+  const roles = await tx.role.findMany({ where, include: PERMISSION_SET_SELECT, orderBy: { roleId: "asc" } });
   const allResourceActions = await tx.resourceAction.findMany({
     include: { resource: true, action: true },
+    orderBy: { resourceActionId: "asc" },
   });
 
   return roles?.map((role) => {
@@ -88,12 +89,12 @@ const USER_ROLE_SELECT = {
 } as const satisfies Prisma.RoleSelect;
 
 export async function findManyRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma) {
-  const roles = await tx.role.findMany({ where, select: ROLE_SELECT });
+  const roles = await tx.role.findMany({ where, select: ROLE_SELECT, orderBy: { roleId: "asc" } });
 
   return roles;
 }
 async function findManyUserRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma) {
-  const roles = await tx.role.findMany({ where, select: USER_ROLE_SELECT });
+  const roles = await tx.role.findMany({ where, select: USER_ROLE_SELECT, orderBy: { roleId: "asc" } });
 
   if (!roles || roles.length === 0) {
     return [];
@@ -157,7 +158,11 @@ export async function findManyResourceAction(
   where?: Prisma.ResourceActionWhereInput,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  const resourceActions = await tx.resourceAction.findMany({ where, select: RESOURCE_ACTION_SELECT });
+  const resourceActions = await tx.resourceAction.findMany({
+    where,
+    select: RESOURCE_ACTION_SELECT,
+    orderBy: { resourceActionId: "asc" },
+  });
 
   return resourceActions;
 }

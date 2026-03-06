@@ -29,6 +29,7 @@ export async function findManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const rooms = await tx.room.findMany({
     where,
     select: ROOM_SELECT,
+    orderBy: { roomId: "asc" },
   });
 
   return flattenRoom(rooms);
@@ -38,6 +39,7 @@ export async function findFirstRoom(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const room = await tx.room.findFirst({
     where,
     select: ROOM_SELECT,
+    orderBy: { roomId: "asc" },
   });
 
   return flattenRoom(room ? [room] : [])[0];

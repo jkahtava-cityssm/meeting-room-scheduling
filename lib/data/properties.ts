@@ -13,5 +13,6 @@ export async function findManyProperties(where?: Prisma.PropertyWhereInput, tx: 
   return tx.property.findMany({
     where,
     select: PROPERTY_SELECT,
+    orderBy: { propertyId: "asc" },
   });
 }

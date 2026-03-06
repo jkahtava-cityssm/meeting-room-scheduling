@@ -11,5 +11,5 @@ const STATUS_SELECT = {
 } as const satisfies Prisma.StatusSelect;
 
 export async function findManyStatus(where?: Prisma.StatusWhereInput, tx: Prisma.TransactionClient = prisma) {
-  return tx.status.findMany({ where, select: STATUS_SELECT });
+  return tx.status.findMany({ where, select: STATUS_SELECT, orderBy: { statusId: "asc" } });
 }

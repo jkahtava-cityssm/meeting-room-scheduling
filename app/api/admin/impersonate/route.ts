@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       const roleName = await prisma.role.findFirst({
         select: { name: true },
         where: { roleId: Number(roleId) },
+        orderBy: { roleId: "asc" },
       });
 
       const session = await prisma.session.update({

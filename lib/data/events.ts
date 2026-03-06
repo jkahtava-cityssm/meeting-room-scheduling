@@ -53,6 +53,7 @@ export async function findManyEvents(where?: Prisma.EventWhereInput) {
   const events = await prisma.event.findMany({
     where,
     include: EVENT_INCLUDE,
+    orderBy: { eventId: "asc" },
   });
   return flattenEvent(events);
 }
@@ -66,7 +67,7 @@ export async function countEvents(where?: Prisma.EventWhereInput) {
 }
 
 export async function findFirstEvent(where?: Prisma.EventWhereInput) {
-  const event = await prisma.event.findFirst({ where, include: EVENT_INCLUDE });
+  const event = await prisma.event.findFirst({ where, include: EVENT_INCLUDE, orderBy: { eventId: "asc" } });
 
   if (!event) return null;
 

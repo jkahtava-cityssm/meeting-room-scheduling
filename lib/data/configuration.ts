@@ -54,7 +54,11 @@ export async function findManyConfiguration(
   const where = {
     OR: keys.map((key) => ({ key })),
   };
-  const configEntries = await tx.configuration.findMany({ where, select: CONFIGURATION_SELECT });
+  const configEntries = await tx.configuration.findMany({
+    where,
+    select: CONFIGURATION_SELECT,
+    orderBy: { configurationId: "asc" },
+  });
 
   return configEntries.map((entry) => ({
     key: entry.key as TConfigurationKeys,
@@ -63,4 +67,20 @@ export async function findManyConfiguration(
     type: entry.type as "string" | "number" | "boolean",
     description: entry.description ?? "",
   }));
+}
+
+export async function upsertConfiguration(
+  params: {
+    where: Prisma.ConfigurationWhereUniqueInput;
+    create: Prisma.ConfigurationCreateInput;
+    update: Prisma.ConfigurationUpdateInput;
+  },
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.configuration.upsert({
+    where: params.where,
+    create: params.create,
+    update: params.update,
+    select: CONFIGURATION_SELECT,
+  });
 }
