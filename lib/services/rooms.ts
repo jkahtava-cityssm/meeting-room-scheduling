@@ -11,7 +11,7 @@ const AllRooms: IRoom = {
   color: "zinc",
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  icon: "Asterisk",
+  icon: "asterisk",
   publicFacing: false,
   roomCategoryId: -1,
   roomCategory: {

@@ -8,7 +8,7 @@ const AllStatus: IStatus = {
   statusId: -1,
   key: "ALL",
   name: "Any Status",
-  icon: "Asterisk",
+  icon: "asterisk",
   color: "zinc",
 };
 
