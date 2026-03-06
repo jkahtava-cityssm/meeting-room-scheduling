@@ -2,23 +2,22 @@ import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@
 import { getServerSession } from "@/lib/auth";
 import { prisma } from "@/prisma";
 import { findManyStatus } from "@/lib/data/status";
+import { guardRoute } from "@/lib/api-guard";
+import { NextRequest } from "next/server";
 
-export async function GET() {
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage("DATABASE_URL Missing");
-  }
+export async function GET(req: NextRequest) {
+  return guardRoute(
+    req,
+    { IsPublic: { type: "role", role: "Public" } },
 
-  const session = await getServerSession();
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+      const status = await findManyStatus();
 
-  if (!session) {
-    return BadRequestMessage("Not Authorized");
-  }
+      if (!status) {
+        return InternalServerErrorMessage();
+      }
 
-  const status = await findManyStatus();
-
-  if (!status) {
-    return InternalServerErrorMessage();
-  }
-
-  return SuccessMessage("Collected Status", status);
+      return SuccessMessage("Collected Status", status);
+    },
+  );
 }

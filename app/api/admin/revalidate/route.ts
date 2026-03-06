@@ -4,19 +4,23 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
-  return guardRoute(req, { type: "function", check: () => process.env.NODE_ENV === "development" }, async () => {
-    const { paths, tags } = await req.json();
+  return guardRoute(
+    req,
+    { IsDevelopment: { type: "function", check: () => process.env.NEXT_PUBLIC_ENVIRONMENT === "development" } },
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+      const { paths, tags } = await req.json();
 
-    for (const path of paths) {
-      revalidatePath(path, "page");
-      revalidatePath(path, "layout");
-      revalidatePath(path);
-    }
+      for (const path of paths) {
+        revalidatePath(path, "page");
+        revalidatePath(path, "layout");
+        revalidatePath(path);
+      }
 
-    for (const tag of tags) {
-      revalidateTag(tag);
-    }
+      for (const tag of tags) {
+        revalidateTag(tag);
+      }
 
-    return NoContentMessage();
-  });
+      return NoContentMessage();
+    },
+  );
 }

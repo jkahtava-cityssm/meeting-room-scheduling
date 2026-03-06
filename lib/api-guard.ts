@@ -4,87 +4,238 @@ import { SessionAction, SessionResource, SessionRole } from "./types";
 import { prisma } from "@/prisma";
 import {
   BadRequestMessage,
-  hasPermission,
-  hasRole,
+  ForbiddenMessage,
   InternalServerErrorMessage,
-  isRequirementMet,
-  PermissionRequirement,
+  UnauthorizedMessage,
   VerifyToken,
 } from "./api-helpers";
 
-export async function guardRoute(
+import {
+  buildPermissionCache,
+  isGroupRequirementMet,
+  PermissionCache,
+  PermissionRequirement,
+} from "./auth-permission-checks";
+
+import { getRolesByUserId } from "./data/permissions";
+import { prettifyError, ZodType } from "zod/v4";
+
+export type LabeledRequirements = {
+  [label: string]: PermissionRequirement | PermissionRequirement[];
+};
+
+export type GuardRequirement =
+  | {
+      AllOf?: LabeledRequirements[];
+      AnyOf?: LabeledRequirements[];
+      Passthrough?: LabeledRequirements[];
+    }
+  | LabeledRequirements;
+
+type UnionToIntersection<U> = (U extends unknown ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+
+export type PermissionResult<T> = {
+  [K in keyof UnionToIntersection<ExtractLabels<T>>]: boolean;
+};
+
+// A helper to flatten the labels from a nested GuardRequirement
+export type ExtractLabels<T> = T extends { AllOf?: unknown } | { AnyOf?: unknown } | { Passthrough?: unknown }
+  ?
+      | (T extends { AllOf: Array<infer U> } ? U : never)
+      | (T extends { AnyOf: Array<infer U> } ? U : never)
+      | (T extends { Passthrough: Array<infer U> } ? U : never)
+  : T;
+
+export async function guardRoute<const T extends GuardRequirement, S = undefined>(
   req: NextRequest,
-  requirement: PermissionRequirement,
-  handler: (userId: number, roles: Role[]) => Promise<Response>
+  groupedRequirements: T,
+
+  handler: (args: {
+    sessionUserId: number;
+    permissionCache: PermissionCache;
+    permissions: PermissionResult<T>;
+    sessionId: number | null;
+    data: S;
+  }) => Promise<Response>,
+  schema?: ZodType<S>,
 ): Promise<Response> {
   if (!process.env.DATABASE_URL) {
     return InternalServerErrorMessage("DATABASE_URL Missing");
   }
 
-  const userId = await getUserIdFromRequest(req);
+  const user = await getUserFromRequest(req);
 
-  if (!userId) {
-    return BadRequestMessage("Not Authorized");
+  if (!user) {
+    return UnauthorizedMessage();
   }
 
-  const roles = await GetUserPermissions(userId);
+  const permissionCache = buildPermissionCache(user.roles);
 
-  const isAuthorized = await isRequirementMet(roles, requirement);
+  const { authorized, permissions, unauthorizedMessages } = await evaluateGuard(permissionCache, groupedRequirements);
 
-  if (!isAuthorized) {
-    return BadRequestMessage("Not Authorized");
+  if (!authorized) {
+    return ForbiddenMessage(`Missing permissions: ${unauthorizedMessages.join(", ")}`);
   }
 
-  return handler(userId, roles);
+  let validatedData = undefined;
+
+  const hasBody = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
+
+  if (!!schema) {
+    let rawData;
+    if (hasBody) {
+      try {
+        rawData = await req.json();
+      } catch {
+        return BadRequestMessage("Invalid JSON body");
+      }
+    } else {
+      // Optional: Pull from searchParams for GET requests
+      rawData = Object.fromEntries(req.nextUrl.searchParams);
+    }
+
+    const result = schema.safeParse(rawData);
+    if (!result.success) {
+      return BadRequestMessage("Validation Failed: " + prettifyError(result.error));
+    }
+    validatedData = result.data;
+  }
+
+  return handler({
+    sessionUserId: user.userId,
+    permissionCache,
+    permissions,
+    sessionId: user.sessionId,
+    data: validatedData as S,
+  });
 }
 
-async function getUserIdFromRequest(req: NextRequest): Promise<number | null> {
+async function getUserFromRequest(
+  req: NextRequest,
+): Promise<{ userId: number; roles: Role[]; sessionId: number | null } | null> {
   const authHeader = req.headers.get("authorization");
   const token = (authHeader || "").split("Bearer ").at(1);
   if (token) {
     const tokenResponse = await VerifyToken(token);
     const accountId = tokenResponse.data?.sub;
+
     if (!accountId) return null;
 
     const account = await prisma.account.findFirst({
       select: { userId: true },
       where: { accountId },
+      orderBy: { userId: "asc" },
     });
 
-    return account?.userId ?? null;
+    if (!account?.userId) return null;
+
+    const roles = await getRolesByUserId(account.userId);
+
+    if (!roles) return null;
+
+    return { userId: account.userId, roles, sessionId: null };
   }
 
   const session = await getServerSession();
-  return session ? Number(session.user.id) : null;
+  if (!session) return null;
+
+  return { userId: Number(session.user.id), roles: session.user.roles, sessionId: Number(session.session?.id) };
 }
 
-export async function GetUserPermissions(userId: number): Promise<Role[]> {
-  const user = await prisma.user.findFirst({
-    include: {
-      userRole: {
-        include: {
-          role: {
-            include: { roleResourceAction: { include: { resource: true, action: true } } },
-          },
-        },
-      },
-    },
-    where: { id: userId },
-  });
+export async function evaluateGuard<T extends GuardRequirement>(
+  cache: PermissionCache,
+  req: T,
+): Promise<{ authorized: boolean; permissions: PermissionResult<T>; unauthorizedMessages: string[] }> {
+  const formattedRequirements = formatPermissionStructure(req);
 
-  if (!user?.userRole) {
+  const permissions: Record<string, boolean> = {};
+  const messages: string[] = [];
+
+  let allOfPassed = true;
+  if (formattedRequirements.AllOf) {
+    const { groupPermissions, outcomes } = await evaluateGroups(cache, formattedRequirements.AllOf, "AND");
+
+    Object.assign(permissions, groupPermissions);
+
+    for (const o of outcomes) {
+      if (!o.passed) {
+        allOfPassed = false;
+        messages.push(...o.messages);
+      }
+    }
   }
 
-  const roles =
-    user?.userRole.map((userRole) => {
-      return {
-        name: userRole.role.name,
-        roleId: userRole.role.roleId,
-        permissions: userRole.role.roleResourceAction.map((permission) => {
-          return { permit: permission.permit, action: permission.action.name, resource: permission.resource.name };
-        }),
-      };
-    }) || [];
+  let anyOfPassed = true;
+  if (formattedRequirements.AnyOf) {
+    const { groupPermissions, outcomes } = await evaluateGroups(cache, formattedRequirements.AnyOf, "OR");
+    Object.assign(permissions, groupPermissions);
 
-  return roles;
+    anyOfPassed = outcomes.length !== 0 || outcomes.some((o) => o.passed);
+
+    if (!anyOfPassed) {
+      outcomes.forEach((o) => messages.push(...o.messages));
+    }
+  }
+
+  if (formattedRequirements.Passthrough) {
+    const { groupPermissions } = await evaluateGroups(cache, formattedRequirements.Passthrough, "OR");
+    Object.assign(permissions, groupPermissions);
+  }
+
+  return {
+    authorized: allOfPassed && anyOfPassed,
+    permissions: permissions as PermissionResult<T>,
+    unauthorizedMessages: [...new Set(messages)],
+  };
+}
+
+type Outcome = { passed: boolean; messages: string[] };
+
+async function evaluateGroups(
+  cache: PermissionCache,
+  groups: LabeledRequirements[],
+  mode: "AND" | "OR",
+): Promise<{ groupPermissions: Record<string, boolean>; outcomes: Outcome[] }> {
+  if (!groups?.length) return { groupPermissions: {}, outcomes: [] };
+
+  const evaluations = await Promise.all(groups.map((g) => isGroupRequirementMet(cache, g)));
+
+  const processedGroups: Record<string, boolean> = {};
+  const outcomes: Outcome[] = [];
+
+  for (const { byGroup, unauthorizedMessages } of evaluations) {
+    Object.assign(processedGroups, byGroup);
+
+    const values = Object.values(byGroup);
+    const passed = mode === "AND" ? values.every(Boolean) : values.some(Boolean);
+
+    outcomes.push({ passed, messages: unauthorizedMessages });
+  }
+
+  return { groupPermissions: processedGroups, outcomes };
+}
+
+type FormattedRequirement = {
+  AllOf?: LabeledRequirements[];
+  AnyOf?: LabeledRequirements[];
+  Passthrough?: LabeledRequirements[];
+};
+
+function formatPermissionStructure<T extends GuardRequirement>(requirements: T): FormattedRequirement {
+  const isGroupedRequirement =
+    typeof requirements === "object" &&
+    requirements !== null &&
+    (Object.prototype.hasOwnProperty.call(requirements, "AllOf") ||
+      Object.prototype.hasOwnProperty.call(requirements, "AnyOf") ||
+      Object.prototype.hasOwnProperty.call(requirements, "Passthrough"));
+
+  if (isGroupedRequirement) {
+    return {
+      AllOf: requirements.AllOf,
+      AnyOf: requirements.AnyOf,
+      Passthrough: requirements.Passthrough,
+    } as FormattedRequirement;
+  }
+
+  return { AllOf: [requirements as LabeledRequirements] };
 }

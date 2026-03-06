@@ -11,9 +11,9 @@ import { format } from "date-fns";
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { type: "role", role: "Any" },
+    { IsPublic: { type: "role", role: "Public" } },
 
-    async (userId, roles) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");
@@ -43,6 +43,6 @@ export async function GET(request: NextRequest) {
       //console.log("COUNT RAN: ", format(new Date(), "PPP @ p"));
       //console.log("###########################################");
       return SuccessMessage("Collected Total Events", { total });
-    }
+    },
   );
 }

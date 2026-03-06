@@ -5,13 +5,36 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 
 import { cn } from "@/lib/utils";
 
-function ScrollArea({ className, children, ...props }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+function ScrollArea({
+  className,
+  children,
+  viewportRef,
+  popoverLayerRef,
+  viewportClassName,
+  ...props
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
+  viewportRef?: React.Ref<HTMLDivElement>;
+  popoverLayerRef?: React.Ref<HTMLDivElement>;
+  viewportClassName?: string;
+}) {
   return (
     <ScrollAreaPrimitive.Root data-slot="scroll-area" className={cn("relative flex flex-col ", className)} {...props}>
       <ScrollAreaPrimitive.Viewport
+        ref={viewportRef}
         data-slot="scroll-area-viewport"
-        className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
+        className={cn(
+          "focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1 overflow-clip",
+          viewportClassName,
+        )}
       >
+        <div
+          ref={popoverLayerRef}
+          className={cn(
+            "pointer-events-none absolute inset-0 overflow-clip",
+            "**:data-radix-popper-content-wrapper:absolute!",
+          )}
+        />
+
         {children}
       </ScrollAreaPrimitive.Viewport>
       <ScrollBar />
@@ -33,7 +56,7 @@ function ScrollBar({
         "flex touch-none p-px transition-colors select-none",
         orientation === "vertical" && "h-full w-2.5 border-l border-l-transparent",
         orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent",
-        className
+        className,
       )}
       {...props}
     >

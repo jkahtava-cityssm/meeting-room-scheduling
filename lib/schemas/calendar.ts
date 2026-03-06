@@ -1,27 +1,50 @@
 import { z } from "zod/v4";
 
-export const SRoomScope = z.object({
-  roomScopeId: z.number(),
-  name: z.string().min(1, "Name is required"),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  accessLevel: z.number(),
+export const utcDateSchema = z.coerce.date().transform((d) => {
+  return new Date(
+    Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth(),
+      d.getUTCDate(),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+    ),
+  );
+});
+
+const DateSchema = z.union([z.string(), z.date().transform((d) => d.toISOString())]);
+
+export const SProperty = z.object({
+  propertyId: z.number(),
+  name: z.string(),
+  type: z.string(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
+});
+
+export const SRoomRoles = z.object({
+  roomRoleId: z.number(),
+  roleId: z.number(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRoomCategory = z.object({
   roomCategoryId: z.number(),
   name: z.string().min(1, "Name is required"),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRoomProperty = z.object({
   roomPropertyId: z.number(),
-  roomId: z.number(),
-  name: z.string().min(1, "Name is required"),
-  value: z.string().min(1, "Value is required"),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  propertyId: z.number(),
+  name: z.string(),
+  value: z.string(),
+  type: z.string(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRoom = z.object({
@@ -29,13 +52,13 @@ export const SRoom = z.object({
   name: z.string().min(1, "Name is required"),
   color: z.string().min(1, "Color is required"),
   icon: z.string().nullable(),
-  roomScopeId: z.number(),
-  roomScope: SRoomScope,
+  publicFacing: z.union([z.boolean(), z.stringbool()]).default(false),
   roomCategoryId: z.number(),
   roomCategory: SRoomCategory,
-  RoomProperty: z.array(SRoomProperty).optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  roomRoles: z.array(SRoomRoles).optional(),
+  roomProperty: z.array(SRoomProperty).optional(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRecurrence = z.object({
@@ -43,16 +66,20 @@ export const SRecurrence = z.object({
   recurrenceCancellationId: z.number().nullable(),
   recurrenceExceptionId: z.number().nullable(),
   rule: z.string(),
-  startDate: z.string(),
-  endDate: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  startDate: DateSchema,
+  endDate: DateSchema,
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SUser = z.object({
   userId: z.number(),
   name: z.string(),
   email: z.string(),
+  department: z.string().optional().nullable(),
+  jobTitle: z.string().optional().nullable(),
+  employeeNumber: z.string().optional().nullable(),
+  employeeActive: z.union([z.boolean(), z.stringbool()]),
 });
 
 export const SMultiDay = z.object({
@@ -73,23 +100,16 @@ export const SEvent = z.object({
   userId: z.number().nullable().optional(),
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
-  startDate: z.coerce.string({
-    error: (issue) => (issue.input === undefined ? "Start date is required" : "Not a valid Start Date"),
-  }),
-  //I hate this, but its the only way to fix the zodResolver
-  //Others have similar issues see https://github.com/colinhacks/zod/issues/3537
-  endDate: z.coerce.string({
-    error: (issue) => (issue.input === undefined ? "End date is required" : "Not a valid End Date"),
-  }),
-
+  startDate: DateSchema,
+  endDate: DateSchema,
   title: z.string().min(1, "Title is required"),
   description: z.string(),
   parentEventId: z.number().nullable().optional(),
   room: SRoom,
   status: SStatus,
   recurrence: SRecurrence.nullish(),
-  createdAt: z.coerce.string(),
-  updatedAt: z.coerce.string(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
   multiDay: SMultiDay.optional(),
 });
 

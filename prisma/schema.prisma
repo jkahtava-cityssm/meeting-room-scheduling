@@ -15,27 +15,35 @@ model User {
   emailVerified  Boolean  @default(false) @map("email_verified")
   image          String?
   employeeNumber String?  @map("employee_number")
+  department     String?  @map("department")
+  jobTitle       String?  @map("job_title")
+  supervisorId   Int?     @map("supervisor_id")
   employeeActive Boolean  @default(true) @map("employee_active")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  accounts Account[]
-  sessions Session[]
-  userRole UserRole[]
-  event    Event[]
+  account     Account[]
+  session     Session[]
+  userRole    UserRole[]
+  event       Event[]
+  ssoprovider SSOProvider[]
+
+  supervisor User?  @relation("EmployeeToSupervisor", fields: [supervisorId], references: [id])
+  employees  User[] @relation("EmployeeToSupervisor")
 
   @@map("user")
 }
 
 model Session {
-  id        Int      @id @default(autoincrement()) @map("user_session_id")
-  userId    Int      @map("user_id")
-  token     String   @unique
-  expiresAt DateTime @map("expires_at")
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement()) @map("user_session_id")
+  userId           Int      @map("user_id")
+  token            String   @unique
+  expiresAt        DateTime @map("expires_at")
+  ipAddress        String?  @map("ip_address")
+  userAgent        String?  @map("user_agent")
+  impersonatedRole String?  @map("impersonated_role")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -75,20 +83,35 @@ model Verification {
   @@map("user_verification")
 }
 
+model SSOProvider {
+  id             Int     @id @default(autoincrement()) @map("sso_provider_id")
+  issuer         String
+  domain         String
+  oidcConfig     String? @map("oidc_config")
+  samlConfig     String? @map("saml_config")
+  userId         Int?    @map("user_id")
+  providerId     String  @map("provider_id")
+  organizationId String? @map("organization_id")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sso_provider")
+}
+
 model Room {
   roomId         Int      @id @default(autoincrement()) @map("room_id")
   name           String
   color          String
   icon           String?  @default("none")
+  publicFacing   Boolean  @default(false) @map("public_facing")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
-  roomScopeId    Int      @default(1) @map("room_scope_id")
-  roomCategoryId Int      @default(1) @map("room_category_id")
+  roomCategoryId Int      @map("room_category_id")
 
   roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
-  roomScope    RoomScope      @relation(fields: [roomScopeId], references: [roomScopeId])
-  event        Event[]
+  events       Event[]
   roomProperty RoomProperty[]
+  roomRoles    RoomRole[]
 
   @@map("room")
 }
@@ -104,27 +127,46 @@ model RoomCategory {
 }
 
 model RoomProperty {
-  roomPropertyId Int      @id @default(autoincrement()) @map("room_property_id")
-  roomId         Int      @map("room_id")
-  name           String
-  value          String
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  roomPropertyId Int     @id @default(autoincrement()) @map("room_property_id")
+  roomId         Int     @map("room_id")
+  propertyId     Int     @map("property_id")
+  value          String?
 
-  room Room @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
+  room     Room     @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [propertyId])
+
+  @@unique([roomId, propertyId], name: "roomId_propertyId")
   @@map("room_property")
 }
 
-model RoomScope {
-  roomScopeId Int      @id @default(autoincrement()) @map("room_scope_id")
-  name        String
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  accessLevel Int      @default(1) @map("access_level")
-  room        Room[]
+model RoomRole {
+  roomRoleId Int      @id @default(autoincrement()) @map("room_role_id")
+  roomId     Int      @map("room_id")
+  roleId     Int      @map("role_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  @@map("room_scope")
+  room Room @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+
+  @@unique([roomId, roleId], name: "roomId_roleId_unique")
+  @@index([roleId], name: "roomrole_role_idx")
+  @@index([roomId], name: "roomrole_room_idx")
+  @@map("room_role")
+}
+
+model Property {
+  propertyId   Int            @id @default(autoincrement()) @map("property_id")
+  name         String         @unique
+  type         String
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  roomProperty RoomProperty[]
+
+  @@map("property")
 }
 
 //Member 1 or Many Roles, MemberRole
@@ -133,12 +175,14 @@ model UserRole {
   userRoleId Int      @id @default(autoincrement()) @map("user_role_id")
   userId     Int      @map("user_id")
   roleId     Int      @map("role_id")
+  granted    Boolean  @default(true)
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
 
+  @@unique([userId, roleId], name: "userId_roleId")
   @@map("user_role")
 }
 
@@ -150,25 +194,38 @@ model Role {
 
   userRole           UserRole[]
   roleResourceAction RoleResourceAction[]
-  // RolePermission     RolePermission[]
+  roomRoles          RoomRole[]
 
   @@map("role")
+}
+
+model ResourceAction {
+  resourceActionId Int      @id @default(autoincrement()) @map("resource_action_id")
+  resourceId       Int      @map("resource_id")
+  actionId         Int      @map("action_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  resource           Resource             @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
+  action             Action               @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
+  roleResourceAction RoleResourceAction[] // Permissions for this resource-action pair
+
+  @@unique([resourceId, actionId]) // Prevent duplicates
+  @@map("resource_action")
 }
 
 model RoleResourceAction {
   roleResourceActionId Int      @id @default(autoincrement()) @map("role_resource_action_id")
   roleId               Int      @map("role_id")
-  resourceId           Int      @map("resource_id")
-  actionId             Int      @map("action_id")
+  resourceActionId     Int      @map("resource_action_id")
   permit               Boolean
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
-  role     Role     @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
-  resource Resource @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
-  action   Action   @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
-  //RolePermission RolePermission[]
+  role           Role           @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+  resourceAction ResourceAction @relation(fields: [resourceActionId], references: [resourceActionId], onDelete: Cascade)
 
+  @@unique([roleId, resourceActionId])
   @@map("role_resource_action")
 }
 
@@ -179,28 +236,21 @@ model Resource {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  roleResourceAction RoleResourceAction[]
+  resourceAction ResourceAction[]
 
   @@map("resource")
 }
 
 model Action {
-  actionId  Int      @id @default(autoincrement())
+  actionId  Int      @id @default(autoincrement()) @map("action_id")
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  roleResourceAction RoleResourceAction[]
+  resourceAction ResourceAction[]
 
   @@map("action")
 }
-
-/**
- * type = frequency
- * pattern = "ByDay"
- * totalOccurrences = Count
- * daySpan/week/month/year = Interval
- */
 
 model Recurrence {
   recurrenceId             Int      @id @default(autoincrement()) @map("recurrence_id")
@@ -247,11 +297,10 @@ model RecurrenceException {
 }
 
 model Event {
-  eventId  Int  @id @default(autoincrement()) @map("event_id")
-  roomId   Int  @map("room_id")
-  statusId Int  @map("status_id") //e.g. "confirmed", "tentative", "cancelled"
-  userId   Int? @map("user_id") //who booked the event
-
+  eventId     Int      @id @default(autoincrement()) @map("event_id")
+  roomId      Int      @map("room_id")
+  statusId    Int      @map("status_id")
+  userId      Int?     @map("user_id")
   startDate   DateTime @map("start_date")
   endDate     DateTime @map("end_date")
   title       String
@@ -265,8 +314,8 @@ model Event {
 
   user User? @relation(fields: [userId], references: [id])
 
-  room   Room    @relation(fields: [roomId], references: [roomId])
-  status Status? @relation(fields: [statusId], references: [statusId])
+  room   Room   @relation(fields: [roomId], references: [roomId])
+  status Status @relation(fields: [statusId], references: [statusId])
 
   @@map("event")
 }
@@ -275,8 +324,8 @@ model Status {
   statusId  Int      @id @default(autoincrement()) @map("status_id")
   key       String   @unique
   name      String
-  icon      String?  @default("none")
-  color     String?  @default("none")
+  icon      String   @default("none")
+  color     String   @default("none")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -288,37 +337,12 @@ model Status {
 model Configuration {
   configurationId Int      @id @default(autoincrement()) @map("configuration_id")
   key             String   @unique
+  name            String
   description     String?
   value           String
+  type            String
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("configuration")
 }
-
-/**
- * export interface IEvent {
- * id: number;
- * key: string;
- * startDate: string;
- * endDate: string;
- * title: string;
- * description: string;
- * room: IRoom;
- * parentEvent: IEvent | null;
- * }
- */
-
-/**
- * //Resource 1 or Many Attributes
- * model Attribute {
- * attributeId Int      @id @default(autoincrement())
- * name        String
- * resourceId  Int
- * actionId    Int
- * createdAt   DateTime @default(now())
- * updatedAt   DateTime @updatedAt
- * resource Resource @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
- * action   Action   @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
- * }
- */

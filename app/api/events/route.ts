@@ -9,13 +9,14 @@ import { guardRoute } from "@/lib/api-guard";
 import { Prisma } from "@prisma/client";
 import { createEvent, upsertEvent, updateEvent, findManyEvents } from "@/lib/data/events";
 import { createRecurrence, upsertRecurrence, deleteRecurrence } from "@/lib/data/recurrence";
+import { SEventPUT } from "@/lib/services/events";
 
 export async function POST(request: NextRequest) {
   return guardRoute(
     request,
-    { type: "permission", resource: "Event", action: "Create" },
+    { CreateEvent: { type: "permission", resource: "Event", action: "Create" } },
 
-    async () => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { title, description, startDate, endDate, roomId, rule, ruleStartDate, ruleEndDate, userId } =
         await request.json();
 
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       }
 
       return CreatedMessage("Created Event", event);
-    }
+    },
   );
 }
 
@@ -55,78 +56,70 @@ export async function PUT(request: NextRequest) {
   return guardRoute(
     request,
     {
-      type: "or",
-      requirements: [
-        { type: "role", role: "Admin" },
-        { type: "permission", resource: "Event", action: "Update" },
-      ],
+      UpdateEvent: { type: "permission", resource: "Event", action: "Update" },
     },
-    async () => {
-      const { eventData, ruleData } = await request.json();
+    async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
+      const {
+        eventId,
+        roomId,
+        userId,
+        statusId,
+        title,
+        description,
+        startDate,
+        endDate,
+        recurrenceId,
+        rule,
+        ruleStartDate,
+        ruleEndDate,
+      } = data;
 
-      if (!eventData) {
-        return BadRequestMessage();
-      }
+      const event = await prisma.$transaction(async (tx) => {
+        let recurrence = null;
 
-      if (
-        eventData.title === undefined ||
-        eventData.startDate === undefined ||
-        eventData.endDate === undefined ||
-        eventData.roomId === undefined ||
-        eventData.userId === undefined ||
-        eventData.statusId === undefined
-      ) {
-        return BadRequestMessage();
-      }
+        if (rule && ruleStartDate && ruleEndDate) {
+          recurrence = await upsertRecurrence(
+            {
+              create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+              where: { recurrenceId: recurrenceId ?? -1 },
+              update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+            },
+            tx,
+          );
+        } else if (recurrenceId) {
+          await tx.recurrence.delete({ where: { recurrenceId } });
+        }
 
-      if (
-        ruleData &&
-        (ruleData.rule === undefined || ruleData.ruleStartDate === undefined || ruleData.ruleEndDate === undefined)
-      ) {
-        return BadRequestMessage();
-      }
-      const { eventId, title, description, startDate, endDate, roomId, recurrenceId, userId, statusId } = eventData;
-      const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
-
-      let recurrence = null;
-
-      if (rule) {
-        recurrence = await upsertRecurrence({
-          create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
-          where: { recurrenceId: recurrenceId },
-          update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
-        });
-      }
-
-      if (ruleData === null && recurrenceId !== null && recurrenceId > 0) {
-        // Delete recurrence if ruleData is null and recurrenceId exists
-        await deleteRecurrence({
-          where: { recurrenceId: recurrenceId },
-        });
-      }
-
-      const event = await upsertEvent({
-        where: { eventId: eventId },
-        create: {
-          title,
-          description,
-          startDate,
-          endDate,
-          room: { connect: { roomId } },
-          recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : undefined,
-          status: { connect: { statusId: statusId } },
-          user: { connect: { id: userId } },
-        },
-        update: {
-          title,
-          description,
-          startDate,
-          endDate,
-          room: { connect: { roomId } },
-          recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : undefined,
-          status: { connect: { statusId: statusId } },
-          user: { connect: { id: userId } },
-        },
+        return await upsertEvent(
+          {
+            where: { eventId: eventId ?? -1 },
+            create: {
+              title,
+              description,
+              startDate,
+              endDate,
+              room: { connect: { roomId } },
+              ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
+              status: { connect: { statusId: statusId } },
+              ...(userId && { user: { connect: { id: userId } } }),
+            },
+            update: {
+              title,
+              description,
+              startDate,
+              endDate,
+              room: { connect: { roomId } },
+              status: { connect: { statusId } },
+              recurrence: recurrence
+                ? { connect: { recurrenceId: recurrence.recurrenceId } }
+                : recurrenceId
+                  ? { disconnect: true }
+                  : undefined,
+              ...(userId && { user: { connect: { id: userId } } }),
+            },
+          },
+          tx,
+        );
       });
 
       if (!event) {
@@ -138,7 +131,8 @@ export async function PUT(request: NextRequest) {
       }
 
       return CreatedMessage("Created Event", event);
-    }
+    },
+    SEventPUT,
   );
 }
 
@@ -146,13 +140,9 @@ export async function PATCH(request: NextRequest) {
   return guardRoute(
     request,
     {
-      type: "or",
-      requirements: [
-        { type: "role", role: "Admin" },
-        { type: "permission", resource: "Event", action: "Update" },
-      ],
+      UpdateEvent: { type: "permission", resource: "Event", action: "Update" },
     },
-    async () => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { eventData, ruleData } = await request.json();
 
       if (!eventData || !eventData.eventId) {
@@ -202,16 +192,16 @@ export async function PATCH(request: NextRequest) {
       }
 
       return SuccessMessage("Event updated successfully", event);
-    }
+    },
   );
 }
 
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { type: "permission", resource: "Event", action: "Read" },
+    { ReadEvent: { type: "permission", resource: "Event", action: "Read All" } },
 
-    async (userId, roles) => {
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
       const startDateParam = searchParams.get("startdate");
@@ -241,7 +231,7 @@ export async function GET(request: NextRequest) {
       };
 
       if (hasUserId) {
-        whereClause.AND = [{ userId: { equals: Number(userId) } }];
+        whereClause.AND = [{ userId: { equals: Number(sessionUserId) } }];
       }
 
       const events = await findManyEvents(whereClause);
@@ -251,6 +241,6 @@ export async function GET(request: NextRequest) {
       }
 
       return SuccessMessage("Collected Events", events);
-    }
+    },
   );
 }

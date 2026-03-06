@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { Form, FormProvider, useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,16 +17,23 @@ import { useContext } from "react";
 import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { useDisclosure } from "@/hooks/use-disclosure";
 
-import { useEventQuery, useEventsMutationDelete, useEventsMutationUpsert } from "@/lib/services/events";
+import {
+  IEventPUT,
+  SEventPUT,
+  useEventQuery,
+  useEventsMutationDelete,
+  useEventsMutationUpsert,
+} from "@/lib/services/events";
 import React from "react";
 import { IEvent } from "@/lib/schemas/calendar";
 import { useEventStore } from "@/lib/zustand/new-event-store";
 
 import FormFooter from "./multi-step-form-footer";
 import UnsavedChangesDialog from "./multi-step-form-unsaved-changes";
-import { useClientSession } from "@/hooks/use-client-auth";
+import { useSession } from "@/contexts/SessionProvider";
 import { isFormValid, isStepValid, updateRRuleIfNecessary } from "./multi-step-form-helper";
 import { ConfirmErrorDialog } from "./multi-step-form-confirm-prompt";
+import { usePublicConfiguration } from "@/lib/services/public";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -43,16 +50,23 @@ export const MultiStepForm = ({
   userId?: string;
   children: React.ReactNode;
 }) => {
-  const { session } = useClientSession();
+  const { session } = useSession();
   const { setEvent, resetEvent, getEventState } = useEventStore();
-
+  const { data: configurationData } = usePublicConfiguration();
   const storedEvent = getEventState().event;
 
+  const originElementRef = useRef<HTMLElement | null>(null);
+
+  // Prefer explicit `event` prop, then an explicit `creationDate` (new slot),
+  // then any stored draft in session storage. This avoids stale stored drafts
+  // overriding a freshly requested creation date.
   const defaultFormValues = event
     ? getEventValues(event)
-    : storedEvent
-    ? storedEvent
-    : defaultValues(creationDate, userId);
+    : creationDate
+      ? defaultValues(creationDate, userId, configurationData?.interval)
+      : storedEvent
+        ? storedEvent
+        : defaultValues(undefined, userId, configurationData?.interval);
 
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedEventSchema),
@@ -66,7 +80,7 @@ export const MultiStepForm = ({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [ignoreLastStep, setIgnoreLastStep] = useState(defaultFormValues["isRecurring"] === "false");
   const [startDate, setStartDate] = useState(
-    defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate
+    defaultFormValues.isRecurring === "true" ? defaultFormValues.ruleStartDate : defaultFormValues.startDate,
   );
 
   const [status, setStatus] = useState<FormStatus>(defaultFormValues["eventId"] === "0" ? "New" : "Read");
@@ -104,6 +118,41 @@ export const MultiStepForm = ({
   }, [status, collectedEvent, isFetching]);
 
   // Navigation functions
+
+  // Reset form when incoming props change (creationDate or event).
+  // - If the sheet is closed, always reset to the new defaults.
+  // - If the sheet is open, only reset when the form is not dirty (avoid clobbering user edits).
+  useEffect(() => {
+    const newDefaults = event
+      ? getEventValues(event)
+      : creationDate
+        ? defaultValues(creationDate, userId, configurationData?.interval)
+        : storedEvent
+          ? storedEvent
+          : defaultValues(undefined, userId, configurationData?.interval);
+
+    if (!isOpen) {
+      // Closed: always reset to new defaults
+      methods.reset(newDefaults);
+      setStatus(newDefaults["eventId"] === "0" ? "New" : "Read");
+      setCurrentStepIndex(0);
+      setIgnoreLastStep(newDefaults["isRecurring"] === "false");
+      setNextButtonDestructive(false);
+      setBackButtonDestructive(false);
+      return;
+    }
+
+    // Open: only reset when the form is pristine
+    if (!methods.formState.isDirty) {
+      methods.reset(newDefaults);
+      setStatus(newDefaults["eventId"] === "0" ? "New" : "Read");
+      setCurrentStepIndex(0);
+      setIgnoreLastStep(newDefaults["isRecurring"] === "false");
+      setNextButtonDestructive(false);
+      setBackButtonDestructive(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creationDate, event]);
   const nextStep = async () => {
     if (currentStepIndex < formSteps.length - 1 && !ignoreLastStep) {
       // Move to the next step if not at the last step
@@ -182,10 +231,40 @@ export const MultiStepForm = ({
 
     if (!allData) return;
 
-    const eventParse = z.safeParse(eventObject, allData);
-    const ruleParse = z.safeParse(ruleObject, allData);
+    const apiPayload: z.input<IEventPUT> = {
+      eventId: formData.eventId ? Number(formData.eventId) : undefined,
+      roomId: Number(formData.roomId),
+      userId: formData.userId ? Number(formData.userId) : null,
+      statusId: Number(formData.statusId),
+      title: formData.title,
+      description: formData.description || "",
+      startDate: formData.startDate,
+      endDate: formData.endDate,
 
-    if (eventParse.success && (isRecurring ? ruleParse.success : true)) {
+      recurrenceId: formData.recurrenceId ? Number(formData.recurrenceId) : null,
+      rule: isRecurring ? formData.rule : undefined,
+      ruleStartDate: isRecurring ? formData.ruleStartDate : undefined,
+      ruleEndDate: isRecurring ? formData.ruleEndDate : undefined,
+    };
+
+    const result = SEventPUT.safeParse(apiPayload);
+
+    if (!result.success) {
+      console.error("API Data Mismatch:", z.prettifyError(result.error));
+      return;
+    }
+
+    mutationUpsert.mutate(result.data, {
+      onSuccess: () => {
+        resetForm();
+        onClose();
+      },
+    });
+
+    //const eventParse = z.safeParse(eventObject, allData);
+    //const ruleParse = z.safeParse(ruleObject, allData);
+
+    /*if (eventParse.success && (isRecurring ? ruleParse.success : true)) {
       mutationUpsert.mutate(
         {
           eventData: eventParse.data,
@@ -197,9 +276,9 @@ export const MultiStepForm = ({
             onClose();
           },
           onError: () => {}, // Optional: handle error
-        }
+        },
       );
-    }
+    }*/
   };
 
   const onOpenChange = (open: boolean) => {
@@ -211,7 +290,7 @@ export const MultiStepForm = ({
   };
 
   const onCloseDrawer = () => {
-    if (methods.formState.isDirty) {
+    if (methods.formState.isDirty && status !== "Read") {
       setShowAlert(true);
       return;
     }
@@ -220,7 +299,10 @@ export const MultiStepForm = ({
   };
 
   const onOpenDrawer = () => {
+    originElementRef.current = document.activeElement as HTMLElement;
+
     resetForm();
+
     onOpen();
   };
 
@@ -255,7 +337,15 @@ export const MultiStepForm = ({
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetTrigger asChild>{children}</SheetTrigger>
 
-        <SheetContent className="w-full md:w-4xl p-4">
+        <SheetContent
+          onCloseAutoFocus={(e) => {
+            if (originElementRef.current) {
+              e.preventDefault(); // Stop Radix from trying to focus the hidden proxy trigger
+              originElementRef.current.focus();
+            }
+          }}
+          className="w-full md:w-4xl p-4"
+        >
           <SheetHeader>
             <SheetTitle>{currentStep.title}</SheetTitle>
             <SheetDescription>
@@ -274,6 +364,7 @@ export const MultiStepForm = ({
             status={status}
             session={session}
             userId={userId}
+            isSaving={mutationUpsert.isPending}
             onSave={onSave}
             onOpenChange={onOpenChange}
             currentStepIndex={currentStepIndex}
@@ -284,6 +375,7 @@ export const MultiStepForm = ({
             backButtonDestructive={backButtonDestructive}
             nextButtonDestructive={nextButtonDestructive}
             onDelete={onDelete}
+            isDeleting={mutationDelete.isPending}
             setStatus={setStatus}
           ></FormFooter>
         </SheetContent>

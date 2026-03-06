@@ -95,7 +95,7 @@ cert-init:
 		--email ${EMAIL} \
 		--agree-tos \
 		--no-eff-email \
-		-d ${DUCKDNS_DOMAIN}
+		-d ${SERVER_NAME}
 
 #  Manually renew SSL certificate
 cert-renew:

@@ -1,3 +1,6 @@
-export default async function Home() {
-  return <div>EVENTUALLY A LIST OF USERS WITH ADMINISTRATIVE ACCESS OR DIFFERENT ROLES</div>;
+import { PermissionGrid } from "@/app/features/permissions/permission-layout";
+import * as React from "react";
+
+export default function PermissionsPage() {
+  return <PermissionGrid />;
 }

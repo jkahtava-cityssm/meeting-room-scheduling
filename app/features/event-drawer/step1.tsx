@@ -5,14 +5,14 @@ import { useMultiStepForm } from "./multi-step-form";
 import { step1Schema } from "./event-drawer.validator";
 
 import { TColors } from "@/lib/types";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+
 import { SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookKey, Loader2Icon } from "lucide-react";
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { IconColored } from "@/components/ui/icon-colored";
-import { ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import { Textarea } from "@/components/ui/textarea";
 import { useRoomsQuery } from "@/lib/services/rooms";
@@ -22,7 +22,7 @@ import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
 import { FormStatus } from "./types";
 import { useUsersQuery } from "@/lib/services/users";
 import { Button } from "@/components/ui/button";
-import { useStatusQuery } from "@/lib/services/references";
+import { useStatusQuery } from "@/lib/services/status";
 import { DateTimePicker, DateTimePickerRef } from "@/components/ui/datetimepicker";
 import { useRef } from "react";
 import { Session } from "@/lib/auth-client";
@@ -33,9 +33,9 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 
   const { setIgnoreLastStep, setStartDate, userId } = useMultiStepForm();
 
-  const { data: rooms } = useRoomsQuery(false);
-  const { data: users } = useUsersQuery();
-  const { data: status } = useStatusQuery();
+  const { data: rooms, error: roomError } = useRoomsQuery(false);
+  const { data: users, error: userError } = useUsersQuery();
+  const { data: status, error: statusError } = useStatusQuery();
 
   const endDatePickerRef = useRef<DateTimePickerRef>(null);
 

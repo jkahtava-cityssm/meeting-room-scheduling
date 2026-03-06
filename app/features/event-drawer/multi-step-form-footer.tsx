@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useVerifySessionRequirement, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
+import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 
 type FormFooterProps = {
   saveButtonEnabled: boolean;
@@ -21,6 +22,7 @@ type FormFooterProps = {
   session: Session | null;
   userId?: string;
   onSave: () => void;
+  isSaving: boolean;
   onOpenChange: (open: boolean) => void;
   currentStepIndex: number;
   formSteps: FormStep[];
@@ -30,8 +32,22 @@ type FormFooterProps = {
   backButtonDestructive?: boolean;
   nextButtonDestructive?: boolean;
   onDelete: () => void;
+  isDeleting: boolean;
   setStatus: (status: FormStatus) => void;
 };
+
+const PAGE_PERMISSIONS = {
+  UpdateEvent: {
+    type: "permission",
+    resource: "Event",
+    action: "Update",
+  },
+  CreateEvent: {
+    type: "permission",
+    resource: "Event",
+    action: "Create",
+  },
+} as const satisfies GroupedPermissionRequirement;
 
 const FormFooter: React.FC<FormFooterProps> = ({
   saveButtonEnabled,
@@ -40,6 +56,7 @@ const FormFooter: React.FC<FormFooterProps> = ({
   session,
   userId,
   onSave,
+  isSaving,
   onOpenChange,
   currentStepIndex,
   formSteps,
@@ -49,31 +66,20 @@ const FormFooter: React.FC<FormFooterProps> = ({
   backButtonDestructive,
   nextButtonDestructive,
   onDelete,
+  isDeleting,
   setStatus,
 }) => {
-  const [isSaving, setSaving] = useState(false);
-  const [isDeleting, setDeleting] = useState(false);
-
-  const canUpdateEvent = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Event",
-    action: "Update",
-  });
-  const canCreateEvent = useVerifySessionRequirement(session, {
-    type: "permission",
-    resource: "Event",
-    action: "Create",
-  });
+  const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const isSaveDisabled = useMemo(() => {
-    if (status === "Edit") return !canUpdateEvent;
-    if (status === "New") return !canCreateEvent || userId !== undefined;
+    if (status === "Edit") return !permissions.UpdateEvent;
+    if (status === "New") return !permissions.CreateEvent || userId !== undefined;
     return false;
-  }, [status, canUpdateEvent, canCreateEvent, userId]);
+  }, [status, permissions, userId]);
 
   const isEditDisabled = useMemo(() => {
-    return status === "Loading" || !canUpdateEvent;
-  }, [status, canUpdateEvent]);
+    return status === "Loading" || !permissions.UpdateEvent;
+  }, [status, permissions]);
 
   return (
     <SheetFooter className="flex md:flex-row gap-6">
@@ -81,7 +87,6 @@ const FormFooter: React.FC<FormFooterProps> = ({
         <Button
           variant="default"
           onClick={() => {
-            setSaving(true);
             onSave();
           }}
           className="md:w-24"
@@ -144,7 +149,6 @@ const FormFooter: React.FC<FormFooterProps> = ({
               variant="outline_destructive"
               className="grow md:w-24"
               onClick={() => {
-                setDeleting(true);
                 onDelete();
               }}
               disabled={isSaving}

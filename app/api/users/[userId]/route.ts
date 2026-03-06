@@ -4,31 +4,54 @@ import { findSession } from "@/lib/data/users";
 import { NextRequest } from "next/server";
 
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { GetUserPermissions } from "@/lib/api-guard";
+
+import { auth, Role } from "@/lib/auth";
+import { getRolesByUserId } from "@/lib/data/permissions";
+
+const roleCache = new Map<string, { roles: Role[]; expiresAt: number }>();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage("DATABASE_URL Missing");
-  }
+	if (!process.env.DATABASE_URL) {
+		return InternalServerErrorMessage("DATABASE_URL Missing");
+	}
 
-  const { userId } = await params;
+	const { userId } = await params;
 
-  const sessionToken = req.nextUrl.searchParams.get("token");
+	if (!userId) {
+		return BadRequestMessage();
+	}
 
-  if (!userId || !sessionToken) {
-    return BadRequestMessage();
-  }
+	const sessionResponse = await auth.api.getSession({ headers: req.headers });
 
-  const session = await findSession({ AND: { userId: Number(userId), token: sessionToken } });
+	if (!sessionResponse || sessionResponse.user.id !== userId) {
+		if (sessionResponse?.session?.token) {
+			roleCache.delete(sessionResponse.session.token);
+		}
+		return BadRequestMessage("Not Authorized");
+	}
 
-  if (!session || session?.expiresAt < new Date() || session.userId != Number(userId)) {
-    return BadRequestMessage("Not Authorized");
-  }
-  const roles = await GetUserPermissions(Number(userId));
+	const token = sessionResponse.session?.token;
+	const now = Date.now();
 
-  if (!roles) {
-    return InternalServerErrorMessage();
-  }
+	const cached = roleCache.get(token);
+	if (cached) {
+		if (cached.expiresAt < now) {
+			roleCache.delete(token);
+		} else {
+			return SuccessMessage("User Found", { userId: userId, roles: cached.roles });
+		}
+	}
 
-  return SuccessMessage("User Found", { userId: Number(userId), roles: roles });
+	const roles = await getRolesByUserId(Number(userId));
+
+	if (!roles) {
+		return InternalServerErrorMessage();
+	}
+
+	roleCache.set(token, {
+		roles,
+		expiresAt: now + 60 * 1000, // 1 minute TTL
+	});
+
+	return SuccessMessage("User Found", { userId: Number(userId), roles: roles });
 }

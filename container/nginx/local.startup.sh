@@ -14,8 +14,8 @@ CERT_OU="${CERT_OU:-IT}"
 
 # SANs for the cert; first entry becomes CN.
 # Prefer your DuckDNS domain if provided; otherwise dev-friendly defaults.
-if [ -n "${DUCKDNS_DOMAIN:-}" ]; then
-  DOMAINS="${DOMAINS:-$DUCKDNS_DOMAIN,localhost,127.0.0.1}"
+if [ -n "${SERVER_NAME:-}" ]; then
+  DOMAINS="${DOMAINS:-$SERVER_NAME,localhost,127.0.0.1}"
 else
   DOMAINS="${DOMAINS:-localhost,127.0.0.1}"
 fi
@@ -95,10 +95,10 @@ ensure_cert
 
 if [ ! -f "$CRT_PATH" ]; then
   echo "No cert found — starting Nginx with HTTP-only config"
-  envsubst '${DUCKDNS_DOMAIN}' < /etc/nginx/http-only.conf.template > /etc/nginx/conf.d/default.conf
+  envsubst '${SERVER_NAME}' < /etc/nginx/http-only.conf.template > /etc/nginx/conf.d/default.conf
 else
   echo "Cert found — starting Nginx with full HTTPS config"
-  envsubst '${DUCKDNS_DOMAIN}' < /etc/nginx/full.conf.template > /etc/nginx/conf.d/default.conf
+  envsubst '${SERVER_NAME}' < /etc/nginx/full.conf.template > /etc/nginx/conf.d/default.conf
 fi
 
 cp /etc/nginx/nginx.conf.template /etc/nginx/nginx.conf

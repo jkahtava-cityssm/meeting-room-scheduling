@@ -1,38 +1,86 @@
-import { prisma } from "@/prisma";
-import { findManyConfiguration } from "@/lib/data/configuration";
-
 import { NextRequest } from "next/server";
-import { InternalServerErrorMessage, SuccessMessage, validateVisibleHours } from "@/lib/api-helpers";
+import { findManyConfiguration, upsertConfiguration } from "@/lib/data/configuration";
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
 import { guardRoute } from "@/lib/api-guard";
+import { CONFIGURATION_KEYS, TConfigurationKeys } from "@/lib/types";
+import { SConfigurationPUT } from "@/lib/services/configuration";
+import z from "zod/v4";
+import { prisma } from "@/prisma";
+
+function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[] {
+  const url = new URL(request.url);
+  const keysParams = url.searchParams.getAll("keys");
+
+  // If no keys provided, return all
+  if (keysParams.length === 0) {
+    return CONFIGURATION_KEYS;
+  }
+
+  // Filter invalid values and narrow to TConfigurationKeys
+  const valid = keysParams.filter((k): k is TConfigurationKeys =>
+    (CONFIGURATION_KEYS as readonly string[]).includes(k),
+  );
+
+  // If after filtering there are none, default to all
+  return valid.length > 0 ? valid : CONFIGURATION_KEYS;
+}
 
 export async function GET(request: NextRequest) {
-  return guardRoute(request, { type: "role", role: "Any" }, async () => {
-    const configEntries = await findManyConfiguration({
-      OR: [{ key: "visibleHoursStart" }, { key: "visibleHoursEnd" }],
-    });
+  return guardRoute(
+    request,
+    { EditConfiguration: { type: "permission", resource: "Settings", action: "Edit Configuration" } },
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+      const requestedKeys = parseRequestedKeys(request);
 
-    if (!configEntries) {
-      return InternalServerErrorMessage();
-    }
+      const configEntries = await findManyConfiguration(requestedKeys);
 
-    type VisibleKey = "visibleHoursStart" | "visibleHoursEnd";
+      if (!configEntries) {
+        return InternalServerErrorMessage();
+      }
 
-    const config = configEntries.reduce<Record<VisibleKey, number>>(
-      (acc, entry) => {
-        const key = entry.key as VisibleKey;
-        acc[key] = Number(entry.value);
-        return acc;
-      },
-      { visibleHoursStart: 0, visibleHoursEnd: 0 }
-    );
+      return SuccessMessage("Collected Configuration", configEntries);
+    },
+  );
+}
 
-    const { visibleHoursStart, visibleHoursEnd } = validateVisibleHours(
-      config.visibleHoursStart,
-      config.visibleHoursEnd
-    );
+export async function PUT(request: NextRequest) {
+  return guardRoute(
+    request,
+    {
+      EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" },
+    },
+    async ({ data }) => {
+      try {
+        const results = await prisma.$transaction(
+          async (tx) =>
+            await Promise.all(
+              data.map((configurationPairs) => {
+                return upsertConfiguration(
+                  {
+                    where: { key: configurationPairs.key },
+                    create: {
+                      key: configurationPairs.key,
+                      value: configurationPairs.value,
+                      name: configurationPairs.name,
+                      type: configurationPairs.type,
+                      description: configurationPairs.description,
+                    },
+                    update: {
+                      value: configurationPairs.value,
+                    },
+                  },
+                  tx,
+                );
+              }),
+            ),
+        );
 
-    const visibleHoursRange = { from: visibleHoursStart, to: visibleHoursEnd };
-
-    return SuccessMessage("Collected Hours", visibleHoursRange);
-  });
+        return SuccessMessage("Updated Configurations", results);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error occurred";
+        return BadRequestMessage(message);
+      }
+    },
+    z.array(SConfigurationPUT),
+  );
 }

@@ -7,6 +7,10 @@ export const sharedColorVariants = {
   cyan: "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300 [&_.event-dot]:fill-cyan-600",
   disabled:
     "border-silver-chalice-200 bg-silver-chalice-50 text-silver-chalice-700 dark:border-silver-chalice-800 dark:bg-silver-chalice-950 dark:text-silver-chalice-300 [&_.event-dot]:fill-silver-chalice-600",
+  approved:
+    "border-approved-600 bg-approved-100 text-approved-800 dark:border-approved-300 dark:bg-approved-900 dark:text-approved-300 [&_.event-dot]:fill-approved-500",
+  rejected:
+    "border-rejected-600 bg-rejected-100 text-rejected-800 dark:border-rejected-300 dark:bg-rejected-900 dark:text-rejected-300 [&_.event-dot]:fill-rejected-500",
   emerald:
     "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 [&_.event-dot]:fill-emerald-600",
   fuchsia:
@@ -61,6 +65,10 @@ export const sharedButtonColorHoverVariants = {
   camarone:
     "hover:bg-camarone-100 focus-visible:ring-camarone-200 dark:focus-visible:ring-camarone-800/40 dark:hover:bg-camarone-950/60",
   cyan: "hover:bg-cyan-100 focus-visible:ring-cyan-200 dark:focus-visible:ring-cyan-800/40 dark:hover:bg-cyan-950/60",
+  approved:
+    "hover:bg-approved-100 focus-visible:ring-approved-200 dark:focus-visible:ring-approved-800/40 dark:hover:bg-approved-950/60",
+  rejected:
+    "hover:bg-rejected-100 focus-visible:ring-rejected-200 dark:focus-visible:ring-rejected-800/40 dark:hover:bg-rejected-950/60",
   disabled:
     "hover:bg-silver-chalice-100 focus-visible:ring-silver-chalice-200 dark:focus-visible:ring-silver-chalice-800/40 dark:hover:bg-silver-chalice-950/60",
   emerald:
@@ -115,6 +123,10 @@ export const sharedButtonColorVariants = {
   camarone:
     "border-camarone-400 bg-camarone-200 text-camarone-700 dark:border-camarone-800 dark:bg-camarone-950 dark:text-camarone-300",
   cyan: "border-cyan-400 bg-cyan-200 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
+  approved:
+    "border-approved-400 bg-approved-200 text-approved-700 dark:border-approved-800 dark:bg-approved-950 dark:text-approved-300",
+  rejected:
+    "border-rejected-400 bg-rejected-200 text-rejected-700 dark:border-rejected-800 dark:bg-rejected-950 dark:text-rejected-300",
   disabled:
     "border-silver-chalice-400 bg-silver-chalice-200 text-silver-chalice-700 dark:border-silver-chalice-800 dark:bg-silver-chalice-950 dark:text-silver-chalice-300",
   emerald:
@@ -166,6 +178,8 @@ export const sharedIconColorVariants = {
   blue: "stroke-blue-600 dark:stroke-blue-300",
   camarone: "stroke-camarone-600 dark:stroke-camarone-300",
   cyan: "stroke-cyan-600 dark:stroke-cyan-300",
+  approved: "stroke-approved-600 dark:stroke-approved-300",
+  rejected: "stroke-rejected-600 dark:stroke-rejected-300",
   disabled: "stroke-silver-chalice-600 dark:stroke-silver-chalice-300",
   emerald: "stroke-emerald-600 dark:stroke-emerald-300",
   fuchsia: "stroke-fuchsia-600 dark:stroke-fuchsia-300",
@@ -204,6 +218,8 @@ export const sharedIconBackgrounVariants = {
   blue: "bg-blue-100/80 border-blue-200",
   camarone: "bg-camarone-100/80 border-camarone-200",
   cyan: "bg-cyan-100/80 border-cyan-200",
+  approved: "bg-approved-100/80 border-approved-200",
+  rejected: "bg-rejected-100/80 border-rejected-200",
   disabled: "bg-silver-chalice-100/80 border-silver-chalice-200",
   emerald: "bg-emerald-100/80 border-emerald-200",
   fuchsia: "bg-fuchsia-100/80 border-fuchsia-200",
@@ -242,6 +258,8 @@ export const sharedIconDotVariants = {
   blue: "bg-blue-600",
   camarone: "bg-camarone-600",
   cyan: "bg-cyan-600",
+  approved: "bg-approved-600",
+  rejected: "bg-rejected-600",
   disabled: "bg-silver-chalice-600",
   emerald: "bg-emerald-600",
   fuchsia: "bg-fuchsia-600",

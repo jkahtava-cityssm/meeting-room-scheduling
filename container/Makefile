@@ -1,15 +1,41 @@
 export
 
 CONTAINER_MANAGER=podman
-ENV_FILE_LOCATION=../.env
+ENV_FILE_LOCATION=../.env.docker
 MIGRATE_COMPOSE=$(CONTAINER_MANAGER) compose -f docker-compose.db.migrate.yml --env-file ${ENV_FILE_LOCATION}
 COMPOSE=$(CONTAINER_MANAGER) compose -f local.docker-compose.merged.yml --env-file ${ENV_FILE_LOCATION}
 
-.PHONY: init dev app migrate seed cert-init cert-renew down logs
+.PHONY: init install installApp dev app migrate seed cert-init cert-renew down logs
 
 # Production bootstrap (DB + migrate + app stack)
 init:
-	$(COMPOSE) --profile init up -d --rm prisma-migrate
+	$(COMPOSE) --profile init up -d 
+
+install:
+	$(COMPOSE) --profile install-db build --no-cache
+	$(COMPOSE) --profile install-db up -d
+	$(COMPOSE) --profile install-nginx build --no-cache
+	$(COMPOSE) --profile install-nginx up -d
+	$(COMPOSE) --profile install-app build --no-cache
+	$(COMPOSE) --profile install-app up -d
+	podman image prune -f
+# Clean up dangling <none> images immediately after
+
+installMigrate:
+	$(COMPOSE) --profile install-db build --no-cache
+	$(COMPOSE) --profile install-db up -d
+	podman image prune -f
+
+installApp:
+	$(COMPOSE) --profile install-app build --no-cache	
+	$(COMPOSE) --profile install-app up -d
+	podman image prune -f
+
+installSeed:
+	$(COMPOSE) --profile seed build --no-cache	
+	$(COMPOSE) --profile seed up -d
+	podman image prune -f
+#--rm prisma-migrate
 
 # Development bootstrap (DB + migrate + seed + app stack)
 dev:
@@ -21,7 +47,8 @@ app:
 
 # Run migrations only (one-off)
 migrate:
-	$(COMPOSE) --profile migrate run --rm prisma-migrate
+	$(COMPOSE) --profile migrate run 
+#--rm prisma-migrate
 
 # Run seed only (one-off)
 seed:

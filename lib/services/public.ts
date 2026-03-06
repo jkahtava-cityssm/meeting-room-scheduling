@@ -1,8 +1,10 @@
-import { fetchGET } from "@/lib/fetch";
 import { SEvent, SRecurrence, SRoom, SRoomCategory, SRoomProperty, SStatus } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
 import { formatISO } from "date-fns";
 import { z } from "zod";
+import { fetchPublicConfiguration, fetchPublicEvents, fetchPublicRooms } from "../server/public";
+import { QueryError } from "@/contexts/ReactQueryProvider";
+import { queryKeys } from "./querykeys";
 
 const formatDate = (date: Date) => {
   return formatISO(date);
@@ -19,6 +21,7 @@ const PUBLIC_SROOM = z.object({
   roomProperty: SRoomProperty.pick({
     name: true,
     value: true,
+    type: true,
   }).array(),
 });
 
@@ -33,34 +36,56 @@ const PUBLIC_SEVENT = z.object({
   status: SStatus.pick({ statusId: true, name: true, key: true }),
 });
 
+const PUBLIC_SCONFIGURATION = z.object({
+  hours: z.object({
+    from: z.number(),
+    to: z.number(),
+  }),
+  useSSO: z.union([z.boolean(), z.stringbool()]),
+  interval: z.number(),
+});
+
 export type PUBLIC_IEVENT = z.infer<typeof PUBLIC_SEVENT>;
 export type PUBLIC_IROOM = z.infer<typeof PUBLIC_SROOM>;
 
-export const usePublicEventsQuery = (startDate: Date, endDate: Date, enabled: boolean = true) =>
-  useQuery({
-    queryKey: ["events", formatDate(startDate), formatDate(endDate)],
+export const usePublicEventsQuery = (date: Date, enabled: boolean = true) => {
+  const currentDate = formatDate(date);
+  return useQuery({
+    queryKey: queryKeys.public.eventList(currentDate),
     queryFn: async () => {
-      const result = await fetchGET("/api/public/events", {
-        startdate: formatDate(startDate),
-        enddate: formatDate(endDate),
-      });
+      const result = await fetchPublicEvents(currentDate);
+
+      if (!result.ok) {
+        throw new Error(result.error ?? "Unknown Error");
+      }
+
       const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "usePublicEventsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
     enabled: enabled,
   });
+};
 
 export const usePublicRoomsQuery = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["rooms"],
+    queryKey: queryKeys.public.rooms(),
     queryFn: async () => {
-      const result = await fetchGET("/api/public/rooms", {});
+      const result = await fetchPublicRooms();
+
+      if (!result.ok) {
+        throw new Error(result.error ?? "Unknown Error");
+      }
+
       const parsedResult = z.array(PUBLIC_SROOM).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid room data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid room data", "usePublicRoomsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -68,12 +93,23 @@ export const usePublicRoomsQuery = (enabled: boolean = true) =>
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
-export const usePublicConfigurationsQuery = (enabled: boolean = true) =>
+export const usePublicConfiguration = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["config_hours"],
+    queryKey: queryKeys.public.configuration(),
     queryFn: async () => {
-      const result = await fetchGET("/api/public/configuration", {}, 1440, ["config_hours"]);
-      return result.data;
+      const result = await fetchPublicConfiguration();
+
+      if (!result.ok) {
+        throw new Error(result.error ?? "Unknown Error");
+      }
+
+      const parsedResult = PUBLIC_SCONFIGURATION.safeParse(result.data);
+
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid configuration data", "usePublicConfiguration", parsedResult.error);
+      }
+
+      return parsedResult.data;
     },
     enabled: enabled,
     staleTime: 1000 * 60 * 60 * 3, // 1 hour

@@ -62,15 +62,15 @@ services:
     expose:
       - "3000"
     environment:
-      BETTER_AUTH_URL: https://${DUCKDNS_DOMAIN}
-      NEXT_PUBLIC_BASE_URL: https://${DUCKDNS_DOMAIN}
+      BETTER_AUTH_URL: https://${SERVER_NAME}
+      NEXT_PUBLIC_BASE_URL: https://${SERVER_NAME}
     depends_on:
       - postgres
       - nginx
     networks:
       - webnet
     extra_hosts:
-      - "${DUCKDNS_DOMAIN}:host-gateway"
+      - "${SERVER_NAME}:host-gateway"
 
   nginx:
     build:
@@ -83,7 +83,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      DUCKDNS_DOMAIN: ${DUCKDNS_DOMAIN}
+      SERVER_NAME: ${SERVER_NAME}
     volumes:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
@@ -104,7 +104,7 @@ services:
       --email ${EMAIL}
       --agree-tos
       --no-eff-email
-      -d ${DUCKDNS_DOMAIN}
+      -d ${SERVER_NAME}
 
   cert-renew:
     image: certbot/certbot
@@ -129,13 +129,13 @@ services:
     container_name: duckdns
     profiles: ["cert-renew"]
     environment:
-      DUCKDNS_DOMAIN: ${DUCKDNS_DOMAIN}
+      SERVER_NAME: ${SERVER_NAME}
       DUCKDNS_TOKEN: ${DUCKDNS_TOKEN}
     entrypoint: /bin/sh -c
     command: >
       "trap exit TERM;
       while :; do
-        curl -s \"https://www.duckdns.org/update?domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip=\";
+        curl -s \"https://www.duckdns.org/update?domains=${SERVER_NAME}&token=${DUCKDNS_TOKEN}&ip=\";
         sleep 24h;
       done"
 

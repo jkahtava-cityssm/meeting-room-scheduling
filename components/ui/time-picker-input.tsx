@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 
 import { cn } from "@/lib/utils";
 import React from "react";
+import { usePublicConfiguration } from "@/lib/services/public";
 
 export interface TimePickerInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   picker: TimePickerType;
@@ -17,15 +18,35 @@ export interface TimePickerInputProps extends React.InputHTMLAttributes<HTMLInpu
   };
 }
 
-const MINUTE_STEP_DATA: {
-  stepValues: number[];
-  wrapForward: { value: number; substitute: number };
-  wrapBackward: { value: number; substitute: number };
-} = {
-  stepValues: [-15, 0, 15, 30, 45, 60],
-  wrapForward: { value: 60, substitute: 15 },
-  wrapBackward: { value: -15, substitute: 45 },
-};
+function computeMinuteStepData(interval: number) {
+  const stepValues: number[] = [];
+
+  // negative wrap value
+  stepValues.push(-interval);
+
+  // multiples from 0 up to but not including 60
+  const count = Math.floor(60 / interval);
+  for (let i = 0; i < count; i++) {
+    stepValues.push(i * interval);
+  }
+
+  // include 60 as sentinel for forward wrap
+  stepValues.push(60);
+
+  return {
+    stepValues,
+    wrapForward: { value: 60, substitute: interval },
+    wrapBackward: { value: -interval, substitute: 60 - interval },
+  };
+}
+
+let MINUTE_STEP_DATA = computeMinuteStepData(15);
+
+function setMinuteStepDataFromInterval(interval: number) {
+  const allowed = [5, 10, 15, 20, 30, 60];
+  const validated = allowed.includes(interval) ? interval : 15;
+  MINUTE_STEP_DATA = computeMinuteStepData(validated);
+}
 
 const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>(
   (
@@ -45,8 +66,20 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
       onRightFocus,
       ...props
     },
-    ref
+    ref,
   ) => {
+    const { data: configurationData } = usePublicConfiguration();
+
+    // Determine interval from public configuration and set global minute step data
+    React.useEffect(() => {
+      const intervalFromConfig = configurationData?.interval;
+      if (typeof intervalFromConfig === "number") {
+        setMinuteStepDataFromInterval(intervalFromConfig);
+      } else {
+        setMinuteStepDataFromInterval(15);
+      }
+    }, [configurationData]);
+
     const inputBufferRef = React.useRef<string>("");
     const roundingTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -66,7 +99,9 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
       if (e.key === "ArrowRight") onRightFocus?.();
       if (e.key === "ArrowLeft") onLeftFocus?.();
       if (["ArrowUp", "ArrowDown"].includes(e.key)) {
-        const step = e.key === "ArrowUp" ? (picker === "minutes" ? 15 : 1) : picker === "minutes" ? -15 : -1;
+        const minuteStep = MINUTE_STEP_DATA.wrapForward.substitute;
+        const step =
+          e.key === "ArrowUp" ? (picker === "minutes" ? minuteStep : 1) : picker === "minutes" ? -minuteStep : -1;
 
         const newValue = getArrowByType(calculatedValue, step, picker);
 
@@ -117,7 +152,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         {...props}
       />
     );
-  }
+  },
 );
 
 TimePickerInput.displayName = "TimePickerInput";
@@ -179,7 +214,7 @@ export function getValidMinuteOrSecond(value: string) {
   if (isNaN(numericValue)) return "00";
 
   const closest = MINUTE_STEP_DATA.stepValues.reduce((prev, curr) =>
-    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev
+    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev,
   );
 
   return normalizeMinuteValue(closest).toString().padStart(2, "0");
@@ -218,11 +253,11 @@ export function getValidArrowMinuteOrSecond(value: string, step: number) {
   const numericValue = parseInt(value, 10);
   if (isNaN(numericValue)) return "00";
 
-  // List the available snap points
-  const multiples = [0, 15, 30, 45];
+  // List the available snap points derived from minute step data
+  const multiples = MINUTE_STEP_DATA.stepValues.filter((v) => v >= 0 && v < 60).sort((a, b) => a - b);
 
   const closest = multiples.reduce((prev, curr) =>
-    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev
+    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev,
   );
 
   // Apply step and wrap

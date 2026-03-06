@@ -1,0 +1,4 @@
+{
+	"dependencies": ["@prisma/client", "date-fns", "rrule", "lucide-react"],
+	"devDependencies": ["prisma", "ts-node", "typescript"]
+}

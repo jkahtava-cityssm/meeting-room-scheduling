@@ -1,12 +1,14 @@
 "use client";
-import { CalendarAllViews } from "@/components/calendar/calendar-all-views";
 
-import { useClientSession } from "@/hooks/use-client-auth";
+import { CalendarAllViews } from "@/app/features/calendar/calendar-controller/calendar-all-views";
+import { CalendarPermissions } from "@/app/features/calendar/permissions/calendar.permissions";
+import { CalendarProviderPrivate } from "@/contexts/CalendarProviderPrivate";
+import { useSession } from "@/contexts/SessionProvider";
 
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  const { session, isPending } = useClientSession();
+  const { session, isPending } = useSession();
 
   if (isPending) {
     return <div>Verifying Access</div>;
@@ -18,8 +20,10 @@ export default function Home() {
   }
 
   return (
-    <div>
-      <CalendarAllViews userId={session?.user.id} />
-    </div>
+    <CalendarPermissions.Provider session={session}>
+      <CalendarProviderPrivate>
+        <CalendarAllViews userId={session?.user.id} />
+      </CalendarProviderPrivate>
+    </CalendarPermissions.Provider>
   );
 }

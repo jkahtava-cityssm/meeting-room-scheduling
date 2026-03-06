@@ -1,5 +1,15 @@
-import { PrismaClient } from "@prisma/client";
-import { DEFAULT_RESOURCES, DEFAULT_USER_ROLES, TColors, TStatusKey } from "../lib/types";
+import { Action, PrismaClient, Resource, ResourceAction, Role } from "@prisma/client";
+import {
+  DEFAULT_PERMISSION_SETS,
+  DEFAULT_RESOURCE_ACTIONS,
+  DEFAULT_USER_ROLES,
+  SessionAction,
+  SessionResource,
+  SessionRole,
+  TColors,
+  TConfigurationKeys,
+  TStatusKey,
+} from "../lib/types";
 import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import {
   EVENTDESCRIPTIONS,
@@ -13,8 +23,8 @@ import {
 import { ByWeekday, datetime, RRule } from "rrule";
 
 import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { property } from "lodash";
 
-// Define the type for icon names
 type IconName = keyof typeof dynamicIconImports;
 
 const prisma = new PrismaClient({
@@ -33,8 +43,22 @@ const prismaAdmin = new PrismaClient({
   },
 });
 
-async function FindCreateAction(name: string) {
-  let record = await prisma.action.findFirst({ where: { name: name } });
+async function FindCreateActionList() {
+  const DEFAULT_ACTIONS = Array.from(
+    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS)),
+  ) as readonly SessionAction[];
+
+  const actionList: Record<SessionAction, Action> = {} as Record<SessionAction, Action>;
+
+  for (const action of DEFAULT_ACTIONS) {
+    actionList[action] = await FindCreateAction(action);
+  }
+
+  return actionList;
+}
+
+async function FindCreateAction(name: string): Promise<Action> {
+  let record = await prisma.action.findFirst({ where: { name: name }, orderBy: { actionId: "asc" } });
 
   if (!record) {
     record = await prisma.action.create({ data: { name: name } });
@@ -43,7 +67,18 @@ async function FindCreateAction(name: string) {
   return record;
 }
 
-async function FindCreateRole(name: string) {
+async function FindCreateRoleList() {
+  const roleList: Record<SessionRole, Role> = {} as Record<SessionRole, Role>;
+
+  for (const role of DEFAULT_USER_ROLES) {
+    if (role === "Public" || role === "Private") continue;
+
+    roleList[role] = await FindCreateRole(role);
+  }
+  return roleList;
+}
+
+async function FindCreateRole(name: string): Promise<Role> {
   let record = await prisma.role.findFirst({ where: { name: name } });
 
   if (!record) {
@@ -53,8 +88,21 @@ async function FindCreateRole(name: string) {
   return record;
 }
 
-async function FindCreateResource(name: string) {
-  let record = await prisma.resource.findFirst({ where: { name: name } });
+async function FindCreateResourceList() {
+  const DEFAULT_RESOURCES = Array.from(
+    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.RESOURCE)),
+  ) as readonly SessionResource[];
+
+  const resourceList: Record<SessionResource, Resource> = {} as Record<SessionResource, Resource>;
+
+  for (const resource of DEFAULT_RESOURCES) {
+    resourceList[resource] = await FindCreateResource(resource);
+  }
+  return resourceList;
+}
+
+async function FindCreateResource(name: string): Promise<Resource> {
+  let record = await prisma.resource.findFirst({ where: { name: name }, orderBy: { resourceId: "asc" } });
 
   if (!record) {
     record = await prisma.resource.create({ data: { name: name } });
@@ -63,70 +111,64 @@ async function FindCreateResource(name: string) {
   return record;
 }
 
-async function FindCreateRoleResourceAction(roleId: number, resourceId: number, actionId: number, permit: boolean) {
-  let record = await prisma.roleResourceAction.findFirst({
-    where: { roleId: roleId, resourceId: resourceId, actionId: actionId },
+async function FindCreateResourceActionList(
+  resourceList: Record<SessionResource, Resource>,
+  actionList: Record<SessionAction, Action>,
+) {
+  const resourceActionList: Record<string, Record<string, ResourceAction>> = {} as Record<
+    string,
+    Record<string, ResourceAction>
+  >;
+
+  for (const resourceAction of DEFAULT_RESOURCE_ACTIONS) {
+    const resourceId = resourceList[resourceAction.RESOURCE].resourceId;
+    resourceActionList[resourceAction.RESOURCE] = {};
+
+    for (const actionName of resourceAction.ACTIONS) {
+      const actionId = actionList[actionName].actionId;
+      resourceActionList[resourceAction.RESOURCE][actionName] = await FindCreateResourceActionRecord(
+        resourceId,
+        actionId,
+      );
+    }
+  }
+  return resourceActionList;
+}
+
+async function FindCreateResourceActionRecord(resourceId: number, actionId: number): Promise<ResourceAction> {
+  let record = await prisma.resourceAction.findFirst({
+    where: { resourceId: resourceId, actionId: actionId },
   });
 
   if (!record) {
-    record = await prisma.roleResourceAction.create({
-      data: { roleId: roleId, resourceId: resourceId, actionId: actionId, permit: permit },
+    record = await prisma.resourceAction.create({
+      data: { resourceId: resourceId, actionId: actionId },
     });
   }
 
   return record;
 }
 
-async function FindCreatePermissionSet(
-  role: { roleId: number; createdAt: Date; updatedAt: Date; name: string },
-  actions: {
-    actionCreate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    actionRead: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    actionUpdate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    actionDelete: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-    accessPrivate: { actionId: number; createdAt: Date; updatedAt: Date; name: string };
-  },
-  resource: { resourceId: number; createdAt: Date; updatedAt: Date; name: string },
-  permissions: { create: boolean; read: boolean; update: boolean; delete: boolean; access: boolean }
-) {
-  const resourceActionEventCreate = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.actionCreate.actionId,
-    permissions.create
-  );
-  const resourceActionEventRead = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.actionRead.actionId,
-    permissions.read
-  );
-  const resourceActionEventUpdate = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.actionUpdate.actionId,
-    permissions.update
-  );
-  const resourceActionEventDelete = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.actionDelete.actionId,
-    permissions.delete
-  );
+async function FindCreateRoleResourceAction(roleId: number, resourceActionId: number, permit: boolean) {
+  let record = await prisma.roleResourceAction.findFirst({
+    where: { roleId: roleId, resourceActionId: resourceActionId },
+    orderBy: { roleResourceActionId: "asc" },
+  });
 
-  const resourceActionEventAccess = await FindCreateRoleResourceAction(
-    role.roleId,
-    resource.resourceId,
-    actions.accessPrivate.actionId,
-    permissions.access
-  );
+  if (!record) {
+    record = await prisma.roleResourceAction.create({
+      data: { roleId: roleId, resourceActionId: resourceActionId, permit: permit },
+    });
+  }
+
+  return record;
+}
+
+async function FindCreatePermissionSet(role: Role, resourceAction: ResourceAction) {
+  const roleResourceAction = await FindCreateRoleResourceAction(role.roleId, resourceAction.resourceActionId, true);
 
   return {
-    resourceActionEventCreate,
-    resourceActionEventRead,
-    resourceActionEventUpdate,
-    resourceActionEventDelete,
-    resourceActionEventAccess,
+    roleResourceAction,
   };
 }
 
@@ -144,27 +186,20 @@ async function FindCreateUserRole(roleId: number, userId: number) {
   return record;
 }
 
-async function FindCreateConfigurationSetting(name: string, value: string) {
+async function FindCreateConfigurationSetting(
+  key: TConfigurationKeys,
+  name: string,
+  description: string,
+  value: string,
+  type: string,
+) {
   let record = await prisma.configuration.findFirst({
-    where: { key: name },
+    where: { key: key },
   });
 
   if (!record) {
     record = await prisma.configuration.create({
-      data: { key: name, value: value },
-    });
-  }
-  return record;
-}
-
-async function FindCreateRoomScope(name: string) {
-  let record = await prisma.roomScope.findFirst({
-    where: { name: name },
-  });
-
-  if (!record) {
-    record = await prisma.roomScope.create({
-      data: { name: name },
+      data: { key: key, name: name, description: description, value: value, type: type },
     });
   }
   return record;
@@ -173,6 +208,7 @@ async function FindCreateRoomScope(name: string) {
 async function FindCreateRoomCategory(name: string) {
   let record = await prisma.roomCategory.findFirst({
     where: { name: name },
+    orderBy: { roomCategoryId: "asc" },
   });
 
   if (!record) {
@@ -183,25 +219,49 @@ async function FindCreateRoomCategory(name: string) {
   return record;
 }
 
-async function FindCreateRoomProperty(roomId: number, name: string, value: string) {
-  let record = await prisma.roomProperty.findFirst({
-    where: { roomId: roomId, name: name },
+async function FindCreateRoomProperty(roomId: number, propertyId: number, value: string) {
+  return await prisma.roomProperty.upsert({
+    where: {
+      roomId_propertyId: {
+        roomId: roomId,
+        propertyId: propertyId,
+      },
+    },
+    update: {
+      value: value,
+    },
+    create: {
+      roomId: roomId,
+      propertyId: propertyId,
+      value: value,
+    },
   });
+}
 
-  if (!record) {
-    record = await prisma.roomProperty.create({
-      data: { roomId: roomId, name: name, value: value },
-    });
-  }
-  return record;
+async function FindCreateProperty(name: string, type: string) {
+  return await prisma.property.upsert({
+    where: {
+      name: name,
+    },
+    update: {
+      name: name,
+      type: type,
+    },
+    create: {
+      name: name,
+      type: type,
+    },
+  });
 }
 
 async function FindCreateRooms(
   name: string,
   color: TColors,
   icon: IconName,
+
   roomCategoryId: number = 1,
-  roomScopeId: number = 1
+  isPublicFacing: boolean = false,
+  roomRoleId?: number[],
 ) {
   let record = await prisma.room.findFirst({
     where: { name: name },
@@ -209,8 +269,20 @@ async function FindCreateRooms(
 
   if (!record) {
     record = await prisma.room.create({
-      data: { name: name, color: color, icon: icon, roomScopeId: roomScopeId, roomCategoryId: roomCategoryId },
+      data: { name: name, color: color, icon: icon, roomCategoryId: roomCategoryId, publicFacing: isPublicFacing },
     });
+  }
+
+  if (roomRoleId) {
+    for (const roleId of roomRoleId) {
+      let roomRole = await prisma.roomRole.findFirst({ where: { roomId: record!.roomId, roleId: roleId } });
+
+      if (!roomRole) {
+        roomRole = await prisma.roomRole.create({
+          data: { roomId: record!.roomId, roleId: roleId },
+        });
+      }
+    }
   }
   return record;
 }
@@ -230,7 +302,7 @@ async function FindCreateEventStatus(name: string, icon: IconName, color: TColor
 
 function FindRoomID(
   roomName: string,
-  rooms: { name: string; createdAt: Date; updatedAt: Date; roomId: number; color: string; icon: string | null }[]
+  rooms: { name: string; createdAt: Date; updatedAt: Date; roomId: number; color: string; icon: string | null }[],
 ) {
   const test = rooms.find((room) => {
     return room.name === roomName;
@@ -249,7 +321,11 @@ function getRandomDescription(): string {
 }
 
 async function getActiveUsers(): Promise<{ id: number }[]> {
-  const result = await prisma.user.findMany({ where: { employeeActive: true }, select: { id: true } });
+  const result = await prisma.user.findMany({
+    where: { employeeActive: true },
+    select: { id: true },
+    orderBy: { id: "asc" },
+  });
 
   return result;
 }
@@ -269,7 +345,7 @@ function validateVisibleHours(visibleHoursStart: number, visibleHoursEnd: number
   if (visibleHoursStart >= visibleHoursEnd || visibleHoursStart <= 0 || visibleHoursEnd > 24) {
     console.log(
       `Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
-        `Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`
+        `Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`,
     );
     visibleHoursStart = 1;
     visibleHoursEnd = 24;
@@ -292,7 +368,7 @@ async function CreateRandomEvents(
   visibleHoursStart: number = 8,
   visibleHoursEnd: number = 8,
   timeSlotIntervalMinutes: number = 15,
-  maxRangeInDays: number = 30
+  maxRangeInDays: number = 30,
 ) {
   timeSlotIntervalMinutes = validateTimeSlotInterval(timeSlotIntervalMinutes);
 
@@ -322,7 +398,7 @@ async function CreateRandomEvents(
       Math.floor(Math.random() * hourInterval) + visibleHoursStart,
       Math.floor(Math.random() * intervalsInHour) * timeSlotIntervalMinutes,
       0,
-      0
+      0,
     );
 
     const endDate = new Date(startDate);
@@ -337,7 +413,7 @@ async function CreateRandomEvents(
         Math.floor(Math.random() * hourInterval) + visibleHoursStart,
         Math.floor(Math.random() * intervalsInHour) * timeSlotIntervalMinutes,
         0,
-        0
+        0,
       );
     } else {
       const minDuration = 30;
@@ -576,11 +652,16 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
 export function convertDateToRRuleDate(date: Date) {
   return new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds())
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      date.getHours(),
+      date.getMinutes(),
+      date.getSeconds(),
+    ),
   );
 }
-
-
 
 async function createLinkedServer() {
   await prismaAdmin.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS postgres_fdw;`);
@@ -611,20 +692,21 @@ async function createLinkedServer() {
 
   await prismaAdmin.$executeRawUnsafe(`CREATE FOREIGN TABLE IF NOT EXISTS public.avanti_z_ex_emp_data (
                                                     employee_number text,
+                                                    location_description text,
                                                     active text
                                                   )
                                                   SERVER ${process.env.LINKED_SERVER_NAME}
                                                   OPTIONS (schema_name 'public', table_name 'avanti_z_ex_emp_data');`);
 
   await prismaAdmin.$executeRawUnsafe(
-    `GRANT USAGE ON FOREIGN SERVER ${process.env.LINKED_SERVER_NAME} TO ${process.env.DATABASE_USER_USERNAME};`
+    `GRANT USAGE ON FOREIGN SERVER ${process.env.LINKED_SERVER_NAME} TO ${process.env.DATABASE_USER_USERNAME};`,
   );
   await prismaAdmin.$executeRawUnsafe(`GRANT USAGE ON SCHEMA public TO ${process.env.DATABASE_USER_USERNAME};`);
   await prismaAdmin.$executeRawUnsafe(
-    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_pers TO ${process.env.DATABASE_USER_USERNAME};`
+    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_pers TO ${process.env.DATABASE_USER_USERNAME};`,
   );
   await prismaAdmin.$executeRawUnsafe(
-    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_data TO ${process.env.DATABASE_USER_USERNAME};`
+    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_data TO ${process.env.DATABASE_USER_USERNAME};`,
   );
 
   await prismaAdmin.$executeRawUnsafe(
@@ -632,11 +714,12 @@ async function createLinkedServer() {
     LANGUAGE 'sql'
     AS $BODY$
     INSERT INTO public.user
-    (name, email, image, employee_number,employee_active,created_at, updated_at)
+    (name, email, image, employee_number,department,employee_active,created_at, updated_at)
     SELECT employee_full_name,
         work_email,
         image,
         employee_number,
+		    location_description,
         employee_active,
         created_at,
         updated_at
@@ -646,6 +729,7 @@ async function createLinkedServer() {
         work_email,
         image,
         employee_number,
+		location_description,
         created_at,
         updated_at,
         CASE WHEN active = 'Yes' THEN true ELSE false END AS employee_active,
@@ -658,6 +742,7 @@ async function createLinkedServer() {
         END AS work_email,
         'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAADzUlEQVR4AXyVPYiVRxSG37PZYCBokBQmmgSScquAgS2EJEUICVmygTVN4oakCiSghfiD1gqCFv6ChRaua2XhxdVCBbGwELxgZangD2ghyG4jqIzPe2a+6yf+DHPmvHPmPe+Zme9+3x0L0XLAv6u/kxOKXm4fjxUv5GDwmn1MZCMJCyq6J8UzSTbjBeIbmcMpLIOyE01fh7HqPL66QGQX9hDbT/1f8Guk8h7eBpZj+5mbsyuzc4BFsPZQr0CpxwxNSLoOdwcesRiAZ8FfYe9j4xi4zBZpAIajHeDrHIPcIviE3Uu/QFaegHSBpbXYEOb3+N+wk9htzNfzHG/smNfMGSLqHOdOFAhdrw85Z1CkE0AffwBpkmJXmOP0Bx4cT/BPKAzOGFMZT8IfKORcaziOhfpX5Dv3LoaSZjDvFFf2MsyT/C1nXAZeRkVwzLOlvcQJ6Tl4hrhz14KtRZwrorIg8UvQNtW2GdfEc5eeo63/pVghyQbOX85mRH06nJwDN4ytZc12gqI/SfTDGuA5MnsA0P/F3BHUEaosMVliQ+BwTOCOY0xu8Y/CWmiGumfwo2BKOo3R81wiNKna5qoLQqBcLnMBZLsdh/oO6HQuS2h2VyR97VUSrqrfGpN4PzrCbZl51MIgeqeBZqh7yJ+otjvVjcZrRgj5PQCCGKtazEbFcPJ5eGa72+KpWQtkxGeoqWY1O9r8Yfx/2HJKLMeDi2NAdRy17AInxTzUAkUP2urnerWdkuKQakMwFoGL3DvY6ToINqdqp7K+aPtFU6MrukGiSes8GKeFfkbm98iJh6pgpEqcwf0AhzpqLdY1FpoxKsArnve4vmMi6o/ZeUmrSDiL/wZbmRYCl3Pg1fAv4n/CRDHR1mPuqVmvSJon4hdlGtJ3UqxE9BjJou3BfiXut/Qx+DFx4yk2sY84IR0HryBObpkmYC1rjk7wiOAeSDjt48j/AFZhl7Ht2Bt6vrFbEL3E4qfY3xi54ZreFJrRCoRosZNdD0ngexS88oQkvinhBGrmvOKExdgDohnYykiuhkXaCabzojG2Tlj6i8l91Fbj3T8AUxMYGD1ZePfERR+KUuA1kpxrDWDt9RmwWqe6CZdXXEs5Dy1IcUbSBqp8ifc3xn84xhuYey0/LyEtttybxFsP1W8Rq+paoUj9Yu5GlIeVD22O5FtQnkF9ijeew08Th6Pd4I/gvxSH6NO/9U+fdd+jH/Qmkv2T5PhhMZuxY5sQhVPMhdbr7VbqFfXi7ChnbZ1fgg4QmELoM3Y0TnwcjvEUca+ZwzKz1tmc4EgKvQAAAP//gA35VgAAAAZJREFUAwBM+gdFlgRZNQAAAABJRU5ErkJggg==' as image,
         avanti_z_ex_emp_pers.employee_number,
+		avanti_z_ex_emp_data.location_description,
         now() as created_at,
         now() as updated_at,
         avanti_z_ex_emp_data.active
@@ -673,17 +758,17 @@ async function createLinkedServer() {
       name = EXCLUDED.name,
       email = EXCLUDED.email,
       employee_number = EXCLUDED.employee_number,
+      department = EXCLUDED.department,
       employee_active = EXCLUDED.employee_active,
       image = EXCLUDED.image,
       updated_at = now();
-    $BODY$;`
+    $BODY$;`,
   );
 
   await prismaAdmin.$executeRawUnsafe(`ALTER PROCEDURE public.insert_avanti_users() OWNER TO postgres;`);
 
   await prisma.$executeRawUnsafe(`CALL public.insert_avanti_users();`);
 }
-
 
 async function main() {
   if (process.env.LINKED_SERVER === "1") {
@@ -703,92 +788,85 @@ async function main() {
     });
   }
 
-  await FindCreateConfigurationSetting("visibleHoursStart", VISIBLE_HOUR_START.toString());
-  await FindCreateConfigurationSetting("visibleHoursEnd", VISIBLE_HOUR_END.toString());
-  await FindCreateConfigurationSetting("timeSlotIntervalMinutes", TIME_SLOT_INTERVAL_MINUTES.toString());
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
+    await prisma.session.deleteMany();
+    await prisma.account.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.sSOProvider.deleteMany();
+    await prisma.userRole.deleteMany();
+    await prisma.verification.deleteMany();
+  }
 
-  const actionCreate = await FindCreateAction("Create");
-  const actionRead = await FindCreateAction("Read");
-  const actionUpdate = await FindCreateAction("Update");
-  const actionDelete = await FindCreateAction("Delete");
-  const accessPrivate = await FindCreateAction("AccessPrivate");
+  await prisma.role.deleteMany();
+  await prisma.action.deleteMany();
+  await prisma.resource.deleteMany();
+  await prisma.roleResourceAction.deleteMany();
 
-  const actions = { actionCreate, actionRead, actionUpdate, actionDelete, accessPrivate };
+  const actions = await FindCreateActionList();
+  const resources = await FindCreateResourceList();
+  const resourceActions = await FindCreateResourceActionList(resources, actions);
+  const roles = await FindCreateRoleList();
+  console.log("Seeding Permission Sets...");
+  for (const roleSet of DEFAULT_PERMISSION_SETS) {
+    const role = roles[roleSet.ROLE];
+    for (const resourceSet of roleSet.SET) {
+      const resource = resources[resourceSet.RESOURCE];
 
-  for (const role of DEFAULT_USER_ROLES) {
-    const dbRole = await FindCreateRole(role);
-
-    for (const resource of DEFAULT_RESOURCES) {
-      const defaultPermission = {
-        create: (resource === "Event" && role === "User") || role === "Admin" || role === "Clerk" ? true : false,
-        read: true,
-        update: role === "Admin" || role === "Clerk" ? true : false,
-        delete: role === "Admin" || role === "Clerk" ? true : false,
-        access: role === "Admin" || role === "Clerk" ? true : false,
-      };
-      const dbResource = await FindCreateResource(resource);
-      await FindCreatePermissionSet(dbRole, actions, dbResource, defaultPermission);
+      for (const actionName of resourceSet.ACTIONS) {
+        const resourceAction = resourceActions[resourceSet.RESOURCE][actionName];
+        await FindCreatePermissionSet(role, resourceAction);
+      }
     }
   }
 
-  /*const roleUser = await FindCreateRole("User");
-  const roleClerk = await FindCreateRole("Clerk");
-  const roleAdmin = await FindCreateRole("Admin");
+  await FindCreateConfigurationSetting(
+    "visibleHoursStart",
+    "Earliest Visible Hour",
+    "The earliest hour that is visible in the calendar view.",
+    VISIBLE_HOUR_START.toString(),
+    "number",
+  );
+  await FindCreateConfigurationSetting(
+    "visibleHoursEnd",
+    "Latest Visible Hour",
+    "The latest hour that is visible in the calendar view.",
+    VISIBLE_HOUR_END.toString(),
+    "number",
+  );
+  await FindCreateConfigurationSetting(
+    "timeSlotIntervalMinutes",
+    "Event Time Slots",
+    "The time interval (in minutes) for each event slot in the calendar view.",
+    TIME_SLOT_INTERVAL_MINUTES.toString(),
+    "number",
+  );
+  await FindCreateConfigurationSetting(
+    "singleSignOnEnabled",
+    "Single Sign On",
+    "Whether Single Sign On is enabled for the application.",
+    "false",
+    "boolean",
+  );
+  await FindCreateConfigurationSetting(
+    "defaultUserRole",
+    "Default Role",
+    "The default role assigned to new users.",
+    String(roles["User"].roleId),
+    "number",
+  );
 
-  const resourceEvent = await FindCreateResource("Event");
-  const resourceAPI = await FindCreateResource("API");
-  const resourceImpersonate = await FindCreateResource("Impersonate");
-  
-
-  await FindCreatePermissionSet(roleUser, actions, resourceEvent, {
-    create: false,
-    read: true,
-    update: false,
-    delete: false,
-  });
-
-  await FindCreatePermissionSet(roleClerk, actions, resourceEvent, {
-    create: false,
-    read: true,
-    update: false,
-    delete: false,
-  });
-
-  await FindCreatePermissionSet(roleAdmin, actions, resourceEvent, {
-    create: true,
-    read: true,
-    update: true,
-    delete: true,
-  });
-
-  await FindCreatePermissionSet(roleAdmin, actions, resourceAPI, {
-    create: true,
-    read: true,
-    update: true,
-    delete: true,
-  });
-
-  await FindCreatePermissionSet(roleAdmin, actions, resourceImpersonate, {
-    create: true,
-    read: true,
-    update: true,
-    delete: true,
-  });
-*/
   const roomList: {
     roomId: number;
     name: string;
     color: string;
     icon: string | null;
-    roomScopeId: number;
+    publicFacing: boolean;
     createdAt: Date;
     updatedAt: Date;
     roomCategoryId: number;
   }[] = [];
 
-  await FindCreateRoomScope("Public");
-  await FindCreateRoomScope("Private");
-
+  console.log("Seeding Room Sizes...");
   const { roomCategoryId: category_none } = await FindCreateRoomCategory("None");
   const { roomCategoryId: category_small } = await FindCreateRoomCategory("Small");
   const { roomCategoryId: category_large } = await FindCreateRoomCategory("Large");
@@ -796,22 +874,24 @@ async function main() {
 
   //await FindCreateRooms("All", "zinc", "Asterisk");
 
-  roomList.push(await FindCreateRooms("Biggings Room", "orange", "book-key", category_large));
-  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "book-key", category_large));
-  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "book-key", category_large));
-  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "book-key", category_large));
-  roomList.push(await FindCreateRooms("IT Training Room", "pink", "book-key", category_large));
+  console.log("Seeding Default Rooms...");
 
-  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "book-key", category_special));
-  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "book-key", category_special));
+  const ClerkOnlyRooms = [roles["Clerk"].roleId];
 
-  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "book-key", category_special, 2));
-  roomList.push(await FindCreateRooms("Cafeteria", "amber", "book-key", category_special, 2));
-  roomList.push(await FindCreateRooms("Penthouse", "violet", "book-key", category_special, 2));
+  roomList.push(await FindCreateRooms("Biggings Room", "orange", "book-key", category_large, true));
+  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "book-key", category_large, true));
+  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "book-key", category_large, true));
+  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "book-key", category_large, true));
+  roomList.push(await FindCreateRooms("IT Training Room", "pink", "book-key", category_large, true));
+  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "book-key", category_special, true));
+  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "book-key", category_special, true));
 
-  roomList.push(await FindCreateRooms("Korah Room", "green", "book-key", category_small));
-  roomList.push(await FindCreateRooms("Steelton Room", "slate", "book-key", category_small));
-  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "book-key", category_small));
+  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "book-key", category_special, false, ClerkOnlyRooms));
+  roomList.push(await FindCreateRooms("Cafeteria", "amber", "book-key", category_special, false, ClerkOnlyRooms));
+  roomList.push(await FindCreateRooms("Penthouse", "violet", "book-key", category_special, false, ClerkOnlyRooms));
+  roomList.push(await FindCreateRooms("Korah Room", "green", "book-key", category_small, true));
+  roomList.push(await FindCreateRooms("Steelton Room", "slate", "book-key", category_small, true));
+  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "book-key", category_small, true));
 
   const projectorRooms: string[] = [
     "Biggings Room",
@@ -822,32 +902,37 @@ async function main() {
     "Council Chambers",
   ];
 
+  const hasProjector = await FindCreateProperty("HasProjector", "boolean");
+
   for (const room of roomList) {
     const property = await FindCreateRoomProperty(
       room.roomId,
-      "HasProjector",
-      projectorRooms.includes(room.name) ? "true" : "false"
+      hasProjector.propertyId,
+      projectorRooms.includes(room.name) ? "true" : "false",
     );
   }
-
+  console.log("Seeding Event Statuses...");
   //await FindCreateEventStatus("Created");
   await FindCreateEventStatus("Pending Review", "circle-pause", "slate", "PENDING");
   await FindCreateEventStatus("Confirmed", "circle-check", "green", "APPROVED");
   await FindCreateEventStatus("Rejected", "circle-x", "red", "REJECTED");
   await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue", "INFORMATION");
 
-  const user = await prisma.user.findFirst();
+  const user = await prisma.user.findFirst({ orderBy: { id: "asc" } });
   if (!user) {
     console.log("No users found, cannot continue seeding");
     return;
   }
 
-  await prisma.event.deleteMany();
-  await prisma.recurrence.deleteMany();
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
+    console.log("Seeding Random Events...");
+    await prisma.event.deleteMany();
+    await prisma.recurrence.deleteMany();
 
-  CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
+    CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
 
-  CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+    CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+  }
 
   //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
 

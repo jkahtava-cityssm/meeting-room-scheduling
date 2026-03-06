@@ -1,13 +1,14 @@
 "use client";
 
-import { lazy, Suspense, memo } from "react";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { memo, useMemo } from "react";
 import { cva } from "class-variance-authority";
 import { sharedIconBackgrounVariants, sharedIconColorVariants } from "../../lib/theme/colorVariants";
 import { TColors } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BadgeColored } from "./badge-colored";
-import { Skeleton } from "./skeleton";
+import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { DynamicIcon as LucideDynamicIcon } from "lucide-react/dynamic";
+import { Bug } from "lucide-react";
 
 export type IconName = keyof typeof dynamicIconImports;
 
@@ -30,59 +31,43 @@ const BackgroundColors = cva("", {
 });
 
 interface DynamicIconProps extends React.SVGProps<SVGSVGElement> {
-  name: IconName;
+  name: keyof typeof dynamicIconImports;
   color?: TColors;
   showBorder?: boolean;
   hideBackground?: boolean;
 }
 
-// Global cache for lazy-loaded icons
-const lazyIconCache: Partial<Record<IconName, React.ComponentType<React.SVGProps<SVGSVGElement>>>> = {};
-
 const DynamicIcon = memo(({ name, color = "invisible", hideBackground = true, ...props }: DynamicIconProps) => {
   const iconClasses = IconColors({ color: color });
-  const backgroundClasses = BackgroundColors({ background: hideBackground ? "invisible" : color });
 
-  const importFn = dynamicIconImports[name];
+  if (!Object.hasOwn(dynamicIconImports, name)) return <Bug />;
 
-  if (!importFn) {
-    return null;
-  }
+  const iconElement = (
+    <LucideDynamicIcon
+      name={name}
+      {...props}
+      className={cn(iconClasses, props.className)}
+      fallback={() => {
+        return (
+          <div
+            style={{ width: props.width || 24, height: props.height || 24 }}
+            className="animate-pulse bg-muted rounded-md"
+          />
+        );
+      }}
+    />
+  );
 
-  // Cache the lazy-loaded icon component
-  if (!lazyIconCache[name]) {
-    lazyIconCache[name] = lazy(importFn);
-  }
+  if (!iconElement) return null;
 
-  const LazyIcon = lazyIconCache[name]!;
-
+  if (hideBackground) return iconElement;
   return (
-    <Suspense fallback={<Skeleton className="min-w-6 min-h-6" />}>
-      {hideBackground ? (
-        <LazyIcon {...props} className={cn(iconClasses, props.className)} />
-      ) : (
-        <BadgeColored color={color} className="h-full aspect-square">
-          <LazyIcon {...props} className={cn(iconClasses, props.className)} />
-        </BadgeColored>
-      )}
-    </Suspense>
+    <BadgeColored color={color} className="h-full aspect-square">
+      {iconElement}
+    </BadgeColored>
   );
 });
 
 DynamicIcon.displayName = "DynamicIcon";
 
 export default DynamicIcon;
-
-/*
-        <div
-          className={cn(
-            backgroundClasses,
-            !hideBackground
-              ? "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              : "",
-            "inline-flex items-center justify-center"
-          )}
-        >     
-            <LazyIcon {...props} className={cn(iconClasses, props.className)} />
-        </div>
-*/

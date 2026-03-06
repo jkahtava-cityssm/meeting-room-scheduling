@@ -1,7 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
-    {
+    /*{
       "name": "Next.js: debug server-side",
       "type": "node-terminal",
       "request": "launch",
@@ -12,12 +12,25 @@
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000"
-    },
+    },*/
     {
+      "name": "Next.js: Debug Turbopack",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev -- --turbopack",
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome",
+        "webRoot": "${workspaceFolder}"
+      }
+    }
+    /*{
       "name": "Next.js: debug full stack",
       "type": "node",
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/next/dist/bin/next",
+      "args": ["dev", "--turbopack"],
       "runtimeArgs": ["--inspect"],
       "skipFiles": ["<node_internals>/**"],
       "serverReadyAction": {
@@ -30,6 +43,6 @@
       "env": {
         "NODE_ENV": "development"
       }
-    }
+    }*/
   ]
 }

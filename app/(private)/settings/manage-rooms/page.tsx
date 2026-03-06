@@ -1,3 +1,12 @@
-export default async function Home() {
-  return <div>EVENTUALLY A LIST OF ROOMS AND THE ROLES THAT HAVE ACCESS TO MANAGE THEM</div>;
+"use client";
+
+import { SharedRoomDrawerProvider } from "@/app/features/room-drawer/shared-room-drawer-context";
+import RoomLayout from "@/app/features/rooms/room-layout";
+
+export default function Home() {
+  return (
+    <SharedRoomDrawerProvider>
+      <RoomLayout />
+    </SharedRoomDrawerProvider>
+  );
 }

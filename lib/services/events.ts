@@ -3,58 +3,120 @@ import { formatISO } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH } from "@/lib/fetch";
 import z from "zod/v4";
-import { IEvent, SEvent } from "@/lib/schemas/calendar";
+import { IEvent, SEvent, utcDateSchema } from "@/lib/schemas/calendar";
 import { Prisma } from "@prisma/client";
+import { processEventsAsync } from "@/app/features/calendar/webworkers/generic-webworker-client";
+import { CalendarAction, ISODateString } from "@/app/features/calendar/webworkers/generic-webworker";
+import { getDateRange } from "@/app/features/calendar/webworkers/generic-webworker-utilities";
+import { TVisibleHours } from "../types";
+import { QueryError } from "@/contexts/ReactQueryProvider";
+import { queryKeys } from "./querykeys";
 
 //const queryClient = new QueryClient();
 const formatDate = (date: Date) => {
   return formatISO(date);
 };
 
-export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) =>
-  useQuery({
-    queryKey: ["events", formatDate(startDate), formatDate(endDate), "user", userId],
+export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) => {
+  const endpoint = userId ? "/api/events/my-events" : "/api/events";
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+
+  return useQuery({
+    queryKey: queryKeys.events.user(start, end, userId),
     queryFn: async () => {
-      const result = await fetchGET("/api/events", {
-        startdate: formatDate(startDate),
-        enddate: formatDate(endDate),
+      const result = await fetchGET(endpoint, {
+        startdate: start,
+        enddate: end,
         userId: userId,
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "useEventsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
     enabled: enabled,
   });
+};
 
-export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) =>
-  useQuery({
-    queryKey: ["events", formatDate(startDate), formatDate(endDate), "status", statusId],
+export const useMyEventsQuery = (
+  action: CalendarAction,
+  date: Date,
+  userId: string,
+  visibleHours: TVisibleHours,
+  roomId?: string | string[],
+  enabled: boolean = true,
+) => {
+  const range = getDateRange(action, date);
+  const start = formatDate(range.startDate);
+  const end = formatDate(range.endDate);
+
+  return useQuery({
+    queryKey: queryKeys.events.user(start, end, userId),
+    queryFn: async () => {
+      const result = await fetchGET("/api/events/my-events", {
+        startdate: start,
+        enddate: end,
+        userId: userId,
+      });
+      const parsedResult = z.array(SEvent).safeParse(result.data);
+
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "useMyEventsQuery", parsedResult.error);
+      }
+
+      return await processEventsAsync({
+        events: result.data as IEvent[],
+        selectedDate: date.toISOString() as ISODateString,
+        selectedRoomId: roomId,
+        action: action,
+        visibleHours,
+        multiDayEventsAtTop: true,
+        userId: userId,
+        // ... any other worker params
+      });
+
+      return parsedResult.data;
+    },
+    enabled: enabled,
+  });
+};
+
+export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) => {
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+
+  return useQuery({
+    queryKey: queryKeys.events.status(start, end, statusId),
     queryFn: async () => {
       const result = await fetchGET("/api/events/status", {
-        startdate: formatDate(startDate),
-        enddate: formatDate(endDate),
+        startdate: start,
+        enddate: end,
         statusId: statusId,
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "useEventsByStatusQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
     enabled: enabled,
   });
+};
 
 export const useTotalEventsByStatusQuery = (
   statusId: string,
   startDate?: Date,
   endDate?: Date,
-  enabled: boolean = true
+  enabled: boolean = true,
 ) =>
   useQuery({
-    queryKey: ["total_events", "status", statusId],
+    queryKey: queryKeys.events.totalByStatus(statusId),
     queryFn: async () => {
       const result = await fetchGET("/api/events/status/counts", {
         startdate: startDate ? formatDate(startDate) : undefined,
@@ -74,12 +136,14 @@ export const useTotalEventsByStatusQuery = (
 
 export const useEventQuery = (eventId: number | undefined, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["event", eventId],
+    queryKey: queryKeys.events.detail(eventId),
     queryFn: async () => {
       const result = await fetchGET(`/api/events/${eventId}`);
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "useEventQuery", parsedResult.error);
+      }
 
       return parsedResult.data[0];
     },
@@ -88,35 +152,30 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
     staleTime: 0,
   });
 
-type eventObject = {
-  eventId?: number;
-  roomId: number;
-  startDate: string;
-  endDate: string;
-  title: string;
-  description?: string;
-  recurrenceId?: number;
-};
+export const SEventPUT = z.object({
+  eventId: z.coerce.number().optional(),
+  roomId: z.coerce.number().gt(0, "Room is required"),
+  userId: z.coerce.number().nullable().optional(),
+  statusId: z.coerce.number(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().default(""),
+  startDate: utcDateSchema,
+  endDate: utcDateSchema,
+  recurrenceId: z.coerce.number().nullable().optional(),
+  rule: z.string().optional(),
+  ruleStartDate: utcDateSchema.optional(),
+  ruleEndDate: utcDateSchema.optional(),
+});
 
-type ruleObject = {
-  rule: string;
-  ruleStartDate: string;
-  ruleEndDate: string;
-};
-
-type mutationObject = {
-  eventData: eventObject;
-  ruleData: ruleObject | null;
-};
+export type IEventPUT = z.infer<typeof SEventPUT>;
 
 export const useEventsMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: mutationObject) => fetchPUT(`/api/events`, data),
+    mutationFn: async (data: IEventPUT) => fetchPUT(`/api/events`, data),
     onSuccess: (response) => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(response.data.eventId) });
     },
   });
 };
@@ -126,14 +185,18 @@ export const useEventsMutationDelete = () => {
   return useMutation({
     mutationFn: async (eventId: number) => fetchDELETE(`/api/events/${eventId}`),
     onSuccess: () => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      //queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
 };
 export const useEventPatchMutation = () => {
   const queryClient = useQueryClient();
+
+  const getContextKey = (tags: { startDate: string; endDate: string; type: "user" | "status"; id: string }) => {
+    return tags.type === "user"
+      ? queryKeys.events.user(tags.startDate, tags.endDate, tags.id)
+      : queryKeys.events.status(tags.startDate, tags.endDate, tags.id);
+  };
 
   return useMutation({
     mutationFn: async ({
@@ -154,8 +217,8 @@ export const useEventPatchMutation = () => {
     },
 
     onMutate: async (variables) => {
-      const eventKey = ["event", variables.eventId];
-      const eventsKey = buildEventKey(variables.cacheTags);
+      const eventKey = queryKeys.events.detail(variables.eventId);
+      const eventsKey = getContextKey(variables.cacheTags);
 
       await queryClient.cancelQueries({ queryKey: eventsKey });
       await queryClient.cancelQueries({ queryKey: eventKey });
@@ -173,8 +236,8 @@ export const useEventPatchMutation = () => {
                   // Apply only known fields from updates
                   statusId: variables.updates.status?.connect?.statusId ?? event.statusId,
                 }
-              : event
-          )
+              : event,
+          ),
         );
       }
 
@@ -190,8 +253,8 @@ export const useEventPatchMutation = () => {
     },
 
     onError: (err, variables, context) => {
-      const eventsKey = buildEventKey(variables.cacheTags);
-      const eventKey = ["event", variables.eventId];
+      const eventsKey = getContextKey(variables.cacheTags);
+      const eventKey = queryKeys.events.detail(variables.eventId);
 
       if (context?.previousEvents) {
         queryClient.setQueryData(eventsKey, context.previousEvents);
@@ -202,19 +265,11 @@ export const useEventPatchMutation = () => {
     },
 
     onSettled: (data, error, variables) => {
-      const eventsKey = buildEventKey(variables.cacheTags);
-      const eventKey = ["event", variables.eventId];
+      const eventsKey = getContextKey(variables.cacheTags);
+      const eventKey = queryKeys.events.detail(variables.eventId);
 
       queryClient.invalidateQueries({ queryKey: eventsKey });
       queryClient.invalidateQueries({ queryKey: eventKey });
     },
   });
 };
-
-const buildEventKey = (tags: { startDate: string; endDate: string; type: string; id: string }) => [
-  "events",
-  tags.startDate,
-  tags.endDate,
-  tags.type,
-  tags.id,
-];

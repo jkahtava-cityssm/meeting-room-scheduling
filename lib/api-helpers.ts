@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { jwtVerify, importJWK, JWTPayload, errors } from "jose";
-import { Role } from "./auth";
-import { SessionAction, SessionResource, SessionRole } from "./types";
 
 export async function CreatedMessage(message: string, data: object) {
   return NextResponse.json({ message: message, data: data }, { status: 201 }); // Created
@@ -12,22 +10,22 @@ export async function SuccessMessage(message: string, data: object) {
 }
 
 export async function NoContentMessage() {
-  return NextResponse.json({ status: 204 }); // No Content
+	return NextResponse.json({ status: 204 }); // No Content
 }
 
 export async function DeleteMessage() {
-  return NextResponse.json({ status: 204 }); // No content
+	return NextResponse.json({ status: 204 }); // No content
 }
 
 export async function InternalServerErrorMessage(message: string = "Internal Server Error") {
-  return NextResponse.json({ message: message }, { status: 500 }); // Internal Server Error
+	return NextResponse.json({ message: message }, { status: 500 }); // Internal Server Error
 }
 
 export async function BadRequestMessage(message: string = "Bad Request") {
-  return NextResponse.json({ message: message }, { status: 400 }); // Bad Request
+	return NextResponse.json({ message: message }, { status: 400 }); // Bad Request
 }
 export async function UnauthorizedMessage() {
-  return NextResponse.json({ status: 401 }); // Not Found
+	return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); // Not Found
 }
 export async function ForbiddenMessage(message: string = "Requested Resource is Forbidden") {
   return NextResponse.json({ message: message }, { status: 403 }); // Not Found
@@ -93,77 +91,6 @@ export async function VerifyToken(token: string): Promise<{ message: string; dat
     const errorMessage = err instanceof Error ? err.message : String(err);
     return { message: errorMessage, data: undefined };
   }
-}
-
-export type PermissionRequirement =
-  | { type: "permission"; resource: SessionResource; action: SessionAction }
-  | { type: "role"; role: SessionRole }
-  | { type: "function"; check: (roles: Role[] | undefined) => boolean | Promise<boolean> }
-  | { type: "and"; requirements: PermissionRequirement[] }
-  | { type: "or"; requirements: PermissionRequirement[] };
-
-export async function isRequirementMet(
-  roles: Role[] | undefined,
-  requirement: PermissionRequirement
-): Promise<boolean> {
-  if (!roles && requirement.type !== "function") return false;
-
-  const isAdmin = roles?.some((role) => role.name.toLowerCase() === "admin");
-  if (isAdmin) return true;
-
-  switch (requirement.type) {
-    case "permission":
-      return hasPermission(roles, requirement.resource, requirement.action);
-
-    case "role":
-      return hasRole(roles, requirement.role);
-
-    case "function":
-      return await Promise.resolve(requirement.check(roles));
-
-    case "and":
-      for (const req of requirement.requirements) {
-        const result = await isRequirementMet(roles, req);
-        if (!result) return false; // short-circuit on first failure
-      }
-      return true;
-
-    case "or":
-      for (const req of requirement.requirements) {
-        const result = await isRequirementMet(roles, req);
-        if (result) return true; // short-circuit on first success
-      }
-      return false;
-
-    default:
-      return false;
-  }
-}
-
-export function hasPermission(roles: Role[] | undefined, resource: SessionResource, action: SessionAction) {
-  if (!roles) return false;
-
-  const permission = roles.some((role) => {
-    return role.permissions.some((permission) => {
-      return (
-        permission.permit === true &&
-        permission.resource.toLowerCase() === resource.toLowerCase() &&
-        permission.action.toLowerCase() === action.toLowerCase()
-      );
-    });
-  });
-
-  return permission;
-}
-
-export function hasRole(roles: Role[] | undefined, role: SessionRole) {
-  if (role.toLowerCase() === "any") return true;
-
-  if (!roles) return false;
-
-  return roles.some((item) => {
-    return item.name.toLowerCase() === role.toLowerCase();
-  });
 }
 
 export function validateVisibleHours(visibleHoursStart?: number, visibleHoursEnd?: number) {

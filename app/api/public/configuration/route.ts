@@ -2,29 +2,41 @@ import { prisma } from "@/prisma";
 import { findManyConfiguration } from "@/lib/data/configuration";
 
 import { NextRequest } from "next/server";
-import { InternalServerErrorMessage, SuccessMessage, validateVisibleHours } from "@/lib/api-helpers";
+import {
+  InternalServerErrorMessage,
+  SuccessMessage,
+  UnauthorizedMessage,
+  validateVisibleHours,
+} from "@/lib/api-helpers";
+import { verifySecretHeader } from "@/lib/server/verifySecretHeader";
+import { TConfigurationKeys } from "@/lib/types";
 
-export async function GET(req: NextRequest) {
-  const configEntries = await findManyConfiguration({ OR: [{ key: "visibleHoursStart" }, { key: "visibleHoursEnd" }] });
-
-  if (!configEntries) {
-    return InternalServerErrorMessage();
+export async function GET(request: NextRequest) {
+  if (!verifySecretHeader(request)) {
+    return UnauthorizedMessage();
   }
 
-  type VisibleKey = "visibleHoursStart" | "visibleHoursEnd";
+  const configEntries = await findManyConfiguration([
+    "visibleHoursStart",
+    "visibleHoursEnd",
+    "singleSignOnEnabled",
+    "timeSlotIntervalMinutes",
+  ]);
 
-  const config = configEntries.reduce<Record<VisibleKey, number>>(
-    (acc, entry) => {
-      const key = entry.key as VisibleKey;
-      acc[key] = Number(entry.value);
-      return acc;
-    },
-    { visibleHoursStart: 0, visibleHoursEnd: 0 }
+  const flatMap = configEntries.reduce<Partial<Record<TConfigurationKeys, string>>>((acc, entry) => {
+    const key = entry.key as TConfigurationKeys;
+    acc[key] = String(entry.value);
+    return acc;
+  }, {});
+
+  const { visibleHoursStart, visibleHoursEnd } = validateVisibleHours(
+    Number(flatMap.visibleHoursStart),
+    Number(flatMap.visibleHoursEnd),
   );
 
-  const { visibleHoursStart, visibleHoursEnd } = validateVisibleHours(config.visibleHoursStart, config.visibleHoursEnd);
-
-  const visibleHoursRange = { from: visibleHoursStart, to: visibleHoursEnd };
-
-  return SuccessMessage("Collected Hours", visibleHoursRange);
+  return SuccessMessage("Collected Public Configuration", {
+    hours: { from: visibleHoursStart, to: visibleHoursEnd },
+    useSSO: flatMap.singleSignOnEnabled === "true",
+    interval: Number(flatMap.timeSlotIntervalMinutes),
+  });
 }

@@ -2,18 +2,18 @@
 
 echo "Startup script is running"
 
-echo "DUCKDNS_DOMAIN is: $DUCKDNS_DOMAIN"
+echo "SERVER_NAME is: $SERVER_NAME"
 
-CERT_PATH="/etc/letsencrypt/live/${DUCKDNS_DOMAIN}/fullchain.pem"
+CERT_PATH="/etc/letsencrypt/live/${SERVER_NAME}/fullchain.pem"
 
 echo "Startup script is running"
 
 if [ ! -f "$CERT_PATH" ]; then
   echo "No cert found — starting Nginx with HTTP-only config"
-  envsubst '${DUCKDNS_DOMAIN}' < /etc/nginx/http-only.conf.template > /etc/nginx/conf.d/default.conf
+  envsubst '${SERVER_NAME}' < /etc/nginx/http-only.conf.template > /etc/nginx/conf.d/default.conf
 else
   echo "Cert found — starting Nginx with full HTTPS config"
-  envsubst '${DUCKDNS_DOMAIN}' < /etc/nginx/full.conf.template > /etc/nginx/conf.d/default.conf
+  envsubst '${SERVER_NAME}' < /etc/nginx/full.conf.template > /etc/nginx/conf.d/default.conf
 fi
 
 # Always copy the loader

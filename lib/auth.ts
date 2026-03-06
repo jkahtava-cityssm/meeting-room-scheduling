@@ -1,10 +1,15 @@
 import { prisma } from "@/prisma";
-import { betterAuth } from "better-auth";
+import { betterAuth, Session } from "better-auth";
+import { sso } from "@better-auth/sso";
 import { customSession } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { headers } from "next/headers";
-import { fetchGET } from "./fetch";
+import { SessionAction, SessionResource, SessionRole } from "./types";
+
+import { getCachedUserRoles } from "./auth-role-cache";
+import { nextCookies } from "better-auth/next-js";
+import { getDefaultRole } from "./data/users";
 
 export type User = {
   userId: string | undefined | null;
@@ -19,14 +24,15 @@ export type User = {
 };
 
 export type Role = {
-  name: string;
+  roleId: number;
+  name: SessionRole;
   permissions: Permission[];
 };
 
 export type Permission = {
   permit: boolean;
-  resource: string;
-  action: string;
+  resource: SessionResource;
+  action: SessionAction;
 };
 
 export const auth = betterAuth({
@@ -52,10 +58,12 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
-    additionalFields: {},
+    additionalFields: { impersonatedRole: { type: "string", required: false } },
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // 5 Minutes
+      maxAge: 10 * 60, // 5 Minutes
+      strategy: "compact",
+      refreshCache: { updateAge: 60 * 2 },
     },
   },
   account: {
@@ -65,32 +73,29 @@ export const auth = betterAuth({
       updateUserInfoOnLink: true,
     },
   },
-  trustedOrigins: ["http://192.168.50.33", "https://192.168.50.33", "http://localhost:3000"],
+  trustedOrigins: [
+    "http://192.168.50.33",
+    "https://192.168.50.33",
+    "http://localhost:3000",
+    "https://exampledomain.home",
+  ],
   databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          createDefaultRole(Number(session.userId));
+        },
+      },
+    },
     user: {
       update: {
         after: async (user) => {
-          const userRole = await prisma.userRole.count({ where: { userId: Number(user.id) } });
-          if (userRole > 0) return;
-
-          const role = await prisma.role.findFirst({ where: { name: "User" } });
-
-          if (role) {
-            await prisma.userRole.create({
-              data: { userId: Number(user.id), roleId: role.roleId },
-            });
-          }
+          createDefaultRole(Number(user.id));
         },
       },
       create: {
         after: async (user) => {
-          const role = await prisma.role.findFirst({ where: { name: "User" } });
-
-          if (role) {
-            await prisma.userRole.create({
-              data: { userId: Number(user.id), roleId: role.roleId },
-            });
-          }
+          createDefaultRole(Number(user.id));
         },
       },
     },
@@ -101,23 +106,26 @@ export const auth = betterAuth({
       roles: { type: "number[]"},
     },
   },*/
+
   plugins: [
+    sso({
+      modelName: "SSOProvider",
+    }),
+
     customSession(async ({ user, session }) => {
-      const userData = await fetchGET(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${user.id}`,
-        { token: session.token },
-        3600,
-        [user.id]
-      );
-      //console.log("SESSION GET");
+      const currentSession = session as Session & { impersonatedRole?: string };
+      const token = session.token;
+      const userId = Number(user.id);
+      const roles = await getCachedUserRoles(token, userId, currentSession.impersonatedRole);
       return {
         user: {
           ...user,
-          roles: userData.data ? (userData.data.roles as Role[] | undefined) : undefined,
+          roles: roles,
         },
-        session,
+        session: currentSession,
       };
     }),
+    nextCookies(), // make sure this is the last plugin in the array
   ],
 });
 
@@ -127,4 +135,25 @@ export async function getServerSession() {
   });
 
   return session;
+}
+
+async function createDefaultRole(userId: number) {
+  const userRole = await prisma.userRole.count({ where: { userId: userId } });
+  if (userRole > 0) return;
+
+  const defaultRole = await getDefaultRole();
+
+  const roleId = Number(defaultRole.roleId);
+  if (!Number.isFinite(roleId)) {
+    console.warn("Default role ID is not set or invalid. Skipping default role assignment.");
+    return;
+  }
+
+  const role = await prisma.role.findFirst({ where: { roleId: roleId }, orderBy: { roleId: "asc" } });
+
+  if (role) {
+    await prisma.userRole.create({
+      data: { userId: userId, roleId: role.roleId, granted: true },
+    });
+  }
 }

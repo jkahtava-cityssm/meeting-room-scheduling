@@ -1,19 +1,17 @@
 "use client";
 
-import { CalendarPublicView } from "@/components/calendar/calendar-public-view";
+import { CalendarPublicView } from "@/app/features/calendar/view-public/public-view";
 import { useSidebar } from "@/components/ui/sidebar";
-import { CalendarProvider } from "@/contexts/CalendarProvider";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarProviderPublic } from "@/contexts/CalendarProviderPublic";
+import { LoaderCircle } from "lucide-react";
+
 import { Suspense } from "react";
 
 export default function Availability() {
-  const { open, openMobile, isMobile } = useSidebar();
   return (
-    <div className="flex flex-1 flex-col ">
-      <Suspense fallback={<>...Loading</>}>
-        <CalendarProvider>
-          <CalendarPublicView sideBarOpen={open && !isMobile}></CalendarPublicView>
-        </CalendarProvider>
-      </Suspense>
-    </div>
+    <CalendarProviderPublic>
+      <CalendarPublicView></CalendarPublicView>
+    </CalendarProviderPublic>
   );
 }

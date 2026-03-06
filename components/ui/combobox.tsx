@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Slot } from "@radix-ui/react-slot";
 
-interface list {
+interface ComboBoxItem {
   key: string;
   label: string;
   value: string;
@@ -25,7 +25,7 @@ export function ComboBox({
 }: {
   value: string;
   children: React.ReactNode;
-  list: list[];
+  list: ComboBoxItem[];
   noResultText: string;
   searchText: string;
   onSelect: (value: string) => void;
@@ -51,7 +51,7 @@ export function ComboBox({
                   }}
                 >
                   {item.label}
-                  <Check className={cn("ml-auto", value === item.value ? "opacity-100" : "opacity-0")} />
+                  <Check className={cn("ml-auto h-4 w-4", value === item.value ? "opacity-100" : "opacity-0")} />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -69,28 +69,23 @@ export function ComboBoxTrigger({
   className,
   disabled,
   ...props
-}: {
-  value: string;
-  list: list[];
+}: React.ComponentPropsWithoutRef<typeof Button> & {
+  value: string | undefined;
+  list: ComboBoxItem[];
   placeholderText: string;
-  className?: string;
-  disabled?: boolean;
-  props?: React.ComponentProps<typeof Slot>;
 }) {
+  const selectedLabel = list?.find((item) => item.value === value)?.label;
   return (
     <Button
       variant="outline"
       role="combobox"
-      className={cn(
-        "w-[200px] justify-between data-[placeholder]:text-muted-foreground text-sm font-normal",
-        className
-      )}
+      className={cn("min-w-[200px] justify-between text-sm font-normal", !value && "text-muted-foreground", className)}
       disabled={disabled}
-      data-placeholder={value && value !== "" ? null : true}
       {...props}
     >
-      {value ? list?.find((item) => item.value === value)?.label : placeholderText}
-      <ChevronDownIcon className="opacity-50" />
+      <span className="truncate">{selectedLabel || placeholderText}</span>
+
+      <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
     </Button>
   );
 }

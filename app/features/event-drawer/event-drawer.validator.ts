@@ -35,9 +35,7 @@ export const step2Schema = z
     yearWeekdayValue: z.string(),
 
     weekValue: z.string(),
-    weekdays: z.array(z.string()).refine((value) => value.some((item) => item), {
-      message: "You have to select at least one item.",
-    }),
+    weekdays: z.array(z.string()),
 
     durationType: z.string().min(1, "Please select a duration type"),
     occurrences: z.string(),
@@ -236,7 +234,7 @@ export const step1Schema = z
       },
       {
         message: "Please select a Room",
-      }
+      },
     ),
     userId: z.string().refine(
       (value) => {
@@ -244,7 +242,7 @@ export const step1Schema = z
       },
       {
         message: "Please select a Member",
-      }
+      },
     ),
     description: z.string().optional(),
     title: z.string().min(1),
@@ -328,8 +326,8 @@ export const CombinedEventSchema = step1Schema.safeExtend(step2Schema.shape);
 
 export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
 
-export const defaultValues = (creationDate?: Date, userId?: string): CombinedSchema => {
-  const startDateTime = getValidMinuteAndRolledHour(creationDate ? creationDate : new Date());
+export const defaultValues = (creationDate?: Date, userId?: string, validMinute: number = 15): CombinedSchema => {
+  const startDateTime = getValidMinuteAndRolledHour(creationDate ? creationDate : new Date(), validMinute);
 
   const endDateTime = addMinutes(startDateTime, 30);
 

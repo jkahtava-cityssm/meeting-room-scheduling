@@ -10,50 +10,29 @@ export function getRRuleData({
   fieldValues: RRuleFieldValues;
 }): Promise<{
   RRuleText: string;
-  ruleString?: string;
-  firstDate?: string;
-  lastDate?: string;
-  count?: number;
-  localDates?: Date[];
+  ruleString: string;
+  firstDate: string;
+  lastDate: string;
+  count: number;
+  localDates: Date[];
 }> {
   const rule = createRRule(startDate, ...fieldValues);
   const RRuleText = rule ? rule.toText() : "Incomplete Recurrence Pattern";
   const RRuleOptions = rule?.options;
 
   if (!RRuleOptions) {
-    return Promise.resolve({ RRuleText });
+    return Promise.reject("Invalid Pattern");
   }
 
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL("./rrule-preview-webworker.ts", import.meta.url));
 
-    worker.onmessage = (
-      response: MessageEvent<{ rrule: RRule; count: number; firstDate: Date; lastDate: Date; localDates: Date[] }>
-    ) => {
-      try {
-        const strippedObject = response.data.rrule;
-        const original = Object.getPrototypeOf(new RRule());
-        Object.setPrototypeOf(strippedObject, original);
-
-        const ruleString = strippedObject.toString();
-        const firstDate = response.data.firstDate?.toISOString();
-        const lastDate = response.data.lastDate?.toISOString();
-        const count = response.data.count;
-        const localDates = response.data.localDates;
-
-        resolve({
-          RRuleText,
-          ruleString,
-          firstDate,
-          lastDate,
-          count,
-          localDates,
-        });
-      } catch (err) {
-        reject(err);
-      } finally {
-        worker.terminate();
-      }
+    worker.onmessage = (event) => {
+      resolve({
+        RRuleText,
+        ...event.data,
+      });
+      worker.terminate();
     };
 
     worker.onerror = (err) => {
@@ -160,7 +139,7 @@ function createRRule(
   yearPeriodValue: string,
   yearWeekdayValue: string,
   occurrences: string,
-  durationType: string
+  durationType: string,
 ) {
   const repeatingPattern = getRepeatingPatternValue(repeatingType, dailyPattern, monthlyPattern, yearlyPattern);
   const weekdayArray = getWeekdayArray(repeatingPattern, weekdays, monthWeekdayValue, yearWeekdayValue);
@@ -186,8 +165,8 @@ function createRRule(
     durationType === "forever"
       ? addYears(parsedStartDate, 200) //convertDateToRRuleDate(addYears(parsedStartDate, 200))
       : durationType === "count"
-      ? null
-      : new Date(untilDate); //convertDateToRRuleDate(parsedEndDate);
+        ? null
+        : new Date(untilDate); //convertDateToRRuleDate(parsedEndDate);
 
   if (
     (durationType === "count" && count === 0) ||
@@ -298,6 +277,123 @@ function createRRule(
   }
 }
 
+function createRRule2(
+  ruleStartDate: string,
+  untilDate: string,
+  repeatingType: string,
+  weekdays: string[],
+  dailyPattern: string,
+  monthlyPattern: string,
+  yearlyPattern: string,
+  dayValue: string,
+  weekValue: string,
+  monthValue: string,
+  monthDayValue: string,
+  monthPeriodValue: string,
+  monthWeekdayValue: string,
+  yearValue: string,
+  yearDayValue: string,
+  yearMonthValue: string,
+  yearPeriodValue: string,
+  yearWeekdayValue: string,
+  occurrences: string,
+  durationType: string,
+) {
+  const repeatingPattern = getRepeatingPatternValue(repeatingType, dailyPattern, monthlyPattern, yearlyPattern);
+  const weekdayArray = getWeekdayArray(repeatingPattern, weekdays, monthWeekdayValue, yearWeekdayValue);
+
+  // Common parsed values
+  const parsedStartDate = new Date(ruleStartDate);
+  const count = durationType === "forever" || durationType === "until" ? null : parseNumber(occurrences);
+
+  const convertedEndDate =
+    durationType === "forever" ? addYears(parsedStartDate, 200) : durationType === "count" ? null : new Date(untilDate);
+
+  // Initial Guard
+  if (
+    (durationType === "count" && count === 0) ||
+    (durationType === "until" && IsDateLessThenEqual(parsedStartDate, convertedEndDate))
+  ) {
+    return;
+  }
+
+  // Base options shared by all rules
+  const baseOptions = {
+    dtstart: parsedStartDate,
+    count: count ?? undefined,
+    until: convertedEndDate ?? undefined,
+  };
+
+  // Helper to safely parse intervals
+  const intervals = {
+    day: parseNumber(dayValue),
+    week: parseNumber(weekValue),
+    month: parseNumber(monthValue),
+    year: parseNumber(yearValue),
+  };
+
+  switch (repeatingPattern) {
+    case "daily-daily":
+      if (intervals.day <= 0) return;
+      return new RRule({ ...baseOptions, freq: RRule.DAILY, interval: intervals.day, byweekday: weekdayArray });
+
+    case "daily-weekdays":
+      return new RRule({ ...baseOptions, freq: RRule.DAILY, interval: 1, byweekday: weekdayArray });
+
+    case "weekly-weekly":
+      if (intervals.week <= 0) return;
+      return new RRule({ ...baseOptions, freq: RRule.WEEKLY, interval: intervals.week, byweekday: weekdayArray });
+
+    case "monthly-dayInMonth": {
+      const day = parseNumber(monthDayValue);
+      if (intervals.month <= 0 || day <= 0) return;
+      return new RRule({ ...baseOptions, freq: RRule.MONTHLY, interval: intervals.month, bymonthday: day });
+    }
+
+    case "monthly-patternInMonth": {
+      const pos = parseNumber(monthPeriodValue);
+      if (intervals.month <= 0 || (pos !== -1 && pos <= 0)) return;
+      return new RRule({
+        ...baseOptions,
+        freq: RRule.MONTHLY,
+        interval: intervals.month,
+        byweekday: weekdayArray,
+        bysetpos: pos,
+      });
+    }
+
+    case "yearly-dayInMonthInYear": {
+      const month = parseNumber(yearMonthValue);
+      const day = parseNumber(yearDayValue);
+      if (intervals.year <= 0 || month <= 0 || day <= 0) return;
+      return new RRule({
+        ...baseOptions,
+        freq: RRule.YEARLY,
+        interval: intervals.year,
+        bymonth: month,
+        bymonthday: day,
+      });
+    }
+
+    case "yearly-patternInMonthInYear": {
+      const month = parseNumber(yearMonthValue);
+      const pos = parseNumber(yearPeriodValue);
+      if (intervals.year <= 0 || month <= 0 || (pos !== -1 && pos <= 0) || weekdayArray.length === 0) return;
+      return new RRule({
+        ...baseOptions,
+        freq: RRule.YEARLY,
+        interval: intervals.year,
+        bymonth: month,
+        byweekday: weekdayArray,
+        bysetpos: pos,
+      });
+    }
+
+    default:
+      return;
+  }
+}
+
 function parseNumber(value: string, defaultValue: number = 0) {
   const newValue = Number(value);
   return isNaN(newValue) ? defaultValue : newValue;
@@ -307,18 +403,18 @@ function getRepeatingPatternValue(
   repeatingType: string,
   dailyPattern: string,
   monthlyPattern: string,
-  yearlyPattern: string
+  yearlyPattern: string,
 ) {
   const pattern =
     repeatingType === "daily"
       ? dailyPattern
       : repeatingType === "monthly"
-      ? monthlyPattern
-      : repeatingType === "yearly"
-      ? yearlyPattern
-      : repeatingType === "weekly"
-      ? "weekly"
-      : "";
+        ? monthlyPattern
+        : repeatingType === "yearly"
+          ? yearlyPattern
+          : repeatingType === "weekly"
+            ? "weekly"
+            : "";
 
   return repeatingType + "-" + pattern;
 }
@@ -327,7 +423,7 @@ function getWeekdayArray(
   repeatingPattern: string,
   weekdays: string[],
   monthWeekdayValue: string,
-  yearWeekdayValue: string
+  yearWeekdayValue: string,
 ) {
   let localWeekdays: string[] = [];
   const weekdayArray: ByWeekday[] = [];
@@ -380,7 +476,7 @@ export type RRuleFieldValues = [
   string, // yearPeriodValue
   string, // yearWeekdayValue
   string, // occurrences
-  string // durationType
+  string, // durationType
 ];
 
 export function getFieldValuesArray(formValues: CombinedSchema): RRuleFieldValues {

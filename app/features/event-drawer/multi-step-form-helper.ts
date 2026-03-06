@@ -5,7 +5,7 @@ import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
 
 export const isStepValid = async (
   formStep: FormStep,
-  methods: UseFormReturn<CombinedSchema>
+  methods: UseFormReturn<CombinedSchema>,
 ): Promise<{ status: boolean; errorList: string[] }> => {
   const formValues = getFormValues(formStep, methods);
 
@@ -30,7 +30,7 @@ export const isStepValid = async (
 export const isFormValid = async (
   formSteps: FormStep[],
   methods: UseFormReturn<CombinedSchema>,
-  skipSteps: number[] = []
+  skipSteps: number[] = [],
 ): Promise<{ status: boolean; errorList: string[] }> => {
   let isValid = true;
   let errorList: string[] = [];
@@ -81,31 +81,41 @@ export const updateRRuleIfNecessary = async (allData: CombinedSchema): Promise<C
   };
 };
 
-const MINUTE_STEP_DATA: {
-  stepValues: number[];
-  wrapForward: { value: number; substitute: number };
-  wrapBackward: { value: number; substitute: number };
-} = {
-  stepValues: [-15, 0, 15, 30, 45, 60],
-  wrapForward: { value: 60, substitute: 15 },
-  wrapBackward: { value: -15, substitute: 45 },
-};
+function computeMinuteStepData(interval: number) {
+  const stepValues: number[] = [];
+  stepValues.push(-interval);
+  const count = Math.floor(60 / interval);
+  for (let i = 0; i < count; i++) {
+    stepValues.push(i * interval);
+  }
+  stepValues.push(60);
 
-export function getValidMinuteAndRolledHour(date: Date): Date {
+  return {
+    stepValues,
+    wrapForward: { value: 60, substitute: interval },
+    wrapBackward: { value: -interval, substitute: 60 - interval },
+  };
+}
+
+export function getValidMinuteAndRolledHour(date: Date, interval?: number): Date {
+  const allowed = [5, 10, 15, 20, 30, 60];
+  const validatedInterval = typeof interval === "number" && allowed.includes(interval) ? interval : 15;
+
+  const MINUTE_STEP_DATA = computeMinuteStepData(validatedInterval);
+
   const minute = date.getMinutes();
   const hour = date.getHours();
 
   const closest = MINUTE_STEP_DATA.stepValues.reduce((prev, curr) =>
-    Math.abs(curr - minute) < Math.abs(prev - minute) ? curr : prev
+    Math.abs(curr - minute) < Math.abs(prev - minute) ? curr : prev,
   );
 
-  const normalizedMinute = normalizeMinuteValue(closest);
+  const normalizedMinute = normalizeMinuteValue(closest, MINUTE_STEP_DATA);
 
   const newDate = new Date(date);
   newDate.setSeconds(0);
   newDate.setMilliseconds(0);
 
-  // If rounding up to 60, roll over the hour
   if (normalizedMinute === 60) {
     newDate.setHours(hour + 1);
     newDate.setMinutes(0);
@@ -116,7 +126,13 @@ export function getValidMinuteAndRolledHour(date: Date): Date {
   return newDate;
 }
 
-function normalizeMinuteValue(value: number): number {
+function normalizeMinuteValue(
+  value: number,
+  MINUTE_STEP_DATA: {
+    wrapForward: { value: number; substitute: number };
+    wrapBackward: { value: number; substitute: number };
+  },
+): number {
   if (value === MINUTE_STEP_DATA.wrapForward.value) return MINUTE_STEP_DATA.wrapForward.substitute;
   if (value === MINUTE_STEP_DATA.wrapBackward.value) return MINUTE_STEP_DATA.wrapBackward.substitute;
   return value;
