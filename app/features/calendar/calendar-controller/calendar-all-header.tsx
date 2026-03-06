@@ -148,7 +148,7 @@ export function CalendarHeader({
             <EventDrawerRefactor userId={userId}>
               <Button className="w-full sm:w-auto">
                 <Plus />
-                Add Event Refactor
+                Add Event
               </Button>
             </EventDrawerRefactor>
           )}
