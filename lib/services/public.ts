@@ -4,6 +4,7 @@ import { formatISO } from "date-fns";
 import { z } from "zod";
 import { fetchPublicConfiguration, fetchPublicEvents, fetchPublicRooms } from "../server/public";
 import { QueryError } from "@/contexts/ReactQueryProvider";
+import { queryKeys } from "./querykeys";
 
 const formatDate = (date: Date) => {
   return formatISO(date);
@@ -47,11 +48,12 @@ const PUBLIC_SCONFIGURATION = z.object({
 export type PUBLIC_IEVENT = z.infer<typeof PUBLIC_SEVENT>;
 export type PUBLIC_IROOM = z.infer<typeof PUBLIC_SROOM>;
 
-export const usePublicEventsQuery = (date: Date, enabled: boolean = true) =>
-  useQuery({
-    queryKey: ["public_events", formatDate(date)],
+export const usePublicEventsQuery = (date: Date, enabled: boolean = true) => {
+  const currentDate = formatDate(date);
+  return useQuery({
+    queryKey: queryKeys.public.eventList(currentDate),
     queryFn: async () => {
-      const result = await fetchPublicEvents(formatDate(date));
+      const result = await fetchPublicEvents(currentDate);
 
       if (!result.ok) {
         throw new Error(result.error ?? "Unknown Error");
@@ -67,10 +69,11 @@ export const usePublicEventsQuery = (date: Date, enabled: boolean = true) =>
     },
     enabled: enabled,
   });
+};
 
 export const usePublicRoomsQuery = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["public_rooms"],
+    queryKey: queryKeys.public.rooms(),
     queryFn: async () => {
       const result = await fetchPublicRooms();
 
@@ -92,7 +95,7 @@ export const usePublicRoomsQuery = (enabled: boolean = true) =>
 
 export const usePublicConfiguration = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["public_configuration"],
+    queryKey: queryKeys.public.configuration(),
     queryFn: async () => {
       const result = await fetchPublicConfiguration();
 

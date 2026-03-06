@@ -3,10 +3,11 @@ import { fetchGET } from "@/lib/fetch";
 import { SEvent, SUser } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
 import z from "zod/v4";
+import { queryKeys } from "./querykeys";
 
 export const useUsersQuery = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["users"],
+    queryKey: queryKeys.users.lists(),
     queryFn: async () => {
       const result = await fetchGET(`/api/users`, undefined, 180, ["users"]);
       const parsedResult = z.array(SUser).safeParse(result.data);
@@ -22,7 +23,7 @@ export const useUsersQuery = (enabled: boolean = true) =>
 
 export const useUserEventsQuery = (userId: string | undefined, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["user_events", userId],
+    queryKey: queryKeys.users.events(userId),
     queryFn: async () => {
       const result = await fetchGET(`/api/users/${userId}/events`);
 

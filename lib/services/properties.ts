@@ -3,10 +3,11 @@ import { fetchGET } from "../fetch";
 import z from "zod/v4";
 import { SProperty } from "../schemas/calendar";
 import { QueryError } from "@/contexts/ReactQueryProvider";
+import { queryKeys } from "./querykeys";
 
 export const usePropertyQuery = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["properties"],
+    queryKey: queryKeys.references.properties(),
     queryFn: async () => {
       const result = await fetchGET("/api/references/properties");
 

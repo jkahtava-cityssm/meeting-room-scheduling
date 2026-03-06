@@ -4,6 +4,7 @@ import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from "@/lib/sc
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { property } from "lodash";
 import { z } from "zod/v4";
+import { queryKeys } from "./querykeys";
 
 const AllRooms: IRoom = {
   roomId: -1,
@@ -22,9 +23,10 @@ const AllRooms: IRoom = {
   },
 };
 
-export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
-  useQuery({
-    queryKey: ["rooms", includeAllOption ? "all" : "existing"],
+export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) => {
+  const type = includeAllOption ? "all" : "existing";
+  return useQuery({
+    queryKey: queryKeys.rooms.list(type),
     queryFn: async () => {
       const result = await fetchGET("/api/rooms");
       if (includeAllOption) {
@@ -43,10 +45,11 @@ export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolea
     //staleTime: 0,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
+};
 
 export const useRoomQuery = (roomId: number | undefined, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["room", roomId],
+    queryKey: queryKeys.rooms.detail(roomId),
     queryFn: async () => {
       const result = await fetchGET(`/api/rooms/${roomId}`);
 
@@ -81,9 +84,8 @@ export const useRoomsMutationUpsert = () => {
   return useMutation({
     mutationFn: async (data: IRoomPUT) => fetchPUT(`/api/rooms`, data),
     onSuccess: (response) => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
-      queryClient.invalidateQueries({ queryKey: ["room", response.data.roomId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.detail(response.data.roomId) });
     },
   });
 };
@@ -93,15 +95,14 @@ export const useRoomsMutationDelete = () => {
   return useMutation({
     mutationFn: async (roomId: number) => fetchDELETE(`/api/rooms/${roomId}`),
     onSuccess: () => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
     },
   });
 };
 
 export const useRoomCategoryQuery = (enabled: boolean = true) =>
   useQuery({
-    queryKey: ["rooms-categories"],
+    queryKey: queryKeys.rooms.categories(),
     queryFn: async () => {
       const result = await fetchGET("/api/rooms/categories");
 

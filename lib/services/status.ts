@@ -3,6 +3,7 @@ import { fetchGET } from "@/lib/fetch";
 import { IStatus, SStatus } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
 import z from "zod/v4";
+import { queryKeys } from "./querykeys";
 
 const AllStatus: IStatus = {
   statusId: -1,
@@ -12,9 +13,10 @@ const AllStatus: IStatus = {
   color: "zinc",
 };
 
-export const useStatusQuery = (includeAllOption: boolean = false, enabled: boolean = true) =>
-  useQuery({
-    queryKey: ["status", includeAllOption ? "all" : "existing"],
+export const useStatusQuery = (includeAllOption: boolean = false, enabled: boolean = true) => {
+  const type = includeAllOption ? "all" : "existing";
+  return useQuery({
+    queryKey: queryKeys.references.statusList(type),
     queryFn: async () => {
       const result = await fetchGET(`/api/references/status`, undefined, 180, ["status"]);
 
@@ -32,3 +34,4 @@ export const useStatusQuery = (includeAllOption: boolean = false, enabled: boole
     },
     enabled: enabled,
   });
+};

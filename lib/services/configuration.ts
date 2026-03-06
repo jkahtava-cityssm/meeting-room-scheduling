@@ -3,19 +3,13 @@ import { fetchGET, fetchPOST, fetchPUT } from "../fetch";
 import z from "zod/v4";
 
 import { TConfigurationKeys } from "../types";
-import { IConfigurationRecord, SConfigurationEntry, TConfigurationEntry } from "../data/configuration";
+import { SConfigurationEntry } from "../data/configuration";
 import { QueryError } from "@/contexts/ReactQueryProvider";
-
-export const configurationKeys = {
-  all: ["configuration"] as const,
-  lists: () => [...configurationKeys.all, "list"] as const,
-  filtered: (keys?: TConfigurationKeys[]) => [...configurationKeys.lists(), { keys }] as const,
-  detail: (key: string) => [...configurationKeys.all, "detail", key] as const,
-};
+import { queryKeys } from "./querykeys";
 
 export const useConfigurationQuery = (keys?: TConfigurationKeys[], enabled: boolean = true) => {
   return useQuery({
-    queryKey: configurationKeys.filtered(keys),
+    queryKey: queryKeys.configuration.filtered(keys),
     queryFn: async () => {
       const result = await fetchGET("/api/configuration", keys ? { keys: keys } : undefined);
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
@@ -45,7 +39,7 @@ export const useConfigurationMutationUpsert = () => {
   return useMutation({
     mutationFn: async (data: IConfigurationPUT[]) => fetchPUT(`/api/configuration`, data),
     onMutate: async (newData) => {
-      const key = configurationKeys.all;
+      const key = queryKeys.configuration.all;
 
       await queryClient.cancelQueries({ queryKey: key });
 
@@ -67,11 +61,11 @@ export const useConfigurationMutationUpsert = () => {
     },
 
     onError: (err, newData, context) => {
-      queryClient.setQueryData(configurationKeys.all, context?.previousConfig);
+      queryClient.setQueryData(queryKeys.configuration.all, context?.previousConfig);
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: configurationKeys.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.configuration.all });
     },
   });
 };

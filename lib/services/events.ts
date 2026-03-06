@@ -10,6 +10,7 @@ import { CalendarAction, ISODateString } from "@/app/features/calendar/webworker
 import { getDateRange } from "@/app/features/calendar/webworkers/generic-webworker-utilities";
 import { TVisibleHours } from "../types";
 import { QueryError } from "@/contexts/ReactQueryProvider";
+import { queryKeys } from "./querykeys";
 
 //const queryClient = new QueryClient();
 const formatDate = (date: Date) => {
@@ -18,12 +19,15 @@ const formatDate = (date: Date) => {
 
 export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) => {
   const endpoint = userId ? "/api/events/my-events" : "/api/events";
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+
   return useQuery({
-    queryKey: ["events", formatDate(startDate), formatDate(endDate), "user", userId],
+    queryKey: queryKeys.events.user(start, end, userId),
     queryFn: async () => {
       const result = await fetchGET(endpoint, {
-        startdate: formatDate(startDate),
-        enddate: formatDate(endDate),
+        startdate: start,
+        enddate: end,
         userId: userId,
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
@@ -47,12 +51,15 @@ export const useMyEventsQuery = (
   enabled: boolean = true,
 ) => {
   const range = getDateRange(action, date);
+  const start = formatDate(range.startDate);
+  const end = formatDate(range.endDate);
+
   return useQuery({
-    queryKey: ["events", formatDate(range.startDate), formatDate(range.endDate), "user", userId],
+    queryKey: queryKeys.events.user(start, end, userId),
     queryFn: async () => {
       const result = await fetchGET("/api/events/my-events", {
-        startdate: formatDate(range.startDate),
-        enddate: formatDate(range.endDate),
+        startdate: start,
+        enddate: end,
         userId: userId,
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
@@ -78,13 +85,16 @@ export const useMyEventsQuery = (
   });
 };
 
-export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) =>
-  useQuery({
-    queryKey: ["events", formatDate(startDate), formatDate(endDate), "status", statusId],
+export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) => {
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+
+  return useQuery({
+    queryKey: queryKeys.events.status(start, end, statusId),
     queryFn: async () => {
       const result = await fetchGET("/api/events/status", {
-        startdate: formatDate(startDate),
-        enddate: formatDate(endDate),
+        startdate: start,
+        enddate: end,
         statusId: statusId,
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
@@ -97,6 +107,7 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId:
     },
     enabled: enabled,
   });
+};
 
 export const useTotalEventsByStatusQuery = (
   statusId: string,
@@ -105,7 +116,7 @@ export const useTotalEventsByStatusQuery = (
   enabled: boolean = true,
 ) =>
   useQuery({
-    queryKey: ["total_events", "status", statusId],
+    queryKey: queryKeys.events.totalByStatus(statusId),
     queryFn: async () => {
       const result = await fetchGET("/api/events/status/counts", {
         startdate: startDate ? formatDate(startDate) : undefined,
@@ -125,7 +136,7 @@ export const useTotalEventsByStatusQuery = (
 
 export const useEventQuery = (eventId: number | undefined, enabled: boolean = true) =>
   useQuery({
-    queryKey: ["event", eventId],
+    queryKey: queryKeys.events.detail(eventId),
     queryFn: async () => {
       const result = await fetchGET(`/api/events/${eventId}`);
       const parsedResult = z.array(SEvent).safeParse(result.data);
@@ -163,9 +174,8 @@ export const useEventsMutationUpsert = () => {
   return useMutation({
     mutationFn: async (data: IEventPUT) => fetchPUT(`/api/events`, data),
     onSuccess: (response) => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(response.data.eventId) });
     },
   });
 };
@@ -175,14 +185,18 @@ export const useEventsMutationDelete = () => {
   return useMutation({
     mutationFn: async (eventId: number) => fetchDELETE(`/api/events/${eventId}`),
     onSuccess: () => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      //queryClient.invalidateQueries({ queryKey: ["event", response.data.eventId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
 };
 export const useEventPatchMutation = () => {
   const queryClient = useQueryClient();
+
+  const getContextKey = (tags: { startDate: string; endDate: string; type: "user" | "status"; id: string }) => {
+    return tags.type === "user"
+      ? queryKeys.events.user(tags.startDate, tags.endDate, tags.id)
+      : queryKeys.events.status(tags.startDate, tags.endDate, tags.id);
+  };
 
   return useMutation({
     mutationFn: async ({
@@ -203,8 +217,8 @@ export const useEventPatchMutation = () => {
     },
 
     onMutate: async (variables) => {
-      const eventKey = ["event", variables.eventId];
-      const eventsKey = buildEventKey(variables.cacheTags);
+      const eventKey = queryKeys.events.detail(variables.eventId);
+      const eventsKey = getContextKey(variables.cacheTags);
 
       await queryClient.cancelQueries({ queryKey: eventsKey });
       await queryClient.cancelQueries({ queryKey: eventKey });
@@ -239,8 +253,8 @@ export const useEventPatchMutation = () => {
     },
 
     onError: (err, variables, context) => {
-      const eventsKey = buildEventKey(variables.cacheTags);
-      const eventKey = ["event", variables.eventId];
+      const eventsKey = getContextKey(variables.cacheTags);
+      const eventKey = queryKeys.events.detail(variables.eventId);
 
       if (context?.previousEvents) {
         queryClient.setQueryData(eventsKey, context.previousEvents);
@@ -251,19 +265,11 @@ export const useEventPatchMutation = () => {
     },
 
     onSettled: (data, error, variables) => {
-      const eventsKey = buildEventKey(variables.cacheTags);
-      const eventKey = ["event", variables.eventId];
+      const eventsKey = getContextKey(variables.cacheTags);
+      const eventKey = queryKeys.events.detail(variables.eventId);
 
       queryClient.invalidateQueries({ queryKey: eventsKey });
       queryClient.invalidateQueries({ queryKey: eventKey });
     },
   });
 };
-
-const buildEventKey = (tags: { startDate: string; endDate: string; type: string; id: string }) => [
-  "events",
-  tags.startDate,
-  tags.endDate,
-  tags.type,
-  tags.id,
-];

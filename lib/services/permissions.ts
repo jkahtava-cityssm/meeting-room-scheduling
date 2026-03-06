@@ -6,6 +6,7 @@ import { SStatus, SUser } from "../schemas/calendar";
 import { SPermissionSet, SRole } from "../data/permissions";
 import z from "zod/v4";
 import { QueryError } from "@/contexts/ReactQueryProvider";
+import { queryKeys } from "./querykeys";
 
 const formatDate = (date: Date) => {
   return formatISO(date);
@@ -13,7 +14,7 @@ const formatDate = (date: Date) => {
 
 export const usePermissionsQuery = (enabled: boolean = true) => {
   return useQuery({
-    queryKey: ["permissions"],
+    queryKey: queryKeys.permissions.sets(),
     queryFn: async () => {
       const result = await fetchGET("/api/admin/permissions");
       const parsedResult = z.array(SPermissionSet).safeParse(result.data);
@@ -30,7 +31,7 @@ export const usePermissionsQuery = (enabled: boolean = true) => {
 
 export const useRolesQuery = (enabled: boolean = true) => {
   return useQuery({
-    queryKey: ["roles"],
+    queryKey: queryKeys.permissions.roles(),
     queryFn: async () => {
       const result = await fetchGET("/api/admin/permissions/roles");
       const parsedResult = z.array(SRole).safeParse(result.data);
@@ -57,9 +58,7 @@ export const usePermissionMutationUpsert = () => {
   return useMutation({
     mutationFn: async (data: rolePermissionMutations[]) => fetchPUT(`/api/admin/permissions`, data),
     onSuccess: (response) => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({ queryKey: ["permissions"] });
-      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.all });
     },
   });
 };
@@ -71,7 +70,7 @@ export type IUserWithRoles = z.infer<typeof SUserWithRoles>;
 
 export const usePermissionUserQuery = (roleId?: string, enabled: boolean = true) => {
   return useQuery({
-    queryKey: ["users_permissions", roleId],
+    queryKey: queryKeys.permissions.userByRole(roleId),
     queryFn: async () => {
       const result = await fetchGET("/api/admin/permissions/users", { roleId: roleId });
       const parsedResult = z.array(SUserWithRoles).safeParse(result.data);
@@ -96,7 +95,7 @@ export const usePermissionUserRoleMutationUpsert = () => {
       }),
 
     onMutate: async (vars) => {
-      const key = ["users_permissions", String(vars.roleId)];
+      const key = queryKeys.permissions.userByRole(String(vars.roleId));
 
       await queryClient.cancelQueries({ queryKey: key });
 
@@ -141,7 +140,7 @@ export const usePermissionUserRoleMutationUpsert = () => {
 
     // Always refetch to get canonical data
     onSettled: (_data, _error, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["users_permissions", String(vars.roleId)] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.permissions.userByRole(String(vars.roleId)) });
     },
   });
 };
