@@ -1,15 +1,5 @@
-export const dynamic = "force-dynamic";
-
-import { ConfigurationPage } from "@/app/features/system-configuration/configuration-table";
-import { RegisterSSO } from "@/app/features/system-configuration/single-sign-on";
-import { findManyConfiguration } from "@/lib/data/configuration";
+import { ConfigurationPage } from "@/app/features/configuration/configuration-table";
 
 export default async function ManageConfiguration() {
-  return (
-    <div className="overflow-hidden rounded-xl border min-w-92">
-      <div className="flex flex-col items-center gap-2 m-4">
-        <ConfigurationPage></ConfigurationPage>
-      </div>
-    </div>
-  );
+  return <ConfigurationPage></ConfigurationPage>;
 }

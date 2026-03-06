@@ -3,7 +3,7 @@ import { fetchGET, fetchPOST, fetchPUT } from "../fetch";
 import z from "zod/v4";
 
 import { TConfigurationKeys } from "../types";
-import { SConfigurationEntry, TConfigurationEntry } from "../data/configuration";
+import { IConfigurationRecord, SConfigurationEntry, TConfigurationEntry } from "../data/configuration";
 import { QueryError } from "@/contexts/ReactQueryProvider";
 
 export const configurationKeys = {
@@ -30,53 +30,47 @@ export const useConfigurationQuery = (keys?: TConfigurationKeys[], enabled: bool
   });
 };
 
-export const useMutateConfiguration = () => {
+export const SConfigurationPUT = z.object({
+  key: z.coerce.string(),
+  value: z.coerce.string(),
+  name: z.coerce.string(),
+  type: z.enum(["boolean", "number", "string"]),
+  description: z.coerce.string(),
+});
+
+export type IConfigurationPUT = z.infer<typeof SConfigurationPUT>;
+
+export const useConfigurationMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { key: string; value: string }) =>
-      fetchPUT(`/api/configuration`, {
-        key: data.key,
-        value: data.value,
-      }),
-
-    onMutate: async (variables) => {
-      const key = configurationKeys.detail(variables.key);
+    mutationFn: async (data: IConfigurationPUT[]) => fetchPUT(`/api/configuration`, data),
+    onMutate: async (newData) => {
+      const key = configurationKeys.all;
 
       await queryClient.cancelQueries({ queryKey: key });
 
-      const previous = queryClient.getQueryData<TConfigurationEntry[]>(key);
+      const previousConfig = queryClient.getQueryData(key);
 
-      if (previous) {
-        queryClient.setQueryData<TConfigurationEntry[]>(key, (old) => {
-          if (!old) return undefined;
+      if (previousConfig) {
+        queryClient.setQueryData<IConfigurationPUT[]>(key, (old) => {
+          if (!old) return [];
 
-          return old.map((entry) => {
-            if (entry.key !== variables.key) return entry;
+          return old.map((setting) => {
+            const matchedSetting = newData.find((newData) => newData.key === setting.key);
 
-            const newValue =
-              entry.type === "boolean"
-                ? Boolean(variables.value)
-                : entry.type === "number"
-                  ? Number(variables.value)
-                  : String(variables.value);
-
-            return { ...entry, value: newValue } as TConfigurationEntry;
+            return matchedSetting ? { ...setting, ...matchedSetting } : setting;
           });
         });
       }
 
-      // Return context with previous snapshot for rollback
-      return { previous, key };
+      return { previousConfig };
     },
 
-    // Rollback on error
-    onError: (_error, _vars, ctx) => {
-      if (ctx?.previous) {
-        queryClient.setQueryData(ctx.key, ctx.previous);
-      }
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(configurationKeys.all, context?.previousConfig);
     },
 
-    onSettled: (_data, _error, variables) => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: configurationKeys.all });
     },
   });

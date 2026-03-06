@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useConfigurationQuery, useMutateConfiguration } from "@/lib/services/configuration";
+import { IConfigurationPUT, useConfigurationMutationUpsert, useConfigurationQuery } from "@/lib/services/configuration";
 import { RegisterSSO } from "./single-sign-on";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectItem } from "@/components/ui/select";
@@ -11,13 +11,14 @@ import { Input } from "@/components/ui/input";
 import { GenericSelect } from "@/components/shared/generic-select";
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function ConfigurationPage() {
   const { data: serverConfiguration } = useConfigurationQuery();
   const [workingConfiguration, setWorkingConfiguration] = useState<TConfigurationEntry[] | undefined>(undefined);
   const [isChanged, setChanged] = useState(false);
   //const [resourceActions, setResourceActions] = useState<ResourceActions | undefined>(undefined);
-  const configurationMutation = useMutateConfiguration();
+  const configurationMutation = useConfigurationMutationUpsert();
 
   useEffect(() => {
     if (serverConfiguration) {
@@ -25,7 +26,7 @@ export function ConfigurationPage() {
     }
   }, [serverConfiguration]);
 
-  const handleSave = useCallback(
+  const handleChange = useCallback(
     (key: string, value: string) => {
       if (key === "visibleHoursStart") {
         const end = workingConfiguration?.find((c) => c.key === "visibleHoursEnd")?.value;
@@ -64,6 +65,16 @@ export function ConfigurationPage() {
     [workingConfiguration],
   );
 
+  const onSave = () => {
+    if (!serverConfiguration || !workingConfiguration) return;
+
+    const differences = getDifferences(serverConfiguration, workingConfiguration);
+
+    configurationMutation.mutate(differences, {
+      onSuccess: () => setChanged(false),
+    });
+  };
+
   const isLoading = false;
 
   if (isLoading) {
@@ -71,9 +82,14 @@ export function ConfigurationPage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex-1 overflow-auto bg-background p-4">
-        {/* The Container is the Grid */}
+    <div className="flex flex-col h-full w-full  rounded-xl border min-w-92">
+      <div className="flex flex-col gap-4  p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between shrink-0 border-b">
+        <div className="flex items-center gap-3 h-14 font-bold">System Configuration</div>
+
+        <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">{/* ACTION AREA */}</div>
+      </div>
+      {/* The Container is the Grid */}
+      <ScrollArea className="w-full flex-1 min-h-0 p-4" type="always">
         <div className="grid grid-cols-[min-content_1fr] items-center gap-y-0 ">
           {workingConfiguration?.map((entry) => (
             // We use React.Fragment or just flat divs because
@@ -89,13 +105,14 @@ export function ConfigurationPage() {
 
               {/* Right Column: Controls */}
               <div className="min-h-[70px] border-b flex items-center ">
-                <ConfigField entry={entry} onChange={(val) => handleSave(entry.key, val)} />
+                <ConfigField entry={entry} onChange={(val) => handleChange(entry.key, val)} />
               </div>
             </React.Fragment>
           ))}
         </div>
-      </div>
-      <footer className="flex h-14 items-center border-t bg-background px-4 shrink-0">
+      </ScrollArea>
+
+      <footer className="flex h-14 items-center border-t px-4 shrink-0">
         <div className="flex w-full items-center justify-end gap-2">
           <Button
             disabled={!isChanged}
@@ -107,13 +124,7 @@ export function ConfigurationPage() {
           >
             Cancel
           </Button>
-          <Button
-            disabled={!isChanged}
-            onClick={() => {
-              //const differences = getDifferences(serverPermissions, workingPermissions);
-              //onSave(differences);
-            }}
-          >
+          <Button disabled={!isChanged} onClick={onSave}>
             Save Changes
           </Button>
         </div>
@@ -207,3 +218,30 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
     );
   },
 };
+
+function getDifferences(
+  serverConfiguration: TConfigurationEntry[],
+  updatedConfiguration: TConfigurationEntry[],
+): IConfigurationPUT[] {
+  const updateList = [];
+
+  for (let serverIndex = 0; serverIndex < serverConfiguration.length; serverIndex++) {
+    const serverSetting = serverConfiguration[serverIndex];
+
+    const localSetting = updatedConfiguration.find((setting) => setting.key === serverSetting.key);
+
+    if (!localSetting) continue;
+
+    if (localSetting.value !== serverSetting.value) {
+      updateList.push({
+        key: localSetting.key,
+        name: localSetting.name,
+        type: localSetting.type,
+        value: String(localSetting.value),
+        description: localSetting.description ?? "",
+      });
+    }
+  }
+
+  return updateList;
+}
