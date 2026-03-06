@@ -145,7 +145,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   const validInterval = clampToValidInterval(interval);
   const totalBlocks = 60 / validInterval;
   const middleBlock = useMemo(() => Math.max(0, Math.floor(totalBlocks / 2) - 1), [totalBlocks]);
-
+  //
   return (
     <div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
       <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
@@ -156,14 +156,19 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
           return (
             <div
               key={hour}
-              className="grid w-full h-24 relative"
+              className={cn(
+                "grid w-full h-24 relative",
+                index !== 0 && "border-t-2 ",
+                "after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-[1px]",
+                "after:bg-[linear-gradient(to_right,theme(colors.border)_50%,transparent_50%)] after:bg-[length:8px_1px] after:bg-repeat-x",
+              )}
               style={{
                 gridTemplateRows: `repeat(${totalBlocks}, 1fr)`,
+
                 contentVisibility: "auto",
                 containIntrinsicSize: `auto ${TIME_BLOCK_SIZE}px`,
               }}
             >
-              {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2"></div>}
               {Array.from({ length: totalBlocks }, (_, blockIndex) => {
                 const startMinute = blockIndex * validInterval;
                 const showBottomSeparator = blockIndex === middleBlock;
@@ -177,7 +182,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                       currentDate,
                       totalBlocks,
                       blockIndex,
-                      showBottomSeparator,
+                      showBottomSeparator: false,
                     })}
                   </Fragment>
                 );
