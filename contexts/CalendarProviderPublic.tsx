@@ -23,14 +23,16 @@ interface ICalendarContext {
   visibleHours: TVisibleHours;
   defaultHours: number[];
   interval: number;
+  configurationError: Error | null;
+  roomError: Error | null;
   //setVisibleHours: Dispatch<SetStateAction<TVisibleHours>>;
 }
 
 const CalendarContext = createContext({} as ICalendarContext);
 
 export function CalendarProviderPublic({ children }: { children: React.ReactNode }) {
-  const { data: configurationData } = usePublicConfiguration();
-  const { data: visibleRooms } = usePublicRoomsQuery();
+  const { data: configurationData, error: configurationError } = usePublicConfiguration();
+  const { data: visibleRooms, error: roomError } = usePublicRoomsQuery();
 
   const visibleHours: TVisibleHours = configurationData ? configurationData.hours : VISIBLE_HOURS;
   const interval = configurationData ? configurationData.interval : 30;
@@ -61,6 +63,8 @@ export function CalendarProviderPublic({ children }: { children: React.ReactNode
         visibleHours,
         defaultHours,
         interval,
+        configurationError,
+        roomError,
       }}
     >
       {children}
@@ -69,7 +73,7 @@ export function CalendarProviderPublic({ children }: { children: React.ReactNode
 }
 
 export function usePublicCalendar(): ICalendarContext {
-	const context = useContext(CalendarContext);
-	if (!context) throw new Error("useCalendar must be used within a CalendarProvider.");
-	return context;
+  const context = useContext(CalendarContext);
+  if (!context) throw new Error("useCalendar must be used within a CalendarProvider.");
+  return context;
 }
