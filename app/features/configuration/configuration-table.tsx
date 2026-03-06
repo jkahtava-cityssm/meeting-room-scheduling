@@ -12,9 +12,10 @@ import { GenericSelect } from "@/components/shared/generic-select";
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { GenericError } from "@/components/shared/generic-error";
 
 export function ConfigurationPage() {
-  const { data: serverConfiguration } = useConfigurationQuery();
+  const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
   const [workingConfiguration, setWorkingConfiguration] = useState<TConfigurationEntry[] | undefined>(undefined);
   const [isChanged, setChanged] = useState(false);
   //const [resourceActions, setResourceActions] = useState<ResourceActions | undefined>(undefined);
@@ -75,9 +76,11 @@ export function ConfigurationPage() {
     });
   };
 
-  const isLoading = false;
+  if (error) {
+    return <GenericError error={error} />;
+  }
 
-  if (isLoading) {
+  if (isPending) {
     return <Skeleton className="w-full h-full" />;
   }
 
