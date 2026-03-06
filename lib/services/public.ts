@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatISO } from "date-fns";
 import { z } from "zod";
 import { fetchPublicConfiguration, fetchPublicEvents, fetchPublicRooms } from "../server/public";
+import { QueryError } from "@/contexts/ReactQueryProvider";
 
 const formatDate = (date: Date) => {
   return formatISO(date);
@@ -58,7 +59,9 @@ export const usePublicEventsQuery = (date: Date, enabled: boolean = true) =>
 
       const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "usePublicEventsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -77,7 +80,9 @@ export const usePublicRoomsQuery = (enabled: boolean = true) =>
 
       const parsedResult = z.array(PUBLIC_SROOM).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid room data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid room data", "usePublicRoomsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -97,7 +102,9 @@ export const usePublicConfiguration = (enabled: boolean = true) =>
 
       const parsedResult = PUBLIC_SCONFIGURATION.safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid public configuration data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid configuration data", "usePublicConfiguration", parsedResult.error);
+      }
 
       return parsedResult.data;
     },

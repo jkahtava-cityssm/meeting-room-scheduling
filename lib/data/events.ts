@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
-  room: { include: { roomCategory: true } },
+  room: { include: { roomCategory: true, roomProperty: true } },
   recurrence: true,
   status: true,
 } as const satisfies Prisma.EventInclude;

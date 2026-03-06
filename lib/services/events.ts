@@ -9,6 +9,7 @@ import { processEventsAsync } from "@/app/features/calendar/webworkers/generic-w
 import { CalendarAction, ISODateString } from "@/app/features/calendar/webworkers/generic-webworker";
 import { getDateRange } from "@/app/features/calendar/webworkers/generic-webworker-utilities";
 import { TVisibleHours } from "../types";
+import { QueryError } from "@/contexts/ReactQueryProvider";
 
 //const queryClient = new QueryClient();
 const formatDate = (date: Date) => {
@@ -28,10 +29,7 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
       if (!parsedResult.success) {
-        if (process.env.NODE_ENV === "development") {
-          console.error(`useEventsQuery, ${z.prettifyError(parsedResult.error)}`);
-        }
-        throw new Error("Invalid event data");
+        throw new QueryError("Invalid event data", "useEventsQuery", parsedResult.error);
       }
 
       return parsedResult.data;
@@ -59,7 +57,9 @@ export const useMyEventsQuery = (
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid my event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "useMyEventsQuery", parsedResult.error);
+      }
 
       return await processEventsAsync({
         events: result.data as IEvent[],
@@ -89,7 +89,9 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId:
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "useEventsByStatusQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -128,7 +130,9 @@ export const useEventQuery = (eventId: number | undefined, enabled: boolean = tr
       const result = await fetchGET(`/api/events/${eventId}`);
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid event data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid event data", "useEventQuery", parsedResult.error);
+      }
 
       return parsedResult.data[0];
     },

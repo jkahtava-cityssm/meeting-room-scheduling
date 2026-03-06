@@ -1,3 +1,4 @@
+import { QueryError } from "@/contexts/ReactQueryProvider";
 import { fetchDELETE, fetchGET, fetchPUT } from "@/lib/fetch";
 import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from "@/lib/schemas/calendar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,7 +33,9 @@ export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolea
 
       const parsedResult = z.array(SRoom).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid room data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid room data", "useRoomsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -49,7 +52,9 @@ export const useRoomQuery = (roomId: number | undefined, enabled: boolean = true
 
       const parsedResult = z.array(SRoom).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid room data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid room data", "useRoomQuery", parsedResult.error);
+      }
 
       return parsedResult.data[0];
     },
@@ -102,7 +107,9 @@ export const useRoomCategoryQuery = (enabled: boolean = true) =>
 
       const parsedResult = z.array(SRoomCategory).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid room category data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid room category data", "useRoomsCategoriesQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },

@@ -5,6 +5,7 @@ import { useSession } from "../auth-client";
 import { SStatus, SUser } from "../schemas/calendar";
 import { SPermissionSet, SRole } from "../data/permissions";
 import z from "zod/v4";
+import { QueryError } from "@/contexts/ReactQueryProvider";
 
 const formatDate = (date: Date) => {
   return formatISO(date);
@@ -17,7 +18,9 @@ export const usePermissionsQuery = (enabled: boolean = true) => {
       const result = await fetchGET("/api/admin/permissions");
       const parsedResult = z.array(SPermissionSet).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid status data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid permissions data", "usePermissionsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -32,7 +35,9 @@ export const useRolesQuery = (enabled: boolean = true) => {
       const result = await fetchGET("/api/admin/permissions/roles");
       const parsedResult = z.array(SRole).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid status data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid roles data", "useRolesQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -71,7 +76,8 @@ export const usePermissionUserQuery = (roleId?: string, enabled: boolean = true)
       const result = await fetchGET("/api/admin/permissions/users", { roleId: roleId });
       const parsedResult = z.array(SUserWithRoles).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error(`Invalid User data: ${z.prettifyError(parsedResult.error)}`);
+      if (!parsedResult.success)
+        throw new Error(`Invalid user permissions data: ${z.prettifyError(parsedResult.error)}`);
 
       return parsedResult.data;
     },

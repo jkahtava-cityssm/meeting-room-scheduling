@@ -1,3 +1,4 @@
+import { QueryError } from "@/contexts/ReactQueryProvider";
 import { fetchGET } from "@/lib/fetch";
 import { SEvent, SUser } from "@/lib/schemas/calendar";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +11,9 @@ export const useUsersQuery = (enabled: boolean = true) =>
       const result = await fetchGET(`/api/users`, undefined, 180, ["users"]);
       const parsedResult = z.array(SUser).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid user data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid user data", "useUsersQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
@@ -25,7 +28,9 @@ export const useUserEventsQuery = (userId: string | undefined, enabled: boolean 
 
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid user events data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid user event data", "useUserEventsQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchGET } from "../fetch";
 import z from "zod/v4";
 import { SProperty } from "../schemas/calendar";
+import { QueryError } from "@/contexts/ReactQueryProvider";
 
 export const usePropertyQuery = (enabled: boolean = true) =>
   useQuery({
@@ -11,7 +12,9 @@ export const usePropertyQuery = (enabled: boolean = true) =>
 
       const parsedResult = z.array(SProperty).safeParse(result.data);
 
-      if (!parsedResult.success) throw new Error("Invalid property data");
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid property data", "usePropertyQuery", parsedResult.error);
+      }
 
       return parsedResult.data;
     },
