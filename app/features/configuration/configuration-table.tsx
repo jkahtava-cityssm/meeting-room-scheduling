@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useConfigurationQuery } from "@/lib/services/configuration";
+import { useConfigurationQuery, useMutateConfiguration } from "@/lib/services/configuration";
 import { RegisterSSO } from "./single-sign-on";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectItem } from "@/components/ui/select";
@@ -17,6 +17,7 @@ export function ConfigurationPage() {
   const [workingConfiguration, setWorkingConfiguration] = useState<TConfigurationEntry[] | undefined>(undefined);
   const [isChanged, setChanged] = useState(false);
   //const [resourceActions, setResourceActions] = useState<ResourceActions | undefined>(undefined);
+  const configurationMutation = useMutateConfiguration();
 
   useEffect(() => {
     if (serverConfiguration) {

@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePublicCalendar } from "@/contexts/CalendarProviderPublic";
 import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
 import { GenericError } from "../../../../components/shared/generic-error";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -108,15 +109,17 @@ export function CalendarPublicView({ sideBarOpen = false }: { sideBarOpen?: bool
           )}
         </div>
 
-        <div className="w-full shrink-0 border rounded-lg p-4 lg:w-72 ">
+        <div className="flex flex-col w-full shrink border rounded-lg p-4 lg:w-72 overflow-hidden h-full">
           {isMounting ? (
             <RoomCategorySkeleton />
           ) : (
-            <RoomCategoryLayout
-              checkedRooms={checkedRooms}
-              onToggleRoom={toggleRoom}
-              rooms={rooms || []}
-            ></RoomCategoryLayout>
+            <ScrollArea className="w-full flex-1 min-h-0" type="always">
+              <RoomCategoryLayout
+                checkedRooms={checkedRooms}
+                onToggleRoom={toggleRoom}
+                rooms={rooms || []}
+              ></RoomCategoryLayout>
+            </ScrollArea>
           )}
         </div>
       </div>

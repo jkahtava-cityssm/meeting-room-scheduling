@@ -119,43 +119,6 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
               </FormItem>
             )}
           />
-
-          <FormField
-            control={control}
-            name="roomRoles"
-            render={({ field }) => (
-              <FormItem className="col-span-3 row-5">
-                <FormLabel>Room Booking Access</FormLabel>
-                <FormControl>
-                  <RoleMultiSelect
-                    selectedRoleIds={field.value}
-                    onRolesChange={field.onChange}
-                    isDisabled={isReadOnly}
-                    className="min-w-0 w-full"
-                  ></RoleMultiSelect>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="roomProperty"
-            render={({ field }) => (
-              <FormItem className="col-span-3 row-4">
-                <FormLabel>Properties</FormLabel>
-                <FormControl>
-                  <RoomPropertyMultiSelect
-                    selectedPropertyIds={field.value}
-                    onPropertyChange={field.onChange}
-                    isDisabled={isReadOnly}
-                    className="min-w-0 w-full"
-                  ></RoomPropertyMultiSelect>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={control}
             name="icon"
@@ -198,8 +161,46 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
               </FormItem>
             )}
           />
+          <FormField
+            control={control}
+            name="roomProperty"
+            render={({ field }) => (
+              <FormItem className="col-span-3 row-4">
+                <FormLabel>Properties</FormLabel>
+                <FormControl>
+                  <RoomPropertyMultiSelect
+                    selectedPropertyIds={field.value}
+                    onPropertyChange={field.onChange}
+                    isDisabled={isReadOnly}
+                    className="min-w-0 w-full"
+                  ></RoomPropertyMultiSelect>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="roomRoles"
+            render={({ field }) => (
+              <FormItem className="col-span-3 row-5">
+                <FormLabel>Room Booking Access</FormLabel>
+                <FormControl>
+                  <RoleMultiSelect
+                    selectedRoleIds={field.value}
+                    onRolesChange={field.onChange}
+                    isDisabled={isReadOnly}
+                    className="min-w-0 w-full"
+                  ></RoleMultiSelect>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {currentColor && (
-            <div className="row-start-1 row-span-3 col-start-3 mt-5.5 ">
+            <div className="row-start-1 row-span-3 col-start-3 mt-5.5 " aria-hidden="true" tabIndex={-1}>
               <EventBlockPreview color={currentColor as TColors} />
             </div>
           )}
@@ -217,12 +218,7 @@ function EventBlockPreview({ color }: { color: TColors }) {
   const startDate = new Date();
   const endDate = addHours(startDate, 1);
   return (
-    <button
-      type="button"
-      tabIndex={0}
-      className={cn("w-full h-full", EventCardClasses)}
-      aria-label={"Example Room Event"}
-    >
+    <div tabIndex={-1} className={cn("w-full h-full", EventCardClasses)} aria-label={"Example Room Event"}>
       <div className="flex items-center gap-1.5 ">
         <p className="truncate font-semibold">{"Example Room Event"}</p>
       </div>
@@ -231,6 +227,6 @@ function EventBlockPreview({ color }: { color: TColors }) {
           {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
         </p>
       </div>
-    </button>
+    </div>
   );
 }

@@ -162,7 +162,7 @@ export default function RoomLayout() {
         return room.publicFacing ? 1 : 0;
 
       case "roomCategory":
-        return (room.roomCategory.name ?? "") as string; // 1 enabled, 0 disabled
+        return (room.roomCategory.name ?? "") as string;
     }
   }, []);
 
