@@ -160,7 +160,7 @@ export function CalendarPublicView() {
                 <EmptyMedia>
                   <LucideCalendarDays />
                 </EmptyMedia>
-                <EmptyTitle>Availability Calendar Error</EmptyTitle>
+                <EmptyTitle>No Availability Calendar</EmptyTitle>
                 <EmptyDescription>
                   {eventError ? eventError.message : configurationError ? configurationError.message : "Unknown Cause"}
                 </EmptyDescription>
