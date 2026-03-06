@@ -1,6 +1,7 @@
 import { prisma } from "@/prisma";
 import type { Prisma } from "@prisma/client";
-import { IEvent } from "../schemas/calendar";
+import { IEvent, SEvent } from "../schemas/calendar";
+import z from "zod/v4";
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
@@ -76,10 +77,12 @@ export async function findFirstEvent(where?: Prisma.EventWhereInput) {
 
 type EventWithRelations = Prisma.EventGetPayload<{ include: typeof EVENT_INCLUDE }>;
 
-function flattenEvent(event: EventWithRelations): IEvent;
-function flattenEvent(event: EventWithRelations[]): IEvent[];
+type IEventInput = z.input<typeof SEvent>;
 
-function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEvent | IEvent[] {
+function flattenEvent(event: EventWithRelations): IEventInput;
+function flattenEvent(event: EventWithRelations[]): IEventInput[];
+
+function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventInput | IEventInput[] {
   const isArray = Array.isArray(data);
   const events = isArray ? data : [data];
 

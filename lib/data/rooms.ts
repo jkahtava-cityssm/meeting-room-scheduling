@@ -1,6 +1,7 @@
 import { prisma } from "@/prisma";
 import type { Prisma } from "@prisma/client";
-import { IRoom } from "../schemas/calendar";
+import { IRoom, SRoom } from "../schemas/calendar";
+import z from "zod/v4";
 
 // Standard room select configuration — used across all DAL functions
 const ROOM_SELECT = {
@@ -70,11 +71,12 @@ export async function upsertRoom(
 }
 
 type RoomWithRelations = Prisma.RoomGetPayload<{ select: typeof ROOM_SELECT }>;
+type IRoomInput = z.input<typeof SRoom>;
 
-function flattenRoom(room: RoomWithRelations): IRoom;
-function flattenRoom(rooms: RoomWithRelations[]): IRoom[];
+function flattenRoom(room: RoomWithRelations): IRoomInput;
+function flattenRoom(rooms: RoomWithRelations[]): IRoomInput[];
 
-function flattenRoom(data: RoomWithRelations | RoomWithRelations[]): IRoom | IRoom[] {
+function flattenRoom(data: RoomWithRelations | RoomWithRelations[]): IRoomInput | IRoomInput[] {
   const isArray = Array.isArray(data);
   const rooms = isArray ? data : [data];
 

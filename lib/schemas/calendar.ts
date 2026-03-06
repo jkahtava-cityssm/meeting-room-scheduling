@@ -13,26 +13,28 @@ export const utcDateSchema = z.coerce.date().transform((d) => {
   );
 });
 
+const DateSchema = z.union([z.string(), z.date().transform((d) => d.toISOString())]);
+
 export const SProperty = z.object({
   propertyId: z.number(),
   name: z.string(),
   type: z.string(),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRoomRoles = z.object({
   roomRoleId: z.number(),
   roleId: z.number(),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRoomCategory = z.object({
   roomCategoryId: z.number(),
   name: z.string().min(1, "Name is required"),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRoomProperty = z.object({
@@ -41,8 +43,8 @@ export const SRoomProperty = z.object({
   name: z.string(),
   value: z.string(),
   type: z.string(),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRoom = z.object({
@@ -55,8 +57,8 @@ export const SRoom = z.object({
   roomCategory: SRoomCategory,
   roomRoles: z.array(SRoomRoles).optional(),
   roomProperty: z.array(SRoomProperty).optional(),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SRecurrence = z.object({
@@ -64,10 +66,10 @@ export const SRecurrence = z.object({
   recurrenceCancellationId: z.number().nullable(),
   recurrenceExceptionId: z.number().nullable(),
   rule: z.string(),
-  startDate: z.union([z.date(), z.string()]),
-  endDate: z.union([z.date(), z.string()]),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  startDate: DateSchema,
+  endDate: DateSchema,
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
 });
 
 export const SUser = z.object({
@@ -88,8 +90,8 @@ export const SStatus = z.object({
   statusId: z.number(),
   key: z.string(),
   name: z.string(),
-  icon: z.string().nullable().default("none"),
-  color: z.string().nullable().default("none"),
+  icon: z.string(),
+  color: z.string(),
 });
 
 export const SEvent = z.object({
@@ -98,16 +100,16 @@ export const SEvent = z.object({
   userId: z.number().nullable().optional(),
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
-  startDate: z.union([z.date(), z.string()]),
-  endDate: z.union([z.date(), z.string()]),
+  startDate: DateSchema,
+  endDate: DateSchema,
   title: z.string().min(1, "Title is required"),
   description: z.string(),
   parentEventId: z.number().nullable().optional(),
   room: SRoom,
-  status: SStatus.nullish(),
+  status: SStatus,
   recurrence: SRecurrence.nullish(),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
   multiDay: SMultiDay.optional(),
 });
 
