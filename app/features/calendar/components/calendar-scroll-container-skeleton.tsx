@@ -81,7 +81,9 @@ function HourColumnSkeleton({ hours }: { hours: number[] }) {
 					);
 				})}
 				<div className={"h-4 flex items-start pr-2"}>
-					<span className="ml-auto -mt-2 text-xs text-muted-foreground">{format(new Date().setHours(lastHour), "hh a")}</span>
+					<span className="ml-auto -mt-2 text-xs text-muted-foreground">
+						<Skeleton className="ml-auto -mt-2 h-4 w-8"></Skeleton>
+					</span>
 				</div>
 			</div>
 		</div>

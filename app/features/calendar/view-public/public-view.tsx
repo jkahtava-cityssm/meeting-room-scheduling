@@ -10,7 +10,7 @@ import { DateControls, DateControlSkeleton } from "./public-date-control";
 import { RoomCategoryLayout } from "./public-room-filter";
 
 import { Button } from "@/components/ui/button";
-import { FilterIcon, LucideCalendarDays, LucideDoorOpen } from "lucide-react";
+import { FilterIcon, LucideCalendarDays, LucideDoorClosedLocked, LucideDoorOpen } from "lucide-react";
 import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
 
 import { CalendarScrollContainerPublic } from "../components/calendar-scroll-container";
@@ -163,10 +163,10 @@ export function CalendarPublicView() {
 					<div className="flex border rounded-lg sm:p-4 min-h-125">
 						<CalendarScrollContainerPublic
 							isLoading={isEventsLoading}
+							isEmpty={filteredRooms?.length === 0}
 							hours={result?.data.hours || fallbackHours}
 						>
 							{filteredRooms?.map((room, index) => {
-								//console.log(dayViews?.eventBlocks.get(String(room.roomId)));
 								return (
 									<CalendarScrollColumnPublic
 										key={room.roomId}
