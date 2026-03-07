@@ -48,6 +48,7 @@ export default function EventDrawerRefactor({
 				formSteps={checkoutSteps}
 				event={event ? SEvent.parse(event) : undefined}
 				userId={userId}
+				roomId={roomId}
 			>
 				{children}
 			</MultiStepForm>
