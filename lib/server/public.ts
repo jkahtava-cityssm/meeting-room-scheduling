@@ -12,9 +12,10 @@ export async function fetchPublicRooms() {
 
 export async function fetchPublicConfiguration() {
 	const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/public/configuration`;
-	return privateServerFetch(url, "Failed to fetch configurations", {
-		next: { revalidate: 1440, tags: ["public_configuration"] },
-	});
+	return privateServerFetch(
+		url,
+		"Failed to fetch configurations", //{next: { revalidate: 1440, tags: ["public_configuration"] },}
+	);
 }
 
 export async function privateServerFetch(

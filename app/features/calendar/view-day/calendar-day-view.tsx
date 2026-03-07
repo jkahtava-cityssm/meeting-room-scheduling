@@ -18,102 +18,93 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 import { GenericError } from "../../../../components/shared/generic-error";
 
-export function CalendarDayView({
-  date,
-  userId,
-  isSidebarOpen = false,
-}: {
-  date: Date;
-  userId?: string;
-  isSidebarOpen?: boolean;
-}) {
-  const { can } = CalendarPermissions.usePermissions();
-  const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
-    usePrivateCalendar();
+export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date: Date; userId?: string; isSidebarOpen?: boolean }) {
+	const { can } = CalendarPermissions.usePermissions();
+	const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
 
-  const roomIds = useMemo(
-    () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
-    [visibleRooms],
-  );
+	const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map(room => room.roomId.toString()) : []), [visibleRooms]);
 
-  const { result, isLoading, error } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
+	const { result, isLoading, error } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
 
-  useEffect(() => {
-    if (isLoading) {
-      setIsHeaderLoading(true);
-    }
+	useEffect(() => {
+		if (isLoading) {
+			setIsHeaderLoading(true);
+		}
 
-    if (result && !isLoading) {
-      setIsHeaderLoading(false);
-    }
-  }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
+		if (result && !isLoading) {
+			setIsHeaderLoading(false);
+		}
+	}, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-  const { roomsToRender, events } = useMemo(() => {
-    const rooms =
-      visibleRooms
-        ?.filter((room) => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
-        .map((room) => {
-          const blocks = result?.data.roomBlocks[String(room.roomId)] ?? [];
-          return { roomId: room.roomId, roomName: room.name, blocks };
-        }) ?? []; // Flatten all events from all blocks
-    const events = rooms.flatMap(
-      (room) => room.blocks.map((block) => block.event).filter(Boolean), // remove null/undefined
-    );
+	const { roomsToRender, events } = useMemo(() => {
+		const rooms =
+			visibleRooms
+				?.filter(room => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
+				.map(room => {
+					const blocks = result?.data.roomBlocks[String(room.roomId)] ?? [];
+					return { roomId: room.roomId, roomName: room.name, blocks };
+				}) ?? []; // Flatten all events from all blocks
+		const events = rooms.flatMap(
+			room => room.blocks.map(block => block.event).filter(Boolean), // remove null/undefined
+		);
 
-    return { roomsToRender: rooms, events };
-  }, [visibleRooms, selectedRoomId, result]);
+		return { roomsToRender: rooms, events };
+	}, [visibleRooms, selectedRoomId, result]);
 
-  useEffect(() => {
-    setTotalEvents(events.length);
-  }, [events, setTotalEvents]);
+	useEffect(() => {
+		setTotalEvents(events.length);
+	}, [events, setTotalEvents]);
 
-  const isMounting = !visibleRooms || !result;
+	const isMounting = !visibleRooms || !result;
 
-  if (error) {
-    return <GenericError error={error} />;
-  }
+	if (error) {
+		return <GenericError error={error} />;
+	}
 
-  return (
-    <div className="flex flex-1 min-h-0">
-      <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
-        {isMounting ? (
-          <>
-            <DayViewDayHeader currentDate={date} />
-            <CalendarScrollContainerSkeleton
-              hours={defaultHours}
-              totalColumns={visibleRooms ? visibleRooms.length : 10}
-            />
-          </>
-        ) : (
-          <>
-            <DayViewDayHeader currentDate={date} />
-            <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours || defaultHours}>
-              {roomsToRender?.map((room, roomIndex) => {
-                return (
-                  <CalendarScrollColumnPrivate
-                    key={room.roomId}
-                    loadingBlocks={isLoading}
-                    title={room.roomName}
-                    interval={interval}
-                    roomId={room.roomId}
-                    userId={userId}
-                    hours={result?.data.hours || []}
-                    eventBlocks={room.blocks || []}
-                    isLastColumn={roomsToRender.length - 1 === roomIndex}
-                    currentDate={date}
-                  />
-                );
-              })}
-            </CalendarScrollContainerPrivate>
-          </>
-        )}
-      </div>
-      <CalendarDayColumnCalendar
-        date={date}
-        isLoading={isLoading}
-        events={events || []}
-        view={"day"}
-      ></CalendarDayColumnCalendar>
-    </div>
-  );
+	return (
+		<div className="flex flex-1 min-h-0">
+			<div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+				{isMounting ? (
+					<>
+						<DayViewDayHeader currentDate={date} />
+						<CalendarScrollContainerSkeleton
+							hours={defaultHours}
+							totalColumns={visibleRooms ? visibleRooms.length : 10}
+						/>
+					</>
+				) : (
+					<>
+						<DayViewDayHeader currentDate={date} />
+						<CalendarScrollContainerPrivate
+							isLoading={isLoading}
+							hours={result?.data.hours}
+						>
+							{roomsToRender?.map((room, roomIndex) => {
+								return (
+									<CalendarScrollColumnPrivate
+										key={room.roomId}
+										loadingBlocks={isLoading}
+										title={room.roomName}
+										interval={interval}
+										roomId={room.roomId}
+										userId={userId}
+										hours={result?.data.hours || []}
+										eventBlocks={room.blocks || []}
+										isLastColumn={roomsToRender.length - 1 === roomIndex}
+										currentDate={date}
+									/>
+								);
+							})}
+						</CalendarScrollContainerPrivate>
+					</>
+				)}
+			</div>
+			<CalendarDayColumnCalendar
+				date={date}
+				isLoading={isLoading}
+				events={events || []}
+				view={"day"}
+			></CalendarDayColumnCalendar>
+		</div>
+	);
 }
