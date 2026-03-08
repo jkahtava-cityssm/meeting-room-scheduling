@@ -8,25 +8,12 @@ import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 import { useSession } from "@/contexts/SessionProvider";
 import { useMultiStepForm } from "./multi-step-form-shell";
 import { cn } from "@/lib/utils";
-import { EvendDrawerPermissions } from "./lib/permissions";
-
-const PAGE_PERMISSIONS = {
-	UpdateEvent: {
-		type: "permission",
-		resource: "Event",
-		action: "Update",
-	},
-	CreateEvent: {
-		type: "permission",
-		resource: "Event",
-		action: "Create",
-	},
-} as const satisfies GroupedPermissionRequirement;
+import { EventDrawerPermissions } from "./lib/permissions";
 
 const FormFooter = ({ userId }: { userId?: string }) => {
 	const ctx = useMultiStepForm();
 
-	const { can, isVerifying } = EvendDrawerPermissions.usePermissions();
+	const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
 	const isEditEnabled = can("UpdateEvent");
 	const isSaveEnabled = ctx.status === "Edit" ? can("UpdateEvent") : can("CreateEvent");

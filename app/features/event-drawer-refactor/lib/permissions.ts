@@ -13,4 +13,4 @@ const PAGE_PERMISSIONS = {
 	ToggleMultiDay: { type: "permission", resource: "Event", action: "Allow Multi-Day" },
 } as const satisfies GroupedPermissionRequirement;
 
-export const EvendDrawerPermissions = createSecurityContext(PAGE_PERMISSIONS);
+export const EventDrawerPermissions = createSecurityContext(PAGE_PERMISSIONS);

@@ -8,7 +8,7 @@ import { Step2 } from "./step-event-recurrence";
 
 import { step1Schema, Step2Fields, step2Schema } from "./event-drawer-schema.validator";
 import { MultiStepForm } from "./multi-step-form-shell";
-import { EvendDrawerPermissions } from "./lib/permissions";
+import { EventDrawerPermissions } from "./lib/permissions";
 import { useSession } from "@/contexts/SessionProvider";
 
 export default function EventDrawerRefactor({
@@ -46,7 +46,7 @@ export default function EventDrawerRefactor({
 	];
 
 	return (
-		<EvendDrawerPermissions.Provider session={session}>
+		<EventDrawerPermissions.Provider session={session}>
 			<MultiStepForm
 				creationDate={creationDate}
 				formSteps={checkoutSteps}
@@ -56,6 +56,6 @@ export default function EventDrawerRefactor({
 			>
 				{children}
 			</MultiStepForm>
-		</EvendDrawerPermissions.Provider>
+		</EventDrawerPermissions.Provider>
 	);
 }
