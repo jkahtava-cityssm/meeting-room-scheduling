@@ -8,6 +8,8 @@ import { Step2 } from "./step-event-recurrence";
 
 import { step1Schema, Step2Fields, step2Schema } from "./event-drawer-schema.validator";
 import { MultiStepForm } from "./multi-step-form-shell";
+import { EvendDrawerPermissions } from "./lib/permissions";
+import { useSession } from "@/contexts/SessionProvider";
 
 export default function EventDrawerRefactor({
 	creationDate,
@@ -22,6 +24,8 @@ export default function EventDrawerRefactor({
 	roomId?: number;
 	children: React.ReactNode;
 }) {
+	const { session } = useSession();
+
 	const checkoutSteps: FormStep[] = [
 		{
 			title: "Step 1: Event Details",
@@ -42,7 +46,7 @@ export default function EventDrawerRefactor({
 	];
 
 	return (
-		<>
+		<EvendDrawerPermissions.Provider session={session}>
 			<MultiStepForm
 				creationDate={creationDate}
 				formSteps={checkoutSteps}
@@ -52,6 +56,6 @@ export default function EventDrawerRefactor({
 			>
 				{children}
 			</MultiStepForm>
-		</>
+		</EvendDrawerPermissions.Provider>
 	);
 }
