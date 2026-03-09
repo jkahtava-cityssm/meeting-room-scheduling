@@ -50,7 +50,7 @@ export async function getCachedUserRoles(sessionToken: string, userId: number, i
 	const cacheEnabled = cacheIsSafe();
 	const cacheKey = impersonatingRole ? `impersonate:${sessionToken}:${impersonatingRole}` : sessionToken;
 
-	if (cacheEnabled) {
+	if (cacheEnabled && !impersonatingRole) {
 		const cached = roleCache.get(cacheKey);
 
 		if (cached && cached.expiresAt > now) {
@@ -60,7 +60,7 @@ export async function getCachedUserRoles(sessionToken: string, userId: number, i
 
 	const roles = impersonatingRole ? await getRolesByName(impersonatingRole) : await getRolesByUserId(userId);
 
-	if (cacheEnabled) {
+	if (cacheEnabled && !impersonatingRole) {
 		roleCache.set(cacheKey, { roles, expiresAt: now + TTL });
 	}
 
