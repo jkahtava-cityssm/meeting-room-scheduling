@@ -36,7 +36,7 @@ export function CalendarDayColumnCalendar({
   };
 
   return (
-    <div className="hidden w-74 divide-y border-l md:block shrink-0">
+    <div className="hidden w-74 divide-y border-l md:flex flex-col h-full shrink-0">
       <DayPicker
         className="mx-auto w-fit"
         mode="single"

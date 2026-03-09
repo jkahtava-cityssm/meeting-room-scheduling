@@ -2,8 +2,10 @@ import { format, isToday, isWithinInterval, set } from "date-fns";
 import { useEffect, useState } from "react";
 
 import { IEvent } from "@/lib/schemas/calendar";
-import { Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock, DoorClosed, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { BadgeColored } from "@/components/ui/badge-colored";
+import { TColors } from "@/lib/types";
 
 function getDateAsOfNow(date: Date) {
   const now = new Date();
@@ -49,8 +51,8 @@ export function CalendarDayColumnCurrentEvents({ events, date }: { events: IEven
   }, [events, date]);
 
   return (
-    <div className="flex-1 space-y-3">
-      <div className="flex items-start gap-2 px-4 pt-4">
+    <div className="flex flex-1 flex-col overflow-hidden space-y-3">
+      <div className="shrink-0 flex items-start gap-2 px-4 pt-4">
         {isToday(date) ? (
           <span className="relative mt-[5px] flex size-2.5">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-75"></span>
@@ -68,7 +70,7 @@ export function CalendarDayColumnCurrentEvents({ events, date }: { events: IEven
         </p>
       </div>
       {currentEvents.length === 0 && (
-        <div className="flex items-start gap-2 px-4 pt-4">
+        <div className="flex-1 px-4 pt-4">
           <p className="p-4 text-center text-sm italic text-muted-foreground">
             No events are scheduled for this time and day.
           </p>
@@ -76,42 +78,38 @@ export function CalendarDayColumnCurrentEvents({ events, date }: { events: IEven
       )}
 
       {currentEvents.length > 0 && (
-        <div className="flex">
-          <div className="flex flex-1 flex-col">
-            <ScrollArea className="max-h-[25vh] md:max-h-[35vh] lg:max-h-[40vh] px-4" type="always">
-              {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
-              <div className="space-y-6 pb-4">
-                {currentEvents.map((event, index) => {
-                  const room = false; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <ScrollArea className="h-0 min-h-full px-4" type="always">
+            {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
+            <div className="space-y-6 pb-4">
+              {currentEvents.map((event, index) => {
+                const room = event.room.name; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
 
-                  return (
-                    <div key={event.eventId + "-" + index} className="space-y-1.5">
-                      <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
+                return (
+                  <div key={event.eventId + "-" + index} className="space-y-1.5">
+                    <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
 
-                      {room && (
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <User className="size-3.5" />
-                          <span className="text-sm">{room}</span>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Calendar className="size-3.5" />
-                        <span className="text-sm">{format(new Date(), "MMM d, yyyy")}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Clock className="size-3.5" />
-                        <span className="text-sm">
-                          {format(event.startDate, "h:mm a")} - {format(event.endDate, "h:mm a")}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <DoorClosed className="size-3.5" />
+                      <BadgeColored color={event.room.color as TColors}>{event.room.name}</BadgeColored>
                     </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-          </div>
+
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Calendar className="size-3.5" />
+                      <span className="text-sm">{format(new Date(), "MMM d, yyyy")}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Clock className="size-3.5" />
+                      <span className="text-sm">
+                        {format(event.startDate, "h:mm a")} - {format(event.endDate, "h:mm a")}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
         </div>
       )}
     </div>
