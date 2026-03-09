@@ -150,8 +150,6 @@ export function PublicEventBlock({ viewport, popoverLayer, eventBlock, heightInP
   const eventCardClasses = PublicEventCard({ color });
   const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;
 
-  //if (!viewportElement || !popoverElement) return;
-
   if (!viewport || !popoverLayer) return null;
 
   return (

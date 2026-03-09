@@ -577,7 +577,7 @@ function calculateEventBlockStyle(
   const startDate = new Date(event.startDate);
   const dayStart = new Date(day.setHours(0, 0, 0, 0));
   const eventStart = startDate < dayStart ? dayStart : startDate;
-  const startMinutes = differenceInMinutes(eventStart, dayStart);
+  const startMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
 
   let top;
 
