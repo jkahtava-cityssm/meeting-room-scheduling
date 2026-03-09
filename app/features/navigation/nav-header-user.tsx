@@ -136,7 +136,6 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                   }}
                 ></Switch>
               </DropdownMenuItem>
-              {process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && <RefreshMenuItem />}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
@@ -160,6 +159,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                     selectedRoleId={selectedRoleId ? selectedRoleId : ""}
                     onRoleChange={setSelectedRoleId}
                     excludeRoleNames={["Admin"]}
+                    className={"w-full"}
                   ></RoleSelect>
                   <Button
                     disabled={!selectedRoleId}
