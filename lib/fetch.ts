@@ -39,10 +39,13 @@ export async function fetchPUT(url: string, data: object) {
 		method: "PUT",
 		body: JSON.stringify(data),
 		headers: { "Content-Type": "application/json" },
-	}).then(res => {
-		//if (!res.ok) throw Error("Network Response Error");
+	}).then(async res => {
+		if (res.ok) return res.json();
 
-		return res.json();
+		const errorData = await res.json().catch(() => ({})); // Catch if body isn't JSON
+		const message = errorData.message || res.statusText;
+
+		throw new Error(`${res.status} - ${res.statusText}, ${url} [${message}]`);
 	});
 }
 

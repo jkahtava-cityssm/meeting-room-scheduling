@@ -170,10 +170,6 @@ export const useEventsMutationUpsert = () => {
 	return useMutation({
 		mutationFn: async (data: IEventPUT) => fetchPUT(`/api/events`, data),
 		onSuccess: response => {
-			if (!response.ok) {
-				throw new Error(response.message);
-			}
-
 			queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
 			queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(response.data.eventId) });
 		},

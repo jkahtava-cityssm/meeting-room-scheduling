@@ -29,8 +29,8 @@ const FormFooter = ({ userId }: { userId?: string }) => {
 			loading: ctx.status === "Loading",
 		},
 		delete: {
-			show: ctx.status === "Edit",
-			disabled: !can("DeleteEvent") || ctx.mutationDelete.isPending || isVerifying,
+			show: ctx.status === "Edit" && can("DeleteEvent"),
+			disabled: ctx.mutationDelete.isPending || isVerifying,
 			loading: ctx.mutationDelete.isPending,
 		},
 		nav: {
