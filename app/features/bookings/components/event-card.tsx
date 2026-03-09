@@ -21,6 +21,8 @@ import { IEventCardFields } from "./types";
 import { TColors } from "@/lib/types";
 import { IconColored } from "@/components/ui/icon-colored";
 import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
+import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { BookingPermissions } from "./permissions/booking.permissions";
 
 export default function EventCard({
   eventCardFields,
@@ -33,6 +35,12 @@ export default function EventCard({
   OnApprove: () => void;
   OnDeny: () => void;
 }) {
+  const { can } = BookingPermissions.usePermissions();
+
+  const { openEventDrawer } = useSharedEventDrawer();
+
+  const canReadEvent = can("ReadAllEvent");
+
   return (
     <Card className="w-100 p-2">
       <CardHeader>
@@ -120,11 +128,19 @@ export default function EventCard({
             Pending
           </ButtonColored>
         )}
-        <EventDrawer event={event} userId={undefined}>
-          <Button variant={"outline"} className="w-full sm:w-1/3">
-            Review
-          </Button>
-        </EventDrawer>
+
+        <Button
+          variant={"outline"}
+          className="w-full sm:w-1/3"
+          onClick={(e) => {
+            e.preventDefault();
+            if (canReadEvent) {
+              openEventDrawer({ event: event });
+            }
+          }}
+        >
+          Review
+        </Button>
       </CardFooter>
     </Card>
   );

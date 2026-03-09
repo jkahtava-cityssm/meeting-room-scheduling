@@ -22,6 +22,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BookingPermissions } from "./permissions/booking.permissions";
 import { CalendarLoadingPage } from "@/app/(private)/calendar/loading";
 import { RequirePermission } from "../../calendar/calendar-controller/calendar-all-views";
+import { SharedEventDrawerProvider } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -197,9 +198,10 @@ export default function UserRequests() {
             id: "1",
           }}
         >
-          {!isLoading && view !== "all" && <BookingList sections={sections} />}
-          {!isLoading && view === "all" && (
-            <BookingListByRoom sections={sections} page={currentPage}></BookingListByRoom>
+          {!isLoading && view !== "all" && (
+            <SharedEventDrawerProvider>
+              <BookingList sections={sections} />
+            </SharedEventDrawerProvider>
           )}
         </BookingProvider>
         <div className="hidden w-74 divide-y border-l md:block">
