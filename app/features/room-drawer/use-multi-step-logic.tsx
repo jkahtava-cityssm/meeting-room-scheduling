@@ -52,9 +52,14 @@ export const useRoomFormLogic = (props: {
     validateStep,
   );
 
+  const prevRoomIdRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    methods.reset(defaultFormValues);
-    setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
+    if (prevRoomIdRef.current !== defaultFormValues.roomId) {
+      methods.reset(defaultFormValues);
+      setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
+      prevRoomIdRef.current = defaultFormValues.roomId;
+    }
   }, [defaultFormValues, methods]);
 
   useEffect(() => {
