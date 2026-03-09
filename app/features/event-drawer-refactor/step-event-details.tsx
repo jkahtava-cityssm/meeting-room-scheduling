@@ -35,12 +35,14 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 
 	const disableChangeStatus = !can("ChangeEventStatus");
 	const disableChangeUser = !can("ChangeEventUser");
-	const allowMultiDay = can("ToggleMultiDay");
+	const enableMultiDay = can("ToggleMultiDay");
 	const allowRecurrence = can("ToggleRecurrence");
 
 	const endDatePickerRef = useRef<DateTimePickerRef>(null);
 	const isReadOnly = formStatus === "Read" || formStatus === "Loading";
 	const isRecurring = watch("isRecurring");
+	const synchronizeEndDate = isRecurring === "true" || !enableMultiDay;
+	const hideEndDate = isRecurring === "true" || !enableMultiDay;
 
 	return (
 		<ScrollArea type="always">
@@ -68,61 +70,63 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 							</FormItem>
 						)}
 					/>
-					{allowRecurrence && (
-						<FormField
-							control={control}
-							name="isRecurring"
-							render={({ field, fieldState }) => (
-								<FormItem className="col-span-1 xs:justify-items-center">
-									{fieldState.invalid ? (
-										<FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-									) : (
-										<FormLabel>Event Type</FormLabel>
-									)}
-									<FormControl>
-										<Tabs
-											defaultValue={field.value}
-											onValueChange={value => {
-												const startDate = getValues("startDate");
-												const endDate = getValues("endDate");
 
-												if (value === "true" && startDate !== endDate) {
-													const b = new Date(startDate);
-													endDatePickerRef.current?.updateDate(startDate);
+					<FormField
+						control={control}
+						name="isRecurring"
+						render={({ field, fieldState }) => (
+							<FormItem className="col-span-1 xs:justify-items-center">
+								{fieldState.invalid ? (
+									<FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+								) : (
+									<FormLabel>Event Type</FormLabel>
+								)}
+								<FormControl>
+									<Tabs
+										defaultValue={field.value}
+										onValueChange={value => {
+											const startDate = getValues("startDate");
+											const endDate = getValues("endDate");
 
-													//setValue("endDate", getValues("startDate"));
-													setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
-												}
-												field.onChange(value);
+											if (value === "true" && startDate !== endDate) {
+												const b = new Date(startDate);
+												endDatePickerRef.current?.updateDate(startDate);
 
-												//setIgnoreLastStep(value === "false" ? true : false);
-											}}
+												//setValue("endDate", getValues("startDate"));
+												setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
+											}
+											field.onChange(value);
+
+											//setIgnoreLastStep(value === "false" ? true : false);
+										}}
+									>
+										<TabsList
+											className="gap-2"
+											aria-disabled={isReadOnly}
+											data-invalid={fieldState.invalid}
+											aria-invalid={fieldState.invalid}
 										>
-											<TabsList
-												className="gap-2"
-												aria-disabled={isReadOnly}
-												data-invalid={fieldState.invalid}
-												aria-invalid={fieldState.invalid}
+											<TabsTrigger
+												value="false"
+												disabled={isReadOnly}
 											>
-												<TabsTrigger
-													value="false"
-													disabled={isReadOnly}
-												>
-													Single
-												</TabsTrigger>
+												Single
+											</TabsTrigger>
+											{allowRecurrence && (
 												<TabsTrigger
 													value="true"
 													disabled={isReadOnly}
 												>
 													Recurring
 												</TabsTrigger>
-											</TabsList>
-										</Tabs>
-									</FormControl>
-								</FormItem>
-							)}
-						/>
-					)}
+											)}
+										</TabsList>
+									</Tabs>
+								</FormControl>
+							</FormItem>
+						)}
+					/>
+
 					<FormField
 						control={control}
 						name="userId"
@@ -196,7 +200,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 										disabled={isReadOnly}
 										value={field.value}
 										onChange={isoString => {
-											if (isRecurring === "true") {
+											if (synchronizeEndDate) {
 												const endDate = endDatePickerRef.current?.calculateNewDate(isoString);
 
 												if (endDate) {
@@ -259,7 +263,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 										className="min-w-52"
 										label={"End Date"}
 										errorMessage={fieldState.error?.message}
-										hideDate={isRecurring === "true" || allowRecurrence}
+										hideDate={hideEndDate}
 									></DateTimePicker>
 								</FormControl>
 							</FormItem>
