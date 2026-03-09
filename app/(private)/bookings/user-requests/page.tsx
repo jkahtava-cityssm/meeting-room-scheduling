@@ -1,12 +1,16 @@
+"use client";
+import { BookingPermissions } from "@/app/features/bookings/components/permissions/booking.permissions";
 import UserRequests from "@/app/features/bookings/components/user-request";
+import { useSession } from "@/contexts/SessionProvider";
 import { Suspense } from "react";
 
 export default function Page() {
+  const { session } = useSession();
   return (
-    <div className="overflow-hidden rounded-xl border min-w-92">
-      <Suspense fallback={<>...Loading</>}>
+    <Suspense fallback={<>...Loading</>}>
+      <BookingPermissions.Provider session={session}>
         <UserRequests></UserRequests>
-      </Suspense>
-    </div>
+      </BookingPermissions.Provider>
+    </Suspense>
   );
 }

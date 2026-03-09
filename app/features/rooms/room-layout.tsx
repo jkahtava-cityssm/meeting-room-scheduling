@@ -229,6 +229,14 @@ export default function RoomLayout() {
     return <GenericError error={error} />;
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full w-full">
+        <Skeleton className="w-full h-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full w-full rounded-lg border">
       <div className="flex flex-col gap-4  p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between shrink-0 border-b">
