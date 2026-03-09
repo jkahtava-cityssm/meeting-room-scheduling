@@ -5,7 +5,8 @@ import { IEvent } from "@/lib/schemas/calendar";
 import { Calendar, Clock, DoorClosed, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BadgeColored } from "@/components/ui/badge-colored";
-import { TColors } from "@/lib/types";
+import { TColors, TStatusKey } from "@/lib/types";
+import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
 
 function getDateAsOfNow(date: Date) {
   const now = new Date();
@@ -17,7 +18,13 @@ function getDateAsOfNow(date: Date) {
 
 function getCurrentEvents(events: IEvent[], date: Date) {
   const now = getDateAsOfNow(date);
-  return events.filter((event) => isWithinInterval(now, { start: event.startDate, end: event.endDate })) || null;
+  return (
+    events.filter(
+      (event) =>
+        isWithinInterval(now, { start: event.startDate, end: event.endDate }) &&
+        event.status.key === ("APPROVED" as TStatusKey),
+    ) || null
+  );
 }
 
 function getLastFiveMinuteInterval(date: Date) {
@@ -90,7 +97,11 @@ export function CalendarDayColumnCurrentEvents({ events, date }: { events: IEven
                     <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>
 
                     <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <DoorClosed className="size-3.5" />
+                      <DynamicIcon
+                        name={event.room.icon as IconName}
+                        color={event.room.color as TColors}
+                        className="size-3.5"
+                      />
                       <BadgeColored color={event.room.color as TColors}>{event.room.name}</BadgeColored>
                     </div>
 
