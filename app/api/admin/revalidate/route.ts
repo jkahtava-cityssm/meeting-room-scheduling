@@ -6,7 +6,7 @@ import { NextRequest } from "next/server";
 export async function POST(req: NextRequest) {
   return guardRoute(
     req,
-    { IsDevelopment: { type: "function", check: () => process.env.NEXT_PUBLIC_ENVIRONMENT === "development" } },
+    { CanConfigure: { type: "permission", resource: "Settings", action: "Edit Configuration" } },
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { paths, tags } = await req.json();
 

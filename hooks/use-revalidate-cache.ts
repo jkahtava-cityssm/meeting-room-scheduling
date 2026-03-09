@@ -2,37 +2,45 @@ import { useSession } from "@/contexts/SessionProvider";
 import { fetchPOST } from "@/lib/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 
+export const CACHE_TAGS = {
+  publicConfig: "public_configuration",
+  users: "users",
+  rooms: "rooms",
+  userById: (id: string) => `user_${id}`,
+} as const;
+
+export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS];
+
 export function useRevalidateAndInvalidate() {
-	const queryClient = useQueryClient();
-	const { session } = useSession();
+  const queryClient = useQueryClient();
+  const { session } = useSession();
 
-	const paths = ["/api/users/[userId]", "/api/users", "/api/users/" + session?.user.id];
-	const tags = [session?.user.id, "users"];
+  const paths = ["/api/users/[userId]", "/api/users", "/api/users/" + session?.user.id];
+  const tags = [session?.user.id, "users"];
 
-	const clientTags = ["users", "rooms"];
+  const clientTags = Object.values(CACHE_TAGS);
 
-	const revalidateAndInvalidate = async () => {
-		try {
-			// Call your Next.js API route to revalidate paths
-			const response = await fetchPOST("/api/admin/revalidate", {
-				paths,
-				tags,
-			});
+  const revalidateAndInvalidate = async () => {
+    try {
+      const response = await fetchPOST("/api/admin/revalidate", {
+        paths,
+        tags,
+      });
 
-			if (response.status !== 204) {
-				throw new Error("Failed to revalidate paths");
-			}
+      if (response.status !== 204) {
+        throw new Error("Failed to revalidate paths");
+      }
 
-			clientTags.forEach(key => {
-				queryClient.invalidateQueries({ queryKey: [key] });
-			});
+      clientTags.forEach((key) => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
 
-			return { success: true };
-		} catch (error) {
-			console.error("Revalidation error:", error);
-			return { success: false, error };
-		}
-	};
+      return { success: true };
+    } catch (error) {
+      console.error("Revalidation error:", error);
+      return { success: false, error };
+    }
+  };
 
-	return { revalidateAndInvalidate };
+  return { revalidateAndInvalidate };
 }
