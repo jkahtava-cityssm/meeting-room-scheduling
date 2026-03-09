@@ -17,7 +17,7 @@ export const queryKeys = {
     statuses: (start: string, end: string) => [...queryKeys.events.range(start, end), "status"] as const,
     status: (start: string, end: string, statusId: string) =>
       [...queryKeys.events.statuses(start, end), statusId] as const,
-    totals: () => ["total_events"] as const,
+    totals: () => [...queryKeys.events.all, "total"] as const,
     totalByStatus: (statusId: string) => [...queryKeys.events.totals(), "status", statusId] as const,
     details: () => ["event"] as const,
     detail: (id: number | undefined) => [...queryKeys.events.details(), id] as const,
