@@ -212,20 +212,3 @@ export function CalendarEmptyAlert({
     </div>
   );
 }
-
-/*function CalendarDayViewWithAllEvents({ date }: { date: Date }) {
-  const startDate: Date = startOfDay(date);
-  const endDate: Date = endOfDay(date);
-
-  const { data: events } = useEventsQuery(startDate, endDate);
-  return <CalendarDayView date={date} events={events} />;
-}
-
-function CalendarDayViewWithUserEvents({ date }: { date: Date }) {
-  const startDate: Date = startOfDay(date);
-  const endDate: Date = endOfDay(date);
-
-  const { data: events } = useUserEventsQuery("201");
-  return <CalendarDayView date={date} events={events} />;
-}
-*/

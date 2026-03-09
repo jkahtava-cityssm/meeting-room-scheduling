@@ -20,20 +20,3 @@ export const useUsersQuery = (enabled: boolean = true) =>
     },
     enabled: enabled,
   });
-
-export const useUserEventsQuery = (userId: string | undefined, enabled: boolean = true) =>
-  useQuery({
-    queryKey: queryKeys.users.events(userId),
-    queryFn: async () => {
-      const result = await fetchGET(`/api/users/${userId}/events`);
-
-      const parsedResult = z.array(SEvent).safeParse(result.data);
-
-      if (!parsedResult.success) {
-        throw new QueryError("Invalid user event data", "useUserEventsQuery", parsedResult.error);
-      }
-
-      return parsedResult.data;
-    },
-    enabled: enabled,
-  });
