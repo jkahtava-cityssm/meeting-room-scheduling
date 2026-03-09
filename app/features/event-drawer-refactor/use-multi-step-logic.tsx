@@ -5,7 +5,14 @@ import { z } from "zod/v4";
 import { CombinedEventSchema, CombinedSchema } from "./event-drawer-schema.validator";
 
 import { usePublicConfiguration } from "@/lib/services/public";
-import { useEventQuery, useEventsMutationUpsert, useEventsMutationDelete, SEventPUT, IEventPUT } from "@/lib/services/events";
+import {
+	useEventQuery,
+	useEventsMutationUpsert,
+	useEventsMutationDelete,
+	SEventPUT,
+	IEventPUT,
+	useEventsMutationCreate,
+} from "@/lib/services/events";
 import { isFormValid, isStepValid, reconcileRecurringEventDates } from "./lib/form-helper";
 import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
 import { IEvent } from "@/lib/schemas/calendar";
@@ -27,6 +34,7 @@ export const useMultiStepFormLogic = (props: {
 	const { event: storedEvent, setEvent, resetEvent } = useEventStore();
 
 	const mutationUpsert = useEventsMutationUpsert();
+	const mutationCreate = useEventsMutationCreate();
 	const mutationDelete = useEventsMutationDelete();
 
 	// 1. Resolve Initial Values
@@ -57,7 +65,7 @@ export const useMultiStepFormLogic = (props: {
 	const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
 
 	// 3. Data Fetching Sync
-	const { data: collectedEvent, isFetching } = useEventQuery(Number(defaultFormValues.eventId), status === "Loading");
+	const { data: collectedEvent, isFetching } = useEventQuery(Number(defaultFormValues.eventId), props.userId, status === "Loading");
 
 	const validateStep = async (index: number) => {
 		const result = await isStepValid(props.formSteps[index], methods);
@@ -126,11 +134,21 @@ export const useMultiStepFormLogic = (props: {
 			rule: isRecurring ? updatedData.rule : undefined,
 		};
 
-		mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
-			onSuccess: () => {
-				resetForm();
-			},
-		});
+		const parsedPayload = SEventPUT.parse(apiPayload);
+
+		if (!parsedPayload.eventId || parsedPayload.eventId === 0) {
+			mutationCreate.mutate(parsedPayload, {
+				onSuccess: () => {
+					resetForm();
+				},
+			});
+		} else {
+			mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
+				onSuccess: () => {
+					resetForm();
+				},
+			});
+		}
 	};
 
 	const onDelete = useCallback(() => {

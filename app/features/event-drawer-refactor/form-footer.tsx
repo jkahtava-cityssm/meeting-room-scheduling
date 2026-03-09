@@ -15,29 +15,53 @@ const FormFooter = ({ userId }: { userId?: string }) => {
 
 	const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
-	const isEditEnabled = can("UpdateEvent");
-	const isSaveEnabled = ctx.status === "Edit" ? can("UpdateEvent") : can("CreateEvent");
-	const isDeleteEnabled = can("DeleteEvent");
+	const actions = {
+		save: {
+			show: ctx.status === "Edit" || ctx.status === "New",
+			disabled: (ctx.status === "Edit" ? !can("UpdateEvent") : !can("CreateEvent")) || ctx.mutationUpsert.isPending || isVerifying,
+			label: ctx.status === "Edit" ? "Save" : "Create",
+			icon: ctx.status === "Edit" ? <SaveIcon /> : <CalendarPlus />,
+			loading: ctx.mutationUpsert.isPending,
+		},
+		edit: {
+			show: ctx.status === "Read" || ctx.status === "Loading",
+			disabled: !can("UpdateEvent") || ctx.status === "Loading" || isVerifying,
+			loading: ctx.status === "Loading",
+		},
+		delete: {
+			show: ctx.status === "Edit",
+			disabled: !can("DeleteEvent") || ctx.mutationDelete.isPending || isVerifying,
+			loading: ctx.mutationDelete.isPending,
+		},
+		nav: {
+			backVariant: ctx.previousStepHasError ? "outline_destructive" : "outline",
+			nextVariant: ctx.nextStepHasError ? "outline_destructive" : "outline",
+			show: can("ToggleRecurrence"),
+			isFirst: ctx.isFirstStep,
+			isLast: ctx.isLastStep,
+		},
+	} as const;
 
 	return (
 		<SheetFooter className="flex md:flex-row gap-6">
-			{(ctx.status === "Edit" || ctx.status === "New") && (
+			{actions.save.show && (
 				<Button
 					onClick={ctx.onSave}
-					disabled={!isSaveEnabled || ctx.mutationUpsert.isPending}
+					disabled={actions.save.disabled}
 					className="md:w-24"
 				>
-					{ctx.mutationUpsert.isPending ? <Loader2Icon className="animate-spin" /> : ctx.status === "Edit" ? <SaveIcon /> : <CalendarPlus />}
-					{ctx.status === "Edit" ? "Save" : "Create"}
+					{actions.save.loading ? <Loader2Icon className="animate-spin" /> : actions.save.icon}
+					{actions.save.label}
 				</Button>
 			)}
-			{(ctx.status === "Read" || ctx.status === "Loading") && (
+			{actions.edit.show && (
 				<Button
 					onClick={() => ctx.setStatus("Loading")}
-					disabled={!isEditEnabled || ctx.status === "Loading"}
+					disabled={actions.edit.disabled}
 					className="md:w-24"
 				>
-					{ctx.status === "Loading" ? <Loader2Icon className="animate-spin" /> : <PenBoxIcon />} Edit
+					{actions.edit.loading ? <Loader2Icon className="animate-spin" /> : <PenBoxIcon />}
+					Edit
 				</Button>
 			)}
 			<Button
@@ -49,34 +73,34 @@ const FormFooter = ({ userId }: { userId?: string }) => {
 				Cancel
 			</Button>
 
-			<div className="flex flex-row md:gap-6 md:grow md:justify-center">
+			<div className={cn("flex flex-row md:gap-6 md:grow md:justify-center", !actions.nav.show && "invisible")}>
 				<Button
-					variant={ctx.previousStepHasError ? "outline_destructive" : "outline"}
+					variant={actions.nav.backVariant}
 					className="basis-[48%] mr-auto md:basis-24 md:mr-0"
 					onClick={ctx.previousStep}
-					disabled={ctx.isFirstStep}
+					disabled={actions.nav.isFirst}
 				>
 					<ArrowLeftCircle /> Back
 				</Button>
 				<Button
-					variant={ctx.nextStepHasError ? "outline_destructive" : "outline"}
+					variant={actions.nav.nextVariant}
 					className="basis-[48%] ml-auto md:basis-24 md:ml-0"
 					onClick={ctx.nextStep}
-					disabled={ctx.isLastStep}
+					disabled={actions.nav.isLast}
 				>
 					Next <ArrowRightCircle />
 				</Button>
 			</div>
 
-			<div className={cn("flex flex-row h-9 md:w-24", ctx.status !== "Edit" && "invisible")}>
+			<div className={cn("flex flex-row h-9 md:w-24", !actions.delete.show && "invisible")}>
 				<Button
 					variant="outline_destructive"
 					className={"grow md:w-24"}
 					onClick={ctx.onDelete}
-					disabled={!isDeleteEnabled || ctx.mutationDelete.isPending}
-					tabIndex={ctx.status === "Edit" ? 0 : -1}
+					disabled={actions.delete.disabled}
+					tabIndex={actions.delete.show ? 0 : -1}
 				>
-					{ctx.mutationDelete.isPending ? <Loader2Icon className="animate-spin" /> : <Trash2 />}
+					{actions.delete.loading ? <Loader2Icon className="animate-spin" /> : <Trash2 />}
 					Delete
 				</Button>
 			</div>

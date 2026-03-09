@@ -33,8 +33,8 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 	const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
 	const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
-	const canChangeStatus = can("ChangeEventStatus");
-	const canChangeUser = can("ChangeEventUser");
+	const disableChangeStatus = !can("ChangeEventStatus");
+	const disableChangeUser = !can("ChangeEventUser");
 	const allowMultiDay = can("ToggleMultiDay");
 	const allowRecurrence = can("ToggleRecurrence");
 
@@ -137,7 +137,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 									selectedUserId={field.value}
 									onUserChange={(id: string, label: string) => field.onChange(id)}
 									dataInvalid={fieldState.invalid}
-									isDisabled={isReadOnly && canChangeStatus}
+									isDisabled={isReadOnly || disableChangeStatus}
 									className="min-w-60"
 								></UserComboBox>
 							</FormItem>
@@ -178,7 +178,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 									selectedStatusId={field.value}
 									includeAllOption={false}
 									onStatusChange={field.onChange}
-									isDisabled={isReadOnly && canChangeUser}
+									isDisabled={isReadOnly || disableChangeStatus}
 									dataInvalid={fieldState.invalid}
 								/>
 							</FormItem>
