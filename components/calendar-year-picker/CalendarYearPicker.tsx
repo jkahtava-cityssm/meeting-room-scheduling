@@ -57,7 +57,7 @@ export default function CalendarYearPicker({ selectedDate }: { selectedDate: Dat
       {/* Year Grid */}
       <div className="flex-1 mx-8 mb-1.5 min-h-65">
         <div className="flex justify-center w-full mt-2">
-          <div className="text-xs font-medium text-muted-foreground h-4">aa</div>
+          <div className="text-xs font-medium text-muted-foreground h-4">Select Year</div>
         </div>
         <YearGrid
           yearList={yearList}
