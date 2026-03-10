@@ -32,10 +32,12 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
   const disableChangeUser = !can("ChangeEventUser");
   const enableMultiDay = can("ToggleMultiDay");
   const allowRecurrence = can("ToggleRecurrence");
+  const restrictHours = !can("AllowOutsideHours");
 
   const endDatePickerRef = useRef<DateTimePickerRef>(null);
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
   const isRecurring = watch("isRecurring");
+
   const synchronizeEndDate = isRecurring === "true" || !enableMultiDay;
   const hideEndDate = isRecurring === "true" || !enableMultiDay;
 
@@ -139,7 +141,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                   selectedUserId={field.value}
                   onUserChange={(id: string, label: string) => field.onChange(id)}
                   dataInvalid={fieldState.invalid}
-                  isDisabled={isReadOnly || disableChangeStatus}
+                  isDisabled={isReadOnly || disableChangeUser}
                   className="min-w-60"
                 ></UserComboBox>
               </FormItem>
