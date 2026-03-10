@@ -26,6 +26,7 @@ import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarLoadingPage } from "@/app/(private)/calendar/loading";
+import { SharedEventDrawerProvider } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
@@ -75,40 +76,42 @@ export function CalendarAllViews({ userId }: { userId?: string }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
-      <CalendarHeader
-        view={view as Exclude<TCalendarView, "all" | "public">}
-        selectedDate={dateValue}
-        userId={userId}
-        permissions={viewPermissions}
-      />
+    <SharedEventDrawerProvider>
+      <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
+        <CalendarHeader
+          view={view as Exclude<TCalendarView, "all" | "public">}
+          selectedDate={dateValue}
+          userId={userId}
+          permissions={viewPermissions}
+        />
 
-      {view === "day" && (
-        <RequirePermission allowed={viewDay}>
-          <CalendarDayView date={dateValue} userId={userId} />
-        </RequirePermission>
-      )}
-      {view === "month" && (
-        <RequirePermission allowed={viewMonth}>
-          <CalendarMonthView key={dateValue.toISOString()} date={dateValue} userId={userId} />
-        </RequirePermission>
-      )}
-      {view === "week" && (
-        <RequirePermission allowed={viewWeek}>
-          <CalendarWeekView date={dateValue} userId={userId} />
-        </RequirePermission>
-      )}
-      {view === "year" && (
-        <RequirePermission allowed={viewYear}>
-          <CalendarYearView date={dateValue} userId={userId} />
-        </RequirePermission>
-      )}
-      {view === "agenda" && (
-        <RequirePermission allowed={viewAgenda}>
-          <CalendarAgendaView date={dateValue} userId={userId} />
-        </RequirePermission>
-      )}
-    </div>
+        {view === "day" && (
+          <RequirePermission allowed={viewDay}>
+            <CalendarDayView date={dateValue} userId={userId} />
+          </RequirePermission>
+        )}
+        {view === "month" && (
+          <RequirePermission allowed={viewMonth}>
+            <CalendarMonthView key={dateValue.toISOString()} date={dateValue} userId={userId} />
+          </RequirePermission>
+        )}
+        {view === "week" && (
+          <RequirePermission allowed={viewWeek}>
+            <CalendarWeekView date={dateValue} userId={userId} />
+          </RequirePermission>
+        )}
+        {view === "year" && (
+          <RequirePermission allowed={viewYear}>
+            <CalendarYearView date={dateValue} userId={userId} />
+          </RequirePermission>
+        )}
+        {view === "agenda" && (
+          <RequirePermission allowed={viewAgenda}>
+            <CalendarAgendaView date={dateValue} userId={userId} />
+          </RequirePermission>
+        )}
+      </div>
+    </SharedEventDrawerProvider>
   );
 }
 

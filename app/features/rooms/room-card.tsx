@@ -1,4 +1,3 @@
-import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { BadgeColored } from "@/components/ui/badge-colored";
 import { Button } from "@/components/ui/button";
 import { ButtonColored } from "@/components/ui/button-colored";

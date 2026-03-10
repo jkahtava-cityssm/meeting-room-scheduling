@@ -6,8 +6,10 @@ import { Clock, MapPin, Text } from "lucide-react";
 
 import { TColors } from "@/lib/types";
 import { IEvent } from "@/lib/schemas/calendar";
-import EventDrawer from "@/app/features/event-drawer/event-drawer";
+
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
+import EventDrawerRefactor from "../../event-drawer-refactor/event-drawer-root";
+import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 const agendaEventCardVariants = cva(
   "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -59,6 +61,7 @@ const agendaEventCardVariants = cva(
 
 export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: string }) {
   //const { badgeVariant } = useCalendar();
+  const { openEventDrawer } = useSharedEventDrawer();
 
   const startDate = event.startDate;
   const endDate = event.endDate;
@@ -78,44 +81,48 @@ export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: str
   };
 
   return (
-    <EventDrawer event={event} userId={userId}>
-      <div
-        role="button"
-        tabIndex={0}
-        className={agendaEventCardClasses}
-        color={event.room.color}
-        onKeyDown={handleKeyDown}
-      >
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-1.5">
-            <p className="text-md leading-none font-semibold">{event.title}</p>
-          </div>
+    <div
+      role="button"
+      tabIndex={0}
+      className={agendaEventCardClasses}
+      color={event.room.color}
+      onKeyDown={handleKeyDown}
+      onClick={() => openEventDrawer({ event: event, userId: userId })}
+    >
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-1.5">
+          <p className="text-md leading-none font-semibold">{event.title}</p>
+        </div>
 
-          <div className="mt-1 flex items-center gap-1">
-            <MapPin className="size-5 shrink-0" />
-            <p className="text-xs text-foreground">{event.room.name}</p>
-          </div>
+        <div className="mt-1 flex items-center gap-1">
+          <MapPin className="size-5 shrink-0" />
+          <p className="text-xs text-foreground">{event.room.name}</p>
+        </div>
 
-          <div className="flex items-center gap-1">
-            <Clock className="size-5 shrink-0" />
-            <p className="text-xs text-foreground">
-              {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
-            </p>
-          </div>
+        <div className="flex items-center gap-1">
+          <Clock className="size-5 shrink-0" />
+          <p className="text-xs text-foreground">
+            {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
+          </p>
+        </div>
 
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Text className="size-5 shrink-0" />
-              <div>
-                <p className="text-sm font-medium">Description</p>
-              </div>
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Text className="size-5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Description</p>
             </div>
-            <div className="flex items-center gap-2 pl-7">
-              <p className="text-xs text-foreground">{event.description}</p>
-            </div>
+          </div>
+          <div className="flex items-center gap-2 pl-7">
+            <p className="text-xs text-foreground">{event.description}</p>
           </div>
         </div>
       </div>
-    </EventDrawer>
+    </div>
   );
 }
+/**
+ * 
+ *       <EventDrawerRefactor event={event} userId={userId}>
+    </EventDrawerRefactor>
+ */

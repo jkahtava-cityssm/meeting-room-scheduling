@@ -3,7 +3,6 @@ import { format } from "date-fns";
 
 import { TColors } from "@/lib/types";
 
-import EventDrawer from "@/app/features/event-drawer/event-drawer";
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import { IEventBlock } from "../webworkers/generic-webworker";
 import { ButtonHTMLAttributes, forwardRef } from "react";
@@ -47,28 +46,26 @@ export const GridEventBlock = forwardRef<HTMLButtonElement, MonthEventBadgeProps
   };
 
   return (
-    <EventDrawer event={eventBlock.event} userId={userId}>
-      <button
-        type="button"
-        ref={ref}
-        tabIndex={0}
-        className={cn("w-full h-full", EventCardClasses)}
-        style={{
-          height: `${heightInPixels}px`,
-        }}
-        onKeyDown={handleKeyDown}
-        aria-label={buttonProps["aria-label"] ?? eventBlock.event.title}
-        {...buttonProps}
-      >
-        <div className="flex items-center gap-1.5 ">
-          <p className="truncate font-semibold">{eventBlock.event.title}</p>
-        </div>
-        <div className="flex items-center gap-1.5 truncate">
-          <p className="truncate">
-            {format(eventBlock.event.startDate, "h:mm a")} - {format(eventBlock.event.endDate, "h:mm a")}
-          </p>
-        </div>
-      </button>
-    </EventDrawer>
+    <button
+      type="button"
+      ref={ref}
+      tabIndex={0}
+      className={cn("w-full h-full", EventCardClasses)}
+      style={{
+        height: `${heightInPixels}px`,
+      }}
+      onKeyDown={handleKeyDown}
+      aria-label={buttonProps["aria-label"] ?? eventBlock.event.title}
+      {...buttonProps}
+    >
+      <div className="flex items-center gap-1.5 ">
+        <p className="truncate font-semibold">{eventBlock.event.title}</p>
+      </div>
+      <div className="flex items-center gap-1.5 truncate">
+        <p className="truncate">
+          {format(eventBlock.event.startDate, "h:mm a")} - {format(eventBlock.event.endDate, "h:mm a")}
+        </p>
+      </div>
+    </button>
   );
 });

@@ -199,6 +199,7 @@ export const useMultiStepFormLogic = (props: {
         },
         startNew: () => {
           resetForm();
+          props.onOpen();
         },
         none: () => {},
       };

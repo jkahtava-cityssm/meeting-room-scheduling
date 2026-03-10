@@ -14,6 +14,7 @@ import { TodayButton } from "./calendar-all-header-today-button";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 
 import EventDrawerRefactor from "../../event-drawer-refactor/event-drawer-root";
+import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 export function CalendarHeader({
   view,
@@ -27,7 +28,8 @@ export function CalendarHeader({
   permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>;
 }) {
   const { day, week, month, year, agenda } = permissions;
-  //const { session, isPending } = useSession();
+
+  const { openEventDrawer } = useSharedEventDrawer();
   const { can, isVerifying } = CalendarPermissions.usePermissions();
   const { setSelectedRoomId, selectedRoomId } = usePrivateCalendar();
   const { push } = useRouter();
@@ -138,19 +140,12 @@ export function CalendarHeader({
               onRoomChange={handleNavigateRoomChange}
             />
           </div>
-          {/*<AddEventDialog>
-            <Button className="w-full sm:w-auto">
+
+          {!isVerifying && can("CreateEvent") && (
+            <Button className="w-full sm:w-auto" onClick={() => openEventDrawer({ userId: userId })}>
               <Plus />
               Add Event
             </Button>
-          </AddEventDialog>*/}
-          {!isVerifying && can("CreateEvent") && (
-            <EventDrawerRefactor userId={userId}>
-              <Button className="w-full sm:w-auto">
-                <Plus />
-                Add Event
-              </Button>
-            </EventDrawerRefactor>
           )}
         </div>
       </div>
