@@ -80,6 +80,7 @@ export const useRoomFormLogic = (props: {
 
   // 4. Handlers
   const resetForm = useCallback(() => {
+    prevRoomIdRef.current = undefined;
     methods.reset(defaultFormValues);
     setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
     resetNavigation();
