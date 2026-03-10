@@ -21,6 +21,9 @@ type Props = {
 
 const CLOSE_ALL_POPOVERS = "calendar-public-close-all-tooltips";
 
+const HOVER_OPEN_DELAY = 500;
+const HOVER_CLOSE_DELAY = 100;
+
 export const PublicEventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
   {
@@ -37,6 +40,8 @@ export function PublicEventBlock({ viewport, popoverLayer, eventBlock, heightInP
   const [popoverIsOpen, setPopoverOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -58,42 +63,65 @@ export function PublicEventBlock({ viewport, popoverLayer, eventBlock, heightInP
     };
 
     window.addEventListener(CLOSE_ALL_POPOVERS, handleGlobalClose);
-    return () => window.removeEventListener(CLOSE_ALL_POPOVERS, handleGlobalClose);
+    return () => {
+      window.removeEventListener(CLOSE_ALL_POPOVERS, handleGlobalClose);
+
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
   }, []);
 
   if (!eventBlock?.event) return null;
 
-  const handleMouseEnter = () => {
-    // Clear any pending "close" timer from this block
+  const clearOpenTimer = () => {
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
+  };
+
+  const clearCloseTimer = () => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
     }
+  };
 
-    // if (triggerRef.current && document.activeElement !== triggerRef.current) {
-    //  triggerRef.current.focus({ preventScroll: true });
-    //}
+  const handleMouseEnter = () => {
+    clearCloseTimer();
 
     if (!popoverIsOpen) {
-      //window.dispatchEvent(new CustomEvent(CLOSE_ALL_POPOVERS));
-      setPopoverOpen(true);
+      clearOpenTimer();
+      //Delayed Open
+      openTimeoutRef.current = setTimeout(() => {
+        setPopoverOpen(true);
+        openTimeoutRef.current = null;
+      }, HOVER_OPEN_DELAY);
     }
   };
 
   const handleMouseLeave = () => {
-    // Wait 50ms before closing to see if we enter another block
+    clearOpenTimer();
+
     if (!isLocked) {
+      clearCloseTimer();
       closeTimeoutRef.current = setTimeout(() => {
         setPopoverOpen(false);
         if (document.activeElement === triggerRef.current) {
           triggerRef.current?.blur();
         }
-      }, 100);
+        closeTimeoutRef.current = null;
+      }, HOVER_CLOSE_DELAY);
     }
   };
 
   const handleBlockClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    clearOpenTimer();
+    clearCloseTimer();
+
     // Toggle the lock. If locking it, ensure it's open.
     // If unlocking it, let it stay open until mouse leaves.
     if (isLocked) {
