@@ -918,22 +918,6 @@ async function main() {
   await FindCreateEventStatus("Rejected", "circle-x", "red", "REJECTED");
   await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue", "INFORMATION");
 
-  const user = await prisma.user.findFirst({ orderBy: { id: "asc" } });
-  if (!user) {
-    console.log("No users found, cannot continue seeding");
-    return;
-  }
-
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
-    console.log("Seeding Random Events...");
-    await prisma.event.deleteMany();
-    await prisma.recurrence.deleteMany();
-
-    CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
-
-    CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
-  }
-
   //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
 
   if (process.env.ADMIN_USER_EMAIL) {
@@ -951,6 +935,22 @@ async function main() {
     });
     const adminRole = await FindCreateRole("Admin");
     const adminUserRole = await FindCreateUserRole(adminRole.roleId, ADMIN_USER.id);
+  }
+
+  const user = await prisma.user.findFirst({ orderBy: { id: "asc" } });
+  if (!user) {
+    console.log("No users found, cannot continue seeding");
+    return;
+  }
+
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
+    console.log("Seeding Random Events...");
+    await prisma.event.deleteMany();
+    await prisma.recurrence.deleteMany();
+
+    CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
+
+    CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
   }
 
   /*
