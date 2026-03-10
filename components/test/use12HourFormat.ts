@@ -1,7 +1,7 @@
 import React from "react";
 
 export type Period = "AM" | "PM";
-export type TimeInterval = 1 | 5 | 10 | 15 | 20 | 30 | 60;
+export type TimeInterval = 1 | 5 | 10 | 15 | 20 | 30 | 45 | 60;
 
 interface UseTimePickerProps {
 	date: Date;
@@ -13,7 +13,8 @@ interface UseTimePickerProps {
 }
 
 export function useTimePicker({ date, setDate, hourInterval = 1, minuteInterval = 15, minHour = 0, maxHour = 23 }: UseTimePickerProps) {
-	const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+	const debounceMinuteTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+	const debounceHourTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
 	const minuteSnapPoints = React.useMemo(() => {
 		const points = [];
@@ -21,23 +22,31 @@ export function useTimePicker({ date, setDate, hourInterval = 1, minuteInterval 
 		return points;
 	}, [minuteInterval]);
 
-	// --- Core Logic: Clamping ---
-	const clampDate = React.useCallback(
-		(targetDate: Date): Date => {
-			const clamped = new Date(targetDate);
-			const hours = clamped.getHours();
+	// --- Core Logic: Clamping & Date Locking ---
+	const applyTimeToDate = React.useCallback(
+		(hours: number, minutes: number): Date => {
+			const newDate = new Date(date); // Start with existing date
 
-			if (hours < minHour) {
-				clamped.setHours(minHour, 0, 0, 0);
-			} else if (hours > maxHour) {
-				clamped.setHours(maxHour, 0, 0, 0);
-			} else if (hours === maxHour && clamped.getMinutes() > 0) {
-				// Hard stop: if we are at the max hour, minutes must be 00
-				clamped.setMinutes(0, 0, 0);
+			// 1. Clamp Hours
+			const clampedHours = Math.max(minHour, Math.min(maxHour, hours));
+			let clampedMinutes = minutes;
+
+			// 2. Hard stop: if we are at the max hour, minutes cannot exceed 0
+			if (clampedHours === maxHour && minutes > 0) {
+				clampedMinutes = 0;
 			}
-			return clamped;
+
+			// 3. Set time while strictly preserving YMD
+			newDate.setHours(clampedHours, clampedMinutes, 0, 0);
+
+			// Final safety check: If JS Date rolled the day, force it back
+			if (newDate.getDate() !== date.getDate()) {
+				newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+			}
+
+			return newDate;
 		},
-		[minHour, maxHour],
+		[date, minHour, maxHour],
 	);
 
 	const getClosestSnap = (num: number) => {
@@ -48,92 +57,67 @@ export function useTimePicker({ date, setDate, hourInterval = 1, minuteInterval 
 
 	// --- Handlers ---
 	const incrementHours = () => {
-		const newDate = new Date(date);
-		newDate.setHours(newDate.getHours() + hourInterval);
-		setDate(clampDate(newDate));
+		const currentHours = date.getHours();
+		// Prevent wrap-around to next day
+		if (currentHours + hourInterval <= maxHour) {
+			setDate(applyTimeToDate(currentHours + hourInterval, date.getMinutes()));
+		}
 	};
 
 	const decrementHours = () => {
-		const newDate = new Date(date);
-		newDate.setHours(newDate.getHours() - hourInterval);
-		setDate(clampDate(newDate));
+		const currentHours = date.getHours();
+		// Prevent wrap-around to previous day
+		if (currentHours - hourInterval >= minHour) {
+			setDate(applyTimeToDate(currentHours - hourInterval, date.getMinutes()));
+		}
 	};
 
 	const incrementMinutes = () => {
-		const newDate = new Date(date);
-		const current = newDate.getMinutes();
-		const idx = minuteSnapPoints.indexOf(current);
+		const current = date.getMinutes();
+		const idx = minuteSnapPoints.indexOf(getClosestSnap(current));
 		const nextIdx = (idx + 1) % minuteSnapPoints.length;
-		newDate.setMinutes(minuteSnapPoints[nextIdx]);
-		setDate(clampDate(newDate));
+
+		// Only increment if it doesn't push us past the maxHour limit
+		setDate(applyTimeToDate(date.getHours(), minuteSnapPoints[nextIdx]));
 	};
 
 	const decrementMinutes = () => {
-		const newDate = new Date(date);
-		const current = newDate.getMinutes();
-		const idx = minuteSnapPoints.indexOf(current);
+		const current = date.getMinutes();
+		const idx = minuteSnapPoints.indexOf(getClosestSnap(current));
 		const nextIdx = (idx - 1 + minuteSnapPoints.length) % minuteSnapPoints.length;
-		newDate.setMinutes(minuteSnapPoints[nextIdx]);
-		setDate(clampDate(newDate));
+
+		setDate(applyTimeToDate(date.getHours(), minuteSnapPoints[nextIdx]));
 	};
 
 	const togglePeriod = () => {
 		const currentHours = date.getHours();
 		const isPM = currentHours >= 12;
-		let targetHours = isPM ? currentHours - 12 : currentHours + 12;
-
-		const periodMin = isPM ? 0 : 12;
-		const periodMax = isPM ? 11 : 23;
-		const allowedMin = Math.max(minHour, periodMin);
-		const allowedMax = Math.min(maxHour, periodMax);
-
-		if (allowedMin > allowedMax) return;
-
-		if (targetHours < allowedMin) targetHours = allowedMin;
-		if (targetHours > allowedMax) targetHours = allowedMax;
-
-		const newDate = new Date(date);
-		newDate.setHours(targetHours);
-		setDate(clampDate(newDate));
+		const targetHours = isPM ? currentHours - 12 : currentHours + 12;
+		setDate(applyTimeToDate(targetHours, date.getMinutes()));
 	};
 
-	// --- Manual Input with Intelligent Clamping ---
 	const setRawTime = (type: "h" | "m", val: string, immediate: boolean = false) => {
-		if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+		if (debounceHourTimerRef.current && type === "h") clearTimeout(debounceHourTimerRef.current);
+		if (debounceMinuteTimerRef.current && type === "m") clearTimeout(debounceMinuteTimerRef.current);
 
 		const performUpdate = () => {
-			let num = parseInt(val, 10);
+			const num = parseInt(val, 10);
 			if (isNaN(num)) return;
 
-			const newDate = new Date(date);
 			if (type === "h") {
-				let h24 = num;
 				const currentIsPM = date.getHours() >= 12;
-
-				// If user enters a 24h value directly (like 17)
-				if (num > 12) {
-					h24 = num;
-				}
-				// If user enters 12 in AM, it's 0. If 12 in PM, it's 12.
-				else if (num === 12) {
-					h24 = currentIsPM ? 12 : 0;
-				}
-				// Normal 1-11 range, maintain current period
-				else {
-					h24 = currentIsPM ? num + 12 : num;
-				}
-
-				newDate.setHours(h24);
+				const h24 = num > 12 ? num : num === 12 ? (currentIsPM ? 12 : 0) : currentIsPM ? num + 12 : num;
+				setDate(applyTimeToDate(h24, date.getMinutes()));
 			} else {
-				newDate.setMinutes(getClosestSnap(num));
+				setDate(applyTimeToDate(date.getHours(), getClosestSnap(num)));
 			}
-			setDate(clampDate(newDate));
 		};
 
-		if (immediate) {
-			performUpdate();
-		} else {
-			debounceTimerRef.current = setTimeout(performUpdate, 2000);
+		if (immediate) performUpdate();
+		else {
+			const timer = setTimeout(performUpdate, 2000);
+			if (type === "h") debounceHourTimerRef.current = timer;
+			if (type === "m") debounceMinuteTimerRef.current = timer;
 		}
 	};
 
