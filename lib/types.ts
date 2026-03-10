@@ -42,6 +42,8 @@ export type TColors = (typeof COLOR_OPTIONS)[number];
 export type TWorkingHours = { [key: number]: { from: number; to: number } };
 export type TVisibleHours = { from: number; to: number };
 
+export type TEventItems = ["None", "Coffee", "Tea", "Coffee & Tea"];
+
 export type TRecurrenceType = "Between" | "Occurrences" | "Forever";
 export type TRecurrencePeriod = "daily" | "weekly" | "monthly" | "yearly";
 export type TRecurrencePattern =
