@@ -15,11 +15,25 @@ export const BaseRecurrence = z.object({
 });
 
 // 2. Define the Specific Patterns
-const Daily = z.object({
-  repeatingType: z.literal("daily"),
-  dailyPattern: z.string().min(1, "You must choose an option"),
-  dayValue: z.string().min(1, "Indicate frequency in Days"),
-});
+
+const Daily = z
+  .object({
+    repeatingType: z.literal("daily"),
+    dailyPattern: z.enum(["weekdays", "daily"]), // adjust to your actual values
+    dayValue: z.string().optional(), // make it optional at the field level
+  })
+  .superRefine((data, ctx) => {
+    // Require dayValue unless dailyPattern is "weekdays"
+    if (data.dailyPattern !== "weekdays") {
+      if (!data.dayValue || data.dayValue.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayValue"],
+          message: "Indicate frequency in Days",
+        });
+      }
+    }
+  });
 
 const Weekly = z.object({
   repeatingType: z.literal("weekly"),
