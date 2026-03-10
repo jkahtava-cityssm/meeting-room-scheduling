@@ -73,12 +73,8 @@ export const auth = betterAuth({
       updateUserInfoOnLink: true,
     },
   },
-  trustedOrigins: [
-    "http://192.168.50.33",
-    "https://192.168.50.33",
-    "http://localhost:3000",
-    "https://exampledomain.home",
-  ],
+  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(",").filter(Boolean) || [],
+
   databaseHooks: {
     session: {
       create: {
