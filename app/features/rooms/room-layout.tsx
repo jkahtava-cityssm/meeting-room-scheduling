@@ -243,7 +243,7 @@ export default function RoomLayout() {
         <div className="flex items-center gap-3 h-14 font-bold">Available Rooms</div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
-          <Button onClick={() => openRoomDrawer({})}> Add Room</Button>
+          <Button onClick={() => openRoomDrawer({})}>Add Room</Button>
         </div>
       </div>
       <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
@@ -478,7 +478,7 @@ export default function RoomLayout() {
                         <div className="flex items-center gap-2">
                           <Button variant={"outline"} onClick={() => openRoomDrawer({ room: room })}>
                             <Pencil />
-                            Edit
+                            View
                           </Button>
                         </div>
                       </div>
