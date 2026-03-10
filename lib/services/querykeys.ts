@@ -26,6 +26,7 @@ export const queryKeys = {
     all: ["permissions"] as const,
     sets: () => [...queryKeys.permissions.all, "sets"] as const,
     roles: () => [...queryKeys.permissions.all, "roles"] as const,
+    list: (type: "none" | "existing") => [...queryKeys.permissions.roles(), type] as const,
     usersByRole: () => [...queryKeys.permissions.all, "users-by-role"] as const,
     userByRole: (roleId?: string) => [...queryKeys.permissions.usersByRole(), roleId] as const,
   },

@@ -3,7 +3,7 @@ import { formatISO } from "date-fns";
 import { fetchGET, fetchPUT } from "../fetch";
 import { useSession } from "../auth-client";
 import { SStatus, SUser } from "../schemas/calendar";
-import { SPermissionSet, SRole } from "../data/permissions";
+import { IRole, SPermissionSet, SRole } from "../data/permissions";
 import z from "zod/v4";
 import { QueryError } from "@/contexts/ReactQueryProvider";
 import { queryKeys } from "./querykeys";
@@ -28,12 +28,24 @@ export const usePermissionsQuery = (enabled: boolean = true) => {
     enabled: enabled,
   });
 };
+const None: IRole = {
+  roleId: -1,
+  name: "None",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
 
-export const useRolesQuery = (enabled: boolean = true) => {
+export const useRolesQuery = (includeNoneOption: boolean = false, enabled: boolean = true) => {
+  const type = includeNoneOption ? "none" : "existing";
   return useQuery({
-    queryKey: queryKeys.permissions.roles(),
+    queryKey: queryKeys.permissions.list(type),
     queryFn: async () => {
       const result = await fetchGET("/api/admin/permissions/roles");
+
+      if (includeNoneOption) {
+        result.data.unshift(None);
+      }
+
       const parsedResult = z.array(SRole).safeParse(result.data);
 
       if (!parsedResult.success) {

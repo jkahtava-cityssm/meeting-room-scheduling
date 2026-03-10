@@ -231,6 +231,7 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
         onRoleChange={(id, label) => onChange(id)}
         className={""}
         isDisabled={false}
+        showNoneOption={true}
       ></RoleComboBox>
     );
   },
