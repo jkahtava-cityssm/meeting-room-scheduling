@@ -85,7 +85,11 @@ export const useMultiStepFormLogic = (props: {
   const prevEventIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (prevEventIdRef.current !== defaultFormValues.eventId) {
+    if (defaultFormValues.eventId === "0") {
+      methods.reset(defaultFormValues);
+      setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+      prevEventIdRef.current = undefined;
+    } else if (prevEventIdRef.current !== defaultFormValues.eventId) {
       methods.reset(defaultFormValues);
       setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
       prevEventIdRef.current = defaultFormValues.eventId;

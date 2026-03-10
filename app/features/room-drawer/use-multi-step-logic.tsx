@@ -55,7 +55,11 @@ export const useRoomFormLogic = (props: {
   const prevRoomIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (prevRoomIdRef.current !== defaultFormValues.roomId) {
+    if (defaultFormValues.roomId === "0") {
+      methods.reset(defaultFormValues);
+      setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
+      prevRoomIdRef.current = undefined;
+    } else if (prevRoomIdRef.current !== defaultFormValues.roomId) {
       methods.reset(defaultFormValues);
       setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
       prevRoomIdRef.current = defaultFormValues.roomId;
