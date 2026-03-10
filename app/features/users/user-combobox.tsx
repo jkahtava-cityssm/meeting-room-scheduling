@@ -28,6 +28,7 @@ export function UserComboBox({
       }}
       getId={(user) => user.userId.toString()}
       getLabel={(user) => user.name}
+      getDescrition={(user) => user.email}
       className={className}
       isDisabled={isDisabled}
       placeholderText={"Select Member"}
