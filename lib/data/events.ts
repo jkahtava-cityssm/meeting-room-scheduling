@@ -7,6 +7,7 @@ import z from "zod/v4";
 const EVENT_INCLUDE = {
   room: { include: { roomCategory: true, roomProperty: { include: { property: true } } } },
   eventItems: { include: { item: true } },
+  eventRecipients: true,
   recurrence: true,
   status: true,
 } as const satisfies Prisma.EventInclude;
@@ -105,7 +106,7 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
           name: "Coffee",
         },
       ],
-
+      eventRecipients: [{ eventRecipientId: 1, userId: 1 }],
       room: {
         ...event.room,
         roomProperty: event.room.roomProperty.map((roomProperty) => {

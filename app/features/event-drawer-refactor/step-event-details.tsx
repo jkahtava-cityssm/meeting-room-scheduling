@@ -322,7 +322,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           />
           <FormField
             control={control}
-            name="notifyUserIds"
+            name="eventRecipientIds"
             render={({ field, fieldState }) => (
               <FormItem className="col-span-3 row-6">
                 {fieldState.invalid ? (

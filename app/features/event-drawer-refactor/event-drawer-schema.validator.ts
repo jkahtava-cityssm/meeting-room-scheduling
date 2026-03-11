@@ -122,7 +122,7 @@ export const step1Schema = z
     eventId: z.string().optional(),
     roomId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Room"),
     userId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Member"),
-    notifyUserIds: z.array(z.string()),
+    eventRecipientIds: z.array(z.string()),
     description: z.string().optional(),
     title: z.string().min(1, "Title is required"),
     statusId: z.string().min(1, "Status is required"),

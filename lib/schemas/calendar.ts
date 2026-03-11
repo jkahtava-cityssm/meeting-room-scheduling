@@ -79,6 +79,11 @@ export const SEventItem = z.object({
   name: z.string(),
 });
 
+export const SEventRecipient = z.object({
+  eventRecipientId: z.number(),
+  userId: z.number(),
+});
+
 export const SUser = z.object({
   userId: z.number(),
   name: z.string(),
@@ -108,6 +113,7 @@ export const SEvent = z.object({
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
   eventItems: z.array(SEventItem).optional(),
+  eventRecipients: z.array(SEventRecipient).optional(),
   startDate: DateSchema,
   endDate: DateSchema,
   title: z.string().min(1, "Title is required"),

@@ -129,6 +129,10 @@ model User {
   itemCreated Item[] @relation("ItemCreatedBy")
   itemUpdated Item[] @relation("ItemUpdatedBy")
 
+  EventRecipientCreated EventRecipient[] @relation("EventRecipientCreatedBy")
+  EventRecipientUpdated EventRecipient[] @relation("EventRecipientUpdatedBy")
+  eventRecipients       EventRecipient[]
+
   @@map("user")
 }
 
@@ -522,9 +526,30 @@ model Event {
   createdByUser User? @relation("EventCreatedBy", fields: [createdBy], references: [id])
   updatedByUser User? @relation("EventUpdatedBy", fields: [updatedBy], references: [id])
 
-  eventItems EventItem[]
+  eventItems      EventItem[]
+  eventRecipients EventRecipient[]
 
   @@map("event")
+}
+
+model EventRecipient {
+  eventRecipientId Int @id @default(autoincrement()) @map("event_recipient_id")
+  eventId          Int
+  userId           Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("EventRecipientCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("EventRecipientUpdatedBy", fields: [updatedBy], references: [id])
+
+  event Event @relation(fields: [eventId], references: [eventId])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId], name: "eventId_userId")
 }
 
 model EventItem {
