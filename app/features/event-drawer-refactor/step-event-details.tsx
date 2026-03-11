@@ -23,6 +23,8 @@ import { UserComboBox } from "../users/user-combobox";
 import { EventDrawerPermissions } from "./lib/permissions";
 
 import { StaticTabsList, StaticTabsTrigger } from "@/components/ui/tabs-placeholder";
+import { UserMultiSelect } from "../users/user-muliselect";
+import { ItemMultiSelect } from "./item-multiselect";
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
@@ -37,6 +39,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
   const endDatePickerRef = useRef<DateTimePickerRef>(null);
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
   const isRecurring = watch("isRecurring");
+  const userId = watch("userId");
 
   const synchronizeEndDate = isRecurring === "true" || !enableMultiDay;
   const hideEndDate = isRecurring === "true" || !enableMultiDay;
@@ -49,7 +52,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
             control={control}
             name="roomId"
             render={({ field, fieldState }) => (
-              <FormItem className="col-span-1">
+              <FormItem className="col-span-1 row-1">
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
@@ -72,7 +75,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               control={control}
               name="isRecurring"
               render={({ field, fieldState }) => (
-                <FormItem className="col-span-1 xs:justify-items-center">
+                <FormItem className="col-span-1 row-1 xs:justify-items-center">
                   {fieldState.invalid ? (
                     <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                   ) : (
@@ -117,7 +120,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               )}
             />
           ) : (
-            <div className="grid gap-2 col-span-1 xs:justify-items-center">
+            <div className="grid gap-2 col-span-1 row-1 xs:justify-items-center">
               <FormLabel>Event Type</FormLabel>
               <StaticTabsList aria-disabled={isReadOnly}>
                 <StaticTabsTrigger state="active" disabled={isReadOnly}>
@@ -126,24 +129,24 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               </StaticTabsList>
             </div>
           )}
-
           <FormField
             control={control}
-            name="userId"
+            name="statusId"
             render={({ field, fieldState }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="col-span-1 row-1">
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
                 ) : (
-                  <FormLabel htmlFor={undefined}>Requesting User</FormLabel>
+                  <FormLabel>Status</FormLabel>
                 )}
-                <UserComboBox
-                  selectedUserId={field.value}
-                  onUserChange={(id: string, label: string) => field.onChange(id)}
+
+                <StatusSelect
+                  selectedStatusId={field.value}
+                  includeAllOption={false}
+                  onStatusChange={field.onChange}
+                  isDisabled={isReadOnly || disableChangeStatus}
                   dataInvalid={fieldState.invalid}
-                  isDisabled={isReadOnly || disableChangeUser}
-                  className="min-w-60"
-                ></UserComboBox>
+                />
               </FormItem>
             )}
           />
@@ -173,26 +176,25 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           />
           <FormField
             control={control}
-            name="statusId"
+            name="eventItemIds"
             render={({ field, fieldState }) => (
               <FormItem className="col-span-1 row-2">
                 {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+                  <FormMessage className="leading-none font-medium" />
                 ) : (
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>Requested Items</FormLabel>
                 )}
-
-                <StatusSelect
-                  selectedStatusId={field.value}
-                  includeAllOption={false}
-                  onStatusChange={field.onChange}
-                  isDisabled={isReadOnly || disableChangeStatus}
-                  dataInvalid={fieldState.invalid}
-                />
+                <FormControl>
+                  <ItemMultiSelect
+                    selectedItemIds={field.value}
+                    onChange={field.onChange}
+                    isDisabled={isReadOnly}
+                    className="min-w-0 w-full"
+                  ></ItemMultiSelect>
+                </FormControl>
               </FormItem>
             )}
           />
-
           <FormField
             control={control}
             name="startDate"
@@ -273,12 +275,11 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               </FormItem>
             )}
           />
-
           <FormField
             control={control}
             name="duration"
             render={({ field, fieldState }) => (
-              <FormItem className="col-span-2  row-5">
+              <FormItem className="col-span-1  row-4">
                 {fieldState.invalid ? (
                   <FormMessage className="leading-none font-medium" />
                 ) : (
@@ -294,6 +295,49 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                     data-invalid={fieldState.invalid}
                     readOnly
                   ></Input>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="userId"
+            render={({ field, fieldState }) => (
+              <FormItem className="col-span-1 row-5">
+                {fieldState.invalid ? (
+                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+                ) : (
+                  <FormLabel htmlFor={undefined}>Requesting User</FormLabel>
+                )}
+                <UserComboBox
+                  selectedUserId={field.value}
+                  onUserChange={(id: string, label: string) => field.onChange(id)}
+                  dataInvalid={fieldState.invalid}
+                  isDisabled={isReadOnly || disableChangeUser}
+                  className="min-w-60"
+                ></UserComboBox>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="notifyUserIds"
+            render={({ field, fieldState }) => (
+              <FormItem className="col-span-3 row-6">
+                {fieldState.invalid ? (
+                  <FormMessage className="leading-none font-medium" />
+                ) : (
+                  <FormLabel>Notify Users</FormLabel>
+                )}
+                <FormControl>
+                  <UserMultiSelect
+                    selectedUserIds={field.value}
+                    excludeUserIds={[userId]}
+                    onChange={field.onChange}
+                    isDisabled={isReadOnly}
+                    className="min-w-0 w-full"
+                  ></UserMultiSelect>
                 </FormControl>
               </FormItem>
             )}
@@ -326,7 +370,6 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
             )}
           />
         </div>
-        <div className="grid col-span-2 gap-2 grid-rows-3"></div>
       </div>
       <ScrollBar orientation="vertical" forceMount></ScrollBar>
     </ScrollArea>

@@ -221,6 +221,7 @@ model Room {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   roomCategoryId Int      @map("room_category_id")
+  displayOrder   Int?     @map("display_order")
 
   createdBy Int? @map("created_by")
   updatedBy Int? @map("updated_by")
@@ -372,7 +373,7 @@ model ResourceAction {
   createdByUser User? @relation("ResourceActionCreatedBy", fields: [createdBy], references: [id])
   updatedByUser User? @relation("ResourceActionUpdatedBy", fields: [updatedBy], references: [id])
 
-  @@unique([resourceId, actionId]) // Prevent duplicates
+  @@unique([resourceId, actionId]) // Pr duplicates
   @@map("resource_action")
 }
 
@@ -504,7 +505,6 @@ model Event {
   description String
 
   recurrenceId Int? @map("recurrence_id")
-  eventItemId  Int? @map("event_item_id")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -519,9 +519,10 @@ model Event {
   room   Room   @relation(fields: [roomId], references: [roomId])
   status Status @relation(fields: [statusId], references: [statusId])
 
-  createdByUser User?      @relation("EventCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?      @relation("EventUpdatedBy", fields: [updatedBy], references: [id])
-  eventItem     EventItem? @relation(fields: [eventItemId], references: [eventItemId])
+  createdByUser User? @relation("EventCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("EventUpdatedBy", fields: [updatedBy], references: [id])
+
+  eventItems EventItem[]
 
   @@map("event")
 }
@@ -539,8 +540,8 @@ model EventItem {
   createdByUser User? @relation("EventItemCreatedBy", fields: [createdBy], references: [id])
   updatedByUser User? @relation("EventItemUpdatedBy", fields: [updatedBy], references: [id])
 
-  event Event[]
-  item  Item[]
+  event Event @relation(fields: [eventId], references: [eventId])
+  item  Item  @relation(fields: [itemId], references: [itemId])
 
   @@unique([eventId, itemId], name: "eventId_itemId")
   @@map("event_item")

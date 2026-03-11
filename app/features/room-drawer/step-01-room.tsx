@@ -199,8 +199,22 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
             )}
           />
 
+          <FormField
+            control={control}
+            name="displayOrder"
+            render={({ field }) => (
+              <FormItem className="col-3 row-1">
+                <FormLabel>Display Order</FormLabel>
+                <FormControl>
+                  <Input type="number" value={field.value && String(field.value)} onChange={field.onChange}></Input>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {currentColor && (
-            <div className="row-start-1 row-span-3 col-start-3 mt-5.5 " aria-hidden="true" tabIndex={-1}>
+            <div className="row-start-1 row-span-5 col-start-4 mt-5.5 " aria-hidden="true" tabIndex={-1}>
               <EventBlockPreview color={currentColor as TColors} />
             </div>
           )}

@@ -10,6 +10,7 @@ const ROOM_SELECT = {
   color: true,
   icon: true,
   publicFacing: true,
+  displayOrder: true,
   roomCategoryId: true,
   roomCategory: { select: { roomCategoryId: true, name: true, createdAt: true, updatedAt: true } },
   roomRoles: { select: { roomRoleId: true, roleId: true, createdAt: true, updatedAt: true } },
@@ -30,7 +31,7 @@ export async function findManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const rooms = await tx.room.findMany({
     where,
     select: ROOM_SELECT,
-    orderBy: { roomId: "asc" },
+    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
   });
 
   return flattenRoom(rooms);
@@ -40,7 +41,7 @@ export async function findFirstRoom(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const room = await tx.room.findFirst({
     where,
     select: ROOM_SELECT,
-    orderBy: { roomId: "asc" },
+    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
   });
 
   return flattenRoom(room ? [room] : [])[0];
@@ -82,18 +83,7 @@ function flattenRoom(data: RoomWithRelations | RoomWithRelations[]): IRoomInput 
 
   const mapped = rooms.map((room) => {
     return {
-      roomId: room.roomId,
-      name: room.name,
-      color: room.color,
-      icon: room.icon,
-      publicFacing: room.publicFacing,
-      roomCategoryId: room.roomCategoryId,
-      roomCategory: {
-        roomCategoryId: room.roomCategoryId,
-        name: room.roomCategory.name,
-        createdAt: room.roomCategory.createdAt,
-        updatedAt: room.roomCategory.updatedAt,
-      },
+      ...room,
       roomProperty: room.roomProperty.map((roomProperty) => {
         return {
           roomPropertyId: roomProperty.roomPropertyId,

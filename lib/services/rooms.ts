@@ -14,6 +14,7 @@ const AllRooms: IRoom = {
   updatedAt: new Date().toISOString(),
   icon: "asterisk",
   publicFacing: false,
+  displayOrder: null,
   roomCategoryId: -1,
   roomCategory: {
     roomCategoryId: -1,

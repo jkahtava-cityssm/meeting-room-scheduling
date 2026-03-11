@@ -53,6 +53,7 @@ export const SRoom = z.object({
   color: z.string().min(1, "Color is required"),
   icon: z.string().nullable(),
   publicFacing: z.union([z.boolean(), z.stringbool()]).default(false),
+  displayOrder: z.number().nullable(),
   roomCategoryId: z.number(),
   roomCategory: SRoomCategory,
   roomRoles: z.array(SRoomRoles).optional(),
@@ -70,6 +71,12 @@ export const SRecurrence = z.object({
   endDate: DateSchema,
   createdAt: DateSchema,
   updatedAt: DateSchema,
+});
+
+export const SEventItem = z.object({
+  eventItemId: z.number(),
+  itemId: z.number(),
+  name: z.string(),
 });
 
 export const SUser = z.object({
@@ -100,6 +107,7 @@ export const SEvent = z.object({
   userId: z.number().nullable().optional(),
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
+  eventItems: z.array(SEventItem).optional(),
   startDate: DateSchema,
   endDate: DateSchema,
   title: z.string().min(1, "Title is required"),

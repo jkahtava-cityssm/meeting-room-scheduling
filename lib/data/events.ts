@@ -6,6 +6,7 @@ import z from "zod/v4";
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
   room: { include: { roomCategory: true, roomProperty: { include: { property: true } } } },
+  eventItems: { include: { item: true } },
   recurrence: true,
   status: true,
 } as const satisfies Prisma.EventInclude;
@@ -89,6 +90,22 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
   const mapped = events.map((event) => {
     return {
       ...event,
+      /*eventItem: event.eventItem?.item?.map((item) => {
+        return {
+          eventItemId: event.eventItem?.eventItemId,
+          itemId: item.itemId,
+          name: item.name,
+        };
+      }),*/
+
+      eventItems: [
+        {
+          eventItemId: 1,
+          itemId: 1,
+          name: "Coffee",
+        },
+      ],
+
       room: {
         ...event.room,
         roomProperty: event.room.roomProperty.map((roomProperty) => {

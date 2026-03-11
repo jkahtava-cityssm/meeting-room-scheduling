@@ -5,6 +5,7 @@ export const step1Schema = z.object({
   name: z.string().min(1, "A Room Name is required"),
   color: z.string().min(1, "Please select a Color"),
   icon: z.string().min(1, "Please select a Icon"),
+  displayOrder: z.string(),
   publicFacing: z.string(),
   roomCategoryId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Category"),
   roomRoles: z.array(z.string()),
