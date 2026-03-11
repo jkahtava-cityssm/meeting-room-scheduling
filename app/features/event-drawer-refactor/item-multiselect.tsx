@@ -1,5 +1,5 @@
 import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
-import { useUsersQuery } from "@/lib/services/users";
+import { useItemsQuery } from "@/lib/services/items";
 
 export function ItemMultiSelect({
   selectedItemIds,
@@ -16,7 +16,7 @@ export function ItemMultiSelect({
   isDisabled: boolean;
   maxCount?: number;
 }) {
-  const { isPending, data, error } = useUsersQuery();
+  const { isPending, data, error } = useItemsQuery();
 
   return (
     <GenericMultiSelect
@@ -25,14 +25,14 @@ export function ItemMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Users" : "Collecting Users"}
-      placeholderText="Select Users to Notify"
-      searchText="Search users..."
-      noResultText="No users found"
+      loadingLabel={error ? "Error: Loading Items" : "Collecting Items"}
+      placeholderText="Select Items"
+      searchText="Search items..."
+      noResultText="No items found"
       dataInvalid={dataInvalid}
       onValueChange={onChange}
-      getId={(user) => user.userId.toString()}
-      getLabel={(user) => user.name}
+      getId={(item) => item.itemId.toString()}
+      getLabel={(item) => item.name}
       className={className}
       maxCount={maxCount}
       hideSelectAll={true}

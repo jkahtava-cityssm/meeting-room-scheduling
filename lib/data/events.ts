@@ -99,14 +99,23 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
         };
       }),*/
 
-      eventItems: [
-        {
-          eventItemId: 1,
-          itemId: 1,
-          name: "Coffee",
-        },
-      ],
-      eventRecipients: [{ eventRecipientId: 1, userId: 1 }],
+      eventItems: event.eventItems
+        ? event.eventItems.map((eventItem) => {
+            return {
+              eventItemId: eventItem.eventItemId,
+              itemId: eventItem.itemId,
+              name: eventItem.item.name,
+            };
+          })
+        : [],
+      eventRecipients: event.eventRecipients
+        ? event.eventRecipients.map((recipient) => {
+            return {
+              eventRecipientId: recipient.eventRecipientId,
+              userId: recipient.userId,
+            };
+          })
+        : [],
       room: {
         ...event.room,
         roomProperty: event.room.roomProperty.map((roomProperty) => {

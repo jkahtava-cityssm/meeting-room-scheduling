@@ -34,6 +34,7 @@ export const queryKeys = {
     all: ["references"] as const,
     properties: () => [...queryKeys.references.all, "properties"] as const,
     statuses: () => [...queryKeys.references.all, "statuses"] as const,
+    items: () => [...queryKeys.references.all, "items"] as const,
     statusList: (type: "all" | "existing") => [...queryKeys.references.statuses(), type] as const,
     rooms: () => [...queryKeys.references.all, "rooms"] as const,
   },

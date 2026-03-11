@@ -23,6 +23,13 @@ export const SProperty = z.object({
   updatedAt: DateSchema,
 });
 
+export const SItem = z.object({
+  itemId: z.number(),
+  name: z.string(),
+  createdAt: DateSchema,
+  updatedAt: DateSchema,
+});
+
 export const SRoomRoles = z.object({
   roomRoleId: z.number(),
   roleId: z.number(),
