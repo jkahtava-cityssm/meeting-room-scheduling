@@ -25,6 +25,7 @@ import { EventDrawerPermissions } from "./lib/permissions";
 import { StaticTabsList, StaticTabsTrigger } from "@/components/ui/tabs-placeholder";
 import { UserMultiSelect } from "../users/user-muliselect";
 import { ItemMultiSelect } from "./item-multiselect";
+import { StartEndDateTimePicker } from "@/components/test/StartEndDateTimePicker";
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
@@ -197,84 +198,48 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           />
           <FormField
             control={control}
+            // Use startDate as the primary anchor, but we will update all 3
             name="startDate"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-2 row-3">
-                <FormControl>
-                  <DateTimePicker
-                    id="startDate"
-                    disabled={isReadOnly}
-                    value={field.value}
-                    onChange={(isoString) => {
-                      if (synchronizeEndDate) {
-                        const endDate = endDatePickerRef.current?.calculateNewDate(isoString);
+            render={({ fieldState }) => (
+              <FormItem className="col-span-3">
+                {/* The New Integrated Picker */}
+                <div className="col-span-9">
+                  <StartEndDateTimePicker
+                    currentStartDate={new Date(getValues("startDate"))}
+                    currentEndDate={new Date(getValues("endDate"))}
+                    isInvalid={fieldState.invalid}
+                    minHour={0}
+                    maxHour={23}
+                    minuteInterval={15}
+                    onDatesChange={(start, end) => {
+                      // 1. Update Start Date
+                      setValue("startDate", start.toISOString(), {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
 
-                        if (endDate) {
-                          setValue("endDate", endDate, {
-                            shouldDirty: true,
-                            shouldTouch: true,
-                            shouldValidate: false,
-                          });
-                        }
-                        setValue("startDate", isoString, {
-                          shouldDirty: true,
-                          shouldTouch: true,
-                          shouldValidate: false,
-                        });
+                      // 2. Update End Date
+                      setValue("endDate", end.toISOString(), {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
 
-                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
-                      } else {
-                        field.onChange(isoString);
-                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
-                      }
+                      // 3. Update Derived Duration
+                      const durationText = getDurationText(start.toISOString(), end.toISOString());
+                      setValue("duration", durationText);
+
+                      // 4. Trigger validation for both
                       trigger(["startDate", "endDate"]);
                     }}
-                    placeholder="Select a date"
-                    data-invalid={fieldState.invalid}
-                    className="min-w-52"
-                    label={"Start Date"}
-                    errorMessage={fieldState.error?.message}
-                  ></DateTimePicker>
-                </FormControl>
+                  />
+                </div>
+                {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
               </FormItem>
             )}
           />
 
-          <FormField
-            control={control}
-            name="endDate"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-2 row-4">
-                <FormControl>
-                  <DateTimePicker
-                    id="endDate"
-                    ref={endDatePickerRef}
-                    disabled={isReadOnly}
-                    value={field.value}
-                    onChange={(isoString) => {
-                      if (isRecurring === "true") {
-                        setValue("endDate", isoString, {
-                          shouldDirty: true,
-                          shouldTouch: true,
-                          shouldValidate: false,
-                        });
-                      } else {
-                        field.onChange(isoString);
-                        setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
-                      }
-                      trigger(["startDate", "endDate"]);
-                    }}
-                    placeholder="Select a date"
-                    data-invalid={fieldState.invalid}
-                    className="min-w-52"
-                    label={"End Date"}
-                    errorMessage={fieldState.error?.message}
-                    hideDate={hideEndDate}
-                  ></DateTimePicker>
-                </FormControl>
-              </FormItem>
-            )}
-          />
           <FormField
             control={control}
             name="duration"
