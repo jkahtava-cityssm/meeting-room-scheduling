@@ -35,14 +35,6 @@ export function useTimePicker({
   const [tempHours, setTempHours] = React.useState<string | null>(null);
   const [tempMinutes, setTempMinutes] = React.useState<string | null>(null);
 
-  //CLEAR TIMERS WHEN UNMOUNTING
-  React.useEffect(() => {
-    return () => {
-      if (debounceMinuteTimerRef.current) clearTimeout(debounceMinuteTimerRef.current);
-      if (debounceHourTimerRef.current) clearTimeout(debounceHourTimerRef.current);
-    };
-  }, []);
-
   //CREATE ARRAY OF SNAP POINTS BASED ON INTERVAL [0,5,10,...]
   const minuteSnapPoints = React.useMemo(() => {
     const points = [];
@@ -82,11 +74,32 @@ export function useTimePicker({
   //FIND THE DIFFERENCE BETWEEN THE PREVIOUS VALUE AND THE ORIGINAL VALUE
   // IF CURRENT DIF < PREVIOUS DIF, THEN CURRENT IS CLOSER ELSE PREVIOUS IS CLOSER
   //IT CHECKS EVERY ELEMENT IN THE ARRAY REGARDLESS OF IF IT FOUND THE BEST ONE YET.
-  const getClosestSnap = (num: number) => {
-    return minuteSnapPoints.reduce((prev, curr) => {
-      return Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev;
-    });
-  };
+  const getClosestSnap = React.useCallback(
+    (num: number) => {
+      return minuteSnapPoints.reduce((prev, curr) => {
+        return Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev;
+      });
+    },
+    [minuteSnapPoints],
+  );
+
+  React.useEffect(() => {
+    const currentHours = date.getHours();
+    const currentMinutes = date.getMinutes();
+
+    // Find what the date *should* be based on your rules
+    const snappedMinutes = getClosestSnap(currentMinutes);
+    const clampedHours = Math.max(verifiedMinHour, Math.min(verifiedMaxHour, currentHours));
+
+    // Check if we actually need to update
+    // (Note: we also check if max hour was exceeded to force minutes to 0)
+    const finalMinutes = clampedHours === verifiedMaxHour && snappedMinutes > 0 ? 0 : snappedMinutes;
+
+    if (currentHours !== clampedHours || currentMinutes !== finalMinutes) {
+      const correctedDate = applyTimeToDate(clampedHours, finalMinutes);
+      setDate(correctedDate);
+    }
+  }, [date, verifiedMinHour, verifiedMaxHour, getClosestSnap, applyTimeToDate, setDate]);
 
   const display = React.useMemo(() => {
     const hours = date.getHours();
@@ -231,6 +244,27 @@ export function useTimePicker({
     updateTimeValue(type, nextValue, false);
   };
 
+  const mergeDate = React.useCallback(
+    (newCalendarDate: Date) => {
+      const newDate = new Date(newCalendarDate);
+      newDate.setHours(date.getHours(), date.getMinutes(), 0, 0);
+
+      // Only update if the date actually changed to avoid loops
+      if (newDate.getTime() !== date.getTime()) {
+        setDate(newDate);
+      }
+    },
+    [date, setDate],
+  );
+
+  //CLEAR TIMERS WHEN UNMOUNTING
+  React.useEffect(() => {
+    return () => {
+      if (debounceMinuteTimerRef.current) clearTimeout(debounceMinuteTimerRef.current);
+      if (debounceHourTimerRef.current) clearTimeout(debounceHourTimerRef.current);
+    };
+  }, []);
+
   return {
     display,
     incrementHours,
@@ -242,5 +276,6 @@ export function useTimePicker({
     handleBackspace,
     handleBlur: (type: "hour" | "minute", val: string) => updateTimeValue(type, val, true),
     forceClamp,
+    mergeDate,
   };
 }
