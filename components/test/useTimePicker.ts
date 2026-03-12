@@ -12,6 +12,7 @@ interface UseTimePickerProps {
   maxHour?: number; // 0-23
   clampDelay?: number;
   is24HourTime?: boolean;
+  allowMinuteRollover?: boolean;
 }
 
 export function useTimePicker({
@@ -23,6 +24,7 @@ export function useTimePicker({
   maxHour = 23,
   clampDelay = 500,
   is24HourTime = false,
+  allowMinuteRollover = true,
 }: UseTimePickerProps) {
   //STATIC REF: Always holds the latest date without triggering re-renders
   const dateRef = React.useRef(date);
@@ -215,10 +217,16 @@ export function useTimePicker({
 
     const snapValue = getClosestSnap(currentMinutes);
     const snapPointIndex = minuteSnapPoints.indexOf(snapValue);
-    const nextIndex = (snapPointIndex + 1) % minuteSnapPoints.length;
 
-    setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
-  }, [getClampedDate, getClosestSnap, minuteSnapPoints, setDate]);
+    const isLastSnapPoint = snapPointIndex === minuteSnapPoints.length - 1;
+
+    if (isLastSnapPoint && allowMinuteRollover && currentHours + 1 <= verifiedMaxHour) {
+      setDate(getClampedDate(currentDate, currentHours + 1, minuteSnapPoints[0]));
+    } else {
+      const nextIndex = (snapPointIndex + 1) % minuteSnapPoints.length;
+      setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
+    }
+  }, [allowMinuteRollover, getClampedDate, getClosestSnap, minuteSnapPoints, setDate, verifiedMaxHour]);
   //GET CURRENT MINUTE, FIND SNAP POINT, GET INDEX,
   //DECREMENT INDEX, ADD LENGTH TO KEEP IN BOUNDS
   //MODULUS AND USE THE REMAINDER AS THE NEW INDEX (2 - 1 + 4) % 4 = 5 % 4 = INDEX 1
@@ -229,10 +237,17 @@ export function useTimePicker({
 
     const snapValue = getClosestSnap(currentMinutes);
     const snapPointIndex = minuteSnapPoints.indexOf(snapValue);
-    const nextIndex = (snapPointIndex - 1 + minuteSnapPoints.length) % minuteSnapPoints.length;
+    const isFirstSnapPoint = snapPointIndex === 0;
 
-    setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
-  }, [getClampedDate, getClosestSnap, minuteSnapPoints, setDate]);
+    if (isFirstSnapPoint && allowMinuteRollover && currentHours - 1 >= verifiedMinHour) {
+      const lastMinuteIndex = minuteSnapPoints.length - 1;
+      setDate(getClampedDate(currentDate, currentHours - 1, minuteSnapPoints[lastMinuteIndex]));
+    } else {
+      const nextIndex = (snapPointIndex - 1 + minuteSnapPoints.length) % minuteSnapPoints.length;
+
+      setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
+    }
+  }, [allowMinuteRollover, getClampedDate, getClosestSnap, minuteSnapPoints, setDate, verifiedMinHour]);
 
   //UPDATE THE TIME IF THE PERIOD IS TOGGLED
   const togglePeriod = React.useCallback(() => {
