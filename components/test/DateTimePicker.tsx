@@ -9,6 +9,7 @@ import * as React from "react";
 type Period = "AM" | "PM";
 
 export function DateTimePicker({
+  id,
   currentDate,
   isInvalid,
   minHour,
@@ -17,6 +18,7 @@ export function DateTimePicker({
   setDate,
   is24HourTime = false,
 }: {
+  id: string;
   currentDate: Date;
   isInvalid: boolean;
   minHour: number; // e.g., 1
@@ -44,16 +46,15 @@ export function DateTimePicker({
     is24HourTime,
   });
 
-  const uid = React.useId();
-  const groupId = `${uid}-starttime-group`;
-  const groupLabelId = `${uid}-starttime-label`;
-  const hourInputId = `${uid}-hour-input`;
-  const hourLabelId = `${uid}-hour-label`;
-  const minuteInputId = `${uid}-minute-input`;
-  const minuteLabelId = `${uid}-minute-label`;
-  const periodLabelId = `${uid}-period-label`;
-  const errorId = `${uid}-error`;
-  const hintId = `${uid}-hint`;
+  const groupId = `${id}-starttime-group`;
+  const groupLabelId = `${id}-starttime-label`;
+  const hourInputId = `${id}-hour-input`;
+  const hourLabelId = `${id}-hour-label`;
+  const minuteInputId = `${id}-minute-input`;
+  const minuteLabelId = `${id}-minute-label`;
+  const periodLabelId = `${id}-period-label`;
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
 
   const hours24 = currentDate.getHours();
   const hourNowForAria = is24HourTime ? hours24 : hours24 % 12 || 12;
@@ -116,7 +117,7 @@ export function DateTimePicker({
           onChange={(e) => {
             handleManualInput("hour", e.target.value);
           }}
-          onBlur={(e) => handleBlur("hour", e.target.value)}
+          //onBlur={(e) => handleBlur("hour", e.target.value)}
         />
       </div>
 
@@ -160,7 +161,7 @@ export function DateTimePicker({
           onChange={(e) => {
             handleManualInput("minute", e.target.value);
           }}
-          onBlur={(e) => handleBlur("minute", e.target.value)}
+          //onBlur={(e) => handleBlur("minute", e.target.value)}
         />
       </div>
 
