@@ -27,6 +27,7 @@ import { UserMultiSelect } from "../users/user-muliselect";
 import { ItemMultiSelect } from "./item-multiselect";
 
 import { StartEndDateTimeProvider } from "@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider";
+import { Label } from "@/components/ui/label";
 
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
@@ -46,8 +47,9 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
   const userId = watch("userId");
 
   const synchronizeEndDate = isRecurring === "true" || !enableMultiDay;
-  const hideEndDate = isRecurring === "true" || !enableMultiDay;
+  const hideEndDate = isRecurring === "false" || !enableMultiDay;
 
+  console.log(enableMultiDay, isRecurring);
   const startRaw = useWatch({ control, name: "startDate" });
   const endRaw = useWatch({ control, name: "endDate" });
 
@@ -243,7 +245,22 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           render={({ fieldState }) => (
             <FormItem className="col-span-2 row-4 grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <StartEndDateTimeProvider.EndDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
+                {hideEndDate ? (
+                  <StartEndDateTimeProvider.EndDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
+                ) : (
+                  <StartEndDateTimeProvider.NoDataPlaceholder
+                    invalid={!!fieldState.error}
+                    isDisabled={true}
+                    label="End Date"
+                    message={
+                      !enableMultiDay
+                        ? "Single Day Requests Only"
+                        : isRecurring
+                          ? "Calculated by Recurrence"
+                          : "Unknown"
+                    }
+                  />
+                )}
               </div>
               <div className="flex flex-col gap-2 items-center">
                 <StartEndDateTimeProvider.EndTime invalid={!!fieldState.error} isDisabled={isReadOnly} />

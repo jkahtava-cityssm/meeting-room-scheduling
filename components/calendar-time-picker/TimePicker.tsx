@@ -5,6 +5,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 type Period = "AM" | "PM";
 
@@ -18,6 +19,7 @@ export function TimePicker({
   setDate,
   is24HourTime = false,
   isDisabled = false,
+  className,
 }: {
   id: string;
   currentDate: Date;
@@ -28,6 +30,7 @@ export function TimePicker({
   setDate: (date: Date) => void;
   is24HourTime?: boolean;
   isDisabled?: boolean;
+  className?: string;
 }) {
   const {
     display,
@@ -82,7 +85,7 @@ export function TimePicker({
         <Input
           id={hourInputId}
           name="hour"
-          className="w-14 text-center font-mono"
+          className={cn("w-14 text-center font-mono", className)}
           value={display.hour}
           inputMode="numeric"
           pattern="[0-9]*"
@@ -137,7 +140,7 @@ export function TimePicker({
         <Input
           id={minuteInputId}
           name="minute"
-          className="w-14 text-center font-mono"
+          className={cn("w-14 text-center font-mono", className)}
           value={display.minutes}
           inputMode="numeric"
           pattern="[0-9]*"

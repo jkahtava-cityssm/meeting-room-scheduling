@@ -5,6 +5,8 @@ import { CalendarDayPopover } from "../calendar-day-popover/calendar-day-popover
 import { TimePicker } from "../calendar-time-picker/TimePicker";
 import { Label } from "../ui/label";
 import { TimeInterval } from "../calendar-time-picker/useTimePicker";
+import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 
 type Ctx = {
   startDate: Date;
@@ -108,14 +110,16 @@ export function StartEndDateTimeProvider({
 type LeafProps = {
   invalid?: boolean;
   isDisabled?: boolean;
+  className?: string;
+  label?: string;
 };
 
-function StartDatePicker({ invalid, isDisabled }: LeafProps) {
+function StartDatePicker({ invalid, isDisabled, className, label = "Start Date" }: LeafProps) {
   const { startDate, endDate, setStart } = useStartEnd();
   return (
     <div className="flex flex-col gap-2">
       <Label id="start-date-label" data-error={invalid ? "data-invalid" : ""}>
-        Start Date
+        {label}
       </Label>
       <CalendarDayPopover
         id={`StartDatePicker`}
@@ -127,7 +131,7 @@ function StartDatePicker({ invalid, isDisabled }: LeafProps) {
             setStart(mergeTime(selectedDate, startDate));
           }
         }}
-        className="min-w-52"
+        className={cn("min-w-52", className)}
         data-invalid={invalid ? "data-invalid" : ""}
         placeholder={""}
       />
@@ -135,7 +139,7 @@ function StartDatePicker({ invalid, isDisabled }: LeafProps) {
   );
 }
 
-function StartTimePicker({ invalid, isDisabled }: LeafProps) {
+function StartTimePicker({ invalid, isDisabled, className }: LeafProps) {
   const { startDate, endDate, minHour, maxHour, minuteInterval, setStart } = useStartEnd();
   return (
     <TimePicker
@@ -147,16 +151,17 @@ function StartTimePicker({ invalid, isDisabled }: LeafProps) {
       maxHour={maxHour}
       minuteInterval={minuteInterval}
       setDate={(next) => setStart(next)}
+      className={cn(className)}
     />
   );
 }
 
-function EndDatePicker({ invalid, isDisabled }: LeafProps) {
+function EndDatePicker({ invalid, isDisabled, className, label = "End Date" }: LeafProps) {
   const { startDate, endDate, setEnd } = useStartEnd();
   return (
     <div className="flex flex-col gap-2">
       <Label id="end-date-label" data-error={invalid ? "data-invalid" : ""}>
-        End Date
+        {label}
       </Label>
       <CalendarDayPopover
         id={`EndDatePicker`}
@@ -169,7 +174,7 @@ function EndDatePicker({ invalid, isDisabled }: LeafProps) {
           }
         }}
         disableDays={{ before: startDate }}
-        className="min-w-52"
+        className={cn("min-w-52", className)}
         data-invalid={invalid ? "data-invalid" : ""}
         placeholder={""}
       />
@@ -177,7 +182,7 @@ function EndDatePicker({ invalid, isDisabled }: LeafProps) {
   );
 }
 
-function EndTimePicker({ invalid, isDisabled }: LeafProps) {
+function EndTimePicker({ invalid, isDisabled, className }: LeafProps) {
   const { endDate, minHour, maxHour, minuteInterval, setEnd } = useStartEnd();
   return (
     <TimePicker
@@ -189,7 +194,34 @@ function EndTimePicker({ invalid, isDisabled }: LeafProps) {
       maxHour={maxHour}
       minuteInterval={minuteInterval}
       setDate={(next) => setEnd(next)}
+      className={cn(className)}
     />
+  );
+}
+
+function NoDataPlaceholder({
+  invalid,
+  isDisabled,
+  className,
+  label = "Label Name",
+  message = "No Data",
+}: LeafProps & { message: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Label id="no-data-label" data-error={invalid ? "data-invalid" : ""}>
+        {label}
+      </Label>
+      <Button
+        variant={"outline"}
+        id={`NoDataPlaceholder`}
+        aria-labelledby="no-date-label"
+        disabled={isDisabled}
+        className={cn("min-w-52 justify-start font-normal", className)}
+        data-invalid={invalid ? "data-invalid" : ""}
+      >
+        {message}
+      </Button>
+    </div>
   );
 }
 
@@ -198,3 +230,5 @@ StartEndDateTimeProvider.StartDate = StartDatePicker;
 StartEndDateTimeProvider.StartTime = StartTimePicker;
 StartEndDateTimeProvider.EndDate = EndDatePicker;
 StartEndDateTimeProvider.EndTime = EndTimePicker;
+
+StartEndDateTimeProvider.NoDataPlaceholder = NoDataPlaceholder;
