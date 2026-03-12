@@ -1,7 +1,16 @@
 import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SheetFooter } from "@/components/ui/sheet";
-import { SaveIcon, CalendarPlus, Loader2Icon, PenBoxIcon, CircleX, ArrowLeftCircle, ArrowRightCircle, Trash2 } from "lucide-react";
+import {
+  SaveIcon,
+  CalendarPlus,
+  Loader2Icon,
+  PenBoxIcon,
+  CircleX,
+  ArrowLeftCircle,
+  ArrowRightCircle,
+  Trash2,
+} from "lucide-react";
 import { useVerifySessionRequirement, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
@@ -11,100 +20,91 @@ import { cn } from "@/lib/utils";
 import { EventDrawerPermissions } from "./lib/permissions";
 
 const FormFooter = ({ userId }: { userId?: string }) => {
-	const ctx = useMultiStepForm();
+  const ctx = useMultiStepForm();
 
-	const { can, isVerifying } = EventDrawerPermissions.usePermissions();
+  const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
-	const actions = {
-		save: {
-			show: ctx.status === "Edit" || ctx.status === "New",
-			disabled: (ctx.status === "Edit" ? !can("UpdateEvent") : !can("CreateEvent")) || ctx.mutationUpsert.isPending || isVerifying,
-			label: ctx.status === "Edit" ? "Save" : "Create",
-			icon: ctx.status === "Edit" ? <SaveIcon /> : <CalendarPlus />,
-			loading: ctx.mutationUpsert.isPending,
-		},
-		edit: {
-			show: ctx.status === "Read" || ctx.status === "Loading",
-			disabled: !can("UpdateEvent") || ctx.status === "Loading" || isVerifying,
-			loading: ctx.status === "Loading",
-		},
-		delete: {
-			show: ctx.status === "Edit" && can("DeleteEvent"),
-			disabled: ctx.mutationDelete.isPending || isVerifying,
-			loading: ctx.mutationDelete.isPending,
-		},
-		nav: {
-			backVariant: ctx.previousStepHasError ? "outline_destructive" : "outline",
-			nextVariant: ctx.nextStepHasError ? "outline_destructive" : "outline",
-			show: can("ToggleRecurrence"),
-			isFirst: ctx.isFirstStep,
-			isLast: ctx.isLastStep,
-		},
-	} as const;
+  const actions = {
+    save: {
+      show: ctx.status === "Edit" || ctx.status === "New",
+      disabled:
+        (ctx.status === "Edit" ? !can("UpdateEvent") : !can("CreateEvent")) ||
+        ctx.mutationUpsert.isPending ||
+        isVerifying,
+      label: ctx.status === "Edit" ? "Save" : "Create",
+      icon: ctx.status === "Edit" ? <SaveIcon /> : <CalendarPlus />,
+      loading: ctx.mutationUpsert.isPending,
+    },
+    edit: {
+      show: ctx.status === "Read" || ctx.status === "Loading",
+      disabled: !can("UpdateEvent") || ctx.status === "Loading" || isVerifying,
+      loading: ctx.status === "Loading",
+    },
+    delete: {
+      show: ctx.status === "Edit" && can("DeleteEvent"),
+      disabled: ctx.mutationDelete.isPending || isVerifying,
+      loading: ctx.mutationDelete.isPending,
+    },
+    nav: {
+      backVariant: ctx.previousStepHasError ? "outline_destructive" : "outline",
+      nextVariant: ctx.nextStepHasError ? "outline_destructive" : "outline",
+      show: can("ToggleRecurrence"),
+      isFirst: ctx.isFirstStep,
+      isLast: ctx.isLastStep,
+    },
+  } as const;
 
-	return (
-		<SheetFooter className="flex md:flex-row gap-6">
-			{actions.save.show && (
-				<Button
-					onClick={ctx.onSave}
-					disabled={actions.save.disabled}
-					className="md:w-24"
-				>
-					{actions.save.loading ? <Loader2Icon className="animate-spin" /> : actions.save.icon}
-					{actions.save.label}
-				</Button>
-			)}
-			{actions.edit.show && (
-				<Button
-					onClick={() => ctx.setStatus("Loading")}
-					disabled={actions.edit.disabled}
-					className="md:w-24"
-				>
-					{actions.edit.loading ? <Loader2Icon className="animate-spin" /> : <PenBoxIcon />}
-					Edit
-				</Button>
-			)}
-			<Button
-				variant="outline"
-				className="md:w-24"
-				onClick={ctx.onClose}
-			>
-				<CircleX />
-				Cancel
-			</Button>
+  return (
+    <SheetFooter className="flex md:flex-row gap-6 border-t">
+      {actions.save.show && (
+        <Button onClick={ctx.onSave} disabled={actions.save.disabled} className="md:w-24">
+          {actions.save.loading ? <Loader2Icon className="animate-spin" /> : actions.save.icon}
+          {actions.save.label}
+        </Button>
+      )}
+      {actions.edit.show && (
+        <Button onClick={() => ctx.setStatus("Loading")} disabled={actions.edit.disabled} className="md:w-24">
+          {actions.edit.loading ? <Loader2Icon className="animate-spin" /> : <PenBoxIcon />}
+          Edit
+        </Button>
+      )}
+      <Button variant="outline" className="md:w-24" onClick={ctx.onClose}>
+        <CircleX />
+        Cancel
+      </Button>
 
-			<div className={cn("flex flex-row md:gap-6 md:grow md:justify-center", !actions.nav.show && "invisible")}>
-				<Button
-					variant={actions.nav.backVariant}
-					className="basis-[48%] mr-auto md:basis-24 md:mr-0"
-					onClick={ctx.previousStep}
-					disabled={actions.nav.isFirst}
-				>
-					<ArrowLeftCircle /> Back
-				</Button>
-				<Button
-					variant={actions.nav.nextVariant}
-					className="basis-[48%] ml-auto md:basis-24 md:ml-0"
-					onClick={ctx.nextStep}
-					disabled={actions.nav.isLast}
-				>
-					Next <ArrowRightCircle />
-				</Button>
-			</div>
+      <div className={cn("flex flex-row md:gap-6 md:grow md:justify-center", !actions.nav.show && "invisible")}>
+        <Button
+          variant={actions.nav.backVariant}
+          className="basis-[48%] mr-auto md:basis-24 md:mr-0"
+          onClick={ctx.previousStep}
+          disabled={actions.nav.isFirst}
+        >
+          <ArrowLeftCircle /> Back
+        </Button>
+        <Button
+          variant={actions.nav.nextVariant}
+          className="basis-[48%] ml-auto md:basis-24 md:ml-0"
+          onClick={ctx.nextStep}
+          disabled={actions.nav.isLast}
+        >
+          Next <ArrowRightCircle />
+        </Button>
+      </div>
 
-			<div className={cn("flex flex-row h-9 md:w-24", !actions.delete.show && "invisible")}>
-				<Button
-					variant="outline_destructive"
-					className={"grow md:w-24"}
-					onClick={ctx.onDelete}
-					disabled={actions.delete.disabled}
-					tabIndex={actions.delete.show ? 0 : -1}
-				>
-					{actions.delete.loading ? <Loader2Icon className="animate-spin" /> : <Trash2 />}
-					Delete
-				</Button>
-			</div>
-		</SheetFooter>
-	);
+      <div className={cn("flex flex-row h-9 md:w-24", !actions.delete.show && "invisible")}>
+        <Button
+          variant="outline_destructive"
+          className={"grow md:w-24"}
+          onClick={ctx.onDelete}
+          disabled={actions.delete.disabled}
+          tabIndex={actions.delete.show ? 0 : -1}
+        >
+          {actions.delete.loading ? <Loader2Icon className="animate-spin" /> : <Trash2 />}
+          Delete
+        </Button>
+      </div>
+    </SheetFooter>
+  );
 };
 export default FormFooter;
