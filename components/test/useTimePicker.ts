@@ -136,7 +136,7 @@ export function useTimePicker({
         if (type === "minute") debounceMinuteTimerRef.current = timer;
       }
     },
-    [is24HourTime, getClampedDate, getClosestSnap, clampDelay],
+    [is24HourTime, getClampedDate, getClosestSnap, setDate, clampDelay],
   );
 
   React.useEffect(() => {
