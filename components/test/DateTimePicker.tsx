@@ -110,6 +110,9 @@ export function DateTimePicker({
                 e.preventDefault();
                 handleBackspace("hour");
                 break;
+              /*case "Tab":
+                handleBlur(e.currentTarget.name as "hour" | "minute", e.currentTarget.value);
+                break;*/
               default:
                 break;
             }
@@ -117,7 +120,10 @@ export function DateTimePicker({
           onChange={(e) => {
             handleManualInput("hour", e.target.value);
           }}
-          //onBlur={(e) => handleBlur("hour", e.target.value)}
+          onBlur={(e) => {
+            e.stopPropagation();
+            handleBlur("hour", e.target.value);
+          }}
         />
       </div>
 
@@ -154,6 +160,9 @@ export function DateTimePicker({
                 e.preventDefault();
                 handleBackspace("minute");
                 break;
+              /*case "Tab":
+                handleBlur(e.currentTarget.name as "hour" | "minute", e.currentTarget.value);
+                break;*/
               default:
                 break;
             }
@@ -161,7 +170,10 @@ export function DateTimePicker({
           onChange={(e) => {
             handleManualInput("minute", e.target.value);
           }}
-          //onBlur={(e) => handleBlur("minute", e.target.value)}
+          onBlur={(e) => {
+            e.stopPropagation();
+            handleBlur("minute", e.target.value);
+          }}
         />
       </div>
 
@@ -170,11 +182,7 @@ export function DateTimePicker({
           <Label id={periodLabelId} className="self-center">
             Period
           </Label>
-          <Tabs
-            value={display.period}
-            onValueChange={(value) => togglePeriod(value as Period)}
-            aria-labelledby={periodLabelId}
-          >
+          <Tabs value={display.period} onValueChange={(value) => togglePeriod()} aria-labelledby={periodLabelId}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="AM">AM</TabsTrigger>
               <TabsTrigger value="PM">PM</TabsTrigger>

@@ -1,4 +1,4 @@
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { z } from "zod/v4";
 
@@ -25,7 +25,10 @@ import { EventDrawerPermissions } from "./lib/permissions";
 import { StaticTabsList, StaticTabsTrigger } from "@/components/ui/tabs-placeholder";
 import { UserMultiSelect } from "../users/user-muliselect";
 import { ItemMultiSelect } from "./item-multiselect";
-import { StartEndDateTimePicker } from "@/components/test/StartEndDateTimePicker";
+
+import { StartEndDateTimeProvider } from "@/components/test/StartEndDateTimeProvider";
+
+const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
@@ -45,166 +48,313 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
   const synchronizeEndDate = isRecurring === "true" || !enableMultiDay;
   const hideEndDate = isRecurring === "true" || !enableMultiDay;
 
+  const startRaw = useWatch({ control, name: "startDate" });
+  const endRaw = useWatch({ control, name: "endDate" });
+
+  const startDate = toDate(startRaw);
+  const endDate = toDate(endRaw);
+
+  const handleStartEndDateTimeChange = async (start: Date, end: Date) => {
+    const options = { shouldDirty: true, shouldTouch: false, shouldValidate: false };
+    setValue("startDate", start.toISOString(), options);
+    setValue("endDate", end.toISOString(), options);
+
+    setValue("duration", getDurationText(start.toISOString(), end.toISOString()), options);
+
+    await trigger(["startDate", "endDate"], { shouldFocus: false });
+  };
+
   return (
-    <ScrollArea type="always">
-      <div className="max-h-[calc(80dvh)] w-full">
-        <div className="grid grid-cols-4 gap-4">
-          <FormField
-            control={control}
-            name="roomId"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-1">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-                ) : (
-                  <FormLabel>Room</FormLabel>
-                )}
-                <FormControl>
-                  <RoomSelect
-                    selectedRoomId={field.value}
-                    includeAllOption={false}
-                    onRoomChange={(value) => field.onChange(value)}
-                    dataInvalid={fieldState.invalid}
-                    isDisabled={isReadOnly}
-                  />
-                </FormControl>
-              </FormItem>
+    <div className="grid grid-cols-3 gap-4 min-h-0 auto-rows-min">
+      <FormField
+        control={control}
+        name="roomId"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1 row-1">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+            ) : (
+              <FormLabel>Room</FormLabel>
             )}
-          />
-          {allowRecurrence ? (
-            <FormField
-              control={control}
-              name="isRecurring"
-              render={({ field, fieldState }) => (
-                <FormItem className="col-span-1 row-1 xs:justify-items-center">
-                  {fieldState.invalid ? (
-                    <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-                  ) : (
-                    <FormLabel>Event Type</FormLabel>
-                  )}
-                  <FormControl>
-                    <Tabs
-                      defaultValue={field.value}
-                      onValueChange={(value) => {
-                        const startDate = getValues("startDate");
-                        const endDate = getValues("endDate");
-
-                        if (value === "true" && startDate !== endDate) {
-                          const b = new Date(startDate);
-                          endDatePickerRef.current?.updateDate(startDate);
-
-                          //setValue("endDate", getValues("startDate"));
-                          setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
-                        }
-                        field.onChange(value);
-
-                        //setIgnoreLastStep(value === "false" ? true : false);
-                      }}
-                    >
-                      <TabsList
-                        className="gap-2"
-                        aria-disabled={isReadOnly}
-                        data-invalid={fieldState.invalid}
-                        aria-invalid={fieldState.invalid}
-                      >
-                        <TabsTrigger value="false" disabled={isReadOnly}>
-                          Single
-                        </TabsTrigger>
-
-                        <TabsTrigger value="true" disabled={isReadOnly}>
-                          Recurring
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </FormControl>
-                </FormItem>
+            <FormControl>
+              <RoomSelect
+                selectedRoomId={field.value}
+                includeAllOption={false}
+                onRoomChange={(value) => field.onChange(value)}
+                dataInvalid={fieldState.invalid}
+                isDisabled={isReadOnly}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      {allowRecurrence ? (
+        <FormField
+          control={control}
+          name="isRecurring"
+          render={({ field, fieldState }) => (
+            <FormItem className="col-span-1 row-1 xs:justify-items-center">
+              {fieldState.invalid ? (
+                <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+              ) : (
+                <FormLabel>Event Type</FormLabel>
               )}
-            />
-          ) : (
-            <div className="grid gap-2 col-span-1 row-1 xs:justify-items-center">
-              <FormLabel>Event Type</FormLabel>
-              <StaticTabsList aria-disabled={isReadOnly}>
-                <StaticTabsTrigger state="active" disabled={isReadOnly}>
-                  Single Day
-                </StaticTabsTrigger>
-              </StaticTabsList>
-            </div>
-          )}
-          <FormField
-            control={control}
-            name="statusId"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-1">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-                ) : (
-                  <FormLabel>Status</FormLabel>
-                )}
+              <FormControl>
+                <Tabs
+                  defaultValue={field.value}
+                  onValueChange={(value) => {
+                    const startDate = getValues("startDate");
+                    const endDate = getValues("endDate");
 
-                <StatusSelect
-                  selectedStatusId={field.value}
-                  includeAllOption={false}
-                  onStatusChange={field.onChange}
-                  isDisabled={isReadOnly || disableChangeStatus}
-                  dataInvalid={fieldState.invalid}
-                />
-              </FormItem>
-            )}
-          />
+                    if (value === "true" && startDate !== endDate) {
+                      const b = new Date(startDate);
+                      endDatePickerRef.current?.updateDate(startDate);
 
-          <FormField
-            control={control}
-            name="title"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-2 row-2">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium" />
-                ) : (
-                  <FormLabel>Title</FormLabel>
-                )}
-                <FormControl>
-                  <Input
-                    id="title"
-                    disabled={isReadOnly}
-                    placeholder="Enter a title"
+                      //setValue("endDate", getValues("startDate"));
+                      setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
+                    }
+                    field.onChange(value);
+
+                    //setIgnoreLastStep(value === "false" ? true : false);
+                  }}
+                >
+                  <TabsList
+                    className="gap-2"
+                    aria-disabled={isReadOnly}
                     data-invalid={fieldState.invalid}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
+                    aria-invalid={fieldState.invalid}
+                  >
+                    <TabsTrigger value="false" disabled={isReadOnly}>
+                      Single
+                    </TabsTrigger>
+
+                    <TabsTrigger value="true" disabled={isReadOnly}>
+                      Recurring
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </FormControl>
+            </FormItem>
+          )}
+        />
+      ) : (
+        <div className="grid gap-2 col-span-1 row-1 xs:justify-items-center">
+          <FormLabel>Event Type</FormLabel>
+          <StaticTabsList aria-disabled={isReadOnly}>
+            <StaticTabsTrigger state="active" disabled={isReadOnly}>
+              Single Day
+            </StaticTabsTrigger>
+          </StaticTabsList>
+        </div>
+      )}
+      <FormField
+        control={control}
+        name="statusId"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1 row-1">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+            ) : (
+              <FormLabel>Status</FormLabel>
             )}
-          />
-          <FormField
-            control={control}
-            name="eventItemIds"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-2">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium" />
-                ) : (
-                  <FormLabel>Requested Items</FormLabel>
-                )}
-                <FormControl>
-                  <ItemMultiSelect
-                    selectedItemIds={field.value}
-                    onChange={field.onChange}
-                    isDisabled={isReadOnly}
-                    className="min-w-0 w-full"
-                  ></ItemMultiSelect>
-                </FormControl>
-              </FormItem>
+
+            <StatusSelect
+              selectedStatusId={field.value}
+              includeAllOption={false}
+              onStatusChange={field.onChange}
+              isDisabled={isReadOnly || disableChangeStatus}
+              dataInvalid={fieldState.invalid}
+            />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="title"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-2 row-2">
+            {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Title</FormLabel>}
+            <FormControl>
+              <Input
+                id="title"
+                disabled={isReadOnly}
+                placeholder="Enter a title"
+                data-invalid={fieldState.invalid}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="eventItemIds"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1 row-2">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium" />
+            ) : (
+              <FormLabel>Requested Items</FormLabel>
             )}
-          />
-          <FormField
+            <FormControl>
+              <ItemMultiSelect
+                selectedItemIds={field.value}
+                onChange={field.onChange}
+                isDisabled={isReadOnly}
+                className="min-w-0 w-full"
+              ></ItemMultiSelect>
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      <StartEndDateTimeProvider
+        startDate={startDate}
+        endDate={endDate}
+        onChange={handleStartEndDateTimeChange}
+        minHour={0}
+        maxHour={23}
+        minuteInterval={15}
+        preserveDuration={false}
+        clampEndToStart
+      >
+        <FormField
+          control={control}
+          name="startDate"
+          render={({ fieldState }) => (
+            <FormItem className="col-span-2 row-3">
+              <fieldset>
+                <legend className="sr-only">Start date and time</legend>
+                <StartEndDateTimeProvider.StartDate invalid={!!fieldState.error} />
+
+                <StartEndDateTimeProvider.StartTime invalid={!!fieldState.error} />
+              </fieldset>
+
+              {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="endDate"
+          render={({ fieldState }) => (
+            <FormItem className="col-span-2 row-4 ">
+              <StartEndDateTimeProvider.EndDate invalid={!!fieldState.error} />
+
+              <StartEndDateTimeProvider.EndTime invalid={!!fieldState.error} />
+
+              {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
+            </FormItem>
+          )}
+        />
+      </StartEndDateTimeProvider>
+      <FormField
+        control={control}
+        name="userId"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1 row-5">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+            ) : (
+              <FormLabel htmlFor={undefined}>Requesting User</FormLabel>
+            )}
+            <UserComboBox
+              selectedUserId={field.value}
+              onUserChange={(id: string, label: string) => field.onChange(id)}
+              dataInvalid={fieldState.invalid}
+              isDisabled={isReadOnly || disableChangeUser}
+              className="min-w-60"
+            ></UserComboBox>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="eventRecipientIds"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-3 row-6">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium" />
+            ) : (
+              <FormLabel>Notify Users</FormLabel>
+            )}
+            <FormControl>
+              <UserMultiSelect
+                selectedUserIds={field.value}
+                excludeUserIds={[userId]}
+                onChange={field.onChange}
+                isDisabled={isReadOnly}
+                className="min-w-0 w-full"
+              ></UserMultiSelect>
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="duration"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1  row-5">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium" />
+            ) : (
+              <FormLabel>Duration:</FormLabel>
+            )}
+            <FormControl>
+              <Input
+                id="duration"
+                disabled={isReadOnly}
+                className="text-sm h-9 px-3 py-1 content-center"
+                //defaultValue={field.value}
+                value={field.value}
+                data-invalid={fieldState.invalid}
+                readOnly
+              ></Input>
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="description"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-4">
+            <div className="flex gap-2">
+              {fieldState.invalid ? (
+                <FormMessage className="leading-none font-medium" />
+              ) : (
+                <FormLabel>Description</FormLabel>
+              )}
+            </div>
+
+            <FormControl>
+              <Textarea
+                className="min-h-20 max-h-50 resize-none"
+                id="description"
+                disabled={isReadOnly}
+                {...field}
+                value={field.value}
+                data-invalid={fieldState.invalid}
+              ></Textarea>
+            </FormControl>
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+};
+
+/**
+ * <FormField
             control={control}
             // Use startDate as the primary anchor, but we will update all 3
-            name="startDate"
+            name="endDate"
             render={({ fieldState }) => (
               <FormItem className="col-span-3">
-                {/* The New Integrated Picker */}
+                
                 <div className="col-span-9">
-                  <StartEndDateTimePicker
+
                     currentStartDate={new Date(getValues("startDate"))}
                     currentEndDate={new Date(getValues("endDate"))}
                     isInvalid={fieldState.invalid}
@@ -242,101 +392,46 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 
           <FormField
             control={control}
-            name="duration"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-1  row-4">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium" />
-                ) : (
-                  <FormLabel>Duration:</FormLabel>
-                )}
-                <FormControl>
-                  <Input
-                    id="duration"
-                    disabled={isReadOnly}
-                    className="text-sm h-9 px-3 py-1 content-center"
-                    //defaultValue={field.value}
-                    value={field.value}
-                    data-invalid={fieldState.invalid}
-                    readOnly
-                  ></Input>
-                </FormControl>
-              </FormItem>
-            )}
-          />
+            // Use startDate as the primary anchor, but we will update all 3
+            name="startDate"
+            render={({ fieldState }) => (
+              <FormItem className="col-span-3">
+               
+                <div className="col-span-9">
+                  <StartEndDateTimePicker
+                    currentStartDate={new Date(getValues("startDate"))}
+                    currentEndDate={new Date(getValues("endDate"))}
+                    isInvalid={fieldState.invalid}
+                    minHour={0}
+                    maxHour={23}
+                    minuteInterval={15}
+                    onDatesChange={(start, end) => {
+                      // 1. Update Start Date
+                      setValue("startDate", start.toISOString(), {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
 
-          <FormField
-            control={control}
-            name="userId"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-1 row-5">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-                ) : (
-                  <FormLabel htmlFor={undefined}>Requesting User</FormLabel>
-                )}
-                <UserComboBox
-                  selectedUserId={field.value}
-                  onUserChange={(id: string, label: string) => field.onChange(id)}
-                  dataInvalid={fieldState.invalid}
-                  isDisabled={isReadOnly || disableChangeUser}
-                  className="min-w-60"
-                ></UserComboBox>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={control}
-            name="eventRecipientIds"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-3 row-6">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium" />
-                ) : (
-                  <FormLabel>Notify Users</FormLabel>
-                )}
-                <FormControl>
-                  <UserMultiSelect
-                    selectedUserIds={field.value}
-                    excludeUserIds={[userId]}
-                    onChange={field.onChange}
-                    isDisabled={isReadOnly}
-                    className="min-w-0 w-full"
-                  ></UserMultiSelect>
-                </FormControl>
-              </FormItem>
-            )}
-          />
+                      // 2. Update End Date
+                      setValue("endDate", end.toISOString(), {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      });
 
-          <FormField
-            control={control}
-            name="description"
-            render={({ field, fieldState }) => (
-              <FormItem className="col-span-4 row-span-3 ">
-                <div className="flex gap-2">
-                  {fieldState.invalid ? (
-                    <FormMessage className="leading-none font-medium" />
-                  ) : (
-                    <FormLabel>Description</FormLabel>
-                  )}
+                      // 3. Update Derived Duration
+                      const durationText = getDurationText(start.toISOString(), end.toISOString());
+                      setValue("duration", durationText);
+
+                      // 4. Trigger validation for both
+                      trigger(["startDate", "endDate"]);
+                    }}
+                  />
                 </div>
-
-                <FormControl>
-                  <Textarea
-                    className="max-h-70 min-h-70 resize-none"
-                    id="description"
-                    disabled={isReadOnly}
-                    {...field}
-                    value={field.value}
-                    data-invalid={fieldState.invalid}
-                  ></Textarea>
-                </FormControl>
+                {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
               </FormItem>
             )}
           />
-        </div>
-      </div>
-      <ScrollBar orientation="vertical" forceMount></ScrollBar>
-    </ScrollArea>
-  );
-};
+ * 
+ */

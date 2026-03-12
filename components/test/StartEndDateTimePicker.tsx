@@ -67,6 +67,7 @@ export function StartEndDateTimePicker({
           />
         </div>
         <DateTimePicker
+          id={"StartTimePicker"}
           currentDate={startDate}
           isInvalid={isInvalid}
           minHour={minHour}
@@ -103,6 +104,7 @@ export function StartEndDateTimePicker({
           />
         </div>
         <DateTimePicker
+          id={"EndTimePicker"}
           currentDate={endDate}
           isInvalid={isInvalid}
           minHour={minHour}

@@ -38,74 +38,18 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
 
   return (
-    <ScrollArea type="always">
-      <div className="h-[calc(40dvh)] w-full">
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
-            {/* DURATION SECTION */}
-            <div className="flex flex-row gap-2 w-100">
-              <FormField
-                control={control}
-                name="durationType"
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <div className="flex flex-row gap-2">
-                      <FormLabel className="min-w-15 justify-end">Duration</FormLabel>
-                      <Select
-                        disabled={isReadOnly}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        key={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger data-invalid={fieldState.invalid} className="min-w-40">
-                            <SelectValue placeholder="Select an option" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {durations.map((d) => (
-                            <SelectItem key={d.id} value={d.id}>
-                              {d.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {durationType === "count" && (
-                <NumberFormInput control={control} name="occurrences" disabled={isReadOnly} />
-              )}
-
-              {durationType === "until" && (
-                <FormField
-                  control={control}
-                  name="untilDate"
-                  render={({ field, fieldState }) => (
-                    <CalendarDayPopover
-                      id="untilDate"
-                      disabled={isReadOnly}
-                      value={field.value ? endOfDay(new Date(field.value)) : new Date()}
-                      onSelect={(date) => field.onChange(date ? endOfDay(date).toISOString() : "")}
-                      placeholder="Select a date"
-                      data-invalid={fieldState.invalid}
-                      className="w-52"
-                    />
-                  )}
-                />
-              )}
-            </div>
-
-            {/* REPEATING TYPE SELECT */}
+    <div>
+      <div className="grid grid-cols-3 gap-4 min-h-0 auto-rows-min">
+        <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
+          {/* DURATION SECTION */}
+          <div className="flex flex-row gap-2 w-100">
             <FormField
               control={control}
-              name="repeatingType"
+              name="durationType"
               render={({ field, fieldState }) => (
                 <FormItem>
                   <div className="flex flex-row gap-2">
-                    <FormLabel className="min-w-15 justify-end">Repeats</FormLabel>
+                    <FormLabel className="min-w-15 justify-end">Duration</FormLabel>
                     <Select disabled={isReadOnly} value={field.value} onValueChange={field.onChange} key={field.value}>
                       <FormControl>
                         <SelectTrigger data-invalid={fieldState.invalid} className="min-w-40">
@@ -113,9 +57,9 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {repeatingPeriods.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.label}
+                        {durations.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -125,21 +69,66 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
               )}
             />
 
-            {/* DYNAMIC RECURRENCE FORMS */}
-            <div className="pt-4">
-              {type === "daily" && <DailyForm control={control} isReadOnly={isReadOnly} />}
-              {type === "weekly" && <WeeklyForm control={control} isReadOnly={isReadOnly} />}
-              {type === "monthly" && <MonthlyForm control={control} isReadOnly={isReadOnly} />}
-              {type === "yearly" && <YearlyForm control={control} isReadOnly={isReadOnly} />}
-            </div>
+            {durationType === "count" && <NumberFormInput control={control} name="occurrences" disabled={isReadOnly} />}
+
+            {durationType === "until" && (
+              <FormField
+                control={control}
+                name="untilDate"
+                render={({ field, fieldState }) => (
+                  <CalendarDayPopover
+                    id="untilDate"
+                    disabled={isReadOnly}
+                    value={field.value ? endOfDay(new Date(field.value)) : new Date()}
+                    onSelect={(date) => field.onChange(date ? endOfDay(date).toISOString() : "")}
+                    placeholder="Select a date"
+                    data-invalid={fieldState.invalid}
+                    className="w-52"
+                  />
+                )}
+              />
+            )}
+          </div>
+
+          {/* REPEATING TYPE SELECT */}
+          <FormField
+            control={control}
+            name="repeatingType"
+            render={({ field, fieldState }) => (
+              <FormItem>
+                <div className="flex flex-row gap-2">
+                  <FormLabel className="min-w-15 justify-end">Repeats</FormLabel>
+                  <Select disabled={isReadOnly} value={field.value} onValueChange={field.onChange} key={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-invalid={fieldState.invalid} className="min-w-40">
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {repeatingPeriods.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {/* DYNAMIC RECURRENCE FORMS */}
+          <div className="pt-4">
+            {type === "daily" && <DailyForm control={control} isReadOnly={isReadOnly} />}
+            {type === "weekly" && <WeeklyForm control={control} isReadOnly={isReadOnly} />}
+            {type === "monthly" && <MonthlyForm control={control} isReadOnly={isReadOnly} />}
+            {type === "yearly" && <YearlyForm control={control} isReadOnly={isReadOnly} />}
           </div>
         </div>
       </div>
 
-      {/* CALCULATION PREVIEW */}
       <RRulePreview localDates={localDates} totalRules={count} isLoading={isCalculating} />
-      <ScrollBar orientation="vertical" forceMount />
-    </ScrollArea>
+    </div>
   );
 }
 
