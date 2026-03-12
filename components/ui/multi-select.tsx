@@ -40,9 +40,11 @@ export interface AnimationConfig {
 const multiSelectVariants = cva("m-1 transition-all duration-300 ease-in-out", {
   variants: {
     variant: {
-      default: "border-foreground/10 text-foreground bg-card hover:bg-card/80",
-      secondary: "border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80",
-      destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+      default: "border-foreground/10 text-foreground bg-card hover:bg-card/80 shadow-md ring-1 ring-white/10",
+      secondary:
+        "border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md ring-1 ring-white/10",
+      destructive:
+        "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 shadow-md ring-1 ring-white/10",
       inverted: "inverted",
     },
     badgeAnimation: {
@@ -736,6 +738,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
           <PopoverTrigger asChild>
             <Button
+              variant="combobox"
               ref={buttonRef}
               {...props}
               onClick={handleTogglePopover}
@@ -923,14 +926,16 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           "cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ",
                       )}
                     >
-                      <XIcon className="h-4 w-4" />
+                      {!disabled && <XIcon className="h-4 w-4" />}
                     </div>
-                    <Separator orientation="vertical" className="flex min-h-6 h-full" />
-                    <ChevronDown
-                      aria-readonly={disabled}
-                      className="h-4 mx-2 cursor-pointer text-muted-foreground aria-readonly:cursor-auto"
-                      aria-hidden="true"
-                    />
+                    {!disabled && <Separator orientation="vertical" className="flex min-h-6 h-full" />}
+                    {!disabled && (
+                      <ChevronDown
+                        aria-readonly={disabled}
+                        className="h-4 mx-2 cursor-pointer text-muted-foreground aria-readonly:cursor-auto"
+                        aria-hidden="true"
+                      />
+                    )}
                   </div>
                 </div>
               ) : (
@@ -962,10 +967,12 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     )}
                     <span className="text-sm text-muted-foreground mx-3">{placeholder}</span>
                   </div>
-                  <ChevronDown
-                    aria-readonly={disabled}
-                    className="h-4 cursor-pointer text-muted-foreground mx-2 aria-readonly:cursor-auto"
-                  />
+                  {!disabled && (
+                    <ChevronDown
+                      aria-readonly={disabled}
+                      className="h-4 cursor-pointer text-muted-foreground mx-2 aria-readonly:cursor-auto"
+                    />
+                  )}
                 </div>
               )}
             </Button>
