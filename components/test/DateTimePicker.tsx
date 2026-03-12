@@ -4,7 +4,9 @@ import { TimeInterval, useTimePicker } from "./useTimePicker";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import { useState } from "react";
+import * as React from "react";
+
+type Period = "AM" | "PM";
 
 export function DateTimePicker({
   currentDate,
@@ -13,13 +15,15 @@ export function DateTimePicker({
   maxHour,
   minuteInterval,
   setDate,
+  is24HourTime = false,
 }: {
   currentDate: Date;
   isInvalid: boolean;
-  minHour: number;
-  maxHour: number;
-  minuteInterval: TimeInterval;
+  minHour: number; // e.g., 1
+  maxHour: number; // e.g., 12
+  minuteInterval: TimeInterval; // e.g., 5
   setDate: (date: Date) => void;
+  is24HourTime?: boolean;
 }) {
   const {
     display,
@@ -37,101 +41,152 @@ export function DateTimePicker({
     minuteInterval,
     minHour,
     maxHour,
+    is24HourTime,
   });
 
+  const uid = React.useId();
+  const groupId = `${uid}-starttime-group`;
+  const groupLabelId = `${uid}-starttime-label`;
+  const hourInputId = `${uid}-hour-input`;
+  const hourLabelId = `${uid}-hour-label`;
+  const minuteInputId = `${uid}-minute-input`;
+  const minuteLabelId = `${uid}-minute-label`;
+  const periodLabelId = `${uid}-period-label`;
+  const errorId = `${uid}-error`;
+  const hintId = `${uid}-hint`;
+
+  const hours24 = currentDate.getHours();
+  const hourNowForAria = is24HourTime ? hours24 : hours24 % 12 || 12;
+  const minuteNow = currentDate.getMinutes();
+
+  const hourMinForAria = is24HourTime ? Math.max(0, Math.min(23, minHour)) : 1;
+  const hourMaxForAria = is24HourTime ? Math.max(0, Math.min(23, maxHour)) : 12;
+
   return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-3 ">
-        <div className="grid col-span-1 gap-2 justify-items-center">
-          <Label
-            id={`StartHourLabel`}
-            data-error={isInvalid && "aria-invalid"}
-            htmlFor={"StartHourInput"}
-            //className="text-center"
-          >
-            Hours
-          </Label>
-          <Input
-            id={`StartHourInput`}
-            className="w-12 text-center font-mono"
-            value={display.hour}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowUp") {
+    <div role="group" aria-labelledby={groupLabelId} className="flex flex-row gap-4" id={groupId}>
+      <span id={groupLabelId} className="sr-only">
+        Time selection
+      </span>
+
+      <span id={hintId} className="sr-only">
+        Use the up and down arrow keys to adjust values. Press Tab to move to the next field.
+      </span>
+
+      <div className="flex flex-col gap-2 items-center">
+        <Label id={hourLabelId} htmlFor={hourInputId} className="self-center">
+          {is24HourTime ? "Hours (24h)" : "Hours"}
+        </Label>
+        <Input
+          id={hourInputId}
+          name="hour"
+          className="w-14 text-center font-mono"
+          value={display.hour}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          aria-invalid={isInvalid || undefined}
+          aria-labelledby={hourLabelId}
+          aria-describedby={`${hintId}${isInvalid ? ` ${errorId}` : ""}`}
+          role="spinbutton"
+          aria-valuemin={hourMinForAria}
+          aria-valuemax={hourMaxForAria}
+          aria-valuenow={hourNowForAria}
+          aria-valuetext={
+            is24HourTime
+              ? `${hourNowForAria} ${hourNowForAria === 1 ? "hour" : "hours"}`
+              : `${hourNowForAria} ${hourNowForAria === 1 ? "hour" : "hours"} ${display.period}`
+          }
+          onKeyDown={(e) => {
+            switch (e.key) {
+              case "ArrowUp":
                 e.preventDefault();
                 incrementHours();
-              }
-              if (e.key === "ArrowDown") {
+                break;
+              case "ArrowDown":
                 e.preventDefault();
                 decrementHours();
-              }
-              if (e.key === "BackSpace") {
+                break;
+              case "Backspace":
                 e.preventDefault();
                 handleBackspace("hour");
-              }
-            }}
-            onChange={(e) => {
-              handleManualInput("hour", e.target.value);
-            }}
-            onBlur={(e) => handleBlur("hour", e.target.value)}
-          />
-        </div>
-        <div className="grid col-span-1 gap-2 justify-items-center">
-          <Label id={"StartMinuteLabel"} data-error={isInvalid && "aria-invalid"} htmlFor={"StartMinuteInput"}>
-            Minutes
-          </Label>
-          <Input
-            id={`StartMinuteInput`}
-            className="w-12 text-center font-mono"
-            value={display.minutes}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowUp") {
+                break;
+              default:
+                break;
+            }
+          }}
+          onChange={(e) => {
+            handleManualInput("hour", e.target.value);
+          }}
+          onBlur={(e) => handleBlur("hour", e.target.value)}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 items-center">
+        <Label id={minuteLabelId} htmlFor={minuteInputId} className="self-center">
+          Minutes
+        </Label>
+        <Input
+          id={minuteInputId}
+          name="minute"
+          className="w-14 text-center font-mono"
+          value={display.minutes}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          aria-invalid={isInvalid || undefined}
+          aria-labelledby={minuteLabelId}
+          aria-describedby={`${hintId}${isInvalid ? ` ${errorId}` : ""}`}
+          role="spinbutton"
+          aria-valuemin={0}
+          aria-valuemax={59}
+          aria-valuenow={minuteNow}
+          aria-valuetext={`${minuteNow} minutes`}
+          onKeyDown={(e) => {
+            switch (e.key) {
+              case "ArrowUp":
                 e.preventDefault();
                 incrementMinutes();
-              }
-              if (e.key === "ArrowDown") {
+                break;
+              case "ArrowDown":
                 e.preventDefault();
                 decrementMinutes();
-              }
-              if (e.key === "BackSpace") {
+                break;
+              case "Backspace":
                 e.preventDefault();
                 handleBackspace("minute");
-              }
-            }}
-            onChange={(e) => {
-              handleManualInput("minute", e.target.value);
-            }}
-            onBlur={(e) => handleBlur("minute", e.target.value)}
-          />
-        </div>
-        <div className="grid col-span-1 gap-2 justify-items-center">
-          <Label id={"PeriodLabel"} data-error={isInvalid && "aria-invalid"} htmlFor={"PeriodSelect"}>
+                break;
+              default:
+                break;
+            }
+          }}
+          onChange={(e) => {
+            handleManualInput("minute", e.target.value);
+          }}
+          onBlur={(e) => handleBlur("minute", e.target.value)}
+        />
+      </div>
+
+      {!is24HourTime && (
+        <div className="flex flex-col gap-2 items-center">
+          <Label id={periodLabelId} className="self-center">
             Period
           </Label>
-          <Tabs value={display.period}>
+          <Tabs
+            value={display.period}
+            onValueChange={(value) => togglePeriod(value as Period)}
+            aria-labelledby={periodLabelId}
+          >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="AM" onClick={() => togglePeriod("AM")}>
-                AM
-              </TabsTrigger>
-              <TabsTrigger value="PM" onClick={() => togglePeriod("PM")}>
-                PM
-              </TabsTrigger>
+              <TabsTrigger value="AM">AM</TabsTrigger>
+              <TabsTrigger value="PM">PM</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
-      </div>
+      )}
+
+      {isInvalid && (
+        <div id={errorId} role="alert" aria-live="polite" className="sr-only">
+          The time you entered is invalid. Please check the hours and minutes.
+        </div>
+      )}
     </div>
   );
 }
-/**.
- * 
-  <div className="rounded-lg bg-slate-900 p-4 text-slate-400 font-mono text-[10px] space-y-1">
-        <div className="grid grid-cols-2 gap-2">
-          <span>Mins: {display.minutes}</span>
-          <span>Hour: {display.hour}</span>
-          <span>Period: {display.period}</span>
-        </div>
-        <div className="pt-2 border-t border-slate-800 truncate">ISO: {date.toISOString()}</div>
-        <div className="pt-2 border-t border-slate-800 truncate">Local: {date.toLocaleString()}</div>
-      </div>
- * 
- */
