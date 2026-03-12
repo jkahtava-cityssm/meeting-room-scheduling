@@ -1,6 +1,6 @@
 "use client";
 
-import { TimeInterval, useTimePicker } from "../calendar-start-end-datetime-provider/useTimePicker";
+import { TimeInterval, useTimePicker } from "./useTimePicker";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
@@ -8,7 +8,7 @@ import * as React from "react";
 
 type Period = "AM" | "PM";
 
-export function DateTimePicker({
+export function TimePicker({
   id,
   currentDate,
   isInvalid,

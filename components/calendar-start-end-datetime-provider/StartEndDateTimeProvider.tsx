@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useMemo } from "react";
 import { CalendarDayPopover } from "../calendar-day-popover/calendar-day-popover";
-import { DateTimePicker } from "../calendar-datetime-picker/DateTimePicker";
+import { TimePicker } from "../calendar-time-picker/TimePicker";
 import { Label } from "../ui/label";
-import { TimeInterval } from "./useTimePicker";
+import { TimeInterval } from "../calendar-time-picker/useTimePicker";
 
 type Ctx = {
   startDate: Date;
@@ -138,7 +138,7 @@ function StartDatePicker({ invalid, isDisabled }: LeafProps) {
 function StartTimePicker({ invalid, isDisabled }: LeafProps) {
   const { startDate, endDate, minHour, maxHour, minuteInterval, setStart } = useStartEnd();
   return (
-    <DateTimePicker
+    <TimePicker
       id="start"
       currentDate={startDate}
       isInvalid={!!invalid}
@@ -180,7 +180,7 @@ function EndDatePicker({ invalid, isDisabled }: LeafProps) {
 function EndTimePicker({ invalid, isDisabled }: LeafProps) {
   const { endDate, minHour, maxHour, minuteInterval, setEnd } = useStartEnd();
   return (
-    <DateTimePicker
+    <TimePicker
       id="end"
       currentDate={endDate}
       isInvalid={!!invalid}
