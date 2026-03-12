@@ -66,7 +66,7 @@ export function TimePicker({
   const hourMaxForAria = is24HourTime ? Math.max(0, Math.min(23, maxHour)) : 12;
 
   return (
-    <div role="group" aria-labelledby={groupLabelId} className="flex flex-row gap-4" id={groupId}>
+    <div role="group" aria-labelledby={groupLabelId} className="flex flex-row gap-2" id={groupId}>
       <span id={groupLabelId} className="sr-only">
         Time selection
       </span>
