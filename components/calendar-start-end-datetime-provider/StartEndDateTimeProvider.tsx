@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from "react";
 import { CalendarDayPopover } from "../calendar-day-popover/calendar-day-popover";
-import { DateTimePicker } from "./DateTimePicker";
+import { DateTimePicker } from "../calendar-datetime-picker/DateTimePicker";
 import { Label } from "../ui/label";
 import { TimeInterval } from "./useTimePicker";
 

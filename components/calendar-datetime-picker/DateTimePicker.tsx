@@ -1,6 +1,6 @@
 "use client";
 
-import { TimeInterval, useTimePicker } from "./useTimePicker";
+import { TimeInterval, useTimePicker } from "../calendar-start-end-datetime-provider/useTimePicker";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";

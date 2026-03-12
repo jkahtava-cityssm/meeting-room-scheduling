@@ -26,7 +26,7 @@ import { StaticTabsList, StaticTabsTrigger } from "@/components/ui/tabs-placehol
 import { UserMultiSelect } from "../users/user-muliselect";
 import { ItemMultiSelect } from "./item-multiselect";
 
-import { StartEndDateTimeProvider } from "@/components/test/StartEndDateTimeProvider";
+import { StartEndDateTimeProvider } from "@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider";
 
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
@@ -346,94 +346,3 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
     </div>
   );
 };
-
-/**
- * <FormField
-            control={control}
-            // Use startDate as the primary anchor, but we will update all 3
-            name="endDate"
-            render={({ fieldState }) => (
-              <FormItem className="col-span-3">
-                
-                <div className="col-span-9">
-
-                    currentStartDate={new Date(getValues("startDate"))}
-                    currentEndDate={new Date(getValues("endDate"))}
-                    isInvalid={fieldState.invalid}
-                    minHour={0}
-                    maxHour={23}
-                    minuteInterval={15}
-                    onDatesChange={(start, end) => {
-                      // 1. Update Start Date
-                      setValue("startDate", start.toISOString(), {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-
-                      // 2. Update End Date
-                      setValue("endDate", end.toISOString(), {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-
-                      // 3. Update Derived Duration
-                      const durationText = getDurationText(start.toISOString(), end.toISOString());
-                      setValue("duration", durationText);
-
-                      // 4. Trigger validation for both
-                      trigger(["startDate", "endDate"]);
-                    }}
-                  />
-                </div>
-                {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            // Use startDate as the primary anchor, but we will update all 3
-            name="startDate"
-            render={({ fieldState }) => (
-              <FormItem className="col-span-3">
-               
-                <div className="col-span-9">
-                  <StartEndDateTimePicker
-                    currentStartDate={new Date(getValues("startDate"))}
-                    currentEndDate={new Date(getValues("endDate"))}
-                    isInvalid={fieldState.invalid}
-                    minHour={0}
-                    maxHour={23}
-                    minuteInterval={15}
-                    onDatesChange={(start, end) => {
-                      // 1. Update Start Date
-                      setValue("startDate", start.toISOString(), {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-
-                      // 2. Update End Date
-                      setValue("endDate", end.toISOString(), {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      });
-
-                      // 3. Update Derived Duration
-                      const durationText = getDurationText(start.toISOString(), end.toISOString());
-                      setValue("duration", durationText);
-
-                      // 4. Trigger validation for both
-                      trigger(["startDate", "endDate"]);
-                    }}
-                  />
-                </div>
-                {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
-              </FormItem>
-            )}
-          />
- * 
- */

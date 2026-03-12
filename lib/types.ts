@@ -60,6 +60,7 @@ export const CONFIGURATION_KEYS = [
   "timeSlotIntervalMinutes",
   "singleSignOnEnabled",
   "defaultUserRole",
+  "maxBookingSpan",
 ] as const;
 
 export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
@@ -85,6 +86,7 @@ export const DEFAULT_RESOURCE_ACTIONS = [
       "Allow Recurrence",
       "Allow Multi-Day",
       "Allow Booking Outside Visible Hours",
+      "Has Booking Span Limit",
     ],
   },
   {
