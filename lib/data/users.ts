@@ -25,7 +25,11 @@ const USER_ROLE_SELECT = {
 } as const satisfies Prisma.UserRoleSelect;
 
 export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
-  const userList = await tx.user.findMany({ where, select: USER_SELECT, orderBy: { id: "asc" } });
+  const userList = await tx.user.findMany({
+    where,
+    select: USER_SELECT,
+    orderBy: [{ name: "asc" }, { email: "asc" }, { id: "asc" }],
+  });
   if (!userList || userList.length === 0) {
     return [];
   }
@@ -51,7 +55,7 @@ export async function findManyUsersWithRoles(
   const userList = await tx.user.findMany({
     where,
     select: { ...USER_SELECT, userRole: { where: roleId ? { roleId } : undefined, select: { ...USER_ROLE_SELECT } } },
-    orderBy: { name: "asc" },
+    orderBy: [{ name: "asc" }, { email: "asc" }, { id: "asc" }],
   });
   if (!userList || userList.length === 0) {
     return [];
