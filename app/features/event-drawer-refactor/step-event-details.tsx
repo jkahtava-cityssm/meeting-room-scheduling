@@ -215,21 +215,20 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
         minHour={0}
         maxHour={23}
         minuteInterval={15}
-        preserveDuration={false}
-        clampEndToStart
+        preserveDuration={true}
+        clampEndToStart={true}
       >
         <FormField
           control={control}
           name="startDate"
           render={({ fieldState }) => (
-            <FormItem className="col-span-2 row-3">
-              <fieldset>
-                <legend className="sr-only">Start date and time</legend>
-                <StartEndDateTimeProvider.StartDate invalid={!!fieldState.error} />
-
-                <StartEndDateTimeProvider.StartTime invalid={!!fieldState.error} />
-              </fieldset>
-
+            <FormItem className="col-span-2 row-3 grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <StartEndDateTimeProvider.StartDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <StartEndDateTimeProvider.StartTime invalid={!!fieldState.error} isDisabled={isReadOnly} />
+              </div>
               {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
             </FormItem>
           )}
@@ -239,16 +238,42 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           control={control}
           name="endDate"
           render={({ fieldState }) => (
-            <FormItem className="col-span-2 row-4 ">
-              <StartEndDateTimeProvider.EndDate invalid={!!fieldState.error} />
-
-              <StartEndDateTimeProvider.EndTime invalid={!!fieldState.error} />
-
+            <FormItem className="col-span-2 row-4 grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <StartEndDateTimeProvider.EndDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <StartEndDateTimeProvider.EndTime invalid={!!fieldState.error} isDisabled={isReadOnly} />
+              </div>
               {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
             </FormItem>
           )}
         />
       </StartEndDateTimeProvider>
+      <FormField
+        control={control}
+        name="duration"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1  row-4">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium" />
+            ) : (
+              <FormLabel>Duration:</FormLabel>
+            )}
+            <FormControl>
+              <Input
+                id="duration"
+                disabled={isReadOnly}
+                className="text-sm h-9 px-3 py-1 content-center"
+                //defaultValue={field.value}
+                value={field.value}
+                data-invalid={fieldState.invalid}
+                readOnly
+              ></Input>
+            </FormControl>
+          </FormItem>
+        )}
+      />
       <FormField
         control={control}
         name="userId"
@@ -291,30 +316,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           </FormItem>
         )}
       />
-      <FormField
-        control={control}
-        name="duration"
-        render={({ field, fieldState }) => (
-          <FormItem className="col-span-1  row-5">
-            {fieldState.invalid ? (
-              <FormMessage className="leading-none font-medium" />
-            ) : (
-              <FormLabel>Duration:</FormLabel>
-            )}
-            <FormControl>
-              <Input
-                id="duration"
-                disabled={isReadOnly}
-                className="text-sm h-9 px-3 py-1 content-center"
-                //defaultValue={field.value}
-                value={field.value}
-                data-invalid={fieldState.invalid}
-                readOnly
-              ></Input>
-            </FormControl>
-          </FormItem>
-        )}
-      />
+
       <FormField
         control={control}
         name="description"

@@ -44,6 +44,7 @@ type RootProps = {
   preserveDuration?: boolean;
   /** Prevent end from going earlier than start */
   clampEndToStart?: boolean;
+  isDisabled?: boolean;
   children: React.ReactNode;
 };
 
@@ -60,6 +61,7 @@ export function StartEndDateTimeProvider({
   minuteInterval,
   preserveDuration = false,
   clampEndToStart = false,
+  isDisabled = false,
   children,
 }: RootProps) {
   const value = useMemo<Ctx>(() => {
@@ -105,9 +107,10 @@ export function StartEndDateTimeProvider({
 
 type LeafProps = {
   invalid?: boolean;
+  isDisabled?: boolean;
 };
 
-function StartDatePicker({ invalid }: LeafProps) {
+function StartDatePicker({ invalid, isDisabled }: LeafProps) {
   const { startDate, endDate, setStart } = useStartEnd();
   return (
     <div className="flex flex-col gap-2">
@@ -117,7 +120,7 @@ function StartDatePicker({ invalid }: LeafProps) {
       <CalendarDayPopover
         id={`StartDatePicker`}
         aria-labelledby="start-date-label"
-        disabled={false}
+        disabled={isDisabled}
         value={startDate}
         onSelect={(selectedDate) => {
           if (selectedDate) {
@@ -132,13 +135,14 @@ function StartDatePicker({ invalid }: LeafProps) {
   );
 }
 
-function StartTimePicker({ invalid }: LeafProps) {
+function StartTimePicker({ invalid, isDisabled }: LeafProps) {
   const { startDate, endDate, minHour, maxHour, minuteInterval, setStart } = useStartEnd();
   return (
     <DateTimePicker
       id="start"
       currentDate={startDate}
       isInvalid={!!invalid}
+      isDisabled={isDisabled}
       minHour={minHour}
       maxHour={maxHour}
       minuteInterval={minuteInterval}
@@ -147,7 +151,7 @@ function StartTimePicker({ invalid }: LeafProps) {
   );
 }
 
-function EndDatePicker({ invalid }: LeafProps) {
+function EndDatePicker({ invalid, isDisabled }: LeafProps) {
   const { startDate, endDate, setEnd } = useStartEnd();
   return (
     <div className="flex flex-col gap-2">
@@ -157,7 +161,7 @@ function EndDatePicker({ invalid }: LeafProps) {
       <CalendarDayPopover
         id={`EndDatePicker`}
         aria-labelledby="end-date-label"
-        disabled={false}
+        disabled={isDisabled}
         value={endDate}
         onSelect={(selectedDate) => {
           if (selectedDate) {
@@ -173,13 +177,14 @@ function EndDatePicker({ invalid }: LeafProps) {
   );
 }
 
-function EndTimePicker({ invalid }: LeafProps) {
+function EndTimePicker({ invalid, isDisabled }: LeafProps) {
   const { endDate, minHour, maxHour, minuteInterval, setEnd } = useStartEnd();
   return (
     <DateTimePicker
       id="end"
       currentDate={endDate}
       isInvalid={!!invalid}
+      isDisabled={isDisabled}
       minHour={minHour}
       maxHour={maxHour}
       minuteInterval={minuteInterval}

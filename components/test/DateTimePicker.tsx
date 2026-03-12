@@ -17,6 +17,7 @@ export function DateTimePicker({
   minuteInterval,
   setDate,
   is24HourTime = false,
+  isDisabled = false,
 }: {
   id: string;
   currentDate: Date;
@@ -26,6 +27,7 @@ export function DateTimePicker({
   minuteInterval: TimeInterval; // e.g., 5
   setDate: (date: Date) => void;
   is24HourTime?: boolean;
+  isDisabled?: boolean;
 }) {
   const {
     display,
@@ -96,6 +98,7 @@ export function DateTimePicker({
               ? `${hourNowForAria} ${hourNowForAria === 1 ? "hour" : "hours"}`
               : `${hourNowForAria} ${hourNowForAria === 1 ? "hour" : "hours"} ${display.period}`
           }
+          disabled={isDisabled}
           onKeyDown={(e) => {
             switch (e.key) {
               case "ArrowUp":
@@ -146,6 +149,7 @@ export function DateTimePicker({
           aria-valuemax={59}
           aria-valuenow={minuteNow}
           aria-valuetext={`${minuteNow} minutes`}
+          disabled={isDisabled}
           onKeyDown={(e) => {
             switch (e.key) {
               case "ArrowUp":
@@ -183,9 +187,18 @@ export function DateTimePicker({
             Period
           </Label>
           <Tabs value={display.period} onValueChange={(value) => togglePeriod()} aria-labelledby={periodLabelId}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="AM">AM</TabsTrigger>
-              <TabsTrigger value="PM">PM</TabsTrigger>
+            <TabsList
+              className="grid w-full grid-cols-2"
+              aria-disabled={isDisabled}
+              data-invalid={isInvalid || undefined}
+              aria-invalid={isInvalid || undefined}
+            >
+              <TabsTrigger value="AM" disabled={isDisabled}>
+                AM
+              </TabsTrigger>
+              <TabsTrigger value="PM" disabled={isDisabled}>
+                PM
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
