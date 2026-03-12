@@ -83,6 +83,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 onRoomChange={(value) => field.onChange(value)}
                 dataInvalid={fieldState.invalid}
                 isDisabled={isReadOnly}
+                className="w-full"
               />
             </FormControl>
           </FormItem>
@@ -164,6 +165,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               onStatusChange={field.onChange}
               isDisabled={isReadOnly || disableChangeStatus}
               dataInvalid={fieldState.invalid}
+              className="min-w-0 w-full"
             />
           </FormItem>
         )}
@@ -182,6 +184,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 data-invalid={fieldState.invalid}
                 value={field.value}
                 onChange={field.onChange}
+                className="min-w-0 w-full"
               />
             </FormControl>
           </FormItem>
@@ -226,7 +229,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               <div className="flex flex-col gap-2">
                 <StartEndDateTimeProvider.StartDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 items-center">
                 <StartEndDateTimeProvider.StartTime invalid={!!fieldState.error} isDisabled={isReadOnly} />
               </div>
               {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
@@ -242,7 +245,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               <div className="flex flex-col gap-2">
                 <StartEndDateTimeProvider.EndDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 items-center">
                 <StartEndDateTimeProvider.EndTime invalid={!!fieldState.error} isDisabled={isReadOnly} />
               </div>
               {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
@@ -311,6 +314,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 onChange={field.onChange}
                 isDisabled={isReadOnly}
                 className="min-w-0 w-full"
+                maxCount={4}
               ></UserMultiSelect>
             </FormControl>
           </FormItem>
