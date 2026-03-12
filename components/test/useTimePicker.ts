@@ -24,14 +24,20 @@ export function useTimePicker({
   clampDelay = 500,
   is24HourTime = false,
 }: UseTimePickerProps) {
+  //STATIC REF: Always holds the latest date without triggering re-renders
+  const dateRef = React.useRef(date);
+  React.useEffect(() => {
+    dateRef.current = date;
+  }, [date]);
+
   // LIMIT MAX AND MIN HOUR TO BETWEEN 0 AND 23
   const verifiedMinHour = Math.max(0, Math.min(23, minHour));
   const verifiedMaxHour = Math.max(0, Math.min(23, maxHour));
 
   const debounceMinuteTimerRef = React.useRef<NodeJS.Timeout | null>(null);
   const debounceHourTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-
   const lastInputTimeRef = React.useRef<number>(0);
+
   const [tempHours, setTempHours] = React.useState<string | null>(null);
   const [tempMinutes, setTempMinutes] = React.useState<string | null>(null);
 
@@ -41,32 +47,6 @@ export function useTimePicker({
     for (let i = 0; i < 60; i += minuteInterval) points.push(i);
     return points;
   }, [minuteInterval]);
-
-  const applyTimeToDate = React.useCallback(
-    (hours: number, minutes: number): Date => {
-      const newDate = new Date(date);
-
-      //CLAMP HOURS TO ENSURE THEY DONT GO PAST THE MAX AND MIN
-      const clampedHours = Math.max(verifiedMinHour, Math.min(verifiedMaxHour, hours));
-      let clampedMinutes = minutes;
-
-      //STOP UPDATING IF MAX HOUR LIMIT IS MET, AND PREVENT MINUTES FROM BEING UPDATE
-      if (clampedHours === verifiedMaxHour && minutes > 0) {
-        clampedMinutes = 0;
-      }
-
-      //SET HOURS AND MINUTES, IGNORE SECONDS
-      newDate.setHours(clampedHours, clampedMinutes, 0, 0);
-
-      //PREVENT DATE BYPASSING CURRENT DAY WHEN INCREMENTING
-      if (newDate.getDate() !== date.getDate()) {
-        newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-      }
-
-      return newDate;
-    },
-    [date, verifiedMinHour, verifiedMaxHour],
-  );
 
   //REDUCE ITERATES THROUGH ARRAY OF INTERVALS, COMPARING CURRENT AND PREVIOUS VALUES
   //PREVIOUS IS THE CURRENT BEST MATCH
@@ -83,6 +63,82 @@ export function useTimePicker({
     [minuteSnapPoints],
   );
 
+  const getClampedDate = React.useCallback(
+    (baseDate: Date, hours: number, minutes: number): Date => {
+      const newDate = new Date(baseDate);
+      const clampedHours = Math.max(verifiedMinHour, Math.min(verifiedMaxHour, hours));
+      const clampedMinutes = clampedHours === verifiedMaxHour && minutes > 0 ? 0 : minutes;
+
+      newDate.setHours(clampedHours, clampedMinutes, 0, 0);
+
+      if (newDate.getDate() !== baseDate.getDate()) {
+        newDate.setFullYear(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+      }
+      return newDate;
+    },
+    [verifiedMinHour, verifiedMaxHour],
+  );
+
+  const updateTimeValue = React.useCallback(
+    (type: "hour" | "minute", timeValue: string, updateNow: boolean = false) => {
+      if (!updateNow) {
+        if (type === "hour") setTempHours(timeValue);
+        if (type === "minute") setTempMinutes(timeValue);
+      }
+
+      // Clear existing debounced timers
+      if (type === "hour" && debounceHourTimerRef.current) {
+        clearTimeout(debounceHourTimerRef.current);
+        debounceHourTimerRef.current = null;
+      }
+      if (type === "minute" && debounceMinuteTimerRef.current) {
+        clearTimeout(debounceMinuteTimerRef.current);
+        debounceMinuteTimerRef.current = null;
+      }
+
+      const performUpdate = () => {
+        const parsedTimeValue = parseInt(timeValue, 10);
+        if (isNaN(parsedTimeValue)) return;
+
+        const currentFullDate = dateRef.current;
+        const currentHours = currentFullDate.getHours();
+        const currentMinutes = currentFullDate.getMinutes();
+
+        let clampedDate: Date;
+
+        if (type === "hour") {
+          let hourValue: number;
+          if (is24HourTime) {
+            hourValue = parsedTimeValue % 24;
+          } else {
+            // Handle 12-hour logic: 12 AM is 0, 12 PM is 12
+            const currentIsPM = currentHours >= 12;
+            const rawHour = parsedTimeValue % 12;
+            hourValue = currentIsPM ? rawHour + 12 : rawHour;
+          }
+          clampedDate = getClampedDate(currentFullDate, hourValue, currentMinutes);
+          setTempHours(null);
+        } else {
+          clampedDate = getClampedDate(currentFullDate, currentHours, getClosestSnap(parsedTimeValue));
+          setTempMinutes(null);
+        }
+
+        if (clampedDate.getTime() !== currentFullDate.getTime()) {
+          setDate(clampedDate);
+        }
+      };
+
+      if (updateNow) {
+        performUpdate();
+      } else {
+        const timer = setTimeout(performUpdate, clampDelay);
+        if (type === "hour") debounceHourTimerRef.current = timer;
+        if (type === "minute") debounceMinuteTimerRef.current = timer;
+      }
+    },
+    [is24HourTime, getClampedDate, getClosestSnap, clampDelay],
+  );
+
   React.useEffect(() => {
     const currentHours = date.getHours();
     const currentMinutes = date.getMinutes();
@@ -95,11 +151,12 @@ export function useTimePicker({
     // (Note: we also check if max hour was exceeded to force minutes to 0)
     const finalMinutes = clampedHours === verifiedMaxHour && snappedMinutes > 0 ? 0 : snappedMinutes;
 
-    if (currentHours !== clampedHours || currentMinutes !== finalMinutes) {
-      const correctedDate = applyTimeToDate(clampedHours, finalMinutes);
-      setDate(correctedDate);
+    const potentialNewDate = getClampedDate(date, clampedHours, finalMinutes);
+
+    if (potentialNewDate.getTime() !== date.getTime()) {
+      setDate(potentialNewDate);
     }
-  }, [date, verifiedMinHour, verifiedMaxHour, getClosestSnap, applyTimeToDate, setDate]);
+  }, [date, verifiedMinHour, verifiedMaxHour, getClosestSnap, getClampedDate, setDate]);
 
   const display = React.useMemo(() => {
     const hours = date.getHours();
@@ -130,131 +187,96 @@ export function useTimePicker({
     return ("0" + prev).slice(0, 2);
   }, []);
 
-  const incrementHours = () => {
-    const currentHours = date.getHours();
+  const incrementHours = React.useCallback(() => {
+    const currentDate = dateRef.current;
+    const currentHours = currentDate.getHours();
+    const currentMinutes = currentDate.getMinutes();
     //PREVENT WRAP AROUND TO NEXT DAY
     if (currentHours + hourInterval <= verifiedMaxHour) {
-      setDate(applyTimeToDate(currentHours + hourInterval, date.getMinutes()));
+      setDate(getClampedDate(currentDate, currentHours + hourInterval, currentMinutes));
     }
-  };
+  }, [hourInterval, verifiedMaxHour, getClampedDate, setDate]);
 
-  const decrementHours = () => {
-    const currentHours = date.getHours();
+  const decrementHours = React.useCallback(() => {
+    const currentDate = dateRef.current;
+    const currentHours = currentDate.getHours();
+    const currentMinutes = currentDate.getMinutes();
     //PREVENT WRAP AROUND TO PREVIOUS DAY
     if (currentHours - hourInterval >= verifiedMinHour) {
-      setDate(applyTimeToDate(currentHours - hourInterval, date.getMinutes()));
+      setDate(getClampedDate(currentDate, currentHours - hourInterval, currentMinutes));
     }
-  };
+  }, [getClampedDate, hourInterval, setDate, verifiedMinHour]);
 
   //GET CURRENT MINUTE, FIND SNAP POINT, GET INDEX, INCREMENT OR MOVE TO INDEX 0
-  const incrementMinutes = () => {
-    const currentMinute = date.getMinutes();
-    const snapValue = getClosestSnap(currentMinute);
+  const incrementMinutes = React.useCallback(() => {
+    const currentDate = dateRef.current;
+    const currentHours = currentDate.getHours();
+    const currentMinutes = currentDate.getMinutes();
+
+    const snapValue = getClosestSnap(currentMinutes);
     const snapPointIndex = minuteSnapPoints.indexOf(snapValue);
     const nextIndex = (snapPointIndex + 1) % minuteSnapPoints.length;
 
-    setDate(applyTimeToDate(date.getHours(), minuteSnapPoints[nextIndex]));
-  };
+    setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
+  }, [getClampedDate, getClosestSnap, minuteSnapPoints, setDate]);
   //GET CURRENT MINUTE, FIND SNAP POINT, GET INDEX,
   //DECREMENT INDEX, ADD LENGTH TO KEEP IN BOUNDS
   //MODULUS AND USE THE REMAINDER AS THE NEW INDEX (2 - 1 + 4) % 4 = 5 % 4 = INDEX 1
-  const decrementMinutes = () => {
-    const currentMinute = date.getMinutes();
-    const snapValue = getClosestSnap(currentMinute);
+  const decrementMinutes = React.useCallback(() => {
+    const currentDate = dateRef.current;
+    const currentHours = currentDate.getHours();
+    const currentMinutes = currentDate.getMinutes();
+
+    const snapValue = getClosestSnap(currentMinutes);
     const snapPointIndex = minuteSnapPoints.indexOf(snapValue);
     const nextIndex = (snapPointIndex - 1 + minuteSnapPoints.length) % minuteSnapPoints.length;
 
-    setDate(applyTimeToDate(date.getHours(), minuteSnapPoints[nextIndex]));
-  };
+    setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
+  }, [getClampedDate, getClosestSnap, minuteSnapPoints, setDate]);
 
   //UPDATE THE TIME IF THE PERIOD IS TOGGLED
-  const togglePeriod = (period: Period | undefined) => {
-    const currentHours = date.getHours();
+  const togglePeriod = React.useCallback(() => {
+    const currentDate = dateRef.current;
+    const currentHours = currentDate.getHours();
+    const currentMinutes = currentDate.getMinutes();
+
     const isPM = currentHours >= 12;
-
     const targetHours = isPM ? currentHours - 12 : currentHours + 12;
-    setDate(applyTimeToDate(targetHours, date.getMinutes()));
-  };
+    setDate(getClampedDate(currentDate, targetHours, currentMinutes));
+  }, [getClampedDate, setDate]);
 
-  const updateTimeValue = (type: "hour" | "minute", timeValue: string, updateNow: boolean = false) => {
-    if (type === "hour") setTempHours(timeValue);
-    if (type === "minute") setTempMinutes(timeValue);
+  const handleBackspace = React.useCallback(
+    (type: "hour" | "minute") => {
+      const prev = type === "hour" ? (tempHours ?? display.hour) : (tempMinutes ?? display.minutes);
 
-    if (debounceHourTimerRef.current && type === "hour") clearTimeout(debounceHourTimerRef.current);
-    if (debounceMinuteTimerRef.current && type === "minute") clearTimeout(debounceMinuteTimerRef.current);
-
-    const performUpdate = () => {
-      const num = parseInt(timeValue, 10);
-      if (isNaN(num)) return;
-
-      if (type === "hour") {
-        let hourValue: number;
-
-        if (is24HourTime) {
-          hourValue = num;
-        } else {
-          if (num === 12 || num === 0 || num === 24) {
-            hourValue = num;
-          } else if (num > 12 && num < 24) {
-            hourValue = num;
-          } else {
-            const currentIsPM = date.getHours() >= 12;
-            hourValue = currentIsPM ? num + 12 : num;
-          }
-        }
-        setDate(applyTimeToDate(hourValue, date.getMinutes()));
-        setTempHours(null);
-      } else {
-        setDate(applyTimeToDate(date.getHours(), getClosestSnap(num)));
-        setTempMinutes(null);
-      }
-    };
-
-    if (updateNow) performUpdate();
-    else {
-      const timer = setTimeout(performUpdate, clampDelay);
-      if (type === "hour") debounceHourTimerRef.current = timer;
-      if (type === "minute") debounceMinuteTimerRef.current = timer;
-    }
-  };
-
-  const forceClamp = () => {
-    if (tempHours !== null) updateTimeValue("hour", tempHours, true);
-    if (tempMinutes !== null) updateTimeValue("minute", tempMinutes, true);
-  };
-
-  const handleBackspace = (type: "hour" | "minute") => {
-    const prev = type === "hour" ? (tempHours ?? display.hour) : (tempMinutes ?? display.minutes);
-
-    const shifted = popDigit(prev);
-    updateTimeValue(type, shifted, false);
-  };
-
-  const handleManualInput = (type: "hour" | "minute", char: string) => {
-    const now = Date.now();
-    const isFreshInput = now - lastInputTimeRef.current > clampDelay;
-
-    const currentDisplay = type === "hour" ? display.hour : display.minutes;
-    const prevValue = isFreshInput ? "00" : (tempHours ?? tempMinutes ?? currentDisplay);
-
-    lastInputTimeRef.current = now;
-
-    const nextValue = pushDigit(prevValue, char.slice(-1));
-
-    updateTimeValue(type, nextValue, false);
-  };
-
-  const mergeDate = React.useCallback(
-    (newCalendarDate: Date) => {
-      const newDate = new Date(newCalendarDate);
-      newDate.setHours(date.getHours(), date.getMinutes(), 0, 0);
-
-      // Only update if the date actually changed to avoid loops
-      if (newDate.getTime() !== date.getTime()) {
-        setDate(newDate);
-      }
+      const shifted = popDigit(prev);
+      updateTimeValue(type, shifted, false);
     },
-    [date, setDate],
+    [display.hour, display.minutes, popDigit, tempHours, tempMinutes, updateTimeValue],
+  );
+
+  const handleManualInput = React.useCallback(
+    (type: "hour" | "minute", char: string) => {
+      const now = Date.now();
+      const isFreshInput = now - lastInputTimeRef.current > clampDelay;
+      lastInputTimeRef.current = now;
+
+      const currentDate = dateRef.current;
+      const currentHours = currentDate.getHours();
+      const currentMinutes = currentDate.getMinutes();
+
+      const calculateHour = is24HourTime ? currentHours : currentHours % 12 || 12;
+
+      const currentValue = type === "hour" ? calculateHour : currentMinutes;
+
+      const prevValue = isFreshInput
+        ? "00"
+        : ((type === "hour" ? tempHours : tempMinutes) ?? currentValue.toString().padStart(2, "0"));
+      const nextValue = pushDigit(prevValue, char.slice(-1));
+
+      updateTimeValue(type, nextValue, false);
+    },
+    [clampDelay, is24HourTime, pushDigit, tempHours, tempMinutes, updateTimeValue],
   );
 
   //CLEAR TIMERS WHEN UNMOUNTING
@@ -265,6 +287,27 @@ export function useTimePicker({
     };
   }, []);
 
+  const updateTimeValueRef = React.useRef(updateTimeValue);
+
+  React.useEffect(() => {
+    if (updateTimeValueRef.current !== updateTimeValue) {
+      console.log("🔄 updateTimeValue changed!");
+      updateTimeValueRef.current = updateTimeValue;
+    }
+  });
+
+  const handleBlur = React.useCallback(
+    (type: "hour" | "minute", val: string) => {
+      window.requestAnimationFrame(() => updateTimeValue(type, val, true));
+    },
+    [updateTimeValue],
+  );
+
+  const forceClamp = React.useCallback(() => {
+    if (tempHours !== null) updateTimeValue("hour", tempHours, true);
+    if (tempMinutes !== null) updateTimeValue("minute", tempMinutes, true);
+  }, [tempHours, tempMinutes, updateTimeValue]);
+
   return {
     display,
     incrementHours,
@@ -274,8 +317,7 @@ export function useTimePicker({
     togglePeriod,
     handleManualInput,
     handleBackspace,
-    handleBlur: (type: "hour" | "minute", val: string) => updateTimeValue(type, val, true),
+    handleBlur,
     forceClamp,
-    mergeDate,
   };
 }
