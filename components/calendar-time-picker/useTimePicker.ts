@@ -30,6 +30,7 @@ export function useTimePicker({
 	const dateRef = React.useRef(date);
 	React.useEffect(() => {
 		dateRef.current = date;
+		console.count("TimePicker Sync Loop Check");
 	}, [date]);
 
 	// LIMIT MAX AND MIN HOUR TO BETWEEN 0 AND 23
@@ -69,12 +70,13 @@ export function useTimePicker({
 		(baseDate: Date, hours: number, minutes: number): Date => {
 			const newDate = new Date(baseDate);
 			const clampedHours = Math.max(verifiedMinHour, Math.min(verifiedMaxHour, hours));
-			const clampedMinutes = clampedHours === verifiedMaxHour && minutes > 0 ? 0 : minutes;
-
+			//const clampedMinutes = minutes; //clampedHours === verifiedMaxHour && minutes > 0 ? 0 : minutes;
+			const clampedMinutes = Math.max(0, Math.min(59, minutes));
 			newDate.setHours(clampedHours, clampedMinutes, 0, 0);
 
 			if (newDate.getDate() !== baseDate.getDate()) {
 				newDate.setFullYear(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+				newDate.setHours(verifiedMaxHour, 59, 0, 0);
 			}
 			return newDate;
 		},
@@ -151,7 +153,7 @@ export function useTimePicker({
 
 		// Check if we actually need to update
 		// (Note: we also check if max hour was exceeded to force minutes to 0)
-		const finalMinutes = clampedHours === verifiedMaxHour && snappedMinutes > 0 ? 0 : snappedMinutes;
+		const finalMinutes = snappedMinutes; //clampedHours === verifiedMaxHour && snappedMinutes > 0 ? 0 : snappedMinutes;
 
 		const potentialNewDate = getClampedDate(date, clampedHours, finalMinutes);
 
@@ -218,11 +220,11 @@ export function useTimePicker({
 
 		const isLastSnapPoint = snapPointIndex === minuteSnapPoints.length - 1;
 
-		if (isLastSnapPoint && allowMinuteRollover && currentHours + 1 <= verifiedMaxHour) {
+		if (snapPointIndex < minuteSnapPoints.length - 1) {
+			const nextMinutes = minuteSnapPoints[snapPointIndex + 1];
+			setDate(getClampedDate(currentDate, currentHours, nextMinutes));
+		} else if (allowMinuteRollover && currentHours < verifiedMaxHour) {
 			setDate(getClampedDate(currentDate, currentHours + 1, minuteSnapPoints[0]));
-		} else {
-			const nextIndex = (snapPointIndex + 1) % minuteSnapPoints.length;
-			setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
 		}
 	}, [allowMinuteRollover, getClampedDate, getClosestSnap, minuteSnapPoints, setDate, verifiedMaxHour]);
 	//GET CURRENT MINUTE, FIND SNAP POINT, GET INDEX,
@@ -237,13 +239,12 @@ export function useTimePicker({
 		const snapPointIndex = minuteSnapPoints.indexOf(snapValue);
 		const isFirstSnapPoint = snapPointIndex === 0;
 
-		if (isFirstSnapPoint && allowMinuteRollover && currentHours - 1 >= verifiedMinHour) {
+		if (snapPointIndex > 0) {
+			const prevMinutes = minuteSnapPoints[snapPointIndex - 1];
+			setDate(getClampedDate(currentDate, currentHours, prevMinutes));
+		} else if (allowMinuteRollover && currentHours > verifiedMinHour) {
 			const lastMinuteIndex = minuteSnapPoints.length - 1;
 			setDate(getClampedDate(currentDate, currentHours - 1, minuteSnapPoints[lastMinuteIndex]));
-		} else {
-			const nextIndex = (snapPointIndex - 1 + minuteSnapPoints.length) % minuteSnapPoints.length;
-
-			setDate(getClampedDate(currentDate, currentHours, minuteSnapPoints[nextIndex]));
 		}
 	}, [allowMinuteRollover, getClampedDate, getClosestSnap, minuteSnapPoints, setDate, verifiedMinHour]);
 
