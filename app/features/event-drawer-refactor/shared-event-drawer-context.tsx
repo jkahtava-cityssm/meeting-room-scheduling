@@ -31,21 +31,20 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
 		<SharedDrawerContext.Provider value={ctxValue}>
 			{children}
 			{/* Offscreen trigger wrapped by the single EventDrawer instance */}
-			{payload && (
-				<EventDrawerRefactor
-					creationDate={payload.creationDate}
-					event={payload?.event}
-					userId={payload?.userId}
-					roomId={payload?.roomId}
-				>
-					<button
-						ref={triggerRef}
-						aria-hidden
-						tabIndex={-1}
-						onClick={e => e.stopPropagation()}
-					/>
-				</EventDrawerRefactor>
-			)}
+
+			<EventDrawerRefactor
+				creationDate={payload ? payload.creationDate : new Date()}
+				event={payload?.event}
+				userId={payload?.userId}
+				roomId={payload?.roomId}
+			>
+				<button
+					ref={triggerRef}
+					aria-hidden
+					tabIndex={-1}
+					onClick={e => e.stopPropagation()}
+				/>
+			</EventDrawerRefactor>
 		</SharedDrawerContext.Provider>
 	);
 }
