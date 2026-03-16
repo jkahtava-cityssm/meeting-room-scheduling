@@ -18,7 +18,7 @@ export default function EventDrawerRefactor({
 	roomId,
 	children,
 }: {
-	creationDate?: Date;
+	creationDate: Date;
 	event?: IEvent;
 	userId?: string;
 	roomId?: number;

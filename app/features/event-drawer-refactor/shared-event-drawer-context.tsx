@@ -3,7 +3,7 @@ import { createContext, useContext, useRef, useState, useCallback, useMemo } fro
 import { IEvent } from "@/lib/schemas/calendar";
 import EventDrawerRefactor from "./event-drawer-root";
 
-export type EventDrawerPayload = { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number };
+export type EventDrawerPayload = { creationDate: Date; event?: IEvent; userId?: string; roomId?: number };
 
 // Shared drawer context to avoid mounting many drawers — mount a single EventDrawer
 const SharedDrawerContext = createContext<{
@@ -31,15 +31,21 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
 		<SharedDrawerContext.Provider value={ctxValue}>
 			{children}
 			{/* Offscreen trigger wrapped by the single EventDrawer instance */}
-
-			<EventDrawerRefactor {...payload}>
-				<button
-					ref={triggerRef}
-					aria-hidden
-					tabIndex={-1}
-					onClick={e => e.stopPropagation()}
-				/>
-			</EventDrawerRefactor>
+			{payload && (
+				<EventDrawerRefactor
+					creationDate={payload.creationDate}
+					event={payload?.event}
+					userId={payload?.userId}
+					roomId={payload?.roomId}
+				>
+					<button
+						ref={triggerRef}
+						aria-hidden
+						tabIndex={-1}
+						onClick={e => e.stopPropagation()}
+					/>
+				</EventDrawerRefactor>
+			)}
 		</SharedDrawerContext.Provider>
 	);
 }

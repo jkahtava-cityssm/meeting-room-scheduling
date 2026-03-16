@@ -7,47 +7,48 @@ import { Label } from "../ui/label";
 import { TimeInterval } from "../calendar-time-picker/useTimePicker";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type Ctx = {
-  startDate: Date;
-  endDate: Date;
-  minHour: number;
-  maxHour: number;
-  minuteInterval: TimeInterval;
-  preserveDuration: boolean;
-  clampEndToStart: boolean;
-  // Updaters expose the shared logic
-  setStart: (next: Date) => void;
-  setEnd: (next: Date) => void;
+	startDate: Date;
+	endDate: Date;
+	minHour: number;
+	maxHour: number;
+	minuteInterval: TimeInterval;
+	preserveDuration: boolean;
+	clampEndToStart: boolean;
+	// Updaters expose the shared logic
+	setStart: (next: Date) => void;
+	setEnd: (next: Date) => void;
 };
 
 const StartEndCtx = createContext<Ctx | null>(null);
 const useStartEnd = () => {
-  const ctx = useContext(StartEndCtx);
-  if (!ctx) throw new Error("Must be used within <StartEndDateTimeProvider/>");
-  return ctx;
+	const ctx = useContext(StartEndCtx);
+	if (!ctx) throw new Error("Must be used within <StartEndDateTimeProvider/>");
+	return ctx;
 };
 
 // Utility: apply the time from oldDate onto newDate (keeps hours/minutes)
 const mergeTime = (newDate: Date, oldDate: Date) => {
-  const merged = new Date(newDate);
-  merged.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
-  return merged;
+	const merged = new Date(newDate);
+	merged.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
+	return merged;
 };
 
 type RootProps = {
-  startDate: Date;
-  endDate: Date;
-  onChange: (start: Date, end: Date) => void;
-  minHour: number;
-  maxHour: number;
-  minuteInterval: TimeInterval;
-  /** Keep the end time offset equal to the original duration when start changes */
-  preserveDuration?: boolean;
-  /** Prevent end from going earlier than start */
-  clampEndToStart?: boolean;
-  isDisabled?: boolean;
-  children: React.ReactNode;
+	startDate: Date;
+	endDate: Date;
+	onChange: (start: Date, end: Date) => void;
+	minHour: number;
+	maxHour: number;
+	minuteInterval: TimeInterval;
+	/** Keep the end time offset equal to the original duration when start changes */
+	preserveDuration?: boolean;
+	/** Prevent end from going earlier than start */
+	clampEndToStart?: boolean;
+	isDisabled?: boolean;
+	children: React.ReactNode;
 };
 
 /**
@@ -55,174 +56,189 @@ type RootProps = {
  * No extra DOM wrapper—so you can place the two FormField blocks anywhere beneath it.
  */
 export function StartEndDateTimeProvider({
-  startDate,
-  endDate,
-  onChange,
-  minHour,
-  maxHour,
-  minuteInterval,
-  preserveDuration = false,
-  clampEndToStart = false,
-  isDisabled = false,
-  children,
+	startDate,
+	endDate,
+	onChange,
+	minHour,
+	maxHour,
+	minuteInterval,
+	preserveDuration = false,
+	clampEndToStart = false,
+	isDisabled = false,
+	children,
 }: RootProps) {
-  const value = useMemo<Ctx>(() => {
-    const setStart = (next: Date) => {
-      const newStart = next;
-      let newEnd = endDate;
+	const value = useMemo<Ctx>(() => {
+		const setStart = (next: Date) => {
+			const newStart = next;
+			let newEnd = endDate;
 
-      if (preserveDuration) {
-        const duration = endDate.getTime() - startDate.getTime();
-        newEnd = new Date(newStart.getTime() + Math.max(0, duration));
-      }
+			if (preserveDuration) {
+				const duration = endDate.getTime() - startDate.getTime();
+				newEnd = new Date(newStart.getTime() + Math.max(0, duration));
+			}
 
-      if (clampEndToStart && newEnd.getTime() < newStart.getTime()) {
-        newEnd = newStart;
-      }
+			if (clampEndToStart && newEnd.getTime() < newStart.getTime()) {
+				newEnd = newStart;
+			}
 
-      onChange(newStart, newEnd);
-    };
+			onChange(newStart, newEnd);
+		};
 
-    const setEnd = (next: Date) => {
-      let newEnd = next;
-      if (clampEndToStart && newEnd.getTime() < startDate.getTime()) {
-        newEnd = startDate;
-      }
-      onChange(startDate, newEnd);
-    };
+		const setEnd = (next: Date) => {
+			let newEnd = next;
+			if (clampEndToStart && newEnd.getTime() < startDate.getTime()) {
+				newEnd = startDate;
+			}
+			onChange(startDate, newEnd);
+		};
 
-    return {
-      startDate,
-      endDate,
-      minHour,
-      maxHour,
-      minuteInterval,
-      preserveDuration,
-      clampEndToStart,
-      setStart,
-      setEnd,
-    };
-  }, [startDate, endDate, onChange, minHour, maxHour, minuteInterval, preserveDuration, clampEndToStart]);
+		return {
+			startDate,
+			endDate,
+			minHour,
+			maxHour,
+			minuteInterval,
+			preserveDuration,
+			clampEndToStart,
+			setStart,
+			setEnd,
+		};
+	}, [startDate, endDate, onChange, minHour, maxHour, minuteInterval, preserveDuration, clampEndToStart]);
 
-  return <StartEndCtx.Provider value={value}>{children}</StartEndCtx.Provider>;
+	return <StartEndCtx.Provider value={value}>{children}</StartEndCtx.Provider>;
 }
 
 type LeafProps = {
-  invalid?: boolean;
-  isDisabled?: boolean;
-  className?: string;
-  label?: string;
+	invalid?: boolean;
+	isDisabled?: boolean;
+	className?: string;
+	label?: string;
 };
 
 function StartDatePicker({ invalid, isDisabled, className, label = "Start Date" }: LeafProps) {
-  const { startDate, endDate, setStart } = useStartEnd();
-  return (
-    <div className="flex flex-col gap-2">
-      <Label id="start-date-label" data-error={invalid ? "data-invalid" : ""}>
-        {label}
-      </Label>
-      <CalendarDayPopover
-        id={`StartDatePicker`}
-        aria-labelledby="start-date-label"
-        disabled={isDisabled}
-        value={startDate}
-        onSelect={(selectedDate) => {
-          if (selectedDate) {
-            setStart(mergeTime(selectedDate, startDate));
-          }
-        }}
-        className={cn("min-w-52", className)}
-        data-invalid={invalid ? "data-invalid" : ""}
-        placeholder={""}
-      />
-    </div>
-  );
+	const { startDate, endDate, setStart } = useStartEnd();
+	return (
+		<div className="flex flex-col gap-2">
+			<Label
+				id="start-date-label"
+				data-error={invalid ? "data-invalid" : ""}
+			>
+				{label}
+			</Label>
+			<CalendarDayPopover
+				id={`StartDatePicker`}
+				aria-labelledby="start-date-label"
+				disabled={isDisabled}
+				value={startDate}
+				onSelect={selectedDate => {
+					if (selectedDate) {
+						setStart(mergeTime(selectedDate, startDate));
+					}
+				}}
+				className={cn("min-w-52", className)}
+				data-invalid={invalid ? "data-invalid" : ""}
+				placeholder={""}
+			/>
+		</div>
+	);
 }
 
 function StartTimePicker({ invalid, isDisabled, className }: LeafProps) {
-  const { startDate, endDate, minHour, maxHour, minuteInterval, setStart } = useStartEnd();
-  return (
-    <TimePicker
-      id="start"
-      currentDate={startDate}
-      isInvalid={!!invalid}
-      isDisabled={isDisabled}
-      minHour={minHour}
-      maxHour={maxHour}
-      minuteInterval={minuteInterval}
-      setDate={(next) => setStart(next)}
-      className={cn(className)}
-    />
-  );
+	const { startDate, endDate, minHour, maxHour, minuteInterval, setStart } = useStartEnd();
+	return (
+		<TimePicker
+			id="start"
+			currentDate={startDate}
+			isInvalid={!!invalid}
+			isDisabled={isDisabled}
+			minHour={minHour}
+			maxHour={maxHour}
+			minuteInterval={minuteInterval}
+			setDate={next => setStart(next)}
+			className={cn(className)}
+		/>
+	);
 }
 
 function EndDatePicker({ invalid, isDisabled, className, label = "End Date" }: LeafProps) {
-  const { startDate, endDate, setEnd } = useStartEnd();
-  return (
-    <div className="flex flex-col gap-2">
-      <Label id="end-date-label" data-error={invalid ? "data-invalid" : ""}>
-        {label}
-      </Label>
-      <CalendarDayPopover
-        id={`EndDatePicker`}
-        aria-labelledby="end-date-label"
-        disabled={isDisabled}
-        value={endDate}
-        onSelect={(selectedDate) => {
-          if (selectedDate) {
-            setEnd(mergeTime(selectedDate, endDate));
-          }
-        }}
-        disableDays={{ before: startDate }}
-        className={cn("min-w-52", className)}
-        data-invalid={invalid ? "data-invalid" : ""}
-        placeholder={""}
-      />
-    </div>
-  );
+	const { startDate, endDate, setEnd } = useStartEnd();
+	return (
+		<div className="flex flex-col gap-2">
+			<Label
+				id="end-date-label"
+				data-error={invalid ? "data-invalid" : ""}
+			>
+				{label}
+			</Label>
+			<CalendarDayPopover
+				id={`EndDatePicker`}
+				aria-labelledby="end-date-label"
+				disabled={isDisabled}
+				value={endDate}
+				onSelect={selectedDate => {
+					if (selectedDate) {
+						setEnd(mergeTime(selectedDate, endDate));
+					}
+				}}
+				disableDays={{ before: startDate }}
+				className={cn("min-w-52", className)}
+				data-invalid={invalid ? "data-invalid" : ""}
+				placeholder={""}
+			/>
+		</div>
+	);
 }
 
 function EndTimePicker({ invalid, isDisabled, className }: LeafProps) {
-  const { endDate, minHour, maxHour, minuteInterval, setEnd } = useStartEnd();
-  return (
-    <TimePicker
-      id="end"
-      currentDate={endDate}
-      isInvalid={!!invalid}
-      isDisabled={isDisabled}
-      minHour={minHour}
-      maxHour={maxHour}
-      minuteInterval={minuteInterval}
-      setDate={(next) => setEnd(next)}
-      className={cn(className)}
-    />
-  );
+	const { endDate, minHour, maxHour, minuteInterval, setEnd } = useStartEnd();
+	return (
+		<TimePicker
+			id="end"
+			currentDate={endDate}
+			isInvalid={!!invalid}
+			isDisabled={isDisabled}
+			minHour={minHour}
+			maxHour={maxHour}
+			minuteInterval={minuteInterval}
+			setDate={next => setEnd(next)}
+			className={cn(className)}
+		/>
+	);
 }
 
 function NoDataPlaceholder({
-  invalid,
-  isDisabled,
-  className,
-  label = "Label Name",
-  message = "No Data",
-}: LeafProps & { message: string }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <Label id="no-data-label" data-error={invalid ? "data-invalid" : ""}>
-        {label}
-      </Label>
-      <Button
-        variant={"outline"}
-        id={`NoDataPlaceholder`}
-        aria-labelledby="no-date-label"
-        disabled={isDisabled}
-        className={cn("min-w-52 justify-start font-normal", className)}
-        data-invalid={invalid ? "data-invalid" : ""}
-      >
-        {message}
-      </Button>
-    </div>
-  );
+	invalid,
+	isDisabled,
+	className,
+	label = "Label Name",
+	message = "No Data",
+	date,
+}: LeafProps & { message: string; date: string }) {
+	return (
+		<div className="flex flex-col gap-2">
+			<Label
+				id="no-data-label"
+				data-error={invalid ? "data-invalid" : ""}
+			>
+				{label}
+			</Label>
+			<Tooltip delayDuration={500}>
+				<TooltipTrigger asChild>
+					<Button
+						id={`NoDataPlaceholder`}
+						variant="outline"
+						className={cn(
+							"group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit disabled:opacity-75",
+							className,
+						)}
+					>
+						{date}
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent>{message}</TooltipContent>
+			</Tooltip>
+		</div>
+	);
 }
 
 /** Attach leaves for the compound API */
