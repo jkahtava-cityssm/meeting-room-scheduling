@@ -20,7 +20,8 @@ import { GenericError } from "../../../../components/shared/generic-error";
 
 export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date: Date; userId?: string; isSidebarOpen?: boolean }) {
 	const { can } = CalendarPermissions.usePermissions();
-	const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
+	const { interval, visibleHours, fallbackHours, visibleRooms, selectedRoomId, configurationError, roomError, setIsHeaderLoading, setTotalEvents } =
+		usePrivateCalendar();
 
 	const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map(room => room.roomId.toString()) : []), [visibleRooms]);
 
@@ -57,8 +58,8 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 
 	const isMounting = !visibleRooms || !result;
 
-	if (error) {
-		return <GenericError error={error} />;
+	if (error || configurationError || roomError) {
+		return <GenericError error={error || configurationError || roomError} />;
 	}
 
 	return (
@@ -68,7 +69,7 @@ export function CalendarDayView({ date, userId, isSidebarOpen = false }: { date:
 					<>
 						<DayViewDayHeader currentDate={date} />
 						<CalendarScrollContainerSkeleton
-							hours={defaultHours}
+							hours={fallbackHours}
 							totalColumns={visibleRooms ? visibleRooms.length : 10}
 						/>
 					</>

@@ -226,5 +226,8 @@ export const useMultiStepFormLogic = (props: {
 		previousStep,
 		previousStepHasError: navigationStatus.prevError,
 		nextStepHasError: navigationStatus.nextError,
+		minHour: config ? config.hours.from : 0,
+		maxHour: config ? config.hours.to : 23,
+		interval: config ? config.interval : 30,
 	};
 };

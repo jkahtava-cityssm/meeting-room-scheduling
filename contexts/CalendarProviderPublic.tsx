@@ -35,8 +35,8 @@ export function CalendarProviderPublic({ children }: { children: React.ReactNode
 	const visibleHours = configurationData ? configurationData.hours : undefined;
 	const interval = configurationData ? configurationData.interval : 30;
 
-	const totalFallbackHours = visibleHours ? visibleHours.to - visibleHours.from : 24;
-	const minFallBackHour = visibleHours ? visibleHours.from : 1;
+	const totalFallbackHours = visibleHours ? visibleHours.to - visibleHours.from + 1 : 23;
+	const minFallBackHour = visibleHours ? visibleHours.from : 0;
 
 	const fallbackHours = Array.from({ length: totalFallbackHours }, (_, i) => i + minFallBackHour);
 

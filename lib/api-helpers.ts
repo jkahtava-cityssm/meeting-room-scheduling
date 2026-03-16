@@ -90,13 +90,13 @@ export async function VerifyToken(token: string): Promise<{ message: string; dat
 }
 
 export function validateVisibleHours(visibleHoursStart?: number, visibleHoursEnd?: number) {
-	if (!visibleHoursStart || !visibleHoursEnd || visibleHoursStart >= visibleHoursEnd || visibleHoursStart <= 0 || visibleHoursEnd > 24) {
+	if (!visibleHoursStart || !visibleHoursEnd || visibleHoursStart >= visibleHoursEnd || visibleHoursStart < 0 || visibleHoursEnd > 23) {
 		console.log(
 			`Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
-				`Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`,
+				`Start Hour must be less than End Hour, start >= 0, and end < 23. Defaulting to start=1 and end=23.`,
 		);
-		visibleHoursStart = 1;
-		visibleHoursEnd = 24;
+		visibleHoursStart = 0;
+		visibleHoursEnd = 23;
 	}
 
 	return { visibleHoursStart, visibleHoursEnd };

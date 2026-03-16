@@ -32,7 +32,7 @@ import type { TCalendarView, TVisibleHours } from "@/lib/types";
 
 import { IEvent } from "./schemas/calendar";
 
-export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 24 };
+export const VISIBLE_HOURS: TVisibleHours = { from: 0, to: 23 };
 export const MAX_VISIBLE_EVENTS = 5;
 
 // ================ Header helper functions ================ //
@@ -160,7 +160,7 @@ export function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IE
 		if (endHour > latestEventHour) latestEventHour = endHour;
 	});
 
-	latestEventHour = Math.min(latestEventHour, 24);
+	latestEventHour = Math.min(latestEventHour, 23);
 
 	const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
