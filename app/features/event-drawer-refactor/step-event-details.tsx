@@ -30,10 +30,14 @@ import { StartEndDateTimeProvider } from "@/components/calendar-start-end-dateti
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { LucideLock } from "lucide-react";
+import { useMultiStepForm } from "./multi-step-form-shell";
+import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
+	const { minHour, maxHour, interval } = useMultiStepForm();
 	const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
 	const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
@@ -161,6 +165,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 									className="cursor-not-allowed"
 								>
 									Recurring
+									<LucideLock className="stroke-muted-foreground" />
 								</StaticTabsTrigger>
 							</TooltipTrigger>
 							<TooltipContent>You do not have the permission to create Recurring Events</TooltipContent>
@@ -227,9 +232,9 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 				startDate={startDate}
 				endDate={endDate}
 				onChange={handleStartEndDateTimeChange}
-				minHour={0}
-				maxHour={23}
-				minuteInterval={15}
+				minHour={restrictHours ? minHour : 0}
+				maxHour={restrictHours ? maxHour : 23}
+				minuteInterval={interval as TimeInterval}
 				preserveDuration={true}
 				clampEndToStart={true}
 			>
