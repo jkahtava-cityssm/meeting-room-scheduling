@@ -6,8 +6,9 @@ import { TimePicker } from "../calendar-time-picker/TimePicker";
 import { Label } from "../ui/label";
 import { TimeInterval } from "../calendar-time-picker/useTimePicker";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
+import { Button, buttonVariants } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { LucideLock } from "lucide-react";
 
 type Ctx = {
 	startDate: Date;
@@ -224,16 +225,18 @@ function NoDataPlaceholder({
 			</Label>
 			<Tooltip delayDuration={500}>
 				<TooltipTrigger asChild>
-					<Button
+					<div
 						id={`NoDataPlaceholder`}
-						variant="outline"
 						className={cn(
-							"group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit disabled:opacity-75",
+							buttonVariants({ variant: "outline" }),
+							"bg-accent/50 hover:bg-accent/50",
+							"group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal  disabled:opacity-75 justify-between",
 							className,
 						)}
 					>
 						{date}
-					</Button>
+						<LucideLock className="stroke-muted-foreground" />
+					</div>
 				</TooltipTrigger>
 				<TooltipContent>{message}</TooltipContent>
 			</Tooltip>
