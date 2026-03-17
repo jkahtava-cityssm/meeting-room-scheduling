@@ -608,9 +608,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       onValueChange([]);
     };
 
-    const handleTogglePopover = () => {
+    const handleTogglePopover = (value: boolean) => {
       if (disabled) return;
-      setIsPopoverOpen((prev) => !prev);
+
+      if (value) {
+        setSearchValue("");
+      }
+
+      setIsPopoverOpen(value);
     };
 
     const clearExtraOptions = () => {
@@ -659,12 +664,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     };
 
     const widthConstraints = getWidthConstraints();
-
-    React.useEffect(() => {
-      if (!isPopoverOpen) {
-        setSearchValue("");
-      }
-    }, [isPopoverOpen]);
 
     React.useEffect(() => {
       const selectedCount = selectedValues.length;
@@ -723,7 +722,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
           </div>
         </div>
 
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal={modalPopover}>
+        <Popover open={isPopoverOpen} onOpenChange={handleTogglePopover} modal={modalPopover}>
           <div id={triggerDescriptionId} className="sr-only">
             Multi-select dropdown. Use arrow keys to navigate, Enter to select, and Escape to close.
           </div>
@@ -741,7 +740,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               variant="combobox"
               ref={buttonRef}
               {...props}
-              onClick={handleTogglePopover}
+              //onClick={handleTogglePopover}
               disabled={disabled}
               role="combobox"
               aria-expanded={isPopoverOpen}
@@ -752,7 +751,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                 getAllOptions().length
               } options selected. ${placeholder}`}
               className={cn(
-                "flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
+                "flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit", // [&_svg]:pointer-events-auto
                 autoSize ? "w-auto" : "w-full",
                 responsiveSettings.compactMode && "min-h-8 text-sm",
                 screenSize === "mobile" && "min-h-12 text-base",
@@ -930,11 +929,16 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     </div>
                     {!disabled && <Separator orientation="vertical" className="flex min-h-6 h-full" />}
                     {!disabled && (
-                      <ChevronDown
-                        aria-readonly={disabled}
-                        className="h-4 mx-2 cursor-pointer text-muted-foreground aria-readonly:cursor-auto"
+                      <div
+                        className="cursor-pointer aria-readonly:cursor-auto"
                         aria-hidden="true"
-                      />
+                        aria-readonly={disabled}
+                      >
+                        <ChevronDown
+                          className="h-4 mx-2 pointer-events-none text-muted-foreground "
+                          aria-hidden="true"
+                        />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -968,10 +972,17 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     <span className="text-sm font-normal text-muted-foreground mx-3">{placeholder}</span>
                   </div>
                   {!disabled && (
-                    <ChevronDown
+                    <div
+                      className="cursor-pointer aria-readonly:cursor-auto"
+                      aria-hidden="true"
                       aria-readonly={disabled}
-                      className="h-4 cursor-pointer text-muted-foreground mx-2 aria-readonly:cursor-auto"
-                    />
+                    >
+                      <ChevronDown
+                        aria-readonly={disabled}
+                        className="h-4 text-muted-foreground mx-2  pointer-events-none"
+                        aria-hidden="true"
+                      />
+                    </div>
                   )}
                 </div>
               )}
