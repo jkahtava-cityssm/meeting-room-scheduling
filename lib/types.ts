@@ -57,13 +57,69 @@ export type TRecurrencePattern =
 export const CONFIGURATION_KEYS = [
   "visibleHoursStart",
   "visibleHoursEnd",
-  "timeSlotIntervalMinutes",
+  "timeSlotInterval",
   "singleSignOnEnabled",
   "defaultUserRole",
   "maxBookingSpan",
 ] as const;
 
-export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
+//export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
+
+export const CONFIG_MANIFEST = [
+  {
+    key: "visibleHoursStart",
+    name: "Earliest Visible Hour",
+    description: "The earliest hour that is visible in the calendar view.",
+    defaultValue: 8,
+    type: "number",
+  },
+
+  {
+    key: "visibleHoursEnd",
+    name: "Latest Visible Hour",
+    description: "The latest hour that is visible in the calendar view.",
+    defaultValue: 8,
+    type: "number",
+  },
+  {
+    key: "timeSlotInterval",
+    name: "Event Time Slots",
+    description: "The time interval (in minutes) for each event slot in the calendar view.",
+    defaultValue: 30,
+    type: "number",
+  },
+  {
+    key: "singleSignOnEnabled",
+    name: "Single Sign On",
+    description: "Whether Single Sign On is enabled for the application.",
+    defaultValue: false,
+    type: "boolean",
+  },
+  {
+    key: "defaultUserRole",
+    name: "Default Role",
+    description: "The default role assigned to new users.",
+    defaultValue: -1,
+    type: "number",
+  },
+  {
+    key: "maxBookingSpan",
+    name: "Max Booking Span",
+    description: "0 = no limit, determines the maximum number in the future a user can create events",
+    defaultValue: 30,
+    type: "number",
+  },
+] as const;
+
+export type TConfigurationKeys = (typeof CONFIG_MANIFEST)[number]["key"];
+
+export type TConfigurationRecord = {
+  [K in (typeof CONFIG_MANIFEST)[number] as K["key"]]: K["type"] extends "number"
+    ? number
+    : K["type"] extends "boolean"
+      ? boolean
+      : string;
+};
 
 /**
  * Default Roles, Resources, Actions, and Permission Sets
@@ -85,8 +141,8 @@ export const DEFAULT_RESOURCE_ACTIONS = [
       "Change Assigned",
       "Allow Recurrence",
       "Allow Multi-Day",
-      "Allow Booking Outside Visible Hours",
-      "Has Booking Span Limit",
+      "Limit to Visible Hours",
+      "Limit to Booking Span",
     ],
   },
   {
@@ -145,7 +201,6 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
           "Change Assigned",
           "Allow Recurrence",
           "Allow Multi-Day",
-          "Allow Booking Outside Visible Hours",
         ],
       },
       { RESOURCE: "Room", ACTIONS: ["Read", "Create", "Update", "Delete", "View Hidden"] },
@@ -161,7 +216,10 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
   {
     ROLE: "User",
     SET: [
-      { RESOURCE: "Event", ACTIONS: ["Read Self", "Create", "Update"] },
+      {
+        RESOURCE: "Event",
+        ACTIONS: ["Read Self", "Create", "Update", "Limit to Visible Hours", "Limit to Booking Span"],
+      },
       { RESOURCE: "Room", ACTIONS: ["Read"] },
       { RESOURCE: "User", ACTIONS: ["Read Self"] },
       { RESOURCE: "Calendar", ACTIONS: [] },

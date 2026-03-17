@@ -28,7 +28,7 @@ import { ItemMultiSelect } from "./item-multiselect";
 
 import { StartEndDateTimeProvider } from "@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider";
 import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { LucideLock } from "lucide-react";
 import { useMultiStepForm } from "./multi-step-form-shell";
@@ -39,7 +39,7 @@ import { buttonVariants } from "@/components/ui/button";
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
-  const { minHour, maxHour, interval } = useMultiStepForm();
+  const { minHour, maxHour, interval, maxSpan } = useMultiStepForm();
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
   const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
@@ -47,7 +47,8 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
   const disableChangeUser = !can("ChangeEventUser");
   const enableMultiDay = can("ToggleMultiDay");
   const allowRecurrence = can("ToggleRecurrence");
-  const restrictHours = !can("AllowOutsideHours");
+  const restrictHours = can("LimitHours");
+  const restrictBookingSpan = can("LimitBookingSpan");
 
   const endDatePickerRef = useRef<DateTimePickerRef>(null);
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
@@ -252,7 +253,11 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           render={({ fieldState }) => (
             <FormItem className="col-span-2 row-3 grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
-                <StartEndDateTimeProvider.StartDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
+                <StartEndDateTimeProvider.StartDate
+                  invalid={!!fieldState.error}
+                  isDisabled={isReadOnly}
+                  maxFutureDate={restrictBookingSpan ? addDays(new Date(), maxSpan) : undefined}
+                />
               </div>
               <div className="flex flex-col gap-2 items-center">
                 <StartEndDateTimeProvider.StartTime invalid={!!fieldState.error} isDisabled={isReadOnly} />
@@ -269,7 +274,11 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
             <FormItem className="col-span-2 row-4 grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-2">
                 {showEndDate ? (
-                  <StartEndDateTimeProvider.EndDate invalid={!!fieldState.error} isDisabled={isReadOnly} />
+                  <StartEndDateTimeProvider.EndDate
+                    invalid={!!fieldState.error}
+                    isDisabled={isReadOnly}
+                    maxFutureDate={restrictBookingSpan ? addDays(new Date(), maxSpan) : undefined}
+                  />
                 ) : (
                   <StartEndDateTimeProvider.NoDataPlaceholder
                     invalid={!!fieldState.error}

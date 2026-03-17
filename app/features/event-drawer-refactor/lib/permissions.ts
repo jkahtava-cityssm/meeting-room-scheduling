@@ -11,7 +11,8 @@ const PAGE_PERMISSIONS = {
   ChangeEventUser: { type: "permission", resource: "Event", action: "Change Assigned" },
   ToggleRecurrence: { type: "permission", resource: "Event", action: "Allow Recurrence" },
   ToggleMultiDay: { type: "permission", resource: "Event", action: "Allow Multi-Day" },
-  AllowOutsideHours: { type: "permission", resource: "Event", action: "Allow Booking Outside Visible Hours" },
+  LimitHours: { type: "permission", resource: "Event", action: "Limit to Visible Hours" },
+  LimitBookingSpan: { type: "permission", resource: "Event", action: "Limit to Booking Span" },
 } as const satisfies GroupedPermissionRequirement;
 
 export const EventDrawerPermissions = createSecurityContext(PAGE_PERMISSIONS);

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchGET, fetchPOST, fetchPUT } from "../fetch";
 import z from "zod/v4";
 
-import { TConfigurationKeys } from "../types";
+import { CONFIG_MANIFEST, TConfigurationKeys, TConfigurationRecord } from "../types";
 import { SConfigurationEntry } from "../data/configuration";
 import { QueryError } from "@/contexts/ReactQueryProvider";
 import { queryKeys } from "./querykeys";
@@ -15,10 +15,36 @@ export const useConfigurationQuery = (keys?: TConfigurationKeys[], enabled: bool
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid configuration data", "useEventQuery", parsedResult.error);
+        throw new QueryError("Invalid configuration data", "useConfigurationQuery", parsedResult.error);
       }
 
       return parsedResult.data;
+    },
+    enabled: enabled,
+  });
+};
+
+export const usePrivateConfigurationQuery = (keys?: TConfigurationKeys[], enabled: boolean = true) => {
+  return useQuery({
+    queryKey: queryKeys.configuration.filtered(keys),
+    queryFn: async () => {
+      const result = await fetchGET("/api/configuration", keys ? { keys: keys } : undefined);
+      const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
+
+      if (!parsedResult.success) {
+        throw new QueryError("Invalid configuration data", "usePrivateConfigurationQuery", parsedResult.error);
+      }
+
+      const defaults = Object.fromEntries(CONFIG_MANIFEST.map((m) => [m.key, m.defaultValue])) as TConfigurationRecord;
+
+      const overrides = Object.fromEntries(parsedResult.data.map((entry) => [entry.key, entry.value]));
+
+      const configMap: TConfigurationRecord = {
+        ...defaults,
+        ...overrides,
+      };
+
+      return configMap;
     },
     enabled: enabled,
   });
