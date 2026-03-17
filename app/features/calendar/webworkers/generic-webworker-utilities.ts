@@ -12,6 +12,7 @@ import {
 	endOfYear,
 	format,
 	getDaysInMonth,
+	isEqual,
 	isSameDay,
 	isSameMonth,
 	isSunday,
@@ -588,6 +589,17 @@ function calculateEventBlockStyle(
 	return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
 }
 
+function isSingleAllDayEvent(startDate: Date, endDate: Date): boolean {
+	// 1. Check if both dates are exactly at Midnight (00:00:00.000)
+	const isStartAtMidnight = startDate.getTime() === startOfDay(startDate).getTime();
+	const isEndAtMidnight = endDate.getTime() === startOfDay(endDate).getTime();
+
+	// 2. Check if the span is exactly 24 hours
+	const is24Hours = endDate.getTime() - startDate.getTime() === 24 * 60 * 60 * 1000;
+
+	return isStartAtMidnight && isEndAtMidnight && is24Hours;
+}
+
 export function generateMultiDayEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date, minStartTime: number, maxEndTime: number) {
 	const eventList: IEvent[] = [];
 
@@ -596,6 +608,13 @@ export function generateMultiDayEventsInPeriod(events: IEvent[], periodStart: Da
 
 		const currentStartDate = event.startDate;
 		const currentEndDate = event.endDate;
+
+		if (isSingleAllDayEvent(new Date(currentStartDate), new Date(currentEndDate))) {
+			if (isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd })) {
+				eventList.push(event);
+			}
+			continue;
+		}
 
 		const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
 
