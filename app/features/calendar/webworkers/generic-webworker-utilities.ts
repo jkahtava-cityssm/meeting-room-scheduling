@@ -569,7 +569,7 @@ function calculateEventBlockStyle(
 
 	if (visibleHoursRange) {
 		const visibleStartMinutes = visibleHoursRange.from * 60;
-		const visibleEndMinutes = visibleHoursRange.to * 60;
+		const visibleEndMinutes = (visibleHoursRange.to + 1) * 60;
 		const visibleRangeMinutes = visibleEndMinutes - visibleStartMinutes;
 		top = ((startMinutes - visibleStartMinutes) / visibleRangeMinutes) * 100;
 	} else {
