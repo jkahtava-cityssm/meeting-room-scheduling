@@ -28,7 +28,7 @@ function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[]
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { EditConfiguration: { type: "permission", resource: "Settings", action: "Edit Configuration" } },
+    { LoggedIn: { type: "role", role: "Private" } },
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const requestedKeys = parseRequestedKeys(request);
 

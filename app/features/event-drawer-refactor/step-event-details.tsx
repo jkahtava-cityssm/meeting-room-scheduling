@@ -256,7 +256,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 <StartEndDateTimeProvider.StartDate
                   invalid={!!fieldState.error}
                   isDisabled={isReadOnly}
-                  maxFutureDate={restrictBookingSpan ? addDays(new Date(), maxSpan) : undefined}
+                  maxFutureDate={restrictBookingSpan && maxSpan > 0 ? addDays(new Date(), maxSpan) : undefined}
                 />
               </div>
               <div className="flex flex-col gap-2 items-center">
@@ -277,7 +277,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                   <StartEndDateTimeProvider.EndDate
                     invalid={!!fieldState.error}
                     isDisabled={isReadOnly}
-                    maxFutureDate={restrictBookingSpan ? addDays(new Date(), maxSpan) : undefined}
+                    maxFutureDate={restrictBookingSpan && maxSpan > 0 ? addDays(new Date(), maxSpan) : undefined}
                   />
                 ) : (
                   <StartEndDateTimeProvider.NoDataPlaceholder

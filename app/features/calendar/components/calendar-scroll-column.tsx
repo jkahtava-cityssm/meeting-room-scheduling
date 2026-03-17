@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { IEventBlock } from "../webworkers/generic-webworker";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { addDays } from "date-fns";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -28,6 +29,9 @@ export type TimeBlockRenderProps = {
   totalBlocks: number;
   blockIndex: number;
   showBottomSeparator: boolean;
+  minHour: number;
+  maxHour: number;
+  maxSpan: number;
 };
 
 export type CalendarScrollColumnProps = {
@@ -37,6 +41,9 @@ export type CalendarScrollColumnProps = {
   roomId: number | undefined;
   userId: string | undefined;
   hours: number[];
+  minHour: number;
+  maxHour: number;
+  maxSpan: number;
   eventBlocks: IEventBlock[];
   isLastColumn: boolean;
   currentDate: Date;
@@ -94,6 +101,11 @@ export function CalendarScrollColumnPrivate(
         blockIndex={p.blockIndex}
         showBottomSeparator={p.showBottomSeparator}
         createEventAllowed={can("CreateEvent")}
+        minHour={p.minHour}
+        maxHour={p.maxHour}
+        maxSpan={p.maxSpan}
+        limitToHours={can("LimitHours")}
+        limitToSpan={can("LimitBookingSpan")}
       />
     ),
     [can],
@@ -140,6 +152,9 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   title,
   interval,
   hours,
+  minHour,
+  maxHour,
+  maxSpan,
   roomId,
   userId,
   eventBlocks,
@@ -185,6 +200,9 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                       roomId,
                       userId,
                       hour,
+                      minHour,
+                      maxHour,
+                      maxSpan,
                       startMinute,
                       currentDate,
                       totalBlocks,
@@ -224,7 +242,12 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
   totalBlocks,
   blockIndex,
   createEventAllowed,
+  limitToHours,
+  limitToSpan,
   showBottomSeparator,
+  minHour,
+  maxHour,
+  maxSpan,
 }: {
   currentDate: Date;
   hour: number;
@@ -234,15 +257,34 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
   roomId: number | undefined;
   blockIndex: number;
   createEventAllowed: boolean;
+  limitToHours: boolean;
+  limitToSpan: boolean;
   showBottomSeparator?: boolean;
+  minHour: number;
+  maxHour: number;
+  maxSpan: number;
 }) {
   const creationDate = useMemo(() => getDateTime(currentDate, hour, startMinute), [currentDate, hour, startMinute]);
   const { openEventDrawer } = useSharedEventDrawer();
 
   const openDrawer = useCallback(() => {
     if (!createEventAllowed) return;
+    if (limitToHours && (creationDate.getHours() > maxHour || creationDate.getHours() < minHour)) return;
+    if (limitToSpan && creationDate.getTime() > addDays(new Date(), maxSpan).getTime()) return;
+
     openEventDrawer({ creationDate, userId, roomId });
-  }, [createEventAllowed, openEventDrawer, creationDate, userId, roomId]);
+  }, [
+    createEventAllowed,
+    limitToHours,
+    creationDate,
+    maxHour,
+    minHour,
+    limitToSpan,
+    maxSpan,
+    openEventDrawer,
+    userId,
+    roomId,
+  ]);
 
   return (
     <TimeBlockButton
