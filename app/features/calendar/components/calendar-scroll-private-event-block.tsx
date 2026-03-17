@@ -7,6 +7,7 @@ import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import { IEventBlock } from "../webworkers/generic-webworker";
 import { ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/utils";
+import { IEvent } from "@/lib/schemas/calendar";
 
 export const EventCard = cva(
   "flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
@@ -62,10 +63,29 @@ export const GridEventBlock = forwardRef<HTMLButtonElement, MonthEventBadgeProps
         <p className="truncate font-semibold">{eventBlock.event.title}</p>
       </div>
       <div className="flex items-center gap-1.5 truncate">
-        <p className="truncate">
-          {format(eventBlock.event.startDate, "h:mm a")} - {format(eventBlock.event.endDate, "h:mm a")}
-        </p>
+        <p className="truncate">{getTimeRangeLabel(eventBlock.event)}</p>
       </div>
     </button>
   );
 });
+
+const getTimeRangeLabel = (event: IEvent) => {
+  const { multiDay, startDate, endDate } = event;
+  const startStr = format(startDate, "h:mm a");
+  const endStr = format(endDate, "h:mm a");
+
+  if (!multiDay) return `${startStr} - ${endStr}`;
+
+  switch (multiDay.position) {
+    case "first":
+      return `${startStr} - 12:00 AM`;
+    case "middle":
+    case "single":
+      return "All Day";
+    case "last":
+      return `12:00 AM - ${endStr}`;
+
+    default:
+      return `${startStr} - ${endStr}`;
+  }
+};

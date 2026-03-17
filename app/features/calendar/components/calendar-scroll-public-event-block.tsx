@@ -11,6 +11,7 @@ import { cva } from "class-variance-authority";
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import { useScrollPopoverDirection } from "./use-scroll-popover-direction";
 import { IEventBlock } from "../webworkers/generic-webworker";
+import { IEvent } from "@/lib/schemas/calendar";
 
 type Props = {
   viewport: HTMLDivElement | null;
@@ -176,7 +177,7 @@ export function PublicEventBlock({ viewport, popoverLayer, eventBlock, heightInP
   const color: TColors = isApproved ? (eventBlock.event.room.color as TColors) : ("disabled" as TColors);
 
   const eventCardClasses = PublicEventCard({ color });
-  const timeRange = `${format(eventBlock.event.startDate, "h:mm a")} - ${format(eventBlock.event.endDate, "h:mm a")}`;
+  const timeRange = getTimeRangeLabel(eventBlock.event);
 
   if (!viewport || !popoverLayer) return null;
 
@@ -277,3 +278,23 @@ export function PublicEventBlock({ viewport, popoverLayer, eventBlock, heightInP
     </Popover>
   );
 }
+
+const getTimeRangeLabel = (event: IEvent) => {
+  const { multiDay, startDate, endDate } = event;
+  const startStr = format(startDate, "h:mm a");
+  const endStr = format(endDate, "h:mm a");
+
+  if (!multiDay) return `${startStr} - ${endStr}`;
+
+  switch (multiDay.position) {
+    case "first":
+      return `${startStr} - 12:00 AM`;
+    case "middle":
+    case "single":
+      return "All Day";
+    case "last":
+      return `12:00 AM - ${endStr}`;
+    default:
+      return `${startStr} - ${endStr}`;
+  }
+};

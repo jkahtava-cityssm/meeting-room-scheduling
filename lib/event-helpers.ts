@@ -46,8 +46,6 @@ export function generateMultiDayEventsInPeriod(
   minStartTime: number,
   maxEndTime: number,
 ) {
-
-
   const eventList: IEvent[] = [];
 
   for (const event of events) {
@@ -72,7 +70,7 @@ export function generateMultiDayEventsInPeriod(
 
       const newEvent = {
         ...event,
-        eventIsSplit: true,
+
         title: `Day ${dayIndex + 1} of ${totalDaysBetween + 1}` + (event.title ? " - " + event.title : ""),
       };
 
@@ -123,6 +121,6 @@ function setUTCPartsToDate(d: Date) {
     d.getUTCDate(),
     d.getUTCHours(),
     d.getUTCMinutes(),
-    d.getUTCSeconds()
+    d.getUTCSeconds(),
   );
 }

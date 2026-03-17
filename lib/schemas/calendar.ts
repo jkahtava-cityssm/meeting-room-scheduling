@@ -102,7 +102,8 @@ export const SUser = z.object({
 });
 
 export const SMultiDay = z.object({
-  position: z.enum(["first", "last", "middle"]),
+  position: z.enum(["first", "last", "middle", "single"]),
+  calculatedDate: z.string(),
 });
 
 export const SStatus = z.object({
