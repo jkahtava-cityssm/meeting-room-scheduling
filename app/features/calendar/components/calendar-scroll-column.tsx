@@ -69,7 +69,12 @@ export function CalendarScrollColumnPrivate(
           const canReadEvent = canAny("ReadAllEvent", ["ReadSelfEvent", String(eventBlock.event.userId) === userId]);
 
           if (canReadEvent) {
-            openEventDrawer({ event: eventBlock.event, userId, roomId });
+            openEventDrawer({
+              creationDate: new Date(eventBlock.event.startDate),
+              event: eventBlock.event,
+              userId,
+              roomId,
+            });
           }
         }}
       />

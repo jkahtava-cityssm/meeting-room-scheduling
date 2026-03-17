@@ -82,7 +82,7 @@ export function generateMultiDayEventsInPeriod(
           seconds: 0,
           milliseconds: 0,
         }).toISOString();
-        newEvent.multiDay = { position: "first" };
+        newEvent.multiDay = { position: "first", calculatedDate: currentStartDate };
       } else if (dayIndex === totalDaysBetween) {
         //LAST DAY
         newEvent.startDate = set(currentEndDate, {
@@ -92,7 +92,7 @@ export function generateMultiDayEventsInPeriod(
           milliseconds: 0,
         }).toISOString();
 
-        newEvent.multiDay = { position: "last" };
+        newEvent.multiDay = { position: "last", calculatedDate: currentEndDate };
       } else {
         newEvent.startDate = set(newDay, {
           hours: minStartTime,
@@ -101,7 +101,7 @@ export function generateMultiDayEventsInPeriod(
           milliseconds: 0,
         }).toISOString();
         newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }).toISOString();
-        newEvent.multiDay = { position: "middle" };
+        newEvent.multiDay = { position: "middle", calculatedDate: newDay.toISOString() };
         //MIDDLE DAY
       }
       eventList.push(newEvent);

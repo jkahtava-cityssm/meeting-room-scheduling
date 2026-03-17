@@ -47,7 +47,11 @@ export function MonthViewDayEvents({
                       onClick={(e) => {
                         // e.preventDefault();
                         if (!readEventAllowed) return;
-                        openEventDrawer({ event: record.event, userId });
+                        openEventDrawer({
+                          creationDate: new Date(record.event!.startDate),
+                          event: record.event,
+                          userId,
+                        });
                       }}
                     />
                   )}

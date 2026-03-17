@@ -134,7 +134,7 @@ export default function EventCard({
           onClick={(e) => {
             e.preventDefault();
             if (canReadEvent) {
-              openEventDrawer({ event: event });
+              openEventDrawer({ creationDate: new Date(event.startDate), event: event });
             }
           }}
         >

@@ -20,6 +20,7 @@ export const eventBadgeVariants = cva(
         first: "relative z-10 mr-0 w-[calc(100%_-_3px)] rounded-r-none border-r-0 [&>span]:mr-2.5",
         middle: "relative z-10 mx-0 w-[calc(100%_+_1px)] rounded-none border-x-0",
         last: "ml-0 rounded-l-none border-l-0",
+        single: "",
         none: "",
       },
     },
@@ -38,7 +39,7 @@ interface MonthEventBadgeProps
   eventCurrentDay?: number;
   eventTotalDays?: number;
   className?: string;
-  position?: "first" | "middle" | "last" | "none";
+  position?: "first" | "middle" | "last" | "none" | "single";
   userId?: string;
 }
 
@@ -51,7 +52,7 @@ export const MonthEventBadge = forwardRef<HTMLButtonElement, MonthEventBadgeProp
 
   if (cellDate < itemStart || cellDate > itemEnd) return null;
 
-  let position: "first" | "middle" | "last" | "none" | undefined;
+  let position: "first" | "middle" | "last" | "none" | "single" | undefined;
 
   if (propPosition) {
     position = propPosition;

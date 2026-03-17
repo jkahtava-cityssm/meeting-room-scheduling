@@ -87,7 +87,7 @@ export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: str
       className={agendaEventCardClasses}
       color={event.room.color}
       onKeyDown={handleKeyDown}
-      onClick={() => openEventDrawer({ event: event, userId: userId })}
+      onClick={() => openEventDrawer({ creationDate: new Date(event.startDate), event: event, userId: userId })}
     >
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1.5">
