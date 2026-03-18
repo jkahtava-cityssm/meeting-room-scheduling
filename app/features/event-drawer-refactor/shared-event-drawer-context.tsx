@@ -14,18 +14,16 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
 	const triggerRef = useRef<HTMLButtonElement | null>(null);
 
 	const [payload, setPayload] = useState<EventDrawerPayload | null>(null);
+	const [isOpen, setIsOpen] = useState(false);
 
 	const openEventDrawer = useCallback((payload: EventDrawerPayload) => {
-		setPayload(payload || null);
-		// click the hidden trigger to open the sheet inside EventDrawer
-		try {
-			triggerRef.current?.click();
-		} catch (e) {
-			// ignore
-		}
+		setPayload(payload);
+		setIsOpen(true);
 	}, []);
 
 	const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
+
+	const fallbackDate = useMemo(() => new Date(), []);
 
 	return (
 		<SharedDrawerContext.Provider value={ctxValue}>
@@ -33,17 +31,19 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
 			{/* Offscreen trigger wrapped by the single EventDrawer instance */}
 
 			<EventDrawerRefactor
-				creationDate={payload ? payload.creationDate : new Date()}
+				creationDate={payload ? payload.creationDate : fallbackDate}
 				event={payload?.event}
 				userId={payload?.userId}
 				roomId={payload?.roomId}
+				isOpen={isOpen}
+				onOpenChange={setIsOpen}
 			>
-				<button
+				{/*<button
 					ref={triggerRef}
 					aria-hidden
 					tabIndex={-1}
 					onClick={e => e.stopPropagation()}
-				/>
+				/>*/}
 			</EventDrawerRefactor>
 		</SharedDrawerContext.Provider>
 	);

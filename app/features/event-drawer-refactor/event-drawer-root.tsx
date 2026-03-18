@@ -6,25 +6,35 @@ import React from "react";
 import { Step1 } from "./step-event-details";
 import { Step2 } from "./step-event-recurrence";
 
-import { step1Schema, Step2Fields, step2Schema } from "./event-drawer-schema.validator";
+import { getStep1Schema, Step2Fields, step2Schema } from "./event-drawer-schema.validator";
 import { MultiStepForm } from "./multi-step-form-shell";
 import { EventDrawerPermissions } from "./lib/permissions";
 import { useSession } from "@/contexts/SessionProvider";
+import { usePrivateConfigurationQuery } from "@/lib/services/configuration";
+import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
 export default function EventDrawerRefactor({
 	creationDate,
 	event,
 	userId,
 	roomId,
-	children,
+	isOpen,
+	onOpenChange,
 }: {
 	creationDate: Date;
 	event?: IEvent;
 	userId?: string;
 	roomId?: number;
-	children: React.ReactNode;
+	isOpen: boolean;
+	onOpenChange: (value: boolean) => void;
 }) {
 	const { session } = useSession();
+	const { data: config } = usePrivateConfigurationQuery(["visibleHoursStart", "visibleHoursEnd", "timeSlotInterval", "maxBookingSpan"]);
+
+	const minHour = config?.visibleHoursStart ?? 0;
+	const maxHour = config?.visibleHoursEnd ?? 23;
+	const interval = (config?.timeSlotInterval ?? 30) as TimeInterval;
+	const maxSpan = config?.maxBookingSpan ?? 0;
 
 	const checkoutSteps: FormStep[] = [
 		{
@@ -32,8 +42,8 @@ export default function EventDrawerRefactor({
 			component: Step1,
 			icon: UserIcon,
 			position: 1,
-			validationSchema: step1Schema,
-			fields: Object.keys(step1Schema.shape) as FieldKeys[],
+			validationSchema: getStep1Schema(minHour, maxHour),
+			fields: Object.keys(getStep1Schema(minHour, maxHour).shape) as FieldKeys[],
 		},
 		{
 			title: "Step 2: Recurrence",
@@ -48,14 +58,18 @@ export default function EventDrawerRefactor({
 	return (
 		<EventDrawerPermissions.Provider session={session}>
 			<MultiStepForm
+				isOpen={isOpen} // Pass it down
+				onOpenChange={onOpenChange} // Pass it down
 				creationDate={creationDate}
 				formSteps={checkoutSteps}
 				event={event ? SEvent.parse(event) : undefined}
 				userId={userId}
 				roomId={roomId}
-			>
-				{children}
-			</MultiStepForm>
+				minHour={minHour}
+				maxHour={maxHour}
+				interval={interval}
+				maxSpan={maxSpan}
+			></MultiStepForm>
 		</EventDrawerPermissions.Provider>
 	);
 }
