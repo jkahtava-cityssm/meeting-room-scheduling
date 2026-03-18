@@ -121,7 +121,11 @@ function StartDatePicker({ invalid, isDisabled, className, label = "Start Date",
   const { startDate, endDate, setStart } = useStartEnd();
   return (
     <div className="flex flex-col gap-2">
-      <Label id="start-date-label" data-error={invalid ? "data-invalid" : ""}>
+      <Label
+        id="start-date-label"
+        data-error={invalid ? "data-invalid" : ""}
+        className={cn(invalid && "text-destructive ")}
+      >
         {label}
       </Label>
       <CalendarDayPopover
@@ -162,9 +166,14 @@ function StartTimePicker({ invalid, isDisabled, className }: LeafProps) {
 
 function EndDatePicker({ invalid, isDisabled, className, label = "End Date", maxFutureDate }: LeafProps) {
   const { startDate, endDate, setEnd } = useStartEnd();
+
   return (
     <div className="flex flex-col gap-2">
-      <Label id="end-date-label" data-error={invalid ? "data-invalid" : ""}>
+      <Label
+        id="end-date-label"
+        data-error={invalid ? "data-invalid" : ""}
+        className={cn(invalid && "text-destructive ")}
+      >
         {label}
       </Label>
       <CalendarDayPopover
@@ -213,7 +222,11 @@ function NoDataPlaceholder({
 }: LeafProps & { message: string; date: string }) {
   return (
     <div className="flex flex-col gap-2">
-      <Label id="no-data-label" data-error={invalid ? "data-invalid" : ""}>
+      <Label
+        id="no-data-label"
+        data-error={invalid ? "data-invalid" : ""}
+        className={cn(invalid && "text-destructive ")}
+      >
         {label}
       </Label>
       <Tooltip delayDuration={500}>

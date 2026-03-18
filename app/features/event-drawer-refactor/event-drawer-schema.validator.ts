@@ -1,4 +1,4 @@
-import { set } from "date-fns";
+import { format, set } from "date-fns";
 import { z } from "zod/v4";
 
 export const DURATION_OPTIONS = ["until", "forever", "count", ""] as const;
@@ -173,19 +173,28 @@ export const getStep1Schema = (min: number, max: number, restrictHours: boolean)
         return true;
       };
 
+      const getStartEnd = (date: Date, minHr: number, maxHr: number) => {
+        const startTime = set(date, { hours: minHr });
+        const endTime = set(date, { hours: maxHr });
+
+        return { startTime: format(startTime, "h aa"), endTime: format(endTime, "h aa") };
+      };
+
       if (!isTimeInRange(start, min, max)) {
+        const { startTime, endTime } = getStartEnd(start, min, max);
         ctx.addIssue({
           code: "custom",
           path: ["startDate"],
-          message: `Time must be between ${min}:00 and ${max}:00`,
+          message: `Start must be between ${startTime} and ${endTime}`,
         });
       }
 
       if (!isTimeInRange(end, min, max)) {
+        const { startTime, endTime } = getStartEnd(end, min, max);
         ctx.addIssue({
           code: "custom",
           path: ["endDate"],
-          message: `Time must be between ${min}:00 and ${max}:00`,
+          message: `End must be between ${startTime} and ${endTime}`,
         });
       }
     });

@@ -254,6 +254,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               <div className="flex flex-col gap-2">
                 <StartEndDateTimeProvider.StartDate
                   invalid={!!fieldState.error}
+                  label={fieldState.error ? fieldState.error.message : "Start Date"}
                   isDisabled={isReadOnly}
                   maxFutureDate={restrictBookingSpan && maxSpan > 0 ? addDays(new Date(), maxSpan) : undefined}
                 />
@@ -261,7 +262,6 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               <div className="flex flex-col gap-2 items-center">
                 <StartEndDateTimeProvider.StartTime invalid={!!fieldState.error} isDisabled={isReadOnly} />
               </div>
-              {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
             </FormItem>
           )}
         />
@@ -276,13 +276,14 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                   <StartEndDateTimeProvider.EndDate
                     invalid={!!fieldState.error}
                     isDisabled={isReadOnly}
+                    label={fieldState.error ? fieldState.error.message : "End Date"}
                     maxFutureDate={restrictBookingSpan && maxSpan > 0 ? addDays(new Date(), maxSpan) : undefined}
                   />
                 ) : (
                   <StartEndDateTimeProvider.NoDataPlaceholder
                     invalid={!!fieldState.error}
                     isDisabled={true}
-                    label="End Date"
+                    label={fieldState.error ? fieldState.error.message : "End Date"}
                     message={
                       !enableMultiDay
                         ? "You do not have the permission to create Multi-Day events"
@@ -298,7 +299,6 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               <div className="flex flex-col gap-2 items-center">
                 <StartEndDateTimeProvider.EndTime invalid={!!fieldState.error} isDisabled={isReadOnly} />
               </div>
-              {fieldState.error && <FormMessage>{fieldState.error.message}</FormMessage>}
             </FormItem>
           )}
         />

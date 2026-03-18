@@ -8,8 +8,8 @@ interface UseTimePickerProps {
   setDate: (date: Date) => void;
   hourInterval?: number;
   minuteInterval?: TimeInterval;
-  minHour?: number;
-  maxHour?: number;
+  minHour?: number; // 0-23
+  maxHour?: number; // 0-23
   clampDelay?: number;
   is24HourTime?: boolean;
   allowMinuteRollover?: boolean;
