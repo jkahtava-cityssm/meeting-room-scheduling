@@ -58,16 +58,19 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[],
     } else if (position === "first" && dateToProcess) {
       // Only the 'first' day of a multi-day event can shrink the minHour via its start time
       const startHour = dateToProcess.getHours();
+      const startMinutes = dateToProcess.getMinutes();
+      const visualStartHour = startHour + (startMinutes > 0 ? 1 : 0);
       if (startHour < minHour) minHour = startHour;
+      if (visualStartHour > maxHour) maxHour = visualStartHour;
     }
 
     // --- END BOUNDARY (maxHour) & STEP-BACK RULE ---
     // We process the end boundary for single-day events OR the 'last' day of multi-day
     if (!isMultiDay || position === "last") {
       const endDate = dateToProcess || new Date(event.endDate);
-      const endHourRaw = endDate.getHours();
+      const endHour = endDate.getHours();
       const endMinutes = endDate.getMinutes();
-      const visualEndHour = endHourRaw + (endMinutes > 0 ? 1 : 0);
+      const visualEndHour = endHour + (endMinutes > 0 ? 1 : 0);
 
       // 1. Expand maxHour if it ends late
       if (visualEndHour > maxHour) {
