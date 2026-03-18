@@ -16,8 +16,18 @@ import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-c
 import { GenericError } from "../../../../components/shared/generic-error";
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
-	const { interval, visibleHours, fallbackHours, visibleRooms, selectedRoomId, configurationError, roomError, setIsHeaderLoading, setTotalEvents } =
-		usePrivateCalendar();
+	const {
+		interval,
+		visibleHours,
+		maxSpan,
+		fallbackHours,
+		visibleRooms,
+		selectedRoomId,
+		configurationError,
+		roomError,
+		setIsHeaderLoading,
+		setTotalEvents,
+	} = usePrivateCalendar();
 
 	const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map(room => room.roomId.toString()) : []), [visibleRooms]);
 
@@ -98,6 +108,9 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
 										eventBlocks={day.blocks || []}
 										isLastColumn={daysToRender.length - 1 === dayIndex}
 										currentDate={parse(day.date, "yyyy-MM-dd", new Date())}
+										maxHour={visibleHours ? visibleHours.to : 23}
+										minHour={visibleHours ? visibleHours.from : 0}
+										maxSpan={maxSpan}
 									/>
 								);
 							})}

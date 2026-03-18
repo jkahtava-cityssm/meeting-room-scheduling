@@ -21,6 +21,7 @@ import { useSession } from "@/contexts/SessionProvider";
 import { EventDialog } from "./components/dialog";
 import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -30,20 +31,48 @@ export const MultiStepForm = ({
 	event,
 	userId,
 	roomId,
-	children,
+
+	isOpen,
+	onOpenChange,
+	minHour,
+	maxHour,
+	interval,
+	maxSpan,
 }: {
 	formSteps: FormStep[];
 	creationDate: Date;
 	event?: IEvent;
 	userId?: string;
 	roomId?: number;
-	children: React.ReactNode;
+	isOpen: boolean;
+	onOpenChange: (value: boolean) => void;
+	minHour: number;
+	maxHour: number;
+	interval: TimeInterval;
+	maxSpan: number;
 }) => {
+	console.log("MultiStepForm Render:", { isOpen, event, userId, roomId, creationDate });
 	const { session } = useSession();
-	const { isOpen, onClose, onOpen } = useDisclosure();
+	//const { isOpen, onClose, onOpen } = useDisclosure();
 	const originRef = useRef<HTMLElement | null>(null);
 
-	const logic = useMultiStepFormLogic({ event, roomId, creationDate, userId, formSteps, onClose, isOpen, onOpen });
+	const logic = useMultiStepFormLogic({
+		event,
+		roomId,
+		creationDate,
+		userId,
+		formSteps,
+		onClose: () => {
+			onOpenChange(false);
+		},
+		isOpen,
+		onOpen: () => {
+			onOpenChange(true);
+		},
+		interval,
+		minHour,
+		maxHour,
+	});
 
 	const handleOpenChange = (open: boolean) => {
 		if (open) {
@@ -66,7 +95,7 @@ export const MultiStepForm = ({
 			}
 
 			logic.resetForm();
-			onOpen();
+			onOpenChange(true);
 		} else {
 			if (logic.methods.formState.isDirty && logic.status !== "Read") {
 				logic.setDialogConfig({
@@ -84,7 +113,7 @@ export const MultiStepForm = ({
 				});
 			} else {
 				logic.resetForm();
-				onClose();
+				onOpenChange(false);
 			}
 		}
 	};
@@ -96,6 +125,10 @@ export const MultiStepForm = ({
 		isFirstStep: logic.currentStepIndex === 0,
 		isLastStep: logic.currentStepIndex === formSteps.length - 1 || logic.ignoreLastStep,
 		onClose: () => handleOpenChange(false),
+		interval,
+		minHour,
+		maxHour,
+		maxSpan,
 	};
 
 	return (
@@ -104,8 +137,6 @@ export const MultiStepForm = ({
 				open={isOpen}
 				onOpenChange={handleOpenChange}
 			>
-				<SheetTrigger asChild>{children}</SheetTrigger>
-
 				<SheetContent
 					onCloseAutoFocus={e => {
 						if (originRef.current) {
