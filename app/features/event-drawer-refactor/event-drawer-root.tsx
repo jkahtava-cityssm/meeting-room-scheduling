@@ -28,7 +28,6 @@ export default function EventDrawerRefactor({
   isOpen: boolean;
   onOpenChange: (value: boolean) => void;
 }) {
-  const { session } = useSession();
   const { data: config } = usePrivateConfigurationQuery([
     "visibleHoursStart",
     "visibleHoursEnd",
@@ -36,10 +35,14 @@ export default function EventDrawerRefactor({
     "maxBookingSpan",
   ]);
 
+  const { can } = EventDrawerPermissions.usePermissions();
+
   const minHour = config?.visibleHoursStart ?? 0;
   const maxHour = config?.visibleHoursEnd ?? 24;
   const interval = (config?.timeSlotInterval ?? 30) as TimeInterval;
   const maxSpan = config?.maxBookingSpan ?? 0;
+
+  const restrictHours = !can("IgnoreHours");
 
   const checkoutSteps: FormStep[] = [
     {
@@ -47,8 +50,8 @@ export default function EventDrawerRefactor({
       component: Step1,
       icon: UserIcon,
       position: 1,
-      validationSchema: getStep1Schema(minHour, maxHour),
-      fields: Object.keys(getStep1Schema(minHour, maxHour).shape) as FieldKeys[],
+      validationSchema: getStep1Schema(minHour, maxHour, restrictHours),
+      fields: Object.keys(getStep1Schema(minHour, maxHour, restrictHours).shape) as FieldKeys[],
     },
     {
       title: "Step 2: Recurrence",
@@ -61,20 +64,18 @@ export default function EventDrawerRefactor({
   ];
 
   return (
-    <EventDrawerPermissions.Provider session={session}>
-      <MultiStepForm
-        isOpen={isOpen} // Pass it down
-        onOpenChange={onOpenChange} // Pass it down
-        creationDate={creationDate}
-        formSteps={checkoutSteps}
-        event={event ? SEvent.parse(event) : undefined}
-        userId={userId}
-        roomId={roomId}
-        minHour={minHour}
-        maxHour={maxHour}
-        interval={interval}
-        maxSpan={maxSpan}
-      ></MultiStepForm>
-    </EventDrawerPermissions.Provider>
+    <MultiStepForm
+      isOpen={isOpen} // Pass it down
+      onOpenChange={onOpenChange} // Pass it down
+      creationDate={creationDate}
+      formSteps={checkoutSteps}
+      event={event ? SEvent.parse(event) : undefined}
+      userId={userId}
+      roomId={roomId}
+      minHour={minHour}
+      maxHour={maxHour}
+      interval={interval}
+      maxSpan={maxSpan}
+    ></MultiStepForm>
   );
 }

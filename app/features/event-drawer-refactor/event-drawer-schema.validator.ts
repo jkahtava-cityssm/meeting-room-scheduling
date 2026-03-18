@@ -118,7 +118,7 @@ export const step2Schema = z
     }
   });
 // --- Step 1 Schema ---
-export const getStep1Schema = (min: number, max: number) =>
+export const getStep1Schema = (min: number, max: number, restrictHours: boolean) =>
   z
     .object({
       eventId: z.string().optional(),
@@ -144,22 +144,44 @@ export const getStep1Schema = (min: number, max: number) =>
         ctx.addIssue({ code: "custom", path: ["startDate"], message: "Start Date exceeds End Date" });
       }
 
-      // Dynamic Hour Check
-      const startTime = start.getTime();
-      const minStartTime = set(start, { hours: min, minutes: 0, seconds: 0, milliseconds: 0 }).getTime();
-      const maxStartTime = set(start, { hours: max, minutes: 0, seconds: 0, milliseconds: 0 }).getTime();
+      if (!restrictHours) return;
 
-      if (startTime < minStartTime || startTime > maxStartTime) {
+      const isTimeInRange = (date: Date, minHr: number, maxHr: number) => {
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+
+        // SPECIAL CASE: Check if this is EXACTLY Midnight of the next day (24:00)
+        // We check if it's 00:00:00 and if it's technically a different day than the start
+        const isMidnight = hours === 0 && minutes === 0 && seconds === 0;
+
+        // If the user wants to allow up to 24:00, then 00:00:00 is valid
+        // (as long as it's the end of the duration, not the start of a 0-length event)
+        if (maxHr === 24 && isMidnight) {
+          return true;
+        }
+
+        // Standard check:
+        // If they pick 00:15, and min is 0, this passes.
+        // If they pick 23:15, and max is 24, this passes.
+        if (hours < minHr || hours >= maxHr) {
+          // If it's exactly the maxHr (e.g. 17:00) and minutes are 0, it's valid.
+          if (hours === maxHr && minutes === 0) return true;
+          return false;
+        }
+
+        return true;
+      };
+
+      if (!isTimeInRange(start, min, max)) {
         ctx.addIssue({
           code: "custom",
           path: ["startDate"],
           message: `Time must be between ${min}:00 and ${max}:00`,
         });
       }
-      const endTime = end.getTime();
-      const minEndTime = set(end, { hours: min, minutes: 0, seconds: 0, milliseconds: 0 }).getTime();
-      const maxEndTime = set(end, { hours: max, minutes: 0, seconds: 0, milliseconds: 0 }).getTime();
-      if (endTime < minEndTime || endTime > maxEndTime) {
+
+      if (!isTimeInRange(end, min, max)) {
         ctx.addIssue({
           code: "custom",
           path: ["endDate"],
@@ -173,7 +195,8 @@ export type DurationType = z.infer<typeof BaseRecurrence>["durationType"];
 export type Step1Schema = z.infer<ReturnType<typeof getStep1Schema>>;
 export type Step2Schema = z.infer<typeof step2Schema>;
 
-export const getCombinedSchema = (min: number, max: number) => getStep1Schema(min, max).and(step2Schema);
+export const getCombinedSchema = (min: number, max: number, restrictHours: boolean) =>
+  getStep1Schema(min, max, restrictHours).and(step2Schema);
 
 export type CombinedSchema = z.infer<ReturnType<typeof getCombinedSchema>>;
 

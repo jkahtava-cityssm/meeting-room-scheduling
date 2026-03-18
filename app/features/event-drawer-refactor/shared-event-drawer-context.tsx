@@ -2,55 +2,59 @@ import { createContext, useContext, useRef, useState, useCallback, useMemo } fro
 
 import { IEvent } from "@/lib/schemas/calendar";
 import EventDrawerRefactor from "./event-drawer-root";
+import { EventDrawerPermissions } from "./lib/permissions";
+import { useSession } from "@/contexts/SessionProvider";
 
 export type EventDrawerPayload = { creationDate: Date; event?: IEvent; userId?: string; roomId?: number };
 
 // Shared drawer context to avoid mounting many drawers — mount a single EventDrawer
 const SharedDrawerContext = createContext<{
-	openEventDrawer: (payload: EventDrawerPayload) => void;
+  openEventDrawer: (payload: EventDrawerPayload) => void;
 } | null>(null);
 
 export function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) {
-	const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-	const [payload, setPayload] = useState<EventDrawerPayload | null>(null);
-	const [isOpen, setIsOpen] = useState(false);
+  const [payload, setPayload] = useState<EventDrawerPayload | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
-	const openEventDrawer = useCallback((payload: EventDrawerPayload) => {
-		setPayload(payload);
-		setIsOpen(true);
-	}, []);
+  const openEventDrawer = useCallback((payload: EventDrawerPayload) => {
+    setPayload(payload);
+    setIsOpen(true);
+  }, []);
 
-	const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
+  const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
 
-	const fallbackDate = useMemo(() => new Date(), []);
+  const fallbackDate = useMemo(() => new Date(), []);
+  const { session } = useSession();
 
-	return (
-		<SharedDrawerContext.Provider value={ctxValue}>
-			{children}
-			{/* Offscreen trigger wrapped by the single EventDrawer instance */}
-
-			<EventDrawerRefactor
-				creationDate={payload ? payload.creationDate : fallbackDate}
-				event={payload?.event}
-				userId={payload?.userId}
-				roomId={payload?.roomId}
-				isOpen={isOpen}
-				onOpenChange={setIsOpen}
-			>
-				{/*<button
+  return (
+    <SharedDrawerContext.Provider value={ctxValue}>
+      {children}
+      {/* Offscreen trigger wrapped by the single EventDrawer instance */}
+      <EventDrawerPermissions.Provider session={session}>
+        <EventDrawerRefactor
+          creationDate={payload ? payload.creationDate : fallbackDate}
+          event={payload?.event}
+          userId={payload?.userId}
+          roomId={payload?.roomId}
+          isOpen={isOpen}
+          onOpenChange={setIsOpen}
+        >
+          {/*<button
 					ref={triggerRef}
 					aria-hidden
 					tabIndex={-1}
 					onClick={e => e.stopPropagation()}
 				/>*/}
-			</EventDrawerRefactor>
-		</SharedDrawerContext.Provider>
-	);
+        </EventDrawerRefactor>
+      </EventDrawerPermissions.Provider>
+    </SharedDrawerContext.Provider>
+  );
 }
 
 export function useSharedEventDrawer() {
-	const ctx = useContext(SharedDrawerContext);
-	if (!ctx) throw new Error("useSharedDrawer must be used within SharedEventDrawerProvider");
-	return ctx;
+  const ctx = useContext(SharedDrawerContext);
+  if (!ctx) throw new Error("useSharedDrawer must be used within SharedEventDrawerProvider");
+  return ctx;
 }
