@@ -14,62 +14,67 @@ import { usePrivateConfigurationQuery } from "@/lib/services/configuration";
 import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
 export default function EventDrawerRefactor({
-	creationDate,
-	event,
-	userId,
-	roomId,
-	isOpen,
-	onOpenChange,
+  creationDate,
+  event,
+  userId,
+  roomId,
+  isOpen,
+  onOpenChange,
 }: {
-	creationDate: Date;
-	event?: IEvent;
-	userId?: string;
-	roomId?: number;
-	isOpen: boolean;
-	onOpenChange: (value: boolean) => void;
+  creationDate: Date;
+  event?: IEvent;
+  userId?: string;
+  roomId?: number;
+  isOpen: boolean;
+  onOpenChange: (value: boolean) => void;
 }) {
-	const { session } = useSession();
-	const { data: config } = usePrivateConfigurationQuery(["visibleHoursStart", "visibleHoursEnd", "timeSlotInterval", "maxBookingSpan"]);
+  const { session } = useSession();
+  const { data: config } = usePrivateConfigurationQuery([
+    "visibleHoursStart",
+    "visibleHoursEnd",
+    "timeSlotInterval",
+    "maxBookingSpan",
+  ]);
 
-	const minHour = config?.visibleHoursStart ?? 0;
-	const maxHour = config?.visibleHoursEnd ?? 23;
-	const interval = (config?.timeSlotInterval ?? 30) as TimeInterval;
-	const maxSpan = config?.maxBookingSpan ?? 0;
+  const minHour = config?.visibleHoursStart ?? 0;
+  const maxHour = config?.visibleHoursEnd ?? 24;
+  const interval = (config?.timeSlotInterval ?? 30) as TimeInterval;
+  const maxSpan = config?.maxBookingSpan ?? 0;
 
-	const checkoutSteps: FormStep[] = [
-		{
-			title: "Step 1: Event Details",
-			component: Step1,
-			icon: UserIcon,
-			position: 1,
-			validationSchema: getStep1Schema(minHour, maxHour),
-			fields: Object.keys(getStep1Schema(minHour, maxHour).shape) as FieldKeys[],
-		},
-		{
-			title: "Step 2: Recurrence",
-			component: Step2,
-			icon: HomeIcon,
-			position: 2,
-			validationSchema: step2Schema,
-			fields: Object.keys(Step2Fields) as FieldKeys[],
-		},
-	];
+  const checkoutSteps: FormStep[] = [
+    {
+      title: "Step 1: Event Details",
+      component: Step1,
+      icon: UserIcon,
+      position: 1,
+      validationSchema: getStep1Schema(minHour, maxHour),
+      fields: Object.keys(getStep1Schema(minHour, maxHour).shape) as FieldKeys[],
+    },
+    {
+      title: "Step 2: Recurrence",
+      component: Step2,
+      icon: HomeIcon,
+      position: 2,
+      validationSchema: step2Schema,
+      fields: Object.keys(Step2Fields) as FieldKeys[],
+    },
+  ];
 
-	return (
-		<EventDrawerPermissions.Provider session={session}>
-			<MultiStepForm
-				isOpen={isOpen} // Pass it down
-				onOpenChange={onOpenChange} // Pass it down
-				creationDate={creationDate}
-				formSteps={checkoutSteps}
-				event={event ? SEvent.parse(event) : undefined}
-				userId={userId}
-				roomId={roomId}
-				minHour={minHour}
-				maxHour={maxHour}
-				interval={interval}
-				maxSpan={maxSpan}
-			></MultiStepForm>
-		</EventDrawerPermissions.Provider>
-	);
+  return (
+    <EventDrawerPermissions.Provider session={session}>
+      <MultiStepForm
+        isOpen={isOpen} // Pass it down
+        onOpenChange={onOpenChange} // Pass it down
+        creationDate={creationDate}
+        formSteps={checkoutSteps}
+        event={event ? SEvent.parse(event) : undefined}
+        userId={userId}
+        roomId={roomId}
+        minHour={minHour}
+        maxHour={maxHour}
+        interval={interval}
+        maxSpan={maxSpan}
+      ></MultiStepForm>
+    </EventDrawerPermissions.Provider>
+  );
 }

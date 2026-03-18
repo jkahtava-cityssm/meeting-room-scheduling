@@ -49,8 +49,8 @@ export function ConfigurationPage() {
           console.error("End hour must be after start hour");
           return;
         }
-        if (Number(value) > 23) {
-          console.error("End hour must be equal to or less than 23");
+        if (Number(value) > 24) {
+          console.error("End hour must be equal to or less than 24");
           return;
         }
       }

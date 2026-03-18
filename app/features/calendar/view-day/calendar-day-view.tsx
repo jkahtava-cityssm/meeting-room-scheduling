@@ -112,7 +112,7 @@ export function CalendarDayView({
                     eventBlocks={room.blocks || []}
                     isLastColumn={roomsToRender.length - 1 === roomIndex}
                     currentDate={date}
-                    maxHour={visibleHours ? visibleHours.to : 23}
+                    maxHour={visibleHours ? visibleHours.to : 24}
                     minHour={visibleHours ? visibleHours.from : 0}
                     maxSpan={maxSpan}
                   />

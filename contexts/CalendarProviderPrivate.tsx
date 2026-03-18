@@ -47,7 +47,7 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
   const interval = config ? config.timeSlotInterval : 30;
   const maxSpan = config ? config.maxBookingSpan : 0;
 
-  const totalFallbackHours = visibleHours ? visibleHours.to - visibleHours.from + 1 : 23;
+  const totalFallbackHours = visibleHours ? visibleHours.to - visibleHours.from : 24;
   const minFallBackHour = visibleHours ? visibleHours.from : 0;
 
   const fallbackHours = Array.from({ length: totalFallbackHours }, (_, i) => i + minFallBackHour);

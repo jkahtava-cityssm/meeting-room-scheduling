@@ -185,7 +185,7 @@ export function CalendarPublicView() {
                     isLastColumn={filteredRooms.length - 1 === index}
                     currentDate={dateValue}
                     minHour={visibleHours ? visibleHours.from : 0}
-                    maxHour={visibleHours ? visibleHours.to : 23}
+                    maxHour={visibleHours ? visibleHours.to : 24}
                     maxSpan={0}
                   />
                 );

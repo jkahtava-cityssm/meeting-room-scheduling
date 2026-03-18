@@ -85,13 +85,13 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[],
 
     if (isMultiDay && position === "single") {
       minHour = 0;
-      maxHour = 23;
+      maxHour = 24;
     }
   });
 
   return {
     from: Math.max(0, minHour),
-    to: Math.min(23, maxHour),
+    to: Math.min(24, maxHour),
   };
 }
 
@@ -103,7 +103,7 @@ export function transformToRoomBlocks(
   earliestEventHour: number,
   latestEventHour: number,
 ): { totalEvents: number; hours: number[]; roomBlocks: Record<string, IEventBlock[]> } {
-  const hours = Array.from({ length: latestEventHour - earliestEventHour + 1 }, (_, i) => i + earliestEventHour);
+  const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
   const groupByEvents: Record<string, IEvent[]> = {};
   const roomBlocks: Record<string, IEventBlock[]> = {};
@@ -138,7 +138,7 @@ export function transformToWeekBlocks(
   startDate: Date,
   endDate: Date,
 ) {
-  const hours = Array.from({ length: latestEventHour - earliestEventHour + 1 }, (_, i) => i + earliestEventHour);
+  const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
   const totalDays = daysBetween(endDate, startDate);
   // Step 1: Group events by date ONLY
@@ -541,9 +541,9 @@ function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IEvent[])
     if (endHour > latestEventHour) latestEventHour = endHour;
   });
 
-  latestEventHour = Math.min(latestEventHour, 23);
+  latestEventHour = Math.min(latestEventHour, 24);
 
-  const hours = Array.from({ length: latestEventHour - earliestEventHour + 1 }, (_, i) => i + earliestEventHour);
+  const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
   return { hours, earliestEventHour, latestEventHour };
 }
@@ -619,7 +619,7 @@ function calculateEventBlockStyle(
 
   if (visibleHoursRange) {
     const visibleStartMinutes = visibleHoursRange.from * 60;
-    const visibleEndMinutes = (visibleHoursRange.to + 1) * 60;
+    const visibleEndMinutes = visibleHoursRange.to * 60;
     const visibleRangeMinutes = visibleEndMinutes - visibleStartMinutes;
     top = ((startMinutes - visibleStartMinutes) / visibleRangeMinutes) * 100;
   } else {
@@ -796,7 +796,7 @@ export function setMultiDayEventBoundaries(events: IEvent[], minHour: number, ma
     switch (event.multiDay?.position) {
       case "first":
         event.endDate = set(event.multiDay.calculatedDate, {
-          hours: maxHour + 1,
+          hours: maxHour,
           minutes: 0,
           seconds: 0,
           milliseconds: 0,
@@ -810,7 +810,7 @@ export function setMultiDayEventBoundaries(events: IEvent[], minHour: number, ma
           milliseconds: 0,
         }).toISOString();
         event.endDate = set(event.multiDay.calculatedDate, {
-          hours: maxHour + 1,
+          hours: maxHour,
           minutes: 0,
           seconds: 0,
           milliseconds: 0,
