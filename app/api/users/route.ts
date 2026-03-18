@@ -16,12 +16,13 @@ export async function GET(request: NextRequest) {
     },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
-      const users = permissions.ReadAll
+      /*const users = permissions.ReadAll
         ? await findManyUsers({ employeeActive: true })
         : permissions.ReadSelf
           ? await findManyUsers({ id: sessionUserId, employeeActive: true })
-          : null;
+          : null;*/
 
+      const users = await findManyUsers({ employeeActive: true });
       if (!users) {
         return NotFoundMessage();
       }
