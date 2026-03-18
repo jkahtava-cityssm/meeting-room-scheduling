@@ -319,7 +319,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "bg-accent/50 hover:bg-accent/50",
-                  "group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal  disabled:opacity-75 justify-between",
+                  "group relative h-9 w-full whitespace-nowrap px-3 py-2 font-normal  disabled:opacity-75 justify-between",
                   "border shadow-none border-dashed ",
                 )}
                 data-invalid={fieldState.invalid}
