@@ -360,10 +360,10 @@ function validateTimeSlotInterval(interval: number): number {
 }
 
 function validateVisibleHours(visibleHoursStart: number, visibleHoursEnd: number) {
-  if (visibleHoursStart >= visibleHoursEnd || visibleHoursStart <= 0 || visibleHoursEnd > 24) {
+  if (visibleHoursStart >= visibleHoursEnd || visibleHoursStart <= 0 || visibleHoursEnd > 25) {
     console.log(
       `Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
-        `Start Hour must be less than End Hour, start >= 0, and end < 24. Defaulting to start=0 and end=24.`,
+        `Start Hour must be less than End Hour, start >= 0, and end < 25. Defaulting to start=0 and end=24.`,
     );
     visibleHoursStart = 0;
     visibleHoursEnd = 24;
