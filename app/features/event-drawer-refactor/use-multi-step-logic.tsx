@@ -22,7 +22,7 @@ import { useStepNavigation } from "./use-step-navigation";
 import { useConfigurationQuery, usePrivateConfigurationQuery } from "@/lib/services/configuration";
 import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
-function useDebugMemoChanges(values: Record<string, any>) {
+function useDebugMemoChanges(values: Record<string, unknown>) {
   const prev = useRef(values);
   useEffect(() => {
     const changes = Object.keys(values).filter((k) => prev.current[k] !== values[k]);
@@ -64,6 +64,13 @@ export const useMultiStepFormLogic = (props: {
     event: props.event,
     date: props.creationDate,
     interval: props.interval,
+    userId: props.userId,
+    roomId: props.roomId,
+    formSteps: props.formSteps,
+    isOpen: props.isOpen,
+    minHour: props.minHour,
+    maxHour: props.maxHour,
+    restrictHours: props.restrictHours,
   });
 
   const dynamicSchema = useMemo(
