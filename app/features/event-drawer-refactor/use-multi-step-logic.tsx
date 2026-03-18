@@ -22,6 +22,17 @@ import { useStepNavigation } from "./use-step-navigation";
 import { useConfigurationQuery, usePrivateConfigurationQuery } from "@/lib/services/configuration";
 import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
+function useDebugMemoChanges(values: Record<string, any>) {
+  const prev = useRef(values);
+  useEffect(() => {
+    const changes = Object.keys(values).filter((k) => prev.current[k] !== values[k]);
+    if (changes.length > 0) {
+      console.log("Values that caused defaultFormValues to re-run:", changes);
+    }
+    prev.current = values;
+  });
+}
+
 export const useMultiStepFormLogic = (props: {
   event?: IEvent;
   creationDate: Date;
@@ -48,6 +59,12 @@ export const useMultiStepFormLogic = (props: {
 
     return getFormDefaults(props.creationDate, props.userId, props.interval, props.roomId);
   }, [props.event, props.creationDate, props.userId, props.interval, props.roomId]);
+
+  useDebugMemoChanges({
+    event: props.event,
+    date: props.creationDate,
+    interval: props.interval,
+  });
 
   const dynamicSchema = useMemo(
     () => getCombinedSchema(props.minHour, props.maxHour, props.restrictHours),
@@ -91,18 +108,18 @@ export const useMultiStepFormLogic = (props: {
   );
 
   // Only reset form if eventId changes (not on every re-render)
-  const prevEventIdRef = useRef<string | undefined>(undefined);
+  //const prevEventIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (defaultFormValues.eventId === "0") {
-      methods.reset(defaultFormValues);
-      setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
-      prevEventIdRef.current = undefined;
-    } else if (prevEventIdRef.current !== defaultFormValues.eventId) {
-      methods.reset(defaultFormValues);
-      setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
-      prevEventIdRef.current = defaultFormValues.eventId;
-    }
+    //if (defaultFormValues.eventId === "0") {
+    methods.reset(defaultFormValues);
+    setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+    //prevEventIdRef.current = undefined;
+    //} else if (prevEventIdRef.current !== defaultFormValues.eventId) {
+    //  methods.reset(defaultFormValues);
+    //  setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+    //  prevEventIdRef.current = defaultFormValues.eventId;
+    //}
   }, [defaultFormValues, methods]);
 
   useEffect(() => {
@@ -119,7 +136,7 @@ export const useMultiStepFormLogic = (props: {
 
   // 4. Handlers
   const resetForm = useCallback(() => {
-    prevEventIdRef.current = undefined;
+    //prevEventIdRef.current = undefined;
     methods.reset(defaultFormValues);
     setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
     resetNavigation();

@@ -39,7 +39,7 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4 min-h-0 auto-rows-min">
+      <div className="flex gap-4 min-h-0 auto-rows-min">
         <div className="flex flex-col flex-1 gap-4 py-4 min-h-90">
           {/* DURATION SECTION */}
           <div className="flex flex-row gap-2 w-100">

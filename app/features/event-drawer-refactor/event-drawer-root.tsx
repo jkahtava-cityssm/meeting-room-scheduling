@@ -2,7 +2,7 @@ import { HomeIcon, UserIcon } from "lucide-react";
 import { FieldKeys, FormStep } from "./types";
 
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
-import React from "react";
+import React, { useMemo } from "react";
 import { Step1 } from "./step-event-details";
 import { Step2 } from "./step-event-recurrence";
 
@@ -44,32 +44,41 @@ export default function EventDrawerRefactor({
 
   const restrictHours = !can("IgnoreHours");
 
-  const checkoutSteps: FormStep[] = [
-    {
-      title: "Step 1: Event Details",
-      component: Step1,
-      icon: UserIcon,
-      position: 1,
-      validationSchema: getStep1Schema(minHour, maxHour, restrictHours),
-      fields: Object.keys(getStep1Schema(minHour, maxHour, restrictHours).shape) as FieldKeys[],
-    },
-    {
-      title: "Step 2: Recurrence",
-      component: Step2,
-      icon: HomeIcon,
-      position: 2,
-      validationSchema: step2Schema,
-      fields: Object.keys(Step2Fields) as FieldKeys[],
-    },
-  ];
+  const checkoutSteps: FormStep[] = useMemo(
+    () => [
+      {
+        title: "Step 1: Event Details",
+        component: Step1,
+        icon: UserIcon,
+        position: 1,
+        validationSchema: getStep1Schema(minHour, maxHour, restrictHours),
+        fields: Object.keys(getStep1Schema(minHour, maxHour, restrictHours).shape) as FieldKeys[],
+      },
+      {
+        title: "Step 2: Recurrence",
+        component: Step2,
+        icon: HomeIcon,
+        position: 2,
+        validationSchema: step2Schema,
+        fields: Object.keys(Step2Fields) as FieldKeys[],
+      },
+    ],
+    [minHour, maxHour, restrictHours],
+  );
+
+  //parse(event) was recreating the same object over and over, causing the form to reset.
+  const parsedEvent = useMemo(() => {
+    if (!event) return undefined;
+    return SEvent.parse(event);
+  }, [event]);
 
   return (
     <MultiStepForm
-      isOpen={isOpen} // Pass it down
-      onOpenChange={onOpenChange} // Pass it down
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
       creationDate={creationDate}
       formSteps={checkoutSteps}
-      event={event ? SEvent.parse(event) : undefined}
+      event={parsedEvent}
       userId={userId}
       roomId={roomId}
       minHour={minHour}

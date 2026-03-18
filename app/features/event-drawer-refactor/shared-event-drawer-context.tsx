@@ -13,14 +13,28 @@ const SharedDrawerContext = createContext<{
 } | null>(null);
 
 export function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) {
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [payload, setPayload] = useState<EventDrawerPayload | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const openEventDrawer = useCallback((payload: EventDrawerPayload) => {
+    //Cleanup the timer so we dont accidentally clobber the new data
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+
     setPayload(payload);
     setIsOpen(true);
+  }, []);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+
+    if (!open) {
+      //call the cleanup after the sheet has closed
+      closeTimerRef.current = setTimeout(() => {
+        setPayload(null);
+        closeTimerRef.current = null;
+      }, 300);
+    }
   }, []);
 
   const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
@@ -39,15 +53,8 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
           userId={payload?.userId}
           roomId={payload?.roomId}
           isOpen={isOpen}
-          onOpenChange={setIsOpen}
-        >
-          {/*<button
-					ref={triggerRef}
-					aria-hidden
-					tabIndex={-1}
-					onClick={e => e.stopPropagation()}
-				/>*/}
-        </EventDrawerRefactor>
+          onOpenChange={handleOpenChange}
+        />
       </EventDrawerPermissions.Provider>
     </SharedDrawerContext.Provider>
   );
