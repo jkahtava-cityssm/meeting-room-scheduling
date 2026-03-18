@@ -1,11 +1,12 @@
 /// <reference lib="webworker" />
 
 import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
+import { TStatusKey, TVisibleHours } from "@/lib/types";
 import {
   calculateMultiDayEventPositions,
   calculateViewBoundaries,
   filterEventsByRoom,
+  filterEventsByStatus,
   generateMultiDayEventsInPeriod,
   generateRecurringEventsInPeriod,
   getDateRange,
@@ -106,6 +107,7 @@ export interface ICalendarProcessData {
   action: CalendarAction;
   requestId: number;
   userId?: string;
+  excludeStatusKeys?: TStatusKey[];
 }
 
 export interface IUnifiedResponse<A extends CalendarAction = CalendarAction> {
@@ -123,7 +125,7 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
   try {
     let payload: ICalendarProcessData | null = event.data;
-    const { action, events, selectedDate, visibleHours } = payload;
+    const { action, events, selectedDate, visibleHours, excludeStatusKeys } = payload;
 
     const currentDate = new Date(selectedDate);
 
@@ -143,8 +145,12 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
     setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
     const filtered = filterEventsByRoom([...multiDayEvents, ...recurringEvents], payload.selectedRoomId || "-1");
+    const filteredByStatus =
+      excludeStatusKeys && excludeStatusKeys.length > 0 ? filterEventsByStatus(filtered, excludeStatusKeys) : filtered;
 
-    const sortedEvents = filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    const sortedEvents = filteredByStatus.sort(
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+    );
     // 2. Generic Transformation Logic
     let resultData: CalendarDataMap[CalendarAction] | null = null;
 

@@ -1,5 +1,5 @@
 import { IEvent, SEvent } from "@/lib/schemas/calendar";
-import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
+import { TIME_BLOCK_SIZE, TStatusKey, TVisibleHours } from "@/lib/types";
 import {
   addDays,
   addMonths,
@@ -514,6 +514,14 @@ export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | 
 
   const results = events.filter((event) => {
     return roomIds.includes(event.roomId.toString());
+  });
+
+  return results;
+}
+
+export function filterEventsByStatus(events: IEvent[], exlcudeStatusKeys: TStatusKey[]) {
+  const results = events.filter((event) => {
+    return !exlcudeStatusKeys.includes(event.status.key as TStatusKey);
   });
 
   return results;

@@ -18,6 +18,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 import { GenericError } from "../../../../components/shared/generic-error";
 import { vi } from "date-fns/locale";
+import { TStatusKey } from "@/lib/types";
+
+const EXCLUDED_STATUSES: TStatusKey[] = ["REJECTED"];
 
 export function CalendarDayView({
   date,
@@ -47,7 +50,14 @@ export function CalendarDayView({
     [visibleRooms],
   );
 
-  const { result, isLoading, error } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
+  const { result, isLoading, error } = usePrivateCalendarEvents(
+    "DAY",
+    date,
+    visibleHours,
+    userId,
+    roomIds,
+    EXCLUDED_STATUSES,
+  );
 
   useEffect(() => {
     if (isLoading) {

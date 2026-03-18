@@ -37,7 +37,7 @@ export function RoleSelect({
       getId={(role) => role.roleId.toString()}
       getLabel={(role) => role.name}
       getColor={(role) => "invisible" as TColors}
-      getIcon={(role) => "" as IconName}
+      //getIcon={(role) => "" as IconName}
       dataInvalid={dataInvalid}
       isDisabled={isDisabled}
       className={cn("min-w-20", className)}

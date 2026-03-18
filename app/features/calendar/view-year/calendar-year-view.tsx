@@ -7,11 +7,13 @@ import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import YearViewMonth from "./calendar-year-view-month";
 import { IEvent } from "@/lib/schemas/calendar";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
-import { TVisibleHours } from "@/lib/types";
+import { TStatusKey, TVisibleHours } from "@/lib/types";
 import { useEventsQuery } from "@/lib/services/events";
 import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { GenericError } from "../../../../components/shared/generic-error";
+
+const EXCLUDED_STATUSES: TStatusKey[] = ["REJECTED"];
 
 export function CalendarYearView({ date, userId }: { date: Date; userId?: string }) {
   const { interval, visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
@@ -22,7 +24,14 @@ export function CalendarYearView({ date, userId }: { date: Date; userId?: string
     [visibleRooms],
   );
 
-  const { result, isLoading, error } = usePrivateCalendarEvents("YEAR", date, visibleHours, userId, selectedRoomId);
+  const { result, isLoading, error } = usePrivateCalendarEvents(
+    "YEAR",
+    date,
+    visibleHours,
+    userId,
+    selectedRoomId,
+    EXCLUDED_STATUSES,
+  );
 
   useEffect(() => {
     if (isLoading) {

@@ -14,6 +14,9 @@ import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-eve
 import { IEventBlock } from "../webworkers/generic-webworker";
 import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
 import { GenericError } from "../../../../components/shared/generic-error";
+import { TStatusKey } from "@/lib/types";
+
+const EXCLUDED_STATUSES: TStatusKey[] = ["REJECTED"];
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const {
@@ -34,7 +37,14 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     [visibleRooms],
   );
 
-  const { result, isLoading, error } = usePrivateCalendarEvents("WEEK", date, visibleHours, userId, selectedRoomId);
+  const { result, isLoading, error } = usePrivateCalendarEvents(
+    "WEEK",
+    date,
+    visibleHours,
+    userId,
+    selectedRoomId,
+    EXCLUDED_STATUSES,
+  );
 
   useEffect(() => {
     if (isLoading) {
