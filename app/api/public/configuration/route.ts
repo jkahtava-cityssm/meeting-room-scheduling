@@ -24,8 +24,6 @@ export async function GET(request: NextRequest) {
     "maxBookingSpan",
   ]);
 
-  //console.log(z.array(SConfigurationEntry).safeParse(configEntries));
-
   const flatMap = configEntries.reduce<Partial<Record<TConfigurationKeys, string>>>((acc, entry) => {
     const key = entry.key as TConfigurationKeys;
     acc[key] = String(entry.value);

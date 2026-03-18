@@ -69,7 +69,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   if (!session) {
-    //console.log("No session, redirecting to login");
   }
 
   return (

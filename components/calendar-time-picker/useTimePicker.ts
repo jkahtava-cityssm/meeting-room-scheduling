@@ -30,7 +30,6 @@ export function useTimePicker({
   const dateRef = React.useRef(date);
   React.useEffect(() => {
     dateRef.current = date;
-    console.count("TimePicker Sync Loop Check");
   }, [date]);
 
   // LIMIT MAX AND MIN HOUR TO BETWEEN 0 AND 23

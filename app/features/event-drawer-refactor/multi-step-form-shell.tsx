@@ -52,7 +52,6 @@ export const MultiStepForm = ({
   interval: TimeInterval;
   maxSpan: number;
 }) => {
-  console.log("MultiStepForm Render:", { isOpen, event, userId, roomId, creationDate });
   const { session } = useSession();
   //const { isOpen, onClose, onOpen } = useDisclosure();
   const originRef = useRef<HTMLElement | null>(null);

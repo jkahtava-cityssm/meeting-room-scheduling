@@ -39,9 +39,7 @@ export async function GET(request: NextRequest) {
       if (total === undefined || total === null) {
         return InternalServerErrorMessage();
       }
-      //console.log("###########################################");
-      //console.log("COUNT RAN: ", format(new Date(), "PPP @ p"));
-      //console.log("###########################################");
+
       return SuccessMessage("Collected Total Events", { total });
     },
   );

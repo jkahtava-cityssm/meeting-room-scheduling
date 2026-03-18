@@ -83,7 +83,7 @@ type SortColumn = "name" | "email" | "employeeNumber" | "department" | "status" 
 
 type SortDirection = "desc" | "asc" | null;
 
-export function UserRoleAssignmentList({ onToggleAssigned }: EmployeeTableSectionProps) {
+export function UserRoleAssignmentList() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [currentRole, setCurrentRole] = useState<{ id: string; label: string } | undefined>(undefined);
   const [filters, setFilters] = useState<UserFilters>(defaultFilters);

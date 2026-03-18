@@ -101,7 +101,7 @@ export function validateVisibleHours(visibleHoursStart?: number, visibleHoursEnd
     visibleHoursStart < 0 ||
     visibleHoursEnd > 24
   ) {
-    console.log(
+    console.warn(
       `Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
         `Start Hour must be less than End Hour, start >= 0, and end < 24. Defaulting to start=0 and end=24.`,
     );
@@ -120,7 +120,7 @@ export function validateTimeSlotInterval(interval?: number): number {
   const validDivisors = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60];
 
   if (!validDivisors.includes(interval)) {
-    console.log(`Invalid timeSlotInterval: ${interval}. Must be a positive divisor of 60. Defaulting to 1.`);
+    console.warn(`Invalid timeSlotInterval: ${interval}. Must be a positive divisor of 60. Defaulting to 1.`);
     return 1;
   }
 
