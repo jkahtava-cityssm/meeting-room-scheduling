@@ -76,7 +76,7 @@ export default function EventDrawerRefactor({
 
   return (
     <MultiStepForm
-      key={instanceKey}
+      //key={instanceKey}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       creationDate={creationDate}

@@ -95,11 +95,9 @@ export const MultiStepForm = ({
         });
         return;
       }
-      logic.resetForm();
+      //logic.resetForm();
       onOpenChange(true);
     } else {
-      console.log(logic.methods.formState.touchedFields);
-      console.log(logic.methods.formState.errors);
       if (logic.methods.formState.isDirty && logic.status !== "Read") {
         logic.setDialogConfig({
           variant: "warning",
@@ -115,7 +113,7 @@ export const MultiStepForm = ({
           showSave: event ? false : true,
         });
       } else {
-        logic.resetForm();
+        //logic.resetForm();
         onOpenChange(false);
       }
     }

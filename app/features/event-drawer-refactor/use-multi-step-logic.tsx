@@ -62,6 +62,31 @@ export const useMultiStepFormLogic = (props: {
     mode: "onChange",
   });
 
+  useEffect(() => {
+    if (props.isOpen) {
+      // Determine what the "Ground Truth" should be right now
+      const baselineValues = props.event
+        ? mapEventToSchema(props.event)
+        : getFormDefaults(props.creationDate, props.userId, props.interval, props.roomId);
+
+      // reset() without arguments uses the original 'defaultValues'
+      // reset(baselineValues) sets a NEW baseline and clears dirty/touched
+      methods.reset(baselineValues);
+
+      // Set your internal status based on the eventId
+      setStatus(baselineValues.eventId === "0" ? "New" : "Read");
+    }
+  }, [
+    props.isOpen,
+    props.event?.eventId,
+    props.creationDate,
+    props.event,
+    props.userId,
+    props.interval,
+    props.roomId,
+    methods,
+  ]);
+
   const {
     data: collectedEvent,
     isFetching,
