@@ -315,9 +315,7 @@ const TimeBlockButton = memo(
 				disabled={disabled}
 				className={cn(
 					"w-full h-full transition-colors relative group flex items-center justify-center",
-					showLock
-						? "cursor-not-allowed bg-[repeating-linear-gradient(45deg,_color-mix(in_srgb,_var(--color-primary)_5%,_transparent)_0_3px,_transparent_3px_25px)] bg-fixed"
-						: "cursor-pointer hover:bg-accent",
+					showLock ? "cursor-not-allowed " : "cursor-pointer hover:bg-accent",
 
 					showBottomSeparator && "border-b border-dashed",
 					className,
