@@ -11,6 +11,8 @@ import { IEventBlock } from "../webworkers/generic-webworker";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
 import { addDays } from "date-fns";
+import { LucideLock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type PrivateCallback = {
 	currentDate: Date;
@@ -141,6 +143,7 @@ export function CalendarScrollColumnPublic(props: Omit<CalendarScrollColumnProps
 				showBottomSeparator={showBottomSeparator}
 				disabled={true}
 				aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, "0")}`}
+				isReadOnly={true}
 			/>
 		),
 		[],
@@ -275,20 +278,24 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
 	const creationDate = useMemo(() => getDateTime(currentDate, hour, startMinute), [currentDate, hour, startMinute]);
 	const { openEventDrawer } = useSharedEventDrawer();
 
+	const isEnabled = useMemo(
+		() => checkDrawerAllowed(creationDate, createEventAllowed, limitToHours, limitToSpan, minHour, maxHour, maxSpan),
+		[createEventAllowed, creationDate, limitToHours, limitToSpan, maxHour, maxSpan, minHour],
+	);
+
 	const openDrawer = useCallback(() => {
-		if (!createEventAllowed) return;
-		if (limitToHours && (creationDate.getHours() > maxHour || creationDate.getHours() < minHour)) return;
-		if (limitToSpan && creationDate.getTime() > addDays(new Date(), maxSpan).getTime()) return;
+		if (!isEnabled) return;
 
 		openEventDrawer({ creationDate, userId, roomId });
-	}, [createEventAllowed, limitToHours, creationDate, maxHour, minHour, limitToSpan, maxSpan, openEventDrawer, userId, roomId]);
+	}, [isEnabled, openEventDrawer, creationDate, userId, roomId]);
 
 	return (
 		<TimeBlockButton
 			totalBlocks={totalBlocks}
 			blockIndex={blockIndex}
 			showBottomSeparator={showBottomSeparator}
-			disabled={!createEventAllowed}
+			disabled={!isEnabled}
+			isReadOnly={false}
 			onClick={openDrawer}
 			aria-label={`Create event at ${hour}:${String(startMinute).padStart(2, "0")}`}
 		/>
@@ -296,25 +303,46 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
 });
 
 const TimeBlockButton = memo(
-	forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { totalBlocks: number; blockIndex: number; showBottomSeparator?: boolean }>(
-		function TimeBlockButton({ totalBlocks, blockIndex, showBottomSeparator, disabled, className, ...props }, ref) {
-			return (
-				<button
-					ref={ref}
-					type="button"
-					disabled={disabled}
-					className={cn(
-						"w-full h-full transition-colors relative",
-						disabled ? "cursor-default pointer-events-none" : "cursor-pointer hover:bg-accent",
+	forwardRef<
+		HTMLButtonElement,
+		ButtonHTMLAttributes<HTMLButtonElement> & { totalBlocks: number; blockIndex: number; showBottomSeparator?: boolean; isReadOnly: boolean }
+	>(function TimeBlockButton({ totalBlocks, blockIndex, showBottomSeparator, disabled, isReadOnly, className, ...props }, ref) {
+		const showLock = disabled && !isReadOnly;
+		const button = (
+			<button
+				ref={ref}
+				type="button"
+				disabled={disabled}
+				className={cn(
+					"w-full h-full transition-colors relative group flex items-center justify-center",
+					showLock ? "cursor-not-allowed " : "cursor-pointer hover:bg-accent",
 
-						showBottomSeparator && "border-b border-dashed",
-						className,
-					)}
-					{...props}
-				/>
-			);
-		},
-	),
+					showBottomSeparator && "border-b border-dashed",
+					className,
+				)}
+				{...props}
+			>
+				{showLock && (
+					<LucideLock
+						size={16}
+						className="text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity"
+					/>
+				)}
+			</button>
+		);
+
+		if (!showLock) return button;
+
+		return (
+			<Tooltip
+				delayDuration={1000}
+				disableHoverableContent
+			>
+				<TooltipTrigger asChild>{button}</TooltipTrigger>
+				<TooltipContent>{"Permission Required to Book Outisde of Working Hours"}</TooltipContent>
+			</Tooltip>
+		);
+	}),
 );
 
 // separators are now drawn via inline background gradients on the hour container
@@ -332,4 +360,19 @@ const MAXIMUM_INTERVAL = 60;
 function clampToValidInterval(interval: number) {
 	const bounded = Math.min(Math.max(interval, MINIMUM_INTERVAL), MAXIMUM_INTERVAL);
 	return VALID_INTERVALS.reduce((best, v) => (Math.abs(bounded - v) < Math.abs(bounded - best) ? v : best), VALID_INTERVALS[0]);
+}
+
+function checkDrawerAllowed(
+	creationDate: Date,
+	createEventAllowed: boolean,
+	limitToHours: boolean,
+	limitToSpan: boolean,
+	minHour: number,
+	maxHour: number,
+	maxSpan: number,
+) {
+	if (!createEventAllowed) return false;
+	if (limitToHours && (creationDate.getHours() > maxHour || creationDate.getHours() < minHour)) return false;
+	if (limitToSpan && creationDate.getTime() > addDays(new Date(), maxSpan).getTime()) return false;
+	return true;
 }
