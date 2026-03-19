@@ -3,15 +3,15 @@ import React, { useMemo, useRef, useState } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CalendarHourTimeline } from "./calendar-scroll-hour-timeline";
 import { format } from "date-fns";
-import { LoaderCircle, LucideCalendarDays } from "lucide-react";
+import { LoaderCircle, LucideBan, LucideCalendarDays, LucideCheck, LucideLock, X } from "lucide-react";
 import { CalendarScrollProvider, useCalendarViewport } from "./calendar-scroll-context";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { cn } from "@/lib/utils";
 
 export type CalendarScrollContainerProps = {
 	isLoading: boolean;
 	isEmpty?: boolean;
 	hours: number[];
-
 	children: React.ReactNode;
 };
 
@@ -27,7 +27,6 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
 	isLoading,
 	isEmpty,
 	hours,
-
 	children,
 }: CalendarScrollContainerProps) {
 	const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
@@ -102,14 +101,22 @@ const HourColumn = React.memo(function HourColumn({ hours }: { hours: number[] }
 					return (
 						<div
 							key={hour}
-							className="h-24 flex items-start pr-2"
+							className="h-24 flex flex-col  items-start pr-2"
 						>
-							<span className="ml-auto -mt-2 text-xs text-muted-foreground">{format(new Date().setHours(hour), "hh a")}</span>
+							<span className={cn("ml-auto -mt-2 text-xs text-muted-foreground")}>{format(new Date().setHours(hour), "hh a")}</span>
+							<div className={"ml-auto my-auto "}>
+								{/*!inRange && limitedToHours && (
+									<LucideLock
+										className="text-muted-foreground/30"
+										size={16}
+									/>
+								)*/}
+							</div>
 						</div>
 					);
 				})}
 				<div className={"h-4 flex items-start pr-2"}>
-					<span className="ml-auto -mt-2 text-xs text-muted-foreground">{format(new Date().setHours(lastHour), "hh a")}</span>
+					<span className={cn("ml-auto -mt-2 text-xs text-muted-foreground")}>{format(new Date().setHours(lastHour), "hh a")}</span>
 				</div>
 			</div>
 		</div>
