@@ -60,7 +60,7 @@ export type EventBlockRenderProps = {
 };
 
 export function CalendarScrollColumnPrivate(
-  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
+  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock" | "limitToHours" | "limitToSpan">,
 ) {
   const { can, canAny } = CalendarPermissions.usePermissions();
 
