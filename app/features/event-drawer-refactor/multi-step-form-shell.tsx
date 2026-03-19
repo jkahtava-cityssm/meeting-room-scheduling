@@ -27,7 +27,6 @@ import { EventDrawerPermissions } from "./lib/permissions";
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
 export const MultiStepForm = ({
-  key,
   formSteps,
   creationDate,
   event,
@@ -40,7 +39,6 @@ export const MultiStepForm = ({
   interval,
   maxSpan,
 }: {
-  key: string | number;
   formSteps: FormStep[];
   creationDate: Date;
   event?: IEvent;
