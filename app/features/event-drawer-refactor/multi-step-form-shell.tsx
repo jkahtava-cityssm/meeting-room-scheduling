@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { createContext, useRef, useState } from "react";
+import { createContext, useMemo, useRef, useState } from "react";
 import { Form, FormProvider } from "react-hook-form";
 
 import { FormStep, MultiStepFormContextProps } from "./types";
@@ -27,12 +27,12 @@ import { EventDrawerPermissions } from "./lib/permissions";
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
 export const MultiStepForm = ({
+  key,
   formSteps,
   creationDate,
   event,
   userId,
   roomId,
-
   isOpen,
   onOpenChange,
   minHour,
@@ -40,6 +40,7 @@ export const MultiStepForm = ({
   interval,
   maxSpan,
 }: {
+  key: string | number;
   formSteps: FormStep[];
   creationDate: Date;
   event?: IEvent;
@@ -73,6 +74,7 @@ export const MultiStepForm = ({
     interval,
     minHour,
     maxHour,
+    maxSpan,
     restrictHours: !can("IgnoreHours"),
   });
 
@@ -120,18 +122,12 @@ export const MultiStepForm = ({
     }
   };
 
-  const contextValue = {
-    ...logic,
-    steps: formSteps,
-    currentStep: formSteps[logic.currentStepIndex],
-    isFirstStep: logic.currentStepIndex === 0,
-    isLastStep: logic.currentStepIndex === formSteps.length - 1 || logic.ignoreLastStep,
-    onClose: () => handleOpenChange(false),
-    interval,
-    minHour,
-    maxHour,
-    maxSpan,
-  };
+  const contextValue = useMemo(
+    () => ({
+      ...logic,
+    }),
+    [logic],
+  );
 
   return (
     <MultiStepFormContext.Provider value={contextValue}>

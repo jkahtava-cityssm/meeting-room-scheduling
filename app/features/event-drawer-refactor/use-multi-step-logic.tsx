@@ -22,17 +22,6 @@ import { useStepNavigation } from "./use-step-navigation";
 import { useConfigurationQuery, usePrivateConfigurationQuery } from "@/lib/services/configuration";
 import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
-function useDebugMemoChanges(values: Record<string, unknown>) {
-  const prev = useRef(values);
-  useEffect(() => {
-    const changes = Object.keys(values).filter((k) => prev.current[k] !== values[k]);
-    if (changes.length > 0) {
-      console.log("Values that caused defaultFormValues to re-run:", changes);
-    }
-    prev.current = values;
-  });
-}
-
 export const useMultiStepFormLogic = (props: {
   event?: IEvent;
   creationDate: Date;
@@ -45,8 +34,9 @@ export const useMultiStepFormLogic = (props: {
   interval: TimeInterval;
   minHour: number;
   maxHour: number;
+  maxSpan: number;
   restrictHours: boolean;
-}) => {
+}): MultiStepFormContextProps => {
   const { event: storedEvent, setEvent, resetEvent } = useEventStore();
 
   const mutationUpsert = useEventsMutationUpsert();
@@ -60,19 +50,6 @@ export const useMultiStepFormLogic = (props: {
     return getFormDefaults(props.creationDate, props.userId, props.interval, props.roomId);
   }, [props.event, props.creationDate, props.userId, props.interval, props.roomId]);
 
-  useDebugMemoChanges({
-    event: props.event,
-    date: props.creationDate,
-    interval: props.interval,
-    userId: props.userId,
-    roomId: props.roomId,
-    formSteps: props.formSteps,
-    isOpen: props.isOpen,
-    minHour: props.minHour,
-    maxHour: props.maxHour,
-    restrictHours: props.restrictHours,
-  });
-
   const dynamicSchema = useMemo(
     () => getCombinedSchema(props.minHour, props.maxHour, props.restrictHours),
     [props.minHour, props.maxHour, props.restrictHours],
@@ -85,7 +62,26 @@ export const useMultiStepFormLogic = (props: {
     mode: "onChange",
   });
 
+  const {
+    data: collectedEvent,
+    isFetching,
+    refetch,
+  } = useEventQuery(Number(defaultFormValues.eventId), props.userId, false);
+
   const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
+
+  const formState = useMemo(
+    () => ({
+      isNew: status === "New",
+      isEditing: status === "Edit",
+      isReadOnly: status === "Read",
+      isLoading: status === "Loading" || isFetching,
+      isSaving: mutationCreate.isPending || mutationUpsert.isPending,
+      isDeleting: mutationDelete.isPending,
+      isDisabled: status === "Loading" || mutationCreate.isPending || mutationUpsert.isPending,
+    }),
+    [status, isFetching, mutationCreate.isPending, mutationUpsert.isPending, mutationDelete.isPending],
+  );
 
   const watchIsRecurring = methods.watch("isRecurring");
   const watchStartDate = methods.watch("startDate");
@@ -97,13 +93,6 @@ export const useMultiStepFormLogic = (props: {
 
   const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
 
-  // 3. Data Fetching Sync
-  const { data: collectedEvent, isFetching } = useEventQuery(
-    Number(defaultFormValues.eventId),
-    props.userId,
-    status === "Loading",
-  );
-
   const validateStep = async (index: number) => {
     const result = await isStepValid(props.formSteps[index], methods);
     return result.status;
@@ -114,36 +103,19 @@ export const useMultiStepFormLogic = (props: {
     validateStep,
   );
 
-  // Only reset form if eventId changes (not on every re-render)
-  //const prevEventIdRef = useRef<string | undefined>(undefined);
-
   useEffect(() => {
-    //if (defaultFormValues.eventId === "0") {
-    methods.reset(defaultFormValues);
-    setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
-    //prevEventIdRef.current = undefined;
-    //} else if (prevEventIdRef.current !== defaultFormValues.eventId) {
-    //  methods.reset(defaultFormValues);
-    //  setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
-    //  prevEventIdRef.current = defaultFormValues.eventId;
-    //}
-  }, [defaultFormValues, methods]);
-
-  useEffect(() => {
-    if (status === "Loading" && collectedEvent && !isFetching) {
+    if (formState.isLoading && collectedEvent && !isFetching) {
       const parsedData = mapEventToSchema(collectedEvent);
       methods.reset(parsedData);
 
-      setTimeout(() => setStatus("Edit"), 100);
+      setStatus("Edit");
     }
-    if (status === "Loading" && !isFetching && !collectedEvent) {
+    if (formState.isLoading && !isFetching && !collectedEvent) {
       setStatus("Read");
     }
-  }, [status, collectedEvent, isFetching, methods]);
+  }, [collectedEvent, isFetching, methods, formState.isLoading]);
 
-  // 4. Handlers
   const resetForm = useCallback(() => {
-    //prevEventIdRef.current = undefined;
     methods.reset(defaultFormValues);
     setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
     resetNavigation();
@@ -199,6 +171,28 @@ export const useMultiStepFormLogic = (props: {
     }
   };
 
+  const onEdit = useCallback(async () => {
+    const { data, isError, error } = await refetch();
+
+    if (data && !isError) {
+      methods.reset(mapEventToSchema(data));
+      setStatus("Edit");
+      return;
+    }
+
+    if (isError || !data) {
+      setStatus("Read");
+      setDialogConfig({
+        variant: "warning",
+        title: "Edit Failed",
+        description: "We couldn't retrieve the latest event details. Please try again later.",
+        confirmText: "Close",
+        showConfirm: true,
+        confirmAction: "none",
+      });
+    }
+  }, [methods, refetch]);
+
   const onDelete = useCallback(() => {
     // If eventId is "0", it only exists in local state/draft
     if (defaultFormValues.eventId === "0") {
@@ -244,16 +238,18 @@ export const useMultiStepFormLogic = (props: {
   );
 
   return {
+    ...formState,
     startDate,
     goToStep,
-    onDelete,
     methods,
     currentStepIndex,
     status,
     setStatus,
-    ignoreLastStep,
     resetForm,
     onSave,
+    onEdit,
+    onClose: props.onClose,
+    onDelete,
     mutationUpsert,
     mutationDelete,
     dialogConfig,
@@ -264,5 +260,13 @@ export const useMultiStepFormLogic = (props: {
     previousStep,
     previousStepHasError: navigationStatus.prevError,
     nextStepHasError: navigationStatus.nextError,
+    steps: props.formSteps,
+    currentStep: props.formSteps[currentStepIndex],
+    isFirstStep: currentStepIndex === 0,
+    isLastStep: currentStepIndex === props.formSteps.length - 1 || ignoreLastStep,
+    minHour: props.minHour,
+    maxHour: props.maxHour,
+    maxSpan: props.maxSpan,
+    interval: props.interval,
   };
 };

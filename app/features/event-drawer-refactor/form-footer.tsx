@@ -26,22 +26,20 @@ const FormFooter = ({ userId }: { userId?: string }) => {
 
   const actions = {
     save: {
-      show: ctx.status === "Edit" || ctx.status === "New",
+      show: ctx.isEditing || ctx.isNew,
       disabled:
-        (ctx.status === "Edit" ? !can("UpdateEvent") : !can("CreateEvent")) ||
-        ctx.mutationUpsert.isPending ||
-        isVerifying,
-      label: ctx.status === "Edit" ? "Save" : "Create",
-      icon: ctx.status === "Edit" ? <SaveIcon /> : <CalendarPlus />,
+        (ctx.isEditing ? !can("UpdateEvent") : !can("CreateEvent")) || ctx.mutationUpsert.isPending || isVerifying,
+      label: ctx.isEditing ? "Save" : "Create",
+      icon: ctx.isEditing ? <SaveIcon /> : <CalendarPlus />,
       loading: ctx.mutationUpsert.isPending,
     },
     edit: {
-      show: ctx.status === "Read" || ctx.status === "Loading",
-      disabled: !can("UpdateEvent") || ctx.status === "Loading" || isVerifying,
-      loading: ctx.status === "Loading",
+      show: ctx.isReadOnly || ctx.isLoading,
+      disabled: !can("UpdateEvent") || ctx.isLoading || isVerifying,
+      loading: ctx.isLoading,
     },
     delete: {
-      show: ctx.status === "Edit" && can("DeleteEvent"),
+      show: ctx.isEditing && can("DeleteEvent"),
       disabled: ctx.mutationDelete.isPending || isVerifying,
       loading: ctx.mutationDelete.isPending,
     },
@@ -63,7 +61,7 @@ const FormFooter = ({ userId }: { userId?: string }) => {
         </Button>
       )}
       {actions.edit.show && (
-        <Button onClick={() => ctx.setStatus("Loading")} disabled={actions.edit.disabled} className="md:w-24">
+        <Button onClick={ctx.onEdit} disabled={actions.edit.disabled} className="md:w-24">
           {actions.edit.loading ? <Loader2Icon className="animate-spin" /> : <PenBoxIcon />}
           Edit
         </Button>

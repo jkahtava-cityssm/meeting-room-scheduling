@@ -72,8 +72,11 @@ export default function EventDrawerRefactor({
     return SEvent.parse(event);
   }, [event]);
 
+  const instanceKey = parsedEvent?.eventId ?? `new-${creationDate.getTime()}`;
+
   return (
     <MultiStepForm
+      key={instanceKey}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       creationDate={creationDate}
