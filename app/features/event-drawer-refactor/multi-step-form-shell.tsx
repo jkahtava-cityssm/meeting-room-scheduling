@@ -63,11 +63,11 @@ export const MultiStepForm = ({
     userId,
     formSteps,
     onClose: () => {
-      onOpenChange(false);
+      handleOpenChange(false);
     },
     isOpen,
     onOpen: () => {
-      onOpenChange(true);
+      handleOpenChange(true);
     },
     interval,
     minHour,
@@ -95,10 +95,11 @@ export const MultiStepForm = ({
         });
         return;
       }
-
       logic.resetForm();
       onOpenChange(true);
     } else {
+      console.log(logic.methods.formState.touchedFields);
+      console.log(logic.methods.formState.errors);
       if (logic.methods.formState.isDirty && logic.status !== "Read") {
         logic.setDialogConfig({
           variant: "warning",

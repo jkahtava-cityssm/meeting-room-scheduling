@@ -70,7 +70,7 @@ export const useMultiStepFormLogic = (props: {
 
   const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
 
-  const formState = useMemo(
+  const formStatus = useMemo(
     () => ({
       isNew: status === "New",
       isEditing: status === "Edit",
@@ -104,23 +104,22 @@ export const useMultiStepFormLogic = (props: {
   );
 
   useEffect(() => {
-    if (formState.isLoading && collectedEvent && !isFetching) {
+    if (formStatus.isLoading && collectedEvent && !isFetching) {
       const parsedData = mapEventToSchema(collectedEvent);
       methods.reset(parsedData);
 
       setStatus("Edit");
     }
-    if (formState.isLoading && !isFetching && !collectedEvent) {
+    if (formStatus.isLoading && !isFetching && !collectedEvent) {
       setStatus("Read");
     }
-  }, [collectedEvent, isFetching, methods, formState.isLoading]);
+  }, [collectedEvent, isFetching, methods, formStatus.isLoading]);
 
   const resetForm = useCallback(() => {
     methods.reset(defaultFormValues);
     setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
     resetNavigation();
-    props.onClose();
-  }, [methods, defaultFormValues, resetNavigation, props]);
+  }, [defaultFormValues, methods, resetNavigation]);
 
   const onSave = async () => {
     const formData = methods.getValues();
@@ -238,7 +237,7 @@ export const useMultiStepFormLogic = (props: {
   );
 
   return {
-    ...formState,
+    ...formStatus,
     startDate,
     goToStep,
     methods,

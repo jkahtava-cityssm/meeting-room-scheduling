@@ -4,7 +4,7 @@ import { createContext, useContext, useState } from "react";
 
 import type { Dispatch, SetStateAction } from "react";
 
-import type { TVisibleHours } from "@/lib/types";
+import type { TStatusKey, TVisibleHours } from "@/lib/types";
 import { VISIBLE_HOURS } from "../lib/helpers";
 import { usePublicConfiguration } from "@/lib/services/public";
 import { useRoomsQuery } from "@/lib/services/rooms";
@@ -20,6 +20,8 @@ interface ICalendarContext {
   setTotalEvents: (total: number) => void;
   selectedRoomId: string;
   setSelectedRoomId: (roomId: string) => void;
+  selectedStatusKeys: TStatusKey[];
+  setSelectedStatusKeys: (statusIds: TStatusKey[]) => void;
   visibleRooms: IRoom[] | undefined;
   visibleHours: TVisibleHours | undefined;
   fallbackHours: number[];
@@ -56,6 +58,7 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
   const [totalEvents, setTotalEvents] = useState(0);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedRoomId, setSelectedRoomId] = useState<string>("-1");
+  const [selectedStatusKeys, setSelectedStatusKeys] = useState<TStatusKey[]>(["APPROVED", "PENDING", "INFORMATION"]);
 
   const handleSelectDate = (date: Date | undefined) => {
     if (!date) return;
@@ -73,6 +76,8 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
         setSelectedDate: handleSelectDate,
         selectedRoomId,
         setSelectedRoomId,
+        selectedStatusKeys,
+        setSelectedStatusKeys,
         visibleRooms,
         visibleHours,
         fallbackHours,
