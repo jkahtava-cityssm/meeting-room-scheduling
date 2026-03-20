@@ -187,6 +187,8 @@ export function CalendarPublicView() {
                     minHour={visibleHours ? visibleHours.from : 0}
                     maxHour={visibleHours ? visibleHours.to : 24}
                     maxSpan={0}
+                    limitToHours={false}
+                    limitToSpan={false}
                   />
                 );
               })}
