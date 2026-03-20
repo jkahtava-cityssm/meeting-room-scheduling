@@ -1081,10 +1081,11 @@ function useOverflowDetection(itemsCount: number) {
     const totalGapsWidth = Math.max(0, BadgeList.length - 1) * GAP_SIZE;
     const totalNeeded = totalBadgesWidth + totalGapsWidth;
 
+    console.log("totalNeeded: ", totalNeeded, "Available: ", availableWidth, "Items: ", BadgeList.length);
     if (totalNeeded < availableWidth && itemsCount <= BadgeList.length) {
       setVisibleCount(itemsCount);
     } else {
-      setVisibleCount(Math.max(1, fitCount));
+      setVisibleCount(Math.max(0, fitCount));
     }
   }, [itemsCount]);
 
