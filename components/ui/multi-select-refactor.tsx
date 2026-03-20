@@ -1,11 +1,20 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CheckIcon, XCircle, ChevronDown, XIcon, WandSparkles } from "lucide-react";
+import {
+  CheckIcon,
+  XCircle,
+  ChevronDown,
+  XIcon,
+  WandSparkles,
+  LucideFilter,
+  LucideX,
+  LucideTrash2,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -21,7 +30,7 @@ import {
  * Variants for the multi-select component to handle different styles.
  * Uses class-variance-authority (cva) to define different styles based on "variant" prop.
  */
-const multiSelectVariants = cva("m-1 transition-all duration-300 ease-in-out", {
+const multiSelectVariants = cva("transition-all duration-300 ease-in-out", {
   variants: {
     variant: {
       default: "border-foreground/10 text-foreground bg-card hover:bg-card/80 shadow-md ring-1 ring-white/10",
@@ -116,7 +125,8 @@ interface MultiSelectProps extends VariantProps<typeof multiSelectVariants> {
    * Optional, defaults to 3.
    */
   maxCount?: number;
-
+  hideIcons?: boolean;
+  compactMode?: boolean;
   /**
    * The modality of the popover. When set to true, interaction with outside elements
    * will be disabled and only popover content will be visible to screen readers.
@@ -180,34 +190,6 @@ interface MultiSelectProps extends VariantProps<typeof multiSelectVariants> {
    * Optional, defaults to false.
    */
   disabled?: boolean;
-
-  /**
-   * Responsive configuration for different screen sizes.
-   * Allows customizing maxCount and other properties based on viewport.
-   * Can be boolean true for default responsive behavior or an object for custom configuration.
-   */
-  responsive?:
-    | boolean
-    | {
-        /** Configuration for mobile devices (< 640px) */
-        mobile?: {
-          maxCount?: number;
-          hideIcons?: boolean;
-          compactMode?: boolean;
-        };
-        /** Configuration for tablet devices (640px - 1024px) */
-        tablet?: {
-          maxCount?: number;
-          hideIcons?: boolean;
-          compactMode?: boolean;
-        };
-        /** Configuration for desktop devices (> 1024px) */
-        desktop?: {
-          maxCount?: number;
-          hideIcons?: boolean;
-          compactMode?: boolean;
-        };
-      };
 
   /**
    * Minimum width for the component.
@@ -282,7 +264,9 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       searchText = "Search options...",
       noResultText = "No results found.",
 
-      maxCount = 3,
+      maxCount,
+      compactMode = false,
+      hideIcons = false,
       modalPopover = false,
       asChild = false,
       className,
@@ -293,7 +277,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       singleLine = true,
       popoverClassName,
       disabled = false,
-      responsive,
+
       minWidth,
       maxWidth,
       deduplicateOptions = false,
@@ -305,7 +289,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
   ) => {
     const [selectedValues, setSelectedValues] = React.useState<string[]>(defaultValue);
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-    console.log(selectedValues);
+
     const [focusedBadgeIndex, setFocusedBadgeIndex] = React.useState<number>(-1);
 
     // Reset focus when the popover opens/closes or search changes
@@ -318,18 +302,21 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const [politeMessage, setPoliteMessage] = React.useState("");
     const [assertiveMessage, setAssertiveMessage] = React.useState("");
 
-    const containerRef = React.useRef<HTMLDivElement>(null);
-    const shadowRef = React.useRef<HTMLDivElement>(null);
-    const dynamicMaxCount = useOverflowDetection(containerRef, shadowRef, selectedValues.length);
+    const { containerRef, shadowRef, actionsRef, measurementLimit, visibleCount } = useOverflowDetection(
+      selectedValues.length,
+    );
+
+    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const announce = React.useCallback((message: string, priority: "polite" | "assertive" = "polite") => {
-      if (priority === "assertive") {
-        setAssertiveMessage(message);
-        setTimeout(() => setAssertiveMessage(""), 100);
-      } else {
-        setPoliteMessage(message);
-        setTimeout(() => setPoliteMessage(""), 100);
-      }
+      const setMessage = priority === "assertive" ? setAssertiveMessage : setPoliteMessage;
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      setMessage(message);
+
+      timeoutRef.current = setTimeout(() => {
+        setMessage("");
+      }, 500);
     }, []);
 
     const multiSelectId = React.useId();
@@ -393,60 +380,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       }),
       [resetToDefault, selectedValues, onValueChange],
     );
-
-    const [screenSize, setScreenSize] = React.useState<"mobile" | "tablet" | "desktop">("desktop");
-
-    React.useEffect(() => {
-      if (typeof window === "undefined") return;
-      const handleResize = () => {
-        const width = window.innerWidth;
-        if (width < 640) {
-          setScreenSize("mobile");
-        } else if (width < 1024) {
-          setScreenSize("tablet");
-        } else {
-          setScreenSize("desktop");
-        }
-      };
-      handleResize();
-      window.addEventListener("resize", handleResize);
-      return () => {
-        if (typeof window !== "undefined") {
-          window.removeEventListener("resize", handleResize);
-        }
-      };
-    }, []);
-
-    const getResponsiveSettings = () => {
-      if (!responsive) {
-        return {
-          maxCount: maxCount,
-          hideIcons: false,
-          compactMode: false,
-        };
-      }
-      if (responsive === true) {
-        const defaultResponsive = {
-          mobile: { maxCount: 2, hideIcons: false, compactMode: true },
-          tablet: { maxCount: 4, hideIcons: false, compactMode: false },
-          desktop: { maxCount: 6, hideIcons: false, compactMode: false },
-        };
-        const currentSettings = defaultResponsive[screenSize];
-        return {
-          maxCount: currentSettings?.maxCount ?? maxCount,
-          hideIcons: currentSettings?.hideIcons ?? false,
-          compactMode: currentSettings?.compactMode ?? false,
-        };
-      }
-      const currentSettings = responsive[screenSize];
-      return {
-        maxCount: currentSettings?.maxCount ?? maxCount,
-        hideIcons: currentSettings?.hideIcons ?? false,
-        compactMode: currentSettings?.compactMode ?? false,
-      };
-    };
-
-    const responsiveSettings = getResponsiveSettings();
 
     const selectionList = React.useMemo(() => {
       if (options.length === 0) return [];
@@ -520,24 +453,23 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     }, [options, searchValue, searchable, isGroupedOptions]);
 
     const { maxBadgeIndex, clearButtonIndex, lastBadgeIndex } = React.useMemo(
-      () => getNavigationIndices(selectedValues.length, dynamicMaxCount, disabled),
-      [selectedValues.length, dynamicMaxCount, disabled],
+      () => getNavigationIndices(selectedValues.length, visibleCount, disabled),
+      [selectedValues.length, visibleCount, disabled],
     );
 
     const toggleOption = React.useCallback(
       (optionValue: string) => {
         if (disabled) return;
 
-        setSelectedValues((prev) => {
-          const newValues = prev.includes(optionValue) ? prev.filter((v) => v !== optionValue) : [...prev, optionValue];
+        const newValues = selectedValues.includes(optionValue)
+          ? selectedValues.filter((v) => v !== optionValue)
+          : [...selectedValues, optionValue];
 
-          onValueChange(newValues);
-          return newValues;
-        });
-
+        setSelectedValues(newValues);
+        onValueChange(newValues);
         if (closeOnSelect) setIsPopoverOpen(false);
       },
-      [disabled, onValueChange, closeOnSelect],
+      [disabled, selectedValues, onValueChange, closeOnSelect],
     );
 
     const handleClear = () => {
@@ -559,12 +491,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const clearExtraOptions = React.useCallback(() => {
       if (disabled) return;
 
-      setSelectedValues((prev) => {
-        const newSelectedValues = prev.slice(0, dynamicMaxCount);
-        onValueChange(newSelectedValues);
-        return newSelectedValues;
-      });
-    }, [disabled, dynamicMaxCount, onValueChange]);
+      const newSelectedValues = selectedValues.slice(0, visibleCount);
+
+      setSelectedValues(newSelectedValues);
+      onValueChange(newSelectedValues);
+    }, [disabled, visibleCount, onValueChange, selectedValues]);
 
     const toggleAll = () => {
       if (disabled) return;
@@ -598,19 +529,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
         prevDefaultValueRef.current = [...defaultValue];
       }
     }, [defaultValue, selectedValues, arraysEqual, resetOnDefaultValueChange]);
-
-    const getWidthConstraints = () => {
-      const defaultMinWidth = screenSize === "mobile" ? "0px" : "200px";
-      const effectiveMinWidth = minWidth || defaultMinWidth;
-      const effectiveMaxWidth = maxWidth || "100%";
-      return {
-        minWidth: effectiveMinWidth,
-        maxWidth: effectiveMaxWidth,
-        width: autoSize ? "auto" : "100%",
-      };
-    };
-
-    const widthConstraints = getWidthConstraints();
 
     useMultiSelectAnnouncements({
       selectedValues,
@@ -676,52 +594,34 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               className={cn(
                 buttonVariants({ variant: "combobox" }),
                 "flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit", // [&_svg]:pointer-events-auto
-                autoSize ? "w-auto" : "w-full",
-                responsiveSettings.compactMode && "min-h-8 text-sm",
-                screenSize === "mobile" && "min-h-12 text-base",
+
                 disabled && "opacity-50 cursor-not-allowed",
 
                 className,
               )}
-              style={{
-                ...widthConstraints,
-                maxWidth: `min(${widthConstraints.maxWidth}, 100%)`,
-              }}
             >
               <div className="relative w-full">
                 <div
                   ref={shadowRef}
-                  className="flex items-center gap-1 absolute opacity-0 pointer-events-none whitespace-nowrap"
+                  className="flex items-center gap-2 p-1 absolute opacity-0 pointer-events-none whitespace-nowrap"
                   style={{ visibility: "hidden", left: 0, top: 0, zIndex: -1 }}
                   aria-hidden="true"
                 >
                   {/* We only render up to 50 badges. Even on a 4k monitor, 
       50 badges will almost certainly overflow the width. */}
-                  {selectedValues.slice(0, 50).map((value) => (
-                    <MultiSelectBadge
+                  {selectedValues.slice(0, measurementLimit).map((value) => (
+                    <GhostBadge
                       key={`shadow-${value}`}
-                      option={getOptionByValue(value)}
-                      variant={variant}
-                      responsiveSettings={responsiveSettings}
-                      screenSize={screenSize}
-                      singleLine={true}
-                      onAction={() => {}}
+                      label={getOptionByValue(value)?.label ?? ""}
+                      compactMode={compactMode}
                       disabled={disabled}
-                      isFocused={false}
                     />
                   ))}
                   <div data-shadow-plus>
-                    <MultiSelectBadge
-                      isMaxCount
+                    <GhostBadge
                       label={`+ ${selectedValues.length} more`}
-                      onAction={() => {}}
-                      // Standard props...
+                      compactMode={compactMode}
                       disabled={disabled}
-                      variant={variant}
-                      responsiveSettings={responsiveSettings}
-                      screenSize={screenSize}
-                      singleLine={singleLine}
-                      isFocused={false}
                     />
                   </div>
                 </div>
@@ -729,15 +629,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                   {/* 1. Selected Options Area */}
                   <div
                     className={cn(
-                      "flex items-center gap-1 overflow-hidden",
+                      "flex items-center gap-2 p-1 overflow-hidden",
                       singleLine ? "overflow-x-auto multiselect-singleline-scroll" : "flex-wrap",
-                      responsiveSettings.compactMode && "gap-0.5",
+                      compactMode && "gap-0.5",
                     )}
-                    style={singleLine ? { paddingBottom: "4px" } : {}}
                   >
                     {selectedValues.length > 0 ? (
                       <>
-                        {selectedValues.slice(0, dynamicMaxCount).map((value, index) => (
+                        {selectedValues.slice(0, visibleCount).map((value, index) => (
                           <MultiSelectBadge
                             key={value}
                             isFocused={focusedBadgeIndex === index}
@@ -749,27 +648,24 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             }}
                             disabled={disabled}
                             variant={variant}
-                            responsiveSettings={responsiveSettings}
-                            screenSize={screenSize}
                             singleLine={singleLine}
+                            compactMode={compactMode}
                           />
                         ))}
-                        {selectedValues.length > dynamicMaxCount && (
+                        {selectedValues.length > visibleCount && (
                           <MultiSelectBadge
                             isFocused={focusedBadgeIndex === maxBadgeIndex}
                             isMaxCount
-                            label={`+ ${selectedValues.length - dynamicMaxCount} more`}
+                            label={`+ ${selectedValues.length - visibleCount} more`}
                             onAction={(e) => {
                               e.stopPropagation();
                               clearExtraOptions();
                               setFocusedBadgeIndex(-1);
                             }}
-                            // Standard props...
                             disabled={disabled}
                             variant={variant}
-                            responsiveSettings={responsiveSettings}
-                            screenSize={screenSize}
                             singleLine={singleLine}
+                            compactMode={compactMode}
                           />
                         )}
                       </>
@@ -777,14 +673,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                       <BadgePlaceholder
                         placeholderBadge={placeholderBadge}
                         variant={variant}
-                        responsiveSettings={responsiveSettings}
                         placeholder={placeholder}
+                        compactMode={compactMode}
                       />
                     )}
                   </div>
 
                   {/* 2. Action Area (Clear & Chevron) */}
-                  <div className="flex items-center">
+                  <div ref={actionsRef} className="flex items-center">
                     {!disabled && selectedValues.length > 0 && (
                       <ClearButton
                         onClick={handleClear}
@@ -806,18 +702,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
             role="listbox"
             aria-multiselectable="true"
             aria-label="Available options"
-            className={cn(
-              "w-auto p-0",
-              screenSize === "mobile" && "w-[85vw] max-w-[280px]",
-              screenSize === "tablet" && "w-[70vw] max-w-md",
-              screenSize === "desktop" && "min-w-[300px]",
-              popoverClassName,
-            )}
-            style={{
-              maxWidth: `min(${widthConstraints.maxWidth}, 85vw)`,
-              maxHeight: screenSize === "mobile" ? "70vh" : "60vh",
-              touchAction: "manipulation",
-            }}
+            className={cn("w-full min-w-(--radix-popover-trigger-width) p-0", "touch-manipulation", popoverClassName)}
             align="start"
             onEscapeKeyDown={() => setIsPopoverOpen(false)}
           >
@@ -839,11 +724,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
               )}
 
               <CommandList
-                className={cn(
-                  "max-h-[40vh] overflow-y-auto multiselect-scrollbar",
-                  screenSize === "mobile" && "max-h-[50vh]",
-                  "overscroll-behavior-y-contain",
-                )}
+                className={cn("max-h-[300px] overflow-y-auto multiselect-scrollbar", "overscroll-behavior-y-contain")}
               >
                 <CommandEmpty>{emptyIndicator || noResultText}</CommandEmpty>
 
@@ -892,13 +773,13 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     ))}
                   </CommandGroup>
                 )}
-
-                <PopoverFooter
-                  onClear={handleClear}
-                  onClose={() => setIsPopoverOpen(false)}
-                  showClear={selectedValues.length > 0}
-                />
               </CommandList>
+              <CommandFooter
+                onClear={handleClear}
+                onClose={() => setIsPopoverOpen(false)}
+                showClear={selectedValues.length > 0}
+                showSelected={selectedValues.length > 0}
+              />
             </Command>
           </PopoverContent>
         </Popover>
@@ -921,12 +802,6 @@ const getNavigationIndices = (count: number, maxVisible: number, isDisabled: boo
   };
 };
 
-interface ResponsiveSettings {
-  maxCount: number;
-  hideIcons: boolean;
-  compactMode: boolean;
-}
-
 const MultiSelectBadge = React.memo(
   function MultiSelectBadge({
     isFocused,
@@ -935,8 +810,9 @@ const MultiSelectBadge = React.memo(
     option,
     disabled,
     variant,
-    responsiveSettings,
-    screenSize,
+
+    hideIcons = false,
+    compactMode,
     singleLine,
     onAction,
   }: {
@@ -946,8 +822,10 @@ const MultiSelectBadge = React.memo(
     option?: MultiSelectOption;
     disabled: boolean;
     variant: VariantProps<typeof multiSelectVariants>["variant"];
-    responsiveSettings: ResponsiveSettings;
-    screenSize: "tablet" | "mobile" | "desktop";
+
+    maxCount?: number;
+    hideIcons?: boolean;
+    compactMode: boolean;
     singleLine: boolean;
     onAction: (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => void;
   }) {
@@ -959,13 +837,11 @@ const MultiSelectBadge = React.memo(
         aria-readonly={disabled}
         className={cn(
           multiSelectVariants({ variant }),
-
-          responsiveSettings.compactMode && "text-xs px-1.5 py-0.5",
-          singleLine && "shrink-0 whitespace-nowrap",
           "[&>svg]:pointer-events-auto aria-readonly:cursor-auto",
+          compactMode && "text-xs px-1.5 py-0.5",
+          singleLine && "shrink-0 whitespace-nowrap",
 
           customStyle?.gradient && "text-white border-transparent",
-          !isMaxCount && screenSize === "mobile" && "max-w-[120px] truncate",
           "transition-all duration-75",
           isFocused && "ring-2 ring-ring ring-offset-1 ",
         )}
@@ -979,12 +855,9 @@ const MultiSelectBadge = React.memo(
             : {}
         }
       >
-        {!isMaxCount && IconComponent && !responsiveSettings.hideIcons && (
+        {!isMaxCount && IconComponent && !hideIcons && (
           <span
-            className={cn(
-              "flex items-center justify-center mr-2 shrink-0",
-              responsiveSettings.compactMode ? "h-3 w-3 mr-1" : "h-4 w-4",
-            )}
+            className={cn("flex items-center justify-center mr-2 shrink-0", compactMode ? "h-3 w-3 mr-1" : "h-4 w-4")}
             style={customStyle?.iconColor ? { color: customStyle.iconColor } : {}}
           >
             <IconComponent className="h-full w-full" />
@@ -1002,9 +875,7 @@ const MultiSelectBadge = React.memo(
           />
         )}
 
-        <span className={cn(!isMaxCount && screenSize === "mobile" && "truncate")}>
-          {isMaxCount ? label : option?.label}
-        </span>
+        <span className={cn("truncate")}>{isMaxCount ? label : option?.label}</span>
       </Badge>
     );
   },
@@ -1019,22 +890,35 @@ const MultiSelectBadge = React.memo(
   },
 );
 
+const GhostBadge = ({ label, compactMode, disabled }: { label: string; compactMode: boolean; disabled: boolean }) => (
+  <div
+    className={cn(
+      badgeVariants({ variant: "default" }),
+      multiSelectVariants({ variant: "default" }),
+      "flex items-center whitespace-nowrap rounded-md border font-semibold", // Match standard Badge base
+      compactMode && "text-xs px-1.5 py-0.5",
+    )}
+    aria-hidden="true"
+  >
+    {!disabled && <div className="mr-1 h-4 w-4 shrink-0" />}
+    <span className="truncate">{label}</span>
+  </div>
+);
+
 const BadgePlaceholder = ({
   placeholderBadge,
   variant,
-  responsiveSettings,
+  compactMode,
   placeholder,
 }: {
   placeholderBadge?: { label: string };
   variant: VariantProps<typeof multiSelectVariants>["variant"];
-  responsiveSettings: ResponsiveSettings;
+  compactMode: boolean;
   placeholder: string;
 }) => (
   <div className="flex items-center">
     {placeholderBadge && (
-      <Badge
-        className={cn(multiSelectVariants({ variant }), responsiveSettings.compactMode && "text-xs px-1.5 py-0.5")}
-      >
+      <Badge className={cn(multiSelectVariants({ variant }), compactMode && "text-xs px-1.5 py-0.5")}>
         {placeholderBadge.label}
       </Badge>
     )}
@@ -1110,106 +994,120 @@ const OptionItem = ({
   </CommandItem>
 );
 
-const PopoverFooter = ({
+const CommandFooter = ({
   onClear,
   onClose,
   showClear,
+  showSelected,
 }: {
   onClear: () => void;
   onClose: () => void;
   showClear: boolean;
+  showSelected: boolean;
 }) => (
-  <>
-    <CommandSeparator />
-    <CommandGroup>
-      <div className="flex items-center justify-between">
-        {showClear && (
-          <>
-            <CommandItem onSelect={onClear} className="flex-1 justify-center cursor-pointer">
-              Clear
-            </CommandItem>
-            <Separator orientation="vertical" className="flex min-h-6 h-full" />
-          </>
-        )}
-        <CommandItem onSelect={onClose} className="flex-1 justify-center cursor-pointer max-w-full">
-          Close
-        </CommandItem>
-      </div>
-    </CommandGroup>
-  </>
+  <div className="flex items-center justify-between p-1 bg-accent gap-2 rounded-md">
+    {showClear && (
+      <Button
+        variant={"outline_destructive"}
+        onClick={onClear}
+        className="flex-1 justify-center cursor-pointer text-xs py-2 dark:bg-input/30"
+      >
+        <LucideTrash2 />
+        Clear
+      </Button>
+    )}
+    {showSelected && (
+      <Button
+        variant={"outline"}
+        onClick={() => {
+          console.log("Selected");
+        }}
+        className="flex-1 justify-center cursor-pointer text-xs py-2"
+      >
+        <LucideFilter />
+        Show Selected
+      </Button>
+    )}
+    <Button variant={"outline"} onClick={onClose} className="flex-1 justify-center cursor-pointer text-xs py-2 ">
+      <LucideX />
+      Close
+    </Button>
+  </div>
 );
-function useOverflowDetection(
-  containerRef: React.RefObject<HTMLDivElement | null>,
-  shadowRef: React.RefObject<HTMLDivElement | null>,
-  itemsCount: number,
-) {
-  const [visibleCount, setVisibleCount] = React.useState(itemsCount);
 
-  const updateVisibleCount = React.useCallback(() => {
+function useOverflowDetection(itemsCount: number) {
+  const GAP_SIZE = 8;
+  const MINIMUM_BADGE_WIDTH = 62;
+
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const shadowRef = React.useRef<HTMLDivElement>(null);
+  const actionsRef = React.useRef<HTMLDivElement>(null);
+
+  const [visibleCount, setVisibleCount] = React.useState(itemsCount);
+  const [measurementLimit, setMeasurementLimit] = React.useState(10);
+
+  const calculateBadgeBounds = React.useCallback(() => {
     const container = containerRef.current;
     const shadow = shadowRef.current;
-    if (!container || !shadow) return;
+    const actions = actionsRef.current;
+    if (!container || !shadow || !actions) return;
 
-    const containerWidth = container.offsetWidth;
-    const actionAreaWidth = 110; // Clear + Chevron + Padding
-    const availableTotalWidth = containerWidth - actionAreaWidth;
+    const { width: actionAreaWidth } = actions.getBoundingClientRect();
 
-    // 1. Get real Plus Badge width
-    const plusBadgeEl = shadow.querySelector("[data-shadow-plus]") as HTMLElement;
-    const plusBadgeWidth = plusBadgeEl ? plusBadgeEl.offsetWidth + 4 : 70;
+    const { width: containerWidth } = container.getBoundingClientRect();
+    const availableWidth = containerWidth - actionAreaWidth - 8;
 
-    // 2. Filter out the measurement helper from the children list
-    const shadowChildren = Array.from(shadow.children).filter(
-      (el) => !el.hasAttribute("data-shadow-plus"),
-    ) as HTMLElement[];
+    const estimatedMax = Math.ceil(availableWidth / MINIMUM_BADGE_WIDTH) + 2;
+    setMeasurementLimit(estimatedMax);
 
+    const shadowChildren = Array.from(shadow.children) as HTMLElement[];
+    const maxCountBadge = shadowChildren.find((el) => el.hasAttribute("data-shadow-plus"));
+    const BadgeList = shadowChildren.filter((el) => !el.hasAttribute("data-shadow-plus"));
+
+    const maxCountBadgeWidth = maxCountBadge ? maxCountBadge.getBoundingClientRect().width + 4 : MINIMUM_BADGE_WIDTH;
+    //723
     let currentWidth = 0;
     let fitCount = 0;
-    let allFitWithNoPlusBadge = true;
 
-    for (let i = 0; i < shadowChildren.length; i++) {
-      const childWidth = shadowChildren[i].offsetWidth + 4;
-
-      // If adding THIS child AND the Plus Badge exceeds the total area...
-      if (currentWidth + childWidth + plusBadgeWidth > availableTotalWidth) {
-        allFitWithNoPlusBadge = false;
-        break;
-      }
-
+    for (let i = 0; i < BadgeList.length; i++) {
+      const childWidth = BadgeList[i].getBoundingClientRect().width + 4;
+      const spaceNeeded = childWidth + GAP_SIZE;
+      if (currentWidth + spaceNeeded + maxCountBadgeWidth > availableWidth) break;
       currentWidth += childWidth;
       fitCount++;
     }
 
-    // 3. Final Check: If the loop broke, we use fitCount.
-    // If the loop finished, check if ALL items fit WITHOUT the plus badge.
-    const totalWidthAllItems = shadowChildren.reduce((acc, el) => acc + el.offsetWidth + 4, 0);
+    const totalBadgesWidth = BadgeList.reduce((acc, el) => acc + el.getBoundingClientRect().width, 0);
+    const totalGapsWidth = Math.max(0, BadgeList.length - 1) * GAP_SIZE;
+    const totalNeeded = totalBadgesWidth + totalGapsWidth;
 
-    // If total items fits without needing a "plus" badge, show all
-    if (totalWidthAllItems <= availableTotalWidth && itemsCount <= shadowChildren.length) {
+    if (totalNeeded < availableWidth && itemsCount <= BadgeList.length) {
       setVisibleCount(itemsCount);
     } else {
-      // Otherwise, return the count that safely accommodates the "plus" badge
       setVisibleCount(Math.max(1, fitCount));
     }
-  }, [itemsCount, containerRef, shadowRef]);
+  }, [itemsCount]);
 
   // Sync pass
   React.useLayoutEffect(() => {
-    updateVisibleCount();
-  }, [itemsCount, updateVisibleCount]);
+    calculateBadgeBounds();
+  }, [itemsCount, calculateBadgeBounds]);
 
   // Resize pass
   React.useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const observer = new ResizeObserver(() => {
-      window.requestAnimationFrame(() => updateVisibleCount());
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [updateVisibleCount, containerRef]);
+    if (!containerRef.current || !actionsRef.current) return;
 
-  return visibleCount;
+    const observer = new ResizeObserver(() => {
+      window.requestAnimationFrame(calculateBadgeBounds);
+    });
+
+    observer.observe(containerRef.current);
+    observer.observe(actionsRef.current);
+
+    return () => observer.disconnect();
+  }, [calculateBadgeBounds]);
+
+  return { containerRef, shadowRef, actionsRef, visibleCount, measurementLimit };
 }
 
 function useMultiSelectAnnouncements({

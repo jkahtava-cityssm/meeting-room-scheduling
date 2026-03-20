@@ -35,6 +35,7 @@ import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { getStep1Schema } from "./event-drawer-schema.validator";
+import { UserMultiSelectRefactored } from "../users/user-muliselect-refactor";
 
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
@@ -350,7 +351,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           </FormItem>
         )}
       />
-      <FormField
+      {/*<FormField
         control={control}
         name="eventRecipientIds"
         render={({ field, fieldState }) => (
@@ -369,6 +370,29 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 className="min-w-0 w-full"
                 maxCount={4}
               ></UserMultiSelect>
+            </FormControl>
+          </FormItem>
+        )}
+      />*/}
+      <FormField
+        control={control}
+        name="eventRecipientIds"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-3 row-7">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium" />
+            ) : (
+              <FormLabel>Notify Users Refactor</FormLabel>
+            )}
+            <FormControl>
+              <UserMultiSelectRefactored
+                selectedUserIds={field.value}
+                excludeUserIds={[userId]}
+                onChange={field.onChange}
+                isDisabled={isReadOnly}
+                className="min-w-0 w-full"
+                maxCount={4}
+              ></UserMultiSelectRefactored>
             </FormControl>
           </FormItem>
         )}
