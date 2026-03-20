@@ -423,24 +423,27 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       [selectedValues.length, visibleCount, disabled],
     );
 
+    const onValueChangeRef = React.useRef(onValueChange);
+
+    React.useLayoutEffect(() => {
+      onValueChangeRef.current = onValueChange;
+    }, [onValueChange]);
+
     const toggleOption = React.useCallback(
       (optionValue: string) => {
         if (disabled) return;
 
         setSelectedValues((prev) => {
-          const isAlreadySelected = prev.includes(optionValue);
-          const newValues = isAlreadySelected ? prev.filter((v) => v !== optionValue) : [...prev, optionValue];
+          const next = prev.includes(optionValue) ? prev.filter((v) => v !== optionValue) : [...prev, optionValue];
 
-          setTimeout(() => {
-            onValueChange?.(newValues);
-          }, 0);
-
-          return newValues;
+          // Use the ref to escape the dependency array
+          onValueChangeRef.current?.(next);
+          return next;
         });
 
         if (closeOnSelect) setIsPopoverOpen(false);
       },
-      [disabled, closeOnSelect, onValueChange],
+      [disabled, closeOnSelect],
     );
 
     const handleClear = React.useCallback(() => {
