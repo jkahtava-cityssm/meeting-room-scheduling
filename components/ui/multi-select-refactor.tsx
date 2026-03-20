@@ -418,7 +418,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       );
     }, [options, searchValue, searchable, isGroupedOptions]);
 
-    const { maxBadgeIndex, clearButtonIndex, lastBadgeIndex } = React.useMemo(
+    const { maxBadgeIndex, clearButtonIndex, lastBadgeIndex, chevronIndex } = React.useMemo(
       () => getNavigationIndices(selectedValues.length, visibleCount, disabled),
       [selectedValues.length, visibleCount, disabled],
     );
@@ -538,12 +538,21 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       lastBadgeIndex,
       clearButtonIndex,
       maxBadgeIndex,
+      chevronIndex,
       toggleOption,
       handleClear,
       clearExtraOptions,
       setIsPopoverOpen,
     });
 
+    const renderCount = React.useRef(0);
+    renderCount.current++;
+    console.log(`MultiSelect Render #${renderCount.current}`, {
+      selectedValues,
+      isPopoverOpen,
+      searchValue,
+      visibleCount, // This comes from your overflow hook
+    });
     return (
       <>
         <div className="sr-only">
@@ -678,7 +687,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     )}
                     {!disabled && <Separator orientation="vertical" className="flex min-h-6 h-full mx-1" />}
                     {!disabled && (
-                      <ChevronDown className="h-4 mx-2 pointer-events-none text-muted-foreground opacity-50" />
+                      <ChevronButton
+                        onClick={() => setIsPopoverOpen(true)}
+                        isFocused={focusedBadgeIndex === chevronIndex}
+                      ></ChevronButton>
                     )}
                   </div>
                 </div>
@@ -787,6 +799,7 @@ const getNavigationIndices = (count: number, maxVisible: number, isDisabled: boo
     maxBadgeIndex,
     clearButtonIndex,
     lastBadgeIndex: hasClearButton ? clearButtonIndex : hasMaxBadge ? maxBadgeIndex : visibleChipsCount - 1,
+    chevronIndex: clearButtonIndex + 1,
   };
 };
 
@@ -947,6 +960,38 @@ const ClearButton = ({
   </div>
 );
 
+const ChevronButton = ({
+  onClick,
+
+  isFocused,
+}: {
+  onClick: () => void;
+
+  isFocused: boolean;
+}) => (
+  <div
+    role="button"
+    tabIndex={-1}
+    onClick={(e) => {
+      e.stopPropagation();
+      onClick();
+    }}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.stopPropagation();
+        onClick();
+      }
+    }}
+    className={cn(
+      "flex items-center justify-center h-4 w-4 mx-2 text-muted-foreground rounded-sm cursor-auto",
+      "cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ",
+      isFocused && "ring-2 ring-ring ring-offset-1 ",
+    )}
+  >
+    <ChevronDown className="h-4 w-4" />
+  </div>
+);
+
 const OptionItem = React.memo(
   function OptionItem({
     option,
@@ -957,6 +1002,7 @@ const OptionItem = React.memo(
     isSelected: boolean;
     onToggle: (value: string) => void;
   }) {
+    console.log(`[Render] OptionItem: ${option.label}`);
     return (
       <CommandItem
         key={option.value}
@@ -1186,6 +1232,7 @@ interface UseMultiSelectKeyboardProps {
   lastBadgeIndex: number;
   clearButtonIndex: number;
   maxBadgeIndex: number;
+  chevronIndex: number;
   toggleOption: (value: string) => void;
   handleClear: () => void;
   clearExtraOptions: () => void;
@@ -1202,6 +1249,7 @@ export function useMultiSelectKeyboard({
   lastBadgeIndex,
   clearButtonIndex,
   maxBadgeIndex,
+  chevronIndex,
   toggleOption,
   handleClear,
   clearExtraOptions,
