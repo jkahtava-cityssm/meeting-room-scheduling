@@ -432,19 +432,17 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const toggleOption = React.useCallback(
       (optionValue: string) => {
         if (disabled) return;
-
-        setSelectedValues((prev) => {
-          const next = prev.includes(optionValue) ? prev.filter((v) => v !== optionValue) : [...prev, optionValue];
-
-          // Use the ref to escape the dependency array
-          onValueChangeRef.current?.(next);
-          return next;
-        });
-
+        setSelectedValues((prev) =>
+          prev.includes(optionValue) ? prev.filter((v) => v !== optionValue) : [...prev, optionValue],
+        );
         if (closeOnSelect) setIsPopoverOpen(false);
       },
       [disabled, closeOnSelect],
     );
+
+    React.useEffect(() => {
+      onValueChangeRef.current?.(selectedValues);
+    }, [selectedValues]);
 
     const handleClear = React.useCallback(() => {
       if (disabled) return;
