@@ -1081,7 +1081,6 @@ function useOverflowDetection(itemsCount: number) {
     const totalGapsWidth = Math.max(0, BadgeList.length - 1) * GAP_SIZE;
     const totalNeeded = totalBadgesWidth + totalGapsWidth;
 
-    console.log("totalNeeded: ", totalNeeded, "Available: ", availableWidth, "Items: ", BadgeList.length);
     if (totalNeeded < availableWidth && itemsCount <= BadgeList.length) {
       setVisibleCount(itemsCount);
     } else {
@@ -1089,12 +1088,10 @@ function useOverflowDetection(itemsCount: number) {
     }
   }, [itemsCount]);
 
-  // Sync pass
   React.useLayoutEffect(() => {
     calculateBadgeBounds();
   }, [itemsCount, calculateBadgeBounds]);
 
-  // Resize pass
   React.useLayoutEffect(() => {
     if (!containerRef.current || !actionsRef.current) return;
 
