@@ -397,6 +397,52 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           </FormItem>
         )}
       />
+      <FormField
+        control={control}
+        name="eventRecipientIds"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1 row-8">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium" />
+            ) : (
+              <FormLabel>Notify Users Refactor</FormLabel>
+            )}
+            <FormControl>
+              <UserMultiSelectRefactored
+                selectedUserIds={field.value}
+                excludeUserIds={[userId]}
+                onChange={field.onChange}
+                isDisabled={isReadOnly}
+                className="min-w-0 w-full"
+                maxCount={4}
+              ></UserMultiSelectRefactored>
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={control}
+        name="eventRecipientIds"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-2 row-9">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium" />
+            ) : (
+              <FormLabel>Notify Users Refactor</FormLabel>
+            )}
+            <FormControl>
+              <UserMultiSelectRefactored
+                selectedUserIds={field.value}
+                excludeUserIds={[userId]}
+                onChange={field.onChange}
+                isDisabled={isReadOnly}
+                className="min-w-0 w-full"
+                maxCount={4}
+              ></UserMultiSelectRefactored>
+            </FormControl>
+          </FormItem>
+        )}
+      />
 
       <FormField
         control={control}

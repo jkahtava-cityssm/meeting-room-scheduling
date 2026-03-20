@@ -347,40 +347,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       onValueChange(defaultValue);
     }, [defaultValue, onValueChange]);
 
-    const buttonRef = React.useRef<HTMLDivElement>(null);
-
-    React.useImperativeHandle(
-      ref,
-      () => ({
-        reset: resetToDefault,
-        getSelectedValues: () => selectedValues,
-        setSelectedValues: (values: string[]) => {
-          setSelectedValues(values);
-          onValueChange(values);
-        },
-        clear: () => {
-          setSelectedValues([]);
-          onValueChange([]);
-        },
-        focus: () => {
-          if (buttonRef.current) {
-            buttonRef.current.focus();
-            const originalOutline = buttonRef.current.style.outline;
-            const originalOutlineOffset = buttonRef.current.style.outlineOffset;
-            buttonRef.current.style.outline = "2px solid hsl(var(--ring))";
-            buttonRef.current.style.outlineOffset = "2px";
-            setTimeout(() => {
-              if (buttonRef.current) {
-                buttonRef.current.style.outline = originalOutline;
-                buttonRef.current.style.outlineOffset = originalOutlineOffset;
-              }
-            }, 1000);
-          }
-        },
-      }),
-      [resetToDefault, selectedValues, onValueChange],
-    );
-
     const selectionList = React.useMemo(() => {
       if (options.length === 0) return [];
 
@@ -461,22 +427,28 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       (optionValue: string) => {
         if (disabled) return;
 
-        const newValues = selectedValues.includes(optionValue)
-          ? selectedValues.filter((v) => v !== optionValue)
-          : [...selectedValues, optionValue];
+        setSelectedValues((prev) => {
+          const isAlreadySelected = prev.includes(optionValue);
+          const newValues = isAlreadySelected ? prev.filter((v) => v !== optionValue) : [...prev, optionValue];
 
-        setSelectedValues(newValues);
-        onValueChange(newValues);
+          setTimeout(() => {
+            onValueChange?.(newValues);
+          }, 0);
+
+          return newValues;
+        });
+
         if (closeOnSelect) setIsPopoverOpen(false);
       },
-      [disabled, selectedValues, onValueChange, closeOnSelect],
+      [disabled, closeOnSelect, onValueChange],
     );
 
-    const handleClear = () => {
+    const handleClear = React.useCallback(() => {
       if (disabled) return;
       setSelectedValues([]);
       onValueChange([]);
-    };
+      announce("All items cleared", "assertive");
+    }, [announce, disabled, onValueChange]);
 
     const handleTogglePopover = (value: boolean) => {
       if (disabled) return;
@@ -512,6 +484,23 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
         setIsPopoverOpen(false);
       }
     };
+
+    const buttonRef = React.useRef<HTMLDivElement>(null);
+
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        reset: resetToDefault,
+        getSelectedValues: () => selectedValues,
+        setSelectedValues: (values: string[]) => {
+          setSelectedValues(values);
+          onValueChange(values);
+        },
+        clear: handleClear,
+        focus: () => buttonRef.current?.focus(),
+      }),
+      [resetToDefault, handleClear, selectedValues, onValueChange],
+    );
 
     React.useEffect(() => {
       if (focusedBadgeIndex > lastBadgeIndex) {
@@ -607,8 +596,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                   style={{ visibility: "hidden", left: 0, top: 0, zIndex: -1 }}
                   aria-hidden="true"
                 >
-                  {/* We only render up to 50 badges. Even on a 4k monitor, 
-      50 badges will almost certainly overflow the width. */}
                   {selectedValues.slice(0, measurementLimit).map((value) => (
                     <GhostBadge
                       key={`shadow-${value}`}
@@ -959,39 +946,51 @@ const ClearButton = ({
   </div>
 );
 
-const OptionItem = ({
-  option,
-  isSelected,
-  onToggle,
-}: {
-  option: MultiSelectOption;
-  isSelected: boolean;
-  onToggle: (value: string) => void;
-}) => (
-  <CommandItem
-    key={option.value}
-    onSelect={() => onToggle(option.value)}
-    value={option.value}
-    keywords={[option.label]}
-    role="option"
-    aria-selected={isSelected}
-    aria-disabled={option.disabled}
-    aria-label={`${option.label}${isSelected ? ", selected" : ", not selected"}${option.disabled ? ", disabled" : ""}`}
-    className={cn("cursor-pointer", option.disabled && "opacity-50 cursor-not-allowed")}
-    disabled={option.disabled}
-  >
-    <div
-      className={cn(
-        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-        isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible",
-      )}
-      aria-hidden="true"
-    >
-      <CheckIcon className="h-4 w-4" />
-    </div>
-    {option.icon && <option.icon className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
-    <span className="truncate">{option.label}</span>
-  </CommandItem>
+const OptionItem = React.memo(
+  function OptionItem({
+    option,
+    isSelected,
+    onToggle,
+  }: {
+    option: MultiSelectOption;
+    isSelected: boolean;
+    onToggle: (value: string) => void;
+  }) {
+    return (
+      <CommandItem
+        key={option.value}
+        onSelect={() => onToggle(option.value)}
+        value={option.value}
+        keywords={[option.label]}
+        role="option"
+        aria-selected={isSelected}
+        aria-disabled={option.disabled}
+        aria-label={`${option.label}${isSelected ? ", selected" : ", not selected"}${option.disabled ? ", disabled" : ""}`}
+        className={cn("cursor-pointer", option.disabled && "opacity-50 cursor-not-allowed")}
+        disabled={option.disabled}
+      >
+        <div
+          className={cn(
+            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+            isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible",
+          )}
+          aria-hidden="true"
+        >
+          <CheckIcon className="h-4 w-4" />
+        </div>
+        {option.icon && <option.icon className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
+        <span className="truncate">{option.label}</span>
+      </CommandItem>
+    );
+  },
+  (prev, next) => {
+    return (
+      prev.isSelected === next.isSelected &&
+      prev.option.value === next.option.value &&
+      prev.option.disabled === next.option.disabled &&
+      prev.option.label === next.option.label
+    );
+  },
 );
 
 const CommandFooter = ({
