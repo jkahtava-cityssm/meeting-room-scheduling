@@ -974,7 +974,7 @@ async function main() {
 	}
 
 	if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
-		console.log("No users found, generating random Users");
+		console.log("Seeding Random Users...");
 		await prisma.user.deleteMany();
 		CreateRandomUsers(50);
 	}
