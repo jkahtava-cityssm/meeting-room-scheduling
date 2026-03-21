@@ -973,9 +973,7 @@ async function main() {
 		await createLinkedServer();
 	}
 
-	const user = await prisma.user.findFirst({ orderBy: { id: "asc" } });
-
-	if (!user && process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
+	if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
 		console.log("No users found, generating random Users");
 		await prisma.user.deleteMany();
 		CreateRandomUsers(50);
