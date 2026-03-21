@@ -1262,26 +1262,30 @@ export function useMultiSelectKeyboard({
 			switch (event.key) {
 				case "ArrowLeft":
 					if (!hasItems) return;
+					if (chevronIndex === -1) return;
 
-					if (focusedBadgeIndex === -1) {
-						// If nothing is focused, jump to the end of the list
+					if (focusedBadgeIndex === 0) {
+						// Exit left, Back to the main container
+						setFocusedBadgeIndex(-1);
+					} else if (focusedBadgeIndex === -1) {
+						// Enter from the right side
 						setFocusedBadgeIndex(chevronIndex);
 					} else {
-						// Move left
-						const nextIndex = focusedBadgeIndex > 0 ? focusedBadgeIndex - 1 : chevronIndex;
-						setFocusedBadgeIndex(nextIndex);
+						setFocusedBadgeIndex(focusedBadgeIndex - 1);
 					}
 					break;
 
 				case "ArrowRight":
 					if (!hasItems) return;
-					if (focusedBadgeIndex === -1) {
-						// Start at the beginning if focus is lost
+					if (chevronIndex === -1) return;
+					if (focusedBadgeIndex === chevronIndex) {
+						// Exit right, Back to the main container
+						setFocusedBadgeIndex(-1);
+					} else if (focusedBadgeIndex === -1) {
+						// Enter from the left side
 						setFocusedBadgeIndex(0);
 					} else {
-						// Move right
-						const nextIndex = focusedBadgeIndex < chevronIndex ? focusedBadgeIndex + 1 : 0;
-						setFocusedBadgeIndex(nextIndex);
+						setFocusedBadgeIndex(focusedBadgeIndex + 1);
 					}
 					break;
 
