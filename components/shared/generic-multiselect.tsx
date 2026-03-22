@@ -9,94 +9,88 @@ import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { useMemo, useState } from "react";
-import { MultiSelect } from "../ui/multi-select";
+import { MultiSelect } from "../multi-select/multi-select";
 
 type DataSelectProps<T> = {
-  list: T[] | undefined;
-  selectedValues: string[];
-  isLoading: boolean;
-  isDisabled: boolean;
-  isError?: boolean;
-  loadingLabel: string;
-  placeholderText: string;
-  placeholderBadge?: { label: string };
-  searchText: string;
-  noResultText: string;
-  dataInvalid?: boolean;
-  onValueChange: (values: string[]) => void;
-  getId: (item: T) => string;
-  getLabel: (item: T) => string;
-  className?: string;
-  maxCount?: number;
-  hideSelectAll?: boolean;
+	list: T[] | undefined;
+	selectedValues: string[];
+	isLoading: boolean;
+	isDisabled: boolean;
+	isError?: boolean;
+	loadingLabel: string;
+	placeholderText: string;
+	placeholderBadge?: { label: string };
+	searchText: string;
+	noResultText: string;
+	dataInvalid?: boolean;
+	onValueChange: (values: string[]) => void;
+	getId: (item: T) => string;
+	getLabel: (item: T) => string;
+	className?: string;
+	maxCount?: number;
+	hideSelectAll?: boolean;
 };
 
 export function GenericMultiSelect<T>({
-  list,
-  selectedValues,
-  isLoading,
-  isDisabled,
-  isError,
-  loadingLabel = "Collecting Data",
-  placeholderText = "Click to Select",
-  placeholderBadge,
-  searchText = "Search...",
-  noResultText = "No Item Found",
-  dataInvalid = false,
-  onValueChange,
-  getId,
-  getLabel,
-  className,
-  maxCount,
-  hideSelectAll = true,
+	list,
+	selectedValues,
+	isLoading,
+	isDisabled,
+	isError,
+	loadingLabel = "Collecting Data",
+	placeholderText = "Click to Select",
+	placeholderBadge,
+	searchText = "Search...",
+	noResultText = "No Item Found",
+	dataInvalid = false,
+	onValueChange,
+	getId,
+	getLabel,
+	className,
+	hideSelectAll = true,
 }: DataSelectProps<T>) {
-  const options = useMemo(() => {
-    if (!list) return [];
-    return list.map((item) => ({
-      label: getLabel(item),
-      value: getId(item),
-    }));
-  }, [list, getLabel, getId]);
+	const options = useMemo(() => {
+		if (!list) return [];
+		return list.map(item => ({
+			label: getLabel(item),
+			value: getId(item),
+		}));
+	}, [list, getLabel, getId]);
 
-  if (isLoading || !list) {
-    return (
-      <Button
-        data-invalid={dataInvalid}
-        aria-invalid={dataInvalid}
-        variant={"combobox"}
-        disabled
-        className={cn("min-w-[200px]", className)}
-      >
-        {isError ? <CircleX /> : <Loader2Icon className="animate-spin" />}
-        {loadingLabel}
-      </Button>
-    );
-  }
+	if (isLoading || !list) {
+		return (
+			<Button
+				data-invalid={dataInvalid}
+				aria-invalid={dataInvalid}
+				variant={"combobox"}
+				disabled
+				className={cn("min-w-[200px]", className)}
+			>
+				{isError ? <CircleX /> : <Loader2Icon className="animate-spin" />}
+				{loadingLabel}
+			</Button>
+		);
+	}
 
-  return (
-    <div className={cn("w-full", className)} data-invalid={dataInvalid}>
-      <MultiSelect
-        options={options}
-        onValueChange={onValueChange}
-        defaultValue={selectedValues}
-        placeholder={placeholderText}
-        placeholderBadge={placeholderBadge}
-        searchText={searchText}
-        noResultText={noResultText}
-        animationConfig={{
-          badgeAnimation: "none",
-          optionHoverAnimation: "none",
-          popoverAnimation: "none",
-          duration: 100,
-          delay: 100,
-        }}
-        disabled={isDisabled}
-        maxCount={maxCount}
-        hideSelectAll={hideSelectAll}
-        className={cn(dataInvalid && "border-destructive")}
-        searchable={true}
-        modalPopover={true}
-      />
-    </div>
-  );
+	return (
+		<div
+			className={cn("w-full", className)}
+			data-invalid={dataInvalid}
+		>
+			<MultiSelect
+				options={options}
+				onValueChange={onValueChange}
+				defaultValue={selectedValues}
+				placeholder={placeholderText}
+				placeholderBadge={placeholderBadge}
+				searchText={searchText}
+				noResultText={noResultText}
+				disabled={isDisabled}
+				hideSelectAll={hideSelectAll}
+				className={cn(dataInvalid && "border-destructive")}
+				searchable={true}
+				modalPopover={true}
+			/>
+		</div>
+	);
 }
