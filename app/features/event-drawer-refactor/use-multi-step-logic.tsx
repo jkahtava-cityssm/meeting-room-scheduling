@@ -174,19 +174,21 @@ export const useMultiStepFormLogic = (props: {
 			userId: updatedData.userId ? Number(updatedData.userId) : null,
 			statusId: Number(updatedData.statusId),
 			rule: isRecurring ? updatedData.rule : undefined,
+			eventRecipients: updatedData.eventRecipientIds,
+			eventItems: updatedData.eventItemIds,
 		};
 
 		const parsedPayload = SEventPUT.parse(apiPayload);
 
 		if (!parsedPayload.eventId || parsedPayload.eventId === 0) {
 			mutationCreate.mutate(parsedPayload, {
-				onSuccess: () => {
+				onSettled: () => {
 					resetForm();
 				},
 			});
 		} else {
 			mutationUpsert.mutate(SEventPUT.parse(apiPayload), {
-				onSuccess: () => {
+				onSettled: () => {
 					resetForm();
 				},
 			});
