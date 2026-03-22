@@ -1,6 +1,6 @@
 import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
 
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas";
 import EventDrawerRefactor from "./event-drawer-root";
 import { EventDrawerPermissions } from "./lib/permissions";
 import { useSession } from "@/contexts/SessionProvider";

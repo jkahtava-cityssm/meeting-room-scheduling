@@ -3,7 +3,7 @@ import { formatISO } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from "@/lib/fetch";
 import z from "zod/v4";
-import { IEvent, SEvent, utcDateSchema } from "@/lib/schemas/calendar";
+import { IEvent, SEvent, utcDateSchema } from "@/lib/schemas";
 import { Prisma } from "@prisma/client";
 import { processEventsAsync } from "@/app/features/calendar/webworkers/generic-webworker-client";
 import { CalendarAction, ISODateString } from "@/app/features/calendar/webworkers/generic-webworker";

@@ -1,7 +1,7 @@
 import { HomeIcon, UserIcon } from "lucide-react";
 import { FieldKeys, FormStep } from "./types";
 
-import { IEvent, SEvent } from "@/lib/schemas/calendar";
+import { IEvent, SEvent } from "@/lib/schemas";
 import React, { useMemo } from "react";
 import { Step1 } from "./step-event-details";
 import { Step2 } from "./step-event-recurrence";

@@ -15,7 +15,7 @@ import {
 } from "@/lib/services/events";
 import { isFormValid, isStepValid, reconcileRecurringEventDates } from "./lib/form-helper";
 import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas";
 import { getFormDefaults, mapEventToSchema } from "./lib/default-util";
 import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
 import { useStepNavigation } from "./use-step-navigation";

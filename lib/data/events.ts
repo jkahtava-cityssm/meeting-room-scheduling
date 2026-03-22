@@ -1,6 +1,6 @@
 import { prisma } from "@/prisma";
 import type { Prisma } from "@prisma/client";
-import { IEvent, SEvent } from "../schemas/calendar";
+import { IEvent, SEvent } from "../schemas";
 import z from "zod/v4";
 
 // Standard event include configuration — used across all DAL functions

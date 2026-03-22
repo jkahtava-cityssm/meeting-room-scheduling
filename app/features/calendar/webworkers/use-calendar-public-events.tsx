@@ -1,7 +1,7 @@
 import { usePublicEventsQuery } from "@/lib/services/public";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { useEffect, useState } from "react";
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas";
 import { CalendarAction, ISODateString } from "./generic-webworker";
 import { TVisibleHours } from "@/lib/types";
 

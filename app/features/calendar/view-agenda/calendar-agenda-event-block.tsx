@@ -5,18 +5,18 @@ import { cva } from "class-variance-authority";
 import { Clock, MapPin, Text } from "lucide-react";
 
 import { TColors } from "@/lib/types";
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas";
 
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import EventDrawerRefactor from "../../event-drawer-refactor/event-drawer-root";
 import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 const agendaEventCardVariants = cva(
-  "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-  {
-    variants: {
-      color: sharedColorVariants,
-      /*{
+	"flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+	{
+		variants: {
+			color: sharedColorVariants,
+			/*{
         red: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300 [&_.event-dot]:fill-red-600",
         orange:
           "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300 [&_.event-dot]:fill-orange-600",
@@ -52,74 +52,74 @@ const agendaEventCardVariants = cva(
         stone:
           "border-stone-200 bg-stone-50 text-stone-700 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 [&_.event-dot]:fill-stone-600",
       },*/
-    },
-    defaultVariants: {
-      color: "blue",
-    },
-  },
+		},
+		defaultVariants: {
+			color: "blue",
+		},
+	},
 );
 
 export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: string }) {
-  //const { badgeVariant } = useCalendar();
-  const { openEventDrawer } = useSharedEventDrawer();
+	//const { badgeVariant } = useCalendar();
+	const { openEventDrawer } = useSharedEventDrawer();
 
-  const startDate = event.startDate;
-  const endDate = event.endDate;
-  /*
+	const startDate = event.startDate;
+	const endDate = event.endDate;
+	/*
   const color = (badgeVariant === "dot" ? `${event.color}-dot` : event.color) as VariantProps<
     typeof agendaEventCardVariants
   >["color"];
 */
-  const color = event.room.color as TColors;
-  const agendaEventCardClasses = agendaEventCardVariants({ color });
+	const color = event.room.color as TColors;
+	const agendaEventCardClasses = agendaEventCardVariants({ color });
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      if (e.currentTarget instanceof HTMLElement) e.currentTarget.click();
-    }
-  };
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" || e.key === " ") {
+			e.preventDefault();
+			if (e.currentTarget instanceof HTMLElement) e.currentTarget.click();
+		}
+	};
 
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      className={agendaEventCardClasses}
-      color={event.room.color}
-      onKeyDown={handleKeyDown}
-      onClick={() => openEventDrawer({ creationDate: new Date(event.startDate), event: event, userId: userId })}
-    >
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-1.5">
-          <p className="text-md leading-none font-semibold">{event.title}</p>
-        </div>
+	return (
+		<div
+			role="button"
+			tabIndex={0}
+			className={agendaEventCardClasses}
+			color={event.room.color}
+			onKeyDown={handleKeyDown}
+			onClick={() => openEventDrawer({ creationDate: new Date(event.startDate), event: event, userId: userId })}
+		>
+			<div className="flex flex-col gap-2">
+				<div className="flex items-center gap-1.5">
+					<p className="text-md leading-none font-semibold">{event.title}</p>
+				</div>
 
-        <div className="mt-1 flex items-center gap-1">
-          <MapPin className="size-5 shrink-0" />
-          <p className="text-xs text-foreground">{event.room.name}</p>
-        </div>
+				<div className="mt-1 flex items-center gap-1">
+					<MapPin className="size-5 shrink-0" />
+					<p className="text-xs text-foreground">{event.room.name}</p>
+				</div>
 
-        <div className="flex items-center gap-1">
-          <Clock className="size-5 shrink-0" />
-          <p className="text-xs text-foreground">
-            {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
-          </p>
-        </div>
+				<div className="flex items-center gap-1">
+					<Clock className="size-5 shrink-0" />
+					<p className="text-xs text-foreground">
+						{format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
+					</p>
+				</div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Text className="size-5 shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Description</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 pl-7">
-            <p className="text-xs text-foreground">{event.description}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+				<div>
+					<div className="flex items-center gap-2 mb-2">
+						<Text className="size-5 shrink-0" />
+						<div>
+							<p className="text-sm font-medium">Description</p>
+						</div>
+					</div>
+					<div className="flex items-center gap-2 pl-7">
+						<p className="text-xs text-foreground">{event.description}</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
 /**
  * 
