@@ -6,16 +6,16 @@ import { ChevronRight } from "lucide-react";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
+	SidebarGroup,
+	SidebarGroupLabel,
+	SidebarHeader,
+	SidebarMenu,
+	SidebarMenuBadge,
+	SidebarMenuButton,
+	SidebarMenuItem,
+	SidebarMenuSub,
+	SidebarMenuSubButton,
+	SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import DynamicIcon, { IconName } from "../../../components/ui/icon-dynamic";
@@ -36,268 +36,312 @@ import { useSearchParams } from "next/navigation";
 import { SidebarPermissions } from "./permissions/navigation.permissions";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { session, isPending } = useSession();
+	const { isPending } = useSession();
 
-  if (isPending) {
-    return (
-      <div className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
-        <div className="flex flex-col bg-sidebar border-r h-full w-full ">
-          <div className="flex min-h-0 flex-1 flex-col ">
-            <div className="flex flex-col gap-2 p-2 h-16 w-64">
-              <Skeleton className="h-full"></Skeleton>
-            </div>
-            <div className="relative flex w-full min-w-0 flex-col p-2">
-              <div className="pr-2 py-2">
-                <Skeleton className="h-4" />
-              </div>
+	if (isPending) {
+		return (
+			<div className="top-(--header-height) h-[calc(100svh-var(--header-height))]!">
+				<div className="flex flex-col bg-sidebar border-r h-full w-full ">
+					<div className="flex min-h-0 flex-1 flex-col ">
+						<div className="flex flex-col gap-2 p-2 h-16 w-64">
+							<Skeleton className="h-full"></Skeleton>
+						</div>
+						<div className="relative flex w-full min-w-0 flex-col p-2">
+							<div className="pr-2 py-2">
+								<Skeleton className="h-4" />
+							</div>
 
-              <div className="pr-2 mb-1">
-                <Skeleton className="h-8" />
-              </div>
-              <div className="flex flex-col px-2.5 py-0.5 mx-3.5 border-l gap-1">
-                <Skeleton className="h-7" />
-                <Skeleton className="h-7" />
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 p-2 h-16 w-64">
-            <Skeleton className="h-full "></Skeleton>
-          </div>
-        </div>
-      </div>
-    );
-  }
+							<div className="pr-2 mb-1">
+								<Skeleton className="h-8" />
+							</div>
+							<div className="flex flex-col px-2.5 py-0.5 mx-3.5 border-l gap-1">
+								<Skeleton className="h-7" />
+								<Skeleton className="h-7" />
+							</div>
+						</div>
+					</div>
+					<div className="flex flex-col gap-2 p-2 h-16 w-64">
+						<Skeleton className="h-full "></Skeleton>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
-  if (!session) {
-  }
-
-  return (
-    <SidebarPermissions.Provider session={session}>
-      <PrivateSidebar />
-    </SidebarPermissions.Provider>
-  );
+	return (
+		<SidebarPermissions.Provider>
+			<PrivateSidebar />
+		</SidebarPermissions.Provider>
+	);
 }
 
 function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { can, canAny, isVerifying } = SidebarPermissions.usePermissions();
+	const { can, canAny, isVerifying } = SidebarPermissions.usePermissions();
 
-  const searchParams = useSearchParams();
+	const searchParams = useSearchParams();
 
-  const dateParam = searchParams.get("selectedDate");
+	const dateParam = searchParams.get("selectedDate");
 
-  const dateValue = useMemo(() => {
-    return dateParam ? parse(dateParam, "yyyy-MM-dd", new Date()) : null;
-  }, [dateParam]);
+	const dateValue = useMemo(() => {
+		return dateParam ? parse(dateParam, "yyyy-MM-dd", new Date()) : null;
+	}, [dateParam]);
 
-  const viewDay = can("ViewCalendarDay");
-  const viewMonth = can("ViewCalendarMonth");
-  const viewWeek = can("ViewCalendarWeek");
-  const viewYear = can("ViewCalendarYear");
-  const viewAgenda = can("ViewCalendarAgenda");
-  const viewStaffRequests = can("ViewStaffRequests");
+	const viewDay = can("ViewCalendarDay");
+	const viewMonth = can("ViewCalendarMonth");
+	const viewWeek = can("ViewCalendarWeek");
+	const viewYear = can("ViewCalendarYear");
+	const viewAgenda = can("ViewCalendarAgenda");
+	const viewStaffRequests = can("ViewStaffRequests");
 
-  const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
+	const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
 
-  const editPermissions = can("EditPermissions");
-  const editRooms = can("EditRooms");
-  const editConfiguration = can("EditConfiguration");
-  const editUsers = can("EditUsers");
+	const editPermissions = can("EditPermissions");
+	const editRooms = can("EditRooms");
+	const editConfiguration = can("EditConfiguration");
+	const editUsers = can("EditUsers");
 
-  const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
+	const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
 
-  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery("1");
+	const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery("1");
 
-  return (
-    <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
-      <SideBarHeaderGroup
-        imagePath="/images/menu_logo.svg"
-        altText="An image of the crest and wreath of the city of Sault Ste. Marie"
-        title="Room Scheduling/Booking"
-        subtitle="The City of Sault Ste. Marie"
-        url="/bookings/user-view"
-      ></SideBarHeaderGroup>
+	return (
+		<Sidebar
+			className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!"
+			{...props}
+		>
+			<SideBarHeaderGroup
+				imagePath="/images/menu_logo.svg"
+				altText="An image of the crest and wreath of the city of Sault Ste. Marie"
+				title="Room Scheduling/Booking"
+				subtitle="The City of Sault Ste. Marie"
+				url="/bookings/user-view"
+			></SideBarHeaderGroup>
 
-      <SidebarContent>
-        <SideBarGroup title="Application">
-          <SideBarPrimaryMenuItem title={"Availability"} iconName={"notebook-pen"} url={"/availability"} />
-          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"send"} url={"/bookings/user-view"} />
-          {hasCalendarAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="calendar">
-              {viewStaffRequests && (
-                <SideBarSubMenuItem
-                  title={"Requests"}
-                  url={"/bookings/user-requests"}
-                  iconName="circle-question-mark"
-                  rightIndicator={
-                    <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
-                  }
-                />
-              )}
-              {viewAgenda && (
-                <SideBarSubMenuItem
-                  title={"Agenda View"}
-                  url={"/calendar" + navigateURL(dateValue, "agenda")}
-                  iconName="calendar-range"
-                />
-              )}
-              {viewDay && (
-                <SideBarSubMenuItem
-                  title={"Day View"}
-                  url={"/calendar" + navigateURL(dateValue, "day")}
-                  iconName="list"
-                />
-              )}
-              {viewWeek && (
-                <SideBarSubMenuItem
-                  title={"Week View"}
-                  url={"/calendar" + navigateURL(dateValue, "week")}
-                  iconName="columns"
-                />
-              )}
-              {viewMonth && (
-                <SideBarSubMenuItem
-                  title={"Month View"}
-                  url={"/calendar" + navigateURL(dateValue, "month")}
-                  iconName="grid-2x2"
-                />
-              )}
-              {viewYear && (
-                <SideBarSubMenuItem
-                  title={"Year View"}
-                  url={"/calendar" + navigateURL(dateValue, "year")}
-                  iconName="grid-3x3"
-                />
-              )}
-            </SideBarCollapsibleGroup>
-          )}
-          {hasSettingsAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
-              {editRooms && <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />}
-              {editPermissions && (
-                <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
-              )}
-              {editConfiguration && (
-                <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
-              )}
-            </SideBarCollapsibleGroup>
-          )}
-        </SideBarGroup>
-      </SidebarContent>
+			<SidebarContent>
+				<SideBarGroup title="Application">
+					<SideBarPrimaryMenuItem
+						title={"Availability"}
+						iconName={"notebook-pen"}
+						url={"/availability"}
+					/>
+					<SideBarPrimaryMenuItem
+						title={"My Bookings"}
+						iconName={"send"}
+						url={"/bookings/user-view"}
+					/>
+					{hasCalendarAccess && (
+						<SideBarCollapsibleGroup
+							isOpenByDefault={true}
+							title={"Calendar"}
+							iconName="calendar"
+						>
+							{viewStaffRequests && (
+								<SideBarSubMenuItem
+									title={"Requests"}
+									url={"/bookings/user-requests"}
+									iconName="circle-question-mark"
+									rightIndicator={<BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>}
+								/>
+							)}
+							{viewAgenda && (
+								<SideBarSubMenuItem
+									title={"Agenda View"}
+									url={"/calendar" + navigateURL(dateValue, "agenda")}
+									iconName="calendar-range"
+								/>
+							)}
+							{viewDay && (
+								<SideBarSubMenuItem
+									title={"Day View"}
+									url={"/calendar" + navigateURL(dateValue, "day")}
+									iconName="list"
+								/>
+							)}
+							{viewWeek && (
+								<SideBarSubMenuItem
+									title={"Week View"}
+									url={"/calendar" + navigateURL(dateValue, "week")}
+									iconName="columns"
+								/>
+							)}
+							{viewMonth && (
+								<SideBarSubMenuItem
+									title={"Month View"}
+									url={"/calendar" + navigateURL(dateValue, "month")}
+									iconName="grid-2x2"
+								/>
+							)}
+							{viewYear && (
+								<SideBarSubMenuItem
+									title={"Year View"}
+									url={"/calendar" + navigateURL(dateValue, "year")}
+									iconName="grid-3x3"
+								/>
+							)}
+						</SideBarCollapsibleGroup>
+					)}
+					{hasSettingsAccess && (
+						<SideBarCollapsibleGroup
+							isOpenByDefault={false}
+							title={"Settings"}
+							iconName="settings-2"
+						>
+							{editRooms && (
+								<SideBarSubMenuItem
+									title={"Manage Rooms"}
+									url={"/settings/manage-rooms"}
+								/>
+							)}
+							{editPermissions && (
+								<SideBarSubMenuItem
+									title={"Manage Permissions"}
+									url={"/settings/manage-permissions"}
+								/>
+							)}
+							{editConfiguration && (
+								<SideBarSubMenuItem
+									title={"Manage Configuration"}
+									url={"/settings/manage-configuration"}
+								/>
+							)}
+						</SideBarCollapsibleGroup>
+					)}
+				</SideBarGroup>
+			</SidebarContent>
 
-      <SidebarFooter>
-        <SideBarGroup title="">
-          <SideBarPrimaryMenuItem title={"Support"} iconName={"life-buoy"} url={"#"} />
-        </SideBarGroup>
-      </SidebarFooter>
-    </Sidebar>
-  );
+			<SidebarFooter>
+				<SideBarGroup title="">
+					<SideBarPrimaryMenuItem
+						title={"Support"}
+						iconName={"life-buoy"}
+						url={"#"}
+					/>
+				</SideBarGroup>
+			</SidebarFooter>
+		</Sidebar>
+	);
 }
 
 export function SideBarHeaderGroup({
-  imagePath = "/images/menu_logo.svg",
-  altText,
-  title,
-  subtitle,
-  url,
+	imagePath = "/images/menu_logo.svg",
+	altText,
+	title,
+	subtitle,
+	url,
 }: {
-  imagePath?: string;
-  altText: string;
-  title: string;
-  subtitle: string;
-  url: string;
+	imagePath?: string;
+	altText: string;
+	title: string;
+	subtitle: string;
+	url: string;
 }) {
-  return (
-    <SidebarHeader>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton size="lg" asChild>
-            <Link href={url}>
-              <div className="flex aspect-square size-8 items-center justify-center">
-                <Image src={imagePath} alt={altText} width={32} height={32} />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{title}</span>
-                <span className="cenet text-xs">{subtitle}</span>
-              </div>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    </SidebarHeader>
-  );
+	return (
+		<SidebarHeader>
+			<SidebarMenu>
+				<SidebarMenuItem>
+					<SidebarMenuButton
+						size="lg"
+						asChild
+					>
+						<Link href={url}>
+							<div className="flex aspect-square size-8 items-center justify-center">
+								<Image
+									src={imagePath}
+									alt={altText}
+									width={32}
+									height={32}
+								/>
+							</div>
+							<div className="grid flex-1 text-left text-sm leading-tight">
+								<span className="truncate font-medium">{title}</span>
+								<span className="cenet text-xs">{subtitle}</span>
+							</div>
+						</Link>
+					</SidebarMenuButton>
+				</SidebarMenuItem>
+			</SidebarMenu>
+		</SidebarHeader>
+	);
 }
 
 export function SideBarGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{title}</SidebarGroupLabel>
-      <SidebarMenu>{children}</SidebarMenu>
-    </SidebarGroup>
-  );
+	return (
+		<SidebarGroup>
+			<SidebarGroupLabel>{title}</SidebarGroupLabel>
+			<SidebarMenu>{children}</SidebarMenu>
+		</SidebarGroup>
+	);
 }
 
 export function SideBarCollapsibleGroup({
-  iconName,
-  isOpenByDefault,
-  title,
-  children,
+	iconName,
+	isOpenByDefault,
+	title,
+	children,
 }: {
-  iconName?: IconName;
-  isOpenByDefault: boolean;
-  title: string;
-  children: React.ReactNode;
+	iconName?: IconName;
+	isOpenByDefault: boolean;
+	title: string;
+	children: React.ReactNode;
 }) {
-  return (
-    <Collapsible defaultOpen={isOpenByDefault} className="group/collapsible">
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip={title}>
-            {iconName && <DynamicIcon name={iconName} />}
-            <span>{title}</span>
-            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        {children}
-      </SidebarMenuItem>
-    </Collapsible>
-  );
+	return (
+		<Collapsible
+			defaultOpen={isOpenByDefault}
+			className="group/collapsible"
+		>
+			<SidebarMenuItem>
+				<CollapsibleTrigger asChild>
+					<SidebarMenuButton tooltip={title}>
+						{iconName && <DynamicIcon name={iconName} />}
+						<span>{title}</span>
+						<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+					</SidebarMenuButton>
+				</CollapsibleTrigger>
+				{children}
+			</SidebarMenuItem>
+		</Collapsible>
+	);
 }
 
 export function SideBarPrimaryMenuItem({ title, iconName, url }: { title: string; iconName?: IconName; url: string }) {
-  return (
-    <SidebarMenuButton asChild key={title} tooltip={title}>
-      <Link href={url}>
-        {iconName && <DynamicIcon name={iconName} />}
-        <span>{title}</span>
-      </Link>
-    </SidebarMenuButton>
-  );
+	return (
+		<SidebarMenuButton
+			asChild
+			key={title}
+			tooltip={title}
+		>
+			<Link href={url}>
+				{iconName && <DynamicIcon name={iconName} />}
+				<span>{title}</span>
+			</Link>
+		</SidebarMenuButton>
+	);
 }
 
 export function SideBarSubMenuItem({
-  title,
-  iconName,
-  url,
-  rightIndicator,
+	title,
+	iconName,
+	url,
+	rightIndicator,
 }: {
-  title: string;
-  iconName?: IconName;
-  url: string;
-  rightIndicator?: React.ReactNode;
+	title: string;
+	iconName?: IconName;
+	url: string;
+	rightIndicator?: React.ReactNode;
 }) {
-  return (
-    <CollapsibleContent>
-      <SidebarMenuSub>
-        <SidebarMenuSubItem key={title}>
-          <SidebarMenuSubButton asChild>
-            <Link href={url}>
-              {iconName && <DynamicIcon name={iconName} />}
-              <span>{title}</span>
-              {rightIndicator}
-            </Link>
-          </SidebarMenuSubButton>
-        </SidebarMenuSubItem>
-      </SidebarMenuSub>
-    </CollapsibleContent>
-  );
+	return (
+		<CollapsibleContent>
+			<SidebarMenuSub>
+				<SidebarMenuSubItem key={title}>
+					<SidebarMenuSubButton asChild>
+						<Link href={url}>
+							{iconName && <DynamicIcon name={iconName} />}
+							<span>{title}</span>
+							{rightIndicator}
+						</Link>
+					</SidebarMenuSubButton>
+				</SidebarMenuSubItem>
+			</SidebarMenuSub>
+		</CollapsibleContent>
+	);
 }

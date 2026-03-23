@@ -37,13 +37,12 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
 	const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
 
 	const fallbackDate = useMemo(() => new Date(), []);
-	const { session } = useSession();
 
 	return (
 		<SharedDrawerContext.Provider value={ctxValue}>
 			{children}
 			{/* Offscreen trigger wrapped by the single EventDrawer instance */}
-			<EventDrawerPermissions.Provider session={session}>
+			<EventDrawerPermissions.Provider>
 				<EventDrawerRefactor
 					creationDate={payload ? payload.creationDate : fallbackDate}
 					event={payload?.event}

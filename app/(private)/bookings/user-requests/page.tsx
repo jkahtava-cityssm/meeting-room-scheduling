@@ -5,12 +5,11 @@ import { useSession } from "@/contexts/SessionProvider";
 import { Suspense } from "react";
 
 export default function Page() {
-  const { session } = useSession();
-  return (
-    <Suspense fallback={<>...Loading</>}>
-      <BookingPermissions.Provider session={session}>
-        <UserRequests></UserRequests>
-      </BookingPermissions.Provider>
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<>...Loading</>}>
+			<BookingPermissions.Provider>
+				<UserRequests></UserRequests>
+			</BookingPermissions.Provider>
+		</Suspense>
+	);
 }

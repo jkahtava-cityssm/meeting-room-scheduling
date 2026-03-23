@@ -7,20 +7,11 @@ import { useSession } from "@/contexts/SessionProvider";
 import { redirect } from "next/navigation";
 
 export default function Calendar() {
-  const { session, isPending } = useSession();
-
-  if (isPending) {
-    return <div>Verifying Access</div>;
-  }
-
-  if (!session) {
-    redirect("/");
-  }
-  return (
-    <CalendarPermissions.Provider session={session}>
-      <CalendarProviderPrivate>
-        <CalendarAllViews />
-      </CalendarProviderPrivate>
-    </CalendarPermissions.Provider>
-  );
+	return (
+		<CalendarPermissions.Provider>
+			<CalendarProviderPrivate>
+				<CalendarAllViews limitedByUserId={false} />
+			</CalendarProviderPrivate>
+		</CalendarPermissions.Provider>
+	);
 }
