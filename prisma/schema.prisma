@@ -566,8 +566,8 @@ model EventItem {
   createdByUser User? @relation("EventItemCreatedBy", fields: [createdBy], references: [id])
   updatedByUser User? @relation("EventItemUpdatedBy", fields: [updatedBy], references: [id])
 
-  event Event @relation(fields: [eventId], references: [eventId])
-  item  Item  @relation(fields: [itemId], references: [itemId])
+  event Event @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
+  item  Item  @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
 
   @@unique([eventId, itemId], name: "eventId_itemId")
   @@map("event_item")
