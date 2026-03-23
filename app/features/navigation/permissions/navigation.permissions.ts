@@ -1,5 +1,6 @@
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
-import { createSecurityContext } from "@/lib/auth-permission-security-context";
+import { createClientSecurity } from "@/lib/auth-permission-security-client";
+import { createServerSecurity } from "@/lib/auth-permission-security-server";
 
 const PAGE_PERMISSIONS = {
   ViewCalendarDay: { type: "permission", resource: "Calendar", action: "View Day" },
@@ -14,10 +15,11 @@ const PAGE_PERMISSIONS = {
   ViewMyBookingMonth: { type: "permission", resource: "My Bookings", action: "View Month" },
   ViewMyBookingYear: { type: "permission", resource: "My Bookings", action: "View Year" },
   ViewMyBookingAgenda: { type: "permission", resource: "My Bookings", action: "View Agenda" },
+
   EditPermissions: { type: "permission", resource: "Settings", action: "Edit Permissions" },
   EditRooms: { type: "permission", resource: "Settings", action: "Edit Rooms" },
   EditConfiguration: { type: "permission", resource: "Settings", action: "Edit Configuration" },
   EditUsers: { type: "permission", resource: "Settings", action: "Edit Users" },
 } as const satisfies GroupedPermissionRequirement;
 
-export const SidebarPermissions = createSecurityContext(PAGE_PERMISSIONS);
+export const NavigationPermissions = createClientSecurity(PAGE_PERMISSIONS);

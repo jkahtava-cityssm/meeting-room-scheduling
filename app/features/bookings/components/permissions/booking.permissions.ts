@@ -1,5 +1,5 @@
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
-import { createSecurityContext } from "@/lib/auth-permission-security-context";
+import { createClientSecurity } from "@/lib/auth-permission-security-client";
 
 const PAGE_PERMISSIONS = {
   ReadAllEvent: { type: "permission", resource: "Event", action: "Read All" },
@@ -12,4 +12,4 @@ const PAGE_PERMISSIONS = {
   ViewStaffRequests: { type: "permission", resource: "Calendar", action: "View Staff Requests" },
 } as const satisfies GroupedPermissionRequirement;
 
-export const BookingPermissions = createSecurityContext(PAGE_PERMISSIONS);
+export const BookingPermissions = createClientSecurity(PAGE_PERMISSIONS);

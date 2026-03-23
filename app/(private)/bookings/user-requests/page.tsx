@@ -1,15 +1,11 @@
-"use client";
-import { BookingPermissions } from "@/app/features/bookings/components/permissions/booking.permissions";
-import UserRequests from "@/app/features/bookings/components/user-request";
-import { useSession } from "@/contexts/SessionProvider";
-import { Suspense } from "react";
+import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permissions";
+
+import PrivateUserRequests from "./private-user-requests";
 
 export default function Page() {
-	return (
-		<Suspense fallback={<>...Loading</>}>
-			<BookingPermissions.Provider>
-				<UserRequests></UserRequests>
-			</BookingPermissions.Provider>
-		</Suspense>
-	);
+  return (
+    <ServerNavigationPermissions.Can permissionKey="ViewStaffRequests">
+      <PrivateUserRequests></PrivateUserRequests>
+    </ServerNavigationPermissions.Can>
+  );
 }

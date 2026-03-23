@@ -1,6 +1,10 @@
 import { PermissionGrid } from "@/app/features/permissions/permission-layout";
-import * as React from "react";
+import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permissions";
 
 export default function PermissionsPage() {
-  return <PermissionGrid />;
+  return (
+    <ServerNavigationPermissions.Can permissionKey="EditPermissions">
+      <PermissionGrid />
+    </ServerNavigationPermissions.Can>
+  );
 }

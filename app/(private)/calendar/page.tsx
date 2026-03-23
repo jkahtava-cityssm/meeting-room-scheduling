@@ -1,17 +1,10 @@
-"use client";
-
-import { CalendarAllViews } from "@/app/features/calendar/calendar-controller/calendar-all-views";
-import { CalendarPermissions } from "@/app/features/calendar/permissions/calendar.permissions";
-import { CalendarProviderPrivate } from "@/contexts/CalendarProviderPrivate";
-import { useSession } from "@/contexts/SessionProvider";
-import { redirect } from "next/navigation";
+import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permissions";
+import PrivateCalendar from "./private-calendar";
 
 export default function Calendar() {
-	return (
-		<CalendarPermissions.Provider>
-			<CalendarProviderPrivate>
-				<CalendarAllViews limitedByUserId={false} />
-			</CalendarProviderPrivate>
-		</CalendarPermissions.Provider>
-	);
+  return (
+    <ServerNavigationPermissions.Can permissionKey="ViewCalendar">
+      <PrivateCalendar></PrivateCalendar>
+    </ServerNavigationPermissions.Can>
+  );
 }
