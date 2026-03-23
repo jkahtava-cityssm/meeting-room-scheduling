@@ -31,6 +31,7 @@ import { useOverflowDetection } from "./use-overflow-detection";
 import DynamicIcon, { IconName } from "../ui/icon-dynamic";
 import { TColors } from "@/lib/types";
 import { BadgeColored } from "../ui/badge-colored";
+import { Checkbox } from "../ui/checkbox";
 
 /**
  * Variants for the multi-select component to handle different styles.
@@ -158,6 +159,7 @@ interface MultiSelectProps extends VariantProps<typeof multiSelectVariants> {
    * Optional, defaults to false.
    */
   hideSelectAll?: boolean;
+  hideSelectAllIcon?: boolean;
 
   /**
    * If true, shows search functionality in the popover.
@@ -288,6 +290,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       modalPopover = false,
       asChild = false,
       className,
+      hideSelectAllIcon = false,
       hideSelectAll = false,
       searchable = true,
       emptyIndicator,
@@ -757,26 +760,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                 className={cn("max-h-[300px] overflow-y-auto multiselect-scrollbar", "overscroll-behavior-y-contain")}
               >
                 <CommandEmpty>{emptyIndicator || noResultText}</CommandEmpty>
-
-                {/* Select All Section */}
-                {!hideSelectAll && !searchValue && (
-                  <CommandGroup>
-                    <CommandItem onSelect={toggleAll} className="cursor-pointer">
-                      <div
-                        className={cn(
-                          "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                          selectedValues.length === selectionList.filter((o) => !o.disabled).length
-                            ? "bg-primary text-primary-foreground"
-                            : "opacity-50 [&_svg]:invisible",
-                        )}
-                      >
-                        <CheckIcon className="h-4 w-4" />
-                      </div>
-                      <span>(Select All {selectionList.length > 20 && `- ${selectionList.length} options`})</span>
-                    </CommandItem>
-                  </CommandGroup>
-                )}
-
                 {/* Options List */}
                 {isGroupedOptions(filteredOptions) ? (
                   filteredOptions.map((group) => (
@@ -793,6 +776,28 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                   ))
                 ) : (
                   <CommandGroup>
+                    {!hideSelectAll && !searchValue && (
+                      <CommandItem onSelect={toggleAll} className="cursor-pointer">
+                        <div
+                          className={cn(
+                            "flex items-center justify-center text-current transition-none  size-4 shrink-0 rounded-[4px]  border shadow-xs transition-shadow outline-none border-input dark:bg-input/30",
+                            selectedValues.length === selectionList.filter((o) => !o.disabled).length &&
+                              "border-primary bg-primary dark:bg-primary",
+                          )}
+                          aria-hidden="true"
+                        >
+                          {selectedValues.length === selectionList.filter((o) => !o.disabled).length && (
+                            <CheckIcon className="size-3.5 text-primary-foreground" />
+                          )}
+                        </div>
+                        {!hideSelectAllIcon && (
+                          <BadgeColored color={"zinc"} className="h-6 w-6">
+                            <DynamicIcon hideBackground={true} color={"zinc"} name={"asterisk"}></DynamicIcon>
+                          </BadgeColored>
+                        )}
+                        <span>Select All</span>
+                      </CommandItem>
+                    )}
                     {filteredOptions.map((opt) => (
                       <OptionItem
                         key={opt.value}
@@ -865,8 +870,7 @@ const MultiSelectBadge = React.memo(
     const customStyle = option?.style;
 
     return (
-      <BadgeColored
-        color={option?.color ? option?.color : "red"}
+      <Badge
         aria-readonly={disabled}
         className={cn(
           multiSelectVariants({ variant }),
@@ -895,7 +899,7 @@ const MultiSelectBadge = React.memo(
         )}
 
         <span className={cn("truncate font-normal")}>{isMaxCount ? label : option?.label}</span>
-      </BadgeColored>
+      </Badge>
     );
   },
   (prev, next) => {
@@ -1040,7 +1044,6 @@ const OptionItem = React.memo(
     isSelected: boolean;
     onToggle: (value: string) => void;
   }) {
-    console.log(`[Render] OptionItem: ${option.label}`);
     return (
       <CommandItem
         key={option.value}
@@ -1056,21 +1059,17 @@ const OptionItem = React.memo(
       >
         <div
           className={cn(
-            "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-            isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible",
+            "flex items-center justify-center text-current transition-none  size-4 shrink-0 rounded-[4px]  border shadow-xs transition-shadow outline-none border-input dark:bg-input/30",
+            isSelected && "border-primary bg-primary dark:bg-primary",
           )}
           aria-hidden="true"
         >
-          <CheckIcon className="h-4 w-4" />
+          {isSelected && <CheckIcon className="size-3.5 text-primary-foreground" />}
         </div>
         {option.icon && option.color && (
-          <DynamicIcon
-            className="mr-2 h-4 w-4 "
-            aria-hidden="true"
-            hideBackground={true}
-            color={option.color}
-            name={option.icon}
-          ></DynamicIcon>
+          <BadgeColored color={option.color} className="h-6 w-6">
+            <DynamicIcon hideBackground={true} color={option.color} name={option.icon}></DynamicIcon>
+          </BadgeColored>
         )}
         <span className="truncate">{option.label}</span>
       </CommandItem>
