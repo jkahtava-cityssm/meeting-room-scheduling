@@ -37,7 +37,7 @@ type DataSelectProps<T> = {
   hideClearSingle?: boolean;
   searchable?: boolean;
   modalPopover?: boolean;
-  selectAllBadge: MultiSelectOption;
+  selectAllBadge?: MultiSelectOption;
 };
 
 export function GenericMultiSelect<T>({
