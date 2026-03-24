@@ -48,6 +48,7 @@ export function RoomMultiSelect({
       getIcon={(room) => room.icon as IconName}
       getColor={(room) => room.color as TColors}
       className={className}
+      selectAllBadge={{ label: "All Rooms", value: "-1", color: "zinc", icon: "asterisk" }}
       hideSelectAll={includeAllOption}
       hideIcon={false}
       hideClearAll={true}

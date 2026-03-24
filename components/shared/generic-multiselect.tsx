@@ -9,7 +9,7 @@ import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { useMemo, useState } from "react";
-import { MultiSelect } from "../multi-select/multi-select";
+import { MultiSelect, MultiSelectOption } from "../multi-select/multi-select";
 
 type DataSelectProps<T> = {
   list: T[] | undefined;
@@ -37,6 +37,7 @@ type DataSelectProps<T> = {
   hideClearSingle?: boolean;
   searchable?: boolean;
   modalPopover?: boolean;
+  selectAllBadge: MultiSelectOption;
 };
 
 export function GenericMultiSelect<T>({
@@ -64,6 +65,7 @@ export function GenericMultiSelect<T>({
   hideClearSingle = false,
   searchable = true,
   modalPopover = true,
+  selectAllBadge,
 }: DataSelectProps<T>) {
   const options = useMemo(() => {
     if (!list) return [];
@@ -101,6 +103,7 @@ export function GenericMultiSelect<T>({
         searchText={searchText}
         noResultText={noResultText}
         disabled={isDisabled}
+        selectAllBadge={selectAllBadge}
         hideSelectAll={hideSelectAll}
         className={cn(dataInvalid && "border-destructive")}
         hideIcon={hideIcon}

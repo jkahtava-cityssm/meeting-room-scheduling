@@ -95,6 +95,7 @@ interface MultiSelectProps extends VariantProps<typeof multiSelectVariants> {
    * An array of option objects or groups to be displayed in the multi-select component.
    */
   options: MultiSelectOption[] | MultiSelectGroup[];
+
   /**
    * Callback function triggered when the selected values change.
    * Receives an array of the new selected values.
@@ -239,6 +240,8 @@ interface MultiSelectProps extends VariantProps<typeof multiSelectVariants> {
   hideClearAll?: boolean;
   hideClearSingle?: boolean;
   showSelectedButton?: boolean;
+
+  selectAllBadge?: MultiSelectOption;
 }
 
 /**
@@ -305,6 +308,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       deduplicateOptions = false,
       resetOnDefaultValueChange = true,
       closeOnSelect = false,
+      selectAllBadge,
       ...props
     },
     ref,
@@ -653,14 +657,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                   <div className={cn("flex items-center gap-2 p-1 overflow-hidden", compactMode && "gap-0.5")}>
                     {selectedValues.length > 0 ? (
                       <>
-                        {selectedValues.slice(0, visibleCount).map((value, index) => (
+                        {!hideSelectAll && selectedValues.length === selectionList.length && selectAllBadge ? (
                           <MultiSelectBadge
-                            key={value}
-                            isFocused={focusedBadgeIndex === index}
-                            option={getOptionByValue(value)}
+                            key={"-1"}
+                            isFocused={focusedBadgeIndex === 0}
+                            option={selectAllBadge}
                             onAction={(e) => {
                               e.stopPropagation();
-                              toggleOption(value);
+                              clearExtraOptions();
                               setFocusedBadgeIndex(-1);
                             }}
                             disabled={disabled}
@@ -670,7 +674,26 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             hideClearSingle={hideClearSingle}
                             hideIcon={hideIcon}
                           />
-                        ))}
+                        ) : (
+                          selectedValues.slice(0, visibleCount).map((value, index) => (
+                            <MultiSelectBadge
+                              key={value}
+                              isFocused={focusedBadgeIndex === index}
+                              option={getOptionByValue(value)}
+                              onAction={(e) => {
+                                e.stopPropagation();
+                                toggleOption(value);
+                                setFocusedBadgeIndex(-1);
+                              }}
+                              disabled={disabled}
+                              variant={variant}
+                              singleLine={singleLine}
+                              compactMode={compactMode}
+                              hideClearSingle={hideClearSingle}
+                              hideIcon={hideIcon}
+                            />
+                          ))
+                        )}
                         {selectedValues.length > visibleCount && (
                           <MultiSelectBadge
                             isFocused={focusedBadgeIndex === maxBadgeIndex}
