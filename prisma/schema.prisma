@@ -9,18 +9,21 @@ generator client {
 }
 
 model User {
-  id             Int      @id @default(autoincrement()) @map("user_id")
+  id             Int     @id @default(autoincrement()) @map("user_id")
   name           String
-  email          String   @unique
-  emailVerified  Boolean  @default(false) @map("email_verified")
+  email          String? @unique
+  emailVerified  Boolean @default(false) @map("email_verified")
   image          String?
-  employeeNumber String?  @map("employee_number")
-  department     String?  @map("department")
-  jobTitle       String?  @map("job_title")
-  supervisorId   Int?     @map("supervisor_id")
-  employeeActive Boolean  @default(true) @map("employee_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  employeeNumber String? @map("employee_number")
+  department     String? @map("department")
+  jobTitle       String? @map("job_title")
+  supervisorId   Int?    @map("supervisor_id")
+  employeeActive Boolean @default(true) @map("employee_active")
+  isExternal     Boolean @default(false) @map("is_external")
+  receiveEmails  Boolean @default(true) @map("receive_emails")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Audit fields (self)
   createdBy Int? @map("created_by")
