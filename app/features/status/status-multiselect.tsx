@@ -40,7 +40,7 @@ export function StatusMultiSelect({
       getColor={(status) => status.color as TColors}
       getIcon={(status) => status.icon as IconName}
       className={className}
-      hideSelectAll={true}
+      hideSelectAll={false}
       hideIcon={false}
       hideClearAll={true}
       hideClearSingle={true}

@@ -24,11 +24,16 @@ export function RoomMultiSelect({
 }) {
   const { isPending, data, error } = useRoomsQuery(false);
 
+  const filteredRoomIds = data
+    ? data
+        .map((room) => String(room.roomId))
+        .filter((roomId) => !excludeRoomIds.includes(roomId) || selectedRoomIds.includes("-1"))
+    : [];
+
   return (
     <GenericMultiSelect
       list={data}
-      selectedValues={selectedRoomIds}
-      placeholderBadge={{ label: "All Rooms" }}
+      selectedValues={filteredRoomIds}
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
