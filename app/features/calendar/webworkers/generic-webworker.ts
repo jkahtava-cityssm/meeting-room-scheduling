@@ -145,8 +145,7 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
     setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
     const filtered = filterEventsByRoom([...multiDayEvents, ...recurringEvents], payload.selectedRoomId || "-1");
-    const filteredByStatus =
-      statusKeys && statusKeys.length > 0 ? filterEventsByStatus(filtered, statusKeys) : filtered;
+    const filteredByStatus = filterEventsByStatus(filtered, statusKeys ?? []);
 
     const sortedEvents = filteredByStatus.sort(
       (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
