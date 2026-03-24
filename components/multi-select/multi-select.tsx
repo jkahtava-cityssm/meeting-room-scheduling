@@ -650,13 +650,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                 </div>
                 <div ref={containerRef} className="flex justify-between items-center w-full">
                   {/* 1. Selected Options Area */}
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 p-1 overflow-hidden",
-                      singleLine ? "overflow-x-auto multiselect-singleline-scroll" : "flex-wrap",
-                      compactMode && "gap-0.5",
-                    )}
-                  >
+                  <div className={cn("flex items-center gap-2 p-1 overflow-hidden", compactMode && "gap-0.5")}>
                     {selectedValues.length > 0 ? (
                       <>
                         {selectedValues.slice(0, visibleCount).map((value, index) => (
