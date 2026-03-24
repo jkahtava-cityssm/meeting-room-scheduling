@@ -22,17 +22,17 @@ import { TStatusKey } from "@/lib/types";
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MIN_INNER_HEIGHT = 96;
 const BORDER_COMPENSATION = 2;
-const EXCLUDED_STATUSES: TStatusKey[] = ["REJECTED"];
 
 export function CalendarMonthView({ date, userId }: { date: Date; userId?: string }) {
-  const { visibleHours, selectedRoomId, setTotalEvents, setIsHeaderLoading } = usePrivateCalendar();
+  const { visibleHours, selectedRoomIds, selectedStatusKeys, setTotalEvents, setIsHeaderLoading } =
+    usePrivateCalendar();
   const { result, isLoading, error } = usePrivateCalendarEvents(
     "MONTH",
     date,
     visibleHours,
     userId,
-    selectedRoomId,
-    EXCLUDED_STATUSES,
+    selectedRoomIds,
+    selectedStatusKeys,
   );
 
   //  hooks always run

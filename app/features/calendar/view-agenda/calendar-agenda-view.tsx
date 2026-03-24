@@ -19,10 +19,9 @@ import { GenericError } from "../../../../components/shared/generic-error";
 import { Label } from "@/components/ui/label";
 import { TStatusKey } from "@/lib/types";
 
-const EXCLUDED_STATUSES: TStatusKey[] = ["REJECTED"];
-
 export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
-  const { visibleHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
+  const { visibleHours, visibleRooms, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents } =
+    usePrivateCalendar();
 
   const roomIds = useMemo(
     () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
@@ -35,7 +34,7 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
     visibleHours,
     userId,
     roomIds,
-    EXCLUDED_STATUSES,
+    selectedStatusKeys,
   );
 
   useEffect(() => {
@@ -52,9 +51,9 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
     if (!result) return [];
 
     return result?.data.sortedEvents.filter(
-      (room) => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId,
+      (room) => selectedRoomIds.includes("-1") || selectedRoomIds.includes(String(room.roomId)),
     );
-  }, [selectedRoomId, result]);
+  }, [selectedRoomIds, result]);
 
   useEffect(() => {
     setTotalEvents(eventsToRender.length);

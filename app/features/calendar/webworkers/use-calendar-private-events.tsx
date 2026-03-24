@@ -9,53 +9,58 @@ import { getDateRange } from "./generic-webworker-utilities";
 import { usePublicEventsQuery } from "@/lib/services/public";
 
 export function usePrivateCalendarEvents<T extends CalendarAction>(
-	action: T,
-	date: Date,
-	visibleHours: TVisibleHours | undefined,
-	userId?: string,
-	roomId?: string | string[],
-	excludeStatusKeys?: TStatusKey[],
-	enabled: boolean = true,
+  action: T,
+  date: Date,
+  visibleHours: TVisibleHours | undefined,
+  userId?: string,
+  roomId?: string | string[],
+  statusKeys?: TStatusKey[],
+  enabled: boolean = true,
 ) {
-	const range = useMemo(() => getDateRange(action, date), [action, date]);
+  const range = useMemo(() => getDateRange(action, date), [action, date]);
 
-	const { data: events, isLoading, isFetching, error } = useEventsQuery(range.startDate, range.endDate, userId, enabled);
+  const {
+    data: events,
+    isLoading,
+    isFetching,
+    error,
+  } = useEventsQuery(range.startDate, range.endDate, userId, enabled);
 
-	const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
+  const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 
-	const viewKey = `${action}|${range.startDate.toISOString()}|${range.endDate.toISOString()}|${roomId}`;
+  const viewKey = `${action}|${range.startDate.toISOString()}|${range.endDate.toISOString()}|${roomId}`;
 
-	const [hasProcessedForView, setHasProcessedForView] = useState(false);
+  const [hasProcessedForView, setHasProcessedForView] = useState(false);
 
-	useEffect(() => {
-		setHasProcessedForView(false);
-	}, [viewKey]);
+  useEffect(() => {
+    setHasProcessedForView(false);
+  }, [viewKey]);
 
-	useEffect(() => {
-		if (!events || !visibleHours) return;
-		processEvents({
-			events: events as IEvent[],
-			selectedDate: date.toISOString() as ISODateString,
-			selectedRoomId: roomId,
-			action: action,
-			visibleHours,
-			multiDayEventsAtTop: true,
-			userId: userId,
-			excludeStatusKeys,
-		});
-	}, [events, action, date, roomId, userId, processEvents, visibleHours, excludeStatusKeys]);
+  useEffect(() => {
+    if (!events || !visibleHours) return;
+    processEvents({
+      events: events as IEvent[],
+      selectedDate: date.toISOString() as ISODateString,
+      selectedRoomId: roomId,
+      action: action,
+      visibleHours,
+      multiDayEventsAtTop: true,
+      userId: userId,
+      statusKeys,
+    });
+  }, [events, action, date, roomId, userId, processEvents, visibleHours, statusKeys]);
 
-	useEffect(() => {
-		if (!isProcessing && data) {
-			setHasProcessedForView(true);
-		}
-	}, [isProcessing, data]);
+  useEffect(() => {
+    if (!isProcessing && data) {
+      setHasProcessedForView(true);
+    }
+  }, [isProcessing, data]);
 
-	return {
-		result: data,
-		isLoading: isLoading || !hasProcessedForView,
-		isRefetching: isFetching && !isLoading,
-		isBackgroundProcessing: hasProcessedForView && isProcessing,
-		error: error || workerError,
-	};
+  return {
+    result: data,
+    isLoading: isLoading || !hasProcessedForView,
+    isRefetching: isFetching && !isLoading,
+    isBackgroundProcessing: hasProcessedForView && isProcessing,
+    error: error || workerError,
+  };
 }

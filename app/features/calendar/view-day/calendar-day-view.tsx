@@ -20,8 +20,6 @@ import { GenericError } from "../../../../components/shared/generic-error";
 import { vi } from "date-fns/locale";
 import { TStatusKey } from "@/lib/types";
 
-const EXCLUDED_STATUSES: TStatusKey[] = ["REJECTED"];
-
 export function CalendarDayView({
   date,
   userId,
@@ -38,7 +36,8 @@ export function CalendarDayView({
     visibleHours,
     fallbackHours,
     visibleRooms,
-    selectedRoomId,
+    selectedRoomIds,
+    selectedStatusKeys,
     configurationError,
     roomError,
     setIsHeaderLoading,
@@ -56,7 +55,7 @@ export function CalendarDayView({
     visibleHours,
     userId,
     roomIds,
-    EXCLUDED_STATUSES,
+    selectedStatusKeys,
   );
 
   useEffect(() => {
@@ -72,7 +71,7 @@ export function CalendarDayView({
   const { roomsToRender, events } = useMemo(() => {
     const rooms =
       visibleRooms
-        ?.filter((room) => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
+        ?.filter((room) => selectedRoomIds.includes("-1") || selectedRoomIds.includes(String(room.roomId)))
         .map((room) => {
           const blocks = result?.data.roomBlocks[String(room.roomId)] ?? [];
           return { roomId: room.roomId, roomName: room.name, blocks };
@@ -82,7 +81,7 @@ export function CalendarDayView({
     );
 
     return { roomsToRender: rooms, events };
-  }, [visibleRooms, selectedRoomId, result]);
+  }, [visibleRooms, selectedRoomIds, result]);
 
   useEffect(() => {
     setTotalEvents(events.length);

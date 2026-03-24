@@ -54,7 +54,7 @@ export function CalendarHeader({
 
   const { openEventDrawer } = useSharedEventDrawer();
   const { can, isVerifying } = CalendarPermissions.usePermissions();
-  const { setSelectedRoomId, selectedRoomId, setSelectedStatusKeys, selectedStatusKeys } = usePrivateCalendar();
+  const { setSelectedRoomIds, selectedRoomIds, setSelectedStatusKeys, selectedStatusKeys } = usePrivateCalendar();
   const { push } = useRouter();
 
   const handleNavigatePrevious = () => {
@@ -69,8 +69,8 @@ export function CalendarHeader({
     push(navigateURL(nextDate, view));
   };
 
-  const handleNavigateRoomChange = (value: string) => {
-    setSelectedRoomId(value);
+  const handleNavigateRoomChange = (roomIds: string[]) => {
+    setSelectedRoomIds(roomIds);
   };
 
   return (
@@ -103,8 +103,8 @@ export function CalendarHeader({
             <Label>Rooms</Label>
             <RoomMultiSelect
               includeAllOption={false}
-              selectedRoomIds={[selectedRoomId]}
-              onChange={(values) => handleNavigateRoomChange(values[0])}
+              selectedRoomIds={selectedRoomIds}
+              onChange={(values) => handleNavigateRoomChange(values)}
               excludeRoomIds={[]}
               isDisabled={false}
               className="min-w-60 lg:w-60"

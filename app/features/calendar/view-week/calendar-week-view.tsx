@@ -16,8 +16,6 @@ import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-c
 import { GenericError } from "../../../../components/shared/generic-error";
 import { TStatusKey } from "@/lib/types";
 
-const EXCLUDED_STATUSES: TStatusKey[] = ["REJECTED"];
-
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const {
     interval,
@@ -25,7 +23,8 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     maxSpan,
     fallbackHours,
     visibleRooms,
-    selectedRoomId,
+    selectedRoomIds,
+    selectedStatusKeys,
     configurationError,
     roomError,
     setIsHeaderLoading,
@@ -42,8 +41,8 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     date,
     visibleHours,
     userId,
-    selectedRoomId,
-    EXCLUDED_STATUSES,
+    selectedRoomIds,
+    selectedStatusKeys,
   );
 
   useEffect(() => {
@@ -70,21 +69,21 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     for (const dateKey in result?.data.dayBlocks) {
       const dayBlock = result?.data.dayBlocks[dateKey];
 
-      let filteredRooms: [string, IEventBlock[]][];
+      /*let filteredRooms: [string, IEventBlock[]][];
 
-      if (selectedRoomId === "-1") {
+      if (selectedRoomIds.includes("-1")) {
         filteredRooms = dayBlock["-1"] ? [["-1", dayBlock["-1"]]] : [];
       } else {
         // Only include the selected room
-        filteredRooms = dayBlock[selectedRoomId] ? [[selectedRoomId, dayBlock[selectedRoomId]]] : [];
-      }
+        filteredRooms = selectedRoomIds.map((roomId) => (dayBlock[roomId] ? [roomId, dayBlock[roomId]] : [roomId, []]));
+      }*/
 
-      const flatBlocks = filteredRooms.flatMap(([_, blocks]) => blocks);
-      daysToRender.push({ date: dateKey, blocks: flatBlocks });
+      //const flatBlocks = filteredRooms.flatMap(([_, blocks]) => blocks);
+      daysToRender.push({ date: dateKey, blocks: dayBlock });
     }
 
     return daysToRender;
-  }, [result, selectedRoomId]);
+  }, [result]);
 
   const isMounting = !visibleRooms || !result || false;
 
