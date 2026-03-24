@@ -75,8 +75,8 @@ export function CalendarHeader({
 
   return (
     <>
-      <div className="flex flex-col gap-4 border-b p-4 min-w-90 lg:flex-row lg:items-end lg:justify-between shrink-0">
-        <MobileHeader permissions={permissions} view={view} selectedDate={selectedDate}></MobileHeader>
+      <div className="flex flex-col gap-4 sm:border-b p-4 min-w-90 lg:flex-row lg:items-end lg:justify-between shrink-0">
+        <MobileHeader permissions={permissions} view={view} selectedDate={selectedDate} className="flex sm:hidden" />
         <div className="hidden sm:flex items-center gap-3">
           <TodayButton view={view} />
 
@@ -88,7 +88,7 @@ export function CalendarHeader({
           />
         </div>
 
-        <div className="flex flex-col items-center gap-1.5 sm:flex-row lg:justify-between lg:ml-auto ">
+        <div className="hidden items-center gap-1.5  sm:flex sm:flex-row lg:justify-between lg:ml-auto ">
           <div className="w-full sm:w-1/2 flex flex-col flex-1 gap-1">
             <Label>Status</Label>
             <StatusMultiSelect
@@ -112,7 +112,7 @@ export function CalendarHeader({
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-4 sm:flex-row sm:justify-between ">
+        <div className="hidden sm:flex sm:gap-4 sm:flex-row sm:justify-between ">
           <div className="flex flex-col w-full items-center gap-1.5">
             <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
               <Button
@@ -193,7 +193,7 @@ export function CalendarHeader({
           )}
         </div>
       </div>
-      <div className="flex sm:hidden items-center gap-3">
+      <div className="flex border-b sm:hidden items-center gap-3">
         <MobileDateControls
           selectedDate={selectedDate}
           view={view}
@@ -209,14 +209,16 @@ const MobileHeader = ({
   selectedDate,
   permissions,
   view,
+  className,
 }: {
   permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>;
   selectedDate: Date;
   view: Exclude<TCalendarView, "all" | "public">;
+  className?: string;
 }) => {
   const { day, week, month, year, agenda } = permissions;
   return (
-    <div className="flex items-center gap-2 justify-between">
+    <div className={cn("flex items-center gap-2 justify-between", className)}>
       <span className="text-lg font-semibold w-35">
         {formatDate(selectedDate, "MMMM")} {selectedDate.getFullYear()}
       </span>
@@ -229,51 +231,47 @@ const MobileHeader = ({
           </PopoverTrigger>
           <PopoverContent align="end" className="w-auto">
             <RadioGroup defaultValue={view} value={view} className="gap-4">
-              <ConditionalLink href={navigateURL(selectedDate, "day")} isDisabled={!day}>
-                <div className="flex justify-between gap-3">
-                  <div className="flex  gap-3">
-                    <List strokeWidth={1.8} className="size-4" />
-                    <Label htmlFor="day">Day</Label>
-                  </div>
-                  <RadioGroupItem value="day" id="day" disabled={!day} />
-                </div>
-              </ConditionalLink>
-              <ConditionalLink href={navigateURL(selectedDate, "week")} isDisabled={!week}>
-                <div className="flex justify-between gap-3">
-                  <div className="flex  gap-3">
-                    <Columns strokeWidth={1.8} className="size-4" />
-                    <Label htmlFor="week">Week</Label>
-                  </div>
-                  <RadioGroupItem value="week" id="week" disabled={!week} />
-                </div>
-              </ConditionalLink>
-              <ConditionalLink href={navigateURL(selectedDate, "month")} isDisabled={!month}>
-                <div className="flex justify-between gap-3">
-                  <div className="flex  gap-3">
-                    <Grid2x2 strokeWidth={1.8} className="size-4" />
-                    <Label htmlFor="month">Month</Label>
-                  </div>
-                  <RadioGroupItem value="month" id="month" disabled={!month} />
-                </div>
-              </ConditionalLink>
-              <ConditionalLink href={navigateURL(selectedDate, "year")} isDisabled={!year}>
-                <div className="flex justify-between gap-3">
-                  <div className="flex  gap-3">
-                    <Grid3x3 strokeWidth={1.8} className="size-4" />
-                    <Label htmlFor="year">Year</Label>
-                  </div>
-                  <RadioGroupItem value="year" id="year" disabled={!year} />
-                </div>
-              </ConditionalLink>
-              <ConditionalLink href={navigateURL(selectedDate, "agenda")} isDisabled={!agenda}>
-                <div className="flex justify-between gap-3">
-                  <div className="flex  gap-3">
-                    <CalendarRange strokeWidth={1.8} className="size-4" />
-                    <Label htmlFor="agenda">Agenda</Label>
-                  </div>
-                  <RadioGroupItem value="agenda" id="agenda" disabled={!agenda} />
-                </div>
-              </ConditionalLink>
+              <ConditionalLink
+                href={navigateURL(selectedDate, "day")}
+                isDisabled={!day}
+                id={"day"}
+                value={"day"}
+                label={"Day"}
+                icon={<List className="size-4" />}
+              ></ConditionalLink>
+              <ConditionalLink
+                href={navigateURL(selectedDate, "week")}
+                isDisabled={!week}
+                id={"week"}
+                value={"week"}
+                label={"Week"}
+                icon={<Columns className="size-4" />}
+              ></ConditionalLink>
+              <ConditionalLink
+                href={navigateURL(selectedDate, "month")}
+                isDisabled={!month}
+                id={"month"}
+                value={"month"}
+                label={"Month"}
+                icon={<Grid2x2 className="size-4" />}
+              ></ConditionalLink>
+              <ConditionalLink
+                href={navigateURL(selectedDate, "year")}
+                isDisabled={!year}
+                id={"year"}
+                value={"year"}
+                label={"Year"}
+                icon={<Grid3x3 className="size-4" />}
+              ></ConditionalLink>
+
+              <ConditionalLink
+                href={navigateURL(selectedDate, "agenda")}
+                isDisabled={!agenda}
+                id={"agenda"}
+                value={"agenda"}
+                label={"Agenda"}
+                icon={<CalendarRange className="size-4" />}
+              ></ConditionalLink>
             </RadioGroup>
           </PopoverContent>
         </Popover>
@@ -289,18 +287,43 @@ const MobileHeader = ({
 const ConditionalLink = ({
   isDisabled,
   href,
-  children,
+  id,
+  value,
+  label,
+  icon,
 }: {
   isDisabled: boolean;
   href: string;
-  children: React.ReactNode;
+
+  id: string;
+  value: string;
+  label: string;
+  icon: React.ReactNode;
 }) => {
   if (isDisabled) {
-    return <div className="contents opacity-50 cursor-default">{children}</div>;
+    return (
+      <div>
+        <div className="flex justify-between gap-3 opacity-50">
+          <div className="flex gap-3">
+            {icon}
+            <Label htmlFor={id}>{label}</Label>
+          </div>
+          <RadioGroupItem value={value} id={id} disabled={isDisabled} />
+        </div>
+      </div>
+    );
   }
   return (
-    <Link href={href} className="contents">
-      {children}
+    <Link href={href} className="cursor-pointer">
+      <div className="flex justify-between gap-3 cursor-pointer">
+        <div className="flex gap-3 cursor-pointer">
+          {icon}
+          <Label htmlFor={id} className="cursor-pointer">
+            {label}
+          </Label>
+        </div>
+        <RadioGroupItem value={value} id={id} disabled={isDisabled} className="cursor-pointer" />
+      </div>
     </Link>
   );
 };
