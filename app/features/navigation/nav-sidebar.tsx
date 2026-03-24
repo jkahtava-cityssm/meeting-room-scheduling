@@ -176,6 +176,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {editConfiguration && (
                 <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
               )}
+              {editUsers && <SideBarSubMenuItem title={"Manage Users"} url={"/settings/manage-users"} />}
             </SideBarCollapsibleGroup>
           )}
         </SideBarGroup>
