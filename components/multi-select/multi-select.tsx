@@ -238,6 +238,7 @@ interface MultiSelectProps extends VariantProps<typeof multiSelectVariants> {
   hideMoreLabel?: boolean;
   hideClearAll?: boolean;
   hideClearSingle?: boolean;
+  showSelectedButton?: boolean;
 }
 
 /**
@@ -280,7 +281,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
       hideIcon = false,
       hideMoreLabel = true,
-
+      showSelectedButton = false,
       hideClearAll = false,
       hideClearSingle = false,
 
@@ -813,7 +814,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                 onClear={handleClear}
                 onClose={() => setIsPopoverOpen(false)}
                 showClear={selectedValues.length > 0}
-                showSelected={selectedValues.length > 0}
+                showSelectedButton={showSelectedButton}
               />
             </Command>
           </PopoverContent>
@@ -1089,12 +1090,12 @@ const CommandFooter = ({
   onClear,
   onClose,
   showClear,
-  showSelected,
+  showSelectedButton,
 }: {
   onClear: () => void;
   onClose: () => void;
   showClear: boolean;
-  showSelected: boolean;
+  showSelectedButton: boolean;
 }) => (
   <div className="flex items-center justify-between p-1 bg-accent gap-2 rounded-md">
     {showClear && (
@@ -1107,7 +1108,7 @@ const CommandFooter = ({
         Clear
       </Button>
     )}
-    {showSelected && (
+    {showSelectedButton && (
       <Button
         variant={"outline"}
         onClick={() => {
