@@ -1,5 +1,7 @@
 import { prisma } from "@/prisma";
 import type { Prisma } from "@prisma/client";
+import { SUser } from "../schemas";
+import z from "zod/v4";
 
 // Standard user select configuration — used across all DAL functions
 const USER_SELECT = {
@@ -10,13 +12,9 @@ const USER_SELECT = {
   jobTitle: true,
   employeeNumber: true,
   employeeActive: true,
+  isExternal: true,
+  receiveEmails: true,
 } as const satisfies Prisma.UserSelect;
-
-// Standard session select configuration — used across all DAL functions
-const SESSION_SELECT = {
-  userId: true,
-  expiresAt: true,
-} as const satisfies Prisma.SessionSelect;
 
 const USER_ROLE_SELECT = {
   roleId: true,
@@ -35,15 +33,7 @@ export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.Tr
   }
 
   return userList.map((user) => {
-    return {
-      userId: user.id,
-      name: user.name,
-      email: user.email,
-      department: user.department,
-      jobTitle: user.jobTitle,
-      employeeNumber: user.employeeNumber,
-      employeeActive: user.employeeActive,
-    };
+    mapBaseUser(user);
   });
 }
 
@@ -75,13 +65,7 @@ export async function findManyUsersWithRoles(
     }
 
     return {
-      userId: user.id,
-      name: user.name,
-      email: user.email,
-      department: user.department ?? "No Department",
-      jobTitle: user.jobTitle,
-      employeeNumber: user.employeeNumber,
-      employeeActive: user.employeeActive,
+      ...mapBaseUser(user),
       roles: roleList,
     };
   });
@@ -109,6 +93,48 @@ export async function getDefaultRole(
   return role ? { roleId: role.roleId, name: role.name } : { roleId: null, name: null };
 }
 
-export async function findSession(where: Prisma.SessionWhereInput, tx: Prisma.TransactionClient = prisma) {
-  return tx.session.findFirst({ where, select: SESSION_SELECT, orderBy: { userId: "asc" } });
+export async function upsertUser(
+  params: {
+    where: Prisma.UserWhereUniqueInput;
+    create: Prisma.UserCreateInput;
+    update: Prisma.UserUpdateInput;
+  },
+  tx: Prisma.TransactionClient = prisma,
+) {
+  const user = await tx.user.upsert({
+    where: params.where,
+    create: params.create,
+    update: params.update,
+    select: USER_SELECT,
+  });
+
+  return mapBaseUser(user);
+}
+
+export async function createUser(data: Prisma.UserCreateInput, tx: Prisma.TransactionClient = prisma) {
+  const user = await tx.user.create({ data, select: USER_SELECT });
+
+  return mapBaseUser(user);
+}
+
+export async function deleteManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.user.deleteMany({
+    where,
+  });
+}
+
+type UserWithRelations = Prisma.UserGetPayload<{ select: typeof USER_SELECT }>;
+
+function mapBaseUser(user: UserWithRelations) {
+  return {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    department: user.department,
+    jobTitle: user.jobTitle,
+    employeeNumber: user.employeeNumber,
+    employeeActive: user.employeeActive,
+    isExternal: user.isExternal,
+    receiveEmail: user.receiveEmails,
+  };
 }

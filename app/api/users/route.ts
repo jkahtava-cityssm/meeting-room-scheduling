@@ -1,6 +1,7 @@
 import { guardRoute } from "@/lib/api-guard";
-import { NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
-import { findManyUsers } from "@/lib/data/users";
+import { CreatedMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage } from "@/lib/api-helpers";
+import { createUser, findManyUsers, upsertUser } from "@/lib/data/users";
+import { SUserPUT } from "@/lib/services/users";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -14,14 +15,7 @@ export async function GET(request: NextRequest) {
         },
       ],
     },
-
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
-      /*const users = permissions.ReadAll
-        ? await findManyUsers({ employeeActive: true })
-        : permissions.ReadSelf
-          ? await findManyUsers({ id: sessionUserId, employeeActive: true })
-          : null;*/
-
+    async () => {
       const users = await findManyUsers({ employeeActive: true });
       if (!users) {
         return NotFoundMessage();
@@ -29,5 +23,86 @@ export async function GET(request: NextRequest) {
 
       return SuccessMessage("Collected Users", users);
     },
+  );
+}
+
+export async function PUT(request: NextRequest) {
+  return guardRoute(
+    request,
+
+    {
+      AnyOf: [
+        { EditUsers: { type: "permission", resource: "User", action: "Update" } },
+        { EditUsers: { type: "permission", resource: "Settings", action: "Edit Users" } },
+      ],
+    },
+    async ({ data }) => {
+      const updatedUser = await upsertUser({
+        where: { id: data.userId },
+        create: {
+          name: data.name,
+          email: data.email,
+          employeeActive: data.employeeActive,
+          isExternal: data.isExternal,
+          receiveEmails: data.receiveEmail,
+          department: data.department,
+          jobTitle: data.jobTitle,
+          employeeNumber: data.employeeNumber,
+        },
+        update: {
+          name: data.name,
+          email: data.email,
+          employeeActive: data.employeeActive,
+          isExternal: data.isExternal,
+          receiveEmails: data.receiveEmail,
+          department: data.department,
+          jobTitle: data.jobTitle,
+          employeeNumber: data.employeeNumber,
+        },
+      });
+
+      if (!updatedUser) {
+        return InternalServerErrorMessage();
+      }
+
+      if (updatedUser.userId === data.userId) {
+        return SuccessMessage("Updated Event", updatedUser);
+      }
+
+      return CreatedMessage("Created Event", updatedUser);
+    },
+    SUserPUT,
+  );
+}
+
+export async function POST(request: NextRequest) {
+  return guardRoute(
+    request,
+
+    {
+      AnyOf: [
+        { EditUsers: { type: "permission", resource: "User", action: "Create" } },
+        { EditUsers: { type: "permission", resource: "Settings", action: "Edit Users" } },
+      ],
+    },
+    async ({ data }) => {
+      const createdUser = await createUser({
+        name: data.name,
+        email: data.email,
+        employeeActive: data.employeeActive,
+        isExternal: data.isExternal,
+        receiveEmails: data.receiveEmail,
+        department: data.department,
+        jobTitle: data.jobTitle,
+        employeeNumber: data.employeeNumber,
+      });
+
+      if (!createdUser) {
+        return InternalServerErrorMessage();
+      }
+
+      return CreatedMessage("Created Event", createdUser);
+    },
+    SUserPUT,
   );
 }

@@ -99,6 +99,8 @@ export const SUser = z.object({
   jobTitle: z.string().optional().nullable(),
   employeeNumber: z.string().optional().nullable(),
   employeeActive: z.union([z.boolean(), z.stringbool()]),
+  isExternal: z.union([z.boolean(), z.stringbool()]),
+  receiveEmail: z.union([z.boolean(), z.stringbool()]),
 });
 
 export const SMultiDay = z.object({
