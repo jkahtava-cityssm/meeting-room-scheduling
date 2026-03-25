@@ -24,6 +24,7 @@ import {
   getSortedRowModel,
   useReactTable,
   Column,
+  createColumnHelper,
 } from "@tanstack/react-table";
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -46,6 +47,16 @@ import { IUser } from "@/lib/schemas";
 const STATUS_OPTIONS = [
   { label: "Enabled", value: "true" },
   { label: "Disabled", value: "false" },
+];
+
+const USER_TYPE_OPTIONS = [
+  { label: "External", value: "true" },
+  { label: "Internal", value: "false" },
+];
+
+const EMAIL_OPTIONS = [
+  { label: "Allowed", value: "true" },
+  { label: "Blocked", value: "false" },
 ];
 
 const DEFAULT_FILTERS = [{ id: "employeeActive", value: ["true"] }];
@@ -74,10 +85,11 @@ export function UserLayout() {
     );
   }, [columnFilters]);
 
-  const columns = useMemo<ColumnDef<IUser>[]>(
+  const columnHelper = createColumnHelper<IUser>();
+
+  const columns = useMemo(
     () => [
-      {
-        accessorKey: "name",
+      columnHelper.accessor("name", {
         header: ({ column }) => (
           <FilterHeader title="Name" column={column}>
             <DebouncedInput
@@ -95,24 +107,9 @@ export function UserLayout() {
             <span className="font-medium truncate">{getValue() as string}</span>
           </div>
         ),
-      },
-      {
-        accessorKey: "email",
-        header: ({ column }) => (
-          <div className="hidden md:block">
-            <FilterHeader title="Email" column={column}>
-              <DebouncedInput
-                placeholder="Search emails..."
-                value={(column.getFilterValue() as string) ?? ""}
-                onChange={(value) => column.setFilterValue(value)}
-              />
-            </FilterHeader>
-          </div>
-        ),
-        cell: ({ getValue }) => <div className="hidden md:block text-sm truncate px-2">{getValue() as string}</div>,
-      },
-      {
-        accessorKey: "employeeNumber",
+      }),
+
+      columnHelper.accessor("employeeNumber", {
         header: ({ column }) => (
           <div className="hidden md:block">
             <FilterHeader title="Employee #" column={column}>
@@ -125,9 +122,8 @@ export function UserLayout() {
           </div>
         ),
         cell: ({ getValue }) => <div className="hidden md:block text-sm truncate">{getValue() as string}</div>,
-      },
-      {
-        accessorKey: "department",
+      }),
+      columnHelper.accessor("department", {
         header: ({ column }) => (
           <div className="hidden md:block">
             <FilterHeader title="Department" column={column}>
@@ -141,9 +137,9 @@ export function UserLayout() {
           return filterValue.includes(String(row.getValue(id)));
         },
         cell: ({ getValue }) => <div className="hidden md:block text-sm truncate">{getValue() as string}</div>,
-      },
-      {
-        accessorKey: "employeeActive",
+      }),
+
+      columnHelper.accessor("employeeActive", {
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
@@ -164,13 +160,80 @@ export function UserLayout() {
           const rowValue = String(row.getValue(id));
           return filterValue.includes(rowValue);
         },
-        cell: ({ getValue }) => (
-          <div className="hidden md:block text-sm truncate text-center">{getValue() ? "Enabled" : "Disabled"}</div>
-        ),
-      },
-      {
-        id: "actions",
-        header: ({ table }) => {
+        cell: ({ getValue }) => {
+          const value = getValue();
+          const option = STATUS_OPTIONS.find((opt) => opt.value === String(value));
+          return (
+            <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>
+          );
+        },
+      }),
+
+      columnHelper.accessor("isExternal", {
+        header: ({ column }) => {
+          const currentFilters = (column.getFilterValue() as string[]) ?? [];
+
+          return (
+            <div className="hidden md:block">
+              <FilterHeader title="Type" center column={column}>
+                <CheckboxFilterGroup
+                  column={column}
+                  options={USER_TYPE_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))}
+                />
+              </FilterHeader>
+            </div>
+          );
+        },
+        filterFn: (row, id, filterValue) => {
+          if (!filterValue.length) return true;
+
+          const rowValue = String(row.getValue(id));
+          return filterValue.includes(rowValue);
+        },
+
+        cell: ({ getValue }) => {
+          const value = getValue();
+          const option = USER_TYPE_OPTIONS.find((opt) => opt.value === String(value));
+          return (
+            <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>
+          );
+        },
+      }),
+
+      columnHelper.accessor("receiveEmail", {
+        header: ({ column }) => {
+          const currentFilters = (column.getFilterValue() as string[]) ?? [];
+
+          return (
+            <div className="hidden md:block">
+              <FilterHeader title="Email" center column={column}>
+                <CheckboxFilterGroup
+                  column={column}
+                  options={EMAIL_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))}
+                />
+              </FilterHeader>
+            </div>
+          );
+        },
+        filterFn: (row, id, filterValue) => {
+          if (!filterValue.length) return true;
+
+          const rowValue = String(row.getValue(id));
+          return filterValue.includes(rowValue);
+        },
+
+        cell: ({ getValue }) => {
+          const value = getValue();
+          const option = EMAIL_OPTIONS.find((opt) => opt.value === String(value));
+          return (
+            <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>
+          );
+        },
+      }),
+
+      columnHelper.display({
+        id: "action",
+        header: () => {
           return (
             <div className="flex items-center justify-center min-w-0 font-bold">
               {!isDefaultState ? (
@@ -196,9 +259,9 @@ export function UserLayout() {
             </Button>
           </div>
         ),
-      },
+      }),
     ],
-    [departmentList, isDefaultState],
+    [columnHelper, departmentList, isDefaultState],
   );
 
   const table = useReactTable({
@@ -217,13 +280,17 @@ export function UserLayout() {
   });
 
   const isLoading = isFetching && !data;
+  const columnCount = useMemo(() => table.getVisibleFlatColumns().length, [table]);
 
   if (error) {
     return <GenericError error={error} />;
   }
 
   return (
-    <div className="flex flex-col h-full w-full rounded-lg border">
+    <div
+      className="flex flex-col h-full w-full rounded-lg border"
+      style={{ "--col-count": columnCount } as React.CSSProperties}
+    >
       <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between border-b">
         <div className="flex items-center gap-3 h-14 font-bold text-xl">Users</div>
         <div className="flex items-center gap-2">
@@ -235,7 +302,12 @@ export function UserLayout() {
         <ScrollArea className="h-full w-full">
           <div className="px-4">
             {/* Header Row */}
-            <div className="grid grid-cols-2 md:grid-cols-6 items-center border-b p-2 sticky top-0 bg-background z-10">
+            <div
+              className="grid  items-center border-b p-2 sticky top-0 bg-background z-10 "
+              style={{
+                gridTemplateColumns: `repeat(var(--col-count), minmax(0, 1fr))`,
+              }}
+            >
               {table.getHeaderGroups()[0].headers.map((header) => (
                 <div key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</div>
               ))}
@@ -264,7 +336,12 @@ export function UserLayout() {
             ) : (
               table.getRowModel().rows.map((row) => (
                 <React.Fragment key={row.id}>
-                  <div className="grid grid-cols-2 md:grid-cols-6 items-center w-auto px-2 border-b">
+                  <div
+                    className="grid items-center w-auto px-2 border-b"
+                    style={{
+                      gridTemplateColumns: `repeat(var(--col-count), minmax(0, 1fr))`,
+                    }}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <div key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
                     ))}
@@ -342,7 +419,7 @@ const FilterHeader = <TData, TValue>({
 };
 
 function DebouncedInput({
-  value: initialValue,
+  value,
   onChange,
   debounce = 300,
   ...props
@@ -351,18 +428,25 @@ function DebouncedInput({
   onChange: (value: string) => void;
   debounce?: number;
 } & Omit<React.ComponentProps<"input">, "onChange">) {
-  const [value, setValue] = useState(initialValue);
+  const [localValue, setLocalValue] = useState(value);
+
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
 
   React.useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
+    setLocalValue(value);
+  }, [value]);
 
   React.useEffect(() => {
-    const timeout = setTimeout(() => onChange(value), debounce);
+    if (localValue === value) return;
+
+    const timeout = setTimeout(() => {
+      onChangeRef.current(localValue);
+    }, debounce);
     return () => clearTimeout(timeout);
-  }, [value, debounce, onChange]);
+  }, [localValue, value, debounce]);
 
-  return <Input {...props} value={value} onChange={(e) => setValue(e.target.value)} />;
+  return <Input {...props} value={localValue} onChange={(e) => setLocalValue(e.target.value)} />;
 }
 
 // 1. Create a dedicated Filter component
