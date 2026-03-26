@@ -7,12 +7,12 @@ export const getFormDefaults = (): CombinedSchema => {
     userId: "0",
     name: "",
     email: "",
-    employeeActive: "true",
-    isExternal: "false",
-    receiveEmail: "true",
+    isActive: "true",
+    isManaged: "false",
+    emailEnabled: "true",
     department: "",
     jobTitle: "",
-    employeeNumber: "",
+    externalId: "",
   } as CombinedSchema;
 };
 
@@ -21,12 +21,12 @@ export const mapUserToSchema = (user: IUser): CombinedSchema => {
     userId: String(user.userId),
     name: user.name,
     email: user.email,
-    employeeActive: String(user.employeeActive),
-    isExternal: String(user.isExternal),
-    receiveEmail: String(user.receiveEmail),
+    isActive: String(user.isActive),
+    isManaged: String(user.isManaged),
+    emailEnabled: String(user.emailEnabled),
     department: user.department ? user.department : "",
     jobTitle: user.jobTitle ? user.jobTitle : "",
-    employeeNumber: user.employeeNumber ? user.employeeNumber : "",
+    externalId: user.externalId ? user.externalId : "",
   };
 
   return { ...SEventFormDefaults } as CombinedSchema;

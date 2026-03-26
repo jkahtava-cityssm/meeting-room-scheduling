@@ -10,10 +10,10 @@ const USER_SELECT = {
   email: true,
   department: true,
   jobTitle: true,
-  employeeNumber: true,
-  employeeActive: true,
-  isExternal: true,
-  receiveEmails: true,
+  externalId: true,
+  isActive: true,
+  isManaged: true,
+  emailEnabled: true,
 } as const satisfies Prisma.UserSelect;
 
 const USER_ROLE_SELECT = {
@@ -130,11 +130,11 @@ function mapBaseUser(user: UserWithRelations) {
     userId: user.id,
     name: user.name,
     email: user.email,
+    emailEnabled: user.emailEnabled,
     department: user.department,
     jobTitle: user.jobTitle,
-    employeeNumber: user.employeeNumber,
-    employeeActive: user.employeeActive,
-    isExternal: user.isExternal,
-    receiveEmail: user.receiveEmails,
+    externalId: user.externalId,
+    isActive: user.isActive,
+    isManaged: user.isManaged,
   };
 }

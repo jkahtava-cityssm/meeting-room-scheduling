@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       ],
     },
     async () => {
-      const users = await findManyUsers({ employeeActive: true });
+      const users = await findManyUsers({ isActive: true });
       if (!users) {
         return NotFoundMessage();
       }
@@ -42,22 +42,22 @@ export async function PUT(request: NextRequest) {
         create: {
           name: data.name,
           email: data.email,
-          employeeActive: data.employeeActive,
-          isExternal: data.isExternal,
-          receiveEmails: data.receiveEmail,
+          isActive: data.isActive,
+          isManaged: data.isManaged,
+          emailEnabled: data.emailEnabled,
           department: data.department,
           jobTitle: data.jobTitle,
-          employeeNumber: data.employeeNumber,
+          externalId: data.externalId,
         },
         update: {
           name: data.name,
           email: data.email,
-          employeeActive: data.employeeActive,
-          isExternal: data.isExternal,
-          receiveEmails: data.receiveEmail,
+          isActive: data.isActive,
+          isManaged: data.isManaged,
+          emailEnabled: data.emailEnabled,
           department: data.department,
           jobTitle: data.jobTitle,
-          employeeNumber: data.employeeNumber,
+          externalId: data.externalId,
         },
       });
 
@@ -89,12 +89,12 @@ export async function POST(request: NextRequest) {
       const createdUser = await createUser({
         name: data.name,
         email: data.email,
-        employeeActive: data.employeeActive,
-        isExternal: data.isExternal,
-        receiveEmails: data.receiveEmail,
+        isActive: data.isActive,
+        isManaged: data.isManaged,
+        emailEnabled: data.emailEnabled,
         department: data.department,
         jobTitle: data.jobTitle,
-        employeeNumber: data.employeeNumber,
+        externalId: data.externalId,
       });
 
       if (!createdUser) {

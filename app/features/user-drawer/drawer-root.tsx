@@ -1,20 +1,16 @@
-import { HomeIcon, UserIcon } from "lucide-react";
+import { UserIcon } from "lucide-react";
 import { FieldKeys, FormStep } from "./types";
 
-import { IEvent, IUser, SEvent, SUser } from "@/lib/schemas";
+import { IUser, SUser } from "@/lib/schemas";
 import React, { useMemo } from "react";
-import { Step1 } from "./drawer-step-event-details";
-import { Step2 } from "./drawer-step-event-recurrence";
+import { Step1 } from "./drawer-step-user-details";
 
 import { step1Schema } from "./drawer-schema.validator";
 import { MultiStepForm } from "./drawer-form-provider";
 
-import { useSession } from "@/contexts/SessionProvider";
-import { usePrivateConfigurationQuery } from "@/lib/services/configuration";
-import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 import { UserDrawerPermissions } from "./lib/permissions";
 
-export default function EventDrawerRefactor({
+export default function UserDrawer({
   creationDate,
   user,
   isOpen,

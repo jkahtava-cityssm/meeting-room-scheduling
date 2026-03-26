@@ -139,7 +139,7 @@ export function UserRoleAssignmentList() {
 
           case "status":
             // status: ["true"] or ["false"]
-            return (filterValue as string[]).includes(String(user.employeeActive));
+            return (filterValue as string[]).includes(String(user.isActive));
 
           case "assigned": {
             const isAssigned = user.roles.some((r) => String(r.roleId) === currentRole?.id);
@@ -167,11 +167,11 @@ export function UserRoleAssignmentList() {
         case "email":
           return (user.email ?? "") as string;
         case "employeeNumber":
-          return Number(user.employeeNumber ?? 0);
+          return Number(user.externalId ?? 0);
         case "department":
           return (user.department ?? "") as string;
         case "status":
-          return user.employeeActive ? 1 : 0; // 1 enabled, 0 disabled
+          return user.isActive ? 1 : 0; // 1 enabled, 0 disabled
         case "assigned": {
           const isAssigned = user.roles?.some((role) => String(role.roleId) === currentRole?.id && role.granted);
           return isAssigned ? 1 : 0;
@@ -444,10 +444,10 @@ export function UserRoleAssignmentList() {
 
                     {/* Desktop Columns */}
                     <div className="hidden md:block text-sm truncate px-2">{employee.email}</div>
-                    <div className="hidden md:block text-sm truncate">{employee.employeeNumber}</div>
+                    <div className="hidden md:block text-sm truncate">{employee.externalId}</div>
                     <div className="hidden md:block text-sm truncate">{employee.department}</div>
                     <div className="hidden md:block text-sm truncate text-center">
-                      {employee.employeeActive ? "Enabled" : "Disabled"}
+                      {employee.isActive ? "Enabled" : "Disabled"}
                     </div>
 
                     {/* Toggle Column */}
@@ -476,7 +476,7 @@ export function UserRoleAssignmentList() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">ID:</span>
-                          <span>{employee.employeeNumber}</span>
+                          <span>{employee.externalId}</span>
                         </div>
                       </div>
                     )}

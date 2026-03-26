@@ -4,21 +4,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
 import { CombinedSchema, CombinedUserSchema } from "./drawer-schema.validator";
 
-import { usePublicConfiguration } from "@/lib/services/public";
-import {
-  useEventQuery,
-  useEventsMutationUpsert,
-  useEventsMutationDelete,
-  SEventPUT,
-  useEventsMutationCreate,
-} from "@/lib/services/events";
 import { isFormValid, isStepValid } from "./lib/form-helper";
 import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
 import { IUser } from "@/lib/schemas";
 import { getFormDefaults, mapUserToSchema } from "./lib/default-util";
 
 import { useStepNavigation } from "./use-step-navigation";
-import { useUserQuery } from "@/lib/services/users";
+import {
+  SUserPUT,
+  useUserQuery,
+  useUsersMutationCreate,
+  useUsersMutationDelete,
+  useUsersMutationUpsert,
+} from "@/lib/services/users";
 
 export const useMultiStepFormLogic = (props: {
   user?: IUser;
@@ -123,9 +121,9 @@ export const useMultiStepFormLogic = (props: {
       return;
     }
 
-    const parsedPayload = SEventPUT.parse(formData);
+    const parsedPayload = SUserPUT.parse(formData);
 
-    if (!parsedPayload.eventId || parsedPayload.eventId === 0) {
+    if (!parsedPayload.userId || parsedPayload.userId === 0) {
       mutationCreate.mutate(parsedPayload, {
         onSettled: () => {
           resetForm();

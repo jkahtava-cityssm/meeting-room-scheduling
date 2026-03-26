@@ -109,7 +109,7 @@ export function UserLayout() {
         ),
       }),
 
-      columnHelper.accessor("employeeNumber", {
+      columnHelper.accessor("externalId", {
         header: ({ column }) => (
           <div className="hidden md:block">
             <FilterHeader title="Employee #" column={column}>
@@ -139,7 +139,7 @@ export function UserLayout() {
         cell: ({ getValue }) => <div className="hidden md:block text-sm truncate">{getValue() as string}</div>,
       }),
 
-      columnHelper.accessor("employeeActive", {
+      columnHelper.accessor("isActive", {
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
@@ -169,7 +169,7 @@ export function UserLayout() {
         },
       }),
 
-      columnHelper.accessor("isExternal", {
+      columnHelper.accessor("isManaged", {
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
@@ -200,7 +200,7 @@ export function UserLayout() {
         },
       }),
 
-      columnHelper.accessor("receiveEmail", {
+      columnHelper.accessor("emailEnabled", {
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
@@ -355,7 +355,7 @@ export function UserLayout() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">ID:</span>
-                        <span>{row.original.employeeNumber}</span>
+                        <span>{row.original.externalId}</span>
                       </div>
                     </div>
                   )}

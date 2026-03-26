@@ -95,12 +95,12 @@ export const SUser = z.object({
   userId: z.number(),
   name: z.string(),
   email: z.string(),
+  emailEnabled: z.union([z.boolean(), z.stringbool()]),
   department: z.string().optional().nullable(),
   jobTitle: z.string().optional().nullable(),
-  employeeNumber: z.string().optional().nullable(),
-  employeeActive: z.union([z.boolean(), z.stringbool()]),
-  isExternal: z.union([z.boolean(), z.stringbool()]),
-  receiveEmail: z.union([z.boolean(), z.stringbool()]),
+  externalId: z.string().optional().nullable(),
+  isActive: z.union([z.boolean(), z.stringbool()]),
+  isManaged: z.union([z.boolean(), z.stringbool()]),
 });
 
 export const SMultiDay = z.object({

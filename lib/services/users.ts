@@ -44,12 +44,12 @@ export const SUserPUT = z.object({
   userId: z.coerce.number().optional(),
   name: z.string().min(1, "Name is required"),
   email: z.string(),
+  emailEnabled: z.union([z.boolean(), z.stringbool()]),
   department: z.string().optional().nullable(),
   jobTitle: z.string().optional().nullable(),
-  employeeNumber: z.string().optional().nullable(),
-  employeeActive: z.union([z.boolean(), z.stringbool()]),
-  isExternal: z.union([z.boolean(), z.stringbool()]),
-  receiveEmail: z.union([z.boolean(), z.stringbool()]),
+  externalId: z.string().optional().nullable(),
+  isActive: z.union([z.boolean(), z.stringbool()]),
+  isManaged: z.union([z.boolean(), z.stringbool()]),
 });
 
 export type IUserPUT = z.infer<typeof SUserPUT>;
