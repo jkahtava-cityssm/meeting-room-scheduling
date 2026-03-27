@@ -10,6 +10,7 @@ import { SessionAction, SessionResource, SessionRole } from "./types";
 import { getCachedUserRoles } from "./auth-role-cache";
 import { nextCookies } from "better-auth/next-js";
 import { getDefaultRole } from "./data/users";
+import { fetchPrivateCachedUserRole } from "./server/private";
 
 export type User = {
   userId: string | undefined | null;
@@ -112,7 +113,14 @@ export const auth = betterAuth({
       const currentSession = session as Session & { impersonatedRole?: string };
       const token = session.token;
       const userId = Number(user.id);
-      const roles = await getCachedUserRoles(token, userId, currentSession.impersonatedRole);
+
+      const impersonatingRole = currentSession.impersonatedRole;
+
+      const cacheKey = impersonatingRole ? `impersonate:${token}:${impersonatingRole}` : token;
+
+      const result = await fetchPrivateCachedUserRole(userId, cacheKey, impersonatingRole ? true : false);
+
+      const roles = result ? result.data : [];
       return {
         user: {
           ...user,

@@ -29,5 +29,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NotFoundMessage();
   }
 
-  return SuccessMessage("User Found", { userId: Number(userId), roles: roles });
+  return SuccessMessage("User Roles", roles);
 }
