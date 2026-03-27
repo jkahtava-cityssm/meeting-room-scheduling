@@ -11,7 +11,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Session } from "@/lib/auth-client";
 
 import { FormStatus } from "./types";
-import { step1Schema } from "./room-drawer-schema.validator";
+import { step1Schema } from "./drawer-schema.validator";
 
 import { StatusSelect } from "../status/status-select";
 
@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { EventCard } from "../calendar/components/calendar-scroll-private-event-block";
 import { addHours, format } from "date-fns";
 
-export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
+export const Step01Room = ({ formStatus }: { formStatus: FormStatus }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
 
   const isReadOnly = formStatus === "Read" || formStatus === "Loading";
@@ -206,7 +206,12 @@ export const Step01Room = ({ formStatus, session }: { formStatus: FormStatus; se
               <FormItem className="col-3 row-1">
                 <FormLabel>Display Order</FormLabel>
                 <FormControl>
-                  <Input type="number" value={field.value && String(field.value)} onChange={field.onChange}></Input>
+                  <Input
+                    type="number"
+                    disabled={isReadOnly}
+                    value={field.value && String(field.value)}
+                    onChange={field.onChange}
+                  ></Input>
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -1,5 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-import { CombinedSchema } from "../room-drawer-schema.validator";
+import { CombinedSchema } from "../drawer-schema.validator";
 import { FormStep } from "../types";
 
 export const isStepValid = async (

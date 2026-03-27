@@ -40,11 +40,12 @@ import { TColors } from "@/lib/types";
 import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { SharedRoomDrawerProvider, useSharedRoomDrawer } from "../room-drawer/shared-room-drawer-context";
+
 import { getDistinctValuesByKey } from "@/lib/helpers";
 import { useDebounce } from "@/hooks/use-debounce";
 import { IRoom } from "@/lib/schemas";
 import { GenericError } from "@/components/shared/generic-error";
+import { useSharedRoomDrawer } from "../room-drawer/drawer-context";
 
 interface RoomFilters {
   name: string;

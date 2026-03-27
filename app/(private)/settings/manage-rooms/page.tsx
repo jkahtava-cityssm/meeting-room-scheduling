@@ -1,4 +1,4 @@
-import { SharedRoomDrawerProvider } from "@/app/features/room-drawer/shared-room-drawer-context";
+import { SharedRoomDrawerProvider } from "@/app/features/room-drawer/drawer-context";
 import RoomLayout from "@/app/features/rooms/room-layout";
 import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permissions";
 
