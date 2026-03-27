@@ -16,7 +16,11 @@ export async function GET(request: NextRequest) {
       ],
     },
     async () => {
-      const users = await findManyUsers({ isActive: true });
+      const searchParams = request.nextUrl.searchParams;
+
+      const onlyActive = searchParams.get("onlyActive");
+
+      const users = await findManyUsers(onlyActive ? { isActive: true } : undefined);
       if (!users) {
         return NotFoundMessage();
       }

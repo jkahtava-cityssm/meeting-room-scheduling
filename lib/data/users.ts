@@ -33,7 +33,7 @@ export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.Tr
   }
 
   return userList.map((user) => {
-    mapBaseUser(user);
+    return mapBaseUser(user);
   });
 }
 

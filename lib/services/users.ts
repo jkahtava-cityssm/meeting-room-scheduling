@@ -5,11 +5,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import z from "zod/v4";
 import { queryKeys } from "./querykeys";
 
-export const useUsersQuery = (enabled: boolean = true) =>
+export const useUsersQuery = (onlyActive: boolean = true, enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.users.lists(),
     queryFn: async () => {
-      const result = await fetchGET(`/api/users`, undefined, 180, ["users"]);
+      const result = await fetchGET(`/api/users`, { onlyActive }, 180, ["users"]);
       const parsedResult = z.array(SUser).safeParse(result.data);
 
       if (!parsedResult.success) {
