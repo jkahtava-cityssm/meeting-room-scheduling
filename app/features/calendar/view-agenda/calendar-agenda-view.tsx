@@ -7,7 +7,7 @@ import { AgendaEventCard } from "@/app/features/calendar/view-agenda/calendar-ag
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Printer } from "lucide-react";
+import { LucideCalendarDays, LucideDoorOpen, LucidePartyPopper, Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -18,10 +18,19 @@ import { cn } from "@/lib/utils";
 import { GenericError } from "../../../../components/shared/generic-error";
 import { Label } from "@/components/ui/label";
 import { TStatusKey } from "@/lib/types";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
-  const { visibleHours, visibleRooms, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents } =
-    usePrivateCalendar();
+  const {
+    visibleHours,
+    visibleRooms,
+    selectedRoomIds,
+    selectedStatusKeys,
+    setIsHeaderLoading,
+    setTotalEvents,
+    configurationError,
+    roomError,
+  } = usePrivateCalendar();
 
   const roomIds = useMemo(
     () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
@@ -68,9 +77,21 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
     pageStyle: "@page { size: auto;  margin: 0mm; } @media print { body { -webkit-print-color-adjust: exact; } }",
   });
 
+  const emptyState =
+    selectedRoomIds.length === 0
+      ? { title: "No Room Selected", message: "Please choose a room", icon: <LucideDoorOpen /> }
+      : eventsToRender.length === 0
+        ? {
+            title: "No Events Found",
+            message: "There don't appear to be events associated with this date",
+            icon: <LucidePartyPopper />,
+          }
+        : null;
+
   if (error) {
     return <GenericError error={error} />;
   }
+
   return (
     <>
       <div className="flex flex-1 min-h-0">
@@ -88,8 +109,10 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
                 </div>
 
                 <div className="space-y-2 m-2">
-                  {eventsToRender.length > 0 &&
-                    eventsToRender.map((event) => {
+                  {emptyState ? (
+                    <EmptyMessage title={emptyState.title} message={emptyState.message} icon={emptyState.icon} />
+                  ) : (
+                    eventsToRender?.map((event) => {
                       return (
                         <div
                           key={`break-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
@@ -102,7 +125,8 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
                           />
                         </div>
                       );
-                    })}
+                    })
+                  )}
                 </div>
               </div>
             </ScrollArea>
@@ -116,5 +140,19 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
         ></CalendarDayColumnCalendar>
       </div>
     </>
+  );
+}
+
+function EmptyMessage({ title, message, icon }: { title: string; message: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex flex-1 flex-col  p-4">
+      <Empty className="border border-dashed flex flex-1 flex-col">
+        <EmptyHeader>
+          <EmptyMedia>{icon}</EmptyMedia>
+          <EmptyTitle>{title}</EmptyTitle>
+          <EmptyDescription>{message}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    </div>
   );
 }
