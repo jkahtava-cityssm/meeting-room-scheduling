@@ -7,7 +7,7 @@ import { AgendaEventCard } from "@/app/features/calendar/view-agenda/calendar-ag
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { LucideCalendarDays, LucideDoorOpen, LucidePartyPopper, Printer } from "lucide-react";
+import { LoaderCircle, LucideCalendarDays, LucideDoorOpen, LucidePartyPopper, Printer } from "lucide-react";
 import { AgendaEventSkeleton } from "./skeleton-calendar-agenda-event";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -95,7 +95,7 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
   return (
     <>
       <div className="flex flex-1 min-h-0">
-        {isLoading ? (
+        {isMounting ? (
           <AgendaEventSkeleton selectedDate={date}></AgendaEventSkeleton>
         ) : (
           <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
@@ -111,6 +111,12 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
                 <div className="space-y-2 m-4">
                   {emptyState ? (
                     <EmptyMessage title={emptyState.title} message={emptyState.message} icon={emptyState.icon} />
+                  ) : isLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="flex flex-col bg-accent-foreground text-accent px-4 py-2 rounded ">
+                        <LoaderCircle className="animate-spin" />
+                      </div>
+                    </div>
                   ) : (
                     eventsToRender?.map((event) => {
                       return (
