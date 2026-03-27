@@ -523,7 +523,7 @@ model Event {
 
   user User? @relation(fields: [userId], references: [id])
 
-  room   Room   @relation(fields: [roomId], references: [roomId])
+  room   Room   @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
   status Status @relation(fields: [statusId], references: [statusId])
 
   createdByUser User? @relation("EventCreatedBy", fields: [createdBy], references: [id])
