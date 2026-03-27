@@ -2,16 +2,40 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Next.js: Debug Turbopack",
-      "type": "node-terminal",
+      "name": "Next.js: Server (Turbopack)",
+      "type": "node",
       "request": "launch",
-      "command": "npm run dev -- --turbopack",
-      "serverReadyAction": {
-        "pattern": "- Local:.+(https?://.+)",
-        "uriFormat": "%s",
-        "action": "debugWithChrome",
-        "webRoot": "${workspaceFolder}"
-      }
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      },
+
+      "skipFiles": [
+        "<node_internals>/**",
+        "**/node_modules/**",
+        "**/.next/server/chunks/**",
+        "**/.next/server/app/**",
+        "**/__nextjs_source-map**"
+      ]
+    },
+
+    {
+      "name": "Next.js: Client (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true
+    }
+  ],
+
+  "compounds": [
+    {
+      "name": "Next.js: Full Stack (Turbopack)",
+      "configurations": ["Next.js: Server (Turbopack)", "Next.js: Client (Chrome)"]
     }
   ]
 }
