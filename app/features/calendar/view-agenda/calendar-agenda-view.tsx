@@ -108,7 +108,7 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
                   </Button>
                 </div>
 
-                <div className="space-y-2 m-2">
+                <div className="space-y-2 m-4">
                   {emptyState ? (
                     <EmptyMessage title={emptyState.title} message={emptyState.message} icon={emptyState.icon} />
                   ) : (
@@ -145,14 +145,16 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
 
 function EmptyMessage({ title, message, icon }: { title: string; message: string; icon: React.ReactNode }) {
   return (
-    <div className="flex flex-1 flex-col  p-4">
-      <Empty className="border border-dashed flex flex-1 flex-col">
-        <EmptyHeader>
-          <EmptyMedia>{icon}</EmptyMedia>
-          <EmptyTitle>{title}</EmptyTitle>
-          <EmptyDescription>{message}</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+    <div className="absolute inset-0 flex flex-col pointer-events-none pt-14">
+      <div className="flex flex-1 flex-col  p-4">
+        <Empty className="border border-dashed flex flex-1 flex-col items-center justify-center">
+          <EmptyHeader>
+            <EmptyMedia>{icon}</EmptyMedia>
+            <EmptyTitle>{title}</EmptyTitle>
+            <EmptyDescription>{message}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
     </div>
   );
 }
