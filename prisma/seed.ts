@@ -808,7 +808,7 @@ async function createLinkedServer() {
     LANGUAGE 'sql'
     AS $BODY$
     INSERT INTO public.user
-    (name, email, image, employee_number,department,employee_active,created_at, updated_at)
+    (name, email, image, external_id,department,is_active,created_at, updated_at)
     SELECT employee_full_name,
         work_email,
         image,
@@ -851,9 +851,9 @@ async function createLinkedServer() {
     DO UPDATE SET
       name = EXCLUDED.name,
       email = EXCLUDED.email,
-      employee_number = EXCLUDED.employee_number,
+      external_id = EXCLUDED.external_id,
       department = EXCLUDED.department,
-      employee_active = EXCLUDED.employee_active,
+      is_active = EXCLUDED.is_active,
       image = EXCLUDED.image,
       updated_at = now();
     $BODY$;`,
