@@ -242,7 +242,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
         </div>
       </div>
       <div className="flex flex-row ">
-        {!isManaged && (
+        {isManaged && (
           <GenericInfoMessage
             title="User Details Locked"
             message="Limited updates are allowed, the current user is managed by an external system."
