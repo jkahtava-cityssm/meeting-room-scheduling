@@ -1,10 +1,11 @@
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import { getServerSession } from "./auth"; // Your existing session getter
 import { getRolesByUserId } from "./data/permissions";
 import { evaluateGuard, GuardRequirement } from "./api-guard";
 import { buildPermissionCache, PermissionResult } from "./auth-permission-checks";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { ShieldCheck, Terminal } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function createServerSecurity<const T extends GuardRequirement>(REQUIREMENTS: T) {
   const getSecurity = cache(async () => {
@@ -18,8 +19,6 @@ export function createServerSecurity<const T extends GuardRequirement>(REQUIREME
         can: () => false,
       };
     }
-    console.log("SERVER CHECK");
-    // Reuse your existing logic
 
     const permissionCache = buildPermissionCache(session.user.roles || []);
     const { authorized, permissions } = await evaluateGuard(permissionCache, REQUIREMENTS);
@@ -28,12 +27,11 @@ export function createServerSecurity<const T extends GuardRequirement>(REQUIREME
       user: session.user,
       authorized,
       permissions,
-      // Helper method for clean boolean checks
+
       can: (key: keyof PermissionResult<T>) => !!permissions[key as keyof typeof permissions],
     };
   });
 
-  // Async Server Component helper
   async function Can({
     permissionKey,
     fallback,
@@ -47,8 +45,44 @@ export function createServerSecurity<const T extends GuardRequirement>(REQUIREME
     return can(permissionKey) ? <>{children}</> : <>{fallback ?? <DefaultAccessDenied />}</>;
   }
 
-  return { getSecurity, Can, AccessDenied: DefaultAccessDenied };
+  function Guard({
+    permissionKey,
+    fallback,
+    loading = <DefaultLoadingSkeleton />,
+    children,
+  }: {
+    permissionKey: keyof PermissionResult<T>;
+    fallback?: React.ReactNode;
+    loading?: React.ReactNode;
+    children: React.ReactNode;
+  }) {
+    return (
+      <Suspense fallback={loading}>
+        <Can permissionKey={permissionKey} fallback={fallback}>
+          {children}
+        </Can>
+      </Suspense>
+    );
+  }
+
+  return { getSecurity, Guard, AccessDenied: DefaultAccessDenied };
 }
+
+const DefaultLoadingSkeleton = () => {
+  return (
+    <div className="relative overflow-hidden rounded-xl border bg-muted/20 min-w-92 h-32 flex flex-col items-center justify-center gap-3 p-6">
+      <div className="absolute inset-0 bg-linear-to-b from-transparent via-primary/5 to-transparent animate-scan" />
+
+      <div className="relative flex flex-col items-center gap-2">
+        <ShieldCheck className="h-8 w-8 text-muted-foreground/40 animate-pulse" />
+        <div className="space-y-2 flex flex-col items-center">
+          <Skeleton className="h-4 w-32" /> Verifying Permissions
+          <Skeleton className="h-3 w-24 opacity-60" /> Please Wait
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const DefaultAccessDenied = () => {
   return (

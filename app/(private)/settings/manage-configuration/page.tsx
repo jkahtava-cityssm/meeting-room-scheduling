@@ -3,8 +3,8 @@ import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permis
 
 export default async function ManageConfiguration() {
   return (
-    <ServerNavigationPermissions.Can permissionKey="EditConfiguration">
+    <ServerNavigationPermissions.Guard permissionKey="EditConfiguration">
       <ConfigurationPage></ConfigurationPage>
-    </ServerNavigationPermissions.Can>
+    </ServerNavigationPermissions.Guard>
   );
 }

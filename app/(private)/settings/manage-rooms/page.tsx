@@ -4,10 +4,10 @@ import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permis
 
 export default function Home() {
   return (
-    <ServerNavigationPermissions.Can permissionKey="EditRooms">
+    <ServerNavigationPermissions.Guard permissionKey="EditRooms">
       <SharedRoomDrawerProvider>
         <RoomLayout />
       </SharedRoomDrawerProvider>
-    </ServerNavigationPermissions.Can>
+    </ServerNavigationPermissions.Guard>
   );
 }

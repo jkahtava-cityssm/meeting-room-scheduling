@@ -4,8 +4,8 @@ import PrivateUserView from "./private-user-view";
 
 export default async function UserView() {
   return (
-    <ServerNavigationPermissions.Can permissionKey="ViewMyBooking">
+    <ServerNavigationPermissions.Guard permissionKey="ViewMyBooking">
       <PrivateUserView></PrivateUserView>
-    </ServerNavigationPermissions.Can>
+    </ServerNavigationPermissions.Guard>
   );
 }

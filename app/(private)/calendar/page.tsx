@@ -3,8 +3,8 @@ import PrivateCalendar from "./private-calendar";
 
 export default function Calendar() {
   return (
-    <ServerNavigationPermissions.Can permissionKey="ViewCalendar">
+    <ServerNavigationPermissions.Guard permissionKey="ViewCalendar">
       <PrivateCalendar></PrivateCalendar>
-    </ServerNavigationPermissions.Can>
+    </ServerNavigationPermissions.Guard>
   );
 }

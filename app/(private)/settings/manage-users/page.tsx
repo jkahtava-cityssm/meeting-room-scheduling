@@ -4,10 +4,10 @@ import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permis
 
 export default function Home() {
   return (
-    <ServerNavigationPermissions.Can permissionKey="EditUsers">
+    <ServerNavigationPermissions.Guard permissionKey="EditUsers">
       <SharedUserDrawerProvider>
         <UserLayout />
       </SharedUserDrawerProvider>
-    </ServerNavigationPermissions.Can>
+    </ServerNavigationPermissions.Guard>
   );
 }

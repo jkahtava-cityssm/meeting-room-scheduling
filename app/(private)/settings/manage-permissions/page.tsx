@@ -3,8 +3,8 @@ import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permis
 
 export default function PermissionsPage() {
   return (
-    <ServerNavigationPermissions.Can permissionKey="EditPermissions">
+    <ServerNavigationPermissions.Guard permissionKey="EditPermissions">
       <PermissionGrid />
-    </ServerNavigationPermissions.Can>
+    </ServerNavigationPermissions.Guard>
   );
 }
