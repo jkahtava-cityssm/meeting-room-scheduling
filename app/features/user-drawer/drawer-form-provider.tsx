@@ -27,7 +27,6 @@ export const MultiStepFormContext = createContext<MultiStepFormContextProps | nu
 
 export const MultiStepForm = ({
   formSteps,
-
   user,
   isOpen,
   onOpen,
@@ -39,8 +38,6 @@ export const MultiStepForm = ({
   onOpen: () => void;
   onClose: () => void;
 }) => {
-  const { can } = UserDrawerPermissions.usePermissions();
-
   const logic = useMultiStepFormLogic({
     user,
     formSteps,

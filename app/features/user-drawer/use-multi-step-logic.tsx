@@ -178,13 +178,12 @@ export const useMultiStepFormLogic = (props: {
   }, [methods, refetch]);
 
   const onDelete = useCallback(() => {
-    // If eventId is "0", it only exists in local state/draft
+    //If ID === 0, this is a new record, and does not exist in the DB
     if (defaultFormValues.userId === "0") {
       resetForm();
     } else {
-      // If it exists on the server, call the mutation
       mutationDelete.mutate(Number(defaultFormValues.userId), {
-        onSuccess: () => {
+        onSettled: () => {
           resetForm();
         },
       });
