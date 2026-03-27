@@ -27,27 +27,22 @@ export const MultiStepFormContext = createContext<MultiStepFormContextProps | nu
 
 export const MultiStepForm = ({
   formSteps,
-  creationDate,
+
   user,
   isOpen,
   onOpen,
   onClose,
 }: {
   formSteps: FormStep[];
-  creationDate: Date;
   user?: IUser;
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
 }) => {
-  const { session } = useSession();
-  //const { isOpen, onClose, onOpen } = useDisclosure();
-
   const { can } = UserDrawerPermissions.usePermissions();
 
   const logic = useMultiStepFormLogic({
     user,
-    creationDate,
     formSteps,
     isOpen,
     onOpen,
@@ -75,10 +70,7 @@ export const MultiStepForm = ({
               <Form className="h-full min-h-0">
                 <ScrollArea className="h-full min-h-0" type="always">
                   <div className="w-full min-h-0 pr-4">
-                    <logic.currentStep.component
-                      formStatus={logic.status}
-                      session={session}
-                    ></logic.currentStep.component>
+                    <logic.currentStep.component formStatus={logic.status}></logic.currentStep.component>
                   </div>
                   <ScrollBar orientation="vertical" forceMount></ScrollBar>
                 </ScrollArea>

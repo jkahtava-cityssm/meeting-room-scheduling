@@ -11,20 +11,16 @@ import { MultiStepForm } from "./drawer-form-provider";
 import { UserDrawerPermissions } from "./lib/permissions";
 
 export default function UserDrawer({
-  creationDate,
   user,
   isOpen,
   onOpen,
   onClose,
 }: {
-  creationDate: Date;
   user?: IUser;
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
 }) {
-  const { can } = UserDrawerPermissions.usePermissions();
-
   const formSteps: FormStep[] = useMemo(
     () => [
       {
@@ -49,7 +45,6 @@ export default function UserDrawer({
       isOpen={isOpen}
       onOpen={onOpen}
       onClose={onClose}
-      creationDate={creationDate}
       formSteps={formSteps}
       user={parsedUser}
     ></MultiStepForm>

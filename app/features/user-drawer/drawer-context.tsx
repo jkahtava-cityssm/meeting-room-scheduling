@@ -1,17 +1,13 @@
+"use client";
 import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
 
 import { IUser } from "@/lib/schemas";
 import { UserDrawerPermissions } from "./lib/permissions";
 
-import { CombinedSchema } from "./drawer-schema.validator";
 import UserDrawer from "./drawer-root";
 
 export type UserDrawerPayload = {
-  creationDate: Date;
   user?: IUser;
-  draft?: CombinedSchema;
-  userId?: string;
-  roomId?: number;
 };
 
 // Shared drawer context to avoid mounting many drawers — mount a single UserDrawer
@@ -50,7 +46,6 @@ export function SharedUserDrawerProvider({ children }: { children: React.ReactNo
       {/* Offscreen trigger wrapped by the single UserDrawer instance */}
       <UserDrawerPermissions.Provider>
         <UserDrawer
-          creationDate={payload ? payload.creationDate : fallbackDate}
           user={payload?.user}
           isOpen={isOpen}
           onOpen={() => setIsOpen(true)}

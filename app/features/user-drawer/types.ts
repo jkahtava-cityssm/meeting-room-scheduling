@@ -12,7 +12,7 @@ export type FormStep = {
   title: string;
   position: number;
   validationSchema: ZodType<unknown>;
-  component: React.FC<{ formStatus: FormStatus; session: Session | null }>;
+  component: React.FC<{ formStatus: FormStatus }>;
   icon: LucideIcon;
   fields: FieldKeys[];
   //defaultValues: object;

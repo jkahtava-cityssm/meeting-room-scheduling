@@ -20,7 +20,6 @@ import {
 
 export const useMultiStepFormLogic = (props: {
   user?: IUser;
-  creationDate: Date;
   formSteps: FormStep[];
   onClose: () => void;
   onOpen: () => void;
