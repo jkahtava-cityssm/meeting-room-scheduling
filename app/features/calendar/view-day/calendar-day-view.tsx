@@ -109,6 +109,7 @@ export function CalendarDayView({
           </>
         ) : (
           <>
+            <DayViewDayHeader currentDate={date} />
             <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours}>
               {noRoomData ? (
                 <div className="flex flex-1 flex-col  p-4">

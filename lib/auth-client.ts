@@ -62,7 +62,7 @@ export function useVerifySessionRequirement<T extends Readonly<GroupedPermission
 
     if (!permissionCache) {
       setResult(initialState);
-      setVerifying(false);
+      setVerifying(true);
       return;
     }
 

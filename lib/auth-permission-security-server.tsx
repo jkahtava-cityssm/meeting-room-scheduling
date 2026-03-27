@@ -6,6 +6,7 @@ import { buildPermissionCache, PermissionResult } from "./auth-permission-checks
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldCheck, Terminal } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export function createServerSecurity<const T extends GuardRequirement>(REQUIREMENTS: T) {
   const getSecurity = cache(async () => {
@@ -42,6 +43,7 @@ export function createServerSecurity<const T extends GuardRequirement>(REQUIREME
     children: React.ReactNode;
   }) {
     const { can } = await getSecurity();
+
     return can(permissionKey) ? <>{children}</> : <>{fallback ?? <DefaultAccessDenied />}</>;
   }
 
@@ -70,16 +72,21 @@ export function createServerSecurity<const T extends GuardRequirement>(REQUIREME
 
 const DefaultLoadingSkeleton = () => {
   return (
-    <div className="relative overflow-hidden rounded-xl border bg-muted/20 min-w-92 h-32 flex flex-col items-center justify-center gap-3 p-6">
-      <div className="absolute inset-0 bg-linear-to-b from-transparent via-primary/5 to-transparent animate-scan" />
-
-      <div className="relative flex flex-col items-center gap-2">
-        <ShieldCheck className="h-8 w-8 text-muted-foreground/40 animate-pulse" />
-        <div className="space-y-2 flex flex-col items-center">
-          <Skeleton className="h-4 w-32" /> Verifying Permissions
-          <Skeleton className="h-3 w-24 opacity-60" /> Please Wait
-        </div>
-      </div>
+    <div className="h-[calc(100vh-var(--header-height)-1px)] transition-[width] duration-300 min-w-0 flex flex-col overflow-hidden rounded-xl ">
+      <Skeleton className="w-full h-full " />
+    </div>
+  );
+  return (
+    <div className="flex flex-1 flex-col  p-4">
+      <Empty className="border border-dashed flex flex-1 flex-col">
+        <EmptyHeader>
+          <EmptyMedia>
+            <ShieldCheck />
+          </EmptyMedia>
+          <EmptyTitle>Verifying Access</EmptyTitle>
+          <EmptyDescription>Please Wait</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     </div>
   );
 };
