@@ -43,15 +43,16 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 
 import { getDistinctValuesByKey } from "@/lib/helpers";
 import { IUser } from "@/lib/schemas";
+import { useSharedUserDrawer } from "../user-drawer/drawer-context";
 
 const STATUS_OPTIONS = [
-  { label: "Enabled", value: "true" },
+  { label: "Active", value: "true" },
   { label: "Disabled", value: "false" },
 ];
 
 const USER_TYPE_OPTIONS = [
-  { label: "External", value: "true" },
-  { label: "Internal", value: "false" },
+  { label: "Internal", value: "true" },
+  { label: "External", value: "false" },
 ];
 
 const EMAIL_OPTIONS = [
@@ -59,14 +60,17 @@ const EMAIL_OPTIONS = [
   { label: "Blocked", value: "false" },
 ];
 
-const DEFAULT_FILTERS = [{ id: "employeeActive", value: ["true"] }];
+const DEFAULT_FILTERS = [{ id: "isActive", value: ["true"] }];
+
+const MOBILE_COL_SPAN = 2;
 
 export function UserLayout() {
-  const { data, isPending, isFetching, error } = useUsersQuery();
+  const { data, isPending, isFetching, error } = useUsersQuery(false);
+  const { openUserDrawer } = useSharedUserDrawer();
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
-    { id: "employeeActive", value: ["true"] }, // Default filter
+    { id: "isActive", value: ["true"] }, // Default filter
   ]);
 
   const [expanded, setExpanded] = useState({});
@@ -81,15 +85,25 @@ export function UserLayout() {
     if (columnFilters.length !== DEFAULT_FILTERS.length) return false;
 
     return columnFilters.every(
-      (f) => f.id === "employeeActive" && Array.isArray(f.value) && f.value[0] === "true" && f.value.length === 1,
+      (f) => f.id === "isActive" && Array.isArray(f.value) && f.value[0] === "true" && f.value.length === 1,
     );
   }, [columnFilters]);
+
+  const prevIsDefault = React.useRef(isDefaultState);
+
+  React.useEffect(() => {
+    prevIsDefault.current = isDefaultState;
+  }, [isDefaultState]);
 
   const columnHelper = createColumnHelper<IUser>();
 
   const columns = useMemo(
     () => [
       columnHelper.accessor("name", {
+        size: 250,
+        minSize: 250,
+        maxSize: 250,
+
         header: ({ column }) => (
           <FilterHeader title="Name" column={column}>
             <DebouncedInput
@@ -108,24 +122,10 @@ export function UserLayout() {
           </div>
         ),
       }),
-
-      columnHelper.accessor("externalId", {
-        header: ({ column }) => (
-          <div className="hidden md:block">
-            <FilterHeader title="Employee #" column={column}>
-              <DebouncedInput
-                placeholder="Search numbers..."
-                value={(column.getFilterValue() as string) ?? ""}
-                onChange={(value) => column.setFilterValue(value)}
-              />
-            </FilterHeader>
-          </div>
-        ),
-        cell: ({ getValue }) => <div className="hidden md:block text-sm truncate">{getValue() as string}</div>,
-      }),
       columnHelper.accessor("department", {
+        size: 200,
         header: ({ column }) => (
-          <div className="hidden md:block">
+          <div className="hidden md:block ">
             <FilterHeader title="Department" column={column}>
               <CheckboxFilterGroup column={column} options={departmentList?.map((d) => ({ label: d, value: d }))} />
             </FilterHeader>
@@ -138,8 +138,53 @@ export function UserLayout() {
         },
         cell: ({ getValue }) => <div className="hidden md:block text-sm truncate">{getValue() as string}</div>,
       }),
+      columnHelper.accessor("email", {
+        size: 250,
+        header: ({ column }) => (
+          <div className="hidden md:block ">
+            <FilterHeader title="Email" column={column}>
+              <DebouncedInput
+                placeholder="Search email..."
+                value={(column.getFilterValue() as string) ?? ""}
+                onChange={(value) => column.setFilterValue(value)}
+              />
+            </FilterHeader>
+          </div>
+        ),
+        filterFn: (row, id, filterValue) => {
+          if (!filterValue || filterValue.length === 0) return true;
+
+          return filterValue.includes(String(row.getValue(id)));
+        },
+        cell: ({ row, getValue }) => (
+          <div className="flex items-center gap-2 py-2">
+            <button onClick={row.getToggleExpandedHandler()} className="md:hidden p-1 hover:bg-slate-100 rounded">
+              {row.getIsExpanded() ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            <span className="text-sm truncate">{getValue() as string}</span>
+          </div>
+        ),
+      }),
+      columnHelper.accessor("externalId", {
+        size: 120,
+        header: ({ column }) => (
+          <div className="hidden md:block justify-items-center">
+            <FilterHeader title="Employee #" column={column}>
+              <DebouncedInput
+                placeholder="Search numbers..."
+                value={(column.getFilterValue() as string) ?? ""}
+                onChange={(value) => column.setFilterValue(value)}
+              />
+            </FilterHeader>
+          </div>
+        ),
+        cell: ({ getValue }) => (
+          <div className="hidden md:block text-center text-sm truncate">{getValue() as string}</div>
+        ),
+      }),
 
       columnHelper.accessor("isActive", {
+        size: 120,
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
@@ -154,6 +199,7 @@ export function UserLayout() {
             </div>
           );
         },
+
         filterFn: (row, id, filterValue) => {
           if (!filterValue.length) return true;
 
@@ -170,6 +216,7 @@ export function UserLayout() {
       }),
 
       columnHelper.accessor("isManaged", {
+        size: 120,
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
@@ -201,6 +248,7 @@ export function UserLayout() {
       }),
 
       columnHelper.accessor("emailEnabled", {
+        size: 120,
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
@@ -233,7 +281,16 @@ export function UserLayout() {
 
       columnHelper.display({
         id: "action",
+
+        size: 100,
+        minSize: 100,
+        maxSize: 100,
+        enableResizing: false,
+
         header: () => {
+          const hasChanged = prevIsDefault.current !== isDefaultState;
+
+          const animationClasses = hasChanged ? "animate-in fade-in zoom-in duration-200" : "";
           return (
             <div className="flex items-center justify-center min-w-0 font-bold">
               {!isDefaultState ? (
@@ -241,27 +298,38 @@ export function UserLayout() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setColumnFilters(DEFAULT_FILTERS)}
-                  className="h-7 text-destructive hover:bg-destructive/10 animate-in fade-in zoom-in duration-200"
+                  className={cn(
+                    "h-7 text-destructive hover:bg-destructive/10",
+                    animationClasses, // Only applied when flipping into this state
+                  )}
                 >
                   <FilterX className="h-4 w-4 mr-1" />
                   <span className="text-[10px] uppercase">Clear</span>
                 </Button>
               ) : (
-                <span className="text-sm animate-in fade-in zoom-in duration-200">Actions</span>
+                <span className={cn("text-sm", animationClasses)}>Actions</span>
               )}
             </div>
           );
         },
-        cell: () => (
+
+        cell: ({ row }) => (
           <div className="flex justify-center py-2">
-            <Button variant="outline" size="sm">
-              <Eye className="mr-2 h-4 w-4" /> View
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                openUserDrawer({ user: row.original });
+              }}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              View
             </Button>
           </div>
         ),
       }),
     ],
-    [columnHelper, departmentList, isDefaultState],
+    [columnHelper, departmentList, isDefaultState, openUserDrawer],
   );
 
   const table = useReactTable({
@@ -288,82 +356,151 @@ export function UserLayout() {
 
   return (
     <div
-      className="flex flex-col h-full w-full rounded-lg border"
+      className="flex flex-col h-full w-full rounded-lg border pr-4"
       style={{ "--col-count": columnCount } as React.CSSProperties}
     >
-      <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between border-b">
+      <div className=" gap-4 p-4  flex flex-row items-center justify-between border-b">
         <div className="flex items-center gap-3 h-14 font-bold text-xl">Users</div>
         <div className="flex items-center gap-2">
-          <Button>Add User</Button>
+          <Button
+            onClick={() => {
+              openUserDrawer({});
+            }}
+          >
+            Add User
+          </Button>
         </div>
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full w-full">
-          <div className="px-4">
-            {/* Header Row */}
-            <div
-              className="grid  items-center border-b p-2 sticky top-0 bg-background z-10 "
-              style={{
-                gridTemplateColumns: `repeat(var(--col-count), minmax(0, 1fr))`,
-              }}
-            >
-              {table.getHeaderGroups()[0].headers.map((header) => (
-                <div key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</div>
-              ))}
-            </div>
+        <ScrollArea className="h-full w-full pr-4">
+          <table className="table-fixed w-full border-seperate border-spacing-0 ">
+            <thead className="sticky top-0 bg-background z-30 border-b">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const isName = header.column.id === "name";
+                    const isAction = header.column.id === "action";
 
-            {/* Body */}
-            {isLoading ? (
-              <div className="mt-4 h-64 flex items-center justify-center">
-                <LoaderCircle className="animate-spin text-muted-foreground" />
-              </div>
-            ) : table.getRowModel().rows.length === 0 ? (
-              <Empty className="mt-4 border-dashed">
-                <EmptyHeader>
-                  <EmptyMedia>
-                    <LucideShieldUser />
-                  </EmptyMedia>
-                  <EmptyTitle>No Users Found</EmptyTitle>
-                  <EmptyDescription>Adjust your filters and try again.</EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                  <Button variant="outline" onClick={() => table.resetColumnFilters()}>
-                    Reset Filters
-                  </Button>
-                </EmptyContent>
-              </Empty>
-            ) : (
-              table.getRowModel().rows.map((row) => (
-                <React.Fragment key={row.id}>
-                  <div
-                    className="grid items-center w-auto px-2 border-b"
-                    style={{
-                      gridTemplateColumns: `repeat(var(--col-count), minmax(0, 1fr))`,
-                    }}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <div key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>
-                    ))}
-                  </div>
-                  {/* Mobile Expanded View */}
-                  {row.getIsExpanded() && (
-                    <div className="col-span-2 md:hidden p-4 bg-muted/30 space-y-2 text-sm border-x border-b mx-2 rounded-b-lg">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Email:</span>
-                        <span>{row.original.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">ID:</span>
-                        <span>{row.original.externalId}</span>
-                      </div>
+                    return (
+                      <th
+                        key={header.id}
+                        style={{ width: header.column.getSize() }}
+                        className={cn(
+                          "px-4 py-2 text-left font-medium bg-background",
+                          isName && "sticky left-0 z-40 shadow-sticky-x",
+                          isAction && "sticky right-0 z-40 text-center  shadow-sticky-x",
+                          !isName && !isAction && "hidden md:table-cell border-r",
+                        )}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    );
+                  })}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns().length}>
+                    <div className="h-64 flex items-center justify-center">
+                      <LoaderCircle className="animate-spin text-muted-foreground" />
                     </div>
-                  )}
-                </React.Fragment>
-              ))
-            )}
-          </div>
-          <ScrollBar orientation="vertical" />
+                  </td>
+                </tr>
+              ) : table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns().length}>
+                    <Empty className="mt-4 border-dashed">
+                      <EmptyHeader>
+                        <EmptyMedia>
+                          <LucideShieldUser />
+                        </EmptyMedia>
+                        <EmptyTitle>No Users Found</EmptyTitle>
+                        <EmptyDescription>Adjust your filters and try again.</EmptyDescription>
+                      </EmptyHeader>
+                      <EmptyContent>
+                        <Button variant="outline" onClick={() => table.resetColumnFilters()}>
+                          Reset Filters
+                        </Button>
+                      </EmptyContent>
+                    </Empty>
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <React.Fragment key={row.id}>
+                    <tr className="border-b hover:bg-muted group">
+                      {row.getVisibleCells().map((cell, index, allCells) => {
+                        const isName = cell.column.id === "name";
+                        const isAction = cell.column.id === "action";
+                        const isLastScrollingCell = index === allCells.length - 2;
+
+                        return (
+                          <td
+                            key={cell.id}
+                            style={{ width: cell.column.getSize() }}
+                            className={cn(
+                              "px-4 py-2 align-middle truncate group-hover:bg-muted",
+                              isName && "sticky left-0 z-20  bg-background shadow-sticky-x",
+                              isAction && "sticky right-0 z-20  bg-background text-center shadow-sticky-x",
+                              !isName && !isAction && ["hidden md:table-cell", !isLastScrollingCell && "border-r"],
+                            )}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        );
+                      })}
+                    </tr>
+
+                    {row.getIsExpanded() && (
+                      <tr className="md:hidden bg-muted/30">
+                        <td colSpan={MOBILE_COL_SPAN}>
+                          <div className="p-4 space-y-3 text-sm">
+                            <div className="grid grid-cols-2 gap-y-2">
+                              <span className="text-muted-foreground font-medium">Department:</span>
+                              <span className="truncate">{row.original.department}</span>
+
+                              <span className="text-muted-foreground font-medium">Email:</span>
+                              <span className="truncate">{row.original.email}</span>
+
+                              <span className="text-muted-foreground font-medium">Employee #:</span>
+                              <span>{row.original.externalId}</span>
+
+                              <span className="text-muted-foreground font-medium">Status:</span>
+                              <span>
+                                {STATUS_OPTIONS.find((option) => option.value === String(row.original.isActive))?.label}
+                              </span>
+
+                              <span className="text-muted-foreground font-medium">User Type:</span>
+                              <span>
+                                {
+                                  USER_TYPE_OPTIONS.find((option) => option.value === String(row.original.isManaged))
+                                    ?.label
+                                }
+                              </span>
+
+                              <span className="text-muted-foreground font-medium">Send Notifications</span>
+                              <span>
+                                {
+                                  EMAIL_OPTIONS.find((option) => option.value === String(row.original.emailEnabled))
+                                    ?.label
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          <ScrollBar className="z-50" orientation="vertical" />
+          <ScrollBar className="z-50" orientation="horizontal" />
         </ScrollArea>
       </div>
     </div>
