@@ -279,6 +279,7 @@ function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, lat
       );
 
       const currentDate = new Date(event.startDate);
+      const { startMinutes, endMinutes } = getEventVisualRange(event, currentDate);
 
       return {
         key: `block-${event.eventId}-${currentDate.getTime()}`,
@@ -288,7 +289,7 @@ function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, lat
           from: earliestEventHour,
           to: latestEventHour,
         }),
-        eventHeight: (differenceInMinutes(event.endDate, event.startDate) / 60) * TIME_BLOCK_SIZE - 8,
+        eventHeight: ((endMinutes - startMinutes) / 60) * TIME_BLOCK_SIZE - 8,
         event,
         roomId: event.roomId,
       };
@@ -686,34 +687,53 @@ function calculateEventBlockStyle(
   groupIndex: number,
   groupSize: number,
   hasOverlap: boolean,
-  visibleHoursRange?: { from: number; to: number },
+  visibleHoursRange: { from: number; to: number },
 ) {
-  const startDate = new Date(event.startDate);
-  const dayStart = new Date(day.setHours(0, 0, 0, 0));
-  const eventStart = startDate < dayStart ? dayStart : startDate;
-  const startMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+  const { startMinutes, endMinutes } = getEventVisualRange(event, day);
 
-  let top;
+  const visibleStartMin = visibleHoursRange.from * 60;
+  const visibleEndMin = visibleHoursRange.to * 60;
+  const totalVisibleMin = visibleEndMin - visibleStartMin;
 
-  if (visibleHoursRange) {
-    const visibleStartMinutes = visibleHoursRange.from * 60;
-    const visibleEndMinutes = visibleHoursRange.to * 60;
-    const visibleRangeMinutes = visibleEndMinutes - visibleStartMinutes;
-    top = ((startMinutes - visibleStartMinutes) / visibleRangeMinutes) * 100;
-  } else {
-    top = (startMinutes / 1440) * 100;
-  }
+  const clampedStart = Math.max(visibleStartMin, startMinutes);
+  const clampedEnd = Math.min(visibleEndMin, endMinutes);
+
+  const top = ((clampedStart - visibleStartMin) / totalVisibleMin) * 100;
+  const height = ((clampedEnd - clampedStart) / totalVisibleMin) * 100;
 
   const width = hasOverlap ? 100 / groupSize : 100;
   const left = hasOverlap ? groupIndex * width : 0;
 
-  //On occassion there are hydration errors associate with these calculations
-  //rounding to 2 decimal places should resolve it, since most errors occur at 10 decimal places
-  const roundedTop = roundToPrecision(top, 2); // Math.round(top * 100) / 100;
-  const roundedWidth = roundToPrecision(width, 2); // Math.round(width * 100) / 100;
-  const roundedLeft = roundToPrecision(left, 2); // Math.round(left * 100) / 100;
+  return {
+    top: `${roundToPrecision(top, 2)}%`,
+    height: `${roundToPrecision(height, 2)}%`,
+    width: `${roundToPrecision(width, 2)}%`,
+    left: `${roundToPrecision(left, 2)}%`,
+    position: "absolute",
+  };
+}
 
-  return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
+function getEventVisualRange(event: IEvent, day: Date) {
+  const startDate = new Date(event.startDate);
+  const endDate = new Date(event.endDate);
+
+  // Default: Event spans the whole day (Middle day logic)
+  let startMinutes = 0;
+  let endMinutes = 1440;
+
+  // If it starts today, use actual start time
+  if (isSameDay(startDate, day)) {
+    startMinutes = startDate.getHours() * 60 + startDate.getMinutes();
+  }
+
+  // If it ends today, use actual end time
+  if (isSameDay(endDate, day)) {
+    const endMins = endDate.getHours() * 60 + endDate.getMinutes();
+    // Handle Midnight (00:00) as the end of the current day (1440)
+    endMinutes = endMins === 0 && endDate.getHours() === 0 ? 1440 : endMins;
+  }
+
+  return { startMinutes, endMinutes };
 }
 
 function getWallClockMinutes(date: Date): number {
@@ -1035,10 +1055,19 @@ export function setMultiDayEventBoundaries(events: IEvent[], minHour: number, ma
 
     const referenceDate = new Date(event.multiDay.calculatedDate);
 
-    const startBoundary = set(referenceDate, { hours: minHour, minutes: 0, seconds: 0, milliseconds: 0 });
-    const endBoundary = set(referenceDate, { hours: maxHour, minutes: 0, seconds: 0, milliseconds: 0 });
+    const getWallDate = (h: number) => {
+      const d = new Date(referenceDate);
+      d.setHours(h, 0, 0, 0);
+      return d;
+    };
 
-    const offsetDiff = startBoundary.getTimezoneOffset() - endBoundary.getTimezoneOffset();
+    const startBoundary = getWallDate(minHour);
+    const endBoundary = getWallDate(maxHour);
+
+    //const startBoundary = set(referenceDate, { hours: minHour, minutes: 0, seconds: 0, milliseconds: 0 });
+    //const endBoundary = set(referenceDate, { hours: maxHour, minutes: 0, seconds: 0, milliseconds: 0 });
+
+    //const offsetDiff = startBoundary.getTimezoneOffset() - endBoundary.getTimezoneOffset();
 
     switch (event.multiDay?.position) {
       case "first":
@@ -1046,11 +1075,17 @@ export function setMultiDayEventBoundaries(events: IEvent[], minHour: number, ma
         break;
       case "middle":
         event.startDate = startBoundary.toISOString();
-        event.endDate = addMinutes(endBoundary, offsetDiff).toISOString();
+        event.endDate = endBoundary.toISOString();
+        //event.endDate = addMinutes(endBoundary, offsetDiff).toISOString();
         break;
       case "last":
         event.startDate = startBoundary.toISOString();
 
+        break;
+      case "single":
+        // For all-day singles, just ensure they cover the full range
+        event.startDate = getWallDate(0).toISOString();
+        event.endDate = getWallDate(24).toISOString();
         break;
     }
   }
