@@ -122,52 +122,6 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
               })}
             </CalendarScrollContainerPrivate>
           )}
-          {/* 
-              <>
-                <div className="relative z-20 flex border-b">
-                  <div className="w-18"></div>
-                  <div className={`grid flex-1 grid-cols-${dayViews.length} divide-x border-l`}>
-                    {dayViews.map((day) => {
-                      return <WeekViewDayHeader key={day.day} dayView={day} />;
-                    })}
-                  </div>
-                </div>
-                <ScrollArea className="max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh] xl:max-h-[73vh]" type="always">
-                  <div className="flex overflow-hidden">
-                    
-                    <HourColumn hours={hours} />
-
-                    
-                    <div className="relative flex-1 border-l">
-                      <div className="grid grid-cols-7 divide-x">
-                        {dayViews.map((day, dayIndex) => {
-                          return (
-                            <div key={dayIndex} className="relative">
-                              <DayHourlyEventDialogs hours={hours} day={day.dayDate} userId={userId} />
-
-                              {day.eventBlocks.map((block, blockIndex) => {
-                                return (
-                                  <div
-                                    key={`day-${dayIndex}-block-${blockIndex}-event-${block.event.eventId}`}
-                                    className="absolute p-1"
-                                    style={block.eventStyle}
-                                  >
-                                    <EventBlock eventBlock={block} heightInPixels={block.eventHeight} userId={userId} />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <CalendarTimeline />
-                    </div>
-                  </div>
-                  <ScrollBar orientation="vertical" forceMount></ScrollBar>
-                </ScrollArea>
-              </>
-              */}
         </div>
       </div>
     </>
