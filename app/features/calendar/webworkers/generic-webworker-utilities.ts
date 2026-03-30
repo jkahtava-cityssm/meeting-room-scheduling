@@ -588,6 +588,8 @@ export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | 
 }
 
 export function filterEventsByStatus(events: IEvent[], statusKeys: TStatusKey[]) {
+  if (statusKeys.length === 0) return events;
+
   const results = events.filter((event) => {
     return statusKeys.includes(event.status.key as TStatusKey);
   });
