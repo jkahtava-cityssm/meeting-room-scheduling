@@ -11,7 +11,7 @@ import {
   TConfigurationKeys,
   TStatusKey,
 } from "../lib/types";
-import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
+import { addDays, addYears, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import {
   DOMAINS,
   EVENTDESCRIPTIONS,
@@ -560,6 +560,306 @@ async function CreateRandomEvents(
   }
 }
 
+/**
+ * Finds the next N DST transitions from a given date by detecting timezone offset changes.
+ * Works with any timezone - detects transitions automatically.
+ * Returns array of objects with transition date and UTC offset change information.
+ */
+function findNextDSTTransitions(fromDate: Date, yearsToSearch: number = 2) {
+  const transitions: Array<{
+    date: Date;
+    direction: "forward" | "backward";
+    offsetBefore: number;
+    offsetAfter: number;
+    offsetChangeMinutes: number;
+  }> = [];
+
+  const searchDate = new Date(fromDate);
+  searchDate.setHours(0, 0, 0, 0);
+
+  // Search up to 2 years in the future to find transitions
+  const endSearch = new Date(searchDate);
+  endSearch.setFullYear(endSearch.getFullYear() + yearsToSearch);
+
+  let currentDate = new Date(searchDate);
+  while (currentDate < endSearch) {
+    const offset1 = currentDate.getTimezoneOffset();
+
+    // Check 1 day ahead
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const offset2 = nextDay.getTimezoneOffset();
+
+    // DST transition detected when UTC offset changes
+    if (offset1 !== offset2) {
+      const offsetChange = offset1 - offset2; // positive = spring forward, negative = fall back
+      transitions.push({
+        date: currentDate,
+        direction: offsetChange > 0 ? "forward" : "backward",
+        offsetBefore: offset1,
+        offsetAfter: offset2,
+        offsetChangeMinutes: Math.abs(offsetChange),
+      });
+      // Skip ahead to avoid detecting the same transition multiple times
+      currentDate = new Date(nextDay);
+      currentDate.setDate(currentDate.getDate() + 7);
+    } else {
+      currentDate = new Date(nextDay);
+    }
+  }
+
+  return transitions;
+}
+
+/**
+ * Creates edge case multi-day events for testing the refactored multi-day event logic.
+ * Tests scenarios like:
+ * - Events ending at midnight
+ * - Events crossing midnight at various times
+ * - Events spanning multiple days
+ * - Events with minimal durations crossing day boundaries
+ * - Events crossing DST transitions (timezone-aware, generic for any timezone)
+ */
+async function CreateEdgeCaseMultiDayEvents(
+  rooms: {
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    roomId: number;
+    color: string;
+    icon: string | null;
+  }[],
+) {
+  const userList = await getActiveUsers();
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate()); // Start 10 days in the future
+  baseDate.setHours(0, 0, 0, 0); // Start at midnight
+
+  // Standard midnight-crossing edge cases
+  const midnightEdgeCases = [
+    {
+      name: "11PM to 1AM (2 hour duration, crosses midnight)",
+      description: "Event starts late evening and ends after midnight",
+      startTime: { hours: 23, minutes: 0 },
+      endTime: { hours: 1, minutes: 0 },
+      dayOffset: 1,
+    },
+    {
+      name: "11PM to 12AM (1 hour, ends at midnight)",
+      description: "Event ends exactly at midnight - edge case that should display as previous day ending",
+      startTime: { hours: 23, minutes: 0 },
+      endTime: { hours: 0, minutes: 0 },
+      dayOffset: 1,
+    },
+    {
+      name: "12AM to 7PM (19 hour duration, starts at midnight)",
+      description: "Event starts at midnight and spans most of the day",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 19, minutes: 0 },
+      dayOffset: 0,
+    },
+    {
+      name: "12AM to 12:15AM (15 minutes, crosses midnight)",
+      description: "Minimal duration event crossing midnight",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 0, minutes: 15 },
+      dayOffset: 0,
+    },
+    {
+      name: "11:45PM to 12:15AM (30 minutes, crosses midnight)",
+      description: "Short event crossing midnight boundary",
+      startTime: { hours: 23, minutes: 45 },
+      endTime: { hours: 0, minutes: 15 },
+      dayOffset: 1,
+    },
+    {
+      name: "2-day span (12AM to 6PM on day 2)",
+      description: "Multi-day event spanning exactly 2 calendar days",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 18, minutes: 0 },
+      dayOffset: 1,
+    },
+    {
+      name: "14-day span (8AM to 4PM on day 14)",
+      description: "Long multi-day event spanning 14 calendar days",
+      startTime: { hours: 8, minutes: 0 },
+      endTime: { hours: 16, minutes: 0 },
+      dayOffset: 13,
+    },
+    {
+      name: "3-day span ending at midnight",
+      description: "Multi-day event that ends exactly at midnight on day 3",
+      startTime: { hours: 9, minutes: 0 },
+      endTime: { hours: 0, minutes: 0 },
+      dayOffset: 2,
+    },
+    {
+      name: "11:30PM to 2:30AM (3 hours, midnight transition)",
+      description: "Longer event crossing midnight",
+      startTime: { hours: 23, minutes: 30 },
+      endTime: { hours: 2, minutes: 30 },
+      dayOffset: 1,
+    },
+    {
+      name: "5-day all-day event (12AM to 12AM)",
+      description: "All-day event spanning 5 days, ending at midnight",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 0, minutes: 0 },
+      dayOffset: 4,
+    },
+    {
+      name: "10:45PM to 11:15PM next day (25 hour duration)",
+      description: "Event spanning almost full day crossing midnight",
+      startTime: { hours: 22, minutes: 45 },
+      endTime: { hours: 23, minutes: 15 },
+      dayOffset: 1,
+    },
+    {
+      name: "1AM to 11:59PM (almost full day)",
+      description: "Event nearly spanning a full day, ending just before midnight",
+      startTime: { hours: 1, minutes: 0 },
+      endTime: { hours: 23, minutes: 59 },
+      dayOffset: 0,
+    },
+  ];
+
+  console.log("\n=== MIDNIGHT EDGE CASES ===");
+  for (const edgeCase of midnightEdgeCases) {
+    const startDate = new Date(baseDate);
+    const endDate = new Date(baseDate);
+
+    // Set start time
+    startDate.setHours(edgeCase.startTime.hours, edgeCase.startTime.minutes, 0, 0);
+
+    // Set end time with day offset
+    endDate.setDate(endDate.getDate() + edgeCase.dayOffset);
+    endDate.setHours(edgeCase.endTime.hours, edgeCase.endTime.minutes, 0, 0);
+
+    const userIndex = Math.floor(Math.random() * userList.length);
+    const roomIndex = Math.floor(Math.random() * rooms.length);
+
+    try {
+      const event = await prisma.event.create({
+        data: {
+          roomId: rooms[roomIndex].roomId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          title: edgeCase.name,
+          description: edgeCase.description,
+          recurrenceId: null,
+          statusId: 1,
+          userId: userList[userIndex].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log(`Created edge case: "${edgeCase.name}"`);
+    } catch (error) {
+      console.error(`Failed to create edge case "${edgeCase.name}":`, error);
+    }
+  }
+
+  // Find and test DST transitions
+  console.log("\n=== DETECTING DST TRANSITIONS ===");
+  const dstTransitions = findNextDSTTransitions(addYears(baseDate, -2), 4);
+
+  if (dstTransitions.length === 0) {
+    console.log("No DST transitions found in the next 2 years for this timezone");
+  } else {
+    for (const transition of dstTransitions) {
+      const transitionDate = new Date(transition.date);
+      const offsetLabel =
+        transition.direction === "forward"
+          ? `Spring Forward (UTC${transition.offsetAfter / 60}h)`
+          : `Fall Back (UTC${transition.offsetAfter / 60}h)`;
+
+      console.log(`\nDST Transition: ${offsetLabel}`);
+      console.log(
+        `   Date: ${transitionDate.toLocaleDateString()} (${transitionDate.toLocaleDateString("en-US", { weekday: "long" })})`,
+      );
+      console.log(`   Offset change: ${transition.offsetChangeMinutes} minutes`);
+
+      // Create DST-specific edge case events
+      const dstEdgeCases = [
+        {
+          name: `Event spanning DST transition (1 day before to 1 day after)`,
+          description: `Multi-day event crossing the ${transition.direction === "forward" ? "spring forward" : "fall back"} DST transition`,
+          daysBeforeTransition: 1,
+          daysAfterTransition: 1,
+          startHour: 10,
+          endHour: 14,
+        },
+        {
+          name: `Event on DST transition day (12AM to 11PM)`,
+          description: `Full day event on the exact DST transition day`,
+          daysBeforeTransition: 0,
+          daysAfterTransition: 0,
+          startHour: 0,
+          endHour: 23,
+        },
+        {
+          name: `Event ending at 2AM on DST transition (spring forward)`,
+          description: `Event that ends around the 2AM transition time during spring forward`,
+          daysBeforeTransition: 0,
+          daysAfterTransition: 0,
+          startHour: 23,
+          endHour: 2,
+        },
+        {
+          name: `Event crossing DST boundary (8PM to 9AM next day)`,
+          description: `Evening through morning event crossing DST transition`,
+          daysBeforeTransition: 0,
+          daysAfterTransition: 1,
+          startHour: 20,
+          endHour: 9,
+        },
+      ];
+
+      for (const dstCase of dstEdgeCases) {
+        const startDate = new Date(transition.date);
+        startDate.setDate(startDate.getDate() - dstCase.daysBeforeTransition);
+        startDate.setHours(dstCase.startHour, 0, 0, 0);
+
+        const endDate = new Date(transition.date);
+        endDate.setDate(endDate.getDate() + dstCase.daysAfterTransition);
+        endDate.setHours(dstCase.endHour, 0, 0, 0);
+
+        // Adjust for day wraparound if endHour is less than startHour
+        if (dstCase.daysAfterTransition === 0 && dstCase.endHour < dstCase.startHour) {
+          endDate.setDate(endDate.getDate() + 1);
+        }
+
+        const userIndex = Math.floor(Math.random() * userList.length);
+        const roomIndex = Math.floor(Math.random() * rooms.length);
+
+        try {
+          const event = await prisma.event.create({
+            data: {
+              roomId: rooms[roomIndex].roomId,
+              startDate: startDate.toISOString(),
+              endDate: endDate.toISOString(),
+              title: dstCase.name,
+              description: dstCase.description,
+              recurrenceId: null,
+              statusId: 1,
+              userId: userList[userIndex].id,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
+
+          console.log(`Created DST test: "${dstCase.name}"`);
+        } catch (error) {
+          console.error(`Failed to create DST test "${dstCase.name}":`, error);
+        }
+      }
+    }
+  }
+
+  console.log(`\nCompleted creating edge case multi-day events for testing.`);
+}
+
 function randomToggle(chance: "75" | "50" | "25" | "10") {
   switch (chance) {
     case "75":
@@ -1057,6 +1357,9 @@ async function main() {
     CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
 
     CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+
+    console.log("Seeding Edge Case Multi-Day Events...");
+    await CreateEdgeCaseMultiDayEvents(roomList);
   }
 
   /*

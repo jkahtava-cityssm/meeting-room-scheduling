@@ -2,6 +2,8 @@ import { IEvent, SEvent } from "@/lib/schemas";
 import { TIME_BLOCK_SIZE, TStatusKey, TVisibleHours } from "@/lib/types";
 import {
   addDays,
+  addHours,
+  addMinutes,
   addMonths,
   areIntervalsOverlapping,
   differenceInDays,
@@ -24,6 +26,7 @@ import {
   startOfWeek,
   startOfYear,
   subDays,
+  subMinutes,
 } from "date-fns";
 
 import { rrulestr } from "rrule";
@@ -44,29 +47,51 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[],
   let minHour = config.from;
   let maxHour = config.to;
 
-  events.forEach((event) => {
-    const isMultiDay = !!event.multiDay;
-    const position = event.multiDay?.position;
+  const multiDayEvents = events.filter((e) => e.multiDay);
+  const otherEvents = events.filter((e) => !e.multiDay);
 
+  // STEP 1: Process all non-multi-day events to establish base bounds
+  otherEvents.forEach((event) => {
+    const startHour = new Date(event.startDate).getHours();
+    const endDate = new Date(event.endDate);
+    let endHour = endDate.getHours();
+    const endMinutes = endDate.getMinutes();
+    if (endMinutes > 0) endHour += 1;
+
+    // Expand minHour if needed
+    if (startHour < minHour) minHour = startHour;
+
+    // Expand maxHour if needed
+    if (endHour > maxHour) maxHour = Math.min(endHour, 24);
+
+    // The Step-Back Rule: if event ends early (e.g., 2 AM), ensure we show the hour before
+    if (endHour > 0 && endHour <= minHour) {
+      const neededStart = endHour - 1;
+      minHour = Math.max(0, neededStart);
+    }
+  });
+
+  // STEP 2: Process multi-day events using the bounds established by otherEvents
+  multiDayEvents.forEach((event) => {
+    const position = event.multiDay?.position;
+    const isEndAtMidnight = event.multiDay?.isEndAtMidnight || false;
     const dateToProcess = event.multiDay?.calculatedDate ? new Date(event.multiDay.calculatedDate) : null;
 
     // --- START BOUNDARY (minHour) ---
-    if (!isMultiDay) {
-      // Regular single-day event: check start time normally
-      const startHour = new Date(event.startDate).getHours();
-      if (startHour < minHour) minHour = startHour;
-    } else if (position === "first" && dateToProcess) {
-      // Only the 'first' day of a multi-day event can shrink the minHour via its start time
+    // Only the 'first' day of a multi-day event can shrink the minHour via its start time
+    if (position === "first" && dateToProcess) {
       const startHour = dateToProcess.getHours();
       const startMinutes = dateToProcess.getMinutes();
       const visualStartHour = startHour + (startMinutes > 0 ? 1 : 0);
       if (startHour < minHour) minHour = startHour;
       if (visualStartHour > maxHour) maxHour = visualStartHour;
+      // The Step-Forward Rule:
+      if (startHour >= maxHour && startHour < 24) {
+        maxHour = Math.min(24, startHour + 1);
+      }
     }
 
-    // --- END BOUNDARY (maxHour) & STEP-BACK RULE ---
-    // We process the end boundary for single-day events OR the 'last' day of multi-day
-    if (!isMultiDay || position === "last") {
+    if (position === "last" && dateToProcess) {
       const endDate = dateToProcess || new Date(event.endDate);
       const endHour = endDate.getHours();
       const endMinutes = endDate.getMinutes();
@@ -86,7 +111,8 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[],
       }
     }
 
-    if (isMultiDay && position === "single") {
+    // Full day for single all-day events
+    if (position === "single") {
       minHour = 0;
       maxHour = 24;
     }
@@ -244,12 +270,12 @@ function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, lat
       const hasOverlap = partitioned.some(
         (neighborGroup, neighborIndex) =>
           neighborIndex !== groupIndex &&
-          neighborGroup.some((o) =>
-            areIntervalsOverlapping(
+          neighborGroup.some((o) => {
+            return areIntervalsOverlapping(
               { start: event.startDate, end: event.endDate },
               { start: o.startDate, end: o.endDate },
-            ),
-          ),
+            );
+          }),
       );
 
       const currentDate = new Date(event.startDate);
@@ -690,6 +716,11 @@ function calculateEventBlockStyle(
   return { top: `${roundedTop}%`, width: `${roundedWidth}%`, left: `${roundedLeft}%` };
 }
 
+function getWallClockMinutes(date: Date): number {
+  // This ignores DST and just looks at what the "clock on the wall" says
+  return date.getHours() * 60 + date.getMinutes();
+}
+
 function isSingleAllDayEvent(startDate: Date, endDate: Date): boolean {
   const startMidnight = startOfDay(startDate);
   const endMidnight = startOfDay(endDate);
@@ -708,6 +739,16 @@ function isSingleAllDayEvent(startDate: Date, endDate: Date): boolean {
   return endMidnight.getTime() === nextMidnight.getTime();
 }
 
+function isSingleDayEventEndAtMidnight(startDate: Date, endDate: Date): boolean {
+  const total = differenceInDays(endDate, startDate);
+
+  if (isMidnight(new Date(endDate)) && total === 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export function generateMultiDayEventsInPeriod(
   events: IEvent[],
   periodStart: Date,
@@ -720,23 +761,48 @@ export function generateMultiDayEventsInPeriod(
   for (const event of events) {
     if (event.recurrenceId !== null) continue;
 
-    const currentStartDate = event.startDate;
-    const currentEndDate = event.endDate;
+    const currentStartDate = new Date(event.startDate);
+    const currentEndDate = new Date(event.endDate);
 
-    if (isSingleAllDayEvent(new Date(currentStartDate), new Date(currentEndDate))) {
+    // Check if event ends at midnight
+    const endAtMidnight = endsAtMidnight(currentStartDate, currentEndDate);
+    const adjustedEndDate = endAtMidnight ? getAdjustedEndDateForMultiDay(currentEndDate) : currentEndDate;
+
+    // Handle all-day events
+    if (isSingleAllDayEvent(currentStartDate, currentEndDate)) {
       if (isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd })) {
-        eventList.push(event);
+        eventList.push({
+          ...event,
+          multiDay: {
+            position: "single",
+            calculatedDate: currentStartDate.toISOString(),
+            isEndAtMidnight: endAtMidnight,
+            originalEndDate: currentEndDate.toISOString(),
+          },
+        });
       }
       continue;
     }
 
-    const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
+    const totalDaysBetween = differenceInDays(endOfDay(adjustedEndDate), startOfDay(currentStartDate));
 
+    // Single-day events
     if (totalDaysBetween === 0) {
-      eventList.push(event);
+      eventList.push({
+        ...event,
+        multiDay: endAtMidnight
+          ? {
+              position: "single",
+              calculatedDate: currentStartDate.toISOString(),
+              isEndAtMidnight: true,
+              originalEndDate: currentEndDate.toISOString(),
+            }
+          : undefined,
+      });
       continue;
     }
 
+    // Multi-day: split into segments with actual time boundaries
     for (let dayIndex = 0; dayIndex <= totalDaysBetween; dayIndex++) {
       const newDay = set(addDays(currentStartDate, dayIndex), { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
 
@@ -751,25 +817,34 @@ export function generateMultiDayEventsInPeriod(
       };
 
       if (dayIndex === 0) {
-        //First Day
+        // First day
         newEvent.endDate = set(currentStartDate, {
           hours: maxEndTime,
           minutes: 0,
           seconds: 0,
           milliseconds: 0,
         }).toISOString();
-        newEvent.multiDay = { position: "first", calculatedDate: currentStartDate };
+        newEvent.multiDay = {
+          position: "first",
+          calculatedDate: currentStartDate.toISOString(),
+          isEndAtMidnight: false,
+        };
       } else if (dayIndex === totalDaysBetween) {
-        //LAST DAY
-        newEvent.startDate = set(currentEndDate, {
+        // Last day
+        newEvent.startDate = set(adjustedEndDate, {
           hours: minStartTime,
           minutes: 0,
           seconds: 0,
           milliseconds: 0,
         }).toISOString();
-
-        newEvent.multiDay = { position: "last", calculatedDate: currentEndDate };
+        newEvent.multiDay = {
+          position: "last",
+          calculatedDate: adjustedEndDate.toISOString(),
+          isEndAtMidnight: endAtMidnight,
+          originalEndDate: endAtMidnight ? currentEndDate.toISOString() : undefined,
+        };
       } else {
+        // Middle days
         newEvent.startDate = set(newDay, {
           hours: minStartTime,
           minutes: 0,
@@ -777,8 +852,11 @@ export function generateMultiDayEventsInPeriod(
           milliseconds: 0,
         }).toISOString();
         newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }).toISOString();
-        newEvent.multiDay = { position: "middle", calculatedDate: newDay.toISOString() };
-        //MIDDLE DAY
+        newEvent.multiDay = {
+          position: "middle",
+          calculatedDate: newDay.toISOString(),
+          isEndAtMidnight: false,
+        };
       }
       eventList.push(newEvent);
     }
@@ -792,23 +870,60 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
   for (const event of events) {
     if (event.recurrenceId !== null) continue;
 
-    const currentStartDate = event.startDate;
-    const currentEndDate = event.endDate;
+    const currentStartDate = new Date(event.startDate);
+    const currentEndDate = new Date(event.endDate);
 
-    if (isSingleAllDayEvent(new Date(currentStartDate), new Date(currentEndDate))) {
+    // Check if this event ends at midnight
+    const endAtMidnight = endsAtMidnight(currentStartDate, currentEndDate);
+
+    // Adjust end date for calculation purposes if it's at midnight
+    const adjustedEndDate = endAtMidnight ? getAdjustedEndDateForMultiDay(currentEndDate) : currentEndDate;
+
+    // Handle all-day events
+    if (isSingleAllDayEvent(currentStartDate, currentEndDate)) {
       if (isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd })) {
-        eventList.push({ ...event, multiDay: { position: "single", calculatedDate: currentStartDate } });
+        eventList.push({
+          ...event,
+          multiDay: {
+            position: "single",
+            calculatedDate: currentStartDate.toISOString(),
+            isEndAtMidnight: endAtMidnight,
+            originalEndDate: currentEndDate.toISOString(),
+          },
+        });
       }
       continue;
     }
 
-    const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
-
-    if (totalDaysBetween === 0) {
-      eventList.push(event);
+    // Handle events ending at midnight on same day
+    if (isSingleDayEventEndAtMidnight(currentStartDate, currentEndDate)) {
+      if (isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd })) {
+        eventList.push({
+          ...event,
+          multiDay: {
+            position: "single",
+            calculatedDate: currentStartDate.toISOString(),
+            isEndAtMidnight: true,
+            originalEndDate: currentEndDate.toISOString(),
+          },
+        });
+      }
       continue;
     }
 
+    // Calculate total days between (using adjusted end date for midnight events)
+    const totalDaysBetween = differenceInDays(endOfDay(adjustedEndDate), startOfDay(currentStartDate));
+
+    // Single-day events that don't end at midnight
+    if (totalDaysBetween === 0) {
+      eventList.push({
+        ...event,
+        multiDay: undefined,
+      });
+      continue;
+    }
+
+    // Multi-day events: split into segments
     for (let dayIndex = 0; dayIndex <= totalDaysBetween; dayIndex++) {
       const newDay = set(addDays(currentStartDate, dayIndex), { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
 
@@ -818,63 +933,123 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
 
       const newEvent = {
         ...event,
-        //eventIsSplit: true,
         title: `Day ${dayIndex + 1} of ${totalDaysBetween + 1}` + (event.title ? " - " + event.title : ""),
       };
 
-      if (dayIndex === 0) {
-        //First Day
+      let position: "first" | "middle" | "last";
+      let calculatedDate: string;
 
-        newEvent.multiDay = { position: "first", calculatedDate: currentStartDate };
+      if (dayIndex === 0) {
+        // First segment
+        position = "first";
+        calculatedDate = currentStartDate.toISOString();
       } else if (dayIndex === totalDaysBetween) {
-        //LAST DAY
-        newEvent.multiDay = { position: "last", calculatedDate: currentEndDate };
+        // Last segment: use adjusted date if midnight
+        position = "last";
+        calculatedDate = endAtMidnight
+          ? getAdjustedEndDateForMultiDay(currentEndDate).toISOString()
+          : currentEndDate.toISOString();
       } else {
-        //MIDDLE DAY
-        newEvent.multiDay = { position: "middle", calculatedDate: newDay.toISOString() };
+        // Middle segments
+        position = "middle";
+        calculatedDate = newDay.toISOString();
       }
+
+      newEvent.multiDay = {
+        position,
+        calculatedDate,
+        isEndAtMidnight: endAtMidnight && dayIndex === totalDaysBetween,
+        originalEndDate: endAtMidnight ? currentEndDate.toISOString() : undefined,
+      };
+
       eventList.push(newEvent);
     }
   }
+
   return eventList;
 }
 
+function isMidnight(date: Date) {
+  return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
+}
+
+/**
+ * Checks if an event ends exactly at midnight (00:00:00 on the next day).
+ * For display purposes, midnight should be treated as 11:59:59 on the previous day.
+ */
+function endsAtMidnight(startDate: Date, endDate: Date): boolean {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Check if end time is exactly midnight
+  if (!isMidnight(end)) return false;
+
+  // Make sure there's an actual span (not same time)
+  return start.getTime() !== end.getTime();
+}
+
+/**
+ * Calculates the actual end date for multi-day events that end at midnight.
+ * Returns the previous day since midnight display should be on the "last" day, not next day.
+ */
+function getAdjustedEndDateForMultiDay(originalEndDate: Date): Date {
+  const end = new Date(originalEndDate);
+
+  if (isMidnight(end)) {
+    // Subtract 1 millisecond to land at 11:59:59.999 of the previous day
+    return subMinutes(end, 1);
+  }
+
+  return end;
+}
+
+/**
+ * Determines the display hours for a multi-day event segment
+ */
+function getDisplayHoursForSegment(
+  position: "first" | "middle" | "last" | "single",
+  event: IEvent,
+  minHour: number,
+  maxHour: number,
+  isEndAtMidnight: boolean,
+): { displayStartHour: number; displayEndHour: number } {
+  switch (position) {
+    case "first":
+      return { displayStartHour: minHour, displayEndHour: maxHour };
+    case "middle":
+      return { displayStartHour: minHour, displayEndHour: maxHour };
+    case "last":
+      // If ends at midnight, cap at previous day's max hour
+      const effectiveEndHour = isEndAtMidnight ? 24 : maxHour;
+      return { displayStartHour: minHour, displayEndHour: effectiveEndHour };
+    case "single":
+      return { displayStartHour: minHour, displayEndHour: maxHour };
+    default:
+      return { displayStartHour: minHour, displayEndHour: maxHour };
+  }
+}
+
 export function setMultiDayEventBoundaries(events: IEvent[], minHour: number, maxHour: number) {
-  const eventList: IEvent[] = [];
+  for (const event of events) {
+    if (!event.multiDay) continue;
 
-  const multiDayEvents = events.filter((event) => event.multiDay);
+    const referenceDate = new Date(event.multiDay.calculatedDate);
 
-  for (const event of multiDayEvents) {
+    const startBoundary = set(referenceDate, { hours: minHour, minutes: 0, seconds: 0, milliseconds: 0 });
+    const endBoundary = set(referenceDate, { hours: maxHour, minutes: 0, seconds: 0, milliseconds: 0 });
+
+    const offsetDiff = startBoundary.getTimezoneOffset() - endBoundary.getTimezoneOffset();
+
     switch (event.multiDay?.position) {
       case "first":
-        event.endDate = set(event.multiDay.calculatedDate, {
-          hours: maxHour,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0,
-        }).toISOString();
+        event.endDate = endBoundary.toISOString();
         break;
       case "middle":
-        event.startDate = set(event.multiDay.calculatedDate, {
-          hours: minHour,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0,
-        }).toISOString();
-        event.endDate = set(event.multiDay.calculatedDate, {
-          hours: maxHour,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0,
-        }).toISOString();
+        event.startDate = startBoundary.toISOString();
+        event.endDate = addMinutes(endBoundary, offsetDiff).toISOString();
         break;
       case "last":
-        event.startDate = set(event.multiDay.calculatedDate, {
-          hours: minHour,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0,
-        }).toISOString();
+        event.startDate = startBoundary.toISOString();
 
         break;
     }

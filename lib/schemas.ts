@@ -106,6 +106,10 @@ export const SUser = z.object({
 export const SMultiDay = z.object({
   position: z.enum(["first", "last", "middle", "single"]),
   calculatedDate: z.string(),
+  isEndAtMidnight: z.boolean().optional(),
+  originalEndDate: z.string().optional(),
+  displayStartHour: z.number().optional(),
+  displayEndHour: z.number().optional(),
 });
 
 export const SStatus = z.object({
