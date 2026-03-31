@@ -8,8 +8,7 @@ const PUBLIC_EVENT_SELECT = {
   startDate: true,
   recurrenceId: true,
   recurrence: { select: { rule: true, endDate: true, startDate: true } },
-  roomId: true,
-  room: { select: { name: true, color: true } },
+  eventRooms: { select: { room: { select: { roomId: true, name: true, color: true } } } },
   status: { select: { statusId: true, name: true, key: true } },
 } as const satisfies Prisma.EventSelect;
 

@@ -5,7 +5,7 @@ import z from "zod/v4";
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
-  room: { include: { roomCategory: true, roomProperty: { include: { property: true } } } },
+  eventRooms: { include: { room: { include: { roomCategory: true, roomProperty: { include: { property: true } } } } } },
   eventItems: { include: { item: true } },
   eventRecipients: true,
   recurrence: true,
@@ -115,20 +115,24 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
             };
           })
         : [],
-      room: {
-        ...event.room,
-        roomProperty: event.room.roomProperty.map((roomProperty) => {
-          return {
-            roomPropertyId: roomProperty.roomPropertyId,
-            propertyId: roomProperty.property.propertyId,
-            name: roomProperty.property.name,
-            value: roomProperty.value ?? "",
-            type: roomProperty.property.type,
-            createdAt: roomProperty.createdAt,
-            updatedAt: roomProperty.updatedAt,
-          };
-        }),
-      },
+      rooms: event.eventRooms
+        ? event.eventRooms.map((eventRoom) => {
+            return {
+              ...eventRoom.room,
+              roomProperty: eventRoom.room.roomProperty.map((roomProperty) => {
+                return {
+                  roomPropertyId: roomProperty.roomPropertyId,
+                  propertyId: roomProperty.property.propertyId,
+                  name: roomProperty.property.name,
+                  value: roomProperty.value ?? "",
+                  type: roomProperty.property.type,
+                  createdAt: roomProperty.createdAt,
+                  updatedAt: roomProperty.updatedAt,
+                };
+              }),
+            };
+          })
+        : [],
     };
   });
 

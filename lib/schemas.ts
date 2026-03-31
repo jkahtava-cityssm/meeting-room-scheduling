@@ -122,7 +122,6 @@ export const SStatus = z.object({
 
 export const SEvent = z.object({
   eventId: z.number(),
-  roomId: z.number().gt(0, "Room is required"),
   userId: z.number().nullable().optional(),
   userName: z.string().nullable().optional(),
   userEmail: z.string().nullable().optional(),
@@ -130,12 +129,12 @@ export const SEvent = z.object({
   recurrenceId: z.number().nullable(),
   eventItems: z.array(SEventItem).optional(),
   eventRecipients: z.array(SEventRecipient).optional(),
+  rooms: z.array(SRoom),
   startDate: DateSchema,
   endDate: DateSchema,
   title: z.string().min(1, "Title is required"),
   description: z.string(),
   parentEventId: z.number().nullable().optional(),
-  room: SRoom,
   status: SStatus,
   recurrence: SRecurrence.nullish(),
   createdAt: DateSchema,
