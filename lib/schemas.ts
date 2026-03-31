@@ -124,6 +124,8 @@ export const SEvent = z.object({
   eventId: z.number(),
   roomId: z.number().gt(0, "Room is required"),
   userId: z.number().nullable().optional(),
+  userName: z.string().nullable().optional(),
+  userEmail: z.string().nullable().optional(),
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
   eventItems: z.array(SEventItem).optional(),

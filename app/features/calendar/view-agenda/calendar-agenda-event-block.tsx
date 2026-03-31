@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { cva } from "class-variance-authority";
-import { Clock, MapPin, Text } from "lucide-react";
+import { BaggageClaim, Clock, Info, MapPin, Refrigerator, Text, User2 } from "lucide-react";
 
 import { TColors } from "@/lib/types";
 import { IEvent } from "@/lib/schemas";
@@ -68,6 +68,8 @@ export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: str
   const color = event.room.color as TColors;
   const agendaEventCardClasses = agendaEventCardVariants({ color });
 
+  const eventItemsText = event.eventItems?.map((item) => item.name).join(", ") || "No items";
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -100,7 +102,14 @@ export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: str
             {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
           </p>
         </div>
-
+        <div className="flex items-center gap-1">
+          <User2 className="size-5 shrink-0" />
+          <p className="text-xs text-foreground">{event.userName}</p>
+        </div>
+        <div className="flex items-center gap-1">
+          <Refrigerator className="size-5 shrink-0" />
+          <p className="text-xs text-foreground">{eventItemsText}</p>
+        </div>
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Text className="size-5 shrink-0" />
