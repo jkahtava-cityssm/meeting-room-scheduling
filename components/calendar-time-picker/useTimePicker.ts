@@ -109,7 +109,7 @@ export function useTimePicker({
         if (type === "hour") {
           let hourValue: number;
 
-          if (parsedTimeValue === 24 || parsedTimeValue === 0) {
+          if (parsedTimeValue === 24 || parsedTimeValue === 0 || parsedTimeValue >= 12) {
             hourValue = parsedTimeValue;
           } else if (is24HourTime) {
             hourValue = parsedTimeValue % 24;
