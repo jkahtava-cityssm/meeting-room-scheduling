@@ -598,7 +598,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
           <PopoverTrigger asChild>
             <div
               ref={buttonRef}
-              tabIndex={0}
+              tabIndex={disabled ? -1 : 0}
               onKeyDown={handleKeyDown}
               onBlur={(event) => {
                 if (!event.currentTarget.contains(event.relatedTarget as Node)) {
