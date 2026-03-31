@@ -11,7 +11,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 export function createServerSecurity<const T extends GuardRequirement>(REQUIREMENTS: T) {
   const getSecurity = cache(async () => {
     const session = await getServerSession();
-    console.log("Session in security check:", session);
+
     if (!session?.user) {
       return {
         authorized: false,
