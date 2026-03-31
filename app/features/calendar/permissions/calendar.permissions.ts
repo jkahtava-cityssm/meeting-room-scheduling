@@ -1,5 +1,6 @@
+"use client";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
-import { createSecurityContext } from "@/lib/auth-permission-security-context";
+import { createClientSecurity } from "@/lib/auth-permission-security-client";
 
 const PAGE_PERMISSIONS = {
   CreateEvent: { type: "permission", resource: "Event", action: "Create" },
@@ -15,6 +16,8 @@ const PAGE_PERMISSIONS = {
   ViewMyBookingMonth: { type: "permission", resource: "My Bookings", action: "View Month" },
   ViewMyBookingYear: { type: "permission", resource: "My Bookings", action: "View Year" },
   ViewMyBookingAgenda: { type: "permission", resource: "My Bookings", action: "View Agenda" },
+  IgnoreBookingSpan: { type: "permission", resource: "Event", action: "Ignore Booking Span" },
+  IgnoreHours: { type: "permission", resource: "Event", action: "Ignore Visible Hours" },
 } as const satisfies GroupedPermissionRequirement;
 
-export const CalendarPermissions = createSecurityContext(PAGE_PERMISSIONS);
+export const CalendarPermissions = createClientSecurity(PAGE_PERMISSIONS);

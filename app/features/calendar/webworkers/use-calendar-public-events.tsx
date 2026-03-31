@@ -1,7 +1,7 @@
 import { usePublicEventsQuery } from "@/lib/services/public";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { useEffect, useState } from "react";
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas";
 import { CalendarAction, ISODateString } from "./generic-webworker";
 import { TVisibleHours } from "@/lib/types";
 
@@ -9,9 +9,9 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
   action: T,
   date: Date,
   roomIdList: string[],
-  visibleHours: TVisibleHours,
+  visibleHours: TVisibleHours | undefined,
 ) {
-  const { data: events, isLoading, isFetching, error } = usePublicEventsQuery(date);
+  const { data: events, isPending, isLoading, isFetching, error } = usePublicEventsQuery(date);
 
   const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 
@@ -24,7 +24,7 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
   }, [viewKey]);
 
   useEffect(() => {
-    if (!events) return;
+    if (!events || !visibleHours) return;
 
     processEvents({
       events: events as IEvent[],
@@ -33,6 +33,7 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
       action: action,
       visibleHours: visibleHours,
       multiDayEventsAtTop: false,
+      statusKeys: ["APPROVED", "PENDING", "INFORMATION"],
     });
   }, [action, events, date, roomIdList, visibleHours, processEvents]);
 
@@ -45,6 +46,7 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
   return {
     result: data,
     isLoading: isLoading || !hasProcessedForView,
+
     isRefetching: isFetching && !isLoading,
     isBackgroundProcessing: hasProcessedForView && isProcessing,
     error: error || workerError,

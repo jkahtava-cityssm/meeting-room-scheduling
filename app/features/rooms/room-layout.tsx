@@ -7,6 +7,7 @@ import {
   ArrowUpAz,
   ChevronDown,
   ChevronUp,
+  Eye,
   Filter,
   FilterX,
   LoaderCircle,
@@ -39,11 +40,12 @@ import { TColors } from "@/lib/types";
 import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { SharedRoomDrawerProvider, useSharedRoomDrawer } from "../room-drawer/shared-room-drawer-context";
+
 import { getDistinctValuesByKey } from "@/lib/helpers";
 import { useDebounce } from "@/hooks/use-debounce";
-import { IRoom } from "@/lib/schemas/calendar";
+import { IRoom } from "@/lib/schemas";
 import { GenericError } from "@/components/shared/generic-error";
+import { useSharedRoomDrawer } from "../room-drawer/drawer-context";
 
 interface RoomFilters {
   name: string;
@@ -229,13 +231,21 @@ export default function RoomLayout() {
     return <GenericError error={error} />;
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full w-full">
+        <Skeleton className="w-full h-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full w-full rounded-lg border">
       <div className="flex flex-col gap-4  p-4 min-w-90 lg:flex-row lg:items-center lg:justify-between shrink-0 border-b">
         <div className="flex items-center gap-3 h-14 font-bold">Available Rooms</div>
 
         <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-between">
-          <Button onClick={() => openRoomDrawer({})}> Add Room</Button>
+          <Button onClick={() => openRoomDrawer({})}>Add Room</Button>
         </div>
       </div>
       <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
@@ -469,8 +479,8 @@ export default function RoomLayout() {
                       <div className="flex justify-center py-2">
                         <div className="flex items-center gap-2">
                           <Button variant={"outline"} onClick={() => openRoomDrawer({ room: room })}>
-                            <Pencil />
-                            Edit
+                            <Eye />
+                            View
                           </Button>
                         </div>
                       </div>
@@ -613,7 +623,6 @@ const DebouncedInput = ({ value, onChange, debounce = 150, ...props }: Debounced
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  // Sync local state if the prop changes (e.g. clearing filters)
   useEffect(() => {
     setLocalValue(value);
   }, [value]);

@@ -10,22 +10,22 @@ export async function SuccessMessage(message: string, data: object) {
 }
 
 export async function NoContentMessage() {
-	return NextResponse.json({ status: 204 }); // No Content
+  return NextResponse.json({ status: 204 }); // No Content
 }
 
 export async function DeleteMessage() {
-	return NextResponse.json({ status: 204 }); // No content
+  return NextResponse.json({ status: 204 }); // No content
 }
 
 export async function InternalServerErrorMessage(message: string = "Internal Server Error") {
-	return NextResponse.json({ message: message }, { status: 500 }); // Internal Server Error
+  return NextResponse.json({ message: message }, { status: 500 }); // Internal Server Error
 }
 
 export async function BadRequestMessage(message: string = "Bad Request") {
-	return NextResponse.json({ message: message }, { status: 400 }); // Bad Request
+  return NextResponse.json({ message: message }, { status: 400 }); // Bad Request
 }
 export async function UnauthorizedMessage() {
-	return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); // Not Found
+  return NextResponse.json({ message: "Unauthorized" }, { status: 401 }); // Not Found
 }
 export async function ForbiddenMessage(message: string = "Requested Resource is Forbidden") {
   return NextResponse.json({ message: message }, { status: 403 }); // Not Found
@@ -98,14 +98,14 @@ export function validateVisibleHours(visibleHoursStart?: number, visibleHoursEnd
     !visibleHoursStart ||
     !visibleHoursEnd ||
     visibleHoursStart >= visibleHoursEnd ||
-    visibleHoursStart <= 0 ||
+    visibleHoursStart < 0 ||
     visibleHoursEnd > 24
   ) {
-    console.log(
+    console.warn(
       `Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
-        `Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`
+        `Start Hour must be less than End Hour, start >= 0, and end < 24. Defaulting to start=0 and end=24.`,
     );
-    visibleHoursStart = 1;
+    visibleHoursStart = 0;
     visibleHoursEnd = 24;
   }
 
@@ -120,7 +120,7 @@ export function validateTimeSlotInterval(interval?: number): number {
   const validDivisors = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60];
 
   if (!validDivisors.includes(interval)) {
-    console.log(`Invalid timeSlotIntervalMinutes: ${interval}. Must be a positive divisor of 60. Defaulting to 1.`);
+    console.warn(`Invalid timeSlotInterval: ${interval}. Must be a positive divisor of 60. Defaulting to 1.`);
     return 1;
   }
 

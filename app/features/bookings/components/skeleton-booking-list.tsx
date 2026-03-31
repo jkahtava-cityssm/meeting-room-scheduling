@@ -1,20 +1,11 @@
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-
-import { IEventCard, IRoomSection, ISection } from "./types";
-import EventCard from "./event-card";
 import { cva } from "class-variance-authority";
 import { sharedColorVariants, sharedIconBackgrounVariants } from "@/lib/theme/colorVariants";
 import { cn } from "@/lib/utils";
 
-import EventDrawer from "@/app/features/event-drawer/event-drawer";
-import { BadgeColored } from "@/components/ui/badge-colored";
-import { Button } from "@/components/ui/button";
-import { ButtonColored } from "@/components/ui/button-colored";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { IEvent } from "@/lib/schemas/calendar";
+
 import { CalendarRange, CalendarSync, Clock, Hourglass, MapPin, Text } from "lucide-react";
-import { IEventCardFields } from "./types";
-import { Badge } from "@/components/ui/badge";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { TColors } from "@/lib/types";
 

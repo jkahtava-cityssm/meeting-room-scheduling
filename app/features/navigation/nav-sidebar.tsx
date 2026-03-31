@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { ChevronRight } from "lucide-react";
+import { Calendar, ChevronRight, LifeBuoy, NotebookPen, Send, Settings2 } from "lucide-react";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -33,10 +33,10 @@ import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { useMemo } from "react";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 import { useSearchParams } from "next/navigation";
-import { SidebarPermissions } from "./permissions/navigation.permissions";
+import { NavigationPermissions } from "./permissions/navigation.permissions";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { session, isPending } = useSession();
+  const { isPending } = useSession();
 
   if (isPending) {
     return (
@@ -68,19 +68,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     );
   }
 
-  if (!session) {
-    //console.log("No session, redirecting to login");
-  }
-
   return (
-    <SidebarPermissions.Provider session={session}>
+    <NavigationPermissions.Provider>
       <PrivateSidebar />
-    </SidebarPermissions.Provider>
+    </NavigationPermissions.Provider>
   );
 }
 
 function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { can, canAny, isVerifying } = SidebarPermissions.usePermissions();
+  const { can, canAny, isVerifying } = NavigationPermissions.usePermissions();
 
   const searchParams = useSearchParams();
 
@@ -120,10 +116,10 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <SideBarGroup title="Application">
-          <SideBarPrimaryMenuItem title={"Availability"} iconName={"notebook-pen"} url={"/availability"} />
-          <SideBarPrimaryMenuItem title={"My Bookings"} iconName={"send"} url={"/bookings/user-view"} />
+          <SideBarPrimaryMenuItem title={"Availability"} icon={<NotebookPen />} url={"/availability"} />
+          <SideBarPrimaryMenuItem title={"My Bookings"} icon={<Send />} url={"/bookings/user-view"} />
           {hasCalendarAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} iconName="calendar">
+            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} icon={<Calendar />}>
               {viewStaffRequests && (
                 <SideBarSubMenuItem
                   title={"Requests"}
@@ -172,7 +168,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SideBarCollapsibleGroup>
           )}
           {hasSettingsAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} iconName="settings-2">
+            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} icon={<Settings2 />}>
               {editRooms && <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />}
               {editPermissions && (
                 <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
@@ -180,6 +176,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {editConfiguration && (
                 <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
               )}
+              {editUsers && <SideBarSubMenuItem title={"Manage Users"} url={"/settings/manage-users"} />}
             </SideBarCollapsibleGroup>
           )}
         </SideBarGroup>
@@ -187,7 +184,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SideBarGroup title="">
-          <SideBarPrimaryMenuItem title={"Support"} iconName={"life-buoy"} url={"#"} />
+          <SideBarPrimaryMenuItem title={"Support"} icon={<LifeBuoy />} url={"#"} />
         </SideBarGroup>
       </SidebarFooter>
     </Sidebar>
@@ -238,12 +235,12 @@ export function SideBarGroup({ title, children }: { title: string; children: Rea
 }
 
 export function SideBarCollapsibleGroup({
-  iconName,
+  icon,
   isOpenByDefault,
   title,
   children,
 }: {
-  iconName?: IconName;
+  icon?: React.ReactNode;
   isOpenByDefault: boolean;
   title: string;
   children: React.ReactNode;
@@ -253,7 +250,7 @@ export function SideBarCollapsibleGroup({
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip={title}>
-            {iconName && <DynamicIcon name={iconName} />}
+            {icon}
             <span>{title}</span>
             <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
           </SidebarMenuButton>
@@ -264,11 +261,11 @@ export function SideBarCollapsibleGroup({
   );
 }
 
-export function SideBarPrimaryMenuItem({ title, iconName, url }: { title: string; iconName?: IconName; url: string }) {
+export function SideBarPrimaryMenuItem({ title, icon, url }: { title: string; icon?: React.ReactNode; url: string }) {
   return (
     <SidebarMenuButton asChild key={title} tooltip={title}>
       <Link href={url}>
-        {iconName && <DynamicIcon name={iconName} />}
+        {icon}
         <span>{title}</span>
       </Link>
     </SidebarMenuButton>

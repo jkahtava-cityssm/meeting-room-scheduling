@@ -20,8 +20,10 @@ function DayPicker({
   showOutsideDays = true,
   selected,
   onToday,
+  disabled,
+  disableToday = false,
   ...props
-}: PropsSingleRequired & PropsBase & { onToday: () => void }) {
+}: PropsSingleRequired & PropsBase & { onToday: () => void; disableToday?: boolean }) {
   const defaultClassNames = getDefaultClassNames();
   return (
     <div>
@@ -32,6 +34,7 @@ function DayPicker({
           selected={selected}
           onSelect={props.onSelect}
           showOutsideDays={showOutsideDays}
+          disabled={disabled}
           //month={currentMonth}
           //onMonthChange={setCurrentMonth}
           //fixedWeeks={props.fixedWeeks}
@@ -50,44 +53,44 @@ function DayPicker({
             button_next: cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 hover:opacity-100 absolute right-1 [&_svg]:fill-foreground  shadow-xs",
-              classNames?.button_next
+              classNames?.button_next,
             ),
             button_previous: cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 hover:opacity-100 absolute left-1 [&_svg]:fill-foreground",
-              classNames?.button_previous
+              classNames?.button_previous,
             ),
             nav: cn("flex items-start", classNames?.nav),
             month_grid: cn("mx-auto mt-4", classNames?.month_grid),
             week: cn("mt-2 flex w-max items-start", classNames?.week),
             day: cn(
               "flex size-8 flex-1 items-center justify-center p-0 text-sm [&>button]:hover:bg-primary/50 [&>button]:hover:text-primary-foreground",
-              classNames?.day
+              classNames?.day,
             ),
             day_button: cn(
               "size-8 rounded-md p-0 font-normal transition-none aria-selected:opacity-100",
-              classNames?.day_button
+              classNames?.day_button,
             ),
             range_start: cn(
               "bg-accent [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary [&>button]:hover:text-primary-foreground day-range-start rounded-s-md",
-              classNames?.range_start
+              classNames?.range_start,
             ),
             range_middle: cn(
               "bg-accent !text-foreground [&>button]:bg-transparent [&>button]:!text-foreground [&>button]:hover:bg-transparent [&>button]:hover:!text-foreground",
-              classNames?.range_middle
+              classNames?.range_middle,
             ),
             range_end: cn(
               "bg-accent [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary [&>button]:hover:text-primary-foreground day-range-end rounded-e-md",
-              classNames?.range_end
+              classNames?.range_end,
             ),
             selected: cn(
               "[&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:hover:bg-primary [&>button]:hover:text-primary-foreground",
-              classNames?.selected
+              classNames?.selected,
             ),
             today: cn("[&>button]:bg-accent [&>button]:text-accent-foreground", classNames?.today),
             outside: cn(
               "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-              classNames?.outside
+              classNames?.outside,
             ),
             disabled: cn("text-muted-foreground opacity-50", classNames?.disabled),
             hidden: cn("invisible flex-1", classNames?.hidden),
@@ -144,7 +147,7 @@ function DayPicker({
         />
       </div>
       <div className="bg-accent rounded-bl-sm rounded-br-sm  pl-3 pr-3">
-        <Button variant={"outline"} size={"sm"} className="m-1" onClick={onToday}>
+        <Button variant={"outline"} size={"sm"} className="m-1" onClick={onToday} disabled={disableToday}>
           Today
         </Button>
       </div>

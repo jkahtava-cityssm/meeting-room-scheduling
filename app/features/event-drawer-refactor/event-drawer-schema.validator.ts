@@ -1,10 +1,5 @@
-import { IEvent } from "@/lib/schemas/calendar";
-import { addMinutes, differenceInYears, endOfDay, startOfDay } from "date-fns";
+import { format, set } from "date-fns";
 import { z } from "zod/v4";
-
-import { RRule, rrulestr } from "rrule";
-import { getValidMinuteAndRolledHour } from "./lib/form-helper";
-import { getDurationText } from "@/lib/helpers";
 
 export const DURATION_OPTIONS = ["until", "forever", "count", ""] as const;
 
@@ -21,11 +16,25 @@ export const BaseRecurrence = z.object({
 });
 
 // 2. Define the Specific Patterns
-const Daily = z.object({
-  repeatingType: z.literal("daily"),
-  dailyPattern: z.string().min(1, "You must choose an option"),
-  dayValue: z.string().min(1, "Indicate frequency in Days"),
-});
+
+const Daily = z
+  .object({
+    repeatingType: z.literal("daily"),
+    dailyPattern: z.enum(["weekdays", "daily"]), // adjust to your actual values
+    dayValue: z.string().optional(), // make it optional at the field level
+  })
+  .superRefine((data, ctx) => {
+    // Require dayValue unless dailyPattern is "weekdays"
+    if (data.dailyPattern !== "weekdays") {
+      if (!data.dayValue || data.dayValue.trim() === "") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["dayValue"],
+          message: "Indicate frequency in Days",
+        });
+      }
+    }
+  });
 
 const Weekly = z.object({
   repeatingType: z.literal("weekly"),
@@ -109,42 +118,100 @@ export const step2Schema = z
     }
   });
 // --- Step 1 Schema ---
-export const step1Schema = z
-  .object({
-    eventId: z.string().optional(),
-    roomId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Room"),
-    userId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Member"),
-    description: z.string().optional(),
-    title: z.string().min(1, "Title is required"),
-    statusId: z.string().min(1, "Status is required"),
-    startDate: z.string().min(1, "Start date is required"),
-    endDate: z.string().min(1, "End date is required"),
-    recurrenceId: z.string().optional(),
-    duration: z.string().min(1, "Duration is required"),
-    isRecurring: z.string(),
-  })
-  .check((ctx) => {
-    const val = ctx.value;
-    const start = new Date(val.startDate);
-    const end = new Date(val.endDate);
+export const getStep1Schema = (min: number, max: number, restrictHours: boolean) =>
+  z
+    .object({
+      eventId: z.string().optional(),
+      roomId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Room"),
+      userId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Member"),
+      eventRecipientIds: z.array(z.string()),
+      description: z.string().optional(),
+      title: z.string().min(1, "Title is required"),
+      statusId: z.string().min(1, "Status is required"),
+      startDate: z.string().min(1, "Start date is required"),
+      endDate: z.string().min(1, "End date is required"),
+      recurrenceId: z.string().optional(),
+      eventItemIds: z.array(z.string()),
+      duration: z.string().min(1, "Duration is required"),
+      isRecurring: z.string(),
+    })
+    .superRefine((val, ctx) => {
+      const start = new Date(val.startDate);
+      const end = new Date(val.endDate);
 
-    if (end < start) {
-      ctx.issues.push({ code: "custom", input: val, path: ["startDate"], message: "Start Date exceeds End Date" });
-      ctx.issues.push({ code: "custom", input: val, path: ["endDate"], message: "End Date precedes Start Date" });
-    }
-  });
+      // Chronological check
+      if (end < start) {
+        ctx.addIssue({ code: "custom", path: ["startDate"], message: "Start Date exceeds End Date" });
+      }
+
+      if (!restrictHours) return;
+
+      const isTimeInRange = (date: Date, minHr: number, maxHr: number) => {
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+
+        // SPECIAL CASE: Check if this is EXACTLY Midnight of the next day (24:00)
+        // We check if it's 00:00:00 and if it's technically a different day than the start
+        const isMidnight = hours === 0 && minutes === 0 && seconds === 0;
+
+        // If the user wants to allow up to 24:00, then 00:00:00 is valid
+        // (as long as it's the end of the duration, not the start of a 0-length event)
+        if (maxHr === 24 && isMidnight) {
+          return true;
+        }
+
+        // Standard check:
+        // If they pick 00:15, and min is 0, this passes.
+        // If they pick 23:15, and max is 24, this passes.
+        if (hours < minHr || hours >= maxHr) {
+          // If it's exactly the maxHr (e.g. 17:00) and minutes are 0, it's valid.
+          if (hours === maxHr && minutes === 0) return true;
+          return false;
+        }
+
+        return true;
+      };
+
+      const getStartEnd = (date: Date, minHr: number, maxHr: number) => {
+        const startTime = set(date, { hours: minHr });
+        const endTime = set(date, { hours: maxHr });
+
+        return { startTime: format(startTime, "h aa"), endTime: format(endTime, "h aa") };
+      };
+
+      if (!isTimeInRange(start, min, max)) {
+        const { startTime, endTime } = getStartEnd(start, min, max);
+        ctx.addIssue({
+          code: "custom",
+          path: ["startDate"],
+          message: `Start must be between ${startTime} and ${endTime}`,
+        });
+      }
+
+      if (!isTimeInRange(end, min, max)) {
+        const { startTime, endTime } = getStartEnd(end, min, max);
+        ctx.addIssue({
+          code: "custom",
+          path: ["endDate"],
+          message: `End must be between ${startTime} and ${endTime}`,
+        });
+      }
+    });
 
 export type DurationType = z.infer<typeof BaseRecurrence>["durationType"];
-export type Step1Schema = z.infer<typeof step1Schema>;
+
+export type Step1Schema = z.infer<ReturnType<typeof getStep1Schema>>;
 export type Step2Schema = z.infer<typeof step2Schema>;
 
-export const CombinedEventSchema = step1Schema.and(step2Schema);
+export const getCombinedSchema = (min: number, max: number, restrictHours: boolean) =>
+  getStep1Schema(min, max, restrictHours).and(step2Schema);
 
-export type CombinedSchema = z.infer<typeof CombinedEventSchema>;
+export type CombinedSchema = z.infer<ReturnType<typeof getCombinedSchema>>;
 
 export const Step2Fields = BaseRecurrence.extend(Daily.shape)
   .extend(Weekly.shape)
   .extend(Monthly.shape)
   .extend(Yearly.shape);
 
-export type FlatCombinedSchema = z.infer<typeof step1Schema> & z.infer<typeof Step2Fields>;
+export type FlatCombinedSchema = z.infer<ReturnType<typeof getStep1Schema>> & z.infer<typeof Step2Fields>;

@@ -9,19 +9,27 @@ generator client {
 }
 
 model User {
-  id             Int      @id @default(autoincrement()) @map("user_id")
-  name           String
-  email          String   @unique
-  emailVerified  Boolean  @default(false) @map("email_verified")
-  image          String?
-  employeeNumber String?  @map("employee_number")
-  department     String?  @map("department")
-  jobTitle       String?  @map("job_title")
-  supervisorId   Int?     @map("supervisor_id")
-  employeeActive Boolean  @default(true) @map("employee_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id            Int     @id @default(autoincrement()) @map("user_id")
+  name          String
+  email         String? @unique
+  emailVerified Boolean @default(false) @map("email_verified")
+  emailEnabled  Boolean @default(true) @map("email_enabled")
+  image         String?
+  externalId    String? @map("external_id")
+  department    String? @map("department")
+  jobTitle      String? @map("job_title")
+  supervisorId  Int?    @map("supervisor_id")
+  isActive      Boolean @default(true) @map("is_active")
+  isManaged     Boolean @default(true) @map("is_managed")
 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Audit fields (self)
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  // Existing relations
   account     Account[]
   session     Session[]
   userRole    UserRole[]
@@ -30,6 +38,103 @@ model User {
 
   supervisor User?  @relation("EmployeeToSupervisor", fields: [supervisorId], references: [id])
   employees  User[] @relation("EmployeeToSupervisor")
+
+  // Self-audit relations
+  createdByUser User?  @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?  @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
+  usersCreated  User[] @relation("UserCreatedBy")
+  usersUpdated  User[] @relation("UserUpdatedBy")
+
+  // Account audit back-relations
+  accountsCreated Account[] @relation("AccountCreatedBy")
+  accountsUpdated Account[] @relation("AccountUpdatedBy")
+
+  // Session audit back-relations
+  sessionsCreated Session[] @relation("SessionCreatedBy")
+  sessionsUpdated Session[] @relation("SessionUpdatedBy")
+
+  // Verification audit back-relations
+  verificationsCreated Verification[] @relation("VerificationCreatedBy")
+  verificationsUpdated Verification[] @relation("VerificationUpdatedBy")
+
+  // Room audit back-relations
+  roomsCreated Room[] @relation("RoomCreatedBy")
+  roomsUpdated Room[] @relation("RoomUpdatedBy")
+
+  // RoomCategory audit back-relations
+  roomCategoriesCreated RoomCategory[] @relation("RoomCategoryCreatedBy")
+  roomCategoriesUpdated RoomCategory[] @relation("RoomCategoryUpdatedBy")
+
+  // EventItem audit back-relations
+  EventItemsCreated EventItem[] @relation("EventItemCreatedBy")
+  EventItemsUpdated EventItem[] @relation("EventItemUpdatedBy")
+
+  // RoomProperty audit back-relations
+  roomPropertiesCreated RoomProperty[] @relation("RoomPropertyCreatedBy")
+  roomPropertiesUpdated RoomProperty[] @relation("RoomPropertyUpdatedBy")
+
+  // RoomRole audit back-relations
+  roomRolesCreated RoomRole[] @relation("RoomRoleCreatedBy")
+  roomRolesUpdated RoomRole[] @relation("RoomRoleUpdatedBy")
+
+  // Property audit back-relations
+  propertiesCreated Property[] @relation("PropertyCreatedBy")
+  propertiesUpdated Property[] @relation("PropertyUpdatedBy")
+
+  // UserRole audit back-relations
+  userRolesCreated UserRole[] @relation("UserRoleCreatedBy")
+  userRolesUpdated UserRole[] @relation("UserRoleUpdatedBy")
+
+  // Role audit back-relations
+  rolesCreated Role[] @relation("RoleCreatedBy")
+  rolesUpdated Role[] @relation("RoleUpdatedBy")
+
+  // ResourceAction audit back-relations
+  resourceActionsCreated ResourceAction[] @relation("ResourceActionCreatedBy")
+  resourceActionsUpdated ResourceAction[] @relation("ResourceActionUpdatedBy")
+
+  // RoleResourceAction audit back-relations
+  roleResourceActionsCreated RoleResourceAction[] @relation("RoleResourceActionCreatedBy")
+  roleResourceActionsUpdated RoleResourceAction[] @relation("RoleResourceActionUpdatedBy")
+
+  // Resource audit back-relations
+  resourcesCreated Resource[] @relation("ResourceCreatedBy")
+  resourcesUpdated Resource[] @relation("ResourceUpdatedBy")
+
+  // Action audit back-relations
+  actionsCreated Action[] @relation("ActionCreatedBy")
+  actionsUpdated Action[] @relation("ActionUpdatedBy")
+
+  // Recurrence audit back-relations
+  recurrencesCreated Recurrence[] @relation("RecurrenceCreatedBy")
+  recurrencesUpdated Recurrence[] @relation("RecurrenceUpdatedBy")
+
+  // RecurrenceCancellation audit back-relations
+  recurrenceCancellationsCreated RecurrenceCancellation[] @relation("RecurrenceCancellationCreatedBy")
+  recurrenceCancellationsUpdated RecurrenceCancellation[] @relation("RecurrenceCancellationUpdatedBy")
+
+  // RecurrenceException audit back-relations
+  recurrenceExceptionsCreated RecurrenceException[] @relation("RecurrenceExceptionCreatedBy")
+  recurrenceExceptionsUpdated RecurrenceException[] @relation("RecurrenceExceptionUpdatedBy")
+
+  // Event audit back-relations
+  eventsCreated Event[] @relation("EventCreatedBy")
+  eventsUpdated Event[] @relation("EventUpdatedBy")
+
+  // Status audit back-relations
+  statusesCreated Status[] @relation("StatusCreatedBy")
+  statusesUpdated Status[] @relation("StatusUpdatedBy")
+
+  // Configuration audit back-relations
+  configurationsCreated Configuration[] @relation("ConfigurationCreatedBy")
+  configurationsUpdated Configuration[] @relation("ConfigurationUpdatedBy")
+
+  itemCreated Item[] @relation("ItemCreatedBy")
+  itemUpdated Item[] @relation("ItemUpdatedBy")
+
+  EventRecipientCreated EventRecipient[] @relation("EventRecipientCreatedBy")
+  EventRecipientUpdated EventRecipient[] @relation("EventRecipientUpdatedBy")
+  eventRecipients       EventRecipient[]
 
   @@map("user")
 }
@@ -45,7 +150,13 @@ model Session {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdByUser User? @relation("SessionCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("SessionUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("user_session")
 }
@@ -65,12 +176,16 @@ model Account {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdByUser User? @relation("AccountCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("AccountUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("user_account")
 }
-
-//@@id([provider, providerAccountId])
 
 model Verification {
   id         Int      @id @default(autoincrement()) @map("user_verification_id")
@@ -79,6 +194,12 @@ model Verification {
   expiresAt  DateTime @map("expires_at")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("VerificationCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("VerificationUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("user_verification")
 }
@@ -107,11 +228,19 @@ model Room {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   roomCategoryId Int      @map("room_category_id")
+  displayOrder   Int?     @map("display_order")
 
-  roomCategory RoomCategory   @relation(fields: [roomCategoryId], references: [roomCategoryId])
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  roomCategory RoomCategory @relation(fields: [roomCategoryId], references: [roomCategoryId])
+
   events       Event[]
   roomProperty RoomProperty[]
   roomRoles    RoomRole[]
+
+  createdByUser User? @relation("RoomCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RoomUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("room")
 }
@@ -122,6 +251,12 @@ model RoomCategory {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   room           Room[]
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("RoomCategoryCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RoomCategoryUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("room_category")
 }
@@ -135,8 +270,14 @@ model RoomProperty {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   room     Room     @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
   property Property @relation(fields: [propertyId], references: [propertyId])
+
+  createdByUser User? @relation("RoomPropertyCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RoomPropertyUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([roomId, propertyId], name: "roomId_propertyId")
   @@map("room_property")
@@ -149,8 +290,14 @@ model RoomRole {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   room Room @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+
+  createdByUser User? @relation("RoomRoleCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RoomRoleUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([roomId, roleId], name: "roomId_roleId_unique")
   @@index([roleId], name: "roomrole_role_idx")
@@ -159,17 +306,22 @@ model RoomRole {
 }
 
 model Property {
-  propertyId   Int            @id @default(autoincrement()) @map("property_id")
-  name         String         @unique
-  type         String
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
+  propertyId Int      @id @default(autoincrement()) @map("property_id")
+  name       String   @unique
+  type       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("PropertyCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("PropertyUpdatedBy", fields: [updatedBy], references: [id])
+
   roomProperty RoomProperty[]
 
   @@map("property")
 }
-
-//Member 1 or Many Roles, MemberRole
 
 model UserRole {
   userRoleId Int      @id @default(autoincrement()) @map("user_role_id")
@@ -179,8 +331,14 @@ model UserRole {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+
+  createdByUser User? @relation("UserRoleCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("UserRoleUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([userId, roleId], name: "userId_roleId")
   @@map("user_role")
@@ -191,6 +349,12 @@ model Role {
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("RoleCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RoleUpdatedBy", fields: [updatedBy], references: [id])
 
   userRole           UserRole[]
   roleResourceAction RoleResourceAction[]
@@ -206,11 +370,17 @@ model ResourceAction {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   resource           Resource             @relation(fields: [resourceId], references: [resourceId], onDelete: Cascade)
   action             Action               @relation(fields: [actionId], references: [actionId], onDelete: Cascade)
   roleResourceAction RoleResourceAction[] // Permissions for this resource-action pair
 
-  @@unique([resourceId, actionId]) // Prevent duplicates
+  createdByUser User? @relation("ResourceActionCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ResourceActionUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@unique([resourceId, actionId]) // Pr duplicates
   @@map("resource_action")
 }
 
@@ -222,19 +392,30 @@ model RoleResourceAction {
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   role           Role           @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
   resourceAction ResourceAction @relation(fields: [resourceActionId], references: [resourceActionId], onDelete: Cascade)
+
+  createdByUser User? @relation("RoleResourceActionCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RoleResourceActionUpdatedBy", fields: [updatedBy], references: [id])
 
   @@unique([roleId, resourceActionId])
   @@map("role_resource_action")
 }
 
-//Events, Rooms, etc...
 model Resource {
   resourceId Int      @id @default(autoincrement()) @map("resource_id")
   name       String
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("ResourceCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ResourceUpdatedBy", fields: [updatedBy], references: [id])
 
   resourceAction ResourceAction[]
 
@@ -246,6 +427,12 @@ model Action {
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("ActionCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ActionUpdatedBy", fields: [updatedBy], references: [id])
 
   resourceAction ResourceAction[]
 
@@ -263,9 +450,15 @@ model Recurrence {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   event                  Event[]
   recurrenceCancellation RecurrenceCancellation? @relation(fields: [recurrenceCancellationId], references: [recurrenceCancellationId])
   recurrenceException    RecurrenceException?    @relation(fields: [recurrenceExceptionId], references: [recurrenceExceptionId])
+
+  createdByUser User? @relation("RecurrenceCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RecurrenceUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("recurrence")
 }
@@ -278,7 +471,13 @@ model RecurrenceCancellation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   recurrence Recurrence[]
+
+  createdByUser User? @relation("RecurrenceCancellationCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RecurrenceCancellationUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("recurrence_cancellation")
 }
@@ -291,7 +490,13 @@ model RecurrenceException {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
   recurrence Recurrence[]
+
+  createdByUser User? @relation("RecurrenceExceptionCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RecurrenceExceptionUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("recurrence_exception")
 }
@@ -306,18 +511,86 @@ model Event {
   title       String
   description String
 
-  recurrenceId Int?     @map("recurrence_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  recurrenceId Int? @map("recurrence_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
 
   recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: Cascade)
 
   user User? @relation(fields: [userId], references: [id])
 
-  room   Room   @relation(fields: [roomId], references: [roomId])
+  room   Room   @relation(fields: [roomId], references: [roomId], onDelete: Cascade)
   status Status @relation(fields: [statusId], references: [statusId])
 
+  createdByUser User? @relation("EventCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("EventUpdatedBy", fields: [updatedBy], references: [id])
+
+  eventItems      EventItem[]
+  eventRecipients EventRecipient[]
+
   @@map("event")
+}
+
+model EventRecipient {
+  eventRecipientId Int @id @default(autoincrement()) @map("event_recipient_id")
+  eventId          Int
+  userId           Int
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("EventRecipientCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("EventRecipientUpdatedBy", fields: [updatedBy], references: [id])
+
+  event Event @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId], name: "eventId_userId")
+  @@map("event_recipient")
+}
+
+model EventItem {
+  eventItemId Int      @id @default(autoincrement()) @map("event_item_id")
+  eventId     Int      @map("event_id")
+  itemId      Int      @map("item_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("EventItemCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("EventItemUpdatedBy", fields: [updatedBy], references: [id])
+
+  event Event @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
+  item  Item  @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
+
+  @@unique([eventId, itemId], name: "eventId_itemId")
+  @@map("event_item")
+}
+
+model Item {
+  itemId    Int      @id @default(autoincrement()) @map("item_id")
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("ItemCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ItemUpdatedBy", fields: [updatedBy], references: [id])
+
+  eventItem EventItem[]
+
+  @@map("item")
 }
 
 model Status {
@@ -328,6 +601,12 @@ model Status {
   color     String   @default("none")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("StatusCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("StatusUpdatedBy", fields: [updatedBy], references: [id])
 
   event Event[]
 
@@ -343,6 +622,12 @@ model Configuration {
   type            String
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
+
+  createdBy Int? @map("created_by")
+  updatedBy Int? @map("updated_by")
+
+  createdByUser User? @relation("ConfigurationCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ConfigurationUpdatedBy", fields: [updatedBy], references: [id])
 
   @@map("configuration")
 }

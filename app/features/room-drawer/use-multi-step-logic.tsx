@@ -2,45 +2,74 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
-import { CombinedRoomSchema, CombinedSchema } from "./room-drawer-schema.validator";
+import { CombinedRoomSchema, CombinedSchema } from "./drawer-schema.validator";
 
 import { isFormValid, isStepValid } from "./lib/form-helper";
 import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
-import { IRoom } from "@/lib/schemas/calendar";
+import { IRoom } from "@/lib/schemas";
 import { getFormDefaults, mapRoomToSchema } from "./lib/default-util";
-import { useStepNavigation } from "../event-drawer-refactor/use-step-navigation";
-import { IRoomPUT, SRoomPUT, useRoomQuery, useRoomsMutationDelete, useRoomsMutationUpsert } from "@/lib/services/rooms";
+
+import {
+  IRoomPUT,
+  SRoomPUT,
+  useRoomQuery,
+  useRoomsMutationCreate,
+  useRoomsMutationDelete,
+  useRoomsMutationUpsert,
+} from "@/lib/services/rooms";
+import { useStepNavigation } from "./use-step-navigation";
 
 export const useRoomFormLogic = (props: {
   room?: IRoom;
-  creationDate?: Date;
   formSteps: FormStep[];
   onClose: () => void;
   onOpen: () => void;
   isOpen: boolean;
-}) => {
+}): MultiStepFormContextProps => {
+  const originRef = useRef<HTMLElement | null>(null);
+
+  const mutationCreate = useRoomsMutationCreate();
   const mutationUpsert = useRoomsMutationUpsert();
   const mutationDelete = useRoomsMutationDelete();
 
-  // 1. Resolve Initial Values
   const defaultFormValues = useMemo(() => {
     if (props.room) return mapRoomToSchema(props.room);
     return getFormDefaults();
   }, [props.room]);
 
-  // 2. Form & Navigation State
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedRoomSchema),
     defaultValues: defaultFormValues,
     mode: "onChange",
   });
 
+  useEffect(() => {
+    if (props.isOpen) {
+      originRef.current = document.activeElement as HTMLElement;
+
+      methods.reset(defaultFormValues);
+      setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
+    }
+  }, [props.isOpen, methods, defaultFormValues]);
+
+  const { data: collectedRoom, isFetching, refetch } = useRoomQuery(Number(defaultFormValues.roomId), false);
+
   const [status, setStatus] = useState<FormStatus>(defaultFormValues.roomId === "0" ? "New" : "Read");
 
-  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
+  const formStatus = useMemo(
+    () => ({
+      isNew: status === "New",
+      isEditing: status === "Edit",
+      isReadOnly: status === "Read",
+      isLoading: status === "Loading" || isFetching,
+      isSaving: mutationCreate.isPending || mutationUpsert.isPending,
+      isDeleting: mutationDelete.isPending,
+      isDisabled: status === "Loading" || mutationCreate.isPending || mutationUpsert.isPending,
+    }),
+    [status, isFetching, mutationCreate.isPending, mutationUpsert.isPending, mutationDelete.isPending],
+  );
 
-  // 3. Data Fetching Sync
-  const { data: collectedRoom, isFetching } = useRoomQuery(Number(defaultFormValues.roomId), status === "Loading");
+  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
 
   const validateStep = async (index: number) => {
     const result = await isStepValid(props.formSteps[index], methods);
@@ -53,23 +82,17 @@ export const useRoomFormLogic = (props: {
   );
 
   useEffect(() => {
-    methods.reset(defaultFormValues);
-    setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
-  }, [defaultFormValues, methods]);
-
-  useEffect(() => {
-    if (status === "Loading" && collectedRoom && !isFetching) {
+    if (formStatus.isLoading && collectedRoom && !isFetching) {
       const parsedData = mapRoomToSchema(collectedRoom);
       methods.reset(parsedData);
 
-      setTimeout(() => setStatus("Edit"), 100);
+      setStatus("Edit");
     }
-    if (status === "Loading" && !isFetching && !collectedRoom) {
+    if (formStatus.isLoading && !isFetching && !collectedRoom) {
       setStatus("Read");
     }
-  }, [status, collectedRoom, isFetching, methods]);
+  }, [collectedRoom, isFetching, methods, formStatus.isLoading]);
 
-  // 4. Handlers
   const resetForm = useCallback(() => {
     methods.reset(defaultFormValues);
     setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
@@ -106,29 +129,70 @@ export const useRoomFormLogic = (props: {
       }),
     };
 
-    const b = SRoomPUT.safeParse(apiPayload);
+    const parsedPayload = SRoomPUT.parse(apiPayload);
 
-    if (!b.success) {
-      console.error(z.prettifyError(b.error));
-    }
-
-    if (b.success) {
-      mutationUpsert.mutate(b.data, {
-        onSuccess: () => {
+    if (!parsedPayload.roomId || parsedPayload.roomId === 0) {
+      mutationCreate.mutate(parsedPayload, {
+        onSettled: () => {
+          resetForm();
+        },
+      });
+    } else {
+      mutationUpsert.mutate(parsedPayload, {
+        onSettled: () => {
           resetForm();
         },
       });
     }
   };
 
+  const handleOpenChange = useCallback(() => {
+    if (methods.formState.isDirty && status !== "Read") {
+      setDialogConfig({
+        variant: "warning",
+        title: "Unsaved Changes",
+        description: "You have unsaved changes. Are you sure you want to close?",
+        confirmText: "Dismiss Form",
+        cancelText: "Continue Editing",
+        confirmAction: "dismiss",
+        cancelAction: "none",
+        showConfirm: true,
+        showCancel: true,
+      });
+    } else {
+      resetForm();
+    }
+  }, [methods, status, resetForm]);
+
+  const onEdit = useCallback(async () => {
+    const { data, isError, error } = await refetch();
+
+    if (data && !isError) {
+      methods.reset(mapRoomToSchema(data));
+      setStatus("Edit");
+      return;
+    }
+
+    if (isError || !data) {
+      setStatus("Read");
+      setDialogConfig({
+        variant: "warning",
+        title: "Edit Failed",
+        description: "We couldn't retrieve the latest room details. Please try again later.",
+        confirmText: "Close",
+        showConfirm: true,
+        confirmAction: "none",
+      });
+    }
+  }, [methods, refetch]);
+
   const onDelete = useCallback(() => {
-    // If eventId is "0", it only exists in local state/draft
+    //If ID === 0, this is a new record, and does not exist in the DB
     if (defaultFormValues.roomId === "0") {
       resetForm();
     } else {
-      // If it exists on the server, call the mutation
       mutationDelete.mutate(Number(defaultFormValues.roomId), {
-        onSuccess: () => {
+        onSettled: () => {
           resetForm();
         },
       });
@@ -151,23 +215,32 @@ export const useRoomFormLogic = (props: {
   );
 
   return {
+    ...formStatus,
     goToStep,
-    onDelete,
     methods,
     currentStepIndex,
     status,
     setStatus,
     resetForm,
     onSave,
+    onEdit,
+    onClose: props.onClose,
+    onDelete,
     mutationUpsert,
     mutationDelete,
     dialogConfig,
     setDialogConfig,
     handleDialogAction,
+    handleOpenChange,
     defaultFormValues,
     nextStep,
     previousStep,
     previousStepHasError: navigationStatus.prevError,
     nextStepHasError: navigationStatus.nextError,
+    steps: props.formSteps,
+    currentStep: props.formSteps[currentStepIndex],
+    isFirstStep: currentStepIndex === 0,
+    isLastStep: currentStepIndex === props.formSteps.length - 1,
+    originRef,
   };
 };

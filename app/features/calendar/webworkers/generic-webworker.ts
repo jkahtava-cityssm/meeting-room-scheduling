@@ -1,13 +1,16 @@
 /// <reference lib="webworker" />
 
-import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
+import { IEvent } from "@/lib/schemas";
+import { TStatusKey, TVisibleHours } from "@/lib/types";
 import {
+  calculateMultiDayEventPositions,
   calculateViewBoundaries,
   filterEventsByRoom,
+  filterEventsByStatus,
   generateMultiDayEventsInPeriod,
   generateRecurringEventsInPeriod,
   getDateRange,
+  setMultiDayEventBoundaries,
   transformToGrid,
   transformToRoomBlocks,
   transformToWeekBlocks,
@@ -31,7 +34,7 @@ export interface IEventBlock {
 
 export interface IEventView {
   index: number;
-  position: "none" | "middle" | "first" | "last";
+  position: "none" | "middle" | "first" | "last" | "single";
   event: IEvent | undefined;
 }
 
@@ -75,7 +78,7 @@ export interface IDayRoomBlock {
 }
 
 export interface IWeekData {
-  dayBlocks: Record<string, Record<string, IEventBlock[]>>;
+  dayBlocks: Record<string, IEventBlock[]>;
   hours: number[];
 }
 
@@ -88,11 +91,11 @@ export type CalendarDataMap = {
 };
 
 export type ProcessedDataMap = {
-	AGENDA: { sortedEvents: IEvent[] };
-	DAY: IDayRoomBlock; // Was TProcessedBlockData (Map)
-	WEEK: IWeekData; // Was TProcessedWeekData (Map)
-	MONTH: { dayViews: IMonthDayView[]; weekViews: IMonthWeekView[] };
-	YEAR: { monthViews: IYearMonthView[] };
+  AGENDA: { sortedEvents: IEvent[] };
+  DAY: IDayRoomBlock; // Was TProcessedBlockData (Map)
+  WEEK: IWeekData; // Was TProcessedWeekData (Map)
+  MONTH: { dayViews: IMonthDayView[]; weekViews: IMonthWeekView[] };
+  YEAR: { monthViews: IYearMonthView[] };
 };
 
 export interface ICalendarProcessData {
@@ -104,6 +107,7 @@ export interface ICalendarProcessData {
   action: CalendarAction;
   requestId: number;
   userId?: string;
+  statusKeys?: TStatusKey[];
 }
 
 export interface IUnifiedResponse<A extends CalendarAction = CalendarAction> {
@@ -115,89 +119,103 @@ export interface IUnifiedResponse<A extends CalendarAction = CalendarAction> {
 }
 
 self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
-	if (!event.data) return;
+  if (!event.data) return;
 
-	const requestId: number = event.data.requestId;
+  const requestId: number = event.data.requestId;
 
-	try {
-		let payload: ICalendarProcessData | null = event.data;
-		const { action, events, selectedDate, visibleHours } = payload;
+  try {
+    let payload: ICalendarProcessData | null = event.data;
+    const { action, events, selectedDate, visibleHours, statusKeys } = payload;
 
-		const currentDate = new Date(selectedDate);
+    const currentDate = new Date(selectedDate);
 
-		// Get DateRange Based on View
-		const range = getDateRange(action, currentDate);
+    // Get DateRange Based on View
+    const range = getDateRange(action, currentDate);
 
-		const viewBounds = calculateViewBoundaries(visibleHours, events as IEvent[]);
+    const [multiDayEvents, recurringEvents] = await Promise.all([
+      calculateMultiDayEventPositions(events as IEvent[], range.startDate, range.endDate),
+      generateRecurringEventsInPeriod(events as IEvent[], range.startDate, range.endDate),
+    ]);
+    const viewBounds = calculateViewBoundaries(
+      visibleHours,
+      [...multiDayEvents, ...recurringEvents] as IEvent[],
+      range.startDate,
+      range.endDate,
+    );
 
-		const [multiDayEvents, recurringEvents] = await Promise.all([
-			generateMultiDayEventsInPeriod(events as IEvent[], range.startDate, range.endDate, viewBounds.from, viewBounds.to),
-			generateRecurringEventsInPeriod(events as IEvent[], range.startDate, range.endDate),
-		]);
+    setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
+    const filtered = filterEventsByRoom([...multiDayEvents, ...recurringEvents], payload.selectedRoomId || "-1");
+    const filteredByStatus = filterEventsByStatus(filtered, statusKeys ?? []);
 
-		const filtered = filterEventsByRoom([...multiDayEvents, ...recurringEvents], payload.selectedRoomId || "-1");
+    const sortedEvents = filteredByStatus.sort(
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+    );
+    // 2. Generic Transformation Logic
+    let resultData: CalendarDataMap[CalendarAction] | null = null;
 
-		const sortedEvents = filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-		// 2. Generic Transformation Logic
-		let resultData: CalendarDataMap[CalendarAction] | null = null;
+    switch (action) {
+      case "AGENDA":
+        resultData = { sortedEvents };
+        break;
 
-		switch (action) {
-			case "AGENDA":
-				resultData = { sortedEvents };
-				break;
+      case "DAY":
+        // These all share the "Block" logic with different date ranges
+        const blockResult = transformToRoomBlocks(sortedEvents, viewBounds.from, viewBounds.to);
+        resultData = {
+          roomBlocks: blockResult.roomBlocks,
+          hours: blockResult.hours,
+        };
+        break;
+      case "WEEK":
+        const weekResult = transformToWeekBlocks(
+          sortedEvents,
+          viewBounds.from,
+          viewBounds.to,
+          range.startDate,
+          range.endDate,
+        );
 
-			case "DAY":
-				// These all share the "Block" logic with different date ranges
-				const blockResult = transformToRoomBlocks(sortedEvents, viewBounds.from, viewBounds.to);
-				resultData = {
-					roomBlocks: blockResult.roomBlocks,
-					hours: blockResult.hours,
-				};
-				break;
-			case "WEEK":
-				const weekResult = transformToWeekBlocks(sortedEvents, viewBounds.from, viewBounds.to, range.startDate, range.endDate);
+        resultData = {
+          dayBlocks: weekResult.dayBlocks, // This will be a Record for DAY/PUBLIC, and an Array for WEEK
+          hours: weekResult.hours,
+        };
+        break;
+      case "MONTH":
+        const gridResult = transformToGrid(sortedEvents, currentDate, payload.multiDayEventsAtTop);
+        resultData = { dayViews: gridResult.dayViews, weekViews: gridResult.weekViews };
+        break;
 
-				resultData = {
-					dayBlocks: weekResult.dayBlocks, // This will be a Record for DAY/PUBLIC, and an Array for WEEK
-					hours: weekResult.hours,
-				};
-				break;
-			case "MONTH":
-				const gridResult = transformToGrid(sortedEvents, currentDate, payload.multiDayEventsAtTop);
-				resultData = { dayViews: gridResult.dayViews, weekViews: gridResult.weekViews };
-				break;
+      case "YEAR":
+        const yearResult = transformToYearly(sortedEvents, currentDate);
+        resultData = { monthViews: yearResult.monthViews };
+        break;
+      default:
+        throw new Error(`Unsupported action: ${action}`);
+    }
 
-			case "YEAR":
-				const yearResult = transformToYearly(sortedEvents, currentDate);
-				resultData = { monthViews: yearResult.monthViews };
-				break;
-			default:
-				throw new Error(`Unsupported action: ${action}`);
-		}
+    if (!resultData) throw new Error("Transformation failed to produce data");
 
-		if (!resultData) throw new Error("Transformation failed to produce data");
+    const response: IUnifiedResponse = {
+      totalEvents: sortedEvents.length,
+      action,
+      data: resultData,
+      requestId,
+    };
 
-		const response: IUnifiedResponse = {
-			totalEvents: sortedEvents.length,
-			action,
-			data: resultData,
-			requestId,
-		};
+    const bytes = new TextEncoder().encode(JSON.stringify(response));
+    self.postMessage(bytes.buffer, [bytes.buffer]);
 
-		const bytes = new TextEncoder().encode(JSON.stringify(response));
-		self.postMessage(bytes.buffer, [bytes.buffer]);
+    resultData = null;
+    payload = null;
+  } catch (error) {
+    const errorPayload = {
+      error: error instanceof Error ? error.message : "Unknown Worker Error",
+      requestId: requestId ? requestId : -1,
+    };
 
-		resultData = null;
-		payload = null;
-	} catch (error) {
-		const errorPayload = {
-			error: error instanceof Error ? error.message : "Unknown Worker Error",
-			requestId: requestId ? requestId : -1,
-		};
+    const bytes = new TextEncoder().encode(JSON.stringify(errorPayload));
+    const errorBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 
-		const bytes = new TextEncoder().encode(JSON.stringify(errorPayload));
-		const errorBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-
-		self.postMessage(errorBuffer, [errorBuffer]);
-	}
+    self.postMessage(errorBuffer, [errorBuffer]);
+  }
 };

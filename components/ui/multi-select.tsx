@@ -40,9 +40,11 @@ export interface AnimationConfig {
 const multiSelectVariants = cva("m-1 transition-all duration-300 ease-in-out", {
   variants: {
     variant: {
-      default: "border-foreground/10 text-foreground bg-card hover:bg-card/80",
-      secondary: "border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80",
-      destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+      default: "border-foreground/10 text-foreground bg-card hover:bg-card/80 shadow-md ring-1 ring-white/10",
+      secondary:
+        "border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md ring-1 ring-white/10",
+      destructive:
+        "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 shadow-md ring-1 ring-white/10",
       inverted: "inverted",
     },
     badgeAnimation: {
@@ -606,9 +608,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
       onValueChange([]);
     };
 
-    const handleTogglePopover = () => {
+    const handleTogglePopover = (value: boolean) => {
       if (disabled) return;
-      setIsPopoverOpen((prev) => !prev);
+
+      if (value) {
+        setSearchValue("");
+      }
+
+      setIsPopoverOpen(value);
     };
 
     const clearExtraOptions = () => {
@@ -657,12 +664,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     };
 
     const widthConstraints = getWidthConstraints();
-
-    React.useEffect(() => {
-      if (!isPopoverOpen) {
-        setSearchValue("");
-      }
-    }, [isPopoverOpen]);
 
     React.useEffect(() => {
       const selectedCount = selectedValues.length;
@@ -721,7 +722,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
           </div>
         </div>
 
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal={modalPopover}>
+        <Popover open={isPopoverOpen} onOpenChange={handleTogglePopover} modal={modalPopover}>
           <div id={triggerDescriptionId} className="sr-only">
             Multi-select dropdown. Use arrow keys to navigate, Enter to select, and Escape to close.
           </div>
@@ -736,9 +737,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
           <PopoverTrigger asChild>
             <Button
+              variant="combobox"
               ref={buttonRef}
               {...props}
-              onClick={handleTogglePopover}
+              //onClick={handleTogglePopover}
               disabled={disabled}
               role="combobox"
               aria-expanded={isPopoverOpen}
@@ -749,7 +751,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                 getAllOptions().length
               } options selected. ${placeholder}`}
               className={cn(
-                "flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit [&_svg]:pointer-events-auto",
+                "flex p-1 rounded-md border min-h-10 h-auto items-center justify-between bg-inherit hover:bg-inherit", // [&_svg]:pointer-events-auto
                 autoSize ? "w-auto" : "w-full",
                 responsiveSettings.compactMode && "min-h-8 text-sm",
                 screenSize === "mobile" && "min-h-12 text-base",
@@ -832,7 +834,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                 })}
                               />
                             )}
-                            <span className={cn(screenSize === "mobile" && "truncate")}>{option.label}</span>
                             {!disabled && (
                               <div
                                 role="button"
@@ -851,13 +852,14 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                                 aria-disabled={disabled}
                                 aria-label={`Remove ${option.label} from selection`}
                                 className={cn(
-                                  "ml-2 h-4 w-4 cursor-auto text-muted-foreground rounded-sm ",
+                                  "mr-1 h-4 w-4 cursor-auto text-muted-foreground rounded-sm ",
                                   !disabled && "cursor-pointer hover:text-foreground",
                                 )}
                               >
                                 <XCircle className={cn("h-3 w-3 ", responsiveSettings.compactMode && "h-2.5 w-2.5")} />
                               </div>
                             )}
+                            <span className={cn(screenSize === "mobile" && "truncate")}>{option.label}</span>
                           </Badge>
                         );
                       })
@@ -882,7 +884,6 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           animationDelay: `${animationConfig?.delay || 0}s`,
                         }}
                       >
-                        {`+ ${selectedValues.length - responsiveSettings.maxCount} more`}
                         {!disabled && (
                           <XCircle
                             aria-readonly={disabled}
@@ -897,6 +898,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             }}
                           />
                         )}
+                        {`+ ${selectedValues.length - responsiveSettings.maxCount} more`}
                       </Badge>
                     )}
                   </div>
@@ -923,14 +925,21 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           "cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ",
                       )}
                     >
-                      <XIcon className="h-4 w-4" />
+                      {!disabled && <XIcon className="h-4 w-4" />}
                     </div>
-                    <Separator orientation="vertical" className="flex min-h-6 h-full" />
-                    <ChevronDown
-                      aria-readonly={disabled}
-                      className="h-4 mx-2 cursor-pointer text-muted-foreground aria-readonly:cursor-auto"
-                      aria-hidden="true"
-                    />
+                    {!disabled && <Separator orientation="vertical" className="flex min-h-6 h-full" />}
+                    {!disabled && (
+                      <div
+                        className="cursor-pointer aria-readonly:cursor-auto"
+                        aria-hidden="true"
+                        aria-readonly={disabled}
+                      >
+                        <ChevronDown
+                          className="h-4 mx-2 pointer-events-none text-muted-foreground "
+                          aria-hidden="true"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -960,12 +969,21 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         <span className={cn(screenSize === "mobile" && "truncate")}>{placeholderBadge.label}</span>
                       </Badge>
                     )}
-                    <span className="text-sm text-muted-foreground mx-3">{placeholder}</span>
+                    <span className="text-sm font-normal text-muted-foreground mx-3">{placeholder}</span>
                   </div>
-                  <ChevronDown
-                    aria-readonly={disabled}
-                    className="h-4 cursor-pointer text-muted-foreground mx-2 aria-readonly:cursor-auto"
-                  />
+                  {!disabled && (
+                    <div
+                      className="cursor-pointer aria-readonly:cursor-auto"
+                      aria-hidden="true"
+                      aria-readonly={disabled}
+                    >
+                      <ChevronDown
+                        aria-readonly={disabled}
+                        className="h-4 text-muted-foreground mx-2  pointer-events-none"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </Button>
@@ -993,7 +1011,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
             align="start"
             onEscapeKeyDown={() => setIsPopoverOpen(false)}
           >
-            <Command>
+            <Command shouldFilter={false}>
               {searchable && (
                 <CommandInput
                   placeholder={searchText}
@@ -1016,7 +1034,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                   "overscroll-behavior-y-contain",
                 )}
               >
-                <CommandEmpty>{emptyIndicator || noResultText}</CommandEmpty>{" "}
+                <CommandEmpty>{emptyIndicator || noResultText}</CommandEmpty>
                 {!hideSelectAll && !searchValue && (
                   <CommandGroup>
                     <CommandItem
@@ -1054,6 +1072,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           <CommandItem
                             key={option.value}
                             onSelect={() => toggleOption(option.value)}
+                            value={option.value}
+                            keywords={[option.label]}
                             role="option"
                             aria-selected={isSelected}
                             aria-disabled={option.disabled}
@@ -1089,6 +1109,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                         <CommandItem
                           key={option.value}
                           onSelect={() => toggleOption(option.value)}
+                          value={option.value}
+                          keywords={[option.label]}
                           role="option"
                           aria-selected={isSelected}
                           aria-disabled={option.disabled}

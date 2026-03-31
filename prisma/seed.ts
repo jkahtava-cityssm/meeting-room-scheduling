@@ -1,5 +1,6 @@
-import { Action, PrismaClient, Resource, ResourceAction, Role } from "@prisma/client";
+import { Action, Item, PrismaClient, Resource, ResourceAction, Role } from "@prisma/client";
 import {
+  CONFIG_MANIFEST,
   DEFAULT_PERMISSION_SETS,
   DEFAULT_RESOURCE_ACTIONS,
   DEFAULT_USER_ROLES,
@@ -10,10 +11,13 @@ import {
   TConfigurationKeys,
   TStatusKey,
 } from "../lib/types";
-import { addDays, differenceInDays, endOfDay, startOfDay } from "date-fns";
+import { addDays, addYears, differenceInDays, endOfDay, startOfDay } from "date-fns";
 import {
+  DOMAINS,
   EVENTDESCRIPTIONS,
   EVENTS,
+  FIRST_NAMES,
+  LAST_NAMES,
   RECURRENCE_PATTERN,
   RECURRENCE_TYPE,
   TIME_SLOT_INTERVAL_MINUTES,
@@ -172,6 +176,56 @@ async function FindCreatePermissionSet(role: Role, resourceAction: ResourceActio
   };
 }
 
+const getRandom = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
+
+async function CreateRandomUsers(count: number) {
+  const createdUsers = [];
+
+  for (let i = 0; i < count; i++) {
+    const firstName = getRandom(FIRST_NAMES);
+    const lastName = getRandom(LAST_NAMES);
+    const fullName = `${firstName} ${lastName}`;
+
+    // Create a semi-unique email by appending a random number
+    const randomID = Math.floor(Math.random() * 10000);
+    const email = `${firstName}.${lastName}${randomID}@${getRandom(DOMAINS)}`;
+
+    const user = await findCreateUser({
+      name: fullName,
+      email: email,
+
+      employeeNumber: Math.floor(10000 + Math.random() * 90000).toString(),
+      emailVerified: Math.random() > 0.5,
+      employeeActive: true,
+    });
+
+    createdUsers.push(user);
+  }
+
+  return createdUsers;
+}
+async function findCreateUser(userData: {
+  email: string;
+  name: string;
+  employeeNumber: string;
+  emailVerified?: boolean;
+  image?: string | null;
+  employeeActive?: boolean;
+}) {
+  return await prisma.user.upsert({
+    where: { email: userData.email },
+    update: {}, // Leave empty to avoid overwriting existing test data
+    create: {
+      name: userData.name,
+      email: userData.email,
+      emailVerified: userData.emailVerified ?? false,
+      image: userData.image ?? null,
+      externalId: userData.employeeNumber,
+      isActive: userData.employeeActive ?? true,
+    },
+  });
+}
+
 async function FindCreateUserRole(roleId: number, userId: number) {
   let record = await prisma.userRole.findFirst({
     where: { roleId: roleId, userId: userId },
@@ -254,14 +308,24 @@ async function FindCreateProperty(name: string, type: string) {
   });
 }
 
+async function FindCreateItem(name: string): Promise<Item> {
+  let record = await prisma.item.findFirst({ where: { name: name }, orderBy: { itemId: "asc" } });
+
+  if (!record) {
+    record = await prisma.item.create({ data: { name: name } });
+  }
+
+  return record;
+}
+
 async function FindCreateRooms(
   name: string,
   color: TColors,
   icon: IconName,
-
   roomCategoryId: number = 1,
   isPublicFacing: boolean = false,
   roomRoleId?: number[],
+  displayOrder?: number,
 ) {
   let record = await prisma.room.findFirst({
     where: { name: name },
@@ -269,7 +333,14 @@ async function FindCreateRooms(
 
   if (!record) {
     record = await prisma.room.create({
-      data: { name: name, color: color, icon: icon, roomCategoryId: roomCategoryId, publicFacing: isPublicFacing },
+      data: {
+        name: name,
+        color: color,
+        icon: icon,
+        roomCategoryId: roomCategoryId,
+        publicFacing: isPublicFacing,
+        displayOrder: displayOrder,
+      },
     });
   }
 
@@ -322,7 +393,7 @@ function getRandomDescription(): string {
 
 async function getActiveUsers(): Promise<{ id: number }[]> {
   const result = await prisma.user.findMany({
-    where: { employeeActive: true },
+    where: { isActive: true },
     select: { id: true },
     orderBy: { id: "asc" },
   });
@@ -334,7 +405,7 @@ function validateTimeSlotInterval(interval: number): number {
   const validDivisors = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60];
 
   if (!validDivisors.includes(interval)) {
-    console.log(`Invalid timeSlotIntervalMinutes: ${interval}. Must be a positive divisor of 60. Defaulting to 1.`);
+    console.warn(`Invalid timeSlotInterval: ${interval}. Must be a positive divisor of 60. Defaulting to 1.`);
     return 1;
   }
 
@@ -342,19 +413,34 @@ function validateTimeSlotInterval(interval: number): number {
 }
 
 function validateVisibleHours(visibleHoursStart: number, visibleHoursEnd: number) {
-  if (visibleHoursStart >= visibleHoursEnd || visibleHoursStart <= 0 || visibleHoursEnd > 24) {
-    console.log(
+  if (visibleHoursStart >= visibleHoursEnd || visibleHoursStart < 0 || visibleHoursEnd > 25) {
+    console.warn(
       `Invalid visible hour range: start=${visibleHoursStart}, end=${visibleHoursEnd}. ` +
-        `Start Hour must be less than End Hour, start > 0, and end < 24. Defaulting to start=1 and end=24.`,
+        `Start Hour must be less than End Hour, start >= 0, and end < 25. Defaulting to start=0 and end=24.`,
     );
-    visibleHoursStart = 1;
+    visibleHoursStart = 0;
     visibleHoursEnd = 24;
   }
 
   return { visibleHoursStart, visibleHoursEnd };
 }
 
-// This was generated by AI -- minus the part where I added my wedding as an "easter egg" :)
+async function FindCreateEventRecipients(userId: number, eventId: number) {
+  return await prisma.eventRecipient.upsert({
+    where: {
+      eventId_userId: {
+        userId: userId,
+        eventId: eventId,
+      },
+    },
+    update: {},
+    create: {
+      userId: userId,
+      eventId: eventId,
+    },
+  });
+}
+
 async function CreateRandomEvents(
   rooms: {
     name: string;
@@ -367,10 +453,10 @@ async function CreateRandomEvents(
   maxEvents: number,
   visibleHoursStart: number = 8,
   visibleHoursEnd: number = 8,
-  timeSlotIntervalMinutes: number = 15,
+  timeSlotInterval: number = 15,
   maxRangeInDays: number = 30,
 ) {
-  timeSlotIntervalMinutes = validateTimeSlotInterval(timeSlotIntervalMinutes);
+  timeSlotInterval = validateTimeSlotInterval(timeSlotInterval);
 
   const validated = validateVisibleHours(visibleHoursStart, visibleHoursEnd);
   visibleHoursStart = validated.visibleHoursStart;
@@ -382,7 +468,7 @@ async function CreateRandomEvents(
 
   const userList = await getActiveUsers();
 
-  const intervalsInHour = 60 / timeSlotIntervalMinutes;
+  const intervalsInHour = 60 / timeSlotInterval;
   const hourInterval = visibleHoursEnd - visibleHoursStart;
 
   for (let index = 0; index < maxEvents; index++) {
@@ -396,7 +482,7 @@ async function CreateRandomEvents(
     // Set time between 8 AM and 8 PM
     startDate.setHours(
       Math.floor(Math.random() * hourInterval) + visibleHoursStart,
-      Math.floor(Math.random() * intervalsInHour) * timeSlotIntervalMinutes,
+      Math.floor(Math.random() * intervalsInHour) * timeSlotInterval,
       0,
       0,
     );
@@ -411,7 +497,7 @@ async function CreateRandomEvents(
       // Set time between 8 AM and 8 PM
       endDate.setHours(
         Math.floor(Math.random() * hourInterval) + visibleHoursStart,
-        Math.floor(Math.random() * intervalsInHour) * timeSlotIntervalMinutes,
+        Math.floor(Math.random() * intervalsInHour) * timeSlotInterval,
         0,
         0,
       );
@@ -420,14 +506,14 @@ async function CreateRandomEvents(
       const maxDuration = 180;
 
       // Calculate how many intervals fit within the min and max bounds
-      const minSlots = Math.ceil(minDuration / timeSlotIntervalMinutes);
-      const maxSlots = Math.floor(maxDuration / timeSlotIntervalMinutes);
+      const minSlots = Math.ceil(minDuration / timeSlotInterval);
+      const maxSlots = Math.floor(maxDuration / timeSlotInterval);
 
       // Pick a random number of slots within that range
       const slotCount = Math.floor(Math.random() * (maxSlots - minSlots + 1)) + minSlots;
 
       // Final duration in minutes
-      const durationMinutes = slotCount * timeSlotIntervalMinutes;
+      const durationMinutes = slotCount * timeSlotInterval;
 
       endDate.setTime(endDate.getTime() + durationMinutes * 60 * 1000);
     }
@@ -443,7 +529,7 @@ async function CreateRandomEvents(
       endDate.setHours(visibleHoursEnd, 0);
     }
 
-    const b = await prisma.event.create({
+    const event = await prisma.event.create({
       data: {
         roomId: rooms[Math.floor(Math.random() * rooms.length)].roomId,
         startDate: startDate.toISOString(),
@@ -457,7 +543,321 @@ async function CreateRandomEvents(
         updatedAt: startDate.toISOString(),
       },
     });
+
+    const hasRecipients = Math.random() < 0.25;
+
+    if (hasRecipients) {
+      const totalRecipients = Math.floor(Math.random() * 5) + 1;
+
+      const recipientList = userList
+        .filter((_, index) => index !== userIndex) // Remove the current user
+        .sort(() => Math.random() - 0.5) // Simple shuffle (Fisher-Yates is better for large lists)
+        .slice(0, totalRecipients) // Take only what you need
+        .map((u) => u.id); // Grab the IDs
+
+      recipientList.map(async (userId) => await FindCreateEventRecipients(userId, event.eventId));
+    }
   }
+}
+
+/**
+ * Finds the next N DST transitions from a given date by detecting timezone offset changes.
+ * Works with any timezone - detects transitions automatically.
+ * Returns array of objects with transition date and UTC offset change information.
+ */
+function findNextDSTTransitions(fromDate: Date, yearsToSearch: number = 2) {
+  const transitions: Array<{
+    date: Date;
+    direction: "forward" | "backward";
+    offsetBefore: number;
+    offsetAfter: number;
+    offsetChangeMinutes: number;
+  }> = [];
+
+  const searchDate = new Date(fromDate);
+  searchDate.setHours(0, 0, 0, 0);
+
+  // Search up to 2 years in the future to find transitions
+  const endSearch = new Date(searchDate);
+  endSearch.setFullYear(endSearch.getFullYear() + yearsToSearch);
+
+  let currentDate = new Date(searchDate);
+  while (currentDate < endSearch) {
+    const offset1 = currentDate.getTimezoneOffset();
+
+    // Check 1 day ahead
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const offset2 = nextDay.getTimezoneOffset();
+
+    // DST transition detected when UTC offset changes
+    if (offset1 !== offset2) {
+      const offsetChange = offset1 - offset2; // positive = spring forward, negative = fall back
+      transitions.push({
+        date: currentDate,
+        direction: offsetChange > 0 ? "forward" : "backward",
+        offsetBefore: offset1,
+        offsetAfter: offset2,
+        offsetChangeMinutes: Math.abs(offsetChange),
+      });
+      // Skip ahead to avoid detecting the same transition multiple times
+      currentDate = new Date(nextDay);
+      currentDate.setDate(currentDate.getDate() + 7);
+    } else {
+      currentDate = new Date(nextDay);
+    }
+  }
+
+  return transitions;
+}
+
+/**
+ * Creates edge case multi-day events for testing the refactored multi-day event logic.
+ * Tests scenarios like:
+ * - Events ending at midnight
+ * - Events crossing midnight at various times
+ * - Events spanning multiple days
+ * - Events with minimal durations crossing day boundaries
+ * - Events crossing DST transitions (timezone-aware, generic for any timezone)
+ */
+async function CreateEdgeCaseMultiDayEvents(
+  rooms: {
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    roomId: number;
+    color: string;
+    icon: string | null;
+  }[],
+) {
+  const userList = await getActiveUsers();
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate()); // Start 10 days in the future
+  baseDate.setHours(0, 0, 0, 0); // Start at midnight
+
+  // Standard midnight-crossing edge cases
+  const midnightEdgeCases = [
+    {
+      name: "11PM to 1AM (2 hour duration, crosses midnight)",
+      description: "Event starts late evening and ends after midnight",
+      startTime: { hours: 23, minutes: 0 },
+      endTime: { hours: 1, minutes: 0 },
+      dayOffset: 1,
+    },
+    {
+      name: "11PM to 12AM (1 hour, ends at midnight)",
+      description: "Event ends exactly at midnight - edge case that should display as previous day ending",
+      startTime: { hours: 23, minutes: 0 },
+      endTime: { hours: 0, minutes: 0 },
+      dayOffset: 1,
+    },
+    {
+      name: "12AM to 7PM (19 hour duration, starts at midnight)",
+      description: "Event starts at midnight and spans most of the day",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 19, minutes: 0 },
+      dayOffset: 0,
+    },
+    {
+      name: "12AM to 12:15AM (15 minutes, crosses midnight)",
+      description: "Minimal duration event crossing midnight",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 0, minutes: 15 },
+      dayOffset: 0,
+    },
+    {
+      name: "11:45PM to 12:15AM (30 minutes, crosses midnight)",
+      description: "Short event crossing midnight boundary",
+      startTime: { hours: 23, minutes: 45 },
+      endTime: { hours: 0, minutes: 15 },
+      dayOffset: 1,
+    },
+    {
+      name: "2-day span (12AM to 6PM on day 2)",
+      description: "Multi-day event spanning exactly 2 calendar days",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 18, minutes: 0 },
+      dayOffset: 1,
+    },
+    {
+      name: "14-day span (8AM to 4PM on day 14)",
+      description: "Long multi-day event spanning 14 calendar days",
+      startTime: { hours: 8, minutes: 0 },
+      endTime: { hours: 16, minutes: 0 },
+      dayOffset: 13,
+    },
+    {
+      name: "3-day span ending at midnight",
+      description: "Multi-day event that ends exactly at midnight on day 3",
+      startTime: { hours: 9, minutes: 0 },
+      endTime: { hours: 0, minutes: 0 },
+      dayOffset: 2,
+    },
+    {
+      name: "11:30PM to 2:30AM (3 hours, midnight transition)",
+      description: "Longer event crossing midnight",
+      startTime: { hours: 23, minutes: 30 },
+      endTime: { hours: 2, minutes: 30 },
+      dayOffset: 1,
+    },
+    {
+      name: "5-day all-day event (12AM to 12AM)",
+      description: "All-day event spanning 5 days, ending at midnight",
+      startTime: { hours: 0, minutes: 0 },
+      endTime: { hours: 0, minutes: 0 },
+      dayOffset: 4,
+    },
+    {
+      name: "10:45PM to 11:15PM next day (25 hour duration)",
+      description: "Event spanning almost full day crossing midnight",
+      startTime: { hours: 22, minutes: 45 },
+      endTime: { hours: 23, minutes: 15 },
+      dayOffset: 1,
+    },
+    {
+      name: "1AM to 11:59PM (almost full day)",
+      description: "Event nearly spanning a full day, ending just before midnight",
+      startTime: { hours: 1, minutes: 0 },
+      endTime: { hours: 23, minutes: 59 },
+      dayOffset: 0,
+    },
+  ];
+
+  console.log("\n=== MIDNIGHT EDGE CASES ===");
+  for (const edgeCase of midnightEdgeCases) {
+    const startDate = new Date(baseDate);
+    const endDate = new Date(baseDate);
+
+    // Set start time
+    startDate.setHours(edgeCase.startTime.hours, edgeCase.startTime.minutes, 0, 0);
+
+    // Set end time with day offset
+    endDate.setDate(endDate.getDate() + edgeCase.dayOffset);
+    endDate.setHours(edgeCase.endTime.hours, edgeCase.endTime.minutes, 0, 0);
+
+    const userIndex = Math.floor(Math.random() * userList.length);
+    const roomIndex = Math.floor(Math.random() * rooms.length);
+
+    try {
+      const event = await prisma.event.create({
+        data: {
+          roomId: rooms[roomIndex].roomId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          title: edgeCase.name,
+          description: edgeCase.description,
+          recurrenceId: null,
+          statusId: 1,
+          userId: userList[userIndex].id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log(`Created edge case: "${edgeCase.name}"`);
+    } catch (error) {
+      console.error(`Failed to create edge case "${edgeCase.name}":`, error);
+    }
+  }
+
+  // Find and test DST transitions
+  console.log("\n=== DETECTING DST TRANSITIONS ===");
+  const dstTransitions = findNextDSTTransitions(addYears(baseDate, -2), 4);
+
+  if (dstTransitions.length === 0) {
+    console.log("No DST transitions found in the next 2 years for this timezone");
+  } else {
+    for (const transition of dstTransitions) {
+      const transitionDate = new Date(transition.date);
+      const offsetLabel =
+        transition.direction === "forward"
+          ? `Spring Forward (UTC${transition.offsetAfter / 60}h)`
+          : `Fall Back (UTC${transition.offsetAfter / 60}h)`;
+
+      console.log(`\nDST Transition: ${offsetLabel}`);
+      console.log(
+        `   Date: ${transitionDate.toLocaleDateString()} (${transitionDate.toLocaleDateString("en-US", { weekday: "long" })})`,
+      );
+      console.log(`   Offset change: ${transition.offsetChangeMinutes} minutes`);
+
+      // Create DST-specific edge case events
+      const dstEdgeCases = [
+        {
+          name: `Event spanning DST transition (1 day before to 1 day after)`,
+          description: `Multi-day event crossing the ${transition.direction === "forward" ? "spring forward" : "fall back"} DST transition`,
+          daysBeforeTransition: 1,
+          daysAfterTransition: 1,
+          startHour: 10,
+          endHour: 14,
+        },
+        {
+          name: `Event on DST transition day (12AM to 11PM)`,
+          description: `Full day event on the exact DST transition day`,
+          daysBeforeTransition: 0,
+          daysAfterTransition: 0,
+          startHour: 0,
+          endHour: 23,
+        },
+        {
+          name: `Event ending at 2AM on DST transition (spring forward)`,
+          description: `Event that ends around the 2AM transition time during spring forward`,
+          daysBeforeTransition: 0,
+          daysAfterTransition: 0,
+          startHour: 23,
+          endHour: 2,
+        },
+        {
+          name: `Event crossing DST boundary (8PM to 9AM next day)`,
+          description: `Evening through morning event crossing DST transition`,
+          daysBeforeTransition: 0,
+          daysAfterTransition: 1,
+          startHour: 20,
+          endHour: 9,
+        },
+      ];
+
+      for (const dstCase of dstEdgeCases) {
+        const startDate = new Date(transition.date);
+        startDate.setDate(startDate.getDate() - dstCase.daysBeforeTransition);
+        startDate.setHours(dstCase.startHour, 0, 0, 0);
+
+        const endDate = new Date(transition.date);
+        endDate.setDate(endDate.getDate() + dstCase.daysAfterTransition);
+        endDate.setHours(dstCase.endHour, 0, 0, 0);
+
+        // Adjust for day wraparound if endHour is less than startHour
+        if (dstCase.daysAfterTransition === 0 && dstCase.endHour < dstCase.startHour) {
+          endDate.setDate(endDate.getDate() + 1);
+        }
+
+        const userIndex = Math.floor(Math.random() * userList.length);
+        const roomIndex = Math.floor(Math.random() * rooms.length);
+
+        try {
+          const event = await prisma.event.create({
+            data: {
+              roomId: rooms[roomIndex].roomId,
+              startDate: startDate.toISOString(),
+              endDate: endDate.toISOString(),
+              title: dstCase.name,
+              description: dstCase.description,
+              recurrenceId: null,
+              statusId: 1,
+              userId: userList[userIndex].id,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          });
+
+          console.log(`Created DST test: "${dstCase.name}"`);
+        } catch (error) {
+          console.error(`Failed to create DST test "${dstCase.name}":`, error);
+        }
+      }
+    }
+  }
+
+  console.log(`\nCompleted creating edge case multi-day events for testing.`);
 }
 
 function randomToggle(chance: "75" | "50" | "25" | "10") {
@@ -625,17 +1025,11 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
     return null;
   }
 
-  //console.log(newRule.all().at(-1));
-  /*if (!newRule.all().at(-1)) {
-    //console.log(newRule);
-    //console.log(newRule.toString());
-  }*/
   //parseISO(newRule.all().at(0)?.toISOString());
   const newEndDate = newRule.all().at(-1); //parseISO(newRule.all().at(-1)?.toISOString());
   const firstStartDate = newRule.all().at(0);
 
   if (!newEndDate || !firstStartDate) {
-    //console.log("NO END DATE");
     return null;
   }
 
@@ -714,7 +1108,7 @@ async function createLinkedServer() {
     LANGUAGE 'sql'
     AS $BODY$
     INSERT INTO public.user
-    (name, email, image, employee_number,department,employee_active,created_at, updated_at)
+    (name, email, image, external_id,department,is_active,created_at, updated_at)
     SELECT employee_full_name,
         work_email,
         image,
@@ -757,9 +1151,9 @@ async function createLinkedServer() {
     DO UPDATE SET
       name = EXCLUDED.name,
       email = EXCLUDED.email,
-      employee_number = EXCLUDED.employee_number,
+      external_id = EXCLUDED.external_id,
       department = EXCLUDED.department,
-      employee_active = EXCLUDED.employee_active,
+      is_active = EXCLUDED.is_active,
       image = EXCLUDED.image,
       updated_at = now();
     $BODY$;`,
@@ -771,23 +1165,6 @@ async function createLinkedServer() {
 }
 
 async function main() {
-  if (process.env.LINKED_SERVER === "1") {
-    await createLinkedServer();
-  } else {
-    await prisma.user.upsert({
-      where: { email: "Default@Default.com" },
-      update: {},
-      create: {
-        name: "Default",
-        email: "Default@Default.com",
-        emailVerified: false,
-        image: null,
-        employeeNumber: "0",
-        employeeActive: true,
-      },
-    });
-  }
-
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();
@@ -819,7 +1196,17 @@ async function main() {
     }
   }
 
-  await FindCreateConfigurationSetting(
+  for (const config of CONFIG_MANIFEST) {
+    await FindCreateConfigurationSetting(
+      config.key,
+      config.name,
+      config.description,
+      String(config.defaultValue),
+      config.type,
+    );
+  }
+
+  /*await FindCreateConfigurationSetting(
     "visibleHoursStart",
     "Earliest Visible Hour",
     "The earliest hour that is visible in the calendar view.",
@@ -834,7 +1221,7 @@ async function main() {
     "number",
   );
   await FindCreateConfigurationSetting(
-    "timeSlotIntervalMinutes",
+    "timeSlotInterval",
     "Event Time Slots",
     "The time interval (in minutes) for each event slot in the calendar view.",
     TIME_SLOT_INTERVAL_MINUTES.toString(),
@@ -855,6 +1242,14 @@ async function main() {
     "number",
   );
 
+  await FindCreateConfigurationSetting(
+    "maxBookingSpan",
+    "Max Booking Span",
+    "0 = no limit, determines the maximum number in the future a user can create events",
+    "30",
+    "number",
+  );
+*/
   const roomList: {
     roomId: number;
     name: string;
@@ -878,20 +1273,22 @@ async function main() {
 
   const ClerkOnlyRooms = [roles["Clerk"].roleId];
 
-  roomList.push(await FindCreateRooms("Biggings Room", "orange", "book-key", category_large, true));
-  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "book-key", category_large, true));
-  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "book-key", category_large, true));
-  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "book-key", category_large, true));
-  roomList.push(await FindCreateRooms("IT Training Room", "pink", "book-key", category_large, true));
-  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "book-key", category_special, true));
-  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "book-key", category_special, true));
+  roomList.push(await FindCreateRooms("Biggings Room", "orange", "book-key", category_large, true, undefined, 1));
+  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "book-key", category_large, true, undefined, 3));
+  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "book-key", category_large, true, undefined, 4));
+  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "book-key", category_large, true, undefined, 2));
+  roomList.push(await FindCreateRooms("IT Training Room", "pink", "book-key", category_large, true, undefined, 8));
+  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "book-key", category_special, true, undefined, 9));
+  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "book-key", category_special, true, undefined, 11));
 
-  roomList.push(await FindCreateRooms("Algoma Board Room", "red", "book-key", category_special, false, ClerkOnlyRooms));
-  roomList.push(await FindCreateRooms("Cafeteria", "amber", "book-key", category_special, false, ClerkOnlyRooms));
-  roomList.push(await FindCreateRooms("Penthouse", "violet", "book-key", category_special, false, ClerkOnlyRooms));
-  roomList.push(await FindCreateRooms("Korah Room", "green", "book-key", category_small, true));
-  roomList.push(await FindCreateRooms("Steelton Room", "slate", "book-key", category_small, true));
-  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "book-key", category_small, true));
+  roomList.push(
+    await FindCreateRooms("Algoma Board Room", "red", "book-key", category_special, false, ClerkOnlyRooms, 12),
+  );
+  roomList.push(await FindCreateRooms("Cafeteria", "amber", "book-key", category_special, false, ClerkOnlyRooms, 13));
+  roomList.push(await FindCreateRooms("Penthouse", "violet", "book-key", category_special, false, ClerkOnlyRooms, 10));
+  roomList.push(await FindCreateRooms("Korah Room", "green", "book-key", category_small, true, undefined, 5));
+  roomList.push(await FindCreateRooms("Steelton Room", "slate", "book-key", category_small, true, undefined, 7));
+  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "book-key", category_small, true, undefined, 6));
 
   const projectorRooms: string[] = [
     "Biggings Room",
@@ -918,23 +1315,22 @@ async function main() {
   await FindCreateEventStatus("Rejected", "circle-x", "red", "REJECTED");
   await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue", "INFORMATION");
 
-  const user = await prisma.user.findFirst({ orderBy: { id: "asc" } });
-  if (!user) {
-    console.log("No users found, cannot continue seeding");
-    return;
+  console.log("Seeding Event Items...");
+  await FindCreateItem("Coffee");
+  await FindCreateItem("Tea");
+
+  console.log("Seeding Default Admin...");
+  //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
+
+  if (process.env.LINKED_SERVER === "1") {
+    await createLinkedServer();
   }
 
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
-    console.log("Seeding Random Events...");
-    await prisma.event.deleteMany();
-    await prisma.recurrence.deleteMany();
-
-    CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
-
-    CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+    console.log("Seeding Random Users...");
+    await prisma.user.deleteMany();
+    CreateRandomUsers(50);
   }
-
-  //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
 
   if (process.env.ADMIN_USER_EMAIL) {
     const ADMIN_USER = await prisma.user.upsert({
@@ -945,12 +1341,25 @@ async function main() {
         email: process.env.ADMIN_USER_EMAIL,
         emailVerified: false,
         image: null,
-        employeeNumber: "000",
-        employeeActive: true,
+        externalId: "000",
+        isActive: true,
       },
     });
     const adminRole = await FindCreateRole("Admin");
     const adminUserRole = await FindCreateUserRole(adminRole.roleId, ADMIN_USER.id);
+  }
+
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
+    console.log("Seeding Random Events...");
+    await prisma.event.deleteMany();
+    await prisma.recurrence.deleteMany();
+
+    CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
+
+    CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+
+    console.log("Seeding Edge Case Multi-Day Events...");
+    await CreateEdgeCaseMultiDayEvents(roomList);
   }
 
   /*
@@ -993,7 +1402,6 @@ async function main() {
       },
     },
   });*/
-  //console.log({ alice, bob });
 }
 main()
   .then(async () => {

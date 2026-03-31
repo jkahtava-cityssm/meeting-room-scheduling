@@ -10,6 +10,7 @@ import { SessionAction, SessionResource, SessionRole } from "./types";
 import { getCachedUserRoles } from "./auth-role-cache";
 import { nextCookies } from "better-auth/next-js";
 import { getDefaultRole } from "./data/users";
+import { fetchPrivateCachedUserRole } from "./server/private";
 
 export type User = {
   userId: string | undefined | null;
@@ -73,12 +74,8 @@ export const auth = betterAuth({
       updateUserInfoOnLink: true,
     },
   },
-  trustedOrigins: [
-    "http://192.168.50.33",
-    "https://192.168.50.33",
-    "http://localhost:3000",
-    "https://exampledomain.home",
-  ],
+  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(",").filter(Boolean) || [],
+
   databaseHooks: {
     session: {
       create: {
@@ -116,7 +113,14 @@ export const auth = betterAuth({
       const currentSession = session as Session & { impersonatedRole?: string };
       const token = session.token;
       const userId = Number(user.id);
-      const roles = await getCachedUserRoles(token, userId, currentSession.impersonatedRole);
+
+      const impersonatingRole = currentSession.impersonatedRole;
+
+      const cacheKey = impersonatingRole ? `impersonate:${token}:${impersonatingRole}` : token;
+
+      const result = await fetchPrivateCachedUserRole(userId, cacheKey, impersonatingRole as SessionRole);
+
+      const roles = result ? result.data : [];
       return {
         user: {
           ...user,

@@ -119,7 +119,7 @@ export default function RequestHeader({
                 aria-label="By Year"
                 size="icon"
                 variant={view === "year" ? "default" : "outline"}
-                className="-ml-px rounded-none [&_svg]:size-5"
+                className="-ml-px rounded-l-none [&_svg]:size-5"
               >
                 <Link href={navigateURL(selectedDate, "year")}>
                   <Grid2x2 strokeWidth={1.8} />
@@ -129,48 +129,6 @@ export default function RequestHeader({
             <TooltipPortal>
               <TooltipContent className="max-w-64" side="top" sticky="always">
                 Year View
-              </TooltipContent>
-            </TooltipPortal>
-          </Tooltip>
-
-          <Tooltip delayDuration={500}>
-            <TooltipTrigger asChild>
-              <Button
-                asChild
-                aria-label="All Time"
-                size="icon"
-                variant={view === "all" ? "default" : "outline"}
-                className="-ml-px rounded-none [&_svg]:size-5"
-              >
-                <Link href={navigateURL(selectedDate, "all")}>
-                  <Grid3x3 strokeWidth={1.8} />
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipPortal>
-              <TooltipContent className="max-w-64" side="top" sticky="always">
-                All of Time View
-              </TooltipContent>
-            </TooltipPortal>
-          </Tooltip>
-
-          <Tooltip delayDuration={500}>
-            <TooltipTrigger asChild>
-              <Button
-                asChild
-                aria-label="By Year"
-                size="icon"
-                variant={view === "agenda" ? "default" : "outline"}
-                className="-ml-px rounded-l-none [&_svg]:size-5"
-              >
-                <Link href={navigateURL(selectedDate, "year")}>
-                  <CalendarRange strokeWidth={1.8} />
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipPortal>
-              <TooltipContent className="max-w-64" side="top" sticky="always">
-                OTHER????
               </TooltipContent>
             </TooltipPortal>
           </Tooltip>

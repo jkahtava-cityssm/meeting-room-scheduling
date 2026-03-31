@@ -1,6 +1,6 @@
 import { QueryError } from "@/contexts/ReactQueryProvider";
-import { fetchDELETE, fetchGET, fetchPUT } from "@/lib/fetch";
-import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from "@/lib/schemas/calendar";
+import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from "@/lib/fetch";
+import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from "@/lib/schemas";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { property } from "lodash";
 import { z } from "zod/v4";
@@ -14,6 +14,7 @@ const AllRooms: IRoom = {
   updatedAt: new Date().toISOString(),
   icon: "asterisk",
   publicFacing: false,
+  displayOrder: null,
   roomCategoryId: -1,
   roomCategory: {
     roomCategoryId: -1,
@@ -72,6 +73,7 @@ export const SRoomPUT = z.object({
   color: z.string(),
   icon: z.string(),
   publicFacing: z.union([z.boolean(), z.stringbool()]),
+  displayOrder: z.coerce.number().optional(),
   roomCategoryId: z.coerce.number(),
   roomProperty: z.array(z.object({ propertyId: z.coerce.number(), value: z.string() })).optional(),
   roomRoles: z.array(z.object({ roleId: z.coerce.number() })).optional(),
@@ -96,6 +98,17 @@ export const useRoomsMutationDelete = () => {
     mutationFn: async (roomId: number) => fetchDELETE(`/api/rooms/${roomId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
+    },
+  });
+};
+
+export const useRoomsMutationCreate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: IRoomPUT) => fetchPOST(`/api/rooms`, data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.detail(response.data.roomId) });
     },
   });
 };

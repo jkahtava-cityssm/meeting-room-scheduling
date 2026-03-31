@@ -42,6 +42,8 @@ export type TColors = (typeof COLOR_OPTIONS)[number];
 export type TWorkingHours = { [key: number]: { from: number; to: number } };
 export type TVisibleHours = { from: number; to: number };
 
+export type TEventItems = ["None", "Coffee", "Tea", "Coffee & Tea"];
+
 export type TRecurrenceType = "Between" | "Occurrences" | "Forever";
 export type TRecurrencePeriod = "daily" | "weekly" | "monthly" | "yearly";
 export type TRecurrencePattern =
@@ -55,12 +57,69 @@ export type TRecurrencePattern =
 export const CONFIGURATION_KEYS = [
   "visibleHoursStart",
   "visibleHoursEnd",
-  "timeSlotIntervalMinutes",
+  "timeSlotInterval",
   "singleSignOnEnabled",
   "defaultUserRole",
+  "maxBookingSpan",
 ] as const;
 
-export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
+//export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
+
+export const CONFIG_MANIFEST = [
+  {
+    key: "visibleHoursStart",
+    name: "Earliest Visible Hour",
+    description: "The earliest hour that is visible in the calendar view.",
+    defaultValue: 8,
+    type: "number",
+  },
+
+  {
+    key: "visibleHoursEnd",
+    name: "Latest Visible Hour",
+    description: "The latest hour that is visible in the calendar view.",
+    defaultValue: 8,
+    type: "number",
+  },
+  {
+    key: "timeSlotInterval",
+    name: "Event Time Slots",
+    description: "The time interval (in minutes) for each event slot in the calendar view.",
+    defaultValue: 30,
+    type: "number",
+  },
+  {
+    key: "singleSignOnEnabled",
+    name: "Single Sign On",
+    description: "Whether Single Sign On is enabled for the application.",
+    defaultValue: false,
+    type: "boolean",
+  },
+  {
+    key: "defaultUserRole",
+    name: "Default Role",
+    description: "The default role assigned to new users.",
+    defaultValue: -1,
+    type: "number",
+  },
+  {
+    key: "maxBookingSpan",
+    name: "Max Booking Span",
+    description: "0 = no limit, determines the maximum number in the future a user can create events",
+    defaultValue: 30,
+    type: "number",
+  },
+] as const;
+
+export type TConfigurationKeys = (typeof CONFIG_MANIFEST)[number]["key"];
+
+export type TConfigurationRecord = {
+  [K in (typeof CONFIG_MANIFEST)[number] as K["key"]]: K["type"] extends "number"
+    ? number
+    : K["type"] extends "boolean"
+      ? boolean
+      : string;
+};
 
 /**
  * Default Roles, Resources, Actions, and Permission Sets
@@ -72,11 +131,23 @@ export type SessionRole = (typeof DEFAULT_USER_ROLES)[number];
 export const DEFAULT_RESOURCE_ACTIONS = [
   {
     RESOURCE: "Event",
-    ACTIONS: ["Read All", "Read Self", "Create", "Update", "Delete", "Change Status", "Change Assigned"],
+    ACTIONS: [
+      "Read All",
+      "Read Self",
+      "Create",
+      "Update",
+      "Delete",
+      "Change Status",
+      "Change Assigned",
+      "Allow Recurrence",
+      "Allow Multi-Day",
+      "Ignore Visible Hours",
+      "Ignore Booking Span",
+    ],
   },
   {
     RESOURCE: "Room",
-    ACTIONS: ["Read", "Create", "Update", "Delete", "View Hidden"],
+    ACTIONS: ["Read", "Create", "Update", "Delete"],
   },
   {
     RESOURCE: "User",
@@ -120,9 +191,21 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
     SET: [
       {
         RESOURCE: "Event",
-        ACTIONS: ["Read Self", "Read All", "Create", "Update", "Delete", "Change Status", "Change Assigned"],
+        ACTIONS: [
+          "Read Self",
+          "Read All",
+          "Create",
+          "Update",
+          "Delete",
+          "Change Status",
+          "Change Assigned",
+          "Allow Recurrence",
+          "Allow Multi-Day",
+          "Ignore Visible Hours",
+          "Ignore Booking Span",
+        ],
       },
-      { RESOURCE: "Room", ACTIONS: ["Read", "Create", "Update", "Delete", "View Hidden"] },
+      { RESOURCE: "Room", ACTIONS: ["Read", "Create", "Update", "Delete"] },
       { RESOURCE: "User", ACTIONS: ["Read All"] },
       { RESOURCE: "Calendar", ACTIONS: ["View Day", "View Month", "View Year", "View Agenda", "View Week"] },
       {
@@ -135,7 +218,10 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
   {
     ROLE: "User",
     SET: [
-      { RESOURCE: "Event", ACTIONS: ["Read Self", "Create", "Update"] },
+      {
+        RESOURCE: "Event",
+        ACTIONS: ["Read Self", "Create", "Update"],
+      },
       { RESOURCE: "Room", ACTIONS: ["Read"] },
       { RESOURCE: "User", ACTIONS: ["Read Self"] },
       { RESOURCE: "Calendar", ACTIONS: [] },

@@ -1,7 +1,30 @@
 import { TVisibleHours } from "@/lib/types";
-import { addDays, differenceInDays, endOfDay, isWithinInterval, set, startOfDay } from "date-fns";
+import { addDays, differenceInDays, endOfDay, isWithinInterval, set, startOfDay, subMinutes } from "date-fns";
 import { rrulestr } from "rrule";
-import { IEvent } from "./schemas/calendar";
+import { IEvent } from "./schemas";
+
+function isMidnight(date: Date) {
+  return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
+}
+
+function endsAtMidnight(startDate: Date, endDate: Date): boolean {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  if (!isMidnight(end)) return false;
+
+  return start.getTime() !== end.getTime();
+}
+
+function getAdjustedEndDateForMultiDay(originalEndDate: Date): Date {
+  const end = new Date(originalEndDate);
+
+  if (isMidnight(end)) {
+    return subMinutes(end, 1);
+  }
+
+  return end;
+}
 
 export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: Date, periodEnd: Date) {
   const eventList: IEvent[] = [];
@@ -46,20 +69,31 @@ export function generateMultiDayEventsInPeriod(
   minStartTime: number,
   maxEndTime: number,
 ) {
-
-
   const eventList: IEvent[] = [];
 
   for (const event of events) {
     if (event.recurrenceId !== null) continue;
 
-    const currentStartDate = event.startDate;
-    const currentEndDate = event.endDate;
+    const currentStartDate = new Date(event.startDate);
+    const currentEndDate = new Date(event.endDate);
 
-    const totalDaysBetween = differenceInDays(endOfDay(currentEndDate), startOfDay(currentStartDate));
+    const endAtMidnight = endsAtMidnight(currentStartDate, currentEndDate);
+    const adjustedEndDate = endAtMidnight ? getAdjustedEndDateForMultiDay(currentEndDate) : currentEndDate;
+
+    const totalDaysBetween = differenceInDays(endOfDay(adjustedEndDate), startOfDay(currentStartDate));
 
     if (totalDaysBetween === 0) {
-      eventList.push(event);
+      eventList.push({
+        ...event,
+        multiDay: endAtMidnight
+          ? {
+              position: "single",
+              calculatedDate: currentStartDate.toISOString(),
+              isEndAtMidnight: true,
+              originalEndDate: currentEndDate.toISOString(),
+            }
+          : undefined,
+      });
       continue;
     }
 
@@ -72,7 +106,7 @@ export function generateMultiDayEventsInPeriod(
 
       const newEvent = {
         ...event,
-        eventIsSplit: true,
+
         title: `Day ${dayIndex + 1} of ${totalDaysBetween + 1}` + (event.title ? " - " + event.title : ""),
       };
 
@@ -84,17 +118,22 @@ export function generateMultiDayEventsInPeriod(
           seconds: 0,
           milliseconds: 0,
         }).toISOString();
-        newEvent.multiDay = { position: "first" };
+        newEvent.multiDay = { position: "first", calculatedDate: currentStartDate.toISOString() };
       } else if (dayIndex === totalDaysBetween) {
         //LAST DAY
-        newEvent.startDate = set(currentEndDate, {
+        newEvent.startDate = set(adjustedEndDate, {
           hours: minStartTime,
           minutes: 0,
           seconds: 0,
           milliseconds: 0,
         }).toISOString();
 
-        newEvent.multiDay = { position: "last" };
+        newEvent.multiDay = {
+          position: "last",
+          calculatedDate: adjustedEndDate.toISOString(),
+          isEndAtMidnight: endAtMidnight,
+          originalEndDate: endAtMidnight ? currentEndDate.toISOString() : undefined,
+        };
       } else {
         newEvent.startDate = set(newDay, {
           hours: minStartTime,
@@ -103,7 +142,7 @@ export function generateMultiDayEventsInPeriod(
           milliseconds: 0,
         }).toISOString();
         newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }).toISOString();
-        newEvent.multiDay = { position: "middle" };
+        newEvent.multiDay = { position: "middle", calculatedDate: newDay.toISOString() };
         //MIDDLE DAY
       }
       eventList.push(newEvent);
@@ -123,6 +162,6 @@ function setUTCPartsToDate(d: Date) {
     d.getUTCDate(),
     d.getUTCHours(),
     d.getUTCMinutes(),
-    d.getUTCSeconds()
+    d.getUTCSeconds(),
   );
 }

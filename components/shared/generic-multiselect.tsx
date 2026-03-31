@@ -9,7 +9,7 @@ import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { useMemo, useState } from "react";
-import { MultiSelect } from "../ui/multi-select";
+import { MultiSelect, MultiSelectOption } from "../multi-select/multi-select";
 
 type DataSelectProps<T> = {
   list: T[] | undefined;
@@ -26,9 +26,18 @@ type DataSelectProps<T> = {
   onValueChange: (values: string[]) => void;
   getId: (item: T) => string;
   getLabel: (item: T) => string;
+  getIcon?: (item: T) => IconName;
+  getColor?: (item: T) => TColors;
   className?: string;
   maxCount?: number;
   hideSelectAll?: boolean;
+  hideIcon?: boolean;
+  hideMoreLabel?: boolean;
+  hideClearAll?: boolean;
+  hideClearSingle?: boolean;
+  searchable?: boolean;
+  modalPopover?: boolean;
+  selectAllBadge?: MultiSelectOption;
 };
 
 export function GenericMultiSelect<T>({
@@ -46,17 +55,27 @@ export function GenericMultiSelect<T>({
   onValueChange,
   getId,
   getLabel,
+  getIcon,
+  getColor,
   className,
-  maxCount,
   hideSelectAll = true,
+  hideIcon = false,
+  hideMoreLabel = false,
+  hideClearAll = false,
+  hideClearSingle = false,
+  searchable = true,
+  modalPopover = true,
+  selectAllBadge,
 }: DataSelectProps<T>) {
   const options = useMemo(() => {
     if (!list) return [];
     return list.map((item) => ({
       label: getLabel(item),
       value: getId(item),
+      icon: getIcon && getIcon(item),
+      color: getColor && getColor(item),
     }));
-  }, [list, getLabel, getId]);
+  }, [list, getLabel, getId, getIcon, getColor]);
 
   if (isLoading || !list) {
     return (
@@ -83,19 +102,16 @@ export function GenericMultiSelect<T>({
         placeholderBadge={placeholderBadge}
         searchText={searchText}
         noResultText={noResultText}
-        animationConfig={{
-          badgeAnimation: "none",
-          optionHoverAnimation: "none",
-          popoverAnimation: "none",
-          duration: 100,
-          delay: 100,
-        }}
         disabled={isDisabled}
-        maxCount={maxCount}
+        selectAllBadge={selectAllBadge}
         hideSelectAll={hideSelectAll}
         className={cn(dataInvalid && "border-destructive")}
-        searchable={true}
-        modalPopover={true}
+        hideIcon={hideIcon}
+        hideMoreLabel={hideMoreLabel}
+        hideClearAll={hideClearAll}
+        hideClearSingle={hideClearSingle}
+        searchable={searchable}
+        modalPopover={modalPopover}
       />
     </div>
   );

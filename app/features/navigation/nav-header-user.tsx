@@ -46,7 +46,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
   const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const isImpersonating = Boolean(session?.session?.impersonatedRole);
-  //console.log("canRefreshAPI:", canRefreshAPI);
+
   const listRoles = getSessionRoles(session);
 
   const handleAddImpersonation = async (roleId: string) => {
@@ -136,7 +136,6 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                   }}
                 ></Switch>
               </DropdownMenuItem>
-              {process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && <RefreshMenuItem />}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <SignOutMenuItem />
@@ -160,6 +159,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                     selectedRoleId={selectedRoleId ? selectedRoleId : ""}
                     onRoleChange={setSelectedRoleId}
                     excludeRoleNames={["Admin"]}
+                    className={"w-full"}
                   ></RoleSelect>
                   <Button
                     disabled={!selectedRoleId}
@@ -194,7 +194,6 @@ export default function RefreshMenuItem() {
   const handleClick = async () => {
     const result = await revalidateAndInvalidate();
     if (result.success) {
-      //console.log("Revalidated and invalidated successfully");
     } else {
       console.error("Error:", result.error);
     }

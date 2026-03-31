@@ -13,6 +13,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GenericError } from "@/components/shared/generic-error";
+import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
+import { RevalidateButton } from "./revalidate-api";
 
 export function ConfigurationPage() {
   const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
@@ -35,8 +37,8 @@ export function ConfigurationPage() {
           console.error("Start hour must be before end hour");
           return;
         }
-        if (Number(value) < 1) {
-          console.error("Start hour must be equal to or greater than 1");
+        if (Number(value) < 0) {
+          console.error("Start hour must be equal to or greater than 0");
           return;
         }
       }
@@ -112,6 +114,18 @@ export function ConfigurationPage() {
               </div>
             </React.Fragment>
           ))}
+          <div className="min-h-[70px] border-b flex flex-col justify-center min-w-max pr-4 ">
+            <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">
+              CLEAR CACHED ROUTES
+            </label>
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+              Certain API routes are cached to reduced the number of database calls. Especially for values that dont
+              change very often
+            </p>
+          </div>
+          <div className="min-h-[70px] border-b flex items-center ">
+            <RevalidateButton />
+          </div>
         </div>
       </ScrollArea>
 
@@ -191,7 +205,7 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
   },
 
   // interval requires a specific set of numbers
-  timeSlotIntervalMinutes: ({ entry, onChange }) => (
+  timeSlotInterval: ({ entry, onChange }) => (
     <GenericSelect
       list={[
         { key: 5, label: "5 minutes" },
@@ -217,6 +231,7 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
         onRoleChange={(id, label) => onChange(id)}
         className={""}
         isDisabled={false}
+        showNoneOption={true}
       ></RoleComboBox>
     );
   },

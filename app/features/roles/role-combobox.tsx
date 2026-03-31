@@ -8,6 +8,7 @@ export function RoleComboBox({
   className,
   dataInvalid = false,
   isDisabled = false,
+  showNoneOption = false,
 }: {
   selectedRoleId: string | undefined;
   onRoleChange: (id: string, label: string) => void;
@@ -15,8 +16,9 @@ export function RoleComboBox({
   className?: string;
   dataInvalid?: boolean;
   isDisabled?: boolean;
+  showNoneOption?: boolean;
 }) {
-  const { isPending, data, error } = useRolesQuery();
+  const { isPending, data, error } = useRolesQuery(showNoneOption);
 
   const filteredRoles = excludeRoleNames && data ? data.filter((role) => !excludeRoleNames?.includes(role.name)) : data;
 

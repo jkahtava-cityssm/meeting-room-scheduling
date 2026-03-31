@@ -4,11 +4,12 @@ import { createContext, useContext, useState } from "react";
 
 import type { Dispatch, SetStateAction } from "react";
 
-import type { TVisibleHours } from "@/lib/types";
+import type { TStatusKey, TVisibleHours } from "@/lib/types";
 import { VISIBLE_HOURS } from "../lib/helpers";
 import { usePublicConfiguration } from "@/lib/services/public";
 import { useRoomsQuery } from "@/lib/services/rooms";
-import { IRoom } from "@/lib/schemas/calendar";
+import { IRoom } from "@/lib/schemas";
+import { usePrivateConfigurationQuery } from "@/lib/services/configuration";
 
 interface ICalendarContext {
   selectedDate: Date;
@@ -17,29 +18,47 @@ interface ICalendarContext {
   setIsHeaderLoading: (value: boolean) => void;
   totalEvents: number;
   setTotalEvents: (total: number) => void;
-  selectedRoomId: string;
-  setSelectedRoomId: (roomId: string) => void;
+  selectedRoomIds: string[];
+  setSelectedRoomIds: (roomIds: string[]) => void;
+  selectedStatusKeys: TStatusKey[];
+  setSelectedStatusKeys: (statusIds: TStatusKey[]) => void;
   visibleRooms: IRoom[] | undefined;
-  visibleHours: TVisibleHours;
-  defaultHours: number[];
+  visibleHours: TVisibleHours | undefined;
+  fallbackHours: number[];
   interval: number;
+  maxSpan: number;
+  configurationError: Error | null;
+  roomError: Error | null;
+  isConfigurationPending: boolean;
+  isRoomsPending: boolean;
   //setVisibleHours: Dispatch<SetStateAction<TVisibleHours>>;
 }
 
 const CalendarContext = createContext({} as ICalendarContext);
 
 export function CalendarProviderPrivate({ children }: { children: React.ReactNode }) {
-  const { data: configurationData } = usePublicConfiguration();
-  const { data: visibleRooms } = useRoomsQuery();
+  const {
+    data: config,
+    error: configurationError,
+    isPending: isConfigurationPending,
+  } = usePrivateConfigurationQuery(["visibleHoursStart", "visibleHoursEnd", "timeSlotInterval", "maxBookingSpan"]);
 
-  const visibleHours: TVisibleHours = configurationData ? configurationData.hours : VISIBLE_HOURS;
-  const interval = configurationData ? configurationData.interval : 30;
-  const defaultHours = Array.from({ length: visibleHours.to - visibleHours.from }, (_, i) => i + visibleHours.from);
+  const { data: visibleRooms, error: roomError, isPending: isRoomsPending } = useRoomsQuery();
+
+  const visibleHours = config ? { from: config.visibleHoursStart, to: config.visibleHoursEnd } : undefined;
+  const interval = config ? config.timeSlotInterval : 30;
+  const maxSpan = config ? config.maxBookingSpan : 0;
+
+  const totalFallbackHours = visibleHours ? visibleHours.to - visibleHours.from : 24;
+  const minFallBackHour = visibleHours ? visibleHours.from : 0;
+
+  const fallbackHours = Array.from({ length: totalFallbackHours }, (_, i) => i + minFallBackHour);
 
   const [isHeaderLoading, setIsHeaderLoading] = useState(true);
   const [totalEvents, setTotalEvents] = useState(0);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedRoomId, setSelectedRoomId] = useState<string>("-1");
+  const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>(["-1"]);
+  const [selectedStatusKeys, setSelectedStatusKeys] = useState<TStatusKey[]>(["APPROVED", "PENDING", "INFORMATION"]);
 
   const handleSelectDate = (date: Date | undefined) => {
     if (!date) return;
@@ -55,12 +74,19 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
         setTotalEvents,
         selectedDate,
         setSelectedDate: handleSelectDate,
-        selectedRoomId,
-        setSelectedRoomId,
+        selectedRoomIds,
+        setSelectedRoomIds,
+        selectedStatusKeys,
+        setSelectedStatusKeys,
         visibleRooms,
         visibleHours,
-        defaultHours,
+        fallbackHours,
         interval,
+        maxSpan,
+        configurationError,
+        roomError,
+        isConfigurationPending,
+        isRoomsPending,
       }}
     >
       {children}
@@ -69,7 +95,7 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
 }
 
 export function usePrivateCalendar(): ICalendarContext {
-	const context = useContext(CalendarContext);
-	if (!context) throw new Error("useCalendar must be used within a CalendarProvider.");
-	return context;
+  const context = useContext(CalendarContext);
+  if (!context) throw new Error("useCalendar must be used within a CalendarProvider.");
+  return context;
 }

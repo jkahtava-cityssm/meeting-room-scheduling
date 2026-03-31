@@ -1,9 +1,12 @@
 import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
 
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas";
 import EventDrawerRefactor from "./event-drawer-root";
+import { EventDrawerPermissions } from "./lib/permissions";
+import { useSession } from "@/contexts/SessionProvider";
+import { CombinedSchema } from "./event-drawer-schema.validator";
 
-export type EventDrawerPayload = { creationDate?: Date; event?: IEvent; userId?: string; roomId?: number };
+export type EventDrawerPayload = { creationDate: Date; event?: IEvent; draft?: CombinedSchema; userId?: string; roomId?: number };
 
 // Shared drawer context to avoid mounting many drawers — mount a single EventDrawer
 const SharedDrawerContext = createContext<{
@@ -11,35 +14,46 @@ const SharedDrawerContext = createContext<{
 } | null>(null);
 
 export function SharedEventDrawerProvider({ children }: { children: React.ReactNode }) {
-	const triggerRef = useRef<HTMLButtonElement | null>(null);
-
+	const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const [payload, setPayload] = useState<EventDrawerPayload | null>(null);
+	const [isOpen, setIsOpen] = useState(false);
 
 	const openEventDrawer = useCallback((payload: EventDrawerPayload) => {
-		setPayload(payload || null);
-		// click the hidden trigger to open the sheet inside EventDrawer
-		try {
-			triggerRef.current?.click();
-		} catch (e) {
-			// ignore
-		}
+		if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+
+		setPayload(payload);
+		setIsOpen(true);
+	}, []);
+
+	const closeEventDrawer = useCallback(() => {
+		setIsOpen(false);
+
+		closeTimerRef.current = setTimeout(() => {
+			setPayload(null);
+			closeTimerRef.current = null;
+		}, 300);
 	}, []);
 
 	const ctxValue = useMemo(() => ({ openEventDrawer }), [openEventDrawer]);
+
+	const fallbackDate = useMemo(() => new Date(), []);
 
 	return (
 		<SharedDrawerContext.Provider value={ctxValue}>
 			{children}
 			{/* Offscreen trigger wrapped by the single EventDrawer instance */}
-
-			<EventDrawerRefactor {...payload}>
-				<button
-					ref={triggerRef}
-					aria-hidden
-					tabIndex={-1}
-					onClick={e => e.stopPropagation()}
+			<EventDrawerPermissions.Provider>
+				<EventDrawerRefactor
+					creationDate={payload ? payload.creationDate : fallbackDate}
+					event={payload?.event}
+					draft={payload?.draft}
+					userId={payload?.userId}
+					roomId={payload?.roomId}
+					isOpen={isOpen}
+					onOpen={() => setIsOpen(true)}
+					onClose={() => closeEventDrawer()}
 				/>
-			</EventDrawerRefactor>
+			</EventDrawerPermissions.Provider>
 		</SharedDrawerContext.Provider>
 	);
 }

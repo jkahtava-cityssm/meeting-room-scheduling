@@ -15,8 +15,11 @@ import { CalendarWeekViewSkeleton } from "../view-week/skeleton-calendar-week-vi
 import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
 import { CalendarAccessDenied } from "../calendar-controller/calendar-all-views";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { LucideCalendarDays, Terminal } from "lucide-react";
 import { GenericError } from "../../../../components/shared/generic-error";
+import { vi } from "date-fns/locale";
+import { TStatusKey } from "@/lib/types";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 export function CalendarDayView({
   date,
@@ -27,16 +30,34 @@ export function CalendarDayView({
   userId?: string;
   isSidebarOpen?: boolean;
 }) {
-  const { can } = CalendarPermissions.usePermissions();
-  const { interval, visibleHours, defaultHours, visibleRooms, selectedRoomId, setIsHeaderLoading, setTotalEvents } =
-    usePrivateCalendar();
+  // const { can } = CalendarPermissions.usePermissions();
+  const {
+    interval,
+    maxSpan,
+    visibleHours,
+    fallbackHours,
+    visibleRooms,
+    selectedRoomIds,
+    selectedStatusKeys,
+    configurationError,
+    roomError,
+    setIsHeaderLoading,
+    setTotalEvents,
+  } = usePrivateCalendar();
 
   const roomIds = useMemo(
     () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
     [visibleRooms],
   );
 
-  const { result, isLoading, error } = usePrivateCalendarEvents("DAY", date, visibleHours, userId, roomIds);
+  const { result, isLoading, error } = usePrivateCalendarEvents(
+    "DAY",
+    date,
+    visibleHours,
+    userId,
+    roomIds,
+    selectedStatusKeys,
+  );
 
   useEffect(() => {
     if (isLoading) {
@@ -51,7 +72,7 @@ export function CalendarDayView({
   const { roomsToRender, events } = useMemo(() => {
     const rooms =
       visibleRooms
-        ?.filter((room) => selectedRoomId === "-1" || String(room.roomId) === selectedRoomId)
+        ?.filter((room) => selectedRoomIds.includes("-1") || selectedRoomIds.includes(String(room.roomId)))
         .map((room) => {
           const blocks = result?.data.roomBlocks[String(room.roomId)] ?? [];
           return { roomId: room.roomId, roomName: room.name, blocks };
@@ -61,7 +82,7 @@ export function CalendarDayView({
     );
 
     return { roomsToRender: rooms, events };
-  }, [visibleRooms, selectedRoomId, result]);
+  }, [visibleRooms, selectedRoomIds, result]);
 
   useEffect(() => {
     setTotalEvents(events.length);
@@ -69,9 +90,11 @@ export function CalendarDayView({
 
   const isMounting = !visibleRooms || !result;
 
-  if (error) {
-    return <GenericError error={error} />;
-  }
+  /*if (error || configurationError || roomError) {
+    return <GenericError error={error || configurationError || roomError} />;
+  }*/
+
+  const noRoomData = roomsToRender.length === 0;
 
   return (
     <div className="flex flex-1 min-h-0">
@@ -80,30 +103,56 @@ export function CalendarDayView({
           <>
             <DayViewDayHeader currentDate={date} />
             <CalendarScrollContainerSkeleton
-              hours={defaultHours}
+              hours={fallbackHours}
               totalColumns={visibleRooms ? visibleRooms.length : 10}
             />
           </>
         ) : (
           <>
             <DayViewDayHeader currentDate={date} />
-            <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours || defaultHours}>
-              {roomsToRender?.map((room, roomIndex) => {
-                return (
-                  <CalendarScrollColumnPrivate
-                    key={room.roomId}
-                    loadingBlocks={isLoading}
-                    title={room.roomName}
-                    interval={interval}
-                    roomId={room.roomId}
-                    userId={userId}
-                    hours={result?.data.hours || []}
-                    eventBlocks={room.blocks || []}
-                    isLastColumn={roomsToRender.length - 1 === roomIndex}
-                    currentDate={date}
-                  />
-                );
-              })}
+            <CalendarScrollContainerPrivate isLoading={isLoading} hours={result?.data.hours}>
+              {noRoomData ? (
+                <div className="flex flex-1 flex-col  p-4">
+                  <Empty className="border border-dashed flex flex-1 flex-col">
+                    <EmptyHeader>
+                      <EmptyMedia>
+                        <LucideCalendarDays />
+                      </EmptyMedia>
+                      <EmptyTitle>No Room Selected</EmptyTitle>
+                      <EmptyDescription>
+                        {error
+                          ? error.message
+                          : configurationError
+                            ? configurationError.message
+                            : noRoomData
+                              ? "Please choose a room from the dropdown"
+                              : "Unknown Cause"}
+                      </EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>{roomError && <GenericError error={roomError} />}</EmptyContent>
+                  </Empty>
+                </div>
+              ) : (
+                roomsToRender?.map((room, roomIndex) => {
+                  return (
+                    <CalendarScrollColumnPrivate
+                      key={room.roomId}
+                      loadingBlocks={isLoading}
+                      title={room.roomName}
+                      interval={interval}
+                      roomId={room.roomId}
+                      userId={userId}
+                      hours={result?.data.hours || []}
+                      eventBlocks={room.blocks || []}
+                      isLastColumn={roomsToRender.length - 1 === roomIndex}
+                      currentDate={date}
+                      maxHour={visibleHours ? visibleHours.to : 24}
+                      minHour={visibleHours ? visibleHours.from : 0}
+                      maxSpan={maxSpan}
+                    />
+                  );
+                })
+              )}
             </CalendarScrollContainerPrivate>
           </>
         )}

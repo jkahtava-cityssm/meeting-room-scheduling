@@ -1,7 +1,7 @@
-import { CombinedSchema } from "../room-drawer-schema.validator";
+import { CombinedSchema } from "../drawer-schema.validator";
 
 import { getDurationText } from "@/lib/helpers";
-import { IRoom } from "@/lib/schemas/calendar";
+import { IRoom } from "@/lib/schemas";
 
 export const getFormDefaults = (): CombinedSchema => {
   return {
@@ -10,6 +10,7 @@ export const getFormDefaults = (): CombinedSchema => {
     color: "",
     icon: "",
     publicFacing: "false",
+    displayOrder: "",
     roomCategoryId: "",
     roomProperty: [],
     roomRoles: [],
@@ -23,6 +24,7 @@ export const mapRoomToSchema = (room: IRoom): CombinedSchema => {
     color: String(room.color),
     icon: String(room.icon),
     publicFacing: room.publicFacing ? "true" : "false",
+    displayOrder: room.displayOrder ? String(room.displayOrder) : "",
     roomCategoryId: String(room.roomCategoryId),
     roomProperty: (room.roomProperty ?? [])
       .filter((p) => p.type === "boolean" && p.value === "true")

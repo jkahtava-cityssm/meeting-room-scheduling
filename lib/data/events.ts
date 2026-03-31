@@ -1,13 +1,16 @@
 import { prisma } from "@/prisma";
 import type { Prisma } from "@prisma/client";
-import { IEvent, SEvent } from "../schemas/calendar";
+import { IEvent, SEvent } from "../schemas";
 import z from "zod/v4";
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
   room: { include: { roomCategory: true, roomProperty: { include: { property: true } } } },
+  eventItems: { include: { item: true } },
+  eventRecipients: true,
   recurrence: true,
   status: true,
+  user: { select: { name: true, email: true } },
 } as const satisfies Prisma.EventInclude;
 
 // Create an event — the DAL controls which relations are included.
@@ -68,9 +71,9 @@ export async function countEvents(where?: Prisma.EventWhereInput) {
 }
 
 export async function findFirstEvent(where?: Prisma.EventWhereInput) {
-  const event = await prisma.event.findFirst({ where, include: EVENT_INCLUDE, orderBy: { eventId: "asc" } });
+  const event = await prisma.event.findFirstOrThrow({ where, include: EVENT_INCLUDE, orderBy: { eventId: "asc" } });
 
-  if (!event) return null;
+  if (!event) return event;
 
   return flattenEvent(event);
 }
@@ -87,8 +90,31 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
   const events = isArray ? data : [data];
 
   const mapped = events.map((event) => {
+    //Remove User Property
+    const { user, ...other } = event;
+
     return {
       ...event,
+      userName: user?.name,
+      userEmail: user?.email,
+
+      eventItems: event.eventItems
+        ? event.eventItems.map((eventItem) => {
+            return {
+              eventItemId: eventItem.eventItemId,
+              itemId: eventItem.itemId,
+              name: eventItem.item.name,
+            };
+          })
+        : [],
+      eventRecipients: event.eventRecipients
+        ? event.eventRecipients.map((recipient) => {
+            return {
+              eventRecipientId: recipient.eventRecipientId,
+              userId: recipient.userId,
+            };
+          })
+        : [],
       room: {
         ...event.room,
         roomProperty: event.room.roomProperty.map((roomProperty) => {

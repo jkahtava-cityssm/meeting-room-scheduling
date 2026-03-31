@@ -17,7 +17,7 @@ export const queryKeys = {
     statuses: (start: string, end: string) => [...queryKeys.events.range(start, end), "status"] as const,
     status: (start: string, end: string, statusId: string) =>
       [...queryKeys.events.statuses(start, end), statusId] as const,
-    totals: () => ["total_events"] as const,
+    totals: () => [...queryKeys.events.all, "total"] as const,
     totalByStatus: (statusId: string) => [...queryKeys.events.totals(), "status", statusId] as const,
     details: () => ["event"] as const,
     detail: (id: number | undefined) => [...queryKeys.events.details(), id] as const,
@@ -26,6 +26,7 @@ export const queryKeys = {
     all: ["permissions"] as const,
     sets: () => [...queryKeys.permissions.all, "sets"] as const,
     roles: () => [...queryKeys.permissions.all, "roles"] as const,
+    list: (type: "none" | "existing") => [...queryKeys.permissions.roles(), type] as const,
     usersByRole: () => [...queryKeys.permissions.all, "users-by-role"] as const,
     userByRole: (roleId?: string) => [...queryKeys.permissions.usersByRole(), roleId] as const,
   },
@@ -33,6 +34,7 @@ export const queryKeys = {
     all: ["references"] as const,
     properties: () => [...queryKeys.references.all, "properties"] as const,
     statuses: () => [...queryKeys.references.all, "statuses"] as const,
+    items: () => [...queryKeys.references.all, "items"] as const,
     statusList: (type: "all" | "existing") => [...queryKeys.references.statuses(), type] as const,
     rooms: () => [...queryKeys.references.all, "rooms"] as const,
   },
@@ -56,6 +58,8 @@ export const queryKeys = {
   users: {
     all: ["users"] as const,
     lists: () => [...queryKeys.users.all, "list"] as const,
+    details: () => ["user"] as const,
+    detail: (id: number | undefined) => [...queryKeys.users.details(), id] as const,
     events: (userId?: string) => [...queryKeys.users.all, "events", userId] as const,
   },
 } as const;

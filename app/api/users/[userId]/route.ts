@@ -1,57 +1,80 @@
-import { prisma } from "@/prisma";
-import { findSession } from "@/lib/data/users";
+import { createUser, deleteManyUsers, findManyUsers, upsertUser } from "@/lib/data/users";
 
 import { NextRequest } from "next/server";
 
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import {
+  BadRequestMessage,
+  CreatedMessage,
+  DeleteMessage,
+  InternalServerErrorMessage,
+  SuccessMessage,
+} from "@/lib/api-helpers";
 
-import { auth, Role } from "@/lib/auth";
-import { getRolesByUserId } from "@/lib/data/permissions";
+import { guardRoute } from "@/lib/api-guard";
+import { SUserPUT } from "@/lib/services/users";
+import { prisma } from "@/prisma";
 
-const roleCache = new Map<string, { roles: Role[]; expiresAt: number }>();
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  return guardRoute(
+    request,
+    {
+      AnyOf: [
+        {
+          ReadUsers: {
+            type: "or",
+            requirements: [
+              { type: "permission", resource: "User", action: "Read All" },
+              { type: "permission", resource: "User", action: "Read Self" },
+            ],
+          },
+        },
+        { EditUsers: { type: "permission", resource: "Settings", action: "Edit Users" } },
+      ],
+    },
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
-	if (!process.env.DATABASE_URL) {
-		return InternalServerErrorMessage("DATABASE_URL Missing");
-	}
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+      const { userId } = await params;
 
-	const { userId } = await params;
+      if (!userId || isNaN(Number(userId))) {
+        return BadRequestMessage();
+      }
 
-	if (!userId) {
-		return BadRequestMessage();
-	}
+      const user = await findManyUsers({ id: parseInt(userId) });
 
-	const sessionResponse = await auth.api.getSession({ headers: req.headers });
+      if (!user) {
+        return InternalServerErrorMessage();
+      }
 
-	if (!sessionResponse || sessionResponse.user.id !== userId) {
-		if (sessionResponse?.session?.token) {
-			roleCache.delete(sessionResponse.session.token);
-		}
-		return BadRequestMessage("Not Authorized");
-	}
+      return SuccessMessage("Collected User", user);
+    },
+  );
+}
 
-	const token = sessionResponse.session?.token;
-	const now = Date.now();
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  return guardRoute(
+    request,
+    {
+      AnyOf: [
+        {
+          DeleteUser: { type: "permission", resource: "User", action: "Delete" },
+        },
+        { EditUsers: { type: "permission", resource: "Settings", action: "Edit Users" } },
+      ],
+    },
 
-	const cached = roleCache.get(token);
-	if (cached) {
-		if (cached.expiresAt < now) {
-			roleCache.delete(token);
-		} else {
-			return SuccessMessage("User Found", { userId: userId, roles: cached.roles });
-		}
-	}
+    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+      const { userId } = await params;
+      if (!userId || isNaN(Number(userId))) {
+        return BadRequestMessage();
+      }
 
-	const roles = await getRolesByUserId(Number(userId));
+      const totalDeleted = await deleteManyUsers({ id: parseInt(userId) });
 
-	if (!roles) {
-		return InternalServerErrorMessage();
-	}
+      if (!totalDeleted) {
+        return InternalServerErrorMessage();
+      }
 
-	roleCache.set(token, {
-		roles,
-		expiresAt: now + 60 * 1000, // 1 minute TTL
-	});
-
-	return SuccessMessage("User Found", { userId: Number(userId), roles: roles });
+      return DeleteMessage();
+    },
+  );
 }

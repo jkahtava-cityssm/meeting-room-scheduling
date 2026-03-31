@@ -10,6 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { IEventBlock } from "../webworkers/generic-webworker";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { addDays } from "date-fns";
+import { LucideLock, LucideShieldBan } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -27,7 +30,8 @@ export type TimeBlockRenderProps = {
   currentDate: Date;
   totalBlocks: number;
   blockIndex: number;
-  showBottomSeparator: boolean;
+  lockDay: boolean;
+  lockHour: boolean;
 };
 
 export type CalendarScrollColumnProps = {
@@ -36,7 +40,12 @@ export type CalendarScrollColumnProps = {
   interval: number;
   roomId: number | undefined;
   userId: string | undefined;
+  limitToHours: boolean;
+  limitToSpan: boolean;
   hours: number[];
+  minHour: number;
+  maxHour: number;
+  maxSpan: number;
   eventBlocks: IEventBlock[];
   isLastColumn: boolean;
   currentDate: Date;
@@ -51,11 +60,12 @@ export type EventBlockRenderProps = {
 };
 
 export function CalendarScrollColumnPrivate(
-  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
+  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock" | "limitToHours" | "limitToSpan">,
 ) {
   const { can, canAny } = CalendarPermissions.usePermissions();
 
   const { openEventDrawer } = useSharedEventDrawer();
+  const roomId = props.roomId;
 
   const renderEventBlock = useCallback(
     ({ eventBlock, userId }: EventBlockRenderProps) => (
@@ -68,12 +78,17 @@ export function CalendarScrollColumnPrivate(
           const canReadEvent = canAny("ReadAllEvent", ["ReadSelfEvent", String(eventBlock.event.userId) === userId]);
 
           if (canReadEvent) {
-            openEventDrawer({ event: eventBlock.event, userId });
+            openEventDrawer({
+              creationDate: new Date(eventBlock.event.startDate),
+              event: eventBlock.event,
+              userId,
+              roomId,
+            });
           }
         }}
       />
     ),
-    [openEventDrawer, canAny],
+    [canAny, openEventDrawer, roomId],
   );
 
   const renderTimeBlock = useCallback(
@@ -86,14 +101,26 @@ export function CalendarScrollColumnPrivate(
         currentDate={p.currentDate}
         totalBlocks={p.totalBlocks}
         blockIndex={p.blockIndex}
-        showBottomSeparator={p.showBottomSeparator}
         createEventAllowed={can("CreateEvent")}
+        lockDay={p.lockDay}
+        lockHour={p.lockHour}
       />
     ),
     [can],
   );
 
-  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;
+  return (
+    <CalendarScrollColumnBase
+      {...props}
+      renderTimeBlock={renderTimeBlock}
+      renderEventBlock={renderEventBlock}
+      minHour={props.minHour}
+      maxHour={props.maxHour}
+      maxSpan={props.maxSpan}
+      limitToHours={!can("IgnoreHours")}
+      limitToSpan={!can("IgnoreBookingSpan")}
+    />
+  );
 }
 
 export function CalendarScrollColumnPublic(
@@ -102,7 +129,7 @@ export function CalendarScrollColumnPublic(
   const { viewport, popoverLayer } = useCalendarViewport();
 
   const renderEventBlock = useCallback(
-    ({ eventBlock, userId }: EventBlockRenderProps) => (
+    ({ eventBlock }: EventBlockRenderProps) => (
       <PublicEventBlock
         eventBlock={eventBlock}
         heightInPixels={eventBlock.eventHeight}
@@ -114,19 +141,30 @@ export function CalendarScrollColumnPublic(
   );
 
   const renderTimeBlock = useCallback(
-    ({ totalBlocks, blockIndex, showBottomSeparator, hour, startMinute }: TimeBlockRenderProps) => (
+    ({ totalBlocks, blockIndex, hour, startMinute }: TimeBlockRenderProps) => (
       <TimeBlockButton
         totalBlocks={totalBlocks}
         blockIndex={blockIndex}
-        showBottomSeparator={showBottomSeparator}
         disabled={true}
         aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, "0")}`}
+        isReadOnly={true}
       />
     ),
     [],
   );
 
-  return <CalendarScrollColumnBase {...props} renderTimeBlock={renderTimeBlock} renderEventBlock={renderEventBlock} />;
+  return (
+    <CalendarScrollColumnBase
+      {...props}
+      renderTimeBlock={renderTimeBlock}
+      renderEventBlock={renderEventBlock}
+      minHour={props.minHour}
+      maxHour={props.maxHour}
+      maxSpan={props.maxSpan}
+      limitToHours={false}
+      limitToSpan={false}
+    />
+  );
 }
 
 const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
@@ -134,6 +172,11 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   title,
   interval,
   hours,
+  limitToHours,
+  limitToSpan,
+  minHour,
+  maxHour,
+  maxSpan,
   roomId,
   userId,
   eventBlocks,
@@ -145,22 +188,29 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   const validInterval = clampToValidInterval(interval);
   const totalBlocks = 60 / validInterval;
   const middleBlock = useMemo(() => Math.max(0, Math.floor(totalBlocks / 2) - 1), [totalBlocks]);
+
+  const lockDay = limitToSpan && currentDate.getTime() > addDays(new Date(), maxSpan).getTime();
+
   //
   return (
     <div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
-      <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
+      <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center border-r">
         <span className="ml-1 text-xs font-semibold text-foreground">{title}</span>
       </div>
       <div className="relative border-t-6 border-b-16">
         {hours?.map((hour, index) => {
+          const creationDate = getDateTime(currentDate, hour, 0);
+          const lockHour = limitToHours && (creationDate.getHours() > maxHour || creationDate.getHours() < minHour);
+
           return (
             <div
               key={hour}
               className={cn(
-                "grid w-full h-24 relative",
+                "grid w-full h-24 relative group",
                 index !== 0 && "border-t-2 ",
                 "after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-px",
                 "after:bg-[linear-gradient(to_right,var(--color-border)_50%,transparent_50%)] after:bg-size-[8px_1px] after:bg-repeat-x",
+                "border-r",
               )}
               style={{
                 gridTemplateRows: `repeat(${totalBlocks}, 1fr)`,
@@ -169,9 +219,25 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                 containIntrinsicSize: `auto ${TIME_BLOCK_SIZE}px`,
               }}
             >
+              {lockHour && (
+                <div className="absolute inset-0 flex items-center justify-center overflow-hidden z-5">
+                  <Tooltip delayDuration={1000} disableHoverableContent>
+                    <TooltipTrigger asChild>
+                      <div className="w-full h-full flex items-center justify-center cursor-not-allowed pointer-events-auto">
+                        <LucideShieldBan
+                          strokeWidth={1}
+                          className="w-full h-full p-6 text-red-300/30 dark:text-red-300/20 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-500"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>{"Permission Required to Book Outside of Working Hours"}</TooltipContent>
+                  </Tooltip>
+                </div>
+              )}
+
               {Array.from({ length: totalBlocks }, (_, blockIndex) => {
                 const startMinute = blockIndex * validInterval;
-                const showBottomSeparator = blockIndex === middleBlock;
+
                 return (
                   <Fragment key={`${hour}-${blockIndex}`}>
                     {renderTimeBlock({
@@ -182,7 +248,8 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                       currentDate,
                       totalBlocks,
                       blockIndex,
-                      showBottomSeparator: false,
+                      lockDay,
+                      lockHour,
                     })}
                   </Fragment>
                 );
@@ -217,7 +284,8 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
   totalBlocks,
   blockIndex,
   createEventAllowed,
-  showBottomSeparator,
+  lockDay,
+  lockHour,
 }: {
   currentDate: Date;
   hour: number;
@@ -227,22 +295,26 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
   roomId: number | undefined;
   blockIndex: number;
   createEventAllowed: boolean;
-  showBottomSeparator?: boolean;
+  lockDay: boolean;
+  lockHour: boolean;
 }) {
   const creationDate = useMemo(() => getDateTime(currentDate, hour, startMinute), [currentDate, hour, startMinute]);
   const { openEventDrawer } = useSharedEventDrawer();
 
+  const isDisabled = !createEventAllowed || lockDay || lockHour;
+
   const openDrawer = useCallback(() => {
-    if (!createEventAllowed) return;
+    if (isDisabled) return;
+
     openEventDrawer({ creationDate, userId, roomId });
-  }, [createEventAllowed, openEventDrawer, creationDate, userId, roomId]);
+  }, [isDisabled, openEventDrawer, creationDate, userId, roomId]);
 
   return (
     <TimeBlockButton
       totalBlocks={totalBlocks}
       blockIndex={blockIndex}
-      showBottomSeparator={showBottomSeparator}
-      disabled={!createEventAllowed}
+      disabled={isDisabled}
+      isReadOnly={false}
       onClick={openDrawer}
       aria-label={`Create event at ${hour}:${String(startMinute).padStart(2, "0")}`}
     />
@@ -252,22 +324,28 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
 const TimeBlockButton = memo(
   forwardRef<
     HTMLButtonElement,
-    ButtonHTMLAttributes<HTMLButtonElement> & { totalBlocks: number; blockIndex: number; showBottomSeparator?: boolean }
-  >(function TimeBlockButton({ totalBlocks, blockIndex, showBottomSeparator, disabled, className, ...props }, ref) {
+    ButtonHTMLAttributes<HTMLButtonElement> & {
+      totalBlocks: number;
+      blockIndex: number;
+
+      isReadOnly: boolean;
+    }
+  >(function TimeBlockButton({ totalBlocks, blockIndex, disabled, isReadOnly, className, ...props }, ref) {
     return (
       <button
         ref={ref}
         type="button"
         disabled={disabled}
         className={cn(
-          "w-full h-full transition-colors relative",
-          disabled ? "cursor-default pointer-events-none" : "cursor-pointer hover:bg-accent",
+          "w-full h-full transition-colors relative group flex items-center justify-center",
 
-          showBottomSeparator && "border-b border-dashed",
+          disabled && !isReadOnly && "cursor-not-allowed ",
+          !isReadOnly && "cursor-pointer hover:bg-accent",
+
           className,
         )}
         {...props}
-      />
+      ></button>
     );
   }),
 );

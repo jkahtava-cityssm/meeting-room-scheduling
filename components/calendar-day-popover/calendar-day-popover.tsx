@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 import type { ButtonHTMLAttributes } from "react";
 import React, { useState } from "react";
+import { dateMatchModifiers, Matcher } from "react-day-picker";
 
 type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"> & {
   onSelect: (value: Date | undefined) => void;
@@ -17,6 +18,7 @@ type TProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onSelect" | "value"
   placeholder: string;
   labelVariant?: "P" | "PP" | "PPP";
   children?: React.ReactNode;
+  disableDays?: Matcher;
 };
 
 function CalendarDayPopover({
@@ -27,18 +29,27 @@ function CalendarDayPopover({
   labelVariant = "PPP",
   value,
   children,
+  disableDays,
   ...props
 }: TProps) {
   const { isOpen, onClose, onToggle } = useDisclosure();
   const [calendarDate, setCalendarDate] = useState(value);
-  //console.log(value);
+
+  const today = new Date();
+  const isTodayDisabled = disableDays ? dateMatchModifiers(today, disableDays) : false;
+
   const handleSelect = (date: Date | undefined) => {
     onSelect(date);
     onClose();
   };
 
   const handleToday = () => {
-    onSelect(new Date());
+    const today = new Date();
+
+    if (isTodayDisabled) {
+      return;
+    }
+    onSelect(today);
     onClose();
   };
 
@@ -60,7 +71,7 @@ function CalendarDayPopover({
             variant="outline"
             className={cn(
               "group relative h-9 w-full justify-start whitespace-nowrap px-3 py-2 font-normal hover:bg-inherit disabled:opacity-75",
-              className
+              className,
             )}
             {...props}
           >
@@ -82,6 +93,15 @@ function CalendarDayPopover({
           startMonth={addYears(value, -25)}
           endMonth={addYears(value, 25)}
           fixedWeeks={true}
+          disabled={disableDays}
+          disableToday={isTodayDisabled}
+          modifiersClassNames={{
+            disabled: "text-red-300  pointer-events-none ",
+
+            today: "bg-transparent font-normal text-foreground",
+
+            outside: "text-muted-foreground ",
+          }}
         />
       </PopoverContent>
     </Popover>

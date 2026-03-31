@@ -24,6 +24,7 @@ type DataSelectProps<T> = {
   onSelect: (id: string, label: string) => void;
   getId: (item: T) => string;
   getLabel: (item: T) => string;
+  getDescrition?: (item: T) => string;
   getColor?: (item: T) => TColors;
   getIcon?: (item: T) => IconName;
   className?: string;
@@ -43,6 +44,7 @@ export function GenericComboBox<T>({
   onSelect,
   getId,
   getLabel,
+  getDescrition,
   getColor,
   getIcon,
   className,
@@ -110,16 +112,21 @@ export function GenericComboBox<T>({
               {list?.map((item) => {
                 const id = getId(item);
                 const label = getLabel(item);
+                const description = getDescrition && getDescrition(item);
                 return (
                   <CommandItem
                     key={id}
-                    value={label}
+                    value={id}
+                    keywords={[label]}
                     onSelect={() => {
                       onSelect(id, label);
                       setOpen(false);
                     }}
                   >
-                    <span className="truncate">{label}</span>
+                    <div className="flex flex-col">
+                      <span className="truncate">{label}</span>
+                      {description && <span className="truncate text-xs">{description}</span>}
+                    </div>
                     <Check className={cn("ml-auto h-4 w-4", selectedValue === id ? "opacity-100" : "opacity-0")} />
                   </CommandItem>
                 );

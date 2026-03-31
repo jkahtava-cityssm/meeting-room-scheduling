@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/contexts/SessionProvider";
-import { IEvent } from "@/lib/schemas/calendar";
+import { IEvent } from "@/lib/schemas";
 
 import { useEventPatchMutation, useEventsByStatusQuery } from "@/lib/services/events";
 import { startOfMonth, endOfMonth, parse, formatISO, startOfDay, endOfDay, endOfYear, startOfYear } from "date-fns";
@@ -19,6 +19,10 @@ import { TCalendarView } from "@/lib/types";
 import { CalendarDayPicker } from "@/components/calendar-day-picker/CalendarDayPicker";
 import BookingListByRoom from "./booking-list-by-room";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { BookingPermissions } from "./permissions/booking.permissions";
+import { CalendarLoadingPage } from "@/app/(private)/calendar/loading";
+import { RequirePermission } from "../../calendar/calendar-controller/calendar-all-views";
+import { SharedEventDrawerProvider } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 export interface IUserRequestProcessData {
 	events: IEvent[];
@@ -58,18 +62,36 @@ function getDateRange(view: TCalendarView, dateValue: Date) {
 	return { startDate: startOfDay(dateValue), endDate: endOfDay(dateValue) };
 }
 
+function getDefaultView(permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>): TCalendarView {
+	if (permissions.day) return "day";
+	else if (permissions.week) return "week";
+	else if (permissions.month) return "month";
+	else if (permissions.year) return "year";
+	else if (permissions.agenda) return "agenda";
+	else return "day";
+}
+
 export default function UserRequests() {
 	const searchParams = useSearchParams();
 	const dateParam = searchParams.get("selectedDate");
 	const viewParam = searchParams.get("view");
 
-	const view = viewParam === null ? "day" : viewParam;
-
 	const dateValue = useMemo(() => {
 		return getViewDate(dateParam);
 	}, [dateParam]);
 
-	const { session, isPending } = useSession();
+	const { isVerifying, can, canAny } = BookingPermissions.usePermissions();
+
+	const viewDay = can("ViewCalendarDay");
+	const viewMonth = can("ViewCalendarMonth");
+	const viewWeek = can("ViewCalendarWeek");
+	const viewYear = can("ViewCalendarYear");
+	const viewAgenda = can("ViewCalendarAgenda");
+
+	const hasAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda);
+	const viewPermissions = { day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda };
+
+	const view = viewParam === null ? getDefaultView(viewPermissions) : viewParam;
 
 	const { startDate, endDate } = getDateRange(view as TCalendarView, dateValue);
 
@@ -140,18 +162,13 @@ export default function UserRequests() {
 		}
 	}, [events, dateValue, roomId, isRefreshed]);
 
-	if (isPending) {
-		return <div>Verifying Access</div>;
+	if (isVerifying) {
+		return <CalendarLoadingPage />;
 	}
 
-	if (!session) {
-		//console.log("User Requests No session, redirecting to login");
-		redirect("/");
+	if (!hasAccess) {
+		return <RequirePermission allowed={hasAccess}></RequirePermission>;
 	}
-
-	const breakpoints = true
-		? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
-		: "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
 
 	return (
 		<>
@@ -179,12 +196,10 @@ export default function UserRequests() {
 						id: "1",
 					}}
 				>
-					{!isLoading && view !== "all" && <BookingList sections={sections} />}
-					{!isLoading && view === "all" && (
-						<BookingListByRoom
-							sections={sections}
-							page={currentPage}
-						></BookingListByRoom>
+					{!isLoading && view !== "all" && (
+						<SharedEventDrawerProvider>
+							<BookingList sections={sections} />
+						</SharedEventDrawerProvider>
 					)}
 				</BookingProvider>
 				<div className="hidden w-74 divide-y border-l md:block">
@@ -204,53 +219,48 @@ export default function UserRequests() {
 	);
 }
 
-function PageList({
-  sections,
-  currentPage,
-  onPageChange,
-}: {
-  sections: ISection[];
-  currentPage: number;
-  onPageChange: (value: number) => void;
-}) {
-  const PAGE_SIZE = 100;
-  const totalPages = Math.ceil(sections.length / PAGE_SIZE);
+function PageList({ sections, currentPage, onPageChange }: { sections: ISection[]; currentPage: number; onPageChange: (value: number) => void }) {
+	const PAGE_SIZE = 100;
+	const totalPages = Math.ceil(sections.length / PAGE_SIZE);
 
-  const getPageInfo = (page: number) => {
-    const start = (page - 1) * PAGE_SIZE;
-    const end = Math.min(start + PAGE_SIZE, sections.length);
-    const firstDate = sections[start]?.formattedDate || "";
-    const lastDate = sections[end - 1]?.formattedDate || "";
-    const count = end - start;
-    return { range: `${firstDate} - ${lastDate}`, count };
-  };
+	const getPageInfo = (page: number) => {
+		const start = (page - 1) * PAGE_SIZE;
+		const end = Math.min(start + PAGE_SIZE, sections.length);
+		const firstDate = sections[start]?.formattedDate || "";
+		const lastDate = sections[end - 1]?.formattedDate || "";
+		const count = end - start;
+		return { range: `${firstDate} - ${lastDate}`, count };
+	};
 
-  return (
-    <>
-      {totalPages > 1 && (
-        <ScrollArea className="max-h-[calc(100vh-180px)] ">
-          <div className="flex flex-wrap gap-2 p-4 justify-center border-t">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-              const { range, count } = getPageInfo(page);
-              return (
-                <button
-                  key={page}
-                  onClick={() => onPageChange(page)}
-                  className={`px-3 py-1 rounded ${currentPage === page ? "bg-primary text-white" : "bg-gray-200"}`}
-                >
-                  <div className="text-sm font-semibold">
-                    Page {page} ({count} sections)
-                  </div>
-                  <div className="text-xs ">{range}</div>
-                </button>
-              );
-            })}
-          </div>
-          <ScrollBar forceMount={true} orientation="vertical" />
-        </ScrollArea>
-      )}
-    </>
-  );
+	return (
+		<>
+			{totalPages > 1 && (
+				<ScrollArea className="max-h-[calc(100vh-180px)] ">
+					<div className="flex flex-wrap gap-2 p-4 justify-center border-t">
+						{Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+							const { range, count } = getPageInfo(page);
+							return (
+								<button
+									key={page}
+									onClick={() => onPageChange(page)}
+									className={`px-3 py-1 rounded ${currentPage === page ? "bg-primary text-white" : "bg-gray-200"}`}
+								>
+									<div className="text-sm font-semibold">
+										Page {page} ({count} sections)
+									</div>
+									<div className="text-xs ">{range}</div>
+								</button>
+							);
+						})}
+					</div>
+					<ScrollBar
+						forceMount={true}
+						orientation="vertical"
+					/>
+				</ScrollArea>
+			)}
+		</>
+	);
 }
 //295x360  - 224x260 mt-16 mx-26
 

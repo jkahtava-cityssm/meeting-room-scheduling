@@ -1,12 +1,11 @@
-import UserRequests from "@/app/features/bookings/components/user-request";
-import { Suspense } from "react";
+import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permissions";
+
+import PrivateUserRequests from "./private-user-requests";
 
 export default function Page() {
   return (
-    <div className="overflow-hidden rounded-xl border min-w-92">
-      <Suspense fallback={<>...Loading</>}>
-        <UserRequests></UserRequests>
-      </Suspense>
-    </div>
+    <ServerNavigationPermissions.Guard permissionKey="ViewStaffRequests">
+      <PrivateUserRequests></PrivateUserRequests>
+    </ServerNavigationPermissions.Guard>
   );
 }

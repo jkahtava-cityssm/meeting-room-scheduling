@@ -38,7 +38,7 @@ export async function findPublicRooms(where?: Prisma.RoomWhereInput, tx: Prisma.
   const rooms = await tx.room.findMany({
     where,
     select: ROOM_SELECT,
-    orderBy: { roomId: "asc" },
+    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
   });
 
   return flattenPublicRoom(rooms);

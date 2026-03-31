@@ -3,17 +3,18 @@ import { useEffect, useMemo, useState } from "react";
 import { useEventsQuery } from "@/lib/services/events";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { CalendarAction, ISODateString } from "./generic-webworker";
-import { IEvent } from "@/lib/schemas/calendar";
-import { TVisibleHours } from "@/lib/types";
+import { IEvent } from "@/lib/schemas";
+import { TStatusKey, TVisibleHours } from "@/lib/types";
 import { getDateRange } from "./generic-webworker-utilities";
 import { usePublicEventsQuery } from "@/lib/services/public";
 
 export function usePrivateCalendarEvents<T extends CalendarAction>(
   action: T,
   date: Date,
-  visibleHours: TVisibleHours,
+  visibleHours: TVisibleHours | undefined,
   userId?: string,
   roomId?: string | string[],
+  statusKeys?: TStatusKey[],
   enabled: boolean = true,
 ) {
   const range = useMemo(() => getDateRange(action, date), [action, date]);
@@ -36,7 +37,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   }, [viewKey]);
 
   useEffect(() => {
-    if (!events) return;
+    if (!events || !visibleHours) return;
     processEvents({
       events: events as IEvent[],
       selectedDate: date.toISOString() as ISODateString,
@@ -45,8 +46,9 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
       visibleHours,
       multiDayEventsAtTop: true,
       userId: userId,
+      statusKeys,
     });
-  }, [events, action, date, roomId, userId, processEvents, visibleHours]);
+  }, [events, action, date, roomId, userId, processEvents, visibleHours, statusKeys]);
 
   useEffect(() => {
     if (!isProcessing && data) {

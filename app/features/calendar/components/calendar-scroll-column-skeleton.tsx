@@ -21,7 +21,7 @@ export function CalendarScrollColumnSkeleton({ hours, isLastColumn }: { hours: n
           return (
             <div
               key={hour}
-              className="grid w-full h-24 relative"
+              className="grid w-full h-24 relative border-r"
               style={{
                 gridTemplateRows: `repeat(${totalBlocks}, 1fr)`,
                 contentVisibility: "auto",
