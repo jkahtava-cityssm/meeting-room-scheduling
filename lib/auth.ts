@@ -118,7 +118,7 @@ export const auth = betterAuth({
 
       const cacheKey = impersonatingRole ? `impersonate:${token}:${impersonatingRole}` : token;
 
-      const result = await fetchPrivateCachedUserRole(userId, cacheKey, impersonatingRole ? true : false);
+      const result = await fetchPrivateCachedUserRole(userId, cacheKey, impersonatingRole as SessionRole);
 
       const roles = result ? result.data : [];
       return {
