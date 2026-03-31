@@ -529,9 +529,14 @@ async function CreateRandomEvents(
       endDate.setHours(visibleHoursEnd, 0);
     }
 
+    const randomRoomCount = Math.floor(Math.random() * rooms.length);
+    const isMultiRoom = Math.random() < 0.1;
+
     const event = await prisma.event.create({
       data: {
-        roomId: rooms[Math.floor(Math.random() * rooms.length)].roomId,
+        eventRooms: {
+          create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
+        },
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         title: EVENTS[eventIndex],
@@ -738,10 +743,15 @@ async function CreateEdgeCaseMultiDayEvents(
     const userIndex = Math.floor(Math.random() * userList.length);
     const roomIndex = Math.floor(Math.random() * rooms.length);
 
+    const randomRoomCount = Math.floor(Math.random() * rooms.length);
+    const isMultiRoom = Math.random() < 0.1;
+
     try {
       const event = await prisma.event.create({
         data: {
-          roomId: rooms[roomIndex].roomId,
+          eventRooms: {
+            create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
+          },
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
           title: edgeCase.name,
@@ -833,10 +843,15 @@ async function CreateEdgeCaseMultiDayEvents(
         const userIndex = Math.floor(Math.random() * userList.length);
         const roomIndex = Math.floor(Math.random() * rooms.length);
 
+        const randomRoomCount = Math.floor(Math.random() * rooms.length);
+        const isMultiRoom = Math.random() < 0.1;
+
         try {
           const event = await prisma.event.create({
             data: {
-              roomId: rooms[roomIndex].roomId,
+              eventRooms: {
+                create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
+              },
               startDate: startDate.toISOString(),
               endDate: endDate.toISOString(),
               title: dstCase.name,
@@ -858,6 +873,35 @@ async function CreateEdgeCaseMultiDayEvents(
   }
 
   console.log(`\nCompleted creating edge case multi-day events for testing.`);
+}
+
+function generateRandomRoomList(
+  rooms: {
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    roomId: number;
+    color: string;
+    icon: string | null;
+  }[],
+  total: number,
+  isMultiRoom: boolean,
+) {
+  const selectedRooms = new Set<number>();
+
+  if (isMultiRoom) {
+    while (selectedRooms.size < total) {
+      const randomIndex = Math.floor(Math.random() * rooms.length);
+      selectedRooms.add(rooms[randomIndex].roomId);
+    }
+  } else {
+    const roomIndex = Math.floor(Math.random() * rooms.length);
+    selectedRooms.add(rooms[roomIndex].roomId);
+  }
+
+  return Array.from(selectedRooms).map((id) => ({
+    roomId: id,
+  }));
 }
 
 function randomToggle(chance: "75" | "50" | "25" | "10") {
