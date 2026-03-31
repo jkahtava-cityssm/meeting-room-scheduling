@@ -11,15 +11,6 @@ export async function GET(req: NextRequest) {
     req,
     {
       AllOf: [{ ReadRoom: { type: "permission", resource: "Room", action: "Read" } }],
-      Passthrough: [
-        {
-          ViewPrivate: {
-            type: "permission",
-            resource: "Room",
-            action: "View Hidden",
-          },
-        },
-      ],
     },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
