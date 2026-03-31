@@ -245,7 +245,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 				maxHour={restrictHours ? maxHour : 24}
 				minuteInterval={interval as TimeInterval}
 				preserveDuration={true}
-				clampEndToStart={true}
+				clampEndToStart={false}
 			>
 				<FormField
 					control={control}
