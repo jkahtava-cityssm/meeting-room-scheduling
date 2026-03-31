@@ -375,13 +375,13 @@ export function UserLayout() {
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full w-full pr-4">
           <table className="table-fixed w-full border-seperate border-spacing-0 ">
-            <thead className="sticky top-0 bg-background z-30 border-b">
+            <thead className="sticky top-0 bg-background z-30 border-b shadow-md">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
+                  {headerGroup.headers.map((header, index, headerCells) => {
                     const isName = header.column.id === "name";
                     const isAction = header.column.id === "action";
-
+                    const isLastScrollingCell = index === headerCells.length - 2;
                     return (
                       <th
                         key={header.id}
@@ -390,7 +390,7 @@ export function UserLayout() {
                           "px-4 py-2 text-left font-medium bg-background",
                           isName && "sticky left-0 z-40 shadow-sticky-x",
                           isAction && "sticky right-0 z-40 text-center  shadow-sticky-x",
-                          !isName && !isAction && "hidden md:table-cell border-r",
+                          !isName && !isAction && ["hidden md:table-cell", !isLastScrollingCell && "border-r"],
                         )}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
