@@ -252,15 +252,24 @@ export function useTimePicker({
   }, [allowMinuteRollover, getClampedDate, getClosestSnap, minuteSnapPoints, setDate, verifiedMinHour]);
 
   //UPDATE THE TIME IF THE PERIOD IS TOGGLED
-  const togglePeriod = React.useCallback(() => {
-    const currentDate = dateRef.current;
-    const currentHours = currentDate.getHours();
-    const currentMinutes = currentDate.getMinutes();
+  const togglePeriod = React.useCallback(
+    (period?: "AM" | "PM") => {
+      const currentDate = dateRef.current;
+      const currentHours = currentDate.getHours();
+      const currentMinutes = currentDate.getMinutes();
 
-    const isPM = currentHours >= 12;
-    const targetHours = isPM ? currentHours - 12 : currentHours + 12;
-    setDate(getClampedDate(currentDate, targetHours, currentMinutes));
-  }, [getClampedDate, setDate]);
+      let targetHours: number;
+      if (period) {
+        const hour12Base = currentHours % 12;
+        targetHours = period === "PM" ? hour12Base + 12 : hour12Base;
+      } else {
+        const isPM = currentHours >= 12;
+        targetHours = isPM ? currentHours - 12 : currentHours + 12;
+      }
+      setDate(getClampedDate(currentDate, targetHours, currentMinutes));
+    },
+    [getClampedDate, setDate],
+  );
 
   const handleBackspace = React.useCallback(
     (type: "hour" | "minute") => {

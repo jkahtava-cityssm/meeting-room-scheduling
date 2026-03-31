@@ -3,7 +3,7 @@
 import { TimeInterval, useTimePicker } from "./useTimePicker";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -189,6 +189,76 @@ export function TimePicker({
           <Label id={periodLabelId} className="self-center">
             Period
           </Label>
+          <div
+            role="group"
+            aria-labelledby={periodLabelId}
+            className={cn(
+              "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+              isInvalid && "ring-destructive/20 dark:ring-destructive/40 border-destructive border ring-1",
+              isDisabled && "bg-transparent opacity-50",
+            )}
+            onKeyDown={(e) => {
+              if (isDisabled) return;
+              const buttons = Array.from(e.currentTarget.querySelectorAll("button"));
+              const currentIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
+
+              if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                e.preventDefault();
+                const nextIndex = currentIndex === 0 ? 1 : 0;
+                buttons[nextIndex]?.focus();
+              }
+            }}
+          >
+            {(["AM", "PM"] as const).map((p) => {
+              const isSelected = display.period === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  aria-pressed={isSelected}
+                  tabIndex={isDisabled ? -1 : 0}
+                  disabled={isDisabled}
+                  onClick={() => togglePeriod(p)}
+                  className={cn(
+                    /* Base TabsTrigger styles */
+                    "inline-flex h-[calc(100%-1px)] items-center justify-center gap-1.5 rounded-md border border-transparent px-3 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] outline-none min-w-12",
+                    "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-1",
+                    "disabled:pointer-events-none disabled:opacity-75 disabled:text-muted-foreground",
+
+                    /* Inactive State */
+                    !isSelected && "text-muted-foreground hover:bg-background/50 hover:border-ring",
+
+                    /* Active State (matches data-[state=active]) */
+                    isSelected && [
+                      "bg-background text-foreground shadow-sm",
+                      "dark:bg-input/30 dark:border-input dark:text-foreground",
+                      "disabled:text-foreground disabled:border-input",
+                    ],
+                  )}
+                >
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {isInvalid && (
+        <div id={errorId} role="alert" aria-live="polite" className="sr-only">
+          The time you entered is invalid. Please check the hours and minutes.
+        </div>
+      )}
+    </div>
+  );
+}
+
+//OLD PERIOD TOGGLE
+/*
+<div className="flex flex-col gap-2 items-center">
+          <Label id={periodLabelId} className="self-center">
+            Period
+          </Label>
           <Tabs value={display.period} onValueChange={(value) => togglePeriod()} aria-labelledby={periodLabelId}>
             <TabsList
               className="grid w-full grid-cols-2"
@@ -205,13 +275,5 @@ export function TimePicker({
             </TabsList>
           </Tabs>
         </div>
-      )}
 
-      {isInvalid && (
-        <div id={errorId} role="alert" aria-live="polite" className="sr-only">
-          The time you entered is invalid. Please check the hours and minutes.
-        </div>
-      )}
-    </div>
-  );
-}
+*/
