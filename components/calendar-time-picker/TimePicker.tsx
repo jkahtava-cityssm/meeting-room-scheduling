@@ -195,7 +195,7 @@ export function TimePicker({
             className={cn(
               "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
               isInvalid && "ring-destructive/20 dark:ring-destructive/40 border-destructive border ring-1",
-              isDisabled && "bg-transparent opacity-50",
+              isDisabled && "bg-transparent",
             )}
             onKeyDown={(e) => {
               if (isDisabled) return;
