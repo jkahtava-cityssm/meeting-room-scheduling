@@ -7,7 +7,7 @@ import { NumberFormInput } from "../components/number-form-input";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { ErrorMessage } from "../components/error-message";
-import { step2Schema } from "../event-drawer-schema.validator";
+import { step2Schema } from "../drawer-schema.validator";
 
 export function WeeklyForm({
   control,

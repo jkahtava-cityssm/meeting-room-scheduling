@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
-import { CombinedSchema, getCombinedSchema } from "./event-drawer-schema.validator";
+import { CombinedSchema, getCombinedSchema } from "./drawer-schema.validator";
 
 import { usePublicConfiguration } from "@/lib/services/public";
 import {

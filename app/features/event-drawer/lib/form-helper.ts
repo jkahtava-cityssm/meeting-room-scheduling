@@ -1,5 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
-import { CombinedSchema } from "../event-drawer-schema.validator";
+import { CombinedSchema } from "../drawer-schema.validator";
 import { FormStep } from "../types";
 import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
 

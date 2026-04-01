@@ -9,7 +9,7 @@ import { PublicEventBlock } from "./calendar-scroll-public-event-block";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IEventBlock } from "../webworkers/generic-webworker";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
-import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
 import { addDays } from "date-fns";
 import { LucideLock, LucideShieldBan } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

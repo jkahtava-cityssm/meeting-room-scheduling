@@ -20,7 +20,7 @@ import { IEventCardFields } from "./types";
 import { TColors } from "@/lib/types";
 import { IconColored } from "@/components/ui/icon-colored";
 import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
-import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
 import { BookingPermissions } from "./permissions/booking.permissions";
 
 export default function EventCard({

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { z } from "zod/v4";
-import { step2Schema } from "./event-drawer-schema.validator";
+import { step2Schema } from "./drawer-schema.validator";
 import { getRRuleData, RRuleFieldValues } from "./lib/rrule-preview-helper";
 
 export function useRRulePreview(startDate: string) {

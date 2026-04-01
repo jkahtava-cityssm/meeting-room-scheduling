@@ -8,8 +8,8 @@ import { TColors } from "@/lib/types";
 import { IEvent, IEventSingleRoom } from "@/lib/schemas";
 
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
-import EventDrawerRefactor from "../../event-drawer-refactor/event-drawer-root";
-import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import EventDrawer from "../../event-drawer/drawer-root";
+import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
 
 const agendaEventCardVariants = cva(
   "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",

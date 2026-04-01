@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { IMonthDayView } from "../webworkers/generic-webworker";
 
 import { useCallback } from "react";
-import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
 
 export function MonthViewDayEvents({
   dayRecord,

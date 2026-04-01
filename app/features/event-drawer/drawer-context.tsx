@@ -1,10 +1,10 @@
 import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
 
 import { IEventSingleRoom } from "@/lib/schemas";
-import EventDrawerRefactor from "./event-drawer-root";
+import EventDrawer from "./drawer-root";
 import { EventDrawerPermissions } from "./lib/permissions";
 import { useSession } from "@/contexts/SessionProvider";
-import { CombinedSchema } from "./event-drawer-schema.validator";
+import { CombinedSchema } from "./drawer-schema.validator";
 
 export type EventDrawerPayload = {
   creationDate: Date;
@@ -49,7 +49,7 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
       {children}
       {/* Offscreen trigger wrapped by the single EventDrawer instance */}
       <EventDrawerPermissions.Provider>
-        <EventDrawerRefactor
+        <EventDrawer
           creationDate={payload ? payload.creationDate : fallbackDate}
           event={payload?.event}
           draft={payload?.draft}

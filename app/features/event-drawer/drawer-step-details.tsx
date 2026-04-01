@@ -23,18 +23,18 @@ import { EventDrawerPermissions } from "./lib/permissions";
 
 import { StaticTabsList, StaticTabsTrigger } from "@/components/ui/tabs-placeholder";
 import { UserMultiSelect } from "../users/user-multiselect";
-import { ItemMultiSelect } from "./item-multiselect";
+import { ItemMultiSelect } from "./components/item-multiselect";
 
 import { StartEndDateTimeProvider } from "@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider";
 import { Label } from "@/components/ui/label";
 import { addDays, format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { LucideLock } from "lucide-react";
-import { useMultiStepForm } from "./multi-step-form-shell";
+import { useMultiStepForm } from "./drawer-form-provider";
 import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { getStep1Schema } from "./event-drawer-schema.validator";
+import { getStep1Schema } from "./drawer-schema.validator";
 import { RoomMultiSelect } from "../rooms/room-multiselect";
 
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());

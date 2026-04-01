@@ -22,7 +22,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BookingPermissions } from "./permissions/booking.permissions";
 import { CalendarLoadingPage } from "@/app/(private)/calendar/loading";
 import { RequirePermission } from "../../calendar/calendar-controller/calendar-all-views";
-import { SharedEventDrawerProvider } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { SharedEventDrawerProvider } from "../../event-drawer/drawer-context";
 
 export interface IUserRequestProcessData {
   events: IEvent[];

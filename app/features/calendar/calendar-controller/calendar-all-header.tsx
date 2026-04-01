@@ -25,8 +25,8 @@ import { DateNavigator, NavigationButtons } from "./calendar-all-header-date-nav
 import { TodayButton } from "./calendar-all-header-today-button";
 import { CalendarPermissions } from "../permissions/calendar.permissions";
 
-import EventDrawerRefactor from "../../event-drawer-refactor/event-drawer-root";
-import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import EventDrawer from "../../event-drawer/drawer-root";
+import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
 
 import { StatusMultiSelect } from "../../status/status-multiselect";
 import { RoomMultiSelect } from "../../rooms/room-multiselect";

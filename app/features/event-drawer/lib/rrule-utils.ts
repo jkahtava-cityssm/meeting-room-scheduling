@@ -32,7 +32,7 @@ export type FlatRRuleSchema = z.infer<typeof BaseRecurrence> & {
 
 import { RRule, rrulestr } from "rrule";
 import { differenceInYears, endOfDay, startOfDay } from "date-fns";
-import { BaseRecurrence, DurationType } from "../event-drawer-schema.validator";
+import { BaseRecurrence, DurationType } from "../drawer-schema.validator";
 import z from "zod/v4";
 
 export function getDurationType(rrule: RRule): DurationType {

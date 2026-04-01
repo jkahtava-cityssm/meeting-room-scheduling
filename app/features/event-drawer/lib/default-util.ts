@@ -1,5 +1,5 @@
 import { addMinutes } from "date-fns";
-import { CombinedSchema, DurationType } from "../event-drawer-schema.validator";
+import { CombinedSchema, DurationType } from "../drawer-schema.validator";
 import { getValidMinuteAndRolledHour } from "./form-helper";
 import { getDurationText } from "@/lib/helpers";
 import { IEvent, IEventSingleRoom } from "@/lib/schemas";

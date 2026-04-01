@@ -15,7 +15,7 @@ import { useVerifySessionRequirement, Session } from "@/lib/auth-client";
 import { FormStatus, FormStep } from "./types";
 import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
 import { useSession } from "@/contexts/SessionProvider";
-import { useMultiStepForm } from "./multi-step-form-shell";
+import { useMultiStepForm } from "./drawer-form-provider";
 import { cn } from "@/lib/utils";
 import { EventDrawerPermissions } from "./lib/permissions";
 

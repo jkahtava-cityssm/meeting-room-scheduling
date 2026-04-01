@@ -3,17 +3,17 @@ import { FieldKeys, FormStep } from "./types";
 
 import { IEventSingleRoom, SEventSingleRoom } from "@/lib/schemas";
 import React, { useMemo } from "react";
-import { Step1 } from "./step-event-details";
-import { Step2 } from "./step-event-recurrence";
+import { Step1 } from "./drawer-step-details";
+import { Step2 } from "./drawer-step-recurrence";
 
-import { CombinedSchema, getStep1Schema, Step2Fields, step2Schema } from "./event-drawer-schema.validator";
-import { MultiStepForm } from "./multi-step-form-shell";
+import { CombinedSchema, getStep1Schema, Step2Fields, step2Schema } from "./drawer-schema.validator";
+import { MultiStepForm } from "./drawer-form-provider";
 import { EventDrawerPermissions } from "./lib/permissions";
 import { useSession } from "@/contexts/SessionProvider";
 import { usePrivateConfigurationQuery } from "@/lib/services/configuration";
 import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 
-export default function EventDrawerRefactor({
+export default function EventDrawer({
   creationDate,
   event,
   draft,

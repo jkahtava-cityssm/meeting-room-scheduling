@@ -12,18 +12,15 @@ import React from "react";
 import { IEventSingleRoom } from "@/lib/schemas";
 
 import FormFooter from "./form-footer";
-import UnsavedChangesDialog from "./dialog-unsaved-changes";
-
-import { ConfirmErrorDialog } from "./dialog-confirm-prompt";
 
 import { useMultiStepFormLogic } from "./use-multi-step-logic";
 import { useSession } from "@/contexts/SessionProvider";
 import { EventDialog } from "./components/dialog";
-import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
+
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
 import { EventDrawerPermissions } from "./lib/permissions";
-import { CombinedSchema } from "./event-drawer-schema.validator";
+import { CombinedSchema } from "./drawer-schema.validator";
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
