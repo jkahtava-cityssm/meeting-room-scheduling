@@ -58,8 +58,6 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
   const isRecurring = watch("isRecurring");
   const userId = watch("userId");
 
-  const eventRoomIds = watch("eventRoomIds");
-  console.log(eventRoomIds);
   const showEndDate = isRecurring === "false" && enableMultiDay;
 
   const startRaw = useWatch({ control, name: "startDate" });
