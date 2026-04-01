@@ -102,7 +102,7 @@ export function CalendarHeader({
           <div className="w-full sm:w-1/2 flex flex-col flex-1 gap-1">
             <Label>Rooms</Label>
             <RoomMultiSelect
-              includeAllOption={false}
+              hideSelectAll={false}
               selectedRoomIds={selectedRoomIds}
               onChange={(values) => handleNavigateRoomChange(values)}
               excludeRoomIds={[]}

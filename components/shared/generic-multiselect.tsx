@@ -93,7 +93,7 @@ export function GenericMultiSelect<T>({
   }
 
   return (
-    <div className={cn("w-full", className)} data-invalid={dataInvalid}>
+    <div className={cn("w-full min-w-0 overflow-hidden", className)} data-invalid={dataInvalid}>
       <MultiSelect
         options={options}
         onValueChange={onValueChange}

@@ -11,7 +11,7 @@ export function RoomMultiSelect({
   dataInvalid = false,
   isDisabled = false,
   maxCount = 3,
-  includeAllOption = false,
+  hideSelectAll = false,
 }: {
   selectedRoomIds: string[];
   onChange: (ids: string[]) => void;
@@ -20,20 +20,20 @@ export function RoomMultiSelect({
   dataInvalid?: boolean;
   isDisabled: boolean;
   maxCount?: number;
-  includeAllOption: boolean;
+  hideSelectAll: boolean;
 }) {
   const { isPending, data, error } = useRoomsQuery(false);
 
-  const filteredRoomIds = data
-    ? data
-        .map((room) => String(room.roomId))
-        .filter((roomId) => !excludeRoomIds.includes(roomId) || selectedRoomIds.includes("-1"))
-    : [];
+  const availableRooms = data ? data.filter((room) => !excludeRoomIds.includes(String(room.roomId))) : [];
+
+  const effectiveSelection = selectedRoomIds.includes("-1")
+    ? [...availableRooms.map((room) => String(room.roomId))]
+    : selectedRoomIds;
 
   return (
     <GenericMultiSelect
-      list={data}
-      selectedValues={filteredRoomIds}
+      list={availableRooms}
+      selectedValues={effectiveSelection}
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
@@ -49,7 +49,7 @@ export function RoomMultiSelect({
       getColor={(room) => room.color as TColors}
       className={className}
       selectAllBadge={{ label: "All Rooms", value: "-1", color: "zinc", icon: "asterisk" }}
-      hideSelectAll={includeAllOption}
+      hideSelectAll={hideSelectAll}
       hideIcon={false}
       hideClearAll={true}
       hideClearSingle={true}
