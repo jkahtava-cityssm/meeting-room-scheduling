@@ -23,6 +23,7 @@ import { FormStatus } from "./types";
 import { useMultiStepForm } from "./drawer-form-provider";
 import { step2Schema } from "./drawer-schema.validator";
 import { RRulePreview } from "./components/rrule-preview";
+import { EventDrawerPermissions } from "./lib/permissions";
 
 // Import your newly created sub-forms and hooks
 
@@ -30,12 +31,15 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
   const { startDate } = useMultiStepForm();
   const { control, watch } = useFormContext<z.infer<typeof step2Schema>>();
 
+  const { can, isVerifying } = EventDrawerPermissions.usePermissions();
+
+  const allowRecurrence = can("ToggleRecurrence");
   // All calculation logic, debouncing, and state is now hidden in this hook
   const { localDates, count, isCalculating } = useRRulePreview(startDate);
 
   const type = watch("repeatingType");
   const durationType = watch("durationType");
-  const isReadOnly = formStatus === "Read" || formStatus === "Loading";
+  const isReadOnly = formStatus === "Read" || formStatus === "Loading" || allowRecurrence === false;
 
   return (
     <div>

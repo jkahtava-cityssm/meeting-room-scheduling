@@ -26,6 +26,7 @@ const buttonVariants = cva(
           "bg-green-500 text-white shadow-xs hover:bg-green-500/90 focus-visible:ring-green-500 /20 dark:focus-visible:ring-green-500/40 dark:bg-green-500/60",
         outline: `${outline} ${darkInvalidBorderStyles} hover:text-accent-foreground `,
         combobox: `${outline} ${darkInvalidBorderStyles} `,
+        outline_primary: `border border-primary/50 disabled:border-border bg-background shadow-xs hover:bg-accent dark:bg-primary/30 dark:border-primary dark:hover:bg-primary/30 ${darkInvalidBorderStyles} hover:text-primary`,
         outline_destructive:
           "border bg-background shadow-xs  border-destructive/50 text-destructive  ring-destructive/20 hover:bg-destructive/10 hover:text-destructive dark:ring-destructive/40 dark:hover:bg-destructive/10",
         secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",

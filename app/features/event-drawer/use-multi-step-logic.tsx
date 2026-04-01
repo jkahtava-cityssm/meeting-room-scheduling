@@ -274,7 +274,7 @@ export const useMultiStepFormLogic = (props: {
 
   return {
     ...formStatus,
-
+    isRecurring,
     startDate,
     goToStep,
     methods,

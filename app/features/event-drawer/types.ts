@@ -33,13 +33,14 @@ export interface MultiStepFormContextProps {
   isFirstStep: boolean;
   isLastStep: boolean;
   goToStep: (step: number) => void;
-  nextStep: () => void;
-  previousStep: () => void;
+  nextStep: (isReadOnly: boolean) => void;
+  previousStep: (isReadOnly: boolean) => void;
   previousStepHasError: boolean;
   nextStepHasError: boolean;
 
   //Form
   defaultFormValues: CombinedSchema;
+  isRecurring: boolean;
   userId?: string;
   startDate: string;
   methods: UseFormReturn<CombinedSchema>;

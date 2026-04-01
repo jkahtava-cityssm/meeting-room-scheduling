@@ -165,71 +165,66 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           )}
         />
       )}
-      {allowRecurrence ? (
-        <FormField
-          control={control}
-          name="isRecurring"
-          render={({ field, fieldState }) => (
-            <FormItem className="col-span-1 row-1 xs:justify-items-center">
-              {fieldState.invalid ? (
-                <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-              ) : (
-                <FormLabel>Event Type</FormLabel>
-              )}
-              <FormControl>
-                <Tabs
-                  defaultValue={field.value}
-                  onValueChange={(value) => {
-                    const startDate = getValues("startDate");
-                    const endDate = getValues("endDate");
 
-                    if (value === "true" && startDate !== endDate) {
-                      const updateDate = changeDateOnly(getValues("startDate"), getValues("endDate"));
-                      setValue("endDate", updateDate);
-                      setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
-                    }
-                    field.onChange(value);
-                  }}
+      <FormField
+        control={control}
+        name="isRecurring"
+        render={({ field, fieldState }) => (
+          <FormItem className="col-span-1 row-1 xs:justify-items-center">
+            {fieldState.invalid ? (
+              <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
+            ) : (
+              <FormLabel>Event Type</FormLabel>
+            )}
+            <FormControl>
+              <Tabs
+                defaultValue={field.value}
+                onValueChange={(value) => {
+                  const startDate = getValues("startDate");
+                  const endDate = getValues("endDate");
+
+                  if (value === "true" && startDate !== endDate) {
+                    const updateDate = changeDateOnly(getValues("startDate"), getValues("endDate"));
+                    setValue("endDate", updateDate);
+                    setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
+                  }
+                  field.onChange(value);
+                }}
+              >
+                <TabsList
+                  className="gap-2"
+                  aria-disabled={isReadOnly || !allowRecurrence}
+                  data-invalid={fieldState.invalid}
+                  aria-invalid={fieldState.invalid}
                 >
-                  <TabsList
-                    className="gap-2"
-                    aria-disabled={isReadOnly}
-                    data-invalid={fieldState.invalid}
-                    aria-invalid={fieldState.invalid}
-                  >
-                    <TabsTrigger value="false" disabled={isReadOnly}>
-                      Single
-                    </TabsTrigger>
-
+                  <TabsTrigger value="false" disabled={isReadOnly || !allowRecurrence}>
+                    Single
+                  </TabsTrigger>
+                  {!allowRecurrence && (
+                    <Tooltip delayDuration={500}>
+                      <TooltipTrigger asChild>
+                        <span className="inline-block">
+                          <TabsTrigger value="true" disabled={isReadOnly || !allowRecurrence}>
+                            Recurring
+                            <LucideLock className="stroke-muted-foreground" />
+                          </TabsTrigger>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>You do not have the permission to create Recurring Events</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {allowRecurrence && (
                     <TabsTrigger value="true" disabled={isReadOnly}>
                       Recurring
                     </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </FormControl>
-            </FormItem>
-          )}
-        />
-      ) : (
-        <div className="grid gap-2 col-span-1 row-1 xs:justify-items-center">
-          <FormLabel>Event Type</FormLabel>
-          <StaticTabsList aria-disabled={isReadOnly}>
-            <StaticTabsTrigger state="active" disabled={isReadOnly}>
-              Single
-            </StaticTabsTrigger>
+                  )}
+                </TabsList>
+              </Tabs>
+            </FormControl>
+          </FormItem>
+        )}
+      />
 
-            <Tooltip delayDuration={500}>
-              <TooltipTrigger asChild>
-                <StaticTabsTrigger state="inactive" disabled={isReadOnly} className="cursor-not-allowed">
-                  Recurring
-                  <LucideLock className="stroke-muted-foreground" />
-                </StaticTabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent>You do not have the permission to create Recurring Events</TooltipContent>
-            </Tooltip>
-          </StaticTabsList>
-        </div>
-      )}
       <FormField
         control={control}
         name="statusId"

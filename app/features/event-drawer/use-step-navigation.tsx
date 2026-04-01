@@ -8,13 +8,13 @@ export const useStepNavigation = (totalSteps: number, validateStep: (index: numb
     nextError: false,
   });
 
-  const handleStepChange = async (direction: "next" | "back") => {
+  const handleStepChange = async (direction: "next" | "back", isReadOnly: boolean) => {
     const isMovingNext = direction === "next";
     const canMove = isMovingNext ? currentStepIndex < totalSteps - 1 : currentStepIndex > 0;
 
     if (!canMove) return;
 
-    const isValid = await validateStep(currentStepIndex);
+    const isValid = isReadOnly ? true : await validateStep(currentStepIndex);
 
     setNavigationStatus((prev) => ({
       prevError: isMovingNext ? !isValid : currentStepIndex - 1 === 0 ? false : prev.prevError,
@@ -32,8 +32,8 @@ export const useStepNavigation = (totalSteps: number, validateStep: (index: numb
   return {
     currentStepIndex,
     navigationStatus,
-    nextStep: () => handleStepChange("next"),
-    previousStep: () => handleStepChange("back"),
+    nextStep: (isReadOnly: boolean) => handleStepChange("next", isReadOnly),
+    previousStep: (isReadOnly: boolean) => handleStepChange("back", isReadOnly),
     resetNavigation,
     goToStep: (index: number) => index >= 0 && index < totalSteps && setCurrentStepIndex(index),
   };

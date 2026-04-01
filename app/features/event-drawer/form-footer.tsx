@@ -44,9 +44,9 @@ const FormFooter = ({ userId }: { userId?: string }) => {
       loading: ctx.mutationDelete.isPending,
     },
     nav: {
-      backVariant: ctx.previousStepHasError ? "outline_destructive" : "outline",
-      nextVariant: ctx.nextStepHasError ? "outline_destructive" : "outline",
-      show: can("ToggleRecurrence"),
+      backVariant: ctx.previousStepHasError ? "outline_destructive" : "outline_primary",
+      nextVariant: ctx.nextStepHasError ? "outline_destructive" : "outline_primary",
+      show: ctx.isRecurring,
       isFirst: ctx.isFirstStep,
       isLast: ctx.isLastStep,
     },
@@ -75,18 +75,19 @@ const FormFooter = ({ userId }: { userId?: string }) => {
         <Button
           variant={actions.nav.backVariant}
           className="basis-[48%] mr-auto md:basis-24 md:mr-0"
-          onClick={ctx.previousStep}
+          onClick={() => ctx.previousStep(ctx.isReadOnly)}
           disabled={actions.nav.isFirst}
         >
-          <ArrowLeftCircle /> Back
+          <ArrowLeftCircle />
+          Event Details
         </Button>
         <Button
           variant={actions.nav.nextVariant}
           className="basis-[48%] ml-auto md:basis-24 md:ml-0"
-          onClick={ctx.nextStep}
+          onClick={() => ctx.nextStep(ctx.isReadOnly)}
           disabled={actions.nav.isLast}
         >
-          Next <ArrowRightCircle />
+          Recurrence <ArrowRightCircle />
         </Button>
       </div>
 
