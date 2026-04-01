@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { IEvent } from "@/lib/schemas";
+import { IEvent, IEventSingleRoom } from "@/lib/schemas";
 import { TStatusKey, TVisibleHours } from "@/lib/types";
 import {
   calculateMultiDayEventPositions,
@@ -11,6 +11,7 @@ import {
   generateRecurringEventsInPeriod,
   getDateRange,
   setMultiDayEventBoundaries,
+  splitMultiRoomEvents,
   transformToGrid,
   transformToRoomBlocks,
   transformToWeekBlocks,
@@ -28,14 +29,14 @@ export interface IEventBlock {
   eventIndex: number;
   eventStyle: { top: string; width: string; left: string };
   eventHeight: number;
-  event: IEvent;
+  event: IEventSingleRoom;
   roomId?: number;
 }
 
 export interface IEventView {
   index: number;
   position: "none" | "middle" | "first" | "last" | "single";
-  event: IEvent | undefined;
+  event: IEventSingleRoom | undefined;
 }
 
 export interface IMonthDayView {
@@ -66,7 +67,7 @@ export interface IYearDayView {
   dayDate: ISODateString;
   isBlank: boolean;
   isToday: boolean;
-  dayEvents: IEvent[];
+  dayEvents: IEventSingleRoom[];
 }
 
 export type TProcessedBlockData = { roomBlocks: Map<string, IEventBlock[]>; hours: number[] };
@@ -83,7 +84,7 @@ export interface IWeekData {
 }
 
 export type CalendarDataMap = {
-  AGENDA: { sortedEvents: IEvent[] };
+  AGENDA: { sortedEvents: IEventSingleRoom[] };
   DAY: IDayRoomBlock;
   WEEK: IWeekData;
   MONTH: { dayViews: IMonthDayView[]; weekViews: IMonthWeekView[] };
@@ -91,7 +92,7 @@ export type CalendarDataMap = {
 };
 
 export type ProcessedDataMap = {
-  AGENDA: { sortedEvents: IEvent[] };
+  AGENDA: { sortedEvents: IEventSingleRoom[] };
   DAY: IDayRoomBlock; // Was TProcessedBlockData (Map)
   WEEK: IWeekData; // Was TProcessedWeekData (Map)
   MONTH: { dayViews: IMonthDayView[]; weekViews: IMonthWeekView[] };
@@ -138,13 +139,16 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
     ]);
     const viewBounds = calculateViewBoundaries(
       visibleHours,
-      [...multiDayEvents, ...recurringEvents] as IEvent[],
+      [...multiDayEvents, ...recurringEvents] as IEventSingleRoom[],
       range.startDate,
       range.endDate,
     );
 
     setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
-    const filtered = filterEventsByRoom([...multiDayEvents, ...recurringEvents], payload.selectedRoomId || "-1");
+
+    const multiRoomEvents = splitMultiRoomEvents([...multiDayEvents, ...recurringEvents] as IEvent[]);
+
+    const filtered = filterEventsByRoom(multiRoomEvents, payload.selectedRoomId || "-1");
     const filteredByStatus = filterEventsByStatus(filtered, statusKeys ?? []);
 
     const sortedEvents = filteredByStatus.sort(

@@ -9,7 +9,7 @@ import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTr
 import { useDisclosure } from "@/hooks/use-disclosure";
 
 import React from "react";
-import { IEvent } from "@/lib/schemas";
+import { IEventSingleRoom } from "@/lib/schemas";
 
 import FormFooter from "./form-footer";
 import UnsavedChangesDialog from "./dialog-unsaved-changes";
@@ -28,127 +28,118 @@ import { CombinedSchema } from "./event-drawer-schema.validator";
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
 export const MultiStepForm = ({
-	formSteps,
-	creationDate,
-	event,
-	draft,
-	userId,
-	roomId,
-	isOpen,
-	onOpen,
-	onClose,
-	minHour,
-	maxHour,
-	interval,
-	maxSpan,
+  formSteps,
+  creationDate,
+  event,
+  draft,
+  userId,
+  roomId,
+  isOpen,
+  onOpen,
+  onClose,
+  minHour,
+  maxHour,
+  interval,
+  maxSpan,
 }: {
-	formSteps: FormStep[];
-	creationDate: Date;
-	event?: IEvent;
-	draft?: CombinedSchema;
-	userId?: string;
-	roomId?: number;
-	isOpen: boolean;
-	onOpen: () => void;
-	onClose: () => void;
-	minHour: number;
-	maxHour: number;
-	interval: TimeInterval;
-	maxSpan: number;
+  formSteps: FormStep[];
+  creationDate: Date;
+  event?: IEventSingleRoom;
+  draft?: CombinedSchema;
+  userId?: string;
+  roomId?: number;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  minHour: number;
+  maxHour: number;
+  interval: TimeInterval;
+  maxSpan: number;
 }) => {
-	const { session } = useSession();
-	//const { isOpen, onClose, onOpen } = useDisclosure();
+  const { session } = useSession();
+  //const { isOpen, onClose, onOpen } = useDisclosure();
 
-	const { can } = EventDrawerPermissions.usePermissions();
+  const { can } = EventDrawerPermissions.usePermissions();
 
-	const logic = useMultiStepFormLogic({
-		event,
-		draft,
-		roomId,
-		creationDate,
-		userId,
-		formSteps,
-		isOpen,
-		onOpen,
-		onClose,
-		interval,
-		minHour,
-		maxHour,
-		maxSpan,
-		restrictHours: !can("IgnoreHours"),
-	});
+  const logic = useMultiStepFormLogic({
+    event,
+    draft,
+    roomId,
+    creationDate,
+    userId,
+    formSteps,
+    isOpen,
+    onOpen,
+    onClose,
+    interval,
+    minHour,
+    maxHour,
+    maxSpan,
+    restrictHours: !can("IgnoreHours"),
+  });
 
-	return (
-		<MultiStepFormContext.Provider value={logic}>
-			<Sheet
-				open={isOpen}
-				onOpenChange={logic.handleOpenChange}
-			>
-				<SheetContent
-					onCloseAutoFocus={e => {
-						if (logic.originRef.current) {
-							e.preventDefault();
-							logic.originRef.current.focus();
-						}
-					}}
-					className="w-full md:w-4xl p-4 flex h-full flex-col min-h-0 overflow-hidden gap-2"
-				>
-					<SheetHeader className="shrink-0 p-4 border-b">
-						<SheetTitle>{logic.currentStep.title}</SheetTitle>
-						<SheetDescription>
-							This form will add an event/appointment to the calendar for the given room and assign it to an individual.
-						</SheetDescription>
-					</SheetHeader>
-					<div className="flex-1 min-h-0 p-4">
-						<FormProvider {...logic.methods}>
-							<Form className="h-full min-h-0">
-								<ScrollArea
-									className="h-full min-h-0"
-									type="always"
-								>
-									<div className="w-full min-h-0 pr-4">
-										<logic.currentStep.component
-											formStatus={logic.status}
-											session={session}
-										></logic.currentStep.component>
-									</div>
-									<ScrollBar
-										orientation="vertical"
-										forceMount
-									></ScrollBar>
-								</ScrollArea>
-							</Form>
-						</FormProvider>
-					</div>
-					<FormFooter userId={userId}></FormFooter>
-				</SheetContent>
-			</Sheet>
-			{logic.dialogConfig && (
-				<EventDialog
-					variant={logic.dialogConfig.variant}
-					isOpen={!!logic.dialogConfig}
-					onClose={() => logic.setDialogConfig(null)}
-					title={logic.dialogConfig.title}
-					description={logic.dialogConfig.description}
-					errors={logic.dialogConfig.errors}
-					onConfirm={() => logic.handleDialogAction(logic.dialogConfig?.confirmAction)}
-					onCancel={() => logic.handleDialogAction(logic.dialogConfig?.cancelAction)}
-					onSave={() => logic.handleDialogAction(logic.dialogConfig?.saveAction)}
-					confirmText={logic.dialogConfig.confirmText ?? "Confirm"}
-					cancelText={logic.dialogConfig.cancelText ?? "Cancel"}
-					showSave={logic.dialogConfig.showSave}
-					showConfirm={logic.dialogConfig.showConfirm}
-					showCancel={logic.dialogConfig.showCancel}
-				/>
-			)}
-		</MultiStepFormContext.Provider>
-	);
+  return (
+    <MultiStepFormContext.Provider value={logic}>
+      <Sheet open={isOpen} onOpenChange={logic.handleOpenChange}>
+        <SheetContent
+          onCloseAutoFocus={(e) => {
+            if (logic.originRef.current) {
+              e.preventDefault();
+              logic.originRef.current.focus();
+            }
+          }}
+          className="w-full md:w-4xl p-4 flex h-full flex-col min-h-0 overflow-hidden gap-2"
+        >
+          <SheetHeader className="shrink-0 p-4 border-b">
+            <SheetTitle>{logic.currentStep.title}</SheetTitle>
+            <SheetDescription>
+              This form will add an event/appointment to the calendar for the given room and assign it to an individual.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 min-h-0 p-4">
+            <FormProvider {...logic.methods}>
+              <Form className="h-full min-h-0">
+                <ScrollArea className="h-full min-h-0" type="always">
+                  <div className="w-full min-h-0 pr-4">
+                    <logic.currentStep.component
+                      formStatus={logic.status}
+                      session={session}
+                    ></logic.currentStep.component>
+                  </div>
+                  <ScrollBar orientation="vertical" forceMount></ScrollBar>
+                </ScrollArea>
+              </Form>
+            </FormProvider>
+          </div>
+          <FormFooter userId={userId}></FormFooter>
+        </SheetContent>
+      </Sheet>
+      {logic.dialogConfig && (
+        <EventDialog
+          variant={logic.dialogConfig.variant}
+          isOpen={!!logic.dialogConfig}
+          onClose={() => logic.setDialogConfig(null)}
+          title={logic.dialogConfig.title}
+          description={logic.dialogConfig.description}
+          errors={logic.dialogConfig.errors}
+          onConfirm={() => logic.handleDialogAction(logic.dialogConfig?.confirmAction)}
+          onCancel={() => logic.handleDialogAction(logic.dialogConfig?.cancelAction)}
+          onSave={() => logic.handleDialogAction(logic.dialogConfig?.saveAction)}
+          confirmText={logic.dialogConfig.confirmText ?? "Confirm"}
+          cancelText={logic.dialogConfig.cancelText ?? "Cancel"}
+          showSave={logic.dialogConfig.showSave}
+          showConfirm={logic.dialogConfig.showConfirm}
+          showCancel={logic.dialogConfig.showCancel}
+        />
+      )}
+    </MultiStepFormContext.Provider>
+  );
 };
 
 export const useMultiStepForm = () => {
-	const context = useContext(MultiStepFormContext);
-	if (!context) {
-		throw new Error("useMultiStepForm must be used within MultiStepForm.Provider");
-	}
-	return context;
+  const context = useContext(MultiStepFormContext);
+  if (!context) {
+    throw new Error("useMultiStepForm must be used within MultiStepForm.Provider");
+  }
+  return context;
 };

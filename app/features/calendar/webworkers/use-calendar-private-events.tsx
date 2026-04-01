@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useEventsQuery } from "@/lib/services/events";
 import { useCalendarWorker } from "./use-generic-webworker";
 import { CalendarAction, ISODateString } from "./generic-webworker";
-import { IEvent } from "@/lib/schemas";
+import { IEventSingleRoom } from "@/lib/schemas";
 import { TStatusKey, TVisibleHours } from "@/lib/types";
 import { getDateRange } from "./generic-webworker-utilities";
 import { usePublicEventsQuery } from "@/lib/services/public";
@@ -39,7 +39,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   useEffect(() => {
     if (!events || !visibleHours) return;
     processEvents({
-      events: events as IEvent[],
+      events: events as IEventSingleRoom[],
       selectedDate: date.toISOString() as ISODateString,
       selectedRoomId: roomId,
       action: action,

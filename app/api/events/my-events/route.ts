@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
           title: permissions.hasReadAll ? event.title : event.status?.key === "APPROVED" ? "Booked" : "Requested",
           description: permissions.hasReadAll ? event.description : "",
           userId: permissions.hasReadAll ? event.userId : null,
-          rooms: event.rooms.map((room) => {
+          eventRooms: event.eventRooms.map((room) => {
             return {
               ...room,
               color: event.status?.key === "APPROVED" ? "approved" : ("disabled" as TColors),

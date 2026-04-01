@@ -212,7 +212,7 @@ export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | 
   const roomIdSet = new Set(roomIds.map((id) => Number(id)));
 
   const results = events.filter((event) => {
-    return event.rooms.some((room) => roomIdSet.has(room.roomId));
+    return event.eventRooms.some((room) => roomIdSet.has(room.roomId));
   });
 
   return results;

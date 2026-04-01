@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     async ({ data, sessionUserId }) => {
       const {
         eventId,
-        roomId,
+
         userId,
         statusId,
         title,
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
         ruleEndDate,
         eventItems,
         eventRecipients,
+        eventRooms,
       } = data;
 
       let recurrence = null;
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
         description,
         startDate,
         endDate,
-        room: { connect: { roomId } },
+        eventRooms: { createMany: { data: eventRooms.map((roomId: number) => ({ roomId })) } },
         ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
         status: { connect: { statusId: statusId } },
         ...(userId && { user: { connect: { id: userId } } }),
@@ -89,7 +90,6 @@ export async function PUT(request: NextRequest) {
     },
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
       const {
-        roomId,
         userId,
         statusId,
         title,
@@ -102,6 +102,7 @@ export async function PUT(request: NextRequest) {
         ruleEndDate,
         eventRecipients,
         eventItems,
+        eventRooms,
       } = data;
 
       const event = await prisma.$transaction(async (tx) => {
@@ -128,7 +129,7 @@ export async function PUT(request: NextRequest) {
               description,
               startDate,
               endDate,
-              room: { connect: { roomId } },
+              eventRooms: { createMany: { data: eventRooms.map((roomId: number) => ({ roomId })) } },
               ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
               status: { connect: { statusId: statusId } },
               ...(userId && { user: { connect: { id: userId } } }),
@@ -138,7 +139,6 @@ export async function PUT(request: NextRequest) {
               description,
               startDate,
               endDate,
-              room: { connect: { roomId } },
               status: { connect: { statusId } },
               recurrence: recurrence
                 ? { connect: { recurrenceId: recurrence.recurrenceId } }
@@ -152,6 +152,18 @@ export async function PUT(request: NextRequest) {
         );
 
         const eventId = event.eventId;
+
+        if (eventRooms) {
+          await tx.eventRoom.deleteMany({
+            where: { eventId, roomId: { notIn: eventRooms } },
+          });
+
+          await tx.eventRoom.createMany({
+            data: eventRooms.map((roomId) => ({ eventId, roomId: roomId })),
+            skipDuplicates: true,
+          });
+        }
+
         if (eventRecipients) {
           await tx.eventRecipient.deleteMany({
             where: { eventId, eventRecipientId: { notIn: eventRecipients } },
@@ -191,7 +203,7 @@ export async function PUT(request: NextRequest) {
   );
 }
 
-export async function PATCH(request: NextRequest) {
+/*export async function PATCH(request: NextRequest) {
   return guardRoute(
     request,
     {
@@ -249,7 +261,7 @@ export async function PATCH(request: NextRequest) {
       return SuccessMessage("Event updated successfully", event);
     },
   );
-}
+}*/
 
 export async function GET(request: NextRequest) {
   return guardRoute(

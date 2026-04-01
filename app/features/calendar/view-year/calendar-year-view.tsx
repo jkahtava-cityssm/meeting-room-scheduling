@@ -5,7 +5,7 @@ import { endOfYear, startOfYear } from "date-fns";
 
 import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
 import YearViewMonth from "./calendar-year-view-month";
-import { IEvent } from "@/lib/schemas";
+import { IEventSingleRoom } from "@/lib/schemas";
 import { YearViewSkeleton } from "./skeleton-calendar-year-view";
 import { TStatusKey, TVisibleHours } from "@/lib/types";
 import { useEventsQuery } from "@/lib/services/events";

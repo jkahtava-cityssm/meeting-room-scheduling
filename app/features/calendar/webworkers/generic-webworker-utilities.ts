@@ -1,4 +1,4 @@
-import { IEvent, SEvent } from "@/lib/schemas";
+import { IEvent, IEventSingleRoom } from "@/lib/schemas";
 import { TIME_BLOCK_SIZE, TStatusKey, TVisibleHours } from "@/lib/types";
 import {
   addDays,
@@ -43,7 +43,12 @@ import {
 } from "./generic-webworker";
 import { daysBetween } from "rrule/dist/esm/dateutil";
 
-export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[], viewStart: Date, viewEnd: Date) {
+export function calculateViewBoundaries(
+  config: TVisibleHours,
+  events: IEventSingleRoom[],
+  viewStart: Date,
+  viewEnd: Date,
+) {
   let minHour = config.from;
   let maxHour = config.to;
 
@@ -128,13 +133,13 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEvent[],
  * Returns Record<string, IEventBlock[]>
  */
 export function transformToRoomBlocks(
-  events: IEvent[],
+  events: IEventSingleRoom[],
   earliestEventHour: number,
   latestEventHour: number,
 ): { totalEvents: number; hours: number[]; roomBlocks: Record<string, IEventBlock[]> } {
   const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
 
-  const groupByEvents: Record<string, IEvent[]> = {};
+  const groupByEvents: Record<string, IEventSingleRoom[]> = {};
   const roomBlocks: Record<string, IEventBlock[]> = {};
 
   events.forEach((event) => {
@@ -161,7 +166,7 @@ export function transformToRoomBlocks(
 }
 
 export function transformToWeekBlocks(
-  events: IEvent[],
+  events: IEventSingleRoom[],
   earliestEventHour: number,
   latestEventHour: number,
   startDate: Date,
@@ -171,7 +176,7 @@ export function transformToWeekBlocks(
 
   const totalDays = daysBetween(endDate, startDate);
   // Step 1: Group events by date ONLY
-  const groupByDate: Record<string, IEvent[]> = {};
+  const groupByDate: Record<string, IEventSingleRoom[]> = {};
   const dayBlocks: Record<string, IEventBlock[]> = {};
 
   Array.from({ length: totalDays }, (_, i) => {
@@ -202,7 +207,7 @@ export function transformToWeekBlocks(
 }
 
 export function transformToBlocksByDayByRoom(
-  events: IEvent[],
+  events: IEventSingleRoom[],
   earliestEventHour: number,
   latestEventHour: number,
   startDate: Date,
@@ -212,7 +217,7 @@ export function transformToBlocksByDayByRoom(
 
   const totalDays = daysBetween(endDate, startDate);
   // Step 1: Group events by date ONLY
-  const groupByDate: Record<string, IEvent[]> = {};
+  const groupByDate: Record<string, IEventSingleRoom[]> = {};
   const dayBlocks: Record<string, Record<string, IEventBlock[]>> = {};
 
   Array.from({ length: totalDays }, (_, i) => {
@@ -237,7 +242,7 @@ export function transformToBlocksByDayByRoom(
     dayBlocks[dateKey]["-1"] = allBlocks; // All Rooms option
 
     // --- SECOND PASS: Individual Rooms ---
-    const rooms: Record<string, IEvent[]> = {};
+    const rooms: Record<string, IEventSingleRoom[]> = {};
 
     // Group events by room for this day
     dailyEvents.forEach((event) => {
@@ -262,7 +267,11 @@ export function transformToBlocksByDayByRoom(
   };
 }
 
-function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, latestEventHour: number): IEventBlock[] {
+function buildEventBlocks(
+  bucketEvents: IEventSingleRoom[],
+  earliestEventHour: number,
+  latestEventHour: number,
+): IEventBlock[] {
   const partitioned = groupEvents(bucketEvents);
 
   return partitioned.flatMap((group, groupIndex) =>
@@ -282,7 +291,7 @@ function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, lat
       const { startMinutes, endMinutes } = getEventVisualRange(event, currentDate);
 
       return {
-        key: `block-${event.eventId}-${currentDate.getTime()}`,
+        key: `block-${event.eventId}-${currentDate.getTime()}-${event.roomId}`,
         groupIndex,
         eventIndex,
         eventStyle: calculateEventBlockStyle(event, currentDate, groupIndex, partitioned.length, hasOverlap, {
@@ -301,12 +310,12 @@ function buildEventBlocks(bucketEvents: IEvent[], earliestEventHour: number, lat
  * Strategy for Grid-based views (Month)
  * Returns a record of days, each containing a list of event records with positions
  */
-export function transformToGrid(events: IEvent[], selectedDate: Date, multiDayEventsAtTop: boolean) {
+export function transformToGrid(events: IEventSingleRoom[], selectedDate: Date, multiDayEventsAtTop: boolean) {
   const { startDate, endDate } = getDaysInView(selectedDate);
   const listOfDays = eachDayOfInterval({ start: startDate, end: endDate });
 
-  const eventsByDate: Record<string, IEvent[]> = {};
-  const eventByID: Record<number, IEvent[]> = {};
+  const eventsByDate: Record<string, IEventSingleRoom[]> = {};
+  const eventByID: Record<number, IEventSingleRoom[]> = {};
 
   events.forEach((event) => {
     const dateKey = format(new Date(event.startDate), "yyyy-MM-dd");
@@ -394,8 +403,8 @@ export function transformToGrid(events: IEvent[], selectedDate: Date, multiDayEv
   return { totalEvents: events.length, dayViews, weekViews };
 }
 
-export function groupEventsByDate(events: IEvent[]): Record<string, IEvent[]> {
-  const map: Record<string, IEvent[]> = {};
+export function groupEventsByDate(events: IEventSingleRoom[]): Record<string, IEventSingleRoom[]> {
+  const map: Record<string, IEventSingleRoom[]> = {};
 
   events.forEach((event) => {
     const key = format(new Date(event.startDate), "yyyy-MM-dd");
@@ -408,8 +417,8 @@ export function groupEventsByDate(events: IEvent[]): Record<string, IEvent[]> {
 
 function mutateMultiDayEventPositions(
   eventPositions: Record<string, (number | null)[]>,
-  eventsByDate: Record<string, IEvent[]>,
-  eventsByID: Record<number, IEvent[]>,
+  eventsByDate: Record<string, IEventSingleRoom[]>,
+  eventsByID: Record<number, IEventSingleRoom[]>,
   multiDayEventsAtTop: boolean = false,
 ) {
   for (const dateKey in eventsByDate) {
@@ -477,7 +486,7 @@ function mutateMultiDayEventPositions(
 
 function mutateSingleDayEventPositions(
   eventPositions: { [key: string]: (number | null)[] },
-  eventsByDate: Record<string, IEvent[]>,
+  eventsByDate: Record<string, IEventSingleRoom[]>,
   listOfDaysInMonth: Date[],
 ) {
   listOfDaysInMonth.forEach((currentDate) => {
@@ -512,11 +521,11 @@ function mutateSingleDayEventPositions(
  * Groups events by date and nests them inside a 12-month structure
  */
 export function transformToYearly(
-  events: IEvent[],
+  events: IEventSingleRoom[],
   selectedDate: Date,
 ): { totalEvents: number; monthViews: IYearMonthView[] } {
   // 1. Group events by date string for O(1) lookup during nesting
-  const eventsByDate: Record<string, IEvent[]> = {};
+  const eventsByDate: Record<string, IEventSingleRoom[]> = {};
 
   events.forEach((event) => {
     const key = format(event.startDate, "yyyy-MM-dd");
@@ -573,7 +582,7 @@ export function transformToYearly(
   return { totalEvents: events.length, monthViews: monthData };
 }
 
-export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | string) {
+export function filterEventsByRoom(events: IEventSingleRoom[], selectedRoomId: string[] | string) {
   const roomIds = Array.isArray(selectedRoomId) ? selectedRoomId : [selectedRoomId];
 
   if (roomIds.includes("-1")) {
@@ -587,7 +596,7 @@ export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | 
   return results;
 }
 
-export function filterEventsByStatus(events: IEvent[], statusKeys: TStatusKey[]) {
+export function filterEventsByStatus(events: IEventSingleRoom[], statusKeys: TStatusKey[]) {
   if (statusKeys.length === 0) return events;
 
   const results = events.filter((event) => {
@@ -610,7 +619,7 @@ function getDaysInView(selectedDate: Date) {
   return { startDate: firstDate, endDate: lastDate };
 }
 
-function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IEvent[]) {
+function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IEventSingleRoom[]) {
   let earliestEventHour = visibleHours.from;
   let latestEventHour = visibleHours.to;
 
@@ -629,9 +638,9 @@ function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IEvent[])
   return { hours, earliestEventHour, latestEventHour };
 }
 
-function groupEvents(dayEvents: IEvent[]) {
+function groupEvents(dayEvents: IEventSingleRoom[]) {
   const sortedEvents = dayEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-  const groups: IEvent[][] = [];
+  const groups: IEventSingleRoom[][] = [];
 
   for (const event of sortedEvents) {
     const eventStart = event.startDate;
@@ -684,7 +693,7 @@ export function getDateRange(action: CalendarAction, date: Date) {
 }
 
 function calculateEventBlockStyle(
-  event: IEvent,
+  event: IEventSingleRoom,
   day: Date,
   groupIndex: number,
   groupSize: number,
@@ -715,7 +724,7 @@ function calculateEventBlockStyle(
   };
 }
 
-function getEventVisualRange(event: IEvent, day: Date) {
+function getEventVisualRange(event: IEventSingleRoom, day: Date) {
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
 
@@ -772,13 +781,13 @@ function isSingleDayEventEndAtMidnight(startDate: Date, endDate: Date): boolean 
 }
 
 export function generateMultiDayEventsInPeriod(
-  events: IEvent[],
+  events: IEventSingleRoom[],
   periodStart: Date,
   periodEnd: Date,
   minStartTime: number,
   maxEndTime: number,
 ) {
-  const eventList: IEvent[] = [];
+  const eventList: IEventSingleRoom[] = [];
 
   for (const event of events) {
     if (event.recurrenceId !== null) continue;
@@ -991,6 +1000,19 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
   return eventList;
 }
 
+export function splitMultiRoomEvents(events: IEvent[]) {
+  const splitEvents: IEventSingleRoom[] = [];
+  events.forEach((event) => {
+    event.eventRooms.map((room) => {
+      splitEvents.push({ ...event, room: room, roomId: room.roomId });
+    });
+    if (event.eventRooms.length > 1) {
+      console.log(`Event: ${event.eventId}`);
+    }
+  });
+  return splitEvents;
+}
+
 function isMidnight(date: Date) {
   return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
 }
@@ -1030,7 +1052,7 @@ function getAdjustedEndDateForMultiDay(originalEndDate: Date): Date {
  */
 function getDisplayHoursForSegment(
   position: "first" | "middle" | "last" | "single",
-  event: IEvent,
+  event: IEventSingleRoom,
   minHour: number,
   maxHour: number,
   isEndAtMidnight: boolean,

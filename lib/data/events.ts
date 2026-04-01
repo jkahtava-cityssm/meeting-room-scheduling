@@ -115,7 +115,7 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
             };
           })
         : [],
-      rooms: event.eventRooms
+      eventRooms: event.eventRooms
         ? event.eventRooms.map((eventRoom) => {
             return {
               ...eventRoom.room,

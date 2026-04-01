@@ -9,7 +9,7 @@ import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTr
 import { useDisclosure } from "@/hooks/use-disclosure";
 
 import React from "react";
-import { IEvent, IUser } from "@/lib/schemas";
+import { IEventSingleRoom, IUser } from "@/lib/schemas";
 
 import FormFooter from "./form-footer";
 

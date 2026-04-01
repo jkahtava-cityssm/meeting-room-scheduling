@@ -1,4 +1,4 @@
-import { IEvent, IRoom, SEvent } from "@/lib/schemas";
+import { IEvent, IEventSingleRoom, IRoom, SEvent } from "@/lib/schemas";
 
 import { z } from "zod/v4";
 
@@ -25,13 +25,13 @@ interface MinimalRoom {
 
 export function processBookingRequestEvents(events: IEvent[], roomId: string): IUserRequestResponseData {
   const filteredEvents: IEvent[] = filterEventsByRoom(z.array(SEvent).parse(events), roomId);
-
+  const multiRoomEvents = splitMultiRoomEvents(filteredEvents);
   //const Rooms = new Map<number,IEvent[]>()
 
   // Step 1: Group by date and room
-  const eventsByStartDate = filteredEvents.reduce((outerMap, event) => {
+  const eventsByStartDate = multiRoomEvents.reduce((outerMap, event) => {
     const dateKey = format(event.startDate, "yyyy-MM-dd");
-    const roomList: MinimalRoom[] = event.rooms.map((room) => {
+    const roomList: MinimalRoom[] = event.eventRooms.map((room) => {
       return { roomId: String(room.roomId), roomName: room.name, roomColour: room.color as TColors };
     });
 
@@ -79,6 +79,19 @@ export function processBookingRequestEvents(events: IEvent[], roomId: string): I
   return { sections, totalEvents: filteredEvents.length };
 }
 
+export function splitMultiRoomEvents(events: IEvent[]) {
+  const splitEvents: IEventSingleRoom[] = [];
+  events.forEach((event) => {
+    event.eventRooms.map((room) => {
+      splitEvents.push({ ...event, room: room, roomId: room.roomId });
+    });
+    if (event.eventRooms.length > 1) {
+      console.log(`Event: ${event.eventId}`);
+    }
+  });
+  return splitEvents;
+}
+
 type EventType = "Recurring" | "Multiple" | "Single";
 
 function getEventType(event: IEvent): EventType {
@@ -124,7 +137,7 @@ function formatTimeRange(event: IEvent, type: EventType) {
   }
 }
 
-function FormatEventCardFields(event: IEvent, room: MinimalRoom): IEventCardFields {
+function FormatEventCardFields(event: IEventSingleRoom, room: MinimalRoom): IEventCardFields {
   const eventType = getEventType(event);
   const { firstInstance, lastInstance, formattedText } = getRecurrenceDetails(event);
 

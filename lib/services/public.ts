@@ -25,7 +25,7 @@ const PUBLIC_SROOM = z.object({
   }).array(),
 });
 
-const PUBLIC_SEVENT = z.object({
+export const PUBLIC_SEVENT = z.object({
   eventId: SEvent.shape.eventId,
   endDate: SEvent.shape.endDate,
   startDate: SEvent.shape.startDate,

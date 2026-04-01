@@ -129,7 +129,7 @@ export const SEvent = z.object({
   recurrenceId: z.number().nullable(),
   eventItems: z.array(SEventItem).optional(),
   eventRecipients: z.array(SEventRecipient).optional(),
-  rooms: z.array(SRoom),
+  eventRooms: z.array(SRoom),
   startDate: DateSchema,
   endDate: DateSchema,
   title: z.string().min(1, "Title is required"),
@@ -145,6 +145,11 @@ export const SEvent = z.object({
 export type IStatus = z.infer<typeof SStatus>;
 
 export type IEvent = z.infer<typeof SEvent>;
+export type IEventSingleRoom = IEvent & {
+  roomId: number;
+  room: IRoom;
+};
+
 export type IRecurrence = z.infer<typeof SRecurrence>;
 export type IRoom = z.infer<typeof SRoom>;
 
