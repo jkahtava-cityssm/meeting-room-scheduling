@@ -129,18 +129,6 @@ export const useMultiStepFormLogic = (props: {
     validateStep,
   );
 
-  useEffect(() => {
-    if (formStatus.isLoading && collectedEvent && !isFetching) {
-      const parsedData = mapEventToSchema(collectedEvent);
-      methods.reset(parsedData);
-
-      setStatus("Edit");
-    }
-    if (formStatus.isLoading && !isFetching && !collectedEvent) {
-      setStatus("Read");
-    }
-  }, [collectedEvent, isFetching, methods, formStatus.isLoading]);
-
   const resetForm = useCallback(() => {
     methods.reset(defaultFormValues);
     setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
@@ -174,7 +162,7 @@ export const useMultiStepFormLogic = (props: {
     const apiPayload: z.input<IEventPUT> = {
       ...updatedData,
       eventId: updatedData.eventId ? Number(updatedData.eventId) : undefined,
-      roomId: Number(updatedData.roomId),
+      eventRooms: updatedData.eventRoomIds,
       userId: updatedData.userId ? Number(updatedData.userId) : null,
       statusId: Number(updatedData.statusId),
       rule: isRecurring ? updatedData.rule : undefined,

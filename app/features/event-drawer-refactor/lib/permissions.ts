@@ -13,6 +13,7 @@ const PAGE_PERMISSIONS = {
   ToggleMultiDay: { type: "permission", resource: "Event", action: "Allow Multi-Day" },
   IgnoreHours: { type: "permission", resource: "Event", action: "Ignore Visible Hours" },
   IgnoreBookingSpan: { type: "permission", resource: "Event", action: "Ignore Booking Span" },
+  AllowMultiRoom: { type: "permission", resource: "Event", action: "Allow Multiple Rooms" },
 } as const satisfies GroupedPermissionRequirement;
 
 export const EventDrawerPermissions = createClientSecurity(PAGE_PERMISSIONS);

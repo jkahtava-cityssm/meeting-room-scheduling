@@ -122,9 +122,10 @@ export const getStep1Schema = (min: number, max: number, restrictHours: boolean)
   z
     .object({
       eventId: z.string().optional(),
-      roomId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Room"),
+      roomId: z.string(),
       userId: z.string().refine((v) => v !== "" && !isNaN(Number(v)) && Number(v) > 0, "Please select a Member"),
       eventRecipientIds: z.array(z.string()),
+      eventRoomIds: z.array(z.string()).min(1, "Please select a Room"),
       description: z.string().optional(),
       title: z.string().min(1, "Title is required"),
       statusId: z.string().min(1, "Status is required"),

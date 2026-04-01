@@ -167,7 +167,7 @@ export const SEventPUT = z.object({
   ruleEndDate: utcDateSchema.optional(),
   eventRecipients: z.array(z.coerce.number()).optional(),
   eventItems: z.array(z.coerce.number()).optional(),
-  eventRooms: z.array(z.coerce.number()).length(1, "At least one room is required"),
+  eventRooms: z.array(z.coerce.number()).min(1, "At least one room is required"),
 });
 
 export type IEventPUT = z.infer<typeof SEventPUT>;

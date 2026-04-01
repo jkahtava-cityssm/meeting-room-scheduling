@@ -143,6 +143,7 @@ export const DEFAULT_RESOURCE_ACTIONS = [
       "Allow Multi-Day",
       "Ignore Visible Hours",
       "Ignore Booking Span",
+      "Allow Multiple Rooms",
     ],
   },
   {
@@ -201,6 +202,7 @@ export const DEFAULT_PERMISSION_SETS: DEFAULT_PERMISSION_SET[] = [
           "Change Assigned",
           "Allow Recurrence",
           "Allow Multi-Day",
+          "Allow Multiple Rooms",
           "Ignore Visible Hours",
           "Ignore Booking Span",
         ],

@@ -2,7 +2,7 @@ import { addMinutes } from "date-fns";
 import { CombinedSchema, DurationType } from "../event-drawer-schema.validator";
 import { getValidMinuteAndRolledHour } from "./form-helper";
 import { getDurationText } from "@/lib/helpers";
-import { IEventSingleRoom } from "@/lib/schemas";
+import { IEvent, IEventSingleRoom } from "@/lib/schemas";
 import { FlatRRuleSchema, parseRRule } from "./rrule-utils";
 
 export const getFormDefaults = (
@@ -19,9 +19,10 @@ export const getFormDefaults = (
   return {
     // Step 1 Fields
     eventId: "0",
-    roomId: roomId ? String(roomId) : "",
     userId: userId ?? "",
     eventRecipientIds: [],
+    roomId: String(roomId),
+    eventRoomIds: [String(roomId)],
     title: "",
     description: "",
     statusId: "1",
@@ -65,12 +66,15 @@ export const getFormDefaults = (
   } as CombinedSchema;
 };
 
-export const mapEventToSchema = (event: IEventSingleRoom): CombinedSchema => {
+export const mapEventToSchema = (event: IEventSingleRoom | IEvent): CombinedSchema => {
+  const isSingleRoom = "roomId" in event && "room" in event;
+
   const SEventFormDefaults = {
     eventId: String(event.eventId),
-    roomId: String(event.roomId),
     userId: event.userId ? String(event.userId) : "",
+    roomId: isSingleRoom ? String((event as IEventSingleRoom).roomId) : "",
     eventRecipientIds: event.eventRecipients ? event.eventRecipients.map((user) => String(user.userId)) : [],
+    eventRoomIds: event.eventRooms.map((er) => String(er.roomId)),
     title: event.title,
     description: event.description ?? "",
     statusId: event.statusId ? String(event.statusId) : "1",

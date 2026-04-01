@@ -1,7 +1,7 @@
 import { HomeIcon, UserIcon } from "lucide-react";
 import { FieldKeys, FormStep } from "./types";
 
-import { IEventSingleRoom, SEvent } from "@/lib/schemas";
+import { IEventSingleRoom, SEventSingleRoom } from "@/lib/schemas";
 import React, { useMemo } from "react";
 import { Step1 } from "./step-event-details";
 import { Step2 } from "./step-event-recurrence";
@@ -73,7 +73,7 @@ export default function EventDrawerRefactor({
   //parse(event) was recreating the same object over and over, causing the form to reset.
   const parsedEvent = useMemo(() => {
     if (!event) return undefined;
-    return SEvent.parse(event);
+    return SEventSingleRoom.parse(event);
   }, [event]);
 
   return (
