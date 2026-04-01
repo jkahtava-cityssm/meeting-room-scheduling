@@ -22,7 +22,7 @@ export const getFormDefaults = (
     userId: userId ?? "",
     eventRecipientIds: [],
     roomId: String(roomId),
-    eventRoomIds: [String(roomId)],
+    eventRoomIds: roomId ? [String(roomId)] : [],
     title: "",
     description: "",
     statusId: "1",
