@@ -37,10 +37,10 @@ export function RoomMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Status" : "Collecting Status"}
-      placeholderText="Select Status"
-      searchText="Search Status..."
-      noResultText="No status found"
+      loadingLabel={error ? "Error: Loading Rooms" : "Collecting Rooms"}
+      placeholderText="Select Rooms"
+      searchText="Search Rooms..."
+      noResultText="No rooms found"
       dataInvalid={dataInvalid}
       onValueChange={onChange}
       getId={(room) => room.roomId.toString()}

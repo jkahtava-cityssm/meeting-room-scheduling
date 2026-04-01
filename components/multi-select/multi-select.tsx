@@ -328,9 +328,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const [politeMessage, setPoliteMessage] = React.useState("");
     const [assertiveMessage, setAssertiveMessage] = React.useState("");
 
-    const { containerRef, shadowRef, actionsRef, measurementLimit, visibleCount } = useOverflowDetection(
-      selectedValues.length,
-    );
+    const { containerRef, shadowRef, actionsRef, measurementLimit, visibleIndices } =
+      useOverflowDetection(selectedValues);
 
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -445,8 +444,8 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     }, [options, searchValue, searchable, isGroupedOptions]);
 
     const { maxBadgeIndex, clearButtonIndex, lastBadgeIndex, chevronIndex } = React.useMemo(
-      () => getNavigationIndices(selectedValues.length, visibleCount, disabled),
-      [selectedValues.length, visibleCount, disabled],
+      () => getNavigationIndices(selectedValues.length, visibleIndices.length, disabled),
+      [selectedValues.length, visibleIndices, disabled],
     );
 
     const onValueChangeRef = React.useRef(onValueChange);
@@ -490,11 +489,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
     const clearExtraOptions = React.useCallback(() => {
       if (disabled) return;
 
-      const newSelectedValues = selectedValues.slice(0, visibleCount);
+      const newSelectedValues = selectedValues.filter((_, index) => visibleIndices.includes(index));
 
       setSelectedValues(newSelectedValues);
       onValueChange(newSelectedValues);
-    }, [disabled, visibleCount, onValueChange, selectedValues]);
+    }, [disabled, visibleIndices, onValueChange, selectedValues]);
 
     const toggleAll = () => {
       if (disabled) return;
@@ -643,7 +642,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                   ))}
                   <div data-shadow-plus>
                     <GhostBadge
-                      label={hideMoreLabel ? `${selectedValues.length}` : `+ ${selectedValues.length} more`}
+                      label={
+                        hideMoreLabel
+                          ? `${selectedValues.length}`
+                          : `+ ${selectedValues.length - visibleIndices.length} more`
+                      }
                       hasIcon={false}
                       compactMode={compactMode}
                       disabled={disabled}
@@ -675,33 +678,36 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             hideIcon={hideIcon}
                           />
                         ) : (
-                          selectedValues.slice(0, visibleCount).map((value, index) => (
-                            <MultiSelectBadge
-                              key={value}
-                              isFocused={focusedBadgeIndex === index}
-                              option={getOptionByValue(value)}
-                              onAction={(e) => {
-                                e.stopPropagation();
-                                toggleOption(value);
-                                setFocusedBadgeIndex(-1);
-                              }}
-                              disabled={disabled}
-                              variant={variant}
-                              singleLine={singleLine}
-                              compactMode={compactMode}
-                              hideClearSingle={hideClearSingle}
-                              hideIcon={hideIcon}
-                            />
-                          ))
+                          selectedValues.map((value, index) => {
+                            if (!visibleIndices.includes(index)) return null;
+                            return (
+                              <MultiSelectBadge
+                                key={value}
+                                isFocused={focusedBadgeIndex === index}
+                                option={getOptionByValue(value)}
+                                onAction={(e) => {
+                                  e.stopPropagation();
+                                  toggleOption(value);
+                                  setFocusedBadgeIndex(-1);
+                                }}
+                                disabled={disabled}
+                                variant={variant}
+                                singleLine={singleLine}
+                                compactMode={compactMode}
+                                hideClearSingle={hideClearSingle}
+                                hideIcon={hideIcon}
+                              />
+                            );
+                          })
                         )}
-                        {selectedValues.length > visibleCount && (
+                        {selectedValues.length > visibleIndices.length && (
                           <MultiSelectBadge
                             isFocused={focusedBadgeIndex === maxBadgeIndex}
                             isMaxCount
                             label={
                               hideMoreLabel
-                                ? `+ ${selectedValues.length - visibleCount}`
-                                : `+ ${selectedValues.length - visibleCount} more`
+                                ? `${selectedValues.length}`
+                                : `+ ${selectedValues.length - visibleIndices.length} more`
                             }
                             onAction={(e) => {
                               e.stopPropagation();
