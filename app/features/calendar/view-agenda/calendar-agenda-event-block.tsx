@@ -5,7 +5,7 @@ import { cva } from "class-variance-authority";
 import { BaggageClaim, Clock, Info, MapPin, Refrigerator, Text, User2 } from "lucide-react";
 
 import { TColors } from "@/lib/types";
-import { IEvent } from "@/lib/schemas";
+import { IEvent, IEventSingleRoom } from "@/lib/schemas";
 
 import { sharedColorVariants } from "@/lib/theme/colorVariants";
 import EventDrawerRefactor from "../../event-drawer-refactor/event-drawer-root";
@@ -59,7 +59,7 @@ const agendaEventCardVariants = cva(
   },
 );
 
-export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: string }) {
+export function AgendaEventCard({ event, userId }: { event: IEventSingleRoom; userId?: string }) {
   const { openEventDrawer } = useSharedEventDrawer();
 
   const startDate = event.startDate;

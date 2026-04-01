@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/contexts/SessionProvider";
-import { IEventSingleRoom } from "@/lib/schemas";
+import { IEvent, IEventSingleRoom } from "@/lib/schemas";
 
 import { useEventPatchMutation, useEventsByStatusQuery } from "@/lib/services/events";
 import { startOfMonth, endOfMonth, parse, formatISO, startOfDay, endOfDay, endOfYear, startOfYear } from "date-fns";
@@ -25,7 +25,7 @@ import { RequirePermission } from "../../calendar/calendar-controller/calendar-a
 import { SharedEventDrawerProvider } from "../../event-drawer-refactor/shared-event-drawer-context";
 
 export interface IUserRequestProcessData {
-  events: IEventSingleRoom[];
+  events: IEvent[];
   roomId: string;
 }
 
