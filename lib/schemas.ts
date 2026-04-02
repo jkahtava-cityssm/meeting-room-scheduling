@@ -140,12 +140,16 @@ export const SEvent = z.object({
   createdAt: DateSchema,
   updatedAt: DateSchema,
   multiDay: SMultiDay.optional(),
+  multiRoom: z.boolean().optional(),
 });
 
 // Single-room variant used for display/form processing (after event spreading)
 export const SEventSingleRoom = SEvent.extend({
   roomId: z.number(),
-  room: SRoom,
+  roomName: z.string(),
+  roomColor: z.string(),
+  roomIcon: z.string().nullable(),
+  roomGroupKey: z.union([z.number(), z.string()]),
 });
 
 export type IStatus = z.infer<typeof SStatus>;
