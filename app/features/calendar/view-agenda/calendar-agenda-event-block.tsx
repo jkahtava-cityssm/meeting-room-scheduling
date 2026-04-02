@@ -93,7 +93,17 @@ export function AgendaEventCard({ event, userId }: { event: IEventSingleRoom; us
 
         <div className="mt-1 flex items-center gap-1">
           <MapPin className="size-5 shrink-0" />
-          <p className="text-xs text-foreground">{event.room.name}</p>
+          {event.eventRooms.length > 1 ? (
+            <div className="columns-2 gap-4 text-xs text-foreground font-medium border-b pb-1 mb-1 pl-1">
+              {event.eventRooms.map((room, index) => (
+                <p key={index} className="break-inside-avoid mb-1 truncate">
+                  {room.name}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-foreground font-medium pl-1 truncate">{event.room.name}</p>
+          )}
         </div>
 
         <div className="flex items-center gap-1">

@@ -121,11 +121,11 @@ export function CalendarAgendaView({ date, userId }: { date: Date; userId?: stri
                     eventsToRender?.map((event) => {
                       return (
                         <div
-                          key={`break-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                          key={`break-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}-room-${event.roomId}`}
                           className="break-inside-avoid"
                         >
                           <AgendaEventCard
-                            key={`agenda-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}`}
+                            key={`agenda-${format(event.startDate, "yyyy-MM-dd-HH-mm")}-event-${event.eventId}-room-${event.roomId}`}
                             event={event}
                             userId={userId}
                           />
