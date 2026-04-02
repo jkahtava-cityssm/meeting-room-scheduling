@@ -15,7 +15,7 @@ import SkeletonBookingList from "@/app/features/bookings/components/skeleton-boo
 import { BookingProvider } from "../context/BookingProvider";
 import CalendarMonthPicker from "@/components/calendar-month-picker/CalendarMonthPicker";
 import CalendarYearPicker from "@/components/calendar-year-picker/CalendarYearPicker";
-import { TCalendarView } from "@/lib/types";
+import { TCalendarView, TStatusKey } from "@/lib/types";
 import { CalendarDayPicker } from "@/components/calendar-day-picker/CalendarDayPicker";
 import BookingListByRoom from "./booking-list-by-room";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -23,6 +23,7 @@ import { BookingPermissions } from "./permissions/booking.permissions";
 import { CalendarLoadingPage } from "@/app/(private)/calendar/loading";
 import { RequirePermission } from "../../calendar/calendar-controller/calendar-all-views";
 import { SharedEventDrawerProvider } from "../../event-drawer/drawer-context";
+import { useStatusQuery } from "@/lib/services/status";
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -109,6 +110,10 @@ export default function UserRequests() {
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const { data: statuses } = useStatusQuery();
+
+  const getStatusId = (key: TStatusKey) => statuses?.find((s) => s.key === key)?.statusId;
+
   useEffect(() => {
     //The Workerthread needs to be recreated when we navigate back to the page if the params havent changed.
     //nextjs cache's the route so this is my temporary fix
@@ -192,6 +197,7 @@ export default function UserRequests() {
         {isLoading && <SkeletonBookingList />}
         <BookingProvider
           value={{
+            statusLookup: (key: TStatusKey) => getStatusId(key),
             startDate: formatISO(startDate),
             endDate: formatISO(endDate),
             type: "status",

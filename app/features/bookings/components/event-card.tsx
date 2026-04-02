@@ -28,11 +28,13 @@ export default function EventCard({
   event,
   OnApprove,
   OnDeny,
+  OnPending,
 }: {
   eventCardFields: IEventCardFields;
   event: IEventSingleRoom;
   OnApprove: () => void;
   OnDeny: () => void;
+  OnPending: () => void;
 }) {
   const { can } = BookingPermissions.usePermissions();
 
@@ -123,7 +125,7 @@ export default function EventCard({
           </ButtonColored>
         )}
         {event.status.name !== "Pending Review" && (
-          <ButtonColored color="slate" className="w-full sm:w-1/3" onClick={OnDeny}>
+          <ButtonColored color="slate" className="w-full sm:w-1/3" onClick={OnPending}>
             Pending
           </ButtonColored>
         )}

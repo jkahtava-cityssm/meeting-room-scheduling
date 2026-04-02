@@ -1,6 +1,8 @@
+import { TStatusKey } from "@/lib/types";
 import { createContext, useContext } from "react";
 
 type BookingContextType = {
+  statusLookup: (key: TStatusKey) => number | undefined;
   startDate: string;
   endDate: string;
   type: "user" | "status";

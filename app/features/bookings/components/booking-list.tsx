@@ -60,7 +60,7 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
 
 function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
   const patchEvent = useEventPatchMutation();
-  const { startDate, endDate, type, id } = useBookingContext();
+  const { startDate, endDate, type, id, statusLookup } = useBookingContext();
   const badgeVariants = cva("", {
     variants: {
       color: sharedColorVariants,
@@ -87,16 +87,22 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
               key={String(eventCard.event.eventId)}
               eventCardFields={eventCard.eventCardFields}
               event={eventCard.event}
+              OnPending={() => {
+                patchEvent.mutate({
+                  data: { eventId: eventCard.event.eventId, statusId: statusLookup("PENDING") },
+                  cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
+                });
+              }}
               OnApprove={() => {
                 patchEvent.mutate({
-                  data: { eventId: eventCard.event.eventId, statusId: 2 },
+                  data: { eventId: eventCard.event.eventId, statusId: statusLookup("APPROVED") },
 
                   cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                 });
               }}
               OnDeny={() => {
                 patchEvent.mutate({
-                  data: { eventId: eventCard.event.eventId, statusId: 3 },
+                  data: { eventId: eventCard.event.eventId, statusId: statusLookup("REJECTED") },
                   cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                 });
               }}
