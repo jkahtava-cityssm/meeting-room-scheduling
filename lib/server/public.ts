@@ -3,8 +3,11 @@
 import { CACHE_TAGS } from "@/hooks/use-revalidate-cache";
 import { PUBLIC_ICONFIGURATION, PUBLIC_IEVENT, PUBLIC_IROOM } from "../services/public";
 
-export async function fetchPublicEvents(date: string): Promise<{ data: PUBLIC_IEVENT[]; message: string }> {
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/public/events?date=${date}`;
+export async function fetchPublicEvents(
+  startDate: string,
+  endDate: string,
+): Promise<{ data: PUBLIC_IEVENT[]; message: string }> {
+  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/public/events?startdate=${startDate}&enddate=${endDate}`;
   return privateServerFetch<{ data: PUBLIC_IEVENT[]; message: string }>(url, "Failed to fetch events");
 }
 

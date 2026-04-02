@@ -1,6 +1,6 @@
 import { SEvent, SRecurrence, SRoom, SRoomCategory, SRoomProperty, SStatus } from "@/lib/schemas";
 import { useQuery } from "@tanstack/react-query";
-import { formatISO } from "date-fns";
+import { endOfDay, formatISO, startOfDay } from "date-fns";
 import { z } from "zod";
 import { fetchPublicConfiguration, fetchPublicEvents, fetchPublicRooms } from "../server/public";
 import { QueryError } from "@/contexts/ReactQueryProvider";
@@ -50,10 +50,13 @@ export type PUBLIC_IROOM = z.infer<typeof PUBLIC_SROOM>;
 
 export const usePublicEventsQuery = (date: Date, enabled: boolean = true) => {
   const currentDate = formatDate(date);
+  const startDate = formatDate(startOfDay(currentDate));
+  const endDate = formatDate(endOfDay(currentDate));
+
   return useQuery({
     queryKey: queryKeys.public.eventList(currentDate),
     queryFn: async () => {
-      const result = await fetchPublicEvents(currentDate);
+      const result = await fetchPublicEvents(startDate, endDate);
 
       const parsedResult = z.array(PUBLIC_SEVENT).safeParse(result.data);
 
