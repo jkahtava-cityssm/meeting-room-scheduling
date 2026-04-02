@@ -1004,11 +1004,16 @@ export function splitMultiRoomEvents(events: IEvent[]) {
   const splitEvents: IEventSingleRoom[] = [];
   events.forEach((event) => {
     event.eventRooms.map((room) => {
-      splitEvents.push({ ...event, room: room, roomId: room.roomId });
+      splitEvents.push({
+        ...event,
+        roomId: room.roomId,
+        roomColor: room.color,
+        roomIcon: room.icon,
+        roomName: room.name,
+        roomGroupKey: room.roomId,
+        multiRoom: event.eventRooms.length > 1,
+      });
     });
-    if (event.eventRooms.length > 1) {
-      console.log(`Event: ${event.eventId}`);
-    }
   });
   return splitEvents;
 }
