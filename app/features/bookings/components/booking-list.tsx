@@ -75,7 +75,7 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
       <div
         className={cn(
           "sticky top-10 p-2  shadow-sm h-10 border-2 rounded-b-sm",
-          badgeVariants({ color: roomSection.roomColour })
+          badgeVariants({ color: roomSection.roomColour }),
         )}
       >
         <span className={cn("flex-1 text-md")}> {roomSection.roomName}</span>
@@ -89,19 +89,14 @@ function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
               event={eventCard.event}
               OnApprove={() => {
                 patchEvent.mutate({
-                  eventId: eventCard.event.eventId,
-                  updates: {
-                    status: { connect: { statusId: 2 } },
-                  },
+                  data: { eventId: eventCard.event.eventId, statusId: 2 },
+
                   cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                 });
               }}
               OnDeny={() => {
                 patchEvent.mutate({
-                  eventId: eventCard.event.eventId,
-                  updates: {
-                    status: { connect: { statusId: 3 } },
-                  },
+                  data: { eventId: eventCard.event.eventId, statusId: 3 },
                   cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                 });
               }}

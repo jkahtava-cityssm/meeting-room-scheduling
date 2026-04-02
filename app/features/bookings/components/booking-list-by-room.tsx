@@ -86,25 +86,20 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
                   event={eventCard.event}
                   OnApprove={() => {
                     patchEvent.mutate({
-                      eventId: eventCard.event.eventId,
-                      updates: {
-                        status: { connect: { statusId: 2 } },
-                      },
+                      data: { eventId: eventCard.event.eventId, statusId: 2 },
+
                       cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                     });
                   }}
                   OnDeny={() => {
                     patchEvent.mutate({
-                      eventId: eventCard.event.eventId,
-                      updates: {
-                        status: { connect: { statusId: 3 } },
-                      },
+                      data: { eventId: eventCard.event.eventId, statusId: 3 },
                       cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
                     });
                   }}
                 ></EventCard>
               );
-            })
+            }),
           )}
         </div>
       </div>

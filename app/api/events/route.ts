@@ -9,7 +9,7 @@ import { guardRoute } from "@/lib/api-guard";
 import { Prisma } from "@prisma/client";
 import { createEvent, upsertEvent, updateEvent, findManyEvents, findFirstEvent } from "@/lib/data/events";
 import { createRecurrence, upsertRecurrence, deleteRecurrence } from "@/lib/data/recurrence";
-import { SEventPUT } from "@/lib/services/events";
+import { SEventPATCH, SEventPUT } from "@/lib/services/events";
 
 export async function POST(request: NextRequest) {
   return guardRoute(
@@ -203,65 +203,80 @@ export async function PUT(request: NextRequest) {
   );
 }
 
-/*export async function PATCH(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   return guardRoute(
     request,
     {
       UpdateEvent: { type: "permission", resource: "Event", action: "Update" },
     },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
-      const { eventData, ruleData } = await request.json();
+    async ({ data }) => {
+      const {
+        eventId,
+        title,
+        description,
+        startDate,
+        endDate,
+        statusId,
+        userId,
+        recurrenceId,
+        rule,
+        ruleStartDate,
+        ruleEndDate,
+        eventRooms,
+      } = data;
 
-      if (!eventData || !eventData.eventId) {
-        return BadRequestMessage("Missing eventId for update");
-      }
+      const event = await prisma.$transaction(async (tx) => {
+        // 1. Handle Recurrence Logic
+        let recurrence = undefined;
+        if (rule && ruleStartDate && ruleEndDate) {
+          recurrence = await upsertRecurrence(
+            {
+              create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+              where: { recurrenceId: recurrenceId || 0 },
+              update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+            },
+            tx,
+          );
+        }
 
-      const { eventId, title, description, startDate, endDate, roomId, recurrenceId, userId, status } = eventData;
-      const { rule, ruleStartDate, ruleEndDate } = ruleData || {};
+        // 2. Build dynamic update object for Prisma
+        const updateData: Prisma.EventUpdateInput = {
+          ...(title !== undefined && { title }),
+          ...(description !== undefined && { description }),
+          ...(startDate !== undefined && { startDate }),
+          ...(endDate !== undefined && { endDate }),
+          ...(statusId !== undefined && { status: { connect: { statusId } } }),
+          ...(userId !== undefined && { user: userId ? { connect: { id: userId } } : { disconnect: true } }),
+          ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
+        };
 
-      // Build dynamic update object
-      const updateData: Prisma.EventUpdateInput = {};
-      if (title !== undefined) updateData.title = title;
-      if (description !== undefined) updateData.description = description;
-      if (startDate !== undefined) updateData.startDate = startDate;
-      if (endDate !== undefined) updateData.endDate = endDate;
-      if (roomId !== undefined) updateData.room = { connect: { roomId } };
-      if (userId !== undefined) updateData.user = { connect: { id: userId } };
-      if (status !== undefined) updateData.status = status;
-
-      let recurrence = null;
-
-      if (rule) {
-        recurrence = await upsertRecurrence({
-          create: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
-          where: { recurrenceId: recurrenceId || 0 },
-          update: { rule, startDate: ruleStartDate, endDate: ruleEndDate },
+        // 3. Update the Event
+        const updatedEvent = await tx.event.update({
+          where: { eventId },
+          data: updateData,
         });
-        updateData.recurrence = { connect: { recurrenceId: recurrence.recurrenceId } };
-      }
 
-      if (ruleData === null && recurrenceId !== null) {
-        await deleteRecurrence({ where: { recurrenceId } });
-        updateData.recurrence = { disconnect: true };
-      }
+        // 4. Handle Room updates if provided (Syncing the many-to-many)
+        if (eventRooms) {
+          await tx.eventRoom.deleteMany({
+            where: { eventId, roomId: { notIn: eventRooms } },
+          });
+          await tx.eventRoom.createMany({
+            data: eventRooms.map((roomId: number) => ({ eventId, roomId })),
+            skipDuplicates: true,
+          });
+        }
 
-      if (Object.keys(updateData).length === 0) {
-        return BadRequestMessage("No fields provided for update");
-      }
-
-      const event = await updateEvent({
-        where: { eventId },
-        data: updateData,
+        return await findFirstEvent({ eventId }, tx);
       });
 
-      if (!event) {
-        return InternalServerErrorMessage();
-      }
+      if (!event) return InternalServerErrorMessage();
 
       return SuccessMessage("Event updated successfully", event);
     },
+    SEventPATCH,
   );
-}*/
+}
 
 export async function GET(request: NextRequest) {
   return guardRoute(

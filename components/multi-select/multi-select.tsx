@@ -325,7 +325,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     <div
                       data-shadow-plus
                       className={cn(
-                        "px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap",
+                        "px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs font-mono font-medium whitespace-nowrap",
                       )}
                     >
                       + {selectedValues.length}
@@ -422,7 +422,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                     {visibility.showCountBadge && (
                       <div
                         className={cn(
-                          "px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap ml-auto",
+                          "px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs font-mono font-medium whitespace-nowrap ml-auto",
                         )}
                       >
                         +

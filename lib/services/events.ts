@@ -203,6 +203,13 @@ export const useEventsMutationDelete = () => {
     },
   });
 };
+
+export const SEventPATCH = SEventPUT.partial().extend({
+  eventId: z.coerce.number(),
+});
+
+export type IEventPATCH = z.infer<typeof SEventPATCH>;
+
 export const useEventPatchMutation = () => {
   const queryClient = useQueryClient();
 
@@ -214,24 +221,17 @@ export const useEventPatchMutation = () => {
 
   return useMutation({
     mutationFn: async ({
-      eventId,
-      updates,
-      ruleData,
+      data,
       cacheTags,
     }: {
-      eventId: number;
-      updates: Prisma.EventUpdateInput;
-      ruleData?: Prisma.RecurrenceUpdateInput | null;
+      data: IEventPATCH;
       cacheTags: { startDate: string; endDate: string; type: "user" | "status"; id: string };
     }) => {
-      return fetchPATCH("/api/events", {
-        eventData: { eventId, ...updates },
-        ruleData,
-      });
+      return fetchPATCH("/api/events", data);
     },
 
     onMutate: async (variables) => {
-      const eventKey = queryKeys.events.detail(variables.eventId);
+      const eventKey = queryKeys.events.detail(variables.data.eventId);
       const eventsKey = getContextKey(variables.cacheTags);
 
       await queryClient.cancelQueries({ queryKey: eventsKey });
@@ -244,11 +244,11 @@ export const useEventPatchMutation = () => {
       if (previousEvents) {
         queryClient.setQueryData(eventsKey, (old: IEvent[] | undefined) =>
           old?.map((event) =>
-            event.eventId === variables.eventId
+            event.eventId === variables.data.eventId
               ? {
                   ...event,
                   // Apply only known fields from updates
-                  statusId: variables.updates.status?.connect?.statusId ?? event.statusId,
+                  statusId: variables.data.statusId ?? event.statusId,
                 }
               : event,
           ),
@@ -259,7 +259,7 @@ export const useEventPatchMutation = () => {
       if (previousEvent) {
         queryClient.setQueryData(eventKey, {
           ...previousEvent,
-          statusId: variables.updates.status?.connect?.statusId ?? previousEvent.statusId,
+          statusId: variables.data.statusId ?? previousEvent.statusId,
         });
       }
 
@@ -268,7 +268,7 @@ export const useEventPatchMutation = () => {
 
     onError: (err, variables, context) => {
       const eventsKey = getContextKey(variables.cacheTags);
-      const eventKey = queryKeys.events.detail(variables.eventId);
+      const eventKey = queryKeys.events.detail(variables.data.eventId);
 
       if (context?.previousEvents) {
         queryClient.setQueryData(eventsKey, context.previousEvents);
@@ -282,7 +282,7 @@ export const useEventPatchMutation = () => {
       const eventsKey = getContextKey(variables.cacheTags);
 
       queryClient.invalidateQueries({ queryKey: eventsKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.data.eventId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
   });
