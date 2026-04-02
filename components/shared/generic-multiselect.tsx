@@ -38,6 +38,7 @@ type DataSelectProps<T> = {
   searchable?: boolean;
   modalPopover?: boolean;
   selectAllBadge?: MultiSelectOption;
+  overflowLabel?: string;
 };
 
 export function GenericMultiSelect<T>({
@@ -65,6 +66,7 @@ export function GenericMultiSelect<T>({
   hideClearSingle = false,
   searchable = true,
   modalPopover = true,
+  overflowLabel = "Items Selected",
   selectAllBadge,
 }: DataSelectProps<T>) {
   const options = useMemo(() => {
@@ -112,6 +114,7 @@ export function GenericMultiSelect<T>({
         hideClearSingle={hideClearSingle}
         searchable={searchable}
         modalPopover={modalPopover}
+        overflowLabel={overflowLabel}
       />
     </div>
   );

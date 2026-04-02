@@ -51,9 +51,10 @@ export function RoomMultiSelect({
       selectAllBadge={{ label: "All Rooms", value: "-1", color: "zinc", icon: "asterisk" }}
       hideSelectAll={hideSelectAll}
       hideIcon={false}
-      hideClearAll={true}
+      hideClearAll={false}
       hideClearSingle={true}
       hideMoreLabel={true}
+      overflowLabel="Rooms Selected"
     />
   );
 }

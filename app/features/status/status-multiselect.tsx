@@ -43,9 +43,10 @@ export function StatusMultiSelect({
       selectAllBadge={{ label: "All Statuses", value: "-1", color: "zinc", icon: "asterisk" }}
       hideSelectAll={false}
       hideIcon={false}
-      hideClearAll={true}
+      hideClearAll={false}
       hideClearSingle={true}
       hideMoreLabel={true}
+      overflowLabel="Status Selected"
     />
   );
 }
