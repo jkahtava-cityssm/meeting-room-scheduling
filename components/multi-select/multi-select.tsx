@@ -425,7 +425,10 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                           "px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap ml-auto",
                         )}
                       >
-                        + {selectedValues.length - visibleIndices.length}
+                        +
+                        {visibility.showSelectAllBadge
+                          ? selectedValues.length
+                          : selectedValues.length - visibleIndices.length}
                       </div>
                     )}
                   </div>
