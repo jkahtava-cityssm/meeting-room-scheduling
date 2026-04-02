@@ -1,4 +1,4 @@
-import { IEvent, IEventSingleRoom, IRoom, SEvent } from "@/lib/schemas";
+import { IEvent, IEventSingleRoom, IRoom, SEvent, SEventSingleRoom } from "@/lib/schemas";
 
 import { z } from "zod/v4";
 
@@ -23,17 +23,15 @@ interface MinimalRoom {
   roomColour: TColors;
 }
 
-export function processBookingRequestEvents(events: IEvent[], roomId: string): IUserRequestResponseData {
-  const filteredEvents: IEvent[] = filterEventsByRoom(z.array(SEvent).parse(events), roomId);
-  const multiRoomEvents = splitMultiRoomEvents(filteredEvents);
+export function processBookingRequestEvents(events: IEvent[], selectedRoomId: string): IUserRequestResponseData {
+  const filteredEvents: IEvent[] = filterEventsByRoom(z.array(SEvent).parse(events), selectedRoomId);
+  const multiRoomEvents = extractSingleRoomEvents(filteredEvents);
   //const Rooms = new Map<number,IEvent[]>()
 
   // Step 1: Group by date and room
   const eventsByStartDate = multiRoomEvents.reduce((outerMap, event) => {
     const dateKey = format(event.startDate, "yyyy-MM-dd");
-    const roomList: MinimalRoom[] = event.eventRooms.map((room) => {
-      return { roomId: String(room.roomId), roomName: room.name, roomColour: room.color as TColors };
-    });
+    const roomId = String(event.room.roomId);
 
     if (!outerMap.has(dateKey)) {
       outerMap.set(dateKey, []);
@@ -41,21 +39,21 @@ export function processBookingRequestEvents(events: IEvent[], roomId: string): I
 
     const roomSections = outerMap.get(dateKey)!;
 
-    roomList.forEach((room) => {
-      const card: IEventCard = { event: event, eventCardFields: FormatEventCardFields(event, room) };
-      // Find existing room section
-      let roomSection = roomSections.find((section) => section.roomId === roomId);
+    const card: IEventCard = { event: event, eventCardFields: FormatEventCardFields(event) };
+    // Find existing room section
+    let roomSection = roomSections.find((section) => section.roomId === roomId);
 
-      if (roomSection) {
-        roomSection.eventCards.push(card);
-      } else {
-        roomSection = {
-          ...room,
-          eventCards: [card],
-        };
-        roomSections.push(roomSection);
-      }
-    });
+    if (roomSection) {
+      roomSection.eventCards.push(card);
+    } else {
+      roomSection = {
+        roomId: roomId,
+        roomName: event.room.name,
+        roomColour: event.room.color as TColors,
+        eventCards: [card],
+      };
+      roomSections.push(roomSection);
+    }
 
     return outerMap;
   }, new Map<string, IRoomSection[]>());
@@ -79,14 +77,33 @@ export function processBookingRequestEvents(events: IEvent[], roomId: string): I
   return { sections, totalEvents: filteredEvents.length };
 }
 
-export function splitMultiRoomEvents(events: IEvent[]) {
+const MultiRooms: IRoom = {
+  roomId: 0,
+  name: "Multiple Rooms",
+  color: "zinc",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  icon: "asterisk",
+  publicFacing: false,
+  displayOrder: null,
+  roomCategoryId: -1,
+  roomCategory: {
+    roomCategoryId: -1,
+    name: "All",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+};
+
+export function extractSingleRoomEvents(events: IEvent[]) {
   const splitEvents: IEventSingleRoom[] = [];
   events.forEach((event) => {
-    event.eventRooms.map((room) => {
-      splitEvents.push({ ...event, room: room, roomId: room.roomId });
-    });
-    if (event.eventRooms.length > 1) {
-      console.log(`Event: ${event.eventId}`);
+    if (event.eventRooms.length === 1) {
+      event.eventRooms.map((room) => {
+        splitEvents.push({ ...event, room: room, roomId: room.roomId });
+      });
+    } else {
+      splitEvents.push({ ...event, room: MultiRooms, roomId: event.eventRooms[0].roomId });
     }
   });
   return splitEvents;
@@ -137,16 +154,18 @@ function formatTimeRange(event: IEvent, type: EventType) {
   }
 }
 
-function FormatEventCardFields(event: IEventSingleRoom, room: MinimalRoom): IEventCardFields {
+function FormatEventCardFields(event: IEventSingleRoom): IEventCardFields {
   const eventType = getEventType(event);
   const { firstInstance, lastInstance, formattedText } = getRecurrenceDetails(event);
 
   return {
     cardTitle:
       eventType === "Recurring" ? "Recurring Event" : eventType === "Multiple" ? "Multi-Day Event" : "Single Day Event",
-    color: room.roomColour as TColors,
+    color: event.room.color as TColors,
     eventTitle: event.title,
-    roomName: room.roomName,
+    badgeName: event.room.roomId === 0 ? "Multiple Rooms" : event.room.name,
+    roomName: event.room.roomId === 0 ? event.eventRooms.map((room) => room.name).join(", ") : event.room.name,
+    isMultiRoom: event.room.roomId === 0,
     dateRange: formatDateRange(event, eventType, firstInstance, lastInstance),
     timeRange: formatTimeRange(event, eventType),
     duration: getDurationText(event.startDate, event.endDate),

@@ -23,7 +23,9 @@ export interface IEventCardFields {
   cardTitle: string;
   color: TColors;
   eventTitle: string;
+  badgeName: string;
   roomName: string;
+  isMultiRoom: boolean;
   dateRange: string;
   timeRange: string;
   duration: string;

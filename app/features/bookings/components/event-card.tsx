@@ -44,17 +44,19 @@ export default function EventCard({
 
   return (
     <Card className="w-100 p-2">
-      <CardHeader>
+      <CardHeader className="min-w-0 overflow-hidden">
         <CardTitle className="pb-2 mb-1 border-b">
           <div className="flex flex-row w-full justify-between items-center">
-            {eventCardFields.eventTitle}
-            <BadgeColored color={eventCardFields.color}>{eventCardFields.roomName}</BadgeColored>
+            <span className="truncate">{eventCardFields.eventTitle}</span>
+            <BadgeColored color={eventCardFields.color} className="shrink-0 max-w-[120px]">
+              <span className="truncate block">{eventCardFields.badgeName}</span>
+            </BadgeColored>
           </div>
 
           <div className="flex flex-col">
             <div className="mt-2 flex items-center gap-1">
               <SendHorizonal className="size-5 shrink-0 text-muted-foreground" />
-              <p className="text-xs text-foreground font-medium">{eventCardFields.createdDate}</p>
+              <p className="text-xs text-foreground font-medium pl-1">{eventCardFields.createdDate}</p>
             </div>
           </div>
         </CardTitle>
@@ -72,29 +74,41 @@ export default function EventCard({
           </BadgeColored>
         </CardTitle>
 
-        <CardDescription>
-          <div className="flex flex-col gap-1">
-            <div className="mt-1 flex items-center gap-1">
+        <CardDescription className="grid min-w-0 w-full">
+          <div className="flex flex-col gap-1 min-w-0">
+            <div className="mt-1 flex items-center gap-1 w-full min-w-0">
               <MapPin className="size-5 shrink-0" />
-              <p className="text-xs text-foreground font-medium">{eventCardFields.roomName}</p>
+              <div className="min-w-0 flex-1">
+                {eventCardFields.isMultiRoom ? (
+                  <div className="columns-2 gap-4 text-xs text-foreground font-medium border-b pb-1 mb-1 pl-1">
+                    {eventCardFields.roomName.split(", ").map((room, index) => (
+                      <p key={index} className="break-inside-avoid mb-1 truncate">
+                        {room}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-foreground font-medium pl-1 truncate">{eventCardFields.roomName}</p>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-1">
               <CalendarRange className="size-5 shrink-0" />
-              <p className="text-xs text-foreground font-medium">{eventCardFields.dateRange}</p>
+              <p className="text-xs text-foreground font-medium pl-1">{eventCardFields.dateRange} </p>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="size-5 shrink-0" />
-              <p className="text-xs text-foreground font-medium">{eventCardFields.timeRange}</p>
+              <p className="text-xs text-foreground font-medium pl-1">{eventCardFields.timeRange}</p>
             </div>
             <div className="flex items-center gap-1">
               <Hourglass className="size-5 shrink-0" />
-              <p className="text-xs text-foreground font-medium">{eventCardFields.duration}</p>
+              <p className="text-xs text-foreground font-medium pl-1">{eventCardFields.duration}</p>
             </div>
             {eventCardFields.recurrence && (
               <div className="flex items-center gap-1">
                 <CalendarSync className="size-5 shrink-0" />
-                <p className="text-xs text-foreground font-medium">{eventCardFields.recurrence}</p>
+                <p className="text-xs text-foreground font-medium pl-1">{eventCardFields.recurrence}</p>
               </div>
             )}
           </div>
