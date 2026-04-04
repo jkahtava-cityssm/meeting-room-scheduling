@@ -38,6 +38,8 @@ import { CalendarDayPopover } from '@/components/calendar-day-popover/calendar-d
 import { formatDate } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { RoomMobileSelector } from './room-mobile-filter';
 
 export function CalendarHeader({
   view,
@@ -76,7 +78,24 @@ export function CalendarHeader({
   return (
     <>
       <div className="flex flex-col gap-4 sm:border-b p-4 min-w-90 lg:flex-row lg:items-end lg:justify-between shrink-0">
-        <MobileHeader permissions={permissions} view={view} selectedDate={selectedDate} className="flex sm:hidden" />
+        <MobileHeader
+          permissions={permissions}
+          view={view}
+          selectedDate={selectedDate}
+          className="flex sm:hidden"
+          selectedStatusKeys={selectedStatusKeys}
+          setSelectedStatusKeys={setSelectedStatusKeys}
+          selectedRoomIds={selectedRoomIds}
+          setSelectedRoomIds={setSelectedRoomIds}
+        />
+        <div className="flex border-b sm:hidden items-center gap-3">
+          <MobileDateControls
+            selectedDate={selectedDate}
+            view={view}
+            onPreviousClick={handleNavigatePrevious}
+            onNextClick={handleNavigateNext}
+          ></MobileDateControls>
+        </div>
         <div className="hidden sm:flex items-center gap-3">
           <TodayButton view={view} />
 
@@ -185,18 +204,11 @@ export function CalendarHeader({
           )}
         </div>
       </div>
-      <div className="flex border-b sm:hidden items-center gap-3">
-        <MobileDateControls
-          selectedDate={selectedDate}
-          view={view}
-          onPreviousClick={handleNavigatePrevious}
-          onNextClick={handleNavigateNext}
-        ></MobileDateControls>
-      </div>
     </>
   );
 }
 
+/*
 const MobileHeader = ({
   selectedDate,
   permissions,
@@ -274,49 +286,167 @@ const MobileHeader = ({
       </div>
     </div>
   );
+};*/
+
+const MobileHeader = ({
+  selectedDate,
+  permissions,
+  view,
+  className,
+  selectedStatusKeys,
+  setSelectedStatusKeys,
+  selectedRoomIds,
+  setSelectedRoomIds,
+}: {
+  permissions: Record<Exclude<TCalendarView, 'all' | 'public'>, boolean>;
+  selectedDate: Date;
+  view: Exclude<TCalendarView, 'all' | 'public'>;
+  className?: string;
+  selectedStatusKeys: TStatusKey[];
+  setSelectedStatusKeys: (values: TStatusKey[]) => void;
+  selectedRoomIds: string[];
+  setSelectedRoomIds: (values: string[]) => void;
+}) => {
+  const { day, week, month, year, agenda } = permissions;
+  const [activeTab, setActiveTab] = useState<'main' | 'rooms' | 'status'>('main');
+  return (
+    <div className={cn('flex items-center gap-2 justify-between', className)}>
+      <div className={cn('flex items-center justify-between p-2 w-full', className)}>
+        {/* LEFT: Primary Action */}
+        <Button size="sm" className=" px-4 h-9 shadow-sm">
+          <Plus className="mr-1.5 size-4" />
+          <span className="font-semibold">Add Event</span>
+        </Button>
+
+        {/* RIGHT: Configuration Group */}
+        <div className="flex items-center gap-1.5">
+          {/* VIEW & NAVIGATION DRAWER */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline">
+                <LucideMenuSquare className="size-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-[20px] px-6 pb-8">
+              <SheetHeader className="mb-4">
+                <SheetTitle className="text-left">Calendar View</SheetTitle>
+              </SheetHeader>
+
+              <RadioGroup value={view} className="gap-2">
+                {[
+                  { id: 'day', label: 'Day', icon: <List className="size-5" />, active: day },
+                  { id: 'week', label: 'Week', icon: <Columns className="size-5" />, active: week },
+                  { id: 'month', label: 'Month', icon: <Grid2x2 className="size-5" />, active: month },
+                  { id: 'year', label: 'Year', icon: <Grid3x3 className="size-5" />, active: year },
+                  { id: 'agenda', label: 'Agenda', icon: <CalendarRange className="size-5" />, active: agenda },
+                ].map((item) => (
+                  <MobileViewOption
+                    key={item.id}
+                    id={item.id}
+                    href={navigateURL(selectedDate, item.id as TCalendarView)}
+                    icon={item.icon}
+                    label={item.label}
+                    value={item.id}
+                    isDisabled={!item.active}
+                  />
+                ))}
+              </RadioGroup>
+            </SheetContent>
+          </Sheet>
+
+          {/* FILTER DRAWER (Placeholder for your MultiSelects) */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline">
+                <LucideFilter className="size-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[85vh] rounded-t-[20px] px-6 flex flex-col">
+              {activeTab === 'main' ? (
+                <div className="space-y-6 py-4">
+                  <SheetHeader className="text-left">
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+
+                  <div className="grid gap-3">
+                    <FilterSummaryButton label="Status" count={selectedStatusKeys.length} onClick={() => setActiveTab('status')} />
+                    <FilterSummaryButton label="Rooms" count={selectedRoomIds.length} onClick={() => setActiveTab('rooms')} />
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <SheetClose asChild>
+                      <Button className="w-full h-12 text-base font-semibold">Apply Filters</Button>
+                    </SheetClose>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col h-full overflow-hidden space-y-6 py-4">
+                  <Button variant="ghost" className="w-fit -ml-2 mb-2 gap-2" onClick={() => setActiveTab('main')}>
+                    <ChevronLeft className="size-4" /> Back to Filters
+                  </Button>
+
+                  {activeTab === 'status' && <RoomMobileSelector selectedRoomIds={selectedRoomIds} onChange={setSelectedRoomIds} />}
+
+                  {activeTab === 'rooms' && <RoomMobileSelector selectedRoomIds={selectedRoomIds} onChange={setSelectedRoomIds} />}
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-const ConditionalLink = ({
-  isDisabled,
-  href,
-  id,
-  value,
-  label,
-  icon,
-}: {
-  isDisabled: boolean;
-  href: string;
+const FilterSummaryButton = ({ label, count, onClick }: { label: string; count: number; onClick: () => void }) => (
+  <Button variant="outline" className="w-full h-16 justify-between px-4 rounded-xl border-2" onClick={onClick}>
+    <div className="flex flex-col items-start">
+      <span className="text-xs text-muted-foreground font-semibold uppercase">{label}</span>
+      <span className="text-base">{count > 0 ? `${count} selected` : 'All'}</span>
+    </div>
+    <ChevronRight className="size-4 text-muted-foreground" />
+  </Button>
+);
 
-  id: string;
-  value: string;
+const MobileViewOption = ({
+  href,
+  icon,
+  label,
+  value,
+  isDisabled,
+  id,
+}: {
+  href: string;
+  icon: React.ReactElement;
   label: string;
-  icon: React.ReactNode;
+  value: string;
+  isDisabled: boolean;
+  id: string;
 }) => {
-  if (isDisabled) {
-    return (
-      <div>
-        <div className="flex justify-between gap-3 opacity-50">
-          <div className="flex gap-3">
-            {icon}
-            <Label htmlFor={id}>{label}</Label>
-          </div>
-          <RadioGroupItem value={value} id={id} disabled={isDisabled} />
-        </div>
+  const content = (
+    <div
+      className={cn(
+        'flex items-center justify-between w-full p-4 rounded-xl border transition-all',
+        'active:scale-[0.98] active:bg-accent',
+        isDisabled ? 'opacity-40 pointer-events-none' : 'cursor-pointer',
+      )}
+    >
+      <div className="flex items-center gap-4">
+        <div className="text-muted-foreground">{icon}</div>
+        <span className="font-medium text-base">{label}</span>
       </div>
-    );
-  }
+      <RadioGroupItem value={value} id={value} disabled={isDisabled} className="pointer-events-none" />
+    </div>
+  );
+
+  if (isDisabled) return content;
+
   return (
-    <Link href={href} className="cursor-pointer">
-      <div className="flex justify-between gap-3 cursor-pointer">
-        <div className="flex gap-3 cursor-pointer">
-          {icon}
-          <Label htmlFor={id} className="cursor-pointer">
-            {label}
-          </Label>
-        </div>
-        <RadioGroupItem value={value} id={id} disabled={isDisabled} className="cursor-pointer" />
-      </div>
-    </Link>
+    <SheetClose asChild>
+      <Link href={href} className="block w-full outline-none">
+        {content}
+      </Link>
+    </SheetClose>
   );
 };
 

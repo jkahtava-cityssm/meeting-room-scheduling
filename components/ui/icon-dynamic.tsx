@@ -46,6 +46,7 @@ const DynamicIcon = memo(({ name, color = 'invisible', hideBackground = true, ..
     <LucideDynamicIcon
       name={name}
       {...props}
+      data-slot="icon"
       className={cn(iconClasses, props.className)}
       fallback={() => {
         return <div style={{ width: props.width || 24, height: props.height || 24 }} className="animate-pulse bg-muted rounded-md" />;
