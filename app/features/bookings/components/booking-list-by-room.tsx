@@ -1,13 +1,13 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import EventCard from "./event-card";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import EventCard from './event-card';
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { LoaderIcon, Terminal } from "lucide-react";
-import { IRoomSection, ISection } from "./types";
-import { useEventPatchMutation } from "@/lib/services/events";
-import { useBookingContext } from "../context/BookingProvider";
-import { useEffect, useState } from "react";
-import { SectionLayoutSkeleton } from "./skeleton-booking-list";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { LoaderIcon, Terminal } from 'lucide-react';
+import { IRoomSection, ISection } from './types';
+import { useEventPatchMutation } from '@/lib/services/events';
+import { useBookingContext } from '../context/BookingProvider';
+import { useEffect, useState } from 'react';
+import { SectionLayoutSkeleton } from './skeleton-booking-list';
 
 export default function BookingListByRoom({ sections, page = 1 }: { sections: ISection[]; page?: number }) {
   const PAGE_SIZE = 100;
@@ -30,8 +30,8 @@ export default function BookingListByRoom({ sections, page = 1 }: { sections: IS
   }, [page, sections]);
 
   const breakpoints = true
-    ? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
-    : "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
+    ? 'w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)'
+    : 'w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)';
 
   return (
     <div className={`flex flex-1 flex-col ${breakpoints}`}>
@@ -45,13 +45,7 @@ export default function BookingListByRoom({ sections, page = 1 }: { sections: IS
                 <NoContentWarning />
               ) : (
                 paginatedSections.map((section) => {
-                  return (
-                    <SectionLayout
-                      key={section.sectionId}
-                      formattedDate={section.formattedDate}
-                      roomSections={section.roomSection}
-                    />
-                  );
+                  return <SectionLayout key={section.sectionId} formattedDate={section.formattedDate} roomSections={section.roomSection} />;
                 })
               )}
             </div>
@@ -68,10 +62,7 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
   const { startDate, endDate, type, id, statusLookup } = useBookingContext();
   return (
     <div className="border-b">
-      <div
-        className="sticky top-0 bg-accent text-primary p-2 border-2 border-accent/50 shadow-sm  h-10 z-10"
-        data-date={formattedDate}
-      >
+      <div className="sticky top-0 bg-accent text-primary p-2 border-2 border-accent/50 shadow-sm  h-10 z-10" data-date={formattedDate}>
         <span className="flex-1 text-md">{formattedDate}</span>
       </div>
 
@@ -82,25 +73,20 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
               return (
                 <EventCard
                   key={String(eventCard.event.eventId)}
-                  eventCardFields={eventCard.eventCardFields}
                   event={eventCard.event}
                   OnPending={() => {
                     patchEvent.mutate({
-                      data: { eventId: eventCard.event.eventId, statusId: statusLookup("PENDING") },
-                      cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
+                      data: { eventId: eventCard.event.eventId, statusId: statusLookup('PENDING') },
                     });
                   }}
                   OnApprove={() => {
                     patchEvent.mutate({
-                      data: { eventId: eventCard.event.eventId, statusId: statusLookup("APPROVED") },
-
-                      cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
+                      data: { eventId: eventCard.event.eventId, statusId: statusLookup('APPROVED') },
                     });
                   }}
                   OnDeny={() => {
                     patchEvent.mutate({
-                      data: { eventId: eventCard.event.eventId, statusId: statusLookup("REJECTED") },
-                      cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
+                      data: { eventId: eventCard.event.eventId, statusId: statusLookup('REJECTED') },
                     });
                   }}
                 ></EventCard>

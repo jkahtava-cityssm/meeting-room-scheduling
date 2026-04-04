@@ -1,29 +1,29 @@
-"use client";
+'use client';
 
-import { useSession } from "@/contexts/SessionProvider";
-import { IEvent, IEventSingleRoom } from "@/lib/schemas";
+import { useSession } from '@/contexts/SessionProvider';
+import { IEvent, IEventSingleRoom } from '@/lib/schemas';
 
-import { useEventPatchMutation, useEventsByStatusQuery } from "@/lib/services/events";
-import { startOfMonth, endOfMonth, parse, formatISO, startOfDay, endOfDay, endOfYear, startOfYear } from "date-fns";
+import { useEventPatchMutation, useEventsByStatusQuery } from '@/lib/services/events';
+import { startOfMonth, endOfMonth, parse, formatISO, startOfDay, endOfDay, endOfYear, startOfYear } from 'date-fns';
 
-import { redirect, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import RequestHeader from "@/app/features/bookings/components/request-header";
-import BookingList from "@/app/features/bookings/components/booking-list";
-import { ISection } from "@/app/features/bookings/components/types";
-import SkeletonBookingList from "@/app/features/bookings/components/skeleton-booking-list";
-import { BookingProvider } from "../context/BookingProvider";
-import CalendarMonthPicker from "@/components/calendar-month-picker/CalendarMonthPicker";
-import CalendarYearPicker from "@/components/calendar-year-picker/CalendarYearPicker";
-import { TCalendarView, TStatusKey } from "@/lib/types";
-import { CalendarDayPicker } from "@/components/calendar-day-picker/CalendarDayPicker";
-import BookingListByRoom from "./booking-list-by-room";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { BookingPermissions } from "./permissions/booking.permissions";
-import { CalendarLoadingPage } from "@/app/(private)/calendar/loading";
-import { RequirePermission } from "../../calendar/calendar-controller/calendar-all-views";
-import { SharedEventDrawerProvider } from "../../event-drawer/drawer-context";
-import { useStatusQuery } from "@/lib/services/status";
+import { redirect, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import RequestHeader from '@/app/features/bookings/components/request-header';
+import BookingList from '@/app/features/bookings/components/booking-list';
+import { ISection } from '@/app/features/bookings/components/types';
+import SkeletonBookingList from '@/app/features/bookings/components/skeleton-booking-list';
+import { BookingProvider } from '../context/BookingProvider';
+import CalendarMonthPicker from '@/components/calendar-month-picker/CalendarMonthPicker';
+import CalendarYearPicker from '@/components/calendar-year-picker/CalendarYearPicker';
+import { TCalendarView, TStatusKey } from '@/lib/types';
+import { CalendarDayPicker } from '@/components/calendar-day-picker/CalendarDayPicker';
+import BookingListByRoom from './booking-list-by-room';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { BookingPermissions } from './permissions/booking.permissions';
+import { CalendarLoadingPage } from '@/app/(private)/calendar/loading';
+import { RequirePermission } from '../../calendar/calendar-controller/calendar-all-views';
+import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
+import { useStatusQuery } from '@/lib/services/status';
 
 export interface IUserRequestProcessData {
   events: IEvent[];
@@ -35,7 +35,7 @@ export interface IUserRequestResponseData {
   sections: ISection[];
 }
 function getViewDate(dateParam: string | null) {
-  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
+  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, 'yyyy-MM-dd', new Date());
 }
 
 function removeTimeFromDate(date: Date) {
@@ -43,39 +43,39 @@ function removeTimeFromDate(date: Date) {
 }
 
 function getDateRange(view: TCalendarView, dateValue: Date) {
-  if (view === "day") {
+  if (view === 'day') {
     return { startDate: startOfDay(dateValue), endDate: endOfDay(dateValue) };
   }
 
-  if (view === "month") {
+  if (view === 'month') {
     return { startDate: startOfMonth(dateValue), endDate: endOfMonth(dateValue) };
   }
-  if (view === "year") {
+  if (view === 'year') {
     return { startDate: startOfYear(dateValue), endDate: endOfYear(dateValue) };
   }
-  if (view === "all") {
+  if (view === 'all') {
     return {
-      startDate: parse("0001-01-01", "yyyy-MM-dd", new Date()),
-      endDate: parse("9999-12-31", "yyyy-MM-dd", new Date()),
+      startDate: parse('0001-01-01', 'yyyy-MM-dd', new Date()),
+      endDate: parse('9999-12-31', 'yyyy-MM-dd', new Date()),
     };
   }
 
   return { startDate: startOfDay(dateValue), endDate: endOfDay(dateValue) };
 }
 
-function getDefaultView(permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>): TCalendarView {
-  if (permissions.day) return "day";
-  else if (permissions.week) return "week";
-  else if (permissions.month) return "month";
-  else if (permissions.year) return "year";
-  else if (permissions.agenda) return "agenda";
-  else return "day";
+function getDefaultView(permissions: Record<Exclude<TCalendarView, 'all' | 'public'>, boolean>): TCalendarView {
+  if (permissions.day) return 'day';
+  else if (permissions.week) return 'week';
+  else if (permissions.month) return 'month';
+  else if (permissions.year) return 'year';
+  else if (permissions.agenda) return 'agenda';
+  else return 'day';
 }
 
 export default function UserRequests() {
   const searchParams = useSearchParams();
-  const dateParam = searchParams.get("selectedDate");
-  const viewParam = searchParams.get("view");
+  const dateParam = searchParams.get('selectedDate');
+  const viewParam = searchParams.get('view');
 
   const dateValue = useMemo(() => {
     return getViewDate(dateParam);
@@ -83,14 +83,14 @@ export default function UserRequests() {
 
   const { isVerifying, can, canAny } = BookingPermissions.usePermissions();
 
-  const viewDay = can("ViewCalendarDay");
-  const viewMonth = can("ViewCalendarMonth");
-  const viewWeek = can("ViewCalendarWeek");
-  const viewYear = can("ViewCalendarYear");
-  const viewAgenda = can("ViewCalendarAgenda");
+  const viewDay = can('ViewCalendarDay');
+  const viewMonth = can('ViewCalendarMonth');
+  const viewWeek = can('ViewCalendarWeek');
+  const viewYear = can('ViewCalendarYear');
+  const viewAgenda = can('ViewCalendarAgenda');
 
   const hasAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda);
-  const viewPermissions = { day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda };
+  const viewPermissions = { day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda, request: viewAgenda };
 
   const view = viewParam === null ? getDefaultView(viewPermissions) : viewParam;
 
@@ -103,8 +103,8 @@ export default function UserRequests() {
   const [isRefreshed, setRefreshed] = useState(false);
 
   const workerRef = useRef<Worker | null>(null);
-  const [roomId, setRoomId] = useState<string>("-1");
-  const [statusId, setStatusId] = useState<string>("1");
+  const [roomId, setRoomId] = useState<string>('-1');
+  const [statusId, setStatusId] = useState<string>('1');
 
   const { data: events } = useEventsByStatusQuery(startDate, endDate, statusId);
 
@@ -132,9 +132,7 @@ export default function UserRequests() {
       return;
     }
 
-    const newWorker = new Worker(
-      new URL("@/app/features/bookings/workers/booking-request-webworker.ts", import.meta.url),
-    );
+    const newWorker = new Worker(new URL('@/app/features/bookings/workers/booking-request-webworker.ts', import.meta.url));
 
     newWorker.onmessage = (message: MessageEvent<IUserRequestResponseData>) => {
       setSections(message.data.sections);
@@ -200,46 +198,36 @@ export default function UserRequests() {
             statusLookup: (key: TStatusKey) => getStatusId(key),
             startDate: formatISO(startDate),
             endDate: formatISO(endDate),
-            type: "status",
-            id: "1",
+            type: 'status',
+            id: '1',
           }}
         >
-          {!isLoading && view !== "all" && (
+          {!isLoading && view !== 'all' && (
             <SharedEventDrawerProvider>
               <BookingList sections={sections} />
             </SharedEventDrawerProvider>
           )}
         </BookingProvider>
         <div className="hidden w-74 divide-y border-l md:block">
-          {view === "month" && <CalendarMonthPicker selectedDate={dateValue}></CalendarMonthPicker>}
-          {view === "year" && <CalendarYearPicker selectedDate={dateValue}></CalendarYearPicker>}
-          {view === "day" && <CalendarDayPicker selectedDate={dateValue}></CalendarDayPicker>}
-          {view === "all" && (
-            <PageList currentPage={currentPage} onPageChange={setCurrentPage} sections={sections}></PageList>
-          )}
+          {view === 'month' && <CalendarMonthPicker selectedDate={dateValue}></CalendarMonthPicker>}
+          {view === 'year' && <CalendarYearPicker selectedDate={dateValue}></CalendarYearPicker>}
+          {view === 'day' && <CalendarDayPicker selectedDate={dateValue}></CalendarDayPicker>}
+          {view === 'all' && <PageList currentPage={currentPage} onPageChange={setCurrentPage} sections={sections}></PageList>}
         </div>
       </div>
     </>
   );
 }
 
-function PageList({
-  sections,
-  currentPage,
-  onPageChange,
-}: {
-  sections: ISection[];
-  currentPage: number;
-  onPageChange: (value: number) => void;
-}) {
+function PageList({ sections, currentPage, onPageChange }: { sections: ISection[]; currentPage: number; onPageChange: (value: number) => void }) {
   const PAGE_SIZE = 100;
   const totalPages = Math.ceil(sections.length / PAGE_SIZE);
 
   const getPageInfo = (page: number) => {
     const start = (page - 1) * PAGE_SIZE;
     const end = Math.min(start + PAGE_SIZE, sections.length);
-    const firstDate = sections[start]?.formattedDate || "";
-    const lastDate = sections[end - 1]?.formattedDate || "";
+    const firstDate = sections[start]?.formattedDate || '';
+    const lastDate = sections[end - 1]?.formattedDate || '';
     const count = end - start;
     return { range: `${firstDate} - ${lastDate}`, count };
   };
@@ -255,7 +243,7 @@ function PageList({
                 <button
                   key={page}
                   onClick={() => onPageChange(page)}
-                  className={`px-3 py-1 rounded ${currentPage === page ? "bg-primary text-white" : "bg-gray-200"}`}
+                  className={`px-3 py-1 rounded ${currentPage === page ? 'bg-primary text-white' : 'bg-gray-200'}`}
                 >
                   <div className="text-sm font-semibold">
                     Page {page} ({count} sections)

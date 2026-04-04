@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 import type { Dispatch, SetStateAction } from "react";
 
@@ -29,51 +29,68 @@ interface ICalendarContext {
 const CalendarContext = createContext({} as ICalendarContext);
 
 export function CalendarProviderPublic({ children }: { children: React.ReactNode }) {
-	const { data: configurationData, error: configurationError, isPending: isConfigurationPending } = usePublicConfiguration();
+	const { data: config, error: configurationError, isPending: isConfigurationPending } = usePublicConfiguration();
 	const { data: visibleRooms, error: roomError, isPending: isRoomsPending } = usePublicRoomsQuery();
 
-	const visibleHours = configurationData ? configurationData.hours : undefined;
-	const interval = configurationData ? configurationData.interval : 30;
+	const visibleHours = config ? config.hours : undefined;
 
-	const totalFallbackHours = visibleHours ? visibleHours.to - visibleHours.from : 24;
-	const minFallBackHour = visibleHours ? visibleHours.from : 0;
-
-	const fallbackHours = Array.from({ length: totalFallbackHours }, (_, i) => i + minFallBackHour);
+	const fallbackHours = useMemo(() => {
+		const totalFallbackHours = visibleHours ? visibleHours.to - visibleHours.from : 24;
+		const minFallBackHour = visibleHours ? visibleHours.from : 0;
+		return Array.from({ length: totalFallbackHours }, (_, i) => i + minFallBackHour);
+	}, [visibleHours]);
 
 	const [isHeaderLoading, setIsHeaderLoading] = useState(true);
 	const [totalEvents, setTotalEvents] = useState(0);
 	const [selectedDate, setSelectedDate] = useState(new Date());
 	const [selectedRoomId, setSelectedRoomId] = useState<string>("-1");
 
-	const handleSelectDate = (date: Date | undefined) => {
+	const handleSelectDate = useCallback((date: Date | undefined) => {
 		if (!date) return;
 		setSelectedDate(date);
-	};
+	}, []);
 
-	return (
-		<CalendarContext.Provider
-			value={{
-				selectedDate,
-				setSelectedDate: handleSelectDate,
-				selectedRoomId,
-				setSelectedRoomId,
-				visibleRooms,
-				visibleHours,
-				fallbackHours,
-				interval,
-				configurationError,
-				roomError,
-				isConfigurationPending,
-				isRoomsPending,
-			}}
-		>
-			{children}
-		</CalendarContext.Provider>
+	const value = useMemo(
+		() => ({
+			isHeaderLoading,
+			setIsHeaderLoading,
+			totalEvents,
+			setTotalEvents,
+			selectedDate,
+			setSelectedDate: handleSelectDate,
+			selectedRoomId,
+			setSelectedRoomId,
+			visibleRooms,
+			visibleHours: config?.hours ?? undefined,
+			fallbackHours,
+			interval: config?.interval ?? 30,
+			configurationError,
+			roomError,
+			isConfigurationPending,
+			isRoomsPending,
+		}),
+		[
+			isHeaderLoading,
+			totalEvents,
+			selectedDate,
+			handleSelectDate,
+			selectedRoomId,
+			visibleRooms,
+			config?.hours,
+			config?.interval,
+			fallbackHours,
+			configurationError,
+			roomError,
+			isConfigurationPending,
+			isRoomsPending,
+		],
 	);
+
+	return <CalendarContext.Provider value={value}>{children}</CalendarContext.Provider>;
 }
 
 export function usePublicCalendar(): ICalendarContext {
 	const context = useContext(CalendarContext);
-	if (!context) throw new Error("useCalendar must be used within a CalendarProvider.");
+	if (!context) throw new Error("usePublicCalendar must be used within a CalendarProviderPublic.");
 	return context;
 }

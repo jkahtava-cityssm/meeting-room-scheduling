@@ -1,24 +1,32 @@
-import { formatISO } from "date-fns";
+import { formatISO } from 'date-fns';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from "@/lib/fetch";
-import z from "zod/v4";
-import { IEvent, SEvent, utcDateSchema } from "@/lib/schemas";
-import { Prisma } from "@prisma/client";
-import { processEventsAsync } from "@/app/features/calendar/webworkers/generic-webworker-client";
-import { CalendarAction, ISODateString } from "@/app/features/calendar/webworkers/generic-webworker";
-import { getDateRange } from "@/app/features/calendar/webworkers/generic-webworker-utilities";
-import { TVisibleHours } from "../types";
-import { QueryError } from "@/contexts/ReactQueryProvider";
-import { queryKeys } from "./querykeys";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch';
+import z from 'zod/v4';
+import { IEvent, SEvent, utcDateSchema } from '@/lib/schemas';
+import { Prisma } from '@prisma/client';
+import { processEventsAsync } from '@/app/features/calendar/webworkers/generic-webworker-client';
+import {
+  CalendarAction,
+  ISODateString,
+} from '@/app/features/calendar/webworkers/generic-webworker';
+import { getDateRange } from '@/app/features/calendar/webworkers/generic-webworker-utilities';
+import { TVisibleHours } from '../types';
+import { QueryError } from '@/contexts/ReactQueryProvider';
+import { queryKeys } from './querykeys';
 
 //const queryClient = new QueryClient();
 const formatDate = (date: Date) => {
   return formatISO(date);
 };
 
-export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) => {
-  const endpoint = userId ? "/api/events/my-events" : "/api/events";
+export const useEventsQuery = (
+  startDate: Date,
+  endDate: Date,
+  userId?: string,
+  enabled: boolean = true,
+) => {
+  const endpoint = userId ? '/api/events/my-events' : '/api/events';
   const start = formatDate(startDate);
   const end = formatDate(endDate);
 
@@ -33,7 +41,7 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid event data", "useEventsQuery", parsedResult.error);
+        throw new QueryError('Invalid event data', 'useEventsQuery', parsedResult.error);
       }
 
       return parsedResult.data;
@@ -57,7 +65,7 @@ export const useMyEventsQuery = (
   return useQuery({
     queryKey: queryKeys.events.user(start, end, userId),
     queryFn: async () => {
-      const result = await fetchGET("/api/events/my-events", {
+      const result = await fetchGET('/api/events/my-events', {
         startdate: start,
         enddate: end,
         userId: userId,
@@ -65,7 +73,7 @@ export const useMyEventsQuery = (
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid event data", "useMyEventsQuery", parsedResult.error);
+        throw new QueryError('Invalid event data', 'useMyEventsQuery', parsedResult.error);
       }
 
       return await processEventsAsync({
@@ -84,14 +92,19 @@ export const useMyEventsQuery = (
   });
 };
 
-export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) => {
+export const useEventsByStatusQuery = (
+  startDate: Date,
+  endDate: Date,
+  statusId: string,
+  enabled: boolean = true,
+) => {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
 
   return useQuery({
     queryKey: queryKeys.events.status(start, end, statusId),
     queryFn: async () => {
-      const result = await fetchGET("/api/events/status", {
+      const result = await fetchGET('/api/events/status', {
         startdate: start,
         enddate: end,
         statusId: statusId,
@@ -99,7 +112,7 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId:
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid event data", "useEventsByStatusQuery", parsedResult.error);
+        throw new QueryError('Invalid event data', 'useEventsByStatusQuery', parsedResult.error);
       }
 
       return parsedResult.data;
@@ -117,13 +130,13 @@ export const useTotalEventsByStatusQuery = (
   useQuery({
     queryKey: queryKeys.events.totalByStatus(statusId),
     queryFn: async () => {
-      const result = await fetchGET("/api/events/status/counts", {
+      const result = await fetchGET('/api/events/status/counts', {
         startdate: startDate ? formatDate(startDate) : undefined,
         enddate: endDate ? formatDate(endDate) : undefined,
         statusId: statusId,
       });
 
-      if (!result.data) throw new Error("Invalid total events");
+      if (!result.data) throw new Error('Invalid total events');
 
       return result.data;
     },
@@ -133,7 +146,11 @@ export const useTotalEventsByStatusQuery = (
     staleTime: 60 * 1000,
   });
 
-export const useEventQuery = (eventId: number | undefined, userId: string | undefined, enabled: boolean = true) => {
+export const useEventQuery = (
+  eventId: number | undefined,
+  userId: string | undefined,
+  enabled: boolean = true,
+) => {
   const endpoint = userId ? `/api/events/my-events/${eventId}` : `/api/events/${eventId}`;
   return useQuery({
     queryKey: queryKeys.events.detail(eventId),
@@ -142,7 +159,7 @@ export const useEventQuery = (eventId: number | undefined, userId: string | unde
       const parsedResult = SEvent.safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid event data", "useEventQuery", parsedResult.error);
+        throw new QueryError('Invalid event data', 'useEventQuery', parsedResult.error);
       }
 
       return parsedResult.data;
@@ -157,17 +174,18 @@ export const SEventPUT = z.object({
   eventId: z.coerce.number().optional(),
   userId: z.coerce.number().nullable().optional(),
   statusId: z.coerce.number(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().default(""),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().default(''),
   startDate: utcDateSchema,
   endDate: utcDateSchema,
   recurrenceId: z.coerce.number().nullable().optional(),
   rule: z.string().optional(),
+  ruleDescription: z.string().optional(),
   ruleStartDate: utcDateSchema.optional(),
   ruleEndDate: utcDateSchema.optional(),
   eventRecipients: z.array(z.coerce.number()).optional(),
   eventItems: z.array(z.coerce.number()).optional(),
-  eventRooms: z.array(z.coerce.number()).min(1, "At least one room is required"),
+  eventRooms: z.array(z.coerce.number()).min(1, 'At least one room is required'),
 });
 
 export type IEventPUT = z.infer<typeof SEventPUT>;
@@ -178,7 +196,9 @@ export const useEventsMutationUpsert = () => {
     mutationFn: async (data: IEventPUT) => fetchPUT(`/api/events`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(response.data.eventId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.detail(response.data.eventId),
+      });
     },
   });
 };
@@ -189,7 +209,9 @@ export const useEventsMutationCreate = () => {
     mutationFn: async (data: IEventPUT) => fetchPOST(`/api/events`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(response.data.eventId) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.detail(response.data.eventId),
+      });
     },
   });
 };
@@ -213,77 +235,70 @@ export type IEventPATCH = z.infer<typeof SEventPATCH>;
 export const useEventPatchMutation = () => {
   const queryClient = useQueryClient();
 
-  const getContextKey = (tags: { startDate: string; endDate: string; type: "user" | "status"; id: string }) => {
-    return tags.type === "user"
-      ? queryKeys.events.user(tags.startDate, tags.endDate, tags.id)
-      : queryKeys.events.status(tags.startDate, tags.endDate, tags.id);
-  };
-
   return useMutation({
-    mutationFn: async ({
-      data,
-      cacheTags,
-    }: {
-      data: IEventPATCH;
-      cacheTags: { startDate: string; endDate: string; type: "user" | "status"; id: string };
-    }) => {
-      return fetchPATCH("/api/events", data);
+    mutationFn: async ({ data }: { data: IEventPATCH }) => {
+      return fetchPATCH('/api/events', data);
     },
 
-    onMutate: async (variables) => {
-      const eventKey = queryKeys.events.detail(variables.data.eventId);
-      const eventsKey = getContextKey(variables.cacheTags);
+    onMutate: async ({ data }) => {
+      const eventId = data.eventId;
 
-      await queryClient.cancelQueries({ queryKey: eventsKey });
-      await queryClient.cancelQueries({ queryKey: eventKey });
+      // 1. Define the specific detail key
+      const detailKey = queryKeys.events.detail(eventId);
 
-      const previousEvents = queryClient.getQueryData<IEvent[]>(eventsKey);
-      const previousEvent = queryClient.getQueryData<IEvent>(eventKey);
+      // 2. Cancel outgoing refetches for both Lists and Details
+      // We use the partial keys to match ['events', ...] and ['event', ...]
+      await queryClient.cancelQueries({ queryKey: queryKeys.events.all });
+      await queryClient.cancelQueries({ queryKey: queryKeys.events.details() });
 
-      // Optimistic update for events list
-      if (previousEvents) {
-        queryClient.setQueryData(eventsKey, (old: IEvent[] | undefined) =>
-          old?.map((event) =>
-            event.eventId === variables.data.eventId
-              ? {
-                  ...event,
-                  // Apply only known fields from updates
-                  statusId: variables.data.statusId ?? event.statusId,
-                }
-              : event,
-          ),
+      // 3. Snapshot current state for rollback
+      const previousLists = queryClient.getQueriesData({
+        queryKey: queryKeys.events.all,
+      });
+      const previousDetail = queryClient.getQueryData(detailKey);
+
+      // 4. Update the Detail Query (The singular "event" key)
+      if (previousDetail) {
+        queryClient.setQueryData(detailKey, (old: IEvent) => ({
+          ...old,
+          ...data,
+        }));
+      }
+
+      // 5. Update all Range/User/Status Lists (The plural "events" key)
+      // This will find and update the event in useEventsQuery and useMyEventsQuery
+      queryClient.setQueriesData({ queryKey: queryKeys.events.all }, (old: IEvent) => {
+        // If the cached data isn't an array (e.g., total counts), skip it
+        if (!Array.isArray(old)) return old;
+
+        return old.map((event: IEvent) =>
+          event.eventId === eventId ? { ...event, ...data } : event,
         );
-      }
+      });
 
-      // Optimistic update for single event
-      if (previousEvent) {
-        queryClient.setQueryData(eventKey, {
-          ...previousEvent,
-          statusId: variables.data.statusId ?? previousEvent.statusId,
-        });
-      }
-
-      return { previousEvents, previousEvent };
+      return { previousLists, previousDetail };
     },
 
     onError: (err, variables, context) => {
-      const eventsKey = getContextKey(variables.cacheTags);
-      const eventKey = queryKeys.events.detail(variables.data.eventId);
-
-      if (context?.previousEvents) {
-        queryClient.setQueryData(eventsKey, context.previousEvents);
+      if (context?.previousDetail) {
+        queryClient.setQueryData(
+          queryKeys.events.detail(variables.data.eventId),
+          context.previousDetail,
+        );
       }
-      if (context?.previousEvent) {
-        queryClient.setQueryData(eventKey, context.previousEvent);
+
+      if (context?.previousLists) {
+        context.previousLists.forEach(([key, value]) => {
+          queryClient.setQueryData(key, value);
+        });
       }
     },
 
     onSettled: (data, error, variables) => {
-      const eventsKey = getContextKey(variables.cacheTags);
-
-      queryClient.invalidateQueries({ queryKey: eventsKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.events.detail(variables.data.eventId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.detail(variables.data.eventId),
+      });
     },
   });
 };
