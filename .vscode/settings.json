@@ -7,6 +7,19 @@
   "css.lint.unknownAtRules": "ignore",
   "prisma.pinToPrisma6": true,
 
-  "typescript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@radix-ui/**"],
-  "javascript.preferences.autoImportFileExcludePatterns": ["**/node_modules/@radix-ui/**"]
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "**/node_modules/@radix-ui/**"
+  ],
+  "javascript.preferences.autoImportFileExcludePatterns": [
+    "**/node_modules/@radix-ui/**"
+  ],
+
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
