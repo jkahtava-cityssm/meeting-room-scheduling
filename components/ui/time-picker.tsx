@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 
-import { Period, TimePickerInput } from "./time-picker-input";
-import { Label } from "./label";
-import { TimePeriodSelect } from "./time-period-select";
+import { Period, TimePickerInput } from './time-picker-input';
+import { Label } from './label';
+import { TimePeriodSelect } from './time-period-select';
 
-function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInput>, "picker">) {
+function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInput>, 'picker'>) {
   const period = getPeriodFromDate(props.date);
 
   const minuteRef = React.useRef<HTMLInputElement>(null);
@@ -17,17 +17,17 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
     <div className="grid grid-cols-3 ">
       <div className="grid col-span-1 gap-2 justify-items-center">
         <Label
-          id={props.id + "HourLabel"}
-          data-error={props["aria-invalid"]}
-          htmlFor={props.id + "HourInput"}
+          id={props.id + 'HourLabel'}
+          data-error={props['aria-invalid']}
+          htmlFor={props.id + 'HourInput'}
           //className="text-center"
         >
           Hours
         </Label>
         <TimePickerInput
-          id={props.id + "HourInput"}
+          id={props.id + 'HourInput'}
           disabled={props.disabled}
-          aria-invalid={props["aria-invalid"]}
+          aria-invalid={props['aria-invalid']}
           picker="12hours"
           period={period}
           date={props.date}
@@ -37,13 +37,13 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
         />
       </div>
       <div className="grid col-span-1 gap-2 justify-items-center">
-        <Label id={props.id + "MinuteLabel"} data-error={props["aria-invalid"]} htmlFor={props.id + "MinuteInput"}>
+        <Label id={props.id + 'MinuteLabel'} data-error={props['aria-invalid']} htmlFor={props.id + 'MinuteInput'}>
           Minutes
         </Label>
         <TimePickerInput
-          id={props.id + "MinuteInput"}
+          id={props.id + 'MinuteInput'}
           disabled={props.disabled}
-          aria-invalid={props["aria-invalid"]}
+          aria-invalid={props['aria-invalid']}
           picker="minutes"
           date={props.date}
           setDate={props.setDate}
@@ -53,13 +53,13 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
         />
       </div>
       <div className="grid col-span-1 gap-2 justify-items-center">
-        <Label id={props.id + "PeriodLabel"} data-error={props["aria-invalid"]} htmlFor={props.id + "PeriodSelect"}>
+        <Label id={props.id + 'PeriodLabel'} data-error={props['aria-invalid']} htmlFor={props.id + 'PeriodSelect'}>
           Period
         </Label>
         <TimePeriodSelect
-          id={props.id + "PeriodSelect"}
+          id={props.id + 'PeriodSelect'}
           disabled={props.disabled}
-          aria-invalid={props["aria-invalid"]}
+          aria-invalid={props['aria-invalid']}
           period={period}
           setPeriod={() => {}}
           date={props.date}
@@ -79,14 +79,14 @@ function TimePicker({ ...props }: Omit<React.ComponentProps<typeof TimePickerInp
  */
 export function getPeriodFromDate(date?: Date) {
   if (!date) {
-    return "AM";
+    return 'AM';
   }
 
   if (date.getHours() >= 12) {
-    return "PM";
+    return 'PM';
   }
 
-  return "AM";
+  return 'AM';
 }
 
 export { TimePicker };

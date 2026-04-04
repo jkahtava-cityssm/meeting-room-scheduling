@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { IConfigurationPUT, useConfigurationMutationUpsert, useConfigurationQuery } from "@/lib/services/configuration";
-import { RegisterSSO } from "./single-sign-on";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectItem } from "@/components/ui/select";
-import { RoleComboBox } from "../roles/role-combobox";
-import { TConfigurationEntry } from "@/lib/data/configuration";
-import { Input } from "@/components/ui/input";
-import { GenericSelect } from "@/components/shared/generic-select";
-import React, { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { GenericError } from "@/components/shared/generic-error";
-import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
-import { RevalidateButton } from "./revalidate-api";
+import { Skeleton } from '@/components/ui/skeleton';
+import { IConfigurationPUT, useConfigurationMutationUpsert, useConfigurationQuery } from '@/lib/services/configuration';
+import { RegisterSSO } from './single-sign-on';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectItem } from '@/components/ui/select';
+import { RoleComboBox } from '../roles/role-combobox';
+import { TConfigurationEntry } from '@/lib/data/configuration';
+import { Input } from '@/components/ui/input';
+import { GenericSelect } from '@/components/shared/generic-select';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { GenericError } from '@/components/shared/generic-error';
+import { useRevalidateAndInvalidate } from '@/hooks/use-revalidate-cache';
+import { RevalidateButton } from './revalidate-api';
 
 export function ConfigurationPage() {
   const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
@@ -31,26 +31,26 @@ export function ConfigurationPage() {
 
   const handleChange = useCallback(
     (key: string, value: string) => {
-      if (key === "visibleHoursStart") {
-        const end = workingConfiguration?.find((c) => c.key === "visibleHoursEnd")?.value;
+      if (key === 'visibleHoursStart') {
+        const end = workingConfiguration?.find((c) => c.key === 'visibleHoursEnd')?.value;
         if (Number(value) >= (end as number)) {
-          console.error("Start hour must be before end hour");
+          console.error('Start hour must be before end hour');
           return;
         }
         if (Number(value) < 0) {
-          console.error("Start hour must be equal to or greater than 0");
+          console.error('Start hour must be equal to or greater than 0');
           return;
         }
       }
 
-      if (key === "visibleHoursEnd") {
-        const start = workingConfiguration?.find((c) => c.key === "visibleHoursStart")?.value;
+      if (key === 'visibleHoursEnd') {
+        const start = workingConfiguration?.find((c) => c.key === 'visibleHoursStart')?.value;
         if (Number(value) <= (start as number)) {
-          console.error("End hour must be after start hour");
+          console.error('End hour must be after start hour');
           return;
         }
         if (Number(value) > 24) {
-          console.error("End hour must be equal to or less than 24");
+          console.error('End hour must be equal to or less than 24');
           return;
         }
       }
@@ -103,9 +103,7 @@ export function ConfigurationPage() {
               {/* Left Column: Label & Description */}
               <div className="min-h-[70px] border-b flex flex-col justify-center min-w-max pr-4 ">
                 <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">{entry.name}</label>
-                {entry.description && (
-                  <p className="text-xs text-muted-foreground mt-1 max-w-sm">{entry.description}</p>
-                )}
+                {entry.description && <p className="text-xs text-muted-foreground mt-1 max-w-sm">{entry.description}</p>}
               </div>
 
               {/* Right Column: Controls */}
@@ -115,12 +113,9 @@ export function ConfigurationPage() {
             </React.Fragment>
           ))}
           <div className="min-h-[70px] border-b flex flex-col justify-center min-w-max pr-4 ">
-            <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">
-              CLEAR CACHED ROUTES
-            </label>
+            <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">CLEAR CACHED ROUTES</label>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-              Certain API routes are cached to reduced the number of database calls. Especially for values that dont
-              change very often
+              Certain API routes are cached to reduced the number of database calls. Especially for values that dont change very often
             </p>
           </div>
           <div className="min-h-[70px] border-b flex items-center ">
@@ -165,32 +160,12 @@ const ConfigField = ({ entry, onChange }: { entry: TConfigurationEntry; onChange
 
   // 2. Fallback to standard types
   switch (entry.type) {
-    case "boolean":
-      return (
-        <Switch
-          checked={entry.value as boolean}
-          onCheckedChange={(checked) => onChange(String(checked))}
-          className="min-w-[200px]"
-        />
-      );
-    case "number":
-      return (
-        <Input
-          type="number"
-          value={entry.value as number}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-[200px]"
-        />
-      );
+    case 'boolean':
+      return <Switch checked={entry.value as boolean} onCheckedChange={(checked) => onChange(String(checked))} className="min-w-[200px]" />;
+    case 'number':
+      return <Input type="number" value={entry.value as number} onChange={(e) => onChange(e.target.value)} className="w-[200px]" />;
     default:
-      return (
-        <Input
-          type="text"
-          value={entry.value as string}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-[200px]"
-        />
-      );
+      return <Input type="text" value={entry.value as string} onChange={(e) => onChange(e.target.value)} className="w-[200px]" />;
   }
 };
 
@@ -208,12 +183,12 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
   timeSlotInterval: ({ entry, onChange }) => (
     <GenericSelect
       list={[
-        { key: 5, label: "5 minutes" },
-        { key: 10, label: "10 minutes" },
-        { key: 15, label: "15 minutes" },
-        { key: 20, label: "20 minutes" },
-        { key: 30, label: "30 minutes" },
-        { key: 60, label: "60 minutes" },
+        { key: 5, label: '5 minutes' },
+        { key: 10, label: '10 minutes' },
+        { key: 15, label: '15 minutes' },
+        { key: 20, label: '20 minutes' },
+        { key: 30, label: '30 minutes' },
+        { key: 60, label: '60 minutes' },
       ]}
       selectedValue={entry.value.toString()}
       isLoading={false}
@@ -229,7 +204,7 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
       <RoleComboBox
         selectedRoleId={String(entry.value)}
         onRoleChange={(id, label) => onChange(id)}
-        className={""}
+        className={''}
         isDisabled={false}
         showNoneOption={true}
       ></RoleComboBox>
@@ -237,10 +212,7 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
   },
 };
 
-function getDifferences(
-  serverConfiguration: TConfigurationEntry[],
-  updatedConfiguration: TConfigurationEntry[],
-): IConfigurationPUT[] {
+function getDifferences(serverConfiguration: TConfigurationEntry[], updatedConfiguration: TConfigurationEntry[]): IConfigurationPUT[] {
   const updateList = [];
 
   for (let serverIndex = 0; serverIndex < serverConfiguration.length; serverIndex++) {
@@ -256,7 +228,7 @@ function getDifferences(
         name: localSetting.name,
         type: localSetting.type,
         value: String(localSetting.value),
-        description: localSetting.description ?? "",
+        description: localSetting.description ?? '',
       });
     }
   }

@@ -1,17 +1,17 @@
-import { RoomSelect } from "@/app/features/rooms/room-select";
-import { StatusSelect } from "@/app/features/status/status-select";
+import { RoomSelect } from '@/app/features/rooms/room-select';
+import { StatusSelect } from '@/app/features/status/status-select';
 
-import { Button } from "@/components/ui/button";
-import { Calendar, CalendarRange, Columns, Grid2x2, Grid3x3 } from "lucide-react";
-import Link from "next/link";
-import { RequestNavigator } from "./request-navigator";
-import { TCalendarView } from "@/lib/types";
-import { navigateDate, navigateURL } from "@/lib/helpers";
-import { format } from "date-fns";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipPortal } from "@radix-ui/react-tooltip";
-import { useRouter } from "next/navigation";
-import { TodayButton } from "../../calendar/calendar-controller/calendar-all-header-today-button";
+import { Button } from '@/components/ui/button';
+import { Calendar, CalendarRange, Columns, Grid2x2, Grid3x3 } from 'lucide-react';
+import Link from 'next/link';
+import { RequestNavigator } from './request-navigator';
+import { TCalendarView } from '@/lib/types';
+import { navigateDate, navigateURL } from '@/lib/helpers';
+import { format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipPortal } from '@radix-ui/react-tooltip';
+import { useRouter } from 'next/navigation';
+import { TodayButton } from '../../calendar/calendar-controller/calendar-all-header-today-button';
 
 export default function RequestHeader({
   view,
@@ -35,13 +35,13 @@ export default function RequestHeader({
   const { push } = useRouter();
 
   const handleNavigatePrevious = () => {
-    const previousDate = navigateDate(selectedDate, view, "previous");
+    const previousDate = navigateDate(selectedDate, view, 'previous');
 
     push(navigateURL(previousDate, view));
   };
 
   const handleNavigateNext = () => {
-    const nextDate = navigateDate(selectedDate, view, "next");
+    const nextDate = navigateDate(selectedDate, view, 'next');
 
     push(navigateURL(nextDate, view));
   };
@@ -76,10 +76,10 @@ export default function RequestHeader({
                 asChild
                 aria-label="By Day"
                 size="icon"
-                variant={view === "day" ? "default" : "outline"}
+                variant={view === 'day' ? 'default' : 'outline'}
                 className="rounded-r-none [&_svg]:size-5"
               >
-                <Link href={navigateURL(selectedDate, "day")}>
+                <Link href={navigateURL(selectedDate, 'day')}>
                   <Calendar strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -97,10 +97,10 @@ export default function RequestHeader({
                 asChild
                 aria-label="By Month"
                 size="icon"
-                variant={view === "month" ? "default" : "outline"}
+                variant={view === 'month' ? 'default' : 'outline'}
                 className="-ml-px rounded-none [&_svg]:size-5"
               >
-                <Link href={navigateURL(selectedDate, "month")}>
+                <Link href={navigateURL(selectedDate, 'month')}>
                   <Columns strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -118,10 +118,10 @@ export default function RequestHeader({
                 asChild
                 aria-label="By Year"
                 size="icon"
-                variant={view === "year" ? "default" : "outline"}
+                variant={view === 'year' ? 'default' : 'outline'}
                 className="-ml-px rounded-l-none [&_svg]:size-5"
               >
-                <Link href={navigateURL(selectedDate, "year")}>
+                <Link href={navigateURL(selectedDate, 'year')}>
                   <Grid2x2 strokeWidth={1.8} />
                 </Link>
               </Button>

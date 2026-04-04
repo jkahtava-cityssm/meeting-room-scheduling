@@ -1,7 +1,7 @@
-import { prisma } from "@/prisma";
-import type { Prisma } from "@prisma/client";
-import { SUser } from "../schemas";
-import z from "zod/v4";
+import { prisma } from '@/prisma';
+import type { Prisma } from '@prisma/client';
+import { SUser } from '../schemas';
+import z from 'zod/v4';
 
 // Standard user select configuration — used across all DAL functions
 const USER_SELECT = {
@@ -26,7 +26,7 @@ export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.Tr
   const userList = await tx.user.findMany({
     where,
     select: USER_SELECT,
-    orderBy: [{ name: "asc" }, { email: "asc" }, { id: "asc" }],
+    orderBy: [{ name: 'asc' }, { email: 'asc' }, { id: 'asc' }],
   });
   if (!userList || userList.length === 0) {
     return [];
@@ -37,15 +37,11 @@ export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.Tr
   });
 }
 
-export async function findManyUsersWithRoles(
-  roleId?: number,
-  where?: Prisma.UserWhereInput,
-  tx: Prisma.TransactionClient = prisma,
-) {
+export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
   const userList = await tx.user.findMany({
     where,
     select: { ...USER_SELECT, userRole: { where: roleId ? { roleId } : undefined, select: { ...USER_ROLE_SELECT } } },
-    orderBy: [{ name: "asc" }, { email: "asc" }, { id: "asc" }],
+    orderBy: [{ name: 'asc' }, { email: 'asc' }, { id: 'asc' }],
   });
   if (!userList || userList.length === 0) {
     return [];
@@ -61,7 +57,7 @@ export async function findManyUsersWithRoles(
     const hasDefaultRole = roleList.some((role) => role.roleId === defaultRole.roleId);
 
     if (defaultRole.roleId && !hasDefaultRole) {
-      roleList.push({ roleId: defaultRole.roleId, name: defaultRole.name ?? "Default Role", granted: true });
+      roleList.push({ roleId: defaultRole.roleId, name: defaultRole.name ?? 'Default Role', granted: true });
     }
 
     return {
@@ -71,17 +67,15 @@ export async function findManyUsersWithRoles(
   });
 }
 
-export async function getDefaultRole(
-  tx: Prisma.TransactionClient = prisma,
-): Promise<{ roleId: number | null; name: string | null }> {
+export async function getDefaultRole(tx: Prisma.TransactionClient = prisma): Promise<{ roleId: number | null; name: string | null }> {
   const defaultRole = await tx.configuration.findFirst({
-    where: { key: "defaultUserRole" },
-    orderBy: { configurationId: "asc" },
+    where: { key: 'defaultUserRole' },
+    orderBy: { configurationId: 'asc' },
   });
 
   const defaultRoleID = Number(defaultRole?.value);
   if (!Number.isFinite(defaultRoleID)) {
-    console.warn("Default role ID is not set or invalid. Skipping default role assignment.");
+    console.warn('Default role ID is not set or invalid. Skipping default role assignment.');
     return { roleId: null, name: null };
   }
 

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import type { GroupedPermissionRequirement, PermissionResult, PermissionCache } from "@/lib/auth-permission-checks";
+import * as React from 'react';
+import type { GroupedPermissionRequirement, PermissionResult, PermissionCache } from '@/lib/auth-permission-checks';
 
-import { useVerifySessionRequirement } from "@/lib/auth-client";
-import { useSession } from "@/contexts/SessionProvider";
+import { useVerifySessionRequirement } from '@/lib/auth-client';
+import { useSession } from '@/contexts/SessionProvider';
 
 export function createClientSecurity<const T extends Readonly<GroupedPermissionRequirement>>(PERMISSIONS: T) {
   type Result = PermissionResult<T>;
@@ -33,8 +33,8 @@ export function createClientSecurity<const T extends Readonly<GroupedPermissionR
       const can = (key: Key) => Boolean(permissions[key]);
 
       const isAllowed = (value: Evaluatable): boolean => {
-        if (typeof value === "boolean") return value;
-        if (typeof value === "function") return value();
+        if (typeof value === 'boolean') return value;
+        if (typeof value === 'function') return value();
         if (Array.isArray(value)) return value.every((v) => isAllowed(v));
         return can(value);
       };
@@ -55,7 +55,7 @@ export function createClientSecurity<const T extends Readonly<GroupedPermissionR
 
   function usePermissions() {
     const ctx = React.useContext(Ctx);
-    if (!ctx) throw new Error("usePermissions must be used within Provider");
+    if (!ctx) throw new Error('usePermissions must be used within Provider');
     return ctx;
   }
 

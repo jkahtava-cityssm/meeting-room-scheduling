@@ -3,19 +3,19 @@ services:
     image: postgres:15
     container_name: container-postgres
     restart: always
-    profiles: ["app", "init", "dev", "install-db", "install-app"]
+    profiles: ['app', 'init', 'dev', 'install-db', 'install-app']
     environment:
       POSTGRES_USER: ${DATABASE_USER_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     ports:
-      - "5432:5432"
+      - '5432:5432'
     networks:
       - webnet
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER_USERNAME} -d ${DATABASE_NAME}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER_USERNAME} -d ${DATABASE_NAME}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
       dockerfile: container/Dockerfile.prisma-migrate
     image: meeting-room-booking-prisma-tools:latest
     container_name: prisma-migrate
-    profiles: ["migrate", "init", "dev", "install-db"]
+    profiles: ['migrate', 'init', 'dev', 'install-db']
     environment:
       DATABASE_URL: ${CONTAINER_DB_URL}
     depends_on:
@@ -42,7 +42,7 @@ services:
       dockerfile: container/Dockerfile.prisma-seed
     image: meeting-room-booking-prisma-tools:latest
     container_name: prisma-seed
-    profiles: ["seed", "dev"]
+    profiles: ['seed', 'dev']
     environment:
       DATABASE_URL: ${DATABASE_URL}
       DATABASE_URL_ADMIN: ${DATABASE_URL_ADMIN}
@@ -65,9 +65,9 @@ services:
       dockerfile: container/Dockerfile.local.nextjs-app
     image: meeting-room-booking-nextjs-app:latest
     container_name: nextjs-app
-    profiles: ["app", "init", "dev", "install-app"]
+    profiles: ['app', 'init', 'dev', 'install-app']
     expose:
-      - "3000"
+      - '3000'
     environment:
       BETTER_AUTH_URL: https://${SERVER_NAME}
       NEXT_PUBLIC_BASE_URL: https://${SERVER_NAME}
@@ -77,7 +77,7 @@ services:
     networks:
       - webnet
     extra_hosts:
-      - "${SERVER_NAME}:host-gateway"
+      - '${SERVER_NAME}:host-gateway'
 
   nginx:
     build:
@@ -85,16 +85,16 @@ services:
       dockerfile: container/Dockerfile.local.nginx
     image: meeting-room-booking-nginx:latest
     container_name: nginx
-    profiles: ["app", "init", "dev", "install-app", "install-nginx"]
+    profiles: ['app', 'init', 'dev', 'install-app', 'install-nginx']
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     environment:
       SERVER_NAME: ${SERVER_NAME}
       CERT_DAYS: 365
       CERT_COUNTRY: CA
       CERT_STATE: Ontario
-      CERT_LOCALITY: "Sault Ste. Marie"
+      CERT_LOCALITY: 'Sault Ste. Marie'
       CERT_ORG: Dev
       CERT_OU: IT
 

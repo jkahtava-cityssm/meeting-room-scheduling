@@ -1,9 +1,9 @@
-import { usePublicEventsQuery } from "@/lib/services/public";
-import { useCalendarWorker } from "./use-generic-webworker";
-import { useEffect, useState } from "react";
-import { IEvent } from "@/lib/schemas";
-import { CalendarAction, ISODateString } from "./generic-webworker";
-import { TVisibleHours } from "@/lib/types";
+import { usePublicEventsQuery } from '@/lib/services/public';
+import { useCalendarWorker } from './use-generic-webworker';
+import { useEffect, useState } from 'react';
+import { IEventSingleRoom } from '@/lib/schemas';
+import { CalendarAction, ISODateString } from './generic-webworker';
+import { TVisibleHours } from '@/lib/types';
 
 export function usePublicCalendarEvents<T extends CalendarAction>(
   action: T,
@@ -27,13 +27,13 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
     if (!events || !visibleHours) return;
 
     processEvents({
-      events: events as IEvent[],
+      events: events as IEventSingleRoom[],
       selectedDate: date.toISOString() as ISODateString,
       selectedRoomId: roomIdList,
       action: action,
       visibleHours: visibleHours,
       multiDayEventsAtTop: false,
-      statusKeys: ["APPROVED", "PENDING", "INFORMATION"],
+      statusKeys: ['APPROVED', 'PENDING', 'INFORMATION'],
     });
   }, [action, events, date, roomIdList, visibleHours, processEvents]);
 

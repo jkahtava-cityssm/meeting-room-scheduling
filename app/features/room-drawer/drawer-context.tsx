@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
 
-import { IRoom } from "@/lib/schemas";
+import { IRoom } from '@/lib/schemas';
 
-import RoomDrawer from "./drawer-root";
-import { RoomDrawerPermissions } from "./lib/permissions";
+import RoomDrawer from './drawer-root';
+import { RoomDrawerPermissions } from './lib/permissions';
 
 export type RoomDrawerPayload = { room?: IRoom };
 
@@ -42,12 +42,7 @@ export function SharedRoomDrawerProvider({ children }: { children: React.ReactNo
       {children}
 
       <RoomDrawerPermissions.Provider>
-        <RoomDrawer
-          room={payload?.room}
-          isOpen={isOpen}
-          onOpen={() => setIsOpen(true)}
-          onClose={() => closeRoomDrawer()}
-        />
+        <RoomDrawer room={payload?.room} isOpen={isOpen} onOpen={() => setIsOpen(true)} onClose={() => closeRoomDrawer()} />
       </RoomDrawerPermissions.Provider>
     </SharedDrawerContext.Provider>
   );
@@ -55,6 +50,6 @@ export function SharedRoomDrawerProvider({ children }: { children: React.ReactNo
 
 export function useSharedRoomDrawer() {
   const ctx = useContext(SharedDrawerContext);
-  if (!ctx) throw new Error("useSharedDrawer must be used within SharedRoomDrawerProvider");
+  if (!ctx) throw new Error('useSharedDrawer must be used within SharedRoomDrawerProvider');
   return ctx;
 }

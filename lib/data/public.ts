@@ -1,6 +1,7 @@
-import { prisma } from "@/prisma";
-import { Prisma } from "@prisma/client";
-import { PUBLIC_IROOM } from "../services/public";
+import { prisma } from '@/prisma';
+import { Prisma } from '@prisma/client';
+import { PUBLIC_IEVENT, PUBLIC_IROOM, PUBLIC_SEVENT } from '../services/public';
+import z from 'zod/v4';
 
 const PUBLIC_EVENT_SELECT = {
   eventId: true,
@@ -8,17 +9,17 @@ const PUBLIC_EVENT_SELECT = {
   startDate: true,
   recurrenceId: true,
   recurrence: { select: { rule: true, endDate: true, startDate: true } },
-  roomId: true,
-  room: { select: { name: true, color: true } },
+  eventRooms: { select: { room: { select: { roomId: true, name: true, color: true } } } },
   status: { select: { statusId: true, name: true, key: true } },
 } as const satisfies Prisma.EventSelect;
 
 export async function findPublicEvents(where?: Prisma.EventWhereInput, tx: Prisma.TransactionClient = prisma) {
-  return tx.event.findMany({
+  const events = await tx.event.findMany({
     where,
     select: PUBLIC_EVENT_SELECT,
-    orderBy: { eventId: "asc" },
+    orderBy: { eventId: 'asc' },
   });
+  return flattenPublicEvent(events);
 }
 
 const ROOM_SELECT = {
@@ -38,7 +39,7 @@ export async function findPublicRooms(where?: Prisma.RoomWhereInput, tx: Prisma.
   const rooms = await tx.room.findMany({
     where,
     select: ROOM_SELECT,
-    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
+    orderBy: [{ displayOrder: { sort: 'asc', nulls: 'last' } }, { roomId: 'asc' }],
   });
 
   return flattenPublicRoom(rooms);
@@ -65,10 +66,36 @@ function flattenPublicRoom(data: RoomWithRelations | RoomWithRelations[]): PUBLI
       roomProperty: room.roomProperty.map((roomProperty) => {
         return {
           name: roomProperty.property.name,
-          value: roomProperty.value ?? "",
+          value: roomProperty.value ?? '',
           type: roomProperty.property.type,
         };
       }),
+    };
+  });
+
+  return isArray ? mapped : mapped[0];
+}
+
+type PublicEventWithRelations = Prisma.EventGetPayload<{ select: typeof PUBLIC_EVENT_SELECT }>;
+type IPublicEventInput = z.input<typeof PUBLIC_SEVENT>;
+
+function flattenPublicEvent(event: PublicEventWithRelations): IPublicEventInput;
+function flattenPublicEvent(event: PublicEventWithRelations[]): IPublicEventInput[];
+
+function flattenPublicEvent(data: PublicEventWithRelations | PublicEventWithRelations[]): IPublicEventInput | IPublicEventInput[] {
+  const isArray = Array.isArray(data);
+  const events = isArray ? data : [data];
+
+  const mapped = events.map((event) => {
+    return {
+      ...event,
+      eventRooms: event.eventRooms
+        ? event.eventRooms.map((eventRoom) => {
+            return {
+              ...eventRoom.room,
+            };
+          })
+        : [],
     };
   });
 

@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
-import { usePermissionMutationUpsert, usePermissionsQuery } from "@/lib/services/permissions";
-import { IPermissionSet } from "@/lib/data/permissions";
+import { usePermissionMutationUpsert, usePermissionsQuery } from '@/lib/services/permissions';
+import { IPermissionSet } from '@/lib/data/permissions';
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton';
 
-import { RolePermissionGrid } from "./permission-role-permission";
-import { UserRoleAssignmentList } from "./permission-role-assignment";
+import { RolePermissionGrid } from './permission-role-permission';
+import { UserRoleAssignmentList } from './permission-role-assignment';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GenericError } from "@/components/shared/generic-error";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { GenericError } from '@/components/shared/generic-error';
 
 export type ResourceActions = {
   resourceId: string;
@@ -42,19 +42,10 @@ export function PermissionGrid() {
   }, [workingPermissions]);
 
   const onToggle = useCallback(
-    (
-      roleId: string,
-      resourceId: string,
-      resourceName: string,
-      actionId: string,
-      actionName: string,
-      next: boolean | "indeterminate",
-    ) => {
+    (roleId: string, resourceId: string, resourceName: string, actionId: string, actionName: string, next: boolean | 'indeterminate') => {
       setChanged(true);
       const isChecked = next === true;
-      setWorkingPermissions((prev) =>
-        prev ? setPermit(prev, roleId, resourceId, resourceName, actionId, actionName, isChecked) : prev,
-      );
+      setWorkingPermissions((prev) => (prev ? setPermit(prev, roleId, resourceId, resourceName, actionId, actionName, isChecked) : prev));
     },
     [],
   );
@@ -203,7 +194,7 @@ function setPermit(
         permissions: [
           ...set.permissions,
           {
-            permissionId: "-1",
+            permissionId: '-1',
             permit: nextValue,
             actionId,
             action: actionName,

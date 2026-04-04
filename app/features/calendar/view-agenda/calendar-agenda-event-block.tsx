@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { format } from "date-fns";
-import { cva } from "class-variance-authority";
-import { BaggageClaim, Clock, Info, MapPin, Refrigerator, Text, User2 } from "lucide-react";
+import { format } from 'date-fns';
+import { cva } from 'class-variance-authority';
+import { BaggageClaim, Clock, Info, MapPin, Refrigerator, Text, User2 } from 'lucide-react';
 
-import { TColors } from "@/lib/types";
-import { IEvent } from "@/lib/schemas";
+import { TColors } from '@/lib/types';
+import { IEvent, IEventSingleRoom } from '@/lib/schemas';
 
-import { sharedColorVariants } from "@/lib/theme/colorVariants";
-import EventDrawerRefactor from "../../event-drawer-refactor/event-drawer-root";
-import { useSharedEventDrawer } from "../../event-drawer-refactor/shared-event-drawer-context";
+import { sharedColorVariants } from '@/lib/theme/colorVariants';
+import EventDrawer from '../../event-drawer/drawer-root';
+import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 
 const agendaEventCardVariants = cva(
-  "flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+  'flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
   {
     variants: {
       color: sharedColorVariants,
@@ -54,24 +54,24 @@ const agendaEventCardVariants = cva(
       },*/
     },
     defaultVariants: {
-      color: "blue",
+      color: 'blue',
     },
   },
 );
 
-export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: string }) {
+export function AgendaEventCard({ event, userId }: { event: IEventSingleRoom; userId?: string }) {
   const { openEventDrawer } = useSharedEventDrawer();
 
   const startDate = event.startDate;
   const endDate = event.endDate;
 
-  const color = event.room.color as TColors;
+  const color = event.roomColor as TColors;
   const agendaEventCardClasses = agendaEventCardVariants({ color });
 
-  const eventItemsText = event.eventItems?.map((item) => item.name).join(", ") || "No items";
+  const eventItemsText = event.eventItems?.map((item) => item.name).join(', ') || 'No items';
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       if (e.currentTarget instanceof HTMLElement) e.currentTarget.click();
     }
@@ -82,7 +82,7 @@ export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: str
       role="button"
       tabIndex={0}
       className={agendaEventCardClasses}
-      color={event.room.color}
+      color={event.roomColor}
       onKeyDown={handleKeyDown}
       onClick={() => openEventDrawer({ creationDate: new Date(event.startDate), event: event, userId: userId })}
     >
@@ -93,13 +93,23 @@ export function AgendaEventCard({ event, userId }: { event: IEvent; userId?: str
 
         <div className="mt-1 flex items-center gap-1">
           <MapPin className="size-5 shrink-0" />
-          <p className="text-xs text-foreground">{event.room.name}</p>
+          {event.eventRooms.length > 1 ? (
+            <div className="columns-2 gap-4 text-xs text-foreground font-medium border-b pb-1 mb-1 pl-1">
+              {event.eventRooms.map((room, index) => (
+                <p key={index} className="break-inside-avoid mb-1 truncate">
+                  {room.name}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-foreground font-medium pl-1 truncate">{event.roomName}</p>
+          )}
         </div>
 
         <div className="flex items-center gap-1">
           <Clock className="size-5 shrink-0" />
           <p className="text-xs text-foreground">
-            {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
+            {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
           </p>
         </div>
         <div className="flex items-center gap-1">

@@ -1,5 +1,5 @@
-import { prisma } from "@/prisma";
-import type { Prisma } from "@prisma/client";
+import { prisma } from '@/prisma';
+import type { Prisma } from '@prisma/client';
 
 // Note: Recurrence DAL functions accept full args objects, allowing callers to specify
 // their own include/select configuration. Consider standardizing include/select here if needed.

@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import { MicrosoftButton } from "./ui/microsoft-signin-button";
-import { useSearchParams } from "next/navigation";
-import { signIn } from "@/lib/auth-client";
-import { Button } from "./ui/button";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-import { Loader2Icon } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
-import { fetchPOST } from "@/lib/fetch";
+import Image from 'next/image';
+import { MicrosoftButton } from './ui/microsoft-signin-button';
+import { useSearchParams } from 'next/navigation';
+import { signIn } from '@/lib/auth-client';
+import { Button } from './ui/button';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+import { Loader2Icon } from 'lucide-react';
+import { authClient } from '@/lib/auth-client';
+import { fetchPOST } from '@/lib/fetch';
 
 const signInGitHub = async (callback: string) => {
   const data = await signIn.social({
-    provider: "github",
+    provider: 'github',
     callbackURL: callback,
   });
   return data;
@@ -21,16 +21,16 @@ const signInGitHub = async (callback: string) => {
 
 const signInEntra = async (callback: string) => {
   const data = await signIn.social({
-    provider: "microsoft",
+    provider: 'microsoft',
     callbackURL: callback,
-    scopes: ["email", "openid", "profile", "offline_access", "User.Read"],
+    scopes: ['email', 'openid', 'profile', 'offline_access', 'User.Read'],
   });
   return data;
 };
 
 const signInEntraSSO = async (callback: string) => {
   const res = await authClient.signIn.sso({
-    providerId: "microsoft",
+    providerId: 'microsoft',
     callbackURL: callback, // where to land post-login
     // errorCallbackURL: "/auth/error", // optional
   });
@@ -40,8 +40,7 @@ const signInEntraSSO = async (callback: string) => {
 export function SignInMicrosoft() {
   const searchParams = useSearchParams();
 
-  const callbackURL =
-    searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? '/bookings/user-view' : (searchParams.get('callbackurl') as string);
 
   return (
     <>
@@ -63,8 +62,7 @@ export function SignInGithub() {
 
   const searchParams = useSearchParams();
 
-  const callbackURL =
-    searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? '/bookings/user-view' : (searchParams.get('callbackurl') as string);
 
   const [mounted, setMounted] = useState(false);
 
@@ -77,7 +75,7 @@ export function SignInGithub() {
       <Button onClick={() => signInGitHub(callbackURL)}>
         {mounted ? (
           <Image
-            src={resolvedTheme === "light" ? "/images/github-mark-white.svg" : "/images/github-mark.svg"}
+            src={resolvedTheme === 'light' ? '/images/github-mark-white.svg' : '/images/github-mark.svg'}
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={21}
             height={21}
@@ -94,8 +92,7 @@ export function SignInGithub() {
 export function SignInMicrosoftSSO() {
   const searchParams = useSearchParams();
 
-  const callbackURL =
-    searchParams.get("callbackurl") == null ? "/bookings/user-view" : (searchParams.get("callbackurl") as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? '/bookings/user-view' : (searchParams.get('callbackurl') as string);
 
   const [mounted, setMounted] = useState(false);
 

@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
-import { IconDot } from "@/components/ui/icon-dot";
-import { TColors } from "@/lib/types";
+import { IconDot } from '@/components/ui/icon-dot';
+import { TColors } from '@/lib/types';
 
-import { navigateURL } from "@/lib/helpers";
-import { IYearDayView } from "../webworkers/generic-webworker";
+import { navigateURL } from '@/lib/helpers';
+import { IYearDayView } from '../webworkers/generic-webworker';
 
 const YearViewDayCell = ({ day, userId }: { day: IYearDayView; userId?: string }) => {
   const { push } = useRouter();
@@ -15,7 +15,7 @@ const YearViewDayCell = ({ day, userId }: { day: IYearDayView; userId?: string }
   const maxIndicators = 3;
 
   const handleClick = () => {
-    push(navigateURL(new Date(day.dayDate), "day"));
+    push(navigateURL(new Date(day.dayDate), 'day'));
   };
 
   const indicatorList = userId ? day.dayEvents.filter((event) => String(event.userId) === userId) : day.dayEvents;
@@ -28,8 +28,8 @@ const YearViewDayCell = ({ day, userId }: { day: IYearDayView; userId?: string }
     >
       <div
         className={cn(
-          "flex size-6 items-center justify-center rounded-full text-xs font-medium",
-          day.isToday && "bg-primary font-semibold text-primary-foreground",
+          'flex size-6 items-center justify-center rounded-full text-xs font-medium',
+          day.isToday && 'bg-primary font-semibold text-primary-foreground',
         )}
       >
         {day.day}
@@ -38,15 +38,12 @@ const YearViewDayCell = ({ day, userId }: { day: IYearDayView; userId?: string }
         <div className="mt-0.5 flex gap-0.5">
           {indicatorList.length <= maxIndicators ? (
             indicatorList.map((event, index) => (
-              <IconDot key={`day-${day.day}-${event.eventId}-${index}`} color={event.room.color as TColors}></IconDot>
+              <IconDot key={`day-${day.day}-${event.eventId}-${index}`} color={event.roomColor as TColors}></IconDot>
             ))
           ) : (
             <>
               <div className="flex justify-center items-center">
-                <IconDot
-                  key={`day-${day.day}-${indicatorList[0].eventId}`}
-                  color={indicatorList[0].room.color as TColors}
-                ></IconDot>
+                <IconDot key={`day-${day.day}-${indicatorList[0].eventId}`} color={indicatorList[0].roomColor as TColors}></IconDot>
               </div>
 
               <span className="text-[0.5rem] ">+ {indicatorList.length - 1}</span>

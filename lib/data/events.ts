@@ -1,11 +1,11 @@
-import { prisma } from "@/prisma";
-import type { Prisma } from "@prisma/client";
-import { IEvent, SEvent } from "../schemas";
-import z from "zod/v4";
+import { prisma } from '@/prisma';
+import type { Prisma } from '@prisma/client';
+import { SEvent } from '../schemas';
+import z from 'zod/v4';
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
-  room: { include: { roomCategory: true, roomProperty: { include: { property: true } } } },
+  eventRooms: { include: { room: { include: { roomCategory: true, roomProperty: { include: { property: true } } } } } },
   eventItems: { include: { item: true } },
   eventRecipients: true,
   recurrence: true,
@@ -53,25 +53,25 @@ export async function updateEvent(
 }
 
 // Find many events — only accept a where clause; DAL applies the include.
-export async function findManyEvents(where?: Prisma.EventWhereInput) {
-  const events = await prisma.event.findMany({
+export async function findManyEvents(where?: Prisma.EventWhereInput, tx: Prisma.TransactionClient = prisma) {
+  const events = await tx.event.findMany({
     where,
     include: EVENT_INCLUDE,
-    orderBy: { eventId: "asc" },
+    orderBy: { eventId: 'asc' },
   });
   return flattenEvent(events);
 }
 
-export async function deleteManyEvents(where?: Prisma.EventWhereInput) {
-  return prisma.event.deleteMany({ where });
+export async function deleteManyEvents(where?: Prisma.EventWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.event.deleteMany({ where });
 }
 
-export async function countEvents(where?: Prisma.EventWhereInput) {
-  return prisma.event.count({ where });
+export async function countEvents(where?: Prisma.EventWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.event.count({ where });
 }
 
-export async function findFirstEvent(where?: Prisma.EventWhereInput) {
-  const event = await prisma.event.findFirstOrThrow({ where, include: EVENT_INCLUDE, orderBy: { eventId: "asc" } });
+export async function findFirstEvent(where?: Prisma.EventWhereInput, tx: Prisma.TransactionClient = prisma) {
+  const event = await tx.event.findFirstOrThrow({ where, include: EVENT_INCLUDE, orderBy: { eventId: 'asc' } });
 
   if (!event) return event;
 
@@ -115,20 +115,24 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
             };
           })
         : [],
-      room: {
-        ...event.room,
-        roomProperty: event.room.roomProperty.map((roomProperty) => {
-          return {
-            roomPropertyId: roomProperty.roomPropertyId,
-            propertyId: roomProperty.property.propertyId,
-            name: roomProperty.property.name,
-            value: roomProperty.value ?? "",
-            type: roomProperty.property.type,
-            createdAt: roomProperty.createdAt,
-            updatedAt: roomProperty.updatedAt,
-          };
-        }),
-      },
+      eventRooms: event.eventRooms
+        ? event.eventRooms.map((eventRoom) => {
+            return {
+              ...eventRoom.room,
+              roomProperty: eventRoom.room.roomProperty.map((roomProperty) => {
+                return {
+                  roomPropertyId: roomProperty.roomPropertyId,
+                  propertyId: roomProperty.property.propertyId,
+                  name: roomProperty.property.name,
+                  value: roomProperty.value ?? '',
+                  type: roomProperty.property.type,
+                  createdAt: roomProperty.createdAt,
+                  updatedAt: roomProperty.updatedAt,
+                };
+              }),
+            };
+          })
+        : [],
     };
   });
 

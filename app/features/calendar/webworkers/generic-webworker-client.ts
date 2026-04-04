@@ -1,4 +1,4 @@
-import { ICalendarProcessData, IUnifiedResponse, CalendarAction, ProcessedDataMap } from "./generic-webworker";
+import { ICalendarProcessData, IUnifiedResponse, CalendarAction, ProcessedDataMap } from './generic-webworker';
 
 // Maintain state outside the function to persist across re-renders
 let worker: Worker | null = null;
@@ -19,10 +19,10 @@ type ResolverEntry = {
 const resolvers = new Map<number, ResolverEntry>();
 
 const getWorker = () => {
-  if (typeof window === "undefined") return null; // SSR safety
+  if (typeof window === 'undefined') return null; // SSR safety
 
   if (!worker) {
-    worker = new Worker(new URL("./generic-webworker.ts", import.meta.url), { type: "module" });
+    worker = new Worker(new URL('./generic-webworker.ts', import.meta.url), { type: 'module' });
 
     worker.onmessage = (event: MessageEvent<ArrayBuffer>) => {
       const json = new TextDecoder().decode(new Uint8Array(event.data));
@@ -55,11 +55,11 @@ const getWorker = () => {
 };
 
 export const processEventsAsync = <A extends CalendarAction>(
-  message: Omit<ICalendarProcessData, "action" | "requestId"> & { action: A },
+  message: Omit<ICalendarProcessData, 'action' | 'requestId'> & { action: A },
 ): Promise<{ action: A; totalEvents: number; data: ProcessedDataMap[A] }> => {
   return new Promise((resolve, reject) => {
     const workerInstance = getWorker();
-    if (!workerInstance) return reject("Worker not available");
+    if (!workerInstance) return reject('Worker not available');
 
     const requestId = ++requestIdCounter;
     resolvers.set(requestId, { resolve: resolve as (value: WorkerSuccessResponse) => void, reject });

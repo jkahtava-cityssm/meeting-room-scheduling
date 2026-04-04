@@ -1,5 +1,5 @@
-import { useRolesQuery } from "@/lib/services/permissions";
-import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
+import { useRolesQuery } from '@/lib/services/permissions';
+import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
 
 export function RoleMultiSelect({
   selectedRoleIds,
@@ -30,9 +30,9 @@ export function RoleMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Roles" : "Collecting Roles"}
+      loadingLabel={error ? 'Error: Loading Roles' : 'Collecting Roles'}
       placeholderText="Select Roles to Limit Access"
-      placeholderBadge={{ label: "Everyone" }}
+      placeholderBadge={{ label: 'Everyone' }}
       searchText="Search roles..."
       noResultText="No roles found"
       dataInvalid={dataInvalid}

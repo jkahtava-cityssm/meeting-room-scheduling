@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { SidebarIcon } from "lucide-react";
+import { SidebarIcon } from 'lucide-react';
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useSidebar } from "@/components/ui/sidebar";
-import { NavUser } from "./nav-header-user";
-import { Skeleton } from "../../../components/ui/skeleton";
-import { useSession } from "@/contexts/SessionProvider";
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useSidebar } from '@/components/ui/sidebar';
+import { NavUser } from './nav-header-user';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { useSession } from '@/contexts/SessionProvider';
 
 export interface IUser {
   name: string | undefined;
@@ -41,9 +41,7 @@ export function SiteHeader() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>*/}
-        <div className="w-full sm:ml-auto sm:w-auto">
-          {session && <NavUser isPending={isPending} session={session} />}
-        </div>
+        <div className="w-full sm:ml-auto sm:w-auto">{session && <NavUser isPending={isPending} session={session} />}</div>
       </div>
     </header>
   );

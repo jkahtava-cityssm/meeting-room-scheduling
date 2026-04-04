@@ -1,5 +1,5 @@
-import { Role } from "../auth";
-import { SessionRole } from "../types";
+import { Role } from '../auth';
+import { SessionRole } from '../types';
 
 export async function fetchPrivateCachedUserRole(
   userId: number,
@@ -16,13 +16,13 @@ export async function privateServerGET(url: string, params: object = {}, revalid
       if (!param[1]) return;
       return `${param[0]}=${encodeURIComponent(param[1])}`;
     })
-    .join("&");
+    .join('&');
 
   return fetch(`${url}?${queryString}`, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      "Content-Type": "application/json",
-      "x-internal-api-key": process.env.PRIVATE_INTERNAL_API_KEY!,
+      'Content-Type': 'application/json',
+      'x-internal-api-key': process.env.PRIVATE_INTERNAL_API_KEY!,
     },
 
     next: {

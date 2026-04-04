@@ -1,4 +1,4 @@
 {
-	"dependencies": ["@prisma/client", "date-fns", "rrule", "lucide-react"],
-	"devDependencies": ["prisma", "ts-node", "typescript"]
+  "dependencies": ["@prisma/client", "date-fns", "rrule", "lucide-react"],
+  "devDependencies": ["prisma", "ts-node", "typescript"]
 }

@@ -1,11 +1,8 @@
-import { UseFormReturn } from "react-hook-form";
-import { CombinedSchema } from "../drawer-schema.validator";
-import { FormStep } from "../types";
+import { UseFormReturn } from 'react-hook-form';
+import { CombinedSchema } from '../drawer-schema.validator';
+import { FormStep } from '../types';
 
-export const isStepValid = async (
-  formStep: FormStep,
-  methods: UseFormReturn<CombinedSchema>,
-): Promise<{ status: boolean; errorList: string[] }> => {
+export const isStepValid = async (formStep: FormStep, methods: UseFormReturn<CombinedSchema>): Promise<{ status: boolean; errorList: string[] }> => {
   const formValues = methods.getValues();
 
   if (formStep.validationSchema) {
@@ -14,8 +11,8 @@ export const isStepValid = async (
 
     if (!validationResult.success) {
       validationResult.error.issues.forEach((err) => {
-        methods.setError(err.path.join(".") as keyof CombinedSchema, {
-          type: "manual",
+        methods.setError(err.path.join('.') as keyof CombinedSchema, {
+          type: 'manual',
           message: err.message,
         });
 

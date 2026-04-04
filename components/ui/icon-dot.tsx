@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 
-import { cn } from "@/lib/utils";
-import { cva } from "class-variance-authority";
+import { cn } from '@/lib/utils';
+import { cva } from 'class-variance-authority';
 
-import { TColors } from "@/lib/types";
-import { sharedIconDotVariants } from "../../lib/theme/colorVariants";
+import { TColors } from '@/lib/types';
+import { sharedIconDotVariants } from '../../lib/theme/colorVariants';
 
-const IconColor = cva("", {
+const IconColor = cva('', {
   variants: {
     color: sharedIconDotVariants,
   },
   compoundVariants: [],
   defaultVariants: {
-    color: "blue",
+    color: 'blue',
   },
 });
 
@@ -37,7 +37,7 @@ function IconDot({
   //React.RefAttributes<SVGSVGElement>
   const EventCardClasses = IconColor({ color: color });
 
-  return <div {...props} className={cn("size-1.5 rounded-full", EventCardClasses)} />;
+  return <div {...props} className={cn('size-1.5 rounded-full', EventCardClasses)} />;
 }
 
 export { IconDot };

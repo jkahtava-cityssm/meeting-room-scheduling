@@ -1,5 +1,5 @@
-import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permissions";
-import PrivateCalendar from "./private-calendar";
+import { ServerNavigationPermissions } from '@/lib/permissions/navigation-permissions';
+import PrivateCalendar from './private-calendar';
 
 export default function Calendar() {
   return (

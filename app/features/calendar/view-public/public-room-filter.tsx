@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { PUBLIC_IROOM } from "@/lib/services/public";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import React from "react";
-import { useRoomLayout } from "./use-room-category-filter";
+import { PUBLIC_IROOM } from '@/lib/services/public';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
+import React from 'react';
+import { useRoomLayout } from './use-room-category-filter';
 
 export const RoomCategoryLayout = ({
   rooms,
@@ -22,23 +22,12 @@ export const RoomCategoryLayout = ({
   const { roomsByCategory, rows } = useRoomLayout(rooms);
 
   return (
-    <div className={cn("w-full", className)}>
-      <div className={cn("flex flex-wrap gap-x-2 gap-y-8", className)}>
+    <div className={cn('w-full', className)}>
+      <div className={cn('flex flex-wrap gap-x-2 gap-y-8', className)}>
         {rows.map((row, index) => (
           <React.Fragment key={index}>
-            <Group
-              key={index}
-              categories={[row.left]}
-              roomsByCategory={roomsByCategory}
-              checkedRooms={checkedRooms}
-              toggleRoom={onToggleRoom}
-            />
-            <Group
-              categories={row.right}
-              roomsByCategory={roomsByCategory}
-              checkedRooms={checkedRooms}
-              toggleRoom={onToggleRoom}
-            />
+            <Group key={index} categories={[row.left]} roomsByCategory={roomsByCategory} checkedRooms={checkedRooms} toggleRoom={onToggleRoom} />
+            <Group categories={row.right} roomsByCategory={roomsByCategory} checkedRooms={checkedRooms} toggleRoom={onToggleRoom} />
           </React.Fragment>
         ))}
       </div>
@@ -77,15 +66,7 @@ const GroupHeader = ({ category, children }: { category: string; children: React
   </div>
 );
 
-const GroupRow = ({
-  room,
-  checkedRooms,
-  toggleRoom,
-}: {
-  room: PUBLIC_IROOM;
-  checkedRooms: Set<number>;
-  toggleRoom: (roomId: number) => void;
-}) => (
+const GroupRow = ({ room, checkedRooms, toggleRoom }: { room: PUBLIC_IROOM; checkedRooms: Set<number>; toggleRoom: (roomId: number) => void }) => (
   <div className="flex items-start gap-3 py-1">
     <Checkbox
       id={`room-${room.roomId}`}

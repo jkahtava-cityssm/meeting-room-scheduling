@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { Loader2Icon, Moon, Sun } from "lucide-react";
-import { Button } from "./ui/button";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { Loader2Icon, Moon, Sun } from 'lucide-react';
+import { Button } from './ui/button';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 
 export function ThemeButton() {
   const { resolvedTheme, setTheme } = useTheme();
   const [isMounted, setMounted] = useState(false);
 
   const handleChangeTheme = () => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function ThemeButton() {
   return (
     <>
       {resolvedTheme ? (
-        <Button onClick={() => handleChangeTheme()}>{resolvedTheme === "dark" ? <Sun></Sun> : <Moon></Moon>}</Button>
+        <Button onClick={() => handleChangeTheme()}>{resolvedTheme === 'dark' ? <Sun></Sun> : <Moon></Moon>}</Button>
       ) : (
         <Button>
           <Loader2Icon className="animate-spin" />

@@ -1,10 +1,10 @@
-import { ZodType } from "zod/v4";
+import { ZodType } from 'zod/v4';
 
-import { LucideIcon } from "lucide-react";
-import { CombinedSchema } from "./drawer-schema.validator";
-import { Session } from "@/lib/auth-client";
-import { UseFormReturn } from "react-hook-form";
-import { RefObject } from "react";
+import { LucideIcon } from 'lucide-react';
+import { CombinedSchema } from './drawer-schema.validator';
+import { Session } from '@/lib/auth-client';
+import { UseFormReturn } from 'react-hook-form';
+import { RefObject } from 'react';
 
 export type FieldKeys = keyof CombinedSchema;
 
@@ -59,7 +59,7 @@ export interface MultiStepFormContextProps {
 
   //Dialog
   dialogConfig: {
-    variant: "warning" | "error" | "info";
+    variant: 'warning' | 'error' | 'info';
     title: string;
     description: string;
     errors?: string[];
@@ -72,13 +72,13 @@ export interface MultiStepFormContextProps {
     confirmText?: string;
     cancelText?: string;
   } | null;
-  setDialogConfig: (config: MultiStepFormContextProps["dialogConfig"]) => void;
+  setDialogConfig: (config: MultiStepFormContextProps['dialogConfig']) => void;
   handleDialogAction: (value: ButtonActions) => void;
   handleOpenChange: (value: boolean) => void;
   //
   originRef: RefObject<HTMLElement | null>;
 }
 
-export type ButtonActions = "dismiss" | "none" | undefined;
+export type ButtonActions = 'dismiss' | 'none' | undefined;
 
-export type FormStatus = "New" | "Read" | "Edit" | "Loading";
+export type FormStatus = 'New' | 'Read' | 'Edit' | 'Loading';

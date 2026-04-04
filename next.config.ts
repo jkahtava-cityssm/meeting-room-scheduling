@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -23,18 +23,18 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: false,
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "radix-ui"],
+    optimizePackageImports: ['lucide-react', 'radix-ui'],
   },
-  transpilePackages: ["lucide-react"],
+  transpilePackages: ['lucide-react'],
   devIndicators: {
-    position: "top-right", // Moves the development indicator to the top-right
+    position: 'top-right', // Moves the development indicator to the top-right
     // Set to false to hide the indicator entirely:
     // devIndicators: false,
   },
 };
 
 module.exports = {
-  output: "standalone",
+  output: 'standalone',
 };
 
 export default nextConfig;

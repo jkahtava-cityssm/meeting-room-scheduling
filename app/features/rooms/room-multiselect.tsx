@@ -1,7 +1,7 @@
-import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
-import { IconName } from "@/components/ui/icon-dynamic";
-import { useRoomsQuery } from "@/lib/services/rooms";
-import { TColors } from "@/lib/types";
+import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
+import { IconName } from '@/components/ui/icon-dynamic';
+import { useRoomsQuery } from '@/lib/services/rooms';
+import { TColors } from '@/lib/types';
 
 export function RoomMultiSelect({
   selectedRoomIds,
@@ -11,7 +11,7 @@ export function RoomMultiSelect({
   dataInvalid = false,
   isDisabled = false,
   maxCount = 3,
-  includeAllOption = false,
+  hideSelectAll = false,
 }: {
   selectedRoomIds: string[];
   onChange: (ids: string[]) => void;
@@ -20,27 +20,25 @@ export function RoomMultiSelect({
   dataInvalid?: boolean;
   isDisabled: boolean;
   maxCount?: number;
-  includeAllOption: boolean;
+  hideSelectAll: boolean;
 }) {
   const { isPending, data, error } = useRoomsQuery(false);
 
-  const filteredRoomIds = data
-    ? data
-        .map((room) => String(room.roomId))
-        .filter((roomId) => !excludeRoomIds.includes(roomId) || selectedRoomIds.includes("-1"))
-    : [];
+  const availableRooms = data ? data.filter((room) => !excludeRoomIds.includes(String(room.roomId))) : [];
+
+  const effectiveSelection = selectedRoomIds.includes('-1') ? [...availableRooms.map((room) => String(room.roomId))] : selectedRoomIds;
 
   return (
     <GenericMultiSelect
-      list={data}
-      selectedValues={filteredRoomIds}
+      list={availableRooms}
+      selectedValues={effectiveSelection}
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Status" : "Collecting Status"}
-      placeholderText="Select Status"
-      searchText="Search Status..."
-      noResultText="No status found"
+      loadingLabel={error ? 'Error: Loading Rooms' : 'Collecting Rooms'}
+      placeholderText="Select Rooms"
+      searchText="Search Rooms..."
+      noResultText="No rooms found"
       dataInvalid={dataInvalid}
       onValueChange={onChange}
       getId={(room) => room.roomId.toString()}
@@ -48,12 +46,13 @@ export function RoomMultiSelect({
       getIcon={(room) => room.icon as IconName}
       getColor={(room) => room.color as TColors}
       className={className}
-      selectAllBadge={{ label: "All Rooms", value: "-1", color: "zinc", icon: "asterisk" }}
-      hideSelectAll={includeAllOption}
+      selectAllBadge={{ label: 'All Rooms', value: '-1', color: 'zinc', icon: 'asterisk' }}
+      hideSelectAll={hideSelectAll}
       hideIcon={false}
-      hideClearAll={true}
+      hideClearAll={false}
       hideClearSingle={true}
       hideMoreLabel={true}
+      overflowLabel="Rooms Selected"
     />
   );
 }

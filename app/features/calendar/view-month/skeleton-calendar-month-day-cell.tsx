@@ -1,8 +1,8 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { getDaysInMonth, startOfMonth, subMonths } from "date-fns";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { getDaysInMonth, startOfMonth, subMonths } from 'date-fns';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 function getDays(selectedDate: Date) {
   const daysInMonth = getDaysInMonth(selectedDate);
@@ -15,20 +15,20 @@ function getDays(selectedDate: Date) {
   const dayList = [];
 
   for (let index = daysInLastMonth - beforeDays; index < daysInLastMonth; index++) {
-    dayList.push({ day: index + 1, type: "before" });
+    dayList.push({ day: index + 1, type: 'before' });
   }
 
   for (let index = 0; index < daysInMonth; index++) {
-    dayList.push({ day: index + 1, type: "current" });
+    dayList.push({ day: index + 1, type: 'current' });
   }
 
   for (let index = 0; index < afterDays; index++) {
-    dayList.push({ day: index + 1, type: "after" });
+    dayList.push({ day: index + 1, type: 'after' });
   }
 
   return dayList;
 }
-const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MIN_INNER_HEIGHT = 96;
 const BORDER_COMPENSATION = 2;
 
@@ -49,7 +49,7 @@ export function MonthViewDayCellSkeleton({ date }: { date: Date }) {
   const recomputeHeights = useCallback(() => {
     if (!outerScrollRef.current || !weekdayHeaderRef.current || weekCount === 0) return;
 
-    const viewport = outerScrollRef.current.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
+    const viewport = outerScrollRef.current.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
     if (!viewport) return;
 
     // This is the available height for "filling"
@@ -76,7 +76,7 @@ export function MonthViewDayCellSkeleton({ date }: { date: Date }) {
 
     recomputeHeights();
 
-    const viewport = outerScrollRef.current?.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
+    const viewport = outerScrollRef.current?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
     if (!viewport) return;
 
     const ro = new ResizeObserver(() => requestAnimationFrame(recomputeHeights));
@@ -107,17 +107,17 @@ export function MonthViewDayCellSkeleton({ date }: { date: Date }) {
           {dayList.map((dayRecord, index) => {
             const isSunday = index % 7 === 0;
             const isProbe = index <= 7;
-            const isCurrentMonth = dayRecord.type === "current";
+            const isCurrentMonth = dayRecord.type === 'current';
             return (
               <div
                 key={`${dayRecord.type}-${dayRecord.day}`}
-                className={cn("flex h-full flex-col border-l border-b overflow-hidden", isSunday && "border-l-0")}
+                className={cn('flex h-full flex-col border-l border-b overflow-hidden', isSunday && 'border-l-0')}
               >
                 <div ref={isProbe ? weekHeaderProbeRef : undefined} className="shrink-0 py-1">
                   <span
                     className={cn(
-                      "flex w-8 translate-x-1 items-center justify-center h-4 px-1 text-xs font-semibold lg:px-2",
-                      !isCurrentMonth && "opacity-20",
+                      'flex w-8 translate-x-1 items-center justify-center h-4 px-1 text-xs font-semibold lg:px-2',
+                      !isCurrentMonth && 'opacity-20',
                     )}
                   >
                     {dayRecord.day}
@@ -125,20 +125,12 @@ export function MonthViewDayCellSkeleton({ date }: { date: Date }) {
                 </div>
 
                 <Skeleton
-                  className={cn("flex h-6 gap-1 px-2  sm:flex-col sm:px-0", !isCurrentMonth && "opacity-50")}
+                  className={cn('flex h-6 gap-1 px-2  sm:flex-col sm:px-0', !isCurrentMonth && 'opacity-50')}
                   style={{ height: rowContentHeight }}
                 ></Skeleton>
 
-                <div
-                  ref={isProbe ? weekFooterProbeRef : undefined}
-                  className={cn("flex w-full flex-col gap-1  py-1 overflow-hidden")}
-                >
-                  <div
-                    className={cn(
-                      "h-4.5 px-1.5 text-xs font-semibold text-muted-foreground",
-                      !isCurrentMonth && "opacity-50",
-                    )}
-                  >
+                <div ref={isProbe ? weekFooterProbeRef : undefined} className={cn('flex w-full flex-col gap-1  py-1 overflow-hidden')}>
+                  <div className={cn('h-4.5 px-1.5 text-xs font-semibold text-muted-foreground', !isCurrentMonth && 'opacity-50')}>
                     <Skeleton className="h-full w-full" />
                   </div>
                 </div>

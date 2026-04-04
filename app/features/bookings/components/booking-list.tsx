@@ -1,20 +1,20 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { IEventCard, IRoomSection, ISection } from "./types";
-import EventCard from "./event-card";
-import { cva } from "class-variance-authority";
-import { sharedColorVariants } from "@/lib/theme/colorVariants";
-import { cn } from "@/lib/utils";
-import { useEventPatchMutation } from "@/lib/services/events";
-import { useBookingContext } from "../context/BookingProvider";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { IEventCard, IRoomSection, ISection } from './types';
+import EventCard from './event-card';
+import { cva } from 'class-variance-authority';
+import { sharedColorVariants } from '@/lib/theme/colorVariants';
+import { cn } from '@/lib/utils';
+import { useEventPatchMutation } from '@/lib/services/events';
+import { useBookingContext } from '../context/BookingProvider';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Terminal } from 'lucide-react';
 
 export default function BookingList({ sections }: { sections: ISection[] }) {
   const breakpoints = true
-    ? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
-    : "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
+    ? 'w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)'
+    : 'w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)';
 
   return (
     <div className={`flex flex-1 flex-col ${breakpoints}`}>
@@ -23,13 +23,7 @@ export default function BookingList({ sections }: { sections: ISection[] }) {
           <div className="flex flex-col gap-6 max-w-screen-2xl pr-4">
             {sections.length === 0 && <NoContentWarning />}
             {sections.map((section) => {
-              return (
-                <SectionLayout
-                  key={section.sectionId}
-                  formattedDate={section.formattedDate}
-                  roomSections={section.roomSection}
-                />
-              );
+              return <SectionLayout key={section.sectionId} formattedDate={section.formattedDate} roomSections={section.roomSection} />;
             })}
           </div>
         </div>
@@ -42,10 +36,7 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
   //{format(date, "EEEE, MMMM d, yyyy")
   return (
     <div className="border-b">
-      <div
-        className="sticky top-0 bg-accent text-primary p-2 border-2 border-accent/50 shadow-sm  h-10 z-10"
-        data-date={formattedDate}
-      >
+      <div className="sticky top-0 bg-accent text-primary p-2 border-2 border-accent/50 shadow-sm  h-10 z-10" data-date={formattedDate}>
         <span className="flex-1 text-md">{formattedDate}</span>
       </div>
 
@@ -60,49 +51,40 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
 
 function RoomSection({ roomSection }: { roomSection: IRoomSection }) {
   const patchEvent = useEventPatchMutation();
-  const { startDate, endDate, type, id } = useBookingContext();
-  const badgeVariants = cva("", {
+  const { startDate, endDate, type, id, statusLookup } = useBookingContext();
+  const badgeVariants = cva('', {
     variants: {
       color: sharedColorVariants,
     },
     defaultVariants: {
-      color: "slate",
+      color: 'slate',
     },
   });
 
   return (
     <div className="w-full">
-      <div
-        className={cn(
-          "sticky top-10 p-2  shadow-sm h-10 border-2 rounded-b-sm",
-          badgeVariants({ color: roomSection.roomColour })
-        )}
-      >
-        <span className={cn("flex-1 text-md")}> {roomSection.roomName}</span>
+      <div className={cn('sticky top-10 p-2  shadow-sm h-10 border-2 rounded-b-sm', badgeVariants({ color: roomSection.roomColour }))}>
+        <span className={cn('flex-1 text-md')}> {roomSection.roomName}</span>
       </div>
       <div className="flex flex-wrap gap-4 p-4 ">
         {roomSection.eventCards.map((eventCard, idx) => {
           return (
             <EventCard
               key={String(eventCard.event.eventId)}
-              eventCardFields={eventCard.eventCardFields}
               event={eventCard.event}
+              OnPending={() => {
+                patchEvent.mutate({
+                  data: { eventId: eventCard.event.eventId, statusId: statusLookup('PENDING') },
+                });
+              }}
               OnApprove={() => {
                 patchEvent.mutate({
-                  eventId: eventCard.event.eventId,
-                  updates: {
-                    status: { connect: { statusId: 2 } },
-                  },
-                  cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
+                  data: { eventId: eventCard.event.eventId, statusId: statusLookup('APPROVED') },
                 });
               }}
               OnDeny={() => {
                 patchEvent.mutate({
-                  eventId: eventCard.event.eventId,
-                  updates: {
-                    status: { connect: { statusId: 3 } },
-                  },
-                  cacheTags: { startDate: startDate, endDate: endDate, type: type, id: id },
+                  data: { eventId: eventCard.event.eventId, statusId: statusLookup('REJECTED') },
                 });
               }}
             ></EventCard>

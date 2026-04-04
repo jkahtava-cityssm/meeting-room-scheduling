@@ -1,5 +1,5 @@
-import { Role } from "./auth";
-import { DEFAULT_RESOURCE_ACTIONS, ROLES_ENUM, SessionAction, SessionResource, SessionRole } from "./types";
+import { Role } from './auth';
+import { DEFAULT_RESOURCE_ACTIONS, ROLES_ENUM, SessionAction, SessionResource, SessionRole } from './types';
 
 /**
  * 1. Creates a lookup table (object type) where the keys are Resources
@@ -7,7 +7,7 @@ import { DEFAULT_RESOURCE_ACTIONS, ROLES_ENUM, SessionAction, SessionResource, S
  * Example: { "User": "Create" | "Delete"; "Post": "Read" | "Edit" }
  */
 type ResourceActionMap = {
-  [E in (typeof DEFAULT_RESOURCE_ACTIONS)[number] as E["RESOURCE"]]: E["ACTIONS"][number];
+  [E in (typeof DEFAULT_RESOURCE_ACTIONS)[number] as E['RESOURCE']]: E['ACTIONS'][number];
 };
 
 /**
@@ -78,12 +78,12 @@ const RESOURCE_TO_ACTIONS: Readonly<Record<SessionResource, ReadonlySet<SessionA
 ) as never;
 
 export type PermissionRequirement =
-  | ({ type: "permission" } & ValidPermissionPair)
-  | { type: "resource"; resource: SessionResource }
-  | { type: "role"; role: SessionRole }
-  | { type: "function"; check: (roles: PermissionCache | undefined) => boolean | Promise<boolean> }
-  | { type: "and"; requirements: PermissionRequirement[] }
-  | { type: "or"; requirements: PermissionRequirement[] };
+  | ({ type: 'permission' } & ValidPermissionPair)
+  | { type: 'resource'; resource: SessionResource }
+  | { type: 'role'; role: SessionRole }
+  | { type: 'function'; check: (roles: PermissionCache | undefined) => boolean | Promise<boolean> }
+  | { type: 'and'; requirements: PermissionRequirement[] }
+  | { type: 'or'; requirements: PermissionRequirement[] };
 
 export type GroupedPermissionRequirement = Record<string, PermissionRequirement | PermissionRequirement[]>;
 
@@ -113,17 +113,15 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
         const allowed = RESOURCE_TO_ACTIONS[resource];
 
         if (!allowed) {
-          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== "production") {
+          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production') {
             console.warn(`[Permission Warning]: Unknown resource "${resource}" found on role "${roleName}".`);
           }
           continue;
         }
 
         if (!allowed.has(action)) {
-          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== "production") {
-            console.warn(
-              `[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`,
-            );
+          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production') {
+            console.warn(`[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`);
           }
           continue;
         }
@@ -139,31 +137,31 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
 
 async function isRequirementMet(permissionCache: PermissionCache, permission: PermissionRequirement): Promise<boolean> {
   switch (permission.type) {
-    case "permission":
+    case 'permission':
       return hasPermission(permissionCache, permission.resource, permission.action);
 
-    case "resource":
+    case 'resource':
       return hasResource(permissionCache, permission.resource);
 
-    case "role":
+    case 'role':
       return hasRole(permissionCache, permission.role);
 
-    case "function":
+    case 'function':
       try {
-        if (typeof permission.check !== "function") return false;
+        if (typeof permission.check !== 'function') return false;
         return await Promise.resolve(permission.check(permissionCache));
       } catch {
         return false;
       }
 
-    case "and":
+    case 'and':
       for (const requirement of permission.requirements) {
         const result = await isRequirementMet(permissionCache, requirement);
         if (!result) return false; // short-circuit on first failure
       }
       return true;
 
-    case "or":
+    case 'or':
       for (const requirement of permission.requirements) {
         const result = await isRequirementMet(permissionCache, requirement);
         if (result) return true; // short-circuit on first success
@@ -238,53 +236,50 @@ function hasResource(permissionCache: PermissionCache, resource: SessionResource
 
 export function getRequirementMessage(req: PermissionRequirement): string {
   switch (req.type) {
-    case "permission":
+    case 'permission':
       return `${req.action} on ${req.resource}`;
-    case "resource":
+    case 'resource':
       return `Access to ${req.resource}`;
-    case "role":
+    case 'role':
       return `Role: ${req.role}`;
-    case "function":
-      return `Custom logic check (${req.check.name || "anonymous"})`;
-    case "and":
-      return `All of: [${req.requirements.map(getRequirementMessage).join(", ")}]`;
-    case "or":
-      return `One of: [${req.requirements.map(getRequirementMessage).join(", ")}]`;
+    case 'function':
+      return `Custom logic check (${req.check.name || 'anonymous'})`;
+    case 'and':
+      return `All of: [${req.requirements.map(getRequirementMessage).join(', ')}]`;
+    case 'or':
+      return `One of: [${req.requirements.map(getRequirementMessage).join(', ')}]`;
     default:
-      return "Unknown Requirement";
+      return 'Unknown Requirement';
   }
 }
 
 export const GuardRequest = {
   permit: <R extends SessionResource, A extends ActionsFor<R>>(resource: R, action: A): PermissionRequirement => ({
-    type: "permission",
+    type: 'permission',
     ...({ resource, action } as ValidPermissionPair),
   }),
 
   resource: (resource: SessionResource): PermissionRequirement => ({
-    type: "resource",
+    type: 'resource',
     resource,
   }),
 
   role: (role: SessionRole): PermissionRequirement => ({
-    type: "role",
+    type: 'role',
     role,
   }),
 
   all: (...requirements: PermissionRequirement[]): PermissionRequirement => ({
-    type: "and",
+    type: 'and',
     requirements,
   }),
 
   any: (...requirements: PermissionRequirement[]): PermissionRequirement => ({
-    type: "or",
+    type: 'or',
     requirements,
   }),
-  custom: (
-    check: (cache: PermissionCache | undefined) => boolean | Promise<boolean>,
-    name?: string,
-  ): PermissionRequirement => ({
-    type: "function",
-    check: name ? Object.defineProperty(check, "name", { value: name }) : check,
+  custom: (check: (cache: PermissionCache | undefined) => boolean | Promise<boolean>, name?: string): PermissionRequirement => ({
+    type: 'function',
+    check: name ? Object.defineProperty(check, 'name', { value: name }) : check,
   }),
 };

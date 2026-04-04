@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 
-import { cn } from "@/lib/utils";
-import { cva } from "class-variance-authority";
-import { TColors } from "@/lib/types";
-import { sharedIconBackgrounVariants, sharedIconColorVariants } from "../../lib/theme/colorVariants";
+import { cn } from '@/lib/utils';
+import { cva } from 'class-variance-authority';
+import { TColors } from '@/lib/types';
+import { sharedIconBackgrounVariants, sharedIconColorVariants } from '../../lib/theme/colorVariants';
 
-const IconColor = cva("", {
+const IconColor = cva('', {
   variants: {
     color: sharedIconColorVariants,
     background: sharedIconBackgrounVariants,
   },
   compoundVariants: [],
   defaultVariants: {
-    color: "blue",
+    color: 'blue',
   },
 });
 
@@ -38,11 +38,11 @@ function IconColored(
     showBorder: boolean;
     hideBackground: boolean;
     children: React.ReactElement<SVGSVGElement>;
-  } //& React.HTMLAttributes<HTMLDivElement> &
+  }, //& React.HTMLAttributes<HTMLDivElement> &
 ) {
   //Omit<LucideProps, "ref"> &
   //React.RefAttributes<SVGSVGElement>
-  const EventCardClasses = IconColor({ color: color, background: hideBackground ? "invisible" : color });
+  const EventCardClasses = IconColor({ color: color, background: hideBackground ? 'invisible' : color });
 
   const renderIcon = () => {
     return React.Children.map(children, (child) => {
@@ -56,9 +56,7 @@ function IconColored(
     <div
       className={cn(
         EventCardClasses,
-        showBorder
-          ? "px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          : ""
+        showBorder ? 'px-1.5 py-1.5 rounded-lg border focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring' : '',
       )}
     >
       {renderIcon()}

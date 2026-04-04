@@ -1,5 +1,5 @@
-import { prisma } from "@/prisma";
-import { Prisma } from "@prisma/client";
+import { prisma } from '@/prisma';
+import { Prisma } from '@prisma/client';
 
 const PROPERTY_SELECT = {
   propertyId: true,
@@ -13,6 +13,6 @@ export async function findManyProperties(where?: Prisma.PropertyWhereInput, tx: 
   return tx.property.findMany({
     where,
     select: PROPERTY_SELECT,
-    orderBy: { propertyId: "asc" },
+    orderBy: { propertyId: 'asc' },
   });
 }

@@ -1,7 +1,7 @@
-"use client";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+'use client';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   ArrowDownAz,
   ArrowUpAz,
@@ -17,35 +17,35 @@ import {
   Pencil,
   Terminal,
   X,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { useEventPatchMutation } from "@/lib/services/events";
+import { useEventPatchMutation } from '@/lib/services/events';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRoomsQuery } from "@/lib/services/rooms";
-import RoomCard from "./room-card";
-import { Button } from "@/components/ui/button";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRoomsQuery } from '@/lib/services/rooms';
+import RoomCard from './room-card';
+import { Button } from '@/components/ui/button';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-import { id } from "date-fns/locale";
-import { type } from "os";
-import EventCard from "../bookings/components/event-card";
-import { IRoomSection } from "../bookings/components/types";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { BadgeColored } from "@/components/ui/badge-colored";
-import { TColors } from "@/lib/types";
-import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { id } from 'date-fns/locale';
+import { type } from 'os';
+import EventCard from '../bookings/components/event-card';
+import { IRoomSection } from '../bookings/components/types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { BadgeColored } from '@/components/ui/badge-colored';
+import { TColors } from '@/lib/types';
+import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { getDistinctValuesByKey } from "@/lib/helpers";
-import { useDebounce } from "@/hooks/use-debounce";
-import { IRoom } from "@/lib/schemas";
-import { GenericError } from "@/components/shared/generic-error";
-import { useSharedRoomDrawer } from "../room-drawer/drawer-context";
+import { getDistinctValuesByKey } from '@/lib/helpers';
+import { useDebounce } from '@/hooks/use-debounce';
+import { IRoom } from '@/lib/schemas';
+import { GenericError } from '@/components/shared/generic-error';
+import { useSharedRoomDrawer } from '../room-drawer/drawer-context';
 
 interface RoomFilters {
   name: string;
@@ -57,7 +57,7 @@ interface RoomFilters {
 }
 
 const defaultFilters: RoomFilters = {
-  name: "",
+  name: '',
   roomCategory: [],
   color: [],
   icon: [],
@@ -65,9 +65,9 @@ const defaultFilters: RoomFilters = {
   properties: [],
 };
 
-type SortColumn = "icon" | "publicFacing" | "color" | "roomCategory" | "name";
+type SortColumn = 'icon' | 'publicFacing' | 'color' | 'roomCategory' | 'name';
 
-type SortDirection = "desc" | "asc" | null;
+type SortDirection = 'desc' | 'asc' | null;
 
 export default function RoomLayout() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -85,28 +85,28 @@ export default function RoomLayout() {
 
   const toggleSort = useCallback((key: SortColumn) => {
     setSort((prev) => {
-      if (prev.key !== key) return { key, dir: "desc" };
-      if (prev.dir === "desc") return { key, dir: "asc" };
+      if (prev.key !== key) return { key, dir: 'desc' };
+      if (prev.dir === 'desc') return { key, dir: 'asc' };
 
       return { key: null, dir: null };
     });
   }, []);
 
-  const isSortedAsc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "asc", [sort]);
-  const isSortedDesc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "desc", [sort]);
+  const isSortedAsc = useCallback((key: SortColumn) => sort.key === key && sort.dir === 'asc', [sort]);
+  const isSortedDesc = useCallback((key: SortColumn) => sort.key === key && sort.dir === 'desc', [sort]);
 
-  const colorList = useMemo(() => getDistinctValuesByKey(data ?? [], "color"), [data]);
+  const colorList = useMemo(() => getDistinctValuesByKey(data ?? [], 'color'), [data]);
 
-  const iconList = useMemo(() => getDistinctValuesByKey(data ?? [], "icon"), [data]);
+  const iconList = useMemo(() => getDistinctValuesByKey(data ?? [], 'icon'), [data]);
 
   const propertyList = useMemo(() => {
     const allProperties = data?.flatMap((r) => r.roomProperty ?? []) ?? [];
-    return getDistinctValuesByKey(allProperties, "name");
+    return getDistinctValuesByKey(allProperties, 'name');
   }, [data]);
 
   const categoryList = useMemo(() => {
     const allCategories = data?.map((r) => r.roomCategory).filter(Boolean) ?? [];
-    return getDistinctValuesByKey(allCategories, "name");
+    return getDistinctValuesByKey(allCategories, 'name');
   }, [data]);
 
   const { debouncedValue: debouncedFilters } = useDebounce(filters, 500);
@@ -123,25 +123,23 @@ export default function RoomLayout() {
 
         // 2. Extract value from the user object based on the key
         switch (key) {
-          case "name":
-            const roomValue = String(room[key as keyof typeof room] || "").toLowerCase();
+          case 'name':
+            const roomValue = String(room[key as keyof typeof room] || '').toLowerCase();
             return roomValue.includes(String(filterValue).toLowerCase());
 
-          case "roomCategory":
-            return (filterValue as string[]).includes(room.roomCategory.name || "");
-          case "icon":
-            return (filterValue as string[]).includes(room.icon || "");
-          case "color":
-            return (filterValue as string[]).includes(room.color || "");
-          case "properties":
+          case 'roomCategory':
+            return (filterValue as string[]).includes(room.roomCategory.name || '');
+          case 'icon':
+            return (filterValue as string[]).includes(room.icon || '');
+          case 'color':
+            return (filterValue as string[]).includes(room.color || '');
+          case 'properties':
             if (!room.roomProperty) return false;
             return room.roomProperty.some((property) => {
-              return (filterValue as string[]).some(
-                (filter) => filter === property.name && property.value === "true" && property.type === "boolean",
-              );
+              return (filterValue as string[]).some((filter) => filter === property.name && property.value === 'true' && property.type === 'boolean');
             });
 
-          case "publicFacing":
+          case 'publicFacing':
             return (filterValue as string[]).includes(String(room.publicFacing));
 
           default:
@@ -154,17 +152,17 @@ export default function RoomLayout() {
   // Helper: value extraction for the active sort key
   const getSortValue = useCallback((room: IRoom, key: SortColumn) => {
     switch (key) {
-      case "name":
-        return (room.name ?? "") as string;
-      case "color":
-        return (room.color ?? "") as string;
-      case "icon":
-        return (room.icon ?? "") as string;
-      case "publicFacing":
+      case 'name':
+        return (room.name ?? '') as string;
+      case 'color':
+        return (room.color ?? '') as string;
+      case 'icon':
+        return (room.icon ?? '') as string;
+      case 'publicFacing':
         return room.publicFacing ? 1 : 0;
 
-      case "roomCategory":
-        return (room.roomCategory.name ?? "") as string;
+      case 'roomCategory':
+        return (room.roomCategory.name ?? '') as string;
     }
   }, []);
 
@@ -175,20 +173,20 @@ export default function RoomLayout() {
     const key = sort.key;
     const dir = sort.dir;
 
-    const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+    const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
 
     const cmp = (roomA: IRoom, roomB: IRoom) => {
       const va = getSortValue(roomA, key);
       const vb = getSortValue(roomB, key);
 
-      if (typeof va === "string" && typeof vb === "string") {
+      if (typeof va === 'string' && typeof vb === 'string') {
         return collator.compare(va, vb);
       }
       // number/boolean compare
       return va === vb ? 0 : va > vb ? 1 : -1;
     };
 
-    const factor = dir === "asc" ? 1 : -1;
+    const factor = dir === 'asc' ? 1 : -1;
 
     // slice() to avoid mutating original; modern JS sort is stable.
     return filteredEmployee.slice().sort((a, b) => factor * cmp(a, b));
@@ -255,26 +253,22 @@ export default function RoomLayout() {
             <div className="grid grid-cols-2 md:grid-cols-7 items-center border-b p-2 sticky top-0 bg-background z-10">
               <FilterHeader
                 title="Room Name"
-                isSortedAsc={isSortedAsc("name")}
-                isSortedDesc={isSortedDesc("name")}
-                onToggleSort={() => toggleSort("name")}
-                onClearFilter={() => clearFilter("name")}
+                isSortedAsc={isSortedAsc('name')}
+                isSortedDesc={isSortedDesc('name')}
+                onToggleSort={() => toggleSort('name')}
+                onClearFilter={() => clearFilter('name')}
                 isFiltered={filters.name.length > 0}
               >
-                <DebouncedInput
-                  placeholder="Search room name..."
-                  onChange={(value) => onFilter(value, "name")}
-                  value={filters.name}
-                />
+                <DebouncedInput placeholder="Search room name..." onChange={(value) => onFilter(value, 'name')} value={filters.name} />
               </FilterHeader>
 
               <div className="hidden md:block">
                 <FilterHeader
                   title="Category"
-                  isSortedAsc={isSortedAsc("roomCategory")}
-                  isSortedDesc={isSortedDesc("roomCategory")}
-                  onToggleSort={() => toggleSort("roomCategory")}
-                  onClearFilter={() => clearFilter("roomCategory")}
+                  isSortedAsc={isSortedAsc('roomCategory')}
+                  isSortedDesc={isSortedDesc('roomCategory')}
+                  onToggleSort={() => toggleSort('roomCategory')}
+                  onClearFilter={() => clearFilter('roomCategory')}
                   isFiltered={filters.roomCategory.length > 0}
                   totalSelected={filters.roomCategory.length}
                 >
@@ -283,7 +277,7 @@ export default function RoomLayout() {
                       <div key={option} className="flex flex-row items-center gap-2 text-sm">
                         <DebouncedCheckbox
                           checked={filters.roomCategory.includes(option)}
-                          onCheckedChange={(value) => onToggleFilterList(option, "roomCategory")}
+                          onCheckedChange={(value) => onToggleFilterList(option, 'roomCategory')}
                         />
                         {option}
                       </div>
@@ -295,10 +289,10 @@ export default function RoomLayout() {
               <div className="font-bold min-w-0 hidden md:block text-center">
                 <FilterHeader
                   title="Colour"
-                  isSortedAsc={isSortedAsc("color")}
-                  isSortedDesc={isSortedDesc("color")}
-                  onToggleSort={() => toggleSort("color")}
-                  onClearFilter={() => clearFilter("color")}
+                  isSortedAsc={isSortedAsc('color')}
+                  isSortedDesc={isSortedDesc('color')}
+                  onToggleSort={() => toggleSort('color')}
+                  onClearFilter={() => clearFilter('color')}
                   isFiltered={filters.color.length > 0}
                   totalSelected={filters.color.length}
                 >
@@ -307,7 +301,7 @@ export default function RoomLayout() {
                       <div key={option} className="flex flex-row items-center gap-2 text-sm">
                         <DebouncedCheckbox
                           checked={filters.color.includes(option)}
-                          onCheckedChange={(value) => onToggleFilterList(option, "color")}
+                          onCheckedChange={(value) => onToggleFilterList(option, 'color')}
                         />
                         {option}
                       </div>
@@ -318,10 +312,10 @@ export default function RoomLayout() {
               <div className="font-bold min-w-0 hidden md:block text-center">
                 <FilterHeader
                   title="Icon"
-                  isSortedAsc={isSortedAsc("icon")}
-                  isSortedDesc={isSortedDesc("icon")}
-                  onToggleSort={() => toggleSort("icon")}
-                  onClearFilter={() => clearFilter("icon")}
+                  isSortedAsc={isSortedAsc('icon')}
+                  isSortedDesc={isSortedDesc('icon')}
+                  onToggleSort={() => toggleSort('icon')}
+                  onClearFilter={() => clearFilter('icon')}
                   isFiltered={filters.icon.length > 0}
                   totalSelected={filters.icon.length}
                 >
@@ -330,10 +324,7 @@ export default function RoomLayout() {
                       if (!icon) return null;
                       return (
                         <div key={icon} className="flex flex-row items-center gap-2 text-sm">
-                          <DebouncedCheckbox
-                            checked={filters.icon.includes(icon)}
-                            onCheckedChange={(value) => onToggleFilterList(icon, "icon")}
-                          />
+                          <DebouncedCheckbox checked={filters.icon.includes(icon)} onCheckedChange={(value) => onToggleFilterList(icon, 'icon')} />
                           {icon}
                         </div>
                       );
@@ -346,22 +337,22 @@ export default function RoomLayout() {
                 <FilterHeader
                   title="Public Facing"
                   center
-                  isSortedAsc={isSortedAsc("publicFacing")}
-                  isSortedDesc={isSortedDesc("publicFacing")}
-                  onToggleSort={() => toggleSort("publicFacing")}
-                  onClearFilter={() => clearFilter("publicFacing")}
+                  isSortedAsc={isSortedAsc('publicFacing')}
+                  isSortedDesc={isSortedDesc('publicFacing')}
+                  onToggleSort={() => toggleSort('publicFacing')}
+                  onClearFilter={() => clearFilter('publicFacing')}
                   isFiltered={filters.publicFacing.length > 0}
                   totalSelected={filters.publicFacing.length}
                 >
                   <div className="flex flex-col gap-2">
                     {[
-                      { value: "false", label: "No" },
-                      { value: "true", label: "Yes" },
+                      { value: 'false', label: 'No' },
+                      { value: 'true', label: 'Yes' },
                     ].map((option) => (
                       <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
                         <DebouncedCheckbox
                           checked={filters.publicFacing.includes(option.value)}
-                          onCheckedChange={(value) => onToggleFilterList(option.value, "publicFacing")}
+                          onCheckedChange={(value) => onToggleFilterList(option.value, 'publicFacing')}
                         />
                         {option.label}
                       </div>
@@ -376,7 +367,7 @@ export default function RoomLayout() {
                   isSortedAsc={undefined}
                   isSortedDesc={undefined}
                   onToggleSort={undefined}
-                  onClearFilter={() => clearFilter("properties")}
+                  onClearFilter={() => clearFilter('properties')}
                   isFiltered={filters.properties.length > 0}
                   totalSelected={filters.properties.length}
                 >
@@ -385,7 +376,7 @@ export default function RoomLayout() {
                       <div key={option} className="flex flex-row items-center gap-2 text-sm">
                         <DebouncedCheckbox
                           checked={filters.properties.includes(option)}
-                          onCheckedChange={(value) => onToggleFilterList(option, "properties")}
+                          onCheckedChange={(value) => onToggleFilterList(option, 'properties')}
                         />
                         {option}
                       </div>
@@ -395,7 +386,7 @@ export default function RoomLayout() {
               </div>
               <div className="font-bold min-w-0 text-center">
                 <div className="min-w-0 flex items-center font-bold">
-                  <div className={cn("min-w-0 inline-flex items-center mx-auto")}>
+                  <div className={cn('min-w-0 inline-flex items-center mx-auto')}>
                     {hasFilters ? (
                       <Button
                         variant="ghost"
@@ -465,20 +456,18 @@ export default function RoomLayout() {
                           {room.icon}
                         </div>
                       </div>
-                      <div className="hidden md:block text-sm truncate text-center">
-                        {room.publicFacing ? "Yes" : "No"}
-                      </div>
+                      <div className="hidden md:block text-sm truncate text-center">{room.publicFacing ? 'Yes' : 'No'}</div>
 
                       {/* Toggle Column */}
                       <div className="flex justify-center py-2">
                         {room.roomProperty?.map((property) => {
-                          if (property.value.toLocaleLowerCase() === "false") return null;
+                          if (property.value.toLocaleLowerCase() === 'false') return null;
                           return <Badge key={property.roomPropertyId}>{property.name}</Badge>;
                         })}
                       </div>
                       <div className="flex justify-center py-2">
                         <div className="flex items-center gap-2">
-                          <Button variant={"outline"} onClick={() => openRoomDrawer({ room: room })}>
+                          <Button variant={'outline'} onClick={() => openRoomDrawer({ room: room })}>
                             <Eye />
                             View
                           </Button>
@@ -557,27 +546,24 @@ const FilterHeader = ({
 
   return (
     <div className="min-w-0 flex items-center font-bold">
-      <div className={cn("min-w-0 inline-flex items-center ", center && "mx-auto")}>
+      <div className={cn('min-w-0 inline-flex items-center ', center && 'mx-auto')}>
         <Button
           variant="link"
-          size={"sm"}
-          className={cn(
-            "min-w-0  h-7 px-2 text-sm font-semibold gap-1",
-            center ? "justify-center text-center" : "justify-start text-left",
-          )}
+          size={'sm'}
+          className={cn('min-w-0  h-7 px-2 text-sm font-semibold gap-1', center ? 'justify-center text-center' : 'justify-start text-left')}
           title={isSortedAsc || isSortedDesc ? `Sort by ${title}` : title}
           onClick={onToggleSort}
         >
-          <span className={cn("block truncate", center && "mx-auto text-center")}>{title}</span>
+          <span className={cn('block truncate', center && 'mx-auto text-center')}>{title}</span>
           {sortIcon && <span className="ml-0.5">{sortIcon}</span>}
         </Button>
 
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant={"ghost"}
-              size={"icon"}
-              className={cn("h-7 w-7 shrink-0", isFiltered && "text-primary")}
+              variant={'ghost'}
+              size={'icon'}
+              className={cn('h-7 w-7 shrink-0', isFiltered && 'text-primary')}
               title={isFiltered ? `${totalSelected} filters applied` : `Filter by ${title}`}
               aria-pressed={isFiltered}
             >
@@ -589,7 +575,7 @@ const FilterHeader = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium leading-none text-sm">Filter {title}</h4>
-                <Button variant={"ghost"} size={"icon"} className="size-6" onClick={onClearFilter}>
+                <Button variant={'ghost'} size={'icon'} className="size-6" onClick={onClearFilter}>
                   <X />
                 </Button>
               </div>
@@ -611,7 +597,7 @@ const FilterHeader = ({
   );
 };
 
-interface DebouncedInputProps extends Omit<React.ComponentProps<typeof Input>, "onChange"> {
+interface DebouncedInputProps extends Omit<React.ComponentProps<typeof Input>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   debounce?: number;
@@ -639,7 +625,7 @@ const DebouncedInput = ({ value, onChange, debounce = 150, ...props }: Debounced
   return <Input {...props} value={localValue} onChange={(e) => setLocalValue(e.target.value)} />;
 };
 
-interface DebouncedCheckboxProps extends Omit<React.ComponentProps<typeof Checkbox>, "onCheckedChange"> {
+interface DebouncedCheckboxProps extends Omit<React.ComponentProps<typeof Checkbox>, 'onCheckedChange'> {
   checked: boolean;
   onCheckedChange: (value: boolean) => void;
   debounce?: number;

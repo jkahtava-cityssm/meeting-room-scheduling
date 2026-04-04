@@ -1,7 +1,7 @@
-"use client";
-import { format } from "date-fns";
-import { useEffect, useState } from "react";
-import { TIME_BLOCK_SIZE, TVisibleHours } from "@/lib/types";
+'use client';
+import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
+import { TIME_BLOCK_SIZE, TVisibleHours } from '@/lib/types';
 
 export function CalendarHourTimeline({ hours }: { hours: number[] }) {
   //The date is not initially set because the server and clients time is not always consistent.
@@ -42,7 +42,7 @@ export function CalendarHourTimeline({ hours }: { hours: number[] }) {
     >
       <div className="absolute left-18 top-0 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"></div>
       <div className="absolute left-0 border-2 rounded-sm flex w-16 -translate-y-1/2  bg-background pl-1 text-xs font-medium text-primary">
-        {format(currentTime, "hh:mm a")}
+        {format(currentTime, 'hh:mm a')}
       </div>
     </div>
   );

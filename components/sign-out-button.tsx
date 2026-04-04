@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { signOut } from "@/lib/auth-client";
+import { signOut } from '@/lib/auth-client';
 
-import { redirect, usePathname } from "next/navigation";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { redirect, usePathname } from 'next/navigation';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { LogOut } from 'lucide-react';
 
 export function SignOutMenuItem() {
   const pathname = usePathname();
@@ -13,7 +13,7 @@ export function SignOutMenuItem() {
     signOut({
       fetchOptions: {
         onSuccess: () => {
-          redirect("/?callbackurl=" + pathname); // redirect to login page
+          redirect('/?callbackurl=' + pathname); // redirect to login page
         },
       },
     });

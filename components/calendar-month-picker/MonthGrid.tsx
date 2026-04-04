@@ -1,13 +1,13 @@
-import React, { useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { format, isSameMonth } from "date-fns";
+import React, { useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { format, isSameMonth } from 'date-fns';
 
 type MonthGridProps = {
   monthList: Date[];
   selectedMonth: Date;
   currentMonth: Date;
   onClickMonth: (date: Date) => void;
-  onNavigate: (direction: "prev" | "next") => void;
+  onNavigate: (direction: 'prev' | 'next') => void;
   firstMonthRef?: React.RefObject<HTMLButtonElement | null>;
   lastMonthRef?: React.RefObject<HTMLButtonElement | null>;
 
@@ -48,11 +48,11 @@ export default function MonthGrid({
     Home: () => deferFocus(0),
     End: () => deferFocus(lastIndex),
     PageUp: (index) => {
-      onNavigate("prev");
+      onNavigate('prev');
       deferFocus(index);
     },
     PageDown: (index) => {
-      onNavigate("next");
+      onNavigate('next');
       deferFocus(index);
     },
     ArrowRight: (index) => moveByOffset(index, 1, 0),
@@ -66,10 +66,10 @@ export default function MonthGrid({
     const col = index % totalColumns;
 
     if (nextIndex < 0) {
-      onNavigate("prev");
+      onNavigate('prev');
       deferFocus(fallback);
     } else if (nextIndex >= monthList.length) {
-      onNavigate("next");
+      onNavigate('next');
       deferFocus(fallback);
     } else {
       deferFocus(nextIndex);
@@ -98,7 +98,7 @@ export default function MonthGrid({
       }}
     >
       {monthList.map((date, index) => {
-        const month = format(date, "MMM");
+        const month = format(date, 'MMM');
 
         const isSelected = isSameMonth(date, selectedMonth);
         const isCurrent = isSameMonth(date, currentMonth);
@@ -115,10 +115,8 @@ export default function MonthGrid({
             role="gridcell"
             key={month}
             aria-selected={isSelected}
-            aria-current={isCurrent ? "date" : undefined}
-            aria-label={`Month ${format(date, "MMMM")}${isCurrent ? ", current month" : ""}${
-              isSelected ? ", selected" : ""
-            }`}
+            aria-current={isCurrent ? 'date' : undefined}
+            aria-label={`Month ${format(date, 'MMMM')}${isCurrent ? ', current month' : ''}${isSelected ? ', selected' : ''}`}
             type="button"
             tabIndex={isTabbable ? 0 : -1}
             onFocus={() => {
@@ -130,10 +128,10 @@ export default function MonthGrid({
               onClickMonth(date);
             }}
             className={`size-14 p-2  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 hover:text-primary-foreground  hover:bg-primary/50 
-                      ${isSelected ? "bg-primary font-semibold text-primary-foreground" : ""}
-                      ${isTodayInMonth && !isSelected ? "bg-accent text-accent-foreground" : ""}
+                      ${isSelected ? 'bg-primary font-semibold text-primary-foreground' : ''}
+                      ${isTodayInMonth && !isSelected ? 'bg-accent text-accent-foreground' : ''}
                       `}
-            variant={"ghost"}
+            variant={'ghost'}
           >
             <div className="flex flex-col justify-center align-middle">
               <div className="flex size-6 items-center justify-center rounded-full text-xs font-medium">{month}</div>

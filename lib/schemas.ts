@@ -1,16 +1,7 @@
-import { z } from "zod/v4";
+import { z } from 'zod/v4';
 
 export const utcDateSchema = z.coerce.date().transform((d) => {
-  return new Date(
-    Date.UTC(
-      d.getUTCFullYear(),
-      d.getUTCMonth(),
-      d.getUTCDate(),
-      d.getUTCHours(),
-      d.getUTCMinutes(),
-      d.getUTCSeconds(),
-    ),
-  );
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()));
 });
 
 const DateSchema = z.union([z.string(), z.date().transform((d) => d.toISOString())]);
@@ -39,7 +30,7 @@ export const SRoomRoles = z.object({
 
 export const SRoomCategory = z.object({
   roomCategoryId: z.number(),
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   createdAt: DateSchema,
   updatedAt: DateSchema,
 });
@@ -56,8 +47,8 @@ export const SRoomProperty = z.object({
 
 export const SRoom = z.object({
   roomId: z.number(),
-  name: z.string().min(1, "Name is required"),
-  color: z.string().min(1, "Color is required"),
+  name: z.string().min(1, 'Name is required'),
+  color: z.string().min(1, 'Color is required'),
   icon: z.string().nullable(),
   publicFacing: z.union([z.boolean(), z.stringbool()]).default(false),
   displayOrder: z.number().nullable(),
@@ -74,6 +65,7 @@ export const SRecurrence = z.object({
   recurrenceCancellationId: z.number().nullable(),
   recurrenceExceptionId: z.number().nullable(),
   rule: z.string(),
+  description: z.string(),
   startDate: DateSchema,
   endDate: DateSchema,
   createdAt: DateSchema,
@@ -104,7 +96,7 @@ export const SUser = z.object({
 });
 
 export const SMultiDay = z.object({
-  position: z.enum(["first", "last", "middle", "single"]),
+  position: z.enum(['first', 'last', 'middle', 'single']),
   calculatedDate: z.string(),
   isEndAtMidnight: z.boolean().optional(),
   originalEndDate: z.string().optional(),
@@ -122,7 +114,6 @@ export const SStatus = z.object({
 
 export const SEvent = z.object({
   eventId: z.number(),
-  roomId: z.number().gt(0, "Room is required"),
   userId: z.number().nullable().optional(),
   userName: z.string().nullable().optional(),
   userEmail: z.string().nullable().optional(),
@@ -130,22 +121,33 @@ export const SEvent = z.object({
   recurrenceId: z.number().nullable(),
   eventItems: z.array(SEventItem).optional(),
   eventRecipients: z.array(SEventRecipient).optional(),
+  eventRooms: z.array(SRoom),
   startDate: DateSchema,
   endDate: DateSchema,
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, 'Title is required'),
   description: z.string(),
   parentEventId: z.number().nullable().optional(),
-  room: SRoom,
   status: SStatus,
   recurrence: SRecurrence.nullish(),
   createdAt: DateSchema,
   updatedAt: DateSchema,
   multiDay: SMultiDay.optional(),
+  multiRoom: z.boolean().optional(),
+});
+
+// Single-room variant used for display/form processing (after event spreading)
+export const SEventSingleRoom = SEvent.extend({
+  roomId: z.number(),
+  roomName: z.string(),
+  roomColor: z.string(),
+  roomIcon: z.string().nullable(),
 });
 
 export type IStatus = z.infer<typeof SStatus>;
 
 export type IEvent = z.infer<typeof SEvent>;
+export type IEventSingleRoom = z.infer<typeof SEventSingleRoom>;
+
 export type IRecurrence = z.infer<typeof SRecurrence>;
 export type IRoom = z.infer<typeof SRoom>;
 

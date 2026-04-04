@@ -1,5 +1,5 @@
-import { GenericComboBox } from "@/components/shared/generic-combobox";
-import { useUsersQuery } from "@/lib/services/users";
+import { GenericComboBox } from '@/components/shared/generic-combobox';
+import { useUsersQuery } from '@/lib/services/users';
 
 export function UserComboBox({
   selectedUserId,
@@ -22,7 +22,7 @@ export function UserComboBox({
       selectedValue={selectedUserId}
       isLoading={isPending}
       isError={!!error}
-      loadingLabel={error ? "Error: Collecting Members" : "Collecting Members"}
+      loadingLabel={error ? 'Error: Collecting Members' : 'Collecting Members'}
       onSelect={(id, label) => {
         onUserChange(id, label);
       }}
@@ -31,9 +31,9 @@ export function UserComboBox({
       getDescrition={(user) => user.email}
       className={className}
       isDisabled={isDisabled}
-      placeholderText={"Select Member"}
-      searchText={"Search Members"}
-      noResultText={"No Member Found"}
+      placeholderText={'Select Member'}
+      searchText={'Search Members'}
+      noResultText={'No Member Found'}
       dataInvalid={dataInvalid}
     />
   );

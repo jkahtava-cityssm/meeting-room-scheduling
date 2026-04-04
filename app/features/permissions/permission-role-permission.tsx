@@ -1,25 +1,18 @@
-import { Fragment } from "react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
-import { IPermissionSet } from "@/lib/data/permissions";
-import { ResourceActions } from "./permission-layout";
-import { Button } from "@/components/ui/button";
+import { Fragment } from 'react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
+import { IPermissionSet } from '@/lib/data/permissions';
+import { ResourceActions } from './permission-layout';
+import { Button } from '@/components/ui/button';
 
 interface PermissionTableWithActionsProps {
   workingPermissions: IPermissionSet[];
   serverPermissions: IPermissionSet[]; // Needed for Reset/Cancel logic
   resourceActions: ResourceActions[]; // Replace with your ResourceActions type
   isChanged: boolean;
-  onToggle: (
-    roleId: string,
-    resourceId: string,
-    resourceName: string,
-    actionId: string,
-    actionName: string,
-    next: boolean,
-  ) => void;
+  onToggle: (roleId: string, resourceId: string, resourceName: string, actionId: string, actionName: string, next: boolean) => void;
   onSave: (
     differences: {
       roleId: string;
@@ -41,8 +34,8 @@ export function RolePermissionGrid({
   onToggle,
   onReset,
   onSave,
-  yesLabel = "YES",
-  noLabel = "NO",
+  yesLabel = 'YES',
+  noLabel = 'NO',
 }: PermissionTableWithActionsProps) {
   return (
     <div className="flex flex-col h-full w-full min-h-0">
@@ -51,9 +44,9 @@ export function RolePermissionGrid({
           <TooltipProvider>
             <Table className="w-auto min-h-0 table-fixed">
               <colgroup>
-                <col style={{ minWidth: "fit-content" }} />
+                <col style={{ minWidth: 'fit-content' }} />
                 {workingPermissions.map((permissionSet) => (
-                  <col key={permissionSet.roleId} style={{ minWidth: "fit-content" }} />
+                  <col key={permissionSet.roleId} style={{ minWidth: 'fit-content' }} />
                 ))}
               </colgroup>
 
@@ -82,20 +75,14 @@ export function RolePermissionGrid({
                         <TableCell className="font-medium px-4">{action.actionName}</TableCell>
                         {workingPermissions.map((permissionSet) => {
                           const isAllowed = permissionSet.permissions.some(
-                            (t) =>
-                              t.actionId === action.actionId &&
-                              t.resourceId === resourceAction.resourceId &&
-                              t.permit === true,
+                            (t) => t.actionId === action.actionId && t.resourceId === resourceAction.resourceId && t.permit === true,
                           );
 
                           return (
-                            <TableCell
-                              key={`${permissionSet.roleId}:${resourceAction.resourceId}:${action.actionId}`}
-                              className="text-center"
-                            >
+                            <TableCell key={`${permissionSet.roleId}:${resourceAction.resourceId}:${action.actionId}`} className="text-center">
                               <div className="flex flex-col items-center gap-1">
                                 <Checkbox
-                                  disabled={permissionSet.roleName === "Admin" || permissionSet.roleName === "Public"}
+                                  disabled={permissionSet.roleName === 'Admin' || permissionSet.roleName === 'Public'}
                                   checked={isAllowed}
                                   onCheckedChange={(next) =>
                                     onToggle(
@@ -151,7 +138,7 @@ function getDifferences(serverPermissions: IPermissionSet[], updatedPermissions:
   for (let roleIndex = 0; roleIndex < serverPermissions.length; roleIndex++) {
     const serverRole = serverPermissions[roleIndex];
 
-    if (serverRole.roleName === "Admin") continue;
+    if (serverRole.roleName === 'Admin') continue;
 
     const savedRole = updatedPermissions.find((role) => role.roleId === serverRole.roleId);
 

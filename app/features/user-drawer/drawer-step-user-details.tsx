@@ -1,51 +1,51 @@
-import { useFormContext, useWatch } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { z } from "zod/v4";
+import { useFormContext, useWatch } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
+import { z } from 'zod/v4';
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from '@/components/ui/textarea';
 
-import { DateTimePicker, DateTimePickerRef } from "@/components/ui/datetimepicker";
-import { useRef } from "react";
-import { Session } from "@/lib/auth-client";
-import { getDurationText } from "@/lib/helpers";
-import { FormStatus } from "./types";
+import { DateTimePicker, DateTimePickerRef } from '@/components/ui/datetimepicker';
+import { useRef } from 'react';
+import { Session } from '@/lib/auth-client';
+import { getDurationText } from '@/lib/helpers';
+import { FormStatus } from './types';
 
-import { RoomSelect } from "../rooms/room-select";
-import { StatusSelect } from "../status/status-select";
-import { UserComboBox } from "../users/user-combobox";
+import { RoomSelect } from '../rooms/room-select';
+import { StatusSelect } from '../status/status-select';
+import { UserComboBox } from '../users/user-combobox';
 
-import { StaticTabsList, StaticTabsTrigger } from "@/components/ui/tabs-placeholder";
-import { UserMultiSelect } from "../users/user-multiselect";
-import { ItemMultiSelect } from "./item-multiselect";
+import { StaticTabsList, StaticTabsTrigger } from '@/components/ui/tabs-placeholder';
+import { UserMultiSelect } from '../users/user-multiselect';
+import { ItemMultiSelect } from './item-multiselect';
 
-import { StartEndDateTimeProvider } from "@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider";
-import { Label } from "@/components/ui/label";
-import { addDays, format } from "date-fns";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LucideLock } from "lucide-react";
-import { useMultiStepForm } from "./drawer-form-provider";
-import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
-import { step1Schema } from "./drawer-schema.validator";
-import { UserDrawerPermissions } from "./lib/permissions";
-import { Checkbox } from "@/components/ui/checkbox";
-import { GenericError } from "@/components/shared/generic-error";
-import { GenericInfoMessage } from "@/components/shared/generic-message";
+import { StartEndDateTimeProvider } from '@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider';
+import { Label } from '@/components/ui/label';
+import { addDays, format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { LucideLock } from 'lucide-react';
+import { useMultiStepForm } from './drawer-form-provider';
+import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
+import { step1Schema } from './drawer-schema.validator';
+import { UserDrawerPermissions } from './lib/permissions';
+import { Checkbox } from '@/components/ui/checkbox';
+import { GenericError } from '@/components/shared/generic-error';
+import { GenericInfoMessage } from '@/components/shared/generic-message';
 
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
 export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
 
-  const isManaged = watch("isManaged") === "true";
-  const isReadOnly = formStatus === "Read" || formStatus === "Loading";
+  const isManaged = watch('isManaged') === 'true';
+  const isReadOnly = formStatus === 'Read' || formStatus === 'Loading';
   const isManagedReadOnly = isReadOnly || isManaged;
 
   return (
@@ -99,11 +99,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
           name="department"
           render={({ field, fieldState }) => (
             <FormItem className="flex-1">
-              {fieldState.invalid ? (
-                <FormMessage className="leading-none font-medium" />
-              ) : (
-                <FormLabel>Department</FormLabel>
-              )}
+              {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Department</FormLabel>}
               <FormControl>
                 <Input
                   id="department"
@@ -123,11 +119,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
           name="jobTitle"
           render={({ field, fieldState }) => (
             <FormItem className="flex-1">
-              {fieldState.invalid ? (
-                <FormMessage className="leading-none font-medium" />
-              ) : (
-                <FormLabel>Job Title</FormLabel>
-              )}
+              {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Job Title</FormLabel>}
               <FormControl>
                 <Input
                   id="jobTitle"
@@ -174,11 +166,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
             name="isActive"
             render={({ field, fieldState }) => (
               <FormItem className="justify-items-center  w-40">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium" />
-                ) : (
-                  <FormLabel>Status</FormLabel>
-                )}
+                {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Status</FormLabel>}
                 <FormControl>
                   <Tabs
                     defaultValue={field.value}
@@ -186,12 +174,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                       field.onChange(value);
                     }}
                   >
-                    <TabsList
-                      className="gap-2"
-                      aria-disabled={isManagedReadOnly}
-                      data-invalid={fieldState.invalid}
-                      aria-invalid={fieldState.invalid}
-                    >
+                    <TabsList className="gap-2" aria-disabled={isManagedReadOnly} data-invalid={fieldState.invalid} aria-invalid={fieldState.invalid}>
                       <TabsTrigger value="true" disabled={isManagedReadOnly}>
                         Active
                       </TabsTrigger>
@@ -209,11 +192,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
             name="emailEnabled"
             render={({ field, fieldState }) => (
               <FormItem className="items-center justify-center justify-items-center w-40">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium" />
-                ) : (
-                  <FormLabel>Send Notifications</FormLabel>
-                )}
+                {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Send Notifications</FormLabel>}
                 <FormControl>
                   <Tabs
                     defaultValue={field.value}
@@ -221,12 +200,7 @@ export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
                       field.onChange(value);
                     }}
                   >
-                    <TabsList
-                      className="gap-2"
-                      aria-disabled={isReadOnly}
-                      data-invalid={fieldState.invalid}
-                      aria-invalid={fieldState.invalid}
-                    >
+                    <TabsList className="gap-2" aria-disabled={isReadOnly} data-invalid={fieldState.invalid} aria-invalid={fieldState.invalid}>
                       <TabsTrigger value="true" disabled={isReadOnly}>
                         Yes
                       </TabsTrigger>

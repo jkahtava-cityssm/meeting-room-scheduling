@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { startOfWeek, addDays } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { startOfWeek, addDays } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { ColumnDayHeaderSkeleton } from "../view-day/skeleton-calendar-day-column-header";
-import { TIME_BLOCK_SIZE } from "@/lib/types";
+import { Skeleton } from '@/components/ui/skeleton';
+import { ColumnDayHeaderSkeleton } from '../view-day/skeleton-calendar-day-column-header';
+import { TIME_BLOCK_SIZE } from '@/lib/types';
 
 export function CalendarWeekViewSkeleton() {
   const weekStart = startOfWeek(new Date());
@@ -27,7 +27,7 @@ export function CalendarWeekViewSkeleton() {
                   <div key={dayIndex} className="relative">
                     {hours.map((hour, index) => {
                       return (
-                        <div key={hour} className={cn("relative")} style={{ height: `${TIME_BLOCK_SIZE}px` }}>
+                        <div key={hour} className={cn('relative')} style={{ height: `${TIME_BLOCK_SIZE}px` }}>
                           {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b"></div>}
                           <Skeleton className="absolute inset-x-0 top-[2px] h-[44px] transition-colors hover:bg-accent rounded-none"></Skeleton>
 

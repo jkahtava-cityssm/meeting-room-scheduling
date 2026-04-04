@@ -1,16 +1,16 @@
-import { GenericSelect } from "@/components/shared/generic-select";
-import { Button } from "@/components/ui/button";
-import { IconName } from "@/components/ui/icon-dynamic";
-import { TColors } from "@/lib/types";
-import { useStatusQuery } from "@/lib/services/status";
-import { CircleX } from "lucide-react";
+import { GenericSelect } from '@/components/shared/generic-select';
+import { Button } from '@/components/ui/button';
+import { IconName } from '@/components/ui/icon-dynamic';
+import { TColors } from '@/lib/types';
+import { useStatusQuery } from '@/lib/services/status';
+import { CircleX } from 'lucide-react';
 
 export function StatusSelect({
   selectedStatusId,
   includeAllOption = true,
   isDisabled = false,
   dataInvalid = false,
-  className = "min-w-60",
+  className = 'min-w-60',
   onStatusChange,
 }: {
   selectedStatusId: string;
@@ -29,7 +29,7 @@ export function StatusSelect({
       isLoading={isPending}
       isError={!!error}
       isDisabled={isDisabled}
-      loadingLabel={error ? "Error: Collecting Status" : "Collecting Status"}
+      loadingLabel={error ? 'Error: Collecting Status' : 'Collecting Status'}
       onChange={(value) => {
         onStatusChange(value);
       }}

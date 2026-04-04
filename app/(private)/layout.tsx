@@ -1,7 +1,7 @@
-import { AppSidebar } from "@/app/features/navigation/nav-sidebar";
-import { SiteHeader } from "@/app/features/navigation/nav-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { SessionProvider } from "@/contexts/SessionProvider";
+import { AppSidebar } from '@/app/features/navigation/nav-sidebar';
+import { SiteHeader } from '@/app/features/navigation/nav-header';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SessionProvider } from '@/contexts/SessionProvider';
 
 export default function PrivateLayout({
   children,

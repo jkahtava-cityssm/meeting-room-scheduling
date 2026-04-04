@@ -1,4 +1,4 @@
-import { Action, Item, PrismaClient, Resource, ResourceAction, Role } from "@prisma/client";
+import { Action, Item, PrismaClient, Resource, ResourceAction, Role } from '@prisma/client';
 import {
   CONFIG_MANIFEST,
   DEFAULT_PERMISSION_SETS,
@@ -10,8 +10,8 @@ import {
   TColors,
   TConfigurationKeys,
   TStatusKey,
-} from "../lib/types";
-import { addDays, addYears, differenceInDays, endOfDay, startOfDay } from "date-fns";
+} from '../lib/types';
+import { addDays, addYears, differenceInDays, endOfDay, startOfDay } from 'date-fns';
 import {
   DOMAINS,
   EVENTDESCRIPTIONS,
@@ -23,11 +23,11 @@ import {
   TIME_SLOT_INTERVAL_MINUTES,
   VISIBLE_HOUR_END,
   VISIBLE_HOUR_START,
-} from "./seed-data";
-import { ByWeekday, datetime, RRule } from "rrule";
+} from './seed-data';
+import { ByWeekday, datetime, RRule } from 'rrule';
 
-import dynamicIconImports from "lucide-react/dynamicIconImports";
-import { property } from "lodash";
+import dynamicIconImports from 'lucide-react/dynamicIconImports';
+import { property } from 'lodash';
 
 type IconName = keyof typeof dynamicIconImports;
 
@@ -48,9 +48,7 @@ const prismaAdmin = new PrismaClient({
 });
 
 async function FindCreateActionList() {
-  const DEFAULT_ACTIONS = Array.from(
-    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS)),
-  ) as readonly SessionAction[];
+  const DEFAULT_ACTIONS = Array.from(new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS))) as readonly SessionAction[];
 
   const actionList: Record<SessionAction, Action> = {} as Record<SessionAction, Action>;
 
@@ -62,7 +60,7 @@ async function FindCreateActionList() {
 }
 
 async function FindCreateAction(name: string): Promise<Action> {
-  let record = await prisma.action.findFirst({ where: { name: name }, orderBy: { actionId: "asc" } });
+  let record = await prisma.action.findFirst({ where: { name: name }, orderBy: { actionId: 'asc' } });
 
   if (!record) {
     record = await prisma.action.create({ data: { name: name } });
@@ -75,7 +73,7 @@ async function FindCreateRoleList() {
   const roleList: Record<SessionRole, Role> = {} as Record<SessionRole, Role>;
 
   for (const role of DEFAULT_USER_ROLES) {
-    if (role === "Public" || role === "Private") continue;
+    if (role === 'Public' || role === 'Private') continue;
 
     roleList[role] = await FindCreateRole(role);
   }
@@ -93,9 +91,7 @@ async function FindCreateRole(name: string): Promise<Role> {
 }
 
 async function FindCreateResourceList() {
-  const DEFAULT_RESOURCES = Array.from(
-    new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.RESOURCE)),
-  ) as readonly SessionResource[];
+  const DEFAULT_RESOURCES = Array.from(new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.RESOURCE))) as readonly SessionResource[];
 
   const resourceList: Record<SessionResource, Resource> = {} as Record<SessionResource, Resource>;
 
@@ -106,7 +102,7 @@ async function FindCreateResourceList() {
 }
 
 async function FindCreateResource(name: string): Promise<Resource> {
-  let record = await prisma.resource.findFirst({ where: { name: name }, orderBy: { resourceId: "asc" } });
+  let record = await prisma.resource.findFirst({ where: { name: name }, orderBy: { resourceId: 'asc' } });
 
   if (!record) {
     record = await prisma.resource.create({ data: { name: name } });
@@ -115,14 +111,8 @@ async function FindCreateResource(name: string): Promise<Resource> {
   return record;
 }
 
-async function FindCreateResourceActionList(
-  resourceList: Record<SessionResource, Resource>,
-  actionList: Record<SessionAction, Action>,
-) {
-  const resourceActionList: Record<string, Record<string, ResourceAction>> = {} as Record<
-    string,
-    Record<string, ResourceAction>
-  >;
+async function FindCreateResourceActionList(resourceList: Record<SessionResource, Resource>, actionList: Record<SessionAction, Action>) {
+  const resourceActionList: Record<string, Record<string, ResourceAction>> = {} as Record<string, Record<string, ResourceAction>>;
 
   for (const resourceAction of DEFAULT_RESOURCE_ACTIONS) {
     const resourceId = resourceList[resourceAction.RESOURCE].resourceId;
@@ -130,10 +120,7 @@ async function FindCreateResourceActionList(
 
     for (const actionName of resourceAction.ACTIONS) {
       const actionId = actionList[actionName].actionId;
-      resourceActionList[resourceAction.RESOURCE][actionName] = await FindCreateResourceActionRecord(
-        resourceId,
-        actionId,
-      );
+      resourceActionList[resourceAction.RESOURCE][actionName] = await FindCreateResourceActionRecord(resourceId, actionId);
     }
   }
   return resourceActionList;
@@ -156,7 +143,7 @@ async function FindCreateResourceActionRecord(resourceId: number, actionId: numb
 async function FindCreateRoleResourceAction(roleId: number, resourceActionId: number, permit: boolean) {
   let record = await prisma.roleResourceAction.findFirst({
     where: { roleId: roleId, resourceActionId: resourceActionId },
-    orderBy: { roleResourceActionId: "asc" },
+    orderBy: { roleResourceActionId: 'asc' },
   });
 
   if (!record) {
@@ -240,13 +227,7 @@ async function FindCreateUserRole(roleId: number, userId: number) {
   return record;
 }
 
-async function FindCreateConfigurationSetting(
-  key: TConfigurationKeys,
-  name: string,
-  description: string,
-  value: string,
-  type: string,
-) {
+async function FindCreateConfigurationSetting(key: TConfigurationKeys, name: string, description: string, value: string, type: string) {
   let record = await prisma.configuration.findFirst({
     where: { key: key },
   });
@@ -262,7 +243,7 @@ async function FindCreateConfigurationSetting(
 async function FindCreateRoomCategory(name: string) {
   let record = await prisma.roomCategory.findFirst({
     where: { name: name },
-    orderBy: { roomCategoryId: "asc" },
+    orderBy: { roomCategoryId: 'asc' },
   });
 
   if (!record) {
@@ -309,7 +290,7 @@ async function FindCreateProperty(name: string, type: string) {
 }
 
 async function FindCreateItem(name: string): Promise<Item> {
-  let record = await prisma.item.findFirst({ where: { name: name }, orderBy: { itemId: "asc" } });
+  let record = await prisma.item.findFirst({ where: { name: name }, orderBy: { itemId: 'asc' } });
 
   if (!record) {
     record = await prisma.item.create({ data: { name: name } });
@@ -384,9 +365,9 @@ function FindRoomID(
 
 function getRandomDescription(): string {
   const numberOfLines = Math.floor(Math.random() * EVENTDESCRIPTIONS.length);
-  let newDescription = "";
+  let newDescription = '';
   for (let index = 0; index <= numberOfLines; index++) {
-    newDescription += EVENTDESCRIPTIONS[index] + "\n";
+    newDescription += EVENTDESCRIPTIONS[index] + '\n';
   }
   return newDescription;
 }
@@ -395,7 +376,7 @@ async function getActiveUsers(): Promise<{ id: number }[]> {
   const result = await prisma.user.findMany({
     where: { isActive: true },
     select: { id: true },
-    orderBy: { id: "asc" },
+    orderBy: { id: 'asc' },
   });
 
   return result;
@@ -529,9 +510,14 @@ async function CreateRandomEvents(
       endDate.setHours(visibleHoursEnd, 0);
     }
 
+    const randomRoomCount = Math.floor(Math.random() * rooms.length);
+    const isMultiRoom = Math.random() < 0.1;
+
     const event = await prisma.event.create({
       data: {
-        roomId: rooms[Math.floor(Math.random() * rooms.length)].roomId,
+        eventRooms: {
+          create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
+        },
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         title: EVENTS[eventIndex],
@@ -568,7 +554,7 @@ async function CreateRandomEvents(
 function findNextDSTTransitions(fromDate: Date, yearsToSearch: number = 2) {
   const transitions: Array<{
     date: Date;
-    direction: "forward" | "backward";
+    direction: 'forward' | 'backward';
     offsetBefore: number;
     offsetAfter: number;
     offsetChangeMinutes: number;
@@ -595,7 +581,7 @@ function findNextDSTTransitions(fromDate: Date, yearsToSearch: number = 2) {
       const offsetChange = offset1 - offset2; // positive = spring forward, negative = fall back
       transitions.push({
         date: currentDate,
-        direction: offsetChange > 0 ? "forward" : "backward",
+        direction: offsetChange > 0 ? 'forward' : 'backward',
         offsetBefore: offset1,
         offsetAfter: offset2,
         offsetChangeMinutes: Math.abs(offsetChange),
@@ -638,92 +624,92 @@ async function CreateEdgeCaseMultiDayEvents(
   // Standard midnight-crossing edge cases
   const midnightEdgeCases = [
     {
-      name: "11PM to 1AM (2 hour duration, crosses midnight)",
-      description: "Event starts late evening and ends after midnight",
+      name: '11PM to 1AM (2 hour duration, crosses midnight)',
+      description: 'Event starts late evening and ends after midnight',
       startTime: { hours: 23, minutes: 0 },
       endTime: { hours: 1, minutes: 0 },
       dayOffset: 1,
     },
     {
-      name: "11PM to 12AM (1 hour, ends at midnight)",
-      description: "Event ends exactly at midnight - edge case that should display as previous day ending",
+      name: '11PM to 12AM (1 hour, ends at midnight)',
+      description: 'Event ends exactly at midnight - edge case that should display as previous day ending',
       startTime: { hours: 23, minutes: 0 },
       endTime: { hours: 0, minutes: 0 },
       dayOffset: 1,
     },
     {
-      name: "12AM to 7PM (19 hour duration, starts at midnight)",
-      description: "Event starts at midnight and spans most of the day",
+      name: '12AM to 7PM (19 hour duration, starts at midnight)',
+      description: 'Event starts at midnight and spans most of the day',
       startTime: { hours: 0, minutes: 0 },
       endTime: { hours: 19, minutes: 0 },
       dayOffset: 0,
     },
     {
-      name: "12AM to 12:15AM (15 minutes, crosses midnight)",
-      description: "Minimal duration event crossing midnight",
+      name: '12AM to 12:15AM (15 minutes, crosses midnight)',
+      description: 'Minimal duration event crossing midnight',
       startTime: { hours: 0, minutes: 0 },
       endTime: { hours: 0, minutes: 15 },
       dayOffset: 0,
     },
     {
-      name: "11:45PM to 12:15AM (30 minutes, crosses midnight)",
-      description: "Short event crossing midnight boundary",
+      name: '11:45PM to 12:15AM (30 minutes, crosses midnight)',
+      description: 'Short event crossing midnight boundary',
       startTime: { hours: 23, minutes: 45 },
       endTime: { hours: 0, minutes: 15 },
       dayOffset: 1,
     },
     {
-      name: "2-day span (12AM to 6PM on day 2)",
-      description: "Multi-day event spanning exactly 2 calendar days",
+      name: '2-day span (12AM to 6PM on day 2)',
+      description: 'Multi-day event spanning exactly 2 calendar days',
       startTime: { hours: 0, minutes: 0 },
       endTime: { hours: 18, minutes: 0 },
       dayOffset: 1,
     },
     {
-      name: "14-day span (8AM to 4PM on day 14)",
-      description: "Long multi-day event spanning 14 calendar days",
+      name: '14-day span (8AM to 4PM on day 14)',
+      description: 'Long multi-day event spanning 14 calendar days',
       startTime: { hours: 8, minutes: 0 },
       endTime: { hours: 16, minutes: 0 },
       dayOffset: 13,
     },
     {
-      name: "3-day span ending at midnight",
-      description: "Multi-day event that ends exactly at midnight on day 3",
+      name: '3-day span ending at midnight',
+      description: 'Multi-day event that ends exactly at midnight on day 3',
       startTime: { hours: 9, minutes: 0 },
       endTime: { hours: 0, minutes: 0 },
       dayOffset: 2,
     },
     {
-      name: "11:30PM to 2:30AM (3 hours, midnight transition)",
-      description: "Longer event crossing midnight",
+      name: '11:30PM to 2:30AM (3 hours, midnight transition)',
+      description: 'Longer event crossing midnight',
       startTime: { hours: 23, minutes: 30 },
       endTime: { hours: 2, minutes: 30 },
       dayOffset: 1,
     },
     {
-      name: "5-day all-day event (12AM to 12AM)",
-      description: "All-day event spanning 5 days, ending at midnight",
+      name: '5-day all-day event (12AM to 12AM)',
+      description: 'All-day event spanning 5 days, ending at midnight',
       startTime: { hours: 0, minutes: 0 },
       endTime: { hours: 0, minutes: 0 },
       dayOffset: 4,
     },
     {
-      name: "10:45PM to 11:15PM next day (25 hour duration)",
-      description: "Event spanning almost full day crossing midnight",
+      name: '10:45PM to 11:15PM next day (25 hour duration)',
+      description: 'Event spanning almost full day crossing midnight',
       startTime: { hours: 22, minutes: 45 },
       endTime: { hours: 23, minutes: 15 },
       dayOffset: 1,
     },
     {
-      name: "1AM to 11:59PM (almost full day)",
-      description: "Event nearly spanning a full day, ending just before midnight",
+      name: '1AM to 11:59PM (almost full day)',
+      description: 'Event nearly spanning a full day, ending just before midnight',
       startTime: { hours: 1, minutes: 0 },
       endTime: { hours: 23, minutes: 59 },
       dayOffset: 0,
     },
   ];
 
-  console.log("\n=== MIDNIGHT EDGE CASES ===");
+  console.log('\n=== MIDNIGHT EDGE CASES ===');
   for (const edgeCase of midnightEdgeCases) {
     const startDate = new Date(baseDate);
     const endDate = new Date(baseDate);
@@ -738,10 +724,15 @@ async function CreateEdgeCaseMultiDayEvents(
     const userIndex = Math.floor(Math.random() * userList.length);
     const roomIndex = Math.floor(Math.random() * rooms.length);
 
+    const randomRoomCount = Math.floor(Math.random() * rooms.length);
+    const isMultiRoom = Math.random() < 0.1;
+
     try {
       const event = await prisma.event.create({
         data: {
-          roomId: rooms[roomIndex].roomId,
+          eventRooms: {
+            create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
+          },
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
           title: edgeCase.name,
@@ -761,30 +752,26 @@ async function CreateEdgeCaseMultiDayEvents(
   }
 
   // Find and test DST transitions
-  console.log("\n=== DETECTING DST TRANSITIONS ===");
+  console.log('\n=== DETECTING DST TRANSITIONS ===');
   const dstTransitions = findNextDSTTransitions(addYears(baseDate, -2), 4);
 
   if (dstTransitions.length === 0) {
-    console.log("No DST transitions found in the next 2 years for this timezone");
+    console.log('No DST transitions found in the next 2 years for this timezone');
   } else {
     for (const transition of dstTransitions) {
       const transitionDate = new Date(transition.date);
       const offsetLabel =
-        transition.direction === "forward"
-          ? `Spring Forward (UTC${transition.offsetAfter / 60}h)`
-          : `Fall Back (UTC${transition.offsetAfter / 60}h)`;
+        transition.direction === 'forward' ? `Spring Forward (UTC${transition.offsetAfter / 60}h)` : `Fall Back (UTC${transition.offsetAfter / 60}h)`;
 
       console.log(`\nDST Transition: ${offsetLabel}`);
-      console.log(
-        `   Date: ${transitionDate.toLocaleDateString()} (${transitionDate.toLocaleDateString("en-US", { weekday: "long" })})`,
-      );
+      console.log(`   Date: ${transitionDate.toLocaleDateString()} (${transitionDate.toLocaleDateString('en-US', { weekday: 'long' })})`);
       console.log(`   Offset change: ${transition.offsetChangeMinutes} minutes`);
 
       // Create DST-specific edge case events
       const dstEdgeCases = [
         {
           name: `Event spanning DST transition (1 day before to 1 day after)`,
-          description: `Multi-day event crossing the ${transition.direction === "forward" ? "spring forward" : "fall back"} DST transition`,
+          description: `Multi-day event crossing the ${transition.direction === 'forward' ? 'spring forward' : 'fall back'} DST transition`,
           daysBeforeTransition: 1,
           daysAfterTransition: 1,
           startHour: 10,
@@ -833,10 +820,15 @@ async function CreateEdgeCaseMultiDayEvents(
         const userIndex = Math.floor(Math.random() * userList.length);
         const roomIndex = Math.floor(Math.random() * rooms.length);
 
+        const randomRoomCount = Math.floor(Math.random() * rooms.length);
+        const isMultiRoom = Math.random() < 0.1;
+
         try {
           const event = await prisma.event.create({
             data: {
-              roomId: rooms[roomIndex].roomId,
+              eventRooms: {
+                create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
+              },
               startDate: startDate.toISOString(),
               endDate: endDate.toISOString(),
               title: dstCase.name,
@@ -860,18 +852,47 @@ async function CreateEdgeCaseMultiDayEvents(
   console.log(`\nCompleted creating edge case multi-day events for testing.`);
 }
 
-function randomToggle(chance: "75" | "50" | "25" | "10") {
+function generateRandomRoomList(
+  rooms: {
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    roomId: number;
+    color: string;
+    icon: string | null;
+  }[],
+  total: number,
+  isMultiRoom: boolean,
+) {
+  const selectedRooms = new Set<number>();
+
+  if (isMultiRoom) {
+    while (selectedRooms.size < total) {
+      const randomIndex = Math.floor(Math.random() * rooms.length);
+      selectedRooms.add(rooms[randomIndex].roomId);
+    }
+  } else {
+    const roomIndex = Math.floor(Math.random() * rooms.length);
+    selectedRooms.add(rooms[roomIndex].roomId);
+  }
+
+  return Array.from(selectedRooms).map((id) => ({
+    roomId: id,
+  }));
+}
+
+function randomToggle(chance: '75' | '50' | '25' | '10') {
   switch (chance) {
-    case "75":
+    case '75':
       return Math.random() < 0.75;
       break;
-    case "50":
+    case '50':
       return Math.random() < 0.5;
       break;
-    case "25":
+    case '25':
       return Math.random() < 0.25;
       break;
-    case "10":
+    case '10':
     default:
       return Math.random() < 0.1;
       break;
@@ -898,11 +919,11 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
   const weekdayArray: ByWeekday[] = [];
 
   switch (PatternValue) {
-    case "Every X Days":
+    case 'Every X Days':
       //PeriodValue = "Daily";
       interval = Math.floor(Math.random() * 7) + 1;
       break;
-    case "Every Weekday":
+    case 'Every Weekday':
       //PeriodValue = "Daily";
       interval = 1;
       weekdayArray.push(RRule.MO);
@@ -911,32 +932,32 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
       weekdayArray.push(RRule.TH);
       weekdayArray.push(RRule.FR);
       break;
-    case "Every X Weeks":
+    case 'Every X Weeks':
       //PeriodValue = "Weekly";
       interval = Math.floor(Math.random() * 7) + 1;
       break;
-    case "Every X Weeks on Every Selected Day":
+    case 'Every X Weeks on Every Selected Day':
       //PeriodValue = "Weekly";
       interval = Math.floor(Math.random() * 7) + 1;
 
-      if (randomToggle("25")) weekdayArray.push(RRule.MO);
-      if (randomToggle("25")) weekdayArray.push(RRule.TU);
-      if (randomToggle("25")) weekdayArray.push(RRule.WE);
-      if (randomToggle("25")) weekdayArray.push(RRule.TH);
-      if (randomToggle("25")) weekdayArray.push(RRule.FR);
-      if (randomToggle("25")) weekdayArray.push(RRule.SA);
-      if (randomToggle("25")) weekdayArray.push(RRule.SU);
+      if (randomToggle('25')) weekdayArray.push(RRule.MO);
+      if (randomToggle('25')) weekdayArray.push(RRule.TU);
+      if (randomToggle('25')) weekdayArray.push(RRule.WE);
+      if (randomToggle('25')) weekdayArray.push(RRule.TH);
+      if (randomToggle('25')) weekdayArray.push(RRule.FR);
+      if (randomToggle('25')) weekdayArray.push(RRule.SA);
+      if (randomToggle('25')) weekdayArray.push(RRule.SU);
 
       if (weekdayArray.length === 0) weekdayArray.push(RRule.TU);
 
       break;
-    case "Every X Months on X Day":
+    case 'Every X Months on X Day':
       //PeriodValue = "Monthly";
       interval = Math.floor(Math.random() * 12) + 1;
       dayValue = Math.floor(Math.random() * 31) + 1;
 
       break;
-    case "Every X Year on X Month on X Day":
+    case 'Every X Year on X Month on X Day':
       //PeriodValue = "Yearly";
       interval = Math.floor(Math.random() * 5) + 1;
 
@@ -955,9 +976,9 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 
   let newRule = undefined;
 
-  if (TypeValue === "Occurrences") {
+  if (TypeValue === 'Occurrences') {
     switch (PatternValue) {
-      case "Every X Days":
+      case 'Every X Days':
         newRule = new RRule({
           freq: RRule.DAILY,
           interval: interval,
@@ -967,7 +988,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           until: null,
         });
         break;
-      case "Every Weekday":
+      case 'Every Weekday':
         newRule = new RRule({
           freq: RRule.DAILY,
           interval: interval,
@@ -977,7 +998,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           until: null,
         });
         break;
-      case "Every X Weeks":
+      case 'Every X Weeks':
         newRule = new RRule({
           freq: RRule.WEEKLY,
           interval: interval,
@@ -986,7 +1007,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           count: occurrences,
           until: null,
         });
-      case "Every X Weeks on Every Selected Day":
+      case 'Every X Weeks on Every Selected Day':
         newRule = new RRule({
           freq: RRule.WEEKLY,
           interval: interval,
@@ -996,7 +1017,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           until: null,
         });
         break;
-      case "Every X Months on X Day":
+      case 'Every X Months on X Day':
         newRule = new RRule({
           freq: RRule.MONTHLY,
           interval: interval,
@@ -1006,7 +1027,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
           until: null,
         });
         break;
-      case "Every X Year on X Month on X Day":
+      case 'Every X Year on X Month on X Day':
         newRule = new RRule({
           freq: RRule.YEARLY,
           interval: interval,
@@ -1018,7 +1039,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
         });
         break;
     }
-  } else if (TypeValue === "Between") {
+  } else if (TypeValue === 'Between') {
   }
 
   if (!newRule) {
@@ -1038,6 +1059,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
       rule: newRule.toString(),
       startDate: firstStartDate,
       endDate: newEndDate, //newRule.all().at(-1) ?? "",
+      description: newRule.toText() ?? '',
     },
   });
 
@@ -1045,16 +1067,7 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
 }
 
 export function convertDateToRRuleDate(date: Date) {
-  return new Date(
-    Date.UTC(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      date.getHours(),
-      date.getMinutes(),
-      date.getSeconds(),
-    ),
-  );
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()));
 }
 
 async function createLinkedServer() {
@@ -1092,16 +1105,10 @@ async function createLinkedServer() {
                                                   SERVER ${process.env.LINKED_SERVER_NAME}
                                                   OPTIONS (schema_name 'public', table_name 'avanti_z_ex_emp_data');`);
 
-  await prismaAdmin.$executeRawUnsafe(
-    `GRANT USAGE ON FOREIGN SERVER ${process.env.LINKED_SERVER_NAME} TO ${process.env.DATABASE_USER_USERNAME};`,
-  );
+  await prismaAdmin.$executeRawUnsafe(`GRANT USAGE ON FOREIGN SERVER ${process.env.LINKED_SERVER_NAME} TO ${process.env.DATABASE_USER_USERNAME};`);
   await prismaAdmin.$executeRawUnsafe(`GRANT USAGE ON SCHEMA public TO ${process.env.DATABASE_USER_USERNAME};`);
-  await prismaAdmin.$executeRawUnsafe(
-    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_pers TO ${process.env.DATABASE_USER_USERNAME};`,
-  );
-  await prismaAdmin.$executeRawUnsafe(
-    `GRANT SELECT ON TABLE public.avanti_z_ex_emp_data TO ${process.env.DATABASE_USER_USERNAME};`,
-  );
+  await prismaAdmin.$executeRawUnsafe(`GRANT SELECT ON TABLE public.avanti_z_ex_emp_pers TO ${process.env.DATABASE_USER_USERNAME};`);
+  await prismaAdmin.$executeRawUnsafe(`GRANT SELECT ON TABLE public.avanti_z_ex_emp_data TO ${process.env.DATABASE_USER_USERNAME};`);
 
   await prismaAdmin.$executeRawUnsafe(
     `CREATE OR REPLACE PROCEDURE public.insert_avanti_users()
@@ -1165,7 +1172,7 @@ async function createLinkedServer() {
 }
 
 async function main() {
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();
     await prisma.user.deleteMany();
@@ -1183,7 +1190,7 @@ async function main() {
   const resources = await FindCreateResourceList();
   const resourceActions = await FindCreateResourceActionList(resources, actions);
   const roles = await FindCreateRoleList();
-  console.log("Seeding Permission Sets...");
+  console.log('Seeding Permission Sets...');
   for (const roleSet of DEFAULT_PERMISSION_SETS) {
     const role = roles[roleSet.ROLE];
     for (const resourceSet of roleSet.SET) {
@@ -1197,13 +1204,7 @@ async function main() {
   }
 
   for (const config of CONFIG_MANIFEST) {
-    await FindCreateConfigurationSetting(
-      config.key,
-      config.name,
-      config.description,
-      String(config.defaultValue),
-      config.type,
-    );
+    await FindCreateConfigurationSetting(config.key, config.name, config.description, String(config.defaultValue), config.type);
   }
 
   /*await FindCreateConfigurationSetting(
@@ -1261,73 +1262,60 @@ async function main() {
     roomCategoryId: number;
   }[] = [];
 
-  console.log("Seeding Room Sizes...");
-  const { roomCategoryId: category_none } = await FindCreateRoomCategory("None");
-  const { roomCategoryId: category_small } = await FindCreateRoomCategory("Small");
-  const { roomCategoryId: category_large } = await FindCreateRoomCategory("Large");
-  const { roomCategoryId: category_special } = await FindCreateRoomCategory("Special");
+  console.log('Seeding Room Sizes...');
+  const { roomCategoryId: category_none } = await FindCreateRoomCategory('None');
+  const { roomCategoryId: category_small } = await FindCreateRoomCategory('Small');
+  const { roomCategoryId: category_large } = await FindCreateRoomCategory('Large');
+  const { roomCategoryId: category_special } = await FindCreateRoomCategory('Special');
 
   //await FindCreateRooms("All", "zinc", "Asterisk");
 
-  console.log("Seeding Default Rooms...");
+  console.log('Seeding Default Rooms...');
 
-  const ClerkOnlyRooms = [roles["Clerk"].roleId];
+  const ClerkOnlyRooms = [roles['Clerk'].roleId];
 
-  roomList.push(await FindCreateRooms("Biggings Room", "orange", "book-key", category_large, true, undefined, 1));
-  roomList.push(await FindCreateRooms("Plummer Room", "cyan", "book-key", category_large, true, undefined, 3));
-  roomList.push(await FindCreateRooms("Russ Ramsay", "zinc", "book-key", category_large, true, undefined, 4));
-  roomList.push(await FindCreateRooms("W.J. Thompson Room", "fuchsia", "book-key", category_large, true, undefined, 2));
-  roomList.push(await FindCreateRooms("IT Training Room", "pink", "book-key", category_large, true, undefined, 8));
-  roomList.push(await FindCreateRooms("Council Chambers", "indigo", "book-key", category_special, true, undefined, 9));
-  roomList.push(await FindCreateRooms("H.C. Hamilton Room", "lime", "book-key", category_special, true, undefined, 11));
+  roomList.push(await FindCreateRooms('Biggings Room', 'orange', 'book-key', category_large, true, undefined, 1));
+  roomList.push(await FindCreateRooms('Plummer Room', 'cyan', 'book-key', category_large, true, undefined, 3));
+  roomList.push(await FindCreateRooms('Russ Ramsay', 'zinc', 'book-key', category_large, true, undefined, 4));
+  roomList.push(await FindCreateRooms('W.J. Thompson Room', 'fuchsia', 'book-key', category_large, true, undefined, 2));
+  roomList.push(await FindCreateRooms('IT Training Room', 'pink', 'book-key', category_large, true, undefined, 8));
+  roomList.push(await FindCreateRooms('Council Chambers', 'indigo', 'book-key', category_special, true, undefined, 9));
+  roomList.push(await FindCreateRooms('H.C. Hamilton Room', 'lime', 'book-key', category_special, true, undefined, 11));
 
-  roomList.push(
-    await FindCreateRooms("Algoma Board Room", "red", "book-key", category_special, false, ClerkOnlyRooms, 12),
-  );
-  roomList.push(await FindCreateRooms("Cafeteria", "amber", "book-key", category_special, false, ClerkOnlyRooms, 13));
-  roomList.push(await FindCreateRooms("Penthouse", "violet", "book-key", category_special, false, ClerkOnlyRooms, 10));
-  roomList.push(await FindCreateRooms("Korah Room", "green", "book-key", category_small, true, undefined, 5));
-  roomList.push(await FindCreateRooms("Steelton Room", "slate", "book-key", category_small, true, undefined, 7));
-  roomList.push(await FindCreateRooms("Tarentarus Room", "blue", "book-key", category_small, true, undefined, 6));
+  roomList.push(await FindCreateRooms('Algoma Board Room', 'red', 'book-key', category_special, false, ClerkOnlyRooms, 12));
+  roomList.push(await FindCreateRooms('Cafeteria', 'amber', 'book-key', category_special, false, ClerkOnlyRooms, 13));
+  roomList.push(await FindCreateRooms('Penthouse', 'violet', 'book-key', category_special, false, ClerkOnlyRooms, 10));
+  roomList.push(await FindCreateRooms('Korah Room', 'green', 'book-key', category_small, true, undefined, 5));
+  roomList.push(await FindCreateRooms('Steelton Room', 'slate', 'book-key', category_small, true, undefined, 7));
+  roomList.push(await FindCreateRooms('Tarentarus Room', 'blue', 'book-key', category_small, true, undefined, 6));
 
-  const projectorRooms: string[] = [
-    "Biggings Room",
-    "Plummer Room",
-    "Russ Ramsay",
-    "W.J. Thompson Room",
-    "IT Training Room",
-    "Council Chambers",
-  ];
+  const projectorRooms: string[] = ['Biggings Room', 'Plummer Room', 'Russ Ramsay', 'W.J. Thompson Room', 'IT Training Room', 'Council Chambers'];
 
-  const hasProjector = await FindCreateProperty("HasProjector", "boolean");
+  const hasProjector = await FindCreateProperty('HasProjector', 'boolean');
 
   for (const room of roomList) {
-    const property = await FindCreateRoomProperty(
-      room.roomId,
-      hasProjector.propertyId,
-      projectorRooms.includes(room.name) ? "true" : "false",
-    );
+    const property = await FindCreateRoomProperty(room.roomId, hasProjector.propertyId, projectorRooms.includes(room.name) ? 'true' : 'false');
   }
-  console.log("Seeding Event Statuses...");
+  console.log('Seeding Event Statuses...');
   //await FindCreateEventStatus("Created");
-  await FindCreateEventStatus("Pending Review", "circle-pause", "slate", "PENDING");
-  await FindCreateEventStatus("Confirmed", "circle-check", "green", "APPROVED");
-  await FindCreateEventStatus("Rejected", "circle-x", "red", "REJECTED");
-  await FindCreateEventStatus("Additional Info Required", "circle-question-mark", "blue", "INFORMATION");
+  await FindCreateEventStatus('Pending Review', 'circle-pause', 'slate', 'PENDING');
+  await FindCreateEventStatus('Confirmed', 'circle-check', 'green', 'APPROVED');
+  await FindCreateEventStatus('Rejected', 'circle-x', 'red', 'REJECTED');
+  await FindCreateEventStatus('Additional Info Required', 'circle-question-mark', 'blue', 'INFORMATION');
 
-  console.log("Seeding Event Items...");
-  await FindCreateItem("Coffee");
-  await FindCreateItem("Tea");
+  console.log('Seeding Event Items...');
+  await FindCreateItem('Coffee');
+  await FindCreateItem('Tea');
 
-  console.log("Seeding Default Admin...");
+  console.log('Seeding Default Admin...');
   //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
 
-  if (process.env.LINKED_SERVER === "1") {
+  if (process.env.LINKED_SERVER === '1') {
     await createLinkedServer();
   }
 
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
-    console.log("Seeding Random Users...");
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
+    console.log('Seeding Random Users...');
     await prisma.user.deleteMany();
     CreateRandomUsers(50);
   }
@@ -1337,20 +1325,20 @@ async function main() {
       where: { email: process.env.ADMIN_USER_EMAIL },
       update: {},
       create: {
-        name: "Admin User",
+        name: 'Admin User',
         email: process.env.ADMIN_USER_EMAIL,
         emailVerified: false,
         image: null,
-        externalId: "000",
+        externalId: '000',
         isActive: true,
       },
     });
-    const adminRole = await FindCreateRole("Admin");
+    const adminRole = await FindCreateRole('Admin');
     const adminUserRole = await FindCreateUserRole(adminRole.roleId, ADMIN_USER.id);
   }
 
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "development") {
-    console.log("Seeding Random Events...");
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
+    console.log('Seeding Random Events...');
     await prisma.event.deleteMany();
     await prisma.recurrence.deleteMany();
 
@@ -1358,7 +1346,7 @@ async function main() {
 
     CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
 
-    console.log("Seeding Edge Case Multi-Day Events...");
+    console.log('Seeding Edge Case Multi-Day Events...');
     await CreateEdgeCaseMultiDayEvents(roomList);
   }
 

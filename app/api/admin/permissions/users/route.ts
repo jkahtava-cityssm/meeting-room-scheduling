@@ -1,4 +1,4 @@
-import { guardRoute } from "@/lib/api-guard";
+import { guardRoute } from '@/lib/api-guard';
 import {
   BadRequestMessage,
   CreatedMessage,
@@ -7,21 +7,21 @@ import {
   NoContentMessage,
   NotFoundMessage,
   SuccessMessage,
-} from "@/lib/api-helpers";
-import { findManyUsersWithRoles } from "@/lib/data/users";
-import { prisma } from "@/prisma";
-import { Prisma } from "@prisma/client";
-import { NextRequest } from "next/server";
+} from '@/lib/api-helpers';
+import { findManyUsersWithRoles } from '@/lib/data/users';
+import { prisma } from '@/prisma';
+import { Prisma } from '@prisma/client';
+import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
+    { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
-      const roleId = searchParams.get("roleId");
+      const roleId = searchParams.get('roleId');
 
       if (!roleId) {
         return BadRequestMessage();
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         return NotFoundMessage();
       }
 
-      return SuccessMessage("Collected Users", users);
+      return SuccessMessage('Collected Users', users);
     },
   );
 }
@@ -42,7 +42,7 @@ export async function PUT(request: NextRequest) {
   return guardRoute(
     request,
     {
-      EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" },
+      EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' },
     },
     async () => {
       const body = await request.json().catch(() => null);
@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest) {
       const roleId = Number(body?.roleId);
       const assignRole: boolean | undefined = body?.assignRole;
 
-      if (!Number.isFinite(userId) || !Number.isFinite(roleId) || typeof assignRole !== "boolean") {
+      if (!Number.isFinite(userId) || !Number.isFinite(roleId) || typeof assignRole !== 'boolean') {
         return BadRequestMessage();
       }
 
@@ -61,9 +61,9 @@ export async function PUT(request: NextRequest) {
           update: { granted: assignRole },
         });
 
-        return SuccessMessage(assignRole ? "User role granted." : "User role revoked.", userRole);
+        return SuccessMessage(assignRole ? 'User role granted.' : 'User role revoked.', userRole);
       } catch (e: unknown) {
-        return InternalServerErrorMessage("Failed to update user role.");
+        return InternalServerErrorMessage('Failed to update user role.');
       }
     },
   );
