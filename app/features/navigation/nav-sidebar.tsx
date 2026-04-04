@@ -123,7 +123,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {viewStaffRequests && (
                 <SideBarSubMenuItem
                   title={'Requests'}
-                  url={'/bookings/user-requests'}
+                  url={'/calendar' + navigateURL(dateValue, 'request')}
                   iconName="circle-question-mark"
                   rightIndicator={<BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : '-'}</BadgeColored>}
                 />

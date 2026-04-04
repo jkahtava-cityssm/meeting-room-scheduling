@@ -61,8 +61,8 @@ export function CalendarAllViews({ limitedByUserId }: { limitedByUserId: boolean
   const viewAgenda = userId ? can('ViewMyBookingAgenda') : can('ViewCalendarAgenda');
   const viewStaffRequests = can('ViewStaffRequests');
 
-  const hasAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda);
-  const viewPermissions = { day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda };
+  const hasAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
+  const viewPermissions = { day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda, request: viewStaffRequests };
 
   const view = viewParam && CALENDAR_VIEWS.includes(viewParam as TCalendarView) ? viewParam : getDefaultView(viewPermissions);
 
