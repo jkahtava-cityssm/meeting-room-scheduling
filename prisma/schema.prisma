@@ -444,6 +444,7 @@ model Recurrence {
   recurrenceCancellationId Int?     @map("recurrence_cancellation_id")
   recurrenceExceptionId    Int?     @map("recurrence_exception_id")
   rule                     String
+  description              String 
   startDate                DateTime @map("start_date")
   endDate                  DateTime @map("end_date")
 
