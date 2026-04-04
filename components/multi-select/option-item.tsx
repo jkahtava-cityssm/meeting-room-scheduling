@@ -1,10 +1,10 @@
-import React from "react";
-import { CheckIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { CommandItem } from "@/components/ui/command";
-import DynamicIcon from "../ui/icon-dynamic";
-import { BadgeColored } from "../ui/badge-colored";
-import { type MultiSelectOption } from "./multi-select.types";
+import React from 'react';
+import { CheckIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { CommandItem } from '@/components/ui/command';
+import DynamicIcon from '../ui/icon-dynamic';
+import { BadgeColored } from '../ui/badge-colored';
+import { type MultiSelectOption } from './multi-select.types';
 
 interface OptionItemProps {
   option: MultiSelectOption;
@@ -26,14 +26,14 @@ export const OptionItem = React.memo(
         role="option"
         aria-selected={isSelected}
         aria-disabled={option.disabled}
-        aria-label={`${option.label}${isSelected ? ", selected" : ", not selected"}${option.disabled ? ", disabled" : ""}`}
-        className={cn("cursor-pointer", option.disabled && "opacity-50 cursor-not-allowed")}
+        aria-label={`${option.label}${isSelected ? ', selected' : ', not selected'}${option.disabled ? ', disabled' : ''}`}
+        className={cn('cursor-pointer', option.disabled && 'opacity-50 cursor-not-allowed')}
         disabled={option.disabled}
       >
         <div
           className={cn(
-            "flex items-center justify-center text-current transition-none  size-4 shrink-0 rounded-[4px]  border shadow-xs transition-shadow outline-none border-input dark:bg-input/30",
-            isSelected && "border-primary bg-primary dark:bg-primary",
+            'flex items-center justify-center text-current transition-none  size-4 shrink-0 rounded-[4px]  border shadow-xs transition-shadow outline-none border-input dark:bg-input/30',
+            isSelected && 'border-primary bg-primary dark:bg-primary',
           )}
           aria-hidden="true"
         >
@@ -58,4 +58,4 @@ export const OptionItem = React.memo(
   },
 );
 
-OptionItem.displayName = "OptionItem";
+OptionItem.displayName = 'OptionItem';

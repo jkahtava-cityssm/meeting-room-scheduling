@@ -1,7 +1,7 @@
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
 
 export function RRulePreview({
   localDates,
@@ -17,9 +17,7 @@ export function RRulePreview({
       <div className="flex flex-col gap-1">
         <Skeleton className="h-9"></Skeleton>
         <Skeleton className="h-60">
-          <div className="flex flex-1 justify-center items-center h-60">
-            {isLoading ? "Generating" : "Invalid Reccurrence Rule"}
-          </div>
+          <div className="flex flex-1 justify-center items-center h-60">{isLoading ? 'Generating' : 'Invalid Reccurrence Rule'}</div>
         </Skeleton>
         <Skeleton className="h-9"></Skeleton>
       </div>
@@ -46,10 +44,10 @@ export function RRulePreview({
                 return (
                   <TableRow key={index}>
                     <TableCell className="w-8">{index + 1}</TableCell>
-                    <TableCell className="w-27">{format(value, "EEEE")}</TableCell>
-                    <TableCell className="w-20">{format(value, "MMMM")}</TableCell>
-                    <TableCell className="w-11">{format(value, "do")}</TableCell>
-                    <TableCell className="w-13">{format(value, "yyyy")}</TableCell>
+                    <TableCell className="w-27">{format(value, 'EEEE')}</TableCell>
+                    <TableCell className="w-20">{format(value, 'MMMM')}</TableCell>
+                    <TableCell className="w-11">{format(value, 'do')}</TableCell>
+                    <TableCell className="w-13">{format(value, 'yyyy')}</TableCell>
                   </TableRow>
                 );
               })}

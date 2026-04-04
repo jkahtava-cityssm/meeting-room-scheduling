@@ -1,7 +1,7 @@
-import { FormField, FormItem, FormControl } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FormField, FormItem, FormControl } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { Control, FieldPath, FieldPathByValue, FieldValues } from "react-hook-form";
+import { Control, FieldPath, FieldPathByValue, FieldValues } from 'react-hook-form';
 
 export function MonthFormSelection<TFieldValues extends FieldValues>({
   control,
@@ -34,12 +34,12 @@ export function MonthFormSelection<TFieldValues extends FieldValues>({
                   id={field.name}
                   data-invalid={fieldState.invalid && showError}
                   aria-invalid={fieldState.invalid && showError}
-                  className={"min-w-31"}
+                  className={'min-w-31'}
                 >
                   <SelectValue placeholder="Select a month" />
                 </SelectTrigger>
               </FormControl>
-              <SelectContent className={"min-w-31"}>
+              <SelectContent className={'min-w-31'}>
                 {MONTHS.map((month) => {
                   return (
                     <SelectItem key={month.id} value={month.id} className="flex-1">
@@ -58,51 +58,51 @@ export function MonthFormSelection<TFieldValues extends FieldValues>({
 
 const MONTHS = [
   {
-    id: "1",
-    label: "January",
+    id: '1',
+    label: 'January',
   },
   {
-    id: "2",
-    label: "February",
+    id: '2',
+    label: 'February',
   },
   {
-    id: "3",
-    label: "March",
+    id: '3',
+    label: 'March',
   },
   {
-    id: "4",
-    label: "April",
+    id: '4',
+    label: 'April',
   },
   {
-    id: "5",
-    label: "May",
+    id: '5',
+    label: 'May',
   },
   {
-    id: "6",
-    label: "June",
+    id: '6',
+    label: 'June',
   },
   {
-    id: "7",
-    label: "July",
+    id: '7',
+    label: 'July',
   },
   {
-    id: "8",
-    label: "August",
+    id: '8',
+    label: 'August',
   },
   {
-    id: "9",
-    label: "September",
+    id: '9',
+    label: 'September',
   },
   {
-    id: "10",
-    label: "October",
+    id: '10',
+    label: 'October',
   },
   {
-    id: "11",
-    label: "November",
+    id: '11',
+    label: 'November',
   },
   {
-    id: "12",
-    label: "December",
+    id: '12',
+    label: 'December',
   },
 ] as const;

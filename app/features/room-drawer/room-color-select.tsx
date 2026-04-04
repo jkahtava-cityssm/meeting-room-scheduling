@@ -1,19 +1,19 @@
-import { GenericSelect } from "@/components/shared/generic-select";
-import { Button } from "@/components/ui/button";
-import DynamicIcon, { IconName } from "@/components/ui/icon-dynamic";
-import { COLOR_OPTIONS, TColors } from "@/lib/types";
-import { useStatusQuery } from "@/lib/services/status";
-import { CircleX } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BadgeColored } from "@/components/ui/badge-colored";
-import { cn } from "@/lib/utils";
+import { GenericSelect } from '@/components/shared/generic-select';
+import { Button } from '@/components/ui/button';
+import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
+import { COLOR_OPTIONS, TColors } from '@/lib/types';
+import { useStatusQuery } from '@/lib/services/status';
+import { CircleX } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BadgeColored } from '@/components/ui/badge-colored';
+import { cn } from '@/lib/utils';
 
 export function RoomColorSelect({
   selectedColorId,
   includeAllOption = true,
   isDisabled = false,
   dataInvalid = false,
-  className = "min-w-60",
+  className = 'min-w-60',
   onColorChange,
 }: {
   selectedColorId: string;
@@ -24,7 +24,7 @@ export function RoomColorSelect({
   onColorChange: (value: string) => void;
 }) {
   const colorList = COLOR_OPTIONS.filter(
-    (color) => color !== "disabled" && color !== "invisible" && color !== "approved" && color !== "rejected",
+    (color) => color !== 'disabled' && color !== 'invisible' && color !== 'approved' && color !== 'rejected',
   ).map((color) => {
     return { color: color };
   });
@@ -32,13 +32,7 @@ export function RoomColorSelect({
   if (isDisabled) {
     const selectedItem = colorList.find((item) => item.color === selectedColorId);
     return (
-      <Button
-        data-invalid={dataInvalid}
-        aria-invalid={dataInvalid}
-        variant={"combobox"}
-        disabled
-        className={cn("min-w-[200px]", className)}
-      >
+      <Button data-invalid={dataInvalid} aria-invalid={dataInvalid} variant={'combobox'} disabled className={cn('min-w-[200px]', className)}>
         {selectedItem && <BadgeColored color={selectedItem.color}>{selectedItem.color}</BadgeColored>}
       </Button>
     );
@@ -46,8 +40,8 @@ export function RoomColorSelect({
 
   return (
     <Select value={selectedColorId} onValueChange={onColorChange}>
-      <SelectTrigger aria-invalid={dataInvalid} data-invalid={dataInvalid} className={cn("min-w-[200px]", className)}>
-        <SelectValue placeholder={"Select a Room Colour"} />
+      <SelectTrigger aria-invalid={dataInvalid} data-invalid={dataInvalid} className={cn('min-w-[200px]', className)}>
+        <SelectValue placeholder={'Select a Room Colour'} />
       </SelectTrigger>
 
       <SelectContent align="end">

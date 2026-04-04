@@ -1,5 +1,5 @@
-import { addMonths, startOfYear } from "date-fns";
-import { YearViewMonthSkeleton } from "./skeleton-calendar-year-view-month-cell copy";
+import { addMonths, startOfYear } from 'date-fns';
+import { YearViewMonthSkeleton } from './skeleton-calendar-year-view-month-cell copy';
 
 function getMonths(selectedDate: Date) {
   const yearStart = startOfYear(selectedDate);

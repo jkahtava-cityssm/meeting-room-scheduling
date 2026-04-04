@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { Check, ChevronDownIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './command';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { Check, ChevronDownIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-import { Button } from "./button";
-import { Slot } from "@radix-ui/react-slot";
+import { Button } from './button';
+import { Slot } from '@radix-ui/react-slot';
 
 interface ComboBoxItem {
   key: string;
@@ -51,7 +51,7 @@ export function ComboBox({
                   }}
                 >
                   {item.label}
-                  <Check className={cn("ml-auto h-4 w-4", value === item.value ? "opacity-100" : "opacity-0")} />
+                  <Check className={cn('ml-auto h-4 w-4', value === item.value ? 'opacity-100' : 'opacity-0')} />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -79,7 +79,7 @@ export function ComboBoxTrigger({
     <Button
       variant="outline"
       role="combobox"
-      className={cn("min-w-[200px] justify-between text-sm font-normal", !value && "text-muted-foreground", className)}
+      className={cn('min-w-[200px] justify-between text-sm font-normal', !value && 'text-muted-foreground', className)}
       disabled={disabled}
       {...props}
     >

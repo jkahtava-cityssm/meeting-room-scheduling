@@ -1,5 +1,5 @@
-import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
-import { useItemsQuery } from "@/lib/services/items";
+import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
+import { useItemsQuery } from '@/lib/services/items';
 
 export function ItemMultiSelect({
   selectedItemIds,
@@ -25,7 +25,7 @@ export function ItemMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Items" : "Collecting Items"}
+      loadingLabel={error ? 'Error: Loading Items' : 'Collecting Items'}
       placeholderText="Select Items"
       searchText="Search items..."
       noResultText="No items found"

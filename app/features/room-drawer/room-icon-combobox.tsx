@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { useVirtualizer } from "@tanstack/react-virtual";
-import React, { useState, useMemo, useDeferredValue, useEffect, useRef } from "react";
-import { icons } from "lucide-react";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
-import type { LucideIcon, LucideProps } from "lucide-react";
+import { useVirtualizer } from '@tanstack/react-virtual';
+import React, { useState, useMemo, useDeferredValue, useEffect, useRef } from 'react';
+import { icons } from 'lucide-react';
+import dynamicIconImports from 'lucide-react/dynamicIconImports';
+import type { LucideIcon, LucideProps } from 'lucide-react';
 
-import { Check, ChevronDownIcon, CircleX, Loader2Icon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, ChevronDownIcon, CircleX, Loader2Icon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-import { TColors } from "@/lib/types";
-import { sharedIconColorVariants } from "@/lib/theme/colorVariants";
-import { cva } from "class-variance-authority";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import DynamicIcon from "@/components/ui/icon-dynamic";
-import { useDebounce } from "@/hooks/use-debounce";
+import { TColors } from '@/lib/types';
+import { sharedIconColorVariants } from '@/lib/theme/colorVariants';
+import { cva } from 'class-variance-authority';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import DynamicIcon from '@/components/ui/icon-dynamic';
+import { useDebounce } from '@/hooks/use-debounce';
 
 type RoomIconComboBoxProps = {
   selectedValue: string | undefined;
@@ -40,15 +40,15 @@ type IconItem = {
 function pascalToKebab(name: string) {
   return (
     name
-      .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+      .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
       // 2) acronym -> Capital+lower (HTMLParser -> HTML-Parser)
-      .replace(/([A-Z]+)([A-Z][a-z])/g, "$1-$2")
+      .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
       // 3) letter -> numeric chunk (optionally 'x' groups) as a single token
       //    e.g., Grid2x2 -> Grid-2x2, ArrowDown01 -> ArrowDown-01
-      .replace(/([A-Za-z])(\d+(?:x\d+)*)/g, "$1-$2")
+      .replace(/([A-Za-z])(\d+(?:x\d+)*)/g, '$1-$2')
       // 4) digit -> Uppercase letter (start of new word)
       //    e.g., 2Plus -> 2-Plus (but won't touch 3d or 2x2 because 'd'/'x' are lowercase)
-      .replace(/(\d)([A-Z])/g, "$1-$2")
+      .replace(/(\d)([A-Z])/g, '$1-$2')
 
       .toLowerCase()
   );
@@ -74,7 +74,7 @@ function useIconData() {
       })
       .filter(Boolean) as IconItem[];
 
-    if (process.env.NODE_ENV !== "production" && failures.length) {
+    if (process.env.NODE_ENV !== 'production' && failures.length) {
       console.warn(`Unmatched Lucide icons (${failures.length})`, failures);
     }
     const iconsById = new Map<string, IconItem>(items.map((it) => [it.id, it]));
@@ -96,11 +96,11 @@ export function RoomIconComboBox({
   isDisabled = false,
   dataInvalid = false,
   className,
-  placeholderText = "Select Icon",
+  placeholderText = 'Select Icon',
 }: RoomIconComboBoxProps) {
   const [open, setOpen] = useState(false);
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [wasMeasured, setWasMeasured] = useState(false);
 
   const { items: allIcons, iconsById } = useIconData();
@@ -150,7 +150,7 @@ export function RoomIconComboBox({
       if (idx >= 0) {
         const rowIndex = Math.floor(idx / 3);
         const raf2 = requestAnimationFrame(() => {
-          rowVirtualizer.scrollToIndex(rowIndex, { align: "center" });
+          rowVirtualizer.scrollToIndex(rowIndex, { align: 'center' });
         });
         return () => cancelAnimationFrame(raf2);
       }
@@ -165,7 +165,7 @@ export function RoomIconComboBox({
     const id = requestAnimationFrame(() => {
       rowVirtualizer.measure();
 
-      rowVirtualizer.scrollToIndex(0, { align: "start" });
+      rowVirtualizer.scrollToIndex(0, { align: 'start' });
     });
 
     return () => cancelAnimationFrame(id);
@@ -182,14 +182,10 @@ export function RoomIconComboBox({
           disabled={isDisabled}
           data-invalid={dataInvalid}
           aria-invalid={dataInvalid}
-          className={cn(
-            "min-w-[240px] justify-between text-sm font-normal",
-            !selectedValue && "text-muted-foreground",
-            className,
-          )}
+          className={cn('min-w-[240px] justify-between text-sm font-normal', !selectedValue && 'text-muted-foreground', className)}
         >
           <div className="flex items-center gap-2 truncate">
-            {selectedRecord && <DynamicIcon name={selectedRecord.id} className={cn("h-4 w-4 shrink-0")} />}
+            {selectedRecord && <DynamicIcon name={selectedRecord.id} className={cn('h-4 w-4 shrink-0')} />}
             <span className="truncate">{selectedRecord?.name || placeholderText}</span>
           </div>
           <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -201,7 +197,7 @@ export function RoomIconComboBox({
           <div className="relative">
             <CommandInput
               placeholder="Search icons..."
-              className={cn("h-9 pr-8")} // add space for the spinner
+              className={cn('h-9 pr-8')} // add space for the spinner
               value={query}
               onValueChange={setQuery}
             />
@@ -234,12 +230,7 @@ export function RoomIconComboBox({
                     {virtualRows.map((vRow) => {
                       const row = rows[vRow.index];
                       return (
-                        <div
-                          key={vRow.key}
-                          data-index={vRow.index}
-                          ref={rowVirtualizer.measureElement}
-                          className="grid grid-cols-3 gap-0.5 p-1"
-                        >
+                        <div key={vRow.key} data-index={vRow.index} ref={rowVirtualizer.measureElement} className="grid grid-cols-3 gap-0.5 p-1">
                           {row.map((icon) => (
                             <IconItem
                               key={icon.id}
@@ -266,15 +257,7 @@ export function RoomIconComboBox({
 }
 
 const IconItem = React.memo(
-  ({
-    icon,
-    isSelected,
-    onSelect,
-  }: {
-    icon: IconItem;
-    isSelected: boolean;
-    onSelect: (id: string, label: string) => void;
-  }) => {
+  ({ icon, isSelected, onSelect }: { icon: IconItem; isSelected: boolean; onSelect: (id: string, label: string) => void }) => {
     const { Component } = icon;
 
     return (
@@ -283,13 +266,13 @@ const IconItem = React.memo(
         value={icon.name}
         onSelect={() => onSelect(icon.id, icon.name)}
         className={cn(
-          "flex flex-col items-center justify-center gap-1.5 p-2 rounded-md cursor-pointer",
-          "hover:bg-accent hover:text-accent-foreground",
-          isSelected && "bg-accent text-accent-foreground ring-1 ring-ring",
-          "",
+          'flex flex-col items-center justify-center gap-1.5 p-2 rounded-md cursor-pointer',
+          'hover:bg-accent hover:text-accent-foreground',
+          isSelected && 'bg-accent text-accent-foreground ring-1 ring-ring',
+          '',
         )}
       >
-        <Component className={cn("size-8", isSelected && "text-muted-foreground")} />
+        <Component className={cn('size-8', isSelected && 'text-muted-foreground')} />
         <span className="text-[10px] w-full truncate text-center leading-none">{icon.name}</span>
       </CommandItem>
     );
@@ -328,4 +311,4 @@ function SkeletonGrid({
   );
 }
 
-IconItem.displayName = "IconItem";
+IconItem.displayName = 'IconItem';

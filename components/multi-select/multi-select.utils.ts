@@ -1,10 +1,10 @@
-import { type MultiSelectOption, type MultiSelectGroup, type NavigationIndices } from "./multi-select.types";
+import { type MultiSelectOption, type MultiSelectGroup, type NavigationIndices } from './multi-select.types';
 
 /**
  * Check if options array contains groups
  */
 export const isGroupedOptions = (opts: MultiSelectOption[] | MultiSelectGroup[]): opts is MultiSelectGroup[] => {
-  return opts.length > 0 && "heading" in opts[0];
+  return opts.length > 0 && 'heading' in opts[0];
 };
 
 /**
@@ -20,10 +20,7 @@ export const arraysEqual = (a: string[], b: string[]): boolean => {
 /**
  * Build flat list of all options from grouped or ungrouped options
  */
-export const buildSelectionList = (
-  options: MultiSelectOption[] | MultiSelectGroup[],
-  deduplicateOptions: boolean,
-): MultiSelectOption[] => {
+export const buildSelectionList = (options: MultiSelectOption[] | MultiSelectGroup[], deduplicateOptions: boolean): MultiSelectOption[] => {
   if (options.length === 0) return [];
 
   const allOptions = isGroupedOptions(options) ? options.flatMap((group) => group.options) : options;
@@ -43,13 +40,13 @@ export const buildSelectionList = (
     }
   });
 
-  if (process.env.NODE_ENV === "development" && duplicates.length > 0) {
-    const action = deduplicateOptions ? "automatically removed" : "detected";
+  if (process.env.NODE_ENV === 'development' && duplicates.length > 0) {
+    const action = deduplicateOptions ? 'automatically removed' : 'detected';
     console.warn(
-      `MultiSelect: Duplicate option values ${action}: ${duplicates.join(", ")}. ` +
+      `MultiSelect: Duplicate option values ${action}: ${duplicates.join(', ')}. ` +
         `${
           deduplicateOptions
-            ? "Duplicates have been removed automatically."
+            ? 'Duplicates have been removed automatically.'
             : "This may cause unexpected behavior. Consider setting 'deduplicateOptions={true}' or ensure all option values are unique."
         }`,
     );
@@ -74,17 +71,14 @@ export const filterOptions = (
         ...group,
         options: group.options.filter(
           (option) =>
-            option.label.toLowerCase().includes(searchValue.toLowerCase()) ||
-            option.value.toLowerCase().includes(searchValue.toLowerCase()),
+            option.label.toLowerCase().includes(searchValue.toLowerCase()) || option.value.toLowerCase().includes(searchValue.toLowerCase()),
         ),
       }))
       .filter((group) => group.options.length > 0);
   }
 
   return (options as MultiSelectOption[]).filter(
-    (option) =>
-      option.label.toLowerCase().includes(searchValue.toLowerCase()) ||
-      option.value.toLowerCase().includes(searchValue.toLowerCase()),
+    (option) => option.label.toLowerCase().includes(searchValue.toLowerCase()) || option.value.toLowerCase().includes(searchValue.toLowerCase()),
   );
 };
 
@@ -116,12 +110,9 @@ export const createOptionsMap = (options: MultiSelectOption[]): Map<string, Mult
 /**
  * Get option by value from map, with optional dev warning
  */
-export const getOptionByValue = (
-  value: string,
-  optionsMap: Map<string, MultiSelectOption>,
-): MultiSelectOption | undefined => {
+export const getOptionByValue = (value: string, optionsMap: Map<string, MultiSelectOption>): MultiSelectOption | undefined => {
   const option = optionsMap.get(value);
-  if (!option && process.env.NODE_ENV === "development") {
+  if (!option && process.env.NODE_ENV === 'development') {
     console.warn(`MultiSelect: Option with value "${value}" not found in options list`);
   }
   return option;

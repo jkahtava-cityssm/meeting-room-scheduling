@@ -1,15 +1,15 @@
-import { TColors } from "@/lib/types";
-import DynamicIcon, { IconName } from "../ui/icon-dynamic";
-import { Button } from "../ui/button";
-import { Check, ChevronDownIcon, CircleX, Loader2Icon } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { BadgeColored } from "../ui/badge-colored";
-import { cn } from "@/lib/utils";
-import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
-import { useMemo, useState } from "react";
-import { MultiSelect, MultiSelectOption } from "../multi-select/multi-select";
+import { TColors } from '@/lib/types';
+import DynamicIcon, { IconName } from '../ui/icon-dynamic';
+import { Button } from '../ui/button';
+import { Check, ChevronDownIcon, CircleX, Loader2Icon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { BadgeColored } from '../ui/badge-colored';
+import { cn } from '@/lib/utils';
+import { ComboBox, ComboBoxTrigger } from '../ui/combobox';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
+import { useMemo, useState } from 'react';
+import { MultiSelect, MultiSelectOption } from '../multi-select/multi-select';
 
 type DataSelectProps<T> = {
   list: T[] | undefined;
@@ -47,11 +47,11 @@ export function GenericMultiSelect<T>({
   isLoading,
   isDisabled,
   isError,
-  loadingLabel = "Collecting Data",
-  placeholderText = "Click to Select",
+  loadingLabel = 'Collecting Data',
+  placeholderText = 'Click to Select',
   placeholderBadge,
-  searchText = "Search...",
-  noResultText = "No Item Found",
+  searchText = 'Search...',
+  noResultText = 'No Item Found',
   dataInvalid = false,
   onValueChange,
   getId,
@@ -66,7 +66,7 @@ export function GenericMultiSelect<T>({
   hideClearSingle = false,
   searchable = true,
   modalPopover = true,
-  overflowLabel = "Items Selected",
+  overflowLabel = 'Items Selected',
   selectAllBadge,
 }: DataSelectProps<T>) {
   const options = useMemo(() => {
@@ -81,13 +81,7 @@ export function GenericMultiSelect<T>({
 
   if (isLoading || !list) {
     return (
-      <Button
-        data-invalid={dataInvalid}
-        aria-invalid={dataInvalid}
-        variant={"combobox"}
-        disabled
-        className={cn("min-w-[200px]", className)}
-      >
+      <Button data-invalid={dataInvalid} aria-invalid={dataInvalid} variant={'combobox'} disabled className={cn('min-w-[200px]', className)}>
         {isError ? <CircleX /> : <Loader2Icon className="animate-spin" />}
         {loadingLabel}
       </Button>
@@ -95,7 +89,7 @@ export function GenericMultiSelect<T>({
   }
 
   return (
-    <div className={cn("w-full min-w-0 overflow-hidden", className)} data-invalid={dataInvalid}>
+    <div className={cn('w-full min-w-0 overflow-hidden', className)} data-invalid={dataInvalid}>
       <MultiSelect
         options={options}
         onValueChange={onValueChange}
@@ -107,7 +101,7 @@ export function GenericMultiSelect<T>({
         disabled={isDisabled}
         selectAllBadge={selectAllBadge}
         hideSelectAll={hideSelectAll}
-        className={cn(dataInvalid && "border-destructive")}
+        className={cn(dataInvalid && 'border-destructive')}
         hideIcon={hideIcon}
         hideMoreLabel={hideMoreLabel}
         hideClearAll={hideClearAll}

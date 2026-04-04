@@ -1,8 +1,8 @@
-import { Input } from "@/components/ui/input";
+import { Input } from '@/components/ui/input';
 
-import { cn } from "@/lib/utils";
-import React from "react";
-import { usePublicConfiguration } from "@/lib/services/public";
+import { cn } from '@/lib/utils';
+import React from 'react';
+import { usePublicConfiguration } from '@/lib/services/public';
 
 export interface TimePickerInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   picker: TimePickerType;
@@ -52,7 +52,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
   (
     {
       className,
-      type = "tel",
+      type = 'tel',
       value,
       id,
       name,
@@ -73,14 +73,14 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
     // Determine interval from public configuration and set global minute step data
     React.useEffect(() => {
       const intervalFromConfig = configurationData?.interval;
-      if (typeof intervalFromConfig === "number") {
+      if (typeof intervalFromConfig === 'number') {
         setMinuteStepDataFromInterval(intervalFromConfig);
       } else {
         setMinuteStepDataFromInterval(15);
       }
     }, [configurationData]);
 
-    const inputBufferRef = React.useRef<string>("");
+    const inputBufferRef = React.useRef<string>('');
     const roundingTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     React.useEffect(() => {
@@ -94,14 +94,13 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
     }, [date, picker]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Tab") return;
+      if (e.key === 'Tab') return;
       e.preventDefault();
-      if (e.key === "ArrowRight") onRightFocus?.();
-      if (e.key === "ArrowLeft") onLeftFocus?.();
-      if (["ArrowUp", "ArrowDown"].includes(e.key)) {
+      if (e.key === 'ArrowRight') onRightFocus?.();
+      if (e.key === 'ArrowLeft') onLeftFocus?.();
+      if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
         const minuteStep = MINUTE_STEP_DATA.wrapForward.substitute;
-        const step =
-          e.key === "ArrowUp" ? (picker === "minutes" ? minuteStep : 1) : picker === "minutes" ? -minuteStep : -1;
+        const step = e.key === 'ArrowUp' ? (picker === 'minutes' ? minuteStep : 1) : picker === 'minutes' ? -minuteStep : -1;
 
         const newValue = getArrowByType(calculatedValue, step, picker);
 
@@ -110,7 +109,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         const tempDate = new Date(date);
         setDate(setDateByType(tempDate, newValue, picker, period));
       }
-      if (e.key >= "0" && e.key <= "9") {
+      if (e.key >= '0' && e.key <= '9') {
         const newBuffer = inputBufferRef.current + e.key;
         inputBufferRef.current = newBuffer;
 
@@ -119,13 +118,13 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         const tempDate = new Date(date);
         setDate(setDateByType(tempDate, newBuffer, picker, period));
 
-        if (inputBufferRef.current.length === 2) inputBufferRef.current = "";
+        if (inputBufferRef.current.length === 2) inputBufferRef.current = '';
 
         if (inputBufferRef.current.length === 1) {
           if (roundingTimerRef.current) clearTimeout(roundingTimerRef.current);
 
           roundingTimerRef.current = setTimeout(() => {
-            inputBufferRef.current = "";
+            inputBufferRef.current = '';
           }, 2000);
         }
       }
@@ -136,8 +135,8 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         ref={ref}
         id={id || picker}
         name={name || picker}
-        className={cn("w-[48px] text-center", className)}
-        aria-invalid={props["aria-invalid"]}
+        className={cn('w-[48px] text-center', className)}
+        aria-invalid={props['aria-invalid']}
         value={value || calculatedValue}
         onChange={(e) => {
           e.preventDefault();
@@ -155,7 +154,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
   },
 );
 
-TimePickerInput.displayName = "TimePickerInput";
+TimePickerInput.displayName = 'TimePickerInput';
 
 export { TimePickerInput };
 
@@ -193,10 +192,10 @@ export function getValidNumber(value: string, { max, min = 0, loop = false }: Ge
       if (numericValue > max) numericValue = min;
       if (numericValue < min) numericValue = max;
     }
-    return numericValue.toString().padStart(2, "0");
+    return numericValue.toString().padStart(2, '0');
   }
 
-  return "00";
+  return '00';
 }
 
 export function getValidHour(value: string) {
@@ -211,13 +210,11 @@ export function getValid12Hour(value: string) {
 
 export function getValidMinuteOrSecond(value: string) {
   const numericValue = parseInt(value, 10);
-  if (isNaN(numericValue)) return "00";
+  if (isNaN(numericValue)) return '00';
 
-  const closest = MINUTE_STEP_DATA.stepValues.reduce((prev, curr) =>
-    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev,
-  );
+  const closest = MINUTE_STEP_DATA.stepValues.reduce((prev, curr) => (Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev));
 
-  return normalizeMinuteValue(closest).toString().padStart(2, "0");
+  return normalizeMinuteValue(closest).toString().padStart(2, '0');
 }
 
 function normalizeMinuteValue(value: number): number {
@@ -238,7 +235,7 @@ export function getValidArrowNumber(value: string, { min, max, step }: GetValidA
     numericValue += step;
     return getValidNumber(String(numericValue), { min, max, loop: true });
   }
-  return "00";
+  return '00';
 }
 
 export function getValidArrowHour(value: string, step: number) {
@@ -251,14 +248,12 @@ export function getValidArrow12Hour(value: string, step: number) {
 
 export function getValidArrowMinuteOrSecond(value: string, step: number) {
   const numericValue = parseInt(value, 10);
-  if (isNaN(numericValue)) return "00";
+  if (isNaN(numericValue)) return '00';
 
   // List the available snap points derived from minute step data
   const multiples = MINUTE_STEP_DATA.stepValues.filter((v) => v >= 0 && v < 60).sort((a, b) => a - b);
 
-  const closest = multiples.reduce((prev, curr) =>
-    Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev,
-  );
+  const closest = multiples.reduce((prev, curr) => (Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev));
 
   // Apply step and wrap
   const index = multiples.indexOf(closest);
@@ -274,7 +269,7 @@ export function getValidArrowMinuteOrSecond(value: string, step: number) {
   */
   const newIndex = (index + (step > 0 ? 1 : -1) + multiples.length) % multiples.length;
 
-  return multiples[newIndex].toString().padStart(2, "0");
+  return multiples[newIndex].toString().padStart(2, '0');
 }
 
 export function setMinutes(date: Date, value: string) {
@@ -302,18 +297,18 @@ export function set12Hours(date: Date, value: string, period: Period) {
   return date;
 }
 
-export type TimePickerType = "minutes" | "seconds" | "hours" | "12hours";
-export type Period = "AM" | "PM";
+export type TimePickerType = 'minutes' | 'seconds' | 'hours' | '12hours';
+export type Period = 'AM' | 'PM';
 
 export function setDateByType(date: Date, value: string, type: TimePickerType, period?: Period) {
   switch (type) {
-    case "minutes":
+    case 'minutes':
       return setMinutes(date, value);
-    case "seconds":
+    case 'seconds':
       return setSeconds(date, value);
-    case "hours":
+    case 'hours':
       return setHours(date, value);
-    case "12hours": {
+    case '12hours': {
       if (!period) return date;
       return set12Hours(date, value, period);
     }
@@ -324,32 +319,32 @@ export function setDateByType(date: Date, value: string, type: TimePickerType, p
 
 export function getDateByType(date: Date, type: TimePickerType) {
   switch (type) {
-    case "minutes":
+    case 'minutes':
       return getValidMinuteOrSecond(String(date.getMinutes()));
-    case "seconds":
+    case 'seconds':
       return getValidMinuteOrSecond(String(date.getSeconds()));
-    case "hours":
+    case 'hours':
       return getValidHour(String(date.getHours()));
-    case "12hours":
+    case '12hours':
       const hours = display12HourValue(date.getHours());
       return getValid12Hour(String(hours));
     default:
-      return "00";
+      return '00';
   }
 }
 
 export function getArrowByType(value: string, step: number, type: TimePickerType) {
   switch (type) {
-    case "minutes":
+    case 'minutes':
       return getValidArrowMinuteOrSecond(value, step);
-    case "seconds":
+    case 'seconds':
       return getValidArrowMinuteOrSecond(value, step);
-    case "hours":
+    case 'hours':
       return getValidArrowHour(value, step);
-    case "12hours":
+    case '12hours':
       return getValidArrow12Hour(value, step);
     default:
-      return "00";
+      return '00';
   }
 }
 
@@ -359,13 +354,13 @@ export function getArrowByType(value: string, step: number, type: TimePickerType
  * 12:00 AM is 00:00
  */
 export function convert12HourTo24Hour(hour: number, period: Period) {
-  if (period === "PM") {
+  if (period === 'PM') {
     if (hour <= 11) {
       return hour + 12;
     } else {
       return hour;
     }
-  } else if (period === "AM") {
+  } else if (period === 'AM') {
     if (hour === 12) return 0;
     return hour;
   }
@@ -378,7 +373,7 @@ export function convert12HourTo24Hour(hour: number, period: Period) {
  * in its 12-hour representation
  */
 export function display12HourValue(hours: number) {
-  if (hours === 0 || hours === 12) return "12";
+  if (hours === 0 || hours === 12) return '12';
   if (hours >= 22) return `${hours - 12}`;
   if (hours % 12 > 9) return `${hours}`;
   return `0${hours % 12}`;

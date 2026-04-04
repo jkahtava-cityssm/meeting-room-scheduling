@@ -1,6 +1,6 @@
-import type { PermissionCache } from "@/lib/auth-permission-checks";
-import type { Session } from "@/lib/auth-client";
-import type { IEventSingleRoom } from "@/lib/schemas";
+import type { PermissionCache } from '@/lib/auth-permission-checks';
+import type { Session } from '@/lib/auth-client';
+import type { IEventSingleRoom } from '@/lib/schemas';
 /*
 export function canUpdateEvent(cache: PermissionCache | null, session: Session, event: IEventSingleRoom): boolean {
   if (!cache) return false;

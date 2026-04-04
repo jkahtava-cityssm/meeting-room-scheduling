@@ -1,5 +1,5 @@
-import { IEventSingleRoom } from "@/lib/schemas";
-import { TColors } from "@/lib/types";
+import { IEventSingleRoom } from '@/lib/schemas';
+import { TColors } from '@/lib/types';
 
 export interface ISection {
   sectionId: string;

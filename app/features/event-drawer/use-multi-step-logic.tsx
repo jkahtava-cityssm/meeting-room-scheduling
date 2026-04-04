@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
-import { CombinedSchema, getCombinedSchema } from "./drawer-schema.validator";
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod/v4';
+import { CombinedSchema, getCombinedSchema } from './drawer-schema.validator';
 
-import { usePublicConfiguration } from "@/lib/services/public";
+import { usePublicConfiguration } from '@/lib/services/public';
 import {
   useEventQuery,
   useEventsMutationUpsert,
@@ -12,15 +12,15 @@ import {
   SEventPUT,
   IEventPUT,
   useEventsMutationCreate,
-} from "@/lib/services/events";
-import { isFormValid, isStepValid, reconcileRecurringEventDates } from "./lib/form-helper";
-import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
-import { IEventSingleRoom } from "@/lib/schemas";
-import { getFormDefaults, mapEventToSchema } from "./lib/default-util";
-import { useEventStore } from "@/lib/zustand/new-event-store-refactor";
-import { useStepNavigation } from "./use-step-navigation";
-import { useConfigurationQuery, usePrivateConfigurationQuery } from "@/lib/services/configuration";
-import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
+} from '@/lib/services/events';
+import { isFormValid, isStepValid, reconcileRecurringEventDates } from './lib/form-helper';
+import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from './types';
+import { IEventSingleRoom } from '@/lib/schemas';
+import { getFormDefaults, mapEventToSchema } from './lib/default-util';
+import { useEventStore } from '@/lib/zustand/new-event-store-refactor';
+import { useStepNavigation } from './use-step-navigation';
+import { useConfigurationQuery, usePrivateConfigurationQuery } from '@/lib/services/configuration';
+import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
 
 export const useMultiStepFormLogic = (props: {
   event?: IEventSingleRoom;
@@ -61,7 +61,7 @@ export const useMultiStepFormLogic = (props: {
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(dynamicSchema),
     defaultValues: defaultFormValues,
-    mode: "onChange",
+    mode: 'onChange',
   });
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export const useMultiStepFormLogic = (props: {
       originRef.current = document.activeElement as HTMLElement;
 
       methods.reset(defaultFormValues);
-      setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+      setStatus(defaultFormValues.eventId === '0' ? 'New' : 'Read');
       /*if (hasStoredDraft && isNewEvent) {
 				setDialogConfig({
 					variant: "info",
@@ -88,36 +88,32 @@ export const useMultiStepFormLogic = (props: {
     }
   }, [props.isOpen, methods, defaultFormValues]);
 
-  const {
-    data: collectedEvent,
-    isFetching,
-    refetch,
-  } = useEventQuery(Number(defaultFormValues.eventId), props.userId, false);
+  const { data: collectedEvent, isFetching, refetch } = useEventQuery(Number(defaultFormValues.eventId), props.userId, false);
 
-  const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === "0" ? "New" : "Read");
+  const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === '0' ? 'New' : 'Read');
 
   const formStatus = useMemo(
     () => ({
-      isNew: status === "New",
-      isEditing: status === "Edit",
-      isReadOnly: status === "Read",
-      isLoading: status === "Loading" || isFetching,
+      isNew: status === 'New',
+      isEditing: status === 'Edit',
+      isReadOnly: status === 'Read',
+      isLoading: status === 'Loading' || isFetching,
       isSaving: mutationCreate.isPending || mutationUpsert.isPending,
       isDeleting: mutationDelete.isPending,
-      isDisabled: status === "Loading" || mutationCreate.isPending || mutationUpsert.isPending,
+      isDisabled: status === 'Loading' || mutationCreate.isPending || mutationUpsert.isPending,
     }),
     [status, isFetching, mutationCreate.isPending, mutationUpsert.isPending, mutationDelete.isPending],
   );
 
-  const watchIsRecurring = methods.watch("isRecurring");
-  const watchStartDate = methods.watch("startDate");
-  const watchRuleStartDate = methods.watch("ruleStartDate");
+  const watchIsRecurring = methods.watch('isRecurring');
+  const watchStartDate = methods.watch('startDate');
+  const watchRuleStartDate = methods.watch('ruleStartDate');
 
-  const isRecurring = watchIsRecurring === "true";
-  const startDate = isRecurring && status !== "Edit" ? watchRuleStartDate : watchStartDate;
+  const isRecurring = watchIsRecurring === 'true';
+  const startDate = isRecurring && status !== 'Edit' ? watchRuleStartDate : watchStartDate;
   const ignoreLastStep = !isRecurring;
 
-  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
+  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps['dialogConfig']>(null);
 
   const validateStep = async (index: number) => {
     const result = await isStepValid(props.formSteps[index], methods);
@@ -131,26 +127,26 @@ export const useMultiStepFormLogic = (props: {
 
   const resetForm = useCallback(() => {
     methods.reset(defaultFormValues);
-    setStatus(defaultFormValues.eventId === "0" ? "New" : "Read");
+    setStatus(defaultFormValues.eventId === '0' ? 'New' : 'Read');
     resetNavigation();
     props.onClose();
   }, [defaultFormValues, methods, props, resetNavigation]);
 
   const onSave = async () => {
     const formData = methods.getValues();
-    const isRecurring = formData.isRecurring === "true";
+    const isRecurring = formData.isRecurring === 'true';
     const validationStepsToSkip = isRecurring ? [] : [1];
     const formState = await isFormValid(props.formSteps, methods, validationStepsToSkip);
 
     if (!formState.status) {
       setDialogConfig({
-        variant: "info",
-        title: "Submission Incomplete",
-        description: "Errors have been identified, and they must be fixed before submission can occur",
-        confirmText: "Continue Editing",
+        variant: 'info',
+        title: 'Submission Incomplete',
+        description: 'Errors have been identified, and they must be fixed before submission can occur',
+        confirmText: 'Continue Editing',
         errors: formState.errorList,
         showConfirm: true,
-        confirmAction: "none",
+        confirmAction: 'none',
       });
 
       return;
@@ -188,16 +184,16 @@ export const useMultiStepFormLogic = (props: {
   };
 
   const handleOpenChange = useCallback(() => {
-    if (methods.formState.isDirty && status !== "Read") {
+    if (methods.formState.isDirty && status !== 'Read') {
       setDialogConfig({
-        variant: "warning",
-        title: "Unsaved Changes",
-        description: "You have unsaved changes. Are you sure you want to close?",
-        confirmText: "Dismiss Form",
-        cancelText: "Continue Editing",
-        confirmAction: "dismiss",
-        saveAction: "save",
-        cancelAction: "none",
+        variant: 'warning',
+        title: 'Unsaved Changes',
+        description: 'You have unsaved changes. Are you sure you want to close?',
+        confirmText: 'Dismiss Form',
+        cancelText: 'Continue Editing',
+        confirmAction: 'dismiss',
+        saveAction: 'save',
+        cancelAction: 'none',
         showConfirm: true,
         showCancel: true,
         showSave: false, //!props.event,
@@ -212,26 +208,26 @@ export const useMultiStepFormLogic = (props: {
 
     if (data && !isError) {
       methods.reset(mapEventToSchema(data));
-      setStatus("Edit");
+      setStatus('Edit');
       return;
     }
 
     if (isError || !data) {
-      setStatus("Read");
+      setStatus('Read');
       setDialogConfig({
-        variant: "warning",
-        title: "Edit Failed",
+        variant: 'warning',
+        title: 'Edit Failed',
         description: "We couldn't retrieve the latest event details. Please try again later.",
-        confirmText: "Close",
+        confirmText: 'Close',
         showConfirm: true,
-        confirmAction: "none",
+        confirmAction: 'none',
       });
     }
   }, [methods, refetch]);
 
   const onDelete = useCallback(() => {
     // If eventId is "0", it only exists in local state/draft
-    if (defaultFormValues.eventId === "0") {
+    if (defaultFormValues.eventId === '0') {
       resetForm();
     } else {
       // If it exists on the server, call the mutation

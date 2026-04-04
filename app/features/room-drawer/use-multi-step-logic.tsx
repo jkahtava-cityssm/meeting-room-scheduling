@@ -1,23 +1,16 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
-import { CombinedRoomSchema, CombinedSchema } from "./drawer-schema.validator";
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod/v4';
+import { CombinedRoomSchema, CombinedSchema } from './drawer-schema.validator';
 
-import { isFormValid, isStepValid } from "./lib/form-helper";
-import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
-import { IRoom } from "@/lib/schemas";
-import { getFormDefaults, mapRoomToSchema } from "./lib/default-util";
+import { isFormValid, isStepValid } from './lib/form-helper';
+import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from './types';
+import { IRoom } from '@/lib/schemas';
+import { getFormDefaults, mapRoomToSchema } from './lib/default-util';
 
-import {
-  IRoomPUT,
-  SRoomPUT,
-  useRoomQuery,
-  useRoomsMutationCreate,
-  useRoomsMutationDelete,
-  useRoomsMutationUpsert,
-} from "@/lib/services/rooms";
-import { useStepNavigation } from "./use-step-navigation";
+import { IRoomPUT, SRoomPUT, useRoomQuery, useRoomsMutationCreate, useRoomsMutationDelete, useRoomsMutationUpsert } from '@/lib/services/rooms';
+import { useStepNavigation } from './use-step-navigation';
 
 export const useRoomFormLogic = (props: {
   room?: IRoom;
@@ -40,7 +33,7 @@ export const useRoomFormLogic = (props: {
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedRoomSchema),
     defaultValues: defaultFormValues,
-    mode: "onChange",
+    mode: 'onChange',
   });
 
   useEffect(() => {
@@ -48,28 +41,28 @@ export const useRoomFormLogic = (props: {
       originRef.current = document.activeElement as HTMLElement;
 
       methods.reset(defaultFormValues);
-      setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
+      setStatus(defaultFormValues.roomId === '0' ? 'New' : 'Read');
     }
   }, [props.isOpen, methods, defaultFormValues]);
 
   const { data: collectedRoom, isFetching, refetch } = useRoomQuery(Number(defaultFormValues.roomId), false);
 
-  const [status, setStatus] = useState<FormStatus>(defaultFormValues.roomId === "0" ? "New" : "Read");
+  const [status, setStatus] = useState<FormStatus>(defaultFormValues.roomId === '0' ? 'New' : 'Read');
 
   const formStatus = useMemo(
     () => ({
-      isNew: status === "New",
-      isEditing: status === "Edit",
-      isReadOnly: status === "Read",
-      isLoading: status === "Loading" || isFetching,
+      isNew: status === 'New',
+      isEditing: status === 'Edit',
+      isReadOnly: status === 'Read',
+      isLoading: status === 'Loading' || isFetching,
       isSaving: mutationCreate.isPending || mutationUpsert.isPending,
       isDeleting: mutationDelete.isPending,
-      isDisabled: status === "Loading" || mutationCreate.isPending || mutationUpsert.isPending,
+      isDisabled: status === 'Loading' || mutationCreate.isPending || mutationUpsert.isPending,
     }),
     [status, isFetching, mutationCreate.isPending, mutationUpsert.isPending, mutationDelete.isPending],
   );
 
-  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
+  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps['dialogConfig']>(null);
 
   const validateStep = async (index: number) => {
     const result = await isStepValid(props.formSteps[index], methods);
@@ -86,16 +79,16 @@ export const useRoomFormLogic = (props: {
       const parsedData = mapRoomToSchema(collectedRoom);
       methods.reset(parsedData);
 
-      setStatus("Edit");
+      setStatus('Edit');
     }
     if (formStatus.isLoading && !isFetching && !collectedRoom) {
-      setStatus("Read");
+      setStatus('Read');
     }
   }, [collectedRoom, isFetching, methods, formStatus.isLoading]);
 
   const resetForm = useCallback(() => {
     methods.reset(defaultFormValues);
-    setStatus(defaultFormValues.roomId === "0" ? "New" : "Read");
+    setStatus(defaultFormValues.roomId === '0' ? 'New' : 'Read');
     resetNavigation();
     props.onClose();
   }, [methods, defaultFormValues, resetNavigation, props]);
@@ -107,13 +100,13 @@ export const useRoomFormLogic = (props: {
 
     if (!formState.status) {
       setDialogConfig({
-        variant: "info",
-        title: "Submission Incomplete",
-        description: "Errors have been identified, and they must be fixed before submission can occur",
-        confirmText: "Continue Editing",
+        variant: 'info',
+        title: 'Submission Incomplete',
+        description: 'Errors have been identified, and they must be fixed before submission can occur',
+        confirmText: 'Continue Editing',
         errors: formState.errorList,
         showConfirm: true,
-        confirmAction: "none",
+        confirmAction: 'none',
       });
 
       return;
@@ -122,7 +115,7 @@ export const useRoomFormLogic = (props: {
     const apiPayload: z.input<IRoomPUT> = {
       ...formData,
       roomProperty: formData.roomProperty.map((id) => {
-        return { propertyId: id, value: "true" };
+        return { propertyId: id, value: 'true' };
       }),
       roomRoles: formData.roomRoles.map((id) => {
         return { roleId: id };
@@ -147,15 +140,15 @@ export const useRoomFormLogic = (props: {
   };
 
   const handleOpenChange = useCallback(() => {
-    if (methods.formState.isDirty && status !== "Read") {
+    if (methods.formState.isDirty && status !== 'Read') {
       setDialogConfig({
-        variant: "warning",
-        title: "Unsaved Changes",
-        description: "You have unsaved changes. Are you sure you want to close?",
-        confirmText: "Dismiss Form",
-        cancelText: "Continue Editing",
-        confirmAction: "dismiss",
-        cancelAction: "none",
+        variant: 'warning',
+        title: 'Unsaved Changes',
+        description: 'You have unsaved changes. Are you sure you want to close?',
+        confirmText: 'Dismiss Form',
+        cancelText: 'Continue Editing',
+        confirmAction: 'dismiss',
+        cancelAction: 'none',
         showConfirm: true,
         showCancel: true,
       });
@@ -169,26 +162,26 @@ export const useRoomFormLogic = (props: {
 
     if (data && !isError) {
       methods.reset(mapRoomToSchema(data));
-      setStatus("Edit");
+      setStatus('Edit');
       return;
     }
 
     if (isError || !data) {
-      setStatus("Read");
+      setStatus('Read');
       setDialogConfig({
-        variant: "warning",
-        title: "Edit Failed",
+        variant: 'warning',
+        title: 'Edit Failed',
         description: "We couldn't retrieve the latest room details. Please try again later.",
-        confirmText: "Close",
+        confirmText: 'Close',
         showConfirm: true,
-        confirmAction: "none",
+        confirmAction: 'none',
       });
     }
   }, [methods, refetch]);
 
   const onDelete = useCallback(() => {
     //If ID === 0, this is a new record, and does not exist in the DB
-    if (defaultFormValues.roomId === "0") {
+    if (defaultFormValues.roomId === '0') {
       resetForm();
     } else {
       mutationDelete.mutate(Number(defaultFormValues.roomId), {

@@ -1,19 +1,19 @@
-import { QueryError } from "@/contexts/ReactQueryProvider";
-import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from "@/lib/fetch";
-import { SEvent, SUser } from "@/lib/schemas";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import z from "zod/v4";
-import { queryKeys } from "./querykeys";
+import { QueryError } from '@/contexts/ReactQueryProvider';
+import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from '@/lib/fetch';
+import { SEvent, SUser } from '@/lib/schemas';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import z from 'zod/v4';
+import { queryKeys } from './querykeys';
 
 export const useUsersQuery = (onlyActive: boolean = true, enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.users.lists(),
     queryFn: async () => {
-      const result = await fetchGET(`/api/users`, { onlyActive }, 180, ["users"]);
+      const result = await fetchGET(`/api/users`, { onlyActive }, 180, ['users']);
       const parsedResult = z.array(SUser).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid user data", "useUsersQuery", parsedResult.error);
+        throw new QueryError('Invalid user data', 'useUsersQuery', parsedResult.error);
       }
 
       return parsedResult.data;
@@ -30,7 +30,7 @@ export const useUserQuery = (userId: number | undefined, enabled: boolean = true
       const parsedResult = z.array(SUser).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid room data", "useUserQuery", parsedResult.error);
+        throw new QueryError('Invalid room data', 'useUserQuery', parsedResult.error);
       }
 
       return parsedResult.data[0];
@@ -42,7 +42,7 @@ export const useUserQuery = (userId: number | undefined, enabled: boolean = true
 
 export const SUserPUT = z.object({
   userId: z.coerce.number().optional(),
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   email: z.string(),
   emailEnabled: z.union([z.boolean(), z.stringbool()]),
   department: z.string().optional().nullable(),

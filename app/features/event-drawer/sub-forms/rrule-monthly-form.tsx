@@ -1,61 +1,42 @@
 // components/sub-forms/monthly-form.tsx
-import { useWatch, Control, useFormContext } from "react-hook-form";
-import { z } from "zod/v4";
+import { useWatch, Control, useFormContext } from 'react-hook-form';
+import { z } from 'zod/v4';
 
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 
-import { step2Schema } from "../drawer-schema.validator";
-import { NumberFormInput } from "../components/number-form-input";
-import { PeriodFormSelection } from "../components/period-form-select";
-import { WeekDayFormSelection } from "../components/weekday-form-select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { step2Schema } from '../drawer-schema.validator';
+import { NumberFormInput } from '../components/number-form-input';
+import { PeriodFormSelection } from '../components/period-form-select';
+import { WeekDayFormSelection } from '../components/weekday-form-select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 // ... imports for UI components
 
-export function MonthlyForm({
-  control,
-  isReadOnly,
-}: {
-  control: Control<z.infer<typeof step2Schema>>;
-  isReadOnly: boolean;
-}) {
+export function MonthlyForm({ control, isReadOnly }: { control: Control<z.infer<typeof step2Schema>>; isReadOnly: boolean }) {
   // Watch values locally to this component
   const { setValue } = useFormContext();
   const [pattern, periodValue] = useWatch({
     control,
-    name: ["monthlyPattern", "monthPeriodValue"],
+    name: ['monthlyPattern', 'monthPeriodValue'],
   });
 
   return (
     <div className="flex flex-col gap-2">
       <RadioGroup
-        onValueChange={(val) => setValue("monthlyPattern", val, { shouldValidate: true })}
+        onValueChange={(val) => setValue('monthlyPattern', val, { shouldValidate: true })}
         value={pattern}
         disabled={isReadOnly}
         className="flex flex-col"
         data-error={false}
       >
-        <MonthlyDayRow control={control} isActive={pattern === "dayInMonth"} isReadOnly={isReadOnly} />
+        <MonthlyDayRow control={control} isActive={pattern === 'dayInMonth'} isReadOnly={isReadOnly} />
 
-        <MonthlyPatternRow
-          control={control}
-          isActive={pattern === "patternInMonth"}
-          monthPeriodValue={periodValue}
-          isReadOnly={isReadOnly}
-        />
+        <MonthlyPatternRow control={control} isActive={pattern === 'patternInMonth'} monthPeriodValue={periodValue} isReadOnly={isReadOnly} />
       </RadioGroup>
     </div>
   );
 }
 
-function MonthlyDayRow({
-  control,
-  isReadOnly,
-  isActive,
-}: {
-  control: Control<z.infer<typeof step2Schema>>;
-  isReadOnly: boolean;
-  isActive: boolean;
-}) {
+function MonthlyDayRow({ control, isReadOnly, isActive }: { control: Control<z.infer<typeof step2Schema>>; isReadOnly: boolean; isActive: boolean }) {
   const {
     formState: { errors },
   } = useFormContext();
@@ -98,7 +79,7 @@ function MonthlyPatternRow({
     formState: { errors },
   } = useFormContext();
   const disabled = !isActive || isReadOnly;
-  const showSpecificDays = monthPeriodValue === "1" || monthPeriodValue === "-1";
+  const showSpecificDays = monthPeriodValue === '1' || monthPeriodValue === '-1';
 
   const hasErrorInRow = isActive && !!(errors.monthWeekdayValue || errors.monthValue || errors.monthPeriodValue);
 

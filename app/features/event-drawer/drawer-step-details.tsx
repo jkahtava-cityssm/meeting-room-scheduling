@@ -1,41 +1,41 @@
-import { useFormContext, useWatch } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { z } from "zod/v4";
+import { useFormContext, useWatch } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
+import { z } from 'zod/v4';
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from '@/components/ui/textarea';
 
-import { DateTimePicker, DateTimePickerRef } from "@/components/ui/datetimepicker";
-import { useRef } from "react";
-import { Session } from "@/lib/auth-client";
-import { getDurationText } from "@/lib/helpers";
-import { FormStatus } from "./types";
+import { DateTimePicker, DateTimePickerRef } from '@/components/ui/datetimepicker';
+import { useRef } from 'react';
+import { Session } from '@/lib/auth-client';
+import { getDurationText } from '@/lib/helpers';
+import { FormStatus } from './types';
 
-import { RoomSelect } from "../rooms/room-select";
-import { StatusSelect } from "../status/status-select";
-import { UserComboBox } from "../users/user-combobox";
-import { EventDrawerPermissions } from "./lib/permissions";
+import { RoomSelect } from '../rooms/room-select';
+import { StatusSelect } from '../status/status-select';
+import { UserComboBox } from '../users/user-combobox';
+import { EventDrawerPermissions } from './lib/permissions';
 
-import { StaticTabsList, StaticTabsTrigger } from "@/components/ui/tabs-placeholder";
-import { UserMultiSelect } from "../users/user-multiselect";
-import { ItemMultiSelect } from "./components/item-multiselect";
+import { StaticTabsList, StaticTabsTrigger } from '@/components/ui/tabs-placeholder';
+import { UserMultiSelect } from '../users/user-multiselect';
+import { ItemMultiSelect } from './components/item-multiselect';
 
-import { StartEndDateTimeProvider } from "@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider";
-import { Label } from "@/components/ui/label";
-import { addDays, format } from "date-fns";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LucideLock } from "lucide-react";
-import { useMultiStepForm } from "./drawer-form-provider";
-import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
-import { getStep1Schema } from "./drawer-schema.validator";
-import { RoomMultiSelect } from "../rooms/room-multiselect";
+import { StartEndDateTimeProvider } from '@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider';
+import { Label } from '@/components/ui/label';
+import { addDays, format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { LucideLock } from 'lucide-react';
+import { useMultiStepForm } from './drawer-form-provider';
+import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
+import { getStep1Schema } from './drawer-schema.validator';
+import { RoomMultiSelect } from '../rooms/room-multiselect';
 
 const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
 
@@ -44,36 +44,36 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<ReturnType<typeof getStep1Schema>>>();
   const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
-  const disableChangeStatus = !can("ChangeEventStatus");
-  const disableChangeUser = !can("ChangeEventUser");
-  const enableMultiDay = can("ToggleMultiDay");
-  const allowRecurrence = can("ToggleRecurrence");
-  const restrictHours = !can("IgnoreHours");
-  const restrictBookingSpan = !can("IgnoreBookingSpan");
-  const enableMultiRoom = can("AllowMultiRoom");
+  const disableChangeStatus = !can('ChangeEventStatus');
+  const disableChangeUser = !can('ChangeEventUser');
+  const enableMultiDay = can('ToggleMultiDay');
+  const allowRecurrence = can('ToggleRecurrence');
+  const restrictHours = !can('IgnoreHours');
+  const restrictBookingSpan = !can('IgnoreBookingSpan');
+  const enableMultiRoom = can('AllowMultiRoom');
 
-  const isReadOnly = formStatus === "Read" || formStatus === "Loading";
-  const isEditing = formStatus === "Edit" || formStatus === "New";
+  const isReadOnly = formStatus === 'Read' || formStatus === 'Loading';
+  const isEditing = formStatus === 'Edit' || formStatus === 'New';
 
-  const isRecurring = watch("isRecurring");
-  const userId = watch("userId");
+  const isRecurring = watch('isRecurring');
+  const userId = watch('userId');
 
-  const showEndDate = isRecurring === "false" && enableMultiDay;
+  const showEndDate = isRecurring === 'false' && enableMultiDay;
 
-  const startRaw = useWatch({ control, name: "startDate" });
-  const endRaw = useWatch({ control, name: "endDate" });
+  const startRaw = useWatch({ control, name: 'startDate' });
+  const endRaw = useWatch({ control, name: 'endDate' });
 
   const startDate = toDate(startRaw);
   const endDate = toDate(endRaw);
 
   const handleStartEndDateTimeChange = async (start: Date, end: Date) => {
     const options = { shouldDirty: true, shouldTouch: false, shouldValidate: false };
-    setValue("startDate", start.toISOString(), options);
-    setValue("endDate", end.toISOString(), options);
+    setValue('startDate', start.toISOString(), options);
+    setValue('endDate', end.toISOString(), options);
 
-    setValue("duration", getDurationText(start.toISOString(), end.toISOString()), options);
+    setValue('duration', getDurationText(start.toISOString(), end.toISOString()), options);
 
-    await trigger(["startDate", "endDate"], { shouldFocus: false });
+    await trigger(['startDate', 'endDate'], { shouldFocus: false });
   };
 
   const changeDateOnly = (newDate: string, oldDate: string) => {
@@ -89,17 +89,13 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
 
   return (
     <div className="grid grid-cols-3 gap-4 min-h-0 auto-rows-min">
-      {formStatus === "Read" && (
+      {formStatus === 'Read' && (
         <FormField
           control={control}
           name="roomId"
           render={({ field, fieldState }) => (
             <FormItem className="col-span-1 row-1">
-              {fieldState.invalid ? (
-                <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-              ) : (
-                <FormLabel>Room</FormLabel>
-              )}
+              {fieldState.invalid ? <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" /> : <FormLabel>Room</FormLabel>}
               <FormControl>
                 <RoomSelect
                   selectedRoomId={field.value}
@@ -120,11 +116,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           name="eventRoomIds"
           render={({ field, fieldState }) => (
             <FormItem className="col-span-1 row-1">
-              {fieldState.invalid ? (
-                <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-              ) : (
-                <FormLabel>Room</FormLabel>
-              )}
+              {fieldState.invalid ? <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" /> : <FormLabel>Room</FormLabel>}
               <FormControl>
                 <RoomMultiSelect
                   selectedRoomIds={field.value}
@@ -146,14 +138,10 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
           name="eventRoomIds"
           render={({ field, fieldState }) => (
             <FormItem className="col-span-1 row-1">
-              {fieldState.invalid ? (
-                <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-              ) : (
-                <FormLabel>Room</FormLabel>
-              )}
+              {fieldState.invalid ? <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" /> : <FormLabel>Room</FormLabel>}
               <FormControl>
                 <RoomSelect
-                  selectedRoomId={field.value.length > 0 ? field.value[0] : ""}
+                  selectedRoomId={field.value.length > 0 ? field.value[0] : ''}
                   includeAllOption={false}
                   onRoomChange={(value) => field.onChange([value])}
                   dataInvalid={fieldState.invalid}
@@ -180,13 +168,13 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               <Tabs
                 defaultValue={field.value}
                 onValueChange={(value) => {
-                  const startDate = getValues("startDate");
-                  const endDate = getValues("endDate");
+                  const startDate = getValues('startDate');
+                  const endDate = getValues('endDate');
 
-                  if (value === "true" && startDate !== endDate) {
-                    const updateDate = changeDateOnly(getValues("startDate"), getValues("endDate"));
-                    setValue("endDate", updateDate);
-                    setValue("duration", getDurationText(...getValues(["startDate", "endDate"])));
+                  if (value === 'true' && startDate !== endDate) {
+                    const updateDate = changeDateOnly(getValues('startDate'), getValues('endDate'));
+                    setValue('endDate', updateDate);
+                    setValue('duration', getDurationText(...getValues(['startDate', 'endDate'])));
                   }
                   field.onChange(value);
                 }}
@@ -230,11 +218,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
         name="statusId"
         render={({ field, fieldState }) => (
           <FormItem className="col-span-1 row-1">
-            {fieldState.invalid ? (
-              <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" />
-            ) : (
-              <FormLabel>Status</FormLabel>
-            )}
+            {fieldState.invalid ? <FormMessage className="leading-none font-medium overflow-ellipsis text-nowrap" /> : <FormLabel>Status</FormLabel>}
 
             <StatusSelect
               selectedStatusId={field.value}
@@ -272,11 +256,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
         name="eventItemIds"
         render={({ field, fieldState }) => (
           <FormItem className="col-span-1 row-2">
-            {fieldState.invalid ? (
-              <FormMessage className="leading-none font-medium" />
-            ) : (
-              <FormLabel>Requested Items</FormLabel>
-            )}
+            {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Requested Items</FormLabel>}
             <FormControl>
               <ItemMultiSelect
                 selectedItemIds={field.value}
@@ -306,7 +286,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
               <div className="flex flex-col gap-2">
                 <StartEndDateTimeProvider.StartDate
                   invalid={!!fieldState.error}
-                  label={fieldState.error ? fieldState.error.message : "Start Date"}
+                  label={fieldState.error ? fieldState.error.message : 'Start Date'}
                   isDisabled={isReadOnly}
                   maxFutureDate={restrictBookingSpan && maxSpan > 0 ? addDays(new Date(), maxSpan) : undefined}
                 />
@@ -328,22 +308,22 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                   <StartEndDateTimeProvider.EndDate
                     invalid={!!fieldState.error}
                     isDisabled={isReadOnly}
-                    label={fieldState.error ? fieldState.error.message : "End Date"}
+                    label={fieldState.error ? fieldState.error.message : 'End Date'}
                     maxFutureDate={restrictBookingSpan && maxSpan > 0 ? addDays(new Date(), maxSpan) : undefined}
                   />
                 ) : (
                   <StartEndDateTimeProvider.NoDataPlaceholder
                     invalid={!!fieldState.error}
                     isDisabled={true}
-                    label={fieldState.error ? fieldState.error.message : "End Date"}
+                    label={fieldState.error ? fieldState.error.message : 'End Date'}
                     message={
                       !enableMultiDay
-                        ? "You do not have the permission to create Multi-Day events"
+                        ? 'You do not have the permission to create Multi-Day events'
                         : isRecurring
-                          ? "Calculated by Recurrence"
-                          : "Unknown"
+                          ? 'Calculated by Recurrence'
+                          : 'Unknown'
                     }
-                    date={format(startDate, "PPP")}
+                    date={format(startDate, 'PPP')}
                     className="cursor-not-allowed border shadow-none border-dashed "
                   />
                 )}
@@ -360,19 +340,15 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
         name="duration"
         render={({ field, fieldState }) => (
           <FormItem className="col-span-1  row-4">
-            {fieldState.invalid ? (
-              <FormMessage className="leading-none font-medium" />
-            ) : (
-              <FormLabel>Duration:</FormLabel>
-            )}
+            {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Duration:</FormLabel>}
             <FormControl>
               <div
                 id={`duration`}
                 className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "bg-accent/50 hover:bg-accent/50",
-                  "group relative h-9 w-full whitespace-nowrap px-3 py-2 font-normal  disabled:opacity-75 justify-between",
-                  "border shadow-none border-dashed ",
+                  buttonVariants({ variant: 'outline' }),
+                  'bg-accent/50 hover:bg-accent/50',
+                  'group relative h-9 w-full whitespace-nowrap px-3 py-2 font-normal  disabled:opacity-75 justify-between',
+                  'border shadow-none border-dashed ',
                 )}
                 data-invalid={fieldState.invalid}
               >
@@ -407,11 +383,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
         name="eventRecipientIds"
         render={({ field, fieldState }) => (
           <FormItem className="col-span-3 row-6">
-            {fieldState.invalid ? (
-              <FormMessage className="leading-none font-medium" />
-            ) : (
-              <FormLabel>Notify Users</FormLabel>
-            )}
+            {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Notify Users</FormLabel>}
             <FormControl>
               <UserMultiSelect
                 selectedUserIds={field.value}
@@ -432,11 +404,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
         render={({ field, fieldState }) => (
           <FormItem className="col-span-4">
             <div className="flex gap-2">
-              {fieldState.invalid ? (
-                <FormMessage className="leading-none font-medium" />
-              ) : (
-                <FormLabel>Description</FormLabel>
-              )}
+              {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Description</FormLabel>}
             </div>
 
             <FormControl>

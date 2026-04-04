@@ -1,7 +1,7 @@
-import { Control } from "react-hook-form";
+import { Control } from 'react-hook-form';
 
-import z from "zod/v4";
-import { step2Schema } from "../drawer-schema.validator";
+import z from 'zod/v4';
+import { step2Schema } from '../drawer-schema.validator';
 
 export function ErrorMessage({
   control,
@@ -11,8 +11,6 @@ export function ErrorMessage({
   fieldName: keyof z.infer<typeof step2Schema>;
 }) {
   return (
-    control.getFieldState(fieldName).error && (
-      <span className="text-destructive text-sm">{control.getFieldState(fieldName).error?.message}</span>
-    )
+    control.getFieldState(fieldName).error && <span className="text-destructive text-sm">{control.getFieldState(fieldName).error?.message}</span>
   );
 }

@@ -1,14 +1,14 @@
-import { TColors } from "@/lib/types";
-import DynamicIcon, { IconName } from "../ui/icon-dynamic";
-import { Button } from "../ui/button";
-import { Check, ChevronDownIcon, CircleX, Loader2Icon } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { BadgeColored } from "../ui/badge-colored";
-import { cn } from "@/lib/utils";
-import { ComboBox, ComboBoxTrigger } from "../ui/combobox";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
-import { useState } from "react";
+import { TColors } from '@/lib/types';
+import DynamicIcon, { IconName } from '../ui/icon-dynamic';
+import { Button } from '../ui/button';
+import { Check, ChevronDownIcon, CircleX, Loader2Icon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { BadgeColored } from '../ui/badge-colored';
+import { cn } from '@/lib/utils';
+import { ComboBox, ComboBoxTrigger } from '../ui/combobox';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
+import { useState } from 'react';
 
 type DataSelectProps<T> = {
   list: T[] | undefined;
@@ -36,10 +36,10 @@ export function GenericComboBox<T>({
   isLoading,
   isDisabled,
   isError,
-  loadingLabel = "Collecting Data",
-  placeholderText = "Click to Select",
-  searchText = "Search...",
-  noResultText = "No Item Found",
+  loadingLabel = 'Collecting Data',
+  placeholderText = 'Click to Select',
+  searchText = 'Search...',
+  noResultText = 'No Item Found',
   dataInvalid = false,
   onSelect,
   getId,
@@ -55,13 +55,7 @@ export function GenericComboBox<T>({
 
   if (isLoading || !list) {
     return (
-      <Button
-        data-invalid={dataInvalid}
-        aria-invalid={dataInvalid}
-        variant={"combobox"}
-        disabled
-        className={cn("min-w-[200px]", className)}
-      >
+      <Button data-invalid={dataInvalid} aria-invalid={dataInvalid} variant={'combobox'} disabled className={cn('min-w-[200px]', className)}>
         {isError ? <CircleX /> : <Loader2Icon className="animate-spin" />}
         {loadingLabel}
       </Button>
@@ -70,14 +64,8 @@ export function GenericComboBox<T>({
 
   if (isDisabled) {
     return (
-      <Button
-        data-invalid={dataInvalid}
-        aria-invalid={dataInvalid}
-        variant={"combobox"}
-        disabled
-        className={cn("min-w-[200px]", className)}
-      >
-        {selectedItem ? getLabel(selectedItem) : ""}
+      <Button data-invalid={dataInvalid} aria-invalid={dataInvalid} variant={'combobox'} disabled className={cn('min-w-[200px]', className)}>
+        {selectedItem ? getLabel(selectedItem) : ''}
       </Button>
     );
   }
@@ -88,12 +76,7 @@ export function GenericComboBox<T>({
         <Button
           variant="combobox"
           role="combobox"
-          className={cn(
-            "min-w-[200px] justify-between text-sm font-normal",
-            !selectedValue && "text-muted-foreground",
-            dataInvalid && "",
-            className,
-          )}
+          className={cn('min-w-[200px] justify-between text-sm font-normal', !selectedValue && 'text-muted-foreground', dataInvalid && '', className)}
           disabled={isDisabled}
           data-invalid={dataInvalid}
           aria-invalid={dataInvalid}
@@ -127,7 +110,7 @@ export function GenericComboBox<T>({
                       <span className="truncate">{label}</span>
                       {description && <span className="truncate text-xs">{description}</span>}
                     </div>
-                    <Check className={cn("ml-auto h-4 w-4", selectedValue === id ? "opacity-100" : "opacity-0")} />
+                    <Check className={cn('ml-auto h-4 w-4', selectedValue === id ? 'opacity-100' : 'opacity-0')} />
                   </CommandItem>
                 );
               })}

@@ -1,39 +1,31 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
-import { MonthViewDayCellSkeleton } from "./skeleton-calendar-month-day-cell";
-import { MonthViewDayEvents } from "./calendar-month-view-day-events";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
+import { MonthViewDayCellSkeleton } from './skeleton-calendar-month-day-cell';
+import { MonthViewDayEvents } from './calendar-month-view-day-events';
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
-import { LoaderCircle } from "lucide-react";
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-events';
+import { LoaderCircle } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
-import { IMonthDayView } from "../webworkers/generic-webworker";
-import { Button } from "@/components/ui/button";
-import { navigateURL } from "@/lib/helpers";
-import { useRouter } from "next/navigation";
+import { cn } from '@/lib/utils';
+import { IMonthDayView } from '../webworkers/generic-webworker';
+import { Button } from '@/components/ui/button';
+import { navigateURL } from '@/lib/helpers';
+import { useRouter } from 'next/navigation';
 
-import { GenericError } from "../../../../components/shared/generic-error";
-import { SharedEventDrawerProvider } from "../../event-drawer/drawer-context";
-import { TStatusKey } from "@/lib/types";
+import { GenericError } from '../../../../components/shared/generic-error';
+import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
+import { TStatusKey } from '@/lib/types';
 
-const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MIN_INNER_HEIGHT = 96;
 const BORDER_COMPENSATION = 2;
 
 export function CalendarMonthView({ date, userId }: { date: Date; userId?: string }) {
-  const { visibleHours, selectedRoomIds, selectedStatusKeys, setTotalEvents, setIsHeaderLoading } =
-    usePrivateCalendar();
-  const { result, isLoading, error } = usePrivateCalendarEvents(
-    "MONTH",
-    date,
-    visibleHours,
-    userId,
-    selectedRoomIds,
-    selectedStatusKeys,
-  );
+  const { visibleHours, selectedRoomIds, selectedStatusKeys, setTotalEvents, setIsHeaderLoading } = usePrivateCalendar();
+  const { result, isLoading, error } = usePrivateCalendarEvents('MONTH', date, visibleHours, userId, selectedRoomIds, selectedStatusKeys);
 
   //  hooks always run
   const outerScrollRef = useRef<HTMLDivElement | null>(null);
@@ -62,7 +54,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
   const recomputeHeights = useCallback(() => {
     if (!outerScrollRef.current || !weekdayHeaderRef.current || weekCount === 0) return;
 
-    const viewport = outerScrollRef.current.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
+    const viewport = outerScrollRef.current.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
     if (!viewport) return;
 
     // This is the available height for "filling"
@@ -89,7 +81,7 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
 
     recomputeHeights();
 
-    const viewport = outerScrollRef.current?.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
+    const viewport = outerScrollRef.current?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
     if (!viewport) return;
 
     const ro = new ResizeObserver(() => requestAnimationFrame(recomputeHeights));
@@ -145,21 +137,10 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
                 </div>
 
                 {/* Row Content (INNER scroll stays) */}
-                <ScrollArea
-                  type="auto"
-                  className="overflow-hidden"
-                  style={{ height: rowContentHeight }}
-                  viewportClassName="[&>div]:h-full"
-                >
+                <ScrollArea type="auto" className="overflow-hidden" style={{ height: rowContentHeight }} viewportClassName="[&>div]:h-full">
                   <div className="grid grid-cols-7 min-h-full h-full">
                     {week.dayViews.map((day) => (
-                      <MonthViewDayEvents
-                        key={day.dayDate}
-                        isLoading={isLoading}
-                        dayRecord={day}
-                        userId={userId}
-                        readEventAllowed={true}
-                      />
+                      <MonthViewDayEvents key={day.dayDate} isLoading={isLoading} dayRecord={day} userId={userId} readEventAllowed={true} />
                     ))}
                   </div>
                   <ScrollBar orientation="vertical" forceMount />
@@ -191,13 +172,8 @@ export function CalendarMonthView({ date, userId }: { date: Date; userId?: strin
 
 export function MonthViewDayFooter({ dayRecord }: { dayRecord: IMonthDayView }) {
   return (
-    <div className={cn("flex h-full flex-col gap-1 border-l py-1 overflow-hidden", dayRecord.isSunday && "border-l-0")}>
-      <p
-        className={cn(
-          "h-4.5 px-1.5 text-xs font-semibold text-muted-foreground",
-          !dayRecord.isCurrentMonth && "opacity-50",
-        )}
-      >
+    <div className={cn('flex h-full flex-col gap-1 border-l py-1 overflow-hidden', dayRecord.isSunday && 'border-l-0')}>
+      <p className={cn('h-4.5 px-1.5 text-xs font-semibold text-muted-foreground', !dayRecord.isCurrentMonth && 'opacity-50')}>
         {dayRecord.totalEvents > 0 && <span className="sm:hidden">+{dayRecord.totalEvents}</span>}
         {dayRecord.totalEvents > 3 && <span className="hidden sm:block"> {dayRecord.totalEvents} events</span>}
       </p>
@@ -209,17 +185,17 @@ export function MonthViewDayHeader({ dayRecord }: { dayRecord: IMonthDayView }) 
   const { push } = useRouter();
 
   const handleClick = () => {
-    push(navigateURL(new Date(dayRecord.dayDate), "day"));
+    push(navigateURL(new Date(dayRecord.dayDate), 'day'));
   };
 
   return (
-    <div className={cn("flex h-full flex-col gap-1 border-l py-1 overflow-hidden", dayRecord.isSunday && "border-l-0")}>
+    <div className={cn('flex h-full flex-col gap-1 border-l py-1 overflow-hidden', dayRecord.isSunday && 'border-l-0')}>
       <Button
-        variant={"ghost"}
+        variant={'ghost'}
         className={cn(
-          "flex w-8 translate-x-1 items-center justify-center h-4 px-1 text-xs font-semibold lg:px-2",
-          !dayRecord.isCurrentMonth && "opacity-20 hover:bg-primary/20",
-          dayRecord.isToday && "rounded-full bg-primary px-0 font-bold text-primary-foreground",
+          'flex w-8 translate-x-1 items-center justify-center h-4 px-1 text-xs font-semibold lg:px-2',
+          !dayRecord.isCurrentMonth && 'opacity-20 hover:bg-primary/20',
+          dayRecord.isToday && 'rounded-full bg-primary px-0 font-bold text-primary-foreground',
         )}
         onClick={handleClick}
       >

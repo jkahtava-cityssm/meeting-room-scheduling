@@ -1,14 +1,14 @@
-"use client";
-import { IEventSingleRoom } from "@/lib/schemas";
+'use client';
+import { IEventSingleRoom } from '@/lib/schemas';
 
-import { addYears } from "date-fns";
-import { useState } from "react";
-import { TCalendarView } from "@/lib/types";
-import { navigateURL } from "@/lib/helpers";
-import { useRouter } from "next/navigation";
-import { CalendarDayColumnCurrentEvents } from "./calendar-day-column-current-events";
-import { DayPicker } from "@/components/ui/day-picker";
-import { Skeleton } from "@/components/ui/skeleton";
+import { addYears } from 'date-fns';
+import { useState } from 'react';
+import { TCalendarView } from '@/lib/types';
+import { navigateURL } from '@/lib/helpers';
+import { useRouter } from 'next/navigation';
+import { CalendarDayColumnCurrentEvents } from './calendar-day-column-current-events';
+import { DayPicker } from '@/components/ui/day-picker';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function CalendarDayColumnCalendar({
   date,

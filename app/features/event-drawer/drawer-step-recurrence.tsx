@@ -1,29 +1,29 @@
-"use client";
+'use client';
 
-import { useFormContext, useWatch } from "react-hook-form";
-import { z } from "zod/v4";
-import { endOfDay } from "date-fns";
+import { useFormContext, useWatch } from 'react-hook-form';
+import { z } from 'zod/v4';
+import { endOfDay } from 'date-fns';
 
-import { FormField, FormLabel, FormItem, FormControl } from "@/components/ui/form";
-import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { FormField, FormLabel, FormItem, FormControl } from '@/components/ui/form';
+import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-import { CalendarDayPopover } from "@/components/calendar-day-popover/calendar-day-popover";
-import { Session } from "@/lib/auth-client";
+import { CalendarDayPopover } from '@/components/calendar-day-popover/calendar-day-popover';
+import { Session } from '@/lib/auth-client';
 
-import { useRRulePreview } from "./use-rrule-preview";
+import { useRRulePreview } from './use-rrule-preview';
 
-import { NumberFormInput } from "./components/number-form-input";
-import { DailyForm } from "./sub-forms/rrule-day-form";
+import { NumberFormInput } from './components/number-form-input';
+import { DailyForm } from './sub-forms/rrule-day-form';
 
-import { MonthlyForm } from "./sub-forms/rrule-monthly-form";
-import { WeeklyForm } from "./sub-forms/rrule-weekly-form";
-import { YearlyForm } from "./sub-forms/rrule-yearly-form";
-import { FormStatus } from "./types";
-import { useMultiStepForm } from "./drawer-form-provider";
-import { step2Schema } from "./drawer-schema.validator";
-import { RRulePreview } from "./components/rrule-preview";
-import { EventDrawerPermissions } from "./lib/permissions";
+import { MonthlyForm } from './sub-forms/rrule-monthly-form';
+import { WeeklyForm } from './sub-forms/rrule-weekly-form';
+import { YearlyForm } from './sub-forms/rrule-yearly-form';
+import { FormStatus } from './types';
+import { useMultiStepForm } from './drawer-form-provider';
+import { step2Schema } from './drawer-schema.validator';
+import { RRulePreview } from './components/rrule-preview';
+import { EventDrawerPermissions } from './lib/permissions';
 
 // Import your newly created sub-forms and hooks
 
@@ -33,13 +33,13 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
 
   const { can, isVerifying } = EventDrawerPermissions.usePermissions();
 
-  const allowRecurrence = can("ToggleRecurrence");
+  const allowRecurrence = can('ToggleRecurrence');
   // All calculation logic, debouncing, and state is now hidden in this hook
   const { localDates, count, isCalculating } = useRRulePreview(startDate);
 
-  const type = watch("repeatingType");
-  const durationType = watch("durationType");
-  const isReadOnly = formStatus === "Read" || formStatus === "Loading" || allowRecurrence === false;
+  const type = watch('repeatingType');
+  const durationType = watch('durationType');
+  const isReadOnly = formStatus === 'Read' || formStatus === 'Loading' || allowRecurrence === false;
 
   return (
     <div>
@@ -73,9 +73,9 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
               )}
             />
 
-            {durationType === "count" && <NumberFormInput control={control} name="occurrences" disabled={isReadOnly} />}
+            {durationType === 'count' && <NumberFormInput control={control} name="occurrences" disabled={isReadOnly} />}
 
-            {durationType === "until" && (
+            {durationType === 'until' && (
               <FormField
                 control={control}
                 name="untilDate"
@@ -84,7 +84,7 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
                     id="untilDate"
                     disabled={isReadOnly}
                     value={field.value ? endOfDay(new Date(field.value)) : new Date()}
-                    onSelect={(date) => field.onChange(date ? endOfDay(date).toISOString() : "")}
+                    onSelect={(date) => field.onChange(date ? endOfDay(date).toISOString() : '')}
                     placeholder="Select a date"
                     data-invalid={fieldState.invalid}
                     className="w-52"
@@ -123,10 +123,10 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
 
           {/* DYNAMIC RECURRENCE FORMS */}
           <div className="pt-4">
-            {type === "daily" && <DailyForm control={control} isReadOnly={isReadOnly} />}
-            {type === "weekly" && <WeeklyForm control={control} isReadOnly={isReadOnly} />}
-            {type === "monthly" && <MonthlyForm control={control} isReadOnly={isReadOnly} />}
-            {type === "yearly" && <YearlyForm control={control} isReadOnly={isReadOnly} />}
+            {type === 'daily' && <DailyForm control={control} isReadOnly={isReadOnly} />}
+            {type === 'weekly' && <WeeklyForm control={control} isReadOnly={isReadOnly} />}
+            {type === 'monthly' && <MonthlyForm control={control} isReadOnly={isReadOnly} />}
+            {type === 'yearly' && <YearlyForm control={control} isReadOnly={isReadOnly} />}
           </div>
         </div>
       </div>
@@ -137,14 +137,14 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
 }
 
 const durations = [
-  { id: "forever", label: "Max (200 Years)" },
-  { id: "until", label: "End Date" },
-  { id: "count", label: "Total Instances" },
+  { id: 'forever', label: 'Max (200 Years)' },
+  { id: 'until', label: 'End Date' },
+  { id: 'count', label: 'Total Instances' },
 ];
 
 const repeatingPeriods = [
-  { id: "daily", label: "Daily" },
-  { id: "weekly", label: "Weekly" },
-  { id: "monthly", label: "Monthly" },
-  { id: "yearly", label: "Yearly" },
+  { id: 'daily', label: 'Daily' },
+  { id: 'weekly', label: 'Weekly' },
+  { id: 'monthly', label: 'Monthly' },
+  { id: 'yearly', label: 'Yearly' },
 ];

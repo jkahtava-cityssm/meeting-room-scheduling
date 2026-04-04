@@ -1,26 +1,26 @@
-import { z } from "zod/v4";
-import { createContext, useMemo, useRef, useState } from "react";
-import { Form, FormProvider } from "react-hook-form";
+import { z } from 'zod/v4';
+import { createContext, useMemo, useRef, useState } from 'react';
+import { Form, FormProvider } from 'react-hook-form';
 
-import { FormStep, MultiStepFormContextProps } from "./types";
+import { FormStep, MultiStepFormContextProps } from './types';
 
-import { useContext } from "react";
-import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from "@/components/ui/sheet";
-import { useDisclosure } from "@/hooks/use-disclosure";
+import { useContext } from 'react';
+import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from '@/components/ui/sheet';
+import { useDisclosure } from '@/hooks/use-disclosure';
 
-import React from "react";
-import { IEventSingleRoom } from "@/lib/schemas";
+import React from 'react';
+import { IEventSingleRoom } from '@/lib/schemas';
 
-import FormFooter from "./form-footer";
+import FormFooter from './form-footer';
 
-import { useMultiStepFormLogic } from "./use-multi-step-logic";
-import { useSession } from "@/contexts/SessionProvider";
-import { EventDialog } from "./components/dialog";
+import { useMultiStepFormLogic } from './use-multi-step-logic';
+import { useSession } from '@/contexts/SessionProvider';
+import { EventDialog } from './components/dialog';
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { TimeInterval } from "@/components/calendar-time-picker/useTimePicker";
-import { EventDrawerPermissions } from "./lib/permissions";
-import { CombinedSchema } from "./drawer-schema.validator";
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
+import { EventDrawerPermissions } from './lib/permissions';
+import { CombinedSchema } from './drawer-schema.validator';
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -72,7 +72,7 @@ export const MultiStepForm = ({
     minHour,
     maxHour,
     maxSpan,
-    restrictHours: !can("IgnoreHours"),
+    restrictHours: !can('IgnoreHours'),
   });
 
   return (
@@ -98,10 +98,7 @@ export const MultiStepForm = ({
               <Form className="h-full min-h-0">
                 <ScrollArea className="h-full min-h-0" type="always">
                   <div className="w-full min-h-0 pr-4">
-                    <logic.currentStep.component
-                      formStatus={logic.status}
-                      session={session}
-                    ></logic.currentStep.component>
+                    <logic.currentStep.component formStatus={logic.status} session={session}></logic.currentStep.component>
                   </div>
                   <ScrollBar orientation="vertical" forceMount></ScrollBar>
                 </ScrollArea>
@@ -122,8 +119,8 @@ export const MultiStepForm = ({
           onConfirm={() => logic.handleDialogAction(logic.dialogConfig?.confirmAction)}
           onCancel={() => logic.handleDialogAction(logic.dialogConfig?.cancelAction)}
           onSave={() => logic.handleDialogAction(logic.dialogConfig?.saveAction)}
-          confirmText={logic.dialogConfig.confirmText ?? "Confirm"}
-          cancelText={logic.dialogConfig.cancelText ?? "Cancel"}
+          confirmText={logic.dialogConfig.confirmText ?? 'Confirm'}
+          cancelText={logic.dialogConfig.cancelText ?? 'Cancel'}
           showSave={logic.dialogConfig.showSave}
           showConfirm={logic.dialogConfig.showConfirm}
           showCancel={logic.dialogConfig.showCancel}
@@ -136,7 +133,7 @@ export const MultiStepForm = ({
 export const useMultiStepForm = () => {
   const context = useContext(MultiStepFormContext);
   if (!context) {
-    throw new Error("useMultiStepForm must be used within MultiStepForm.Provider");
+    throw new Error('useMultiStepForm must be used within MultiStepForm.Provider');
   }
   return context;
 };

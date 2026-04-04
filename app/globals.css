@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @source inline("{bg,text,border,fill}-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,slate,gray,zinc,neutral,stone}-{50,100,200,300,400,500,600,700,800,900}");
 @source inline("{dark:bg,dark:text,dark:border}-{red,orange,amber,yellow,lime,green,emerald,teal,cyan,sky,blue,indigo,violet,purple,fuchsia,pink,rose,slate,gray,zinc,neutral,stone}-{900,800,700}");
@@ -236,7 +236,7 @@
   font-style: normal;
   font-weight: 600;
   font-size: 15px;
-  font-display: "Segoe UI", sans-serif;
+  font-display: 'Segoe UI', sans-serif;
 }
 
 .microsoft-dark {
@@ -244,7 +244,7 @@
   font-style: normal;
   font-weight: 600;
   font-size: 15px;
-  font-display: "Segoe UI", sans-serif;
+  font-display: 'Segoe UI', sans-serif;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -299,13 +299,9 @@
   --public-calendar-w-lg: calc(100dvw - (var(--public-calendar-filter-w-col-2) + (var(--spacing) * 15)));
 
   --public-calendar-sidebar-w-min: calc(100dvw - 300px - ((var(--spacing) * 10)));
-  --public-calendar-sidebar-w-sm: calc(
-    100dvw - 300px - (var(--public-calendar-filter-w-col-1) + (var(--spacing) * 10))
-  );
+  --public-calendar-sidebar-w-sm: calc(100dvw - 300px - (var(--public-calendar-filter-w-col-1) + (var(--spacing) * 10)));
   --public-calendar-sidebar-w-lg: calc(100dvw - 90px - (var(--public-calendar-filter-w-col-2) + (var(--spacing) * 15)));
-  --public-calendar-sidebar-w-xl: calc(
-    100dvw - 300px - (var(--public-calendar-filter-w-col-2) + (var(--spacing) * 15))
-  );
+  --public-calendar-sidebar-w-xl: calc(100dvw - 300px - (var(--public-calendar-filter-w-col-2) + (var(--spacing) * 15)));
 }
 
 :root {

@@ -1,24 +1,22 @@
-import { cva, type VariantProps } from "class-variance-authority";
-import { IconName } from "../ui/icon-dynamic";
-import { TColors } from "@/lib/types";
+import { cva, type VariantProps } from 'class-variance-authority';
+import { IconName } from '../ui/icon-dynamic';
+import { TColors } from '@/lib/types';
 
 /**
  * Variants for the multi-select component to handle different styles.
  * Uses class-variance-authority (cva) to define different styles based on "variant" prop.
  */
-export const multiSelectVariants = cva("transition-all duration-300 ease-in-out", {
+export const multiSelectVariants = cva('transition-all duration-300 ease-in-out', {
   variants: {
     variant: {
-      default: "border-foreground/10 text-foreground bg-card hover:bg-card/80 shadow-md ring-1 ring-white/10",
-      secondary:
-        "border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md ring-1 ring-white/10",
-      destructive:
-        "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 shadow-md ring-1 ring-white/10",
-      inverted: "inverted",
+      default: 'border-foreground/10 text-foreground bg-card hover:bg-card/80 shadow-md ring-1 ring-white/10',
+      secondary: 'border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-md ring-1 ring-white/10',
+      destructive: 'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 shadow-md ring-1 ring-white/10',
+      inverted: 'inverted',
     },
   },
   defaultVariants: {
-    variant: "default",
+    variant: 'default',
   },
 });
 

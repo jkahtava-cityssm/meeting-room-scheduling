@@ -15,8 +15,10 @@ Maintain state between container restarts when using Certbot in a Dockerized env
 - ssl-dhparams.pem – Diffie-Hellman parameters for enhanced security.
 
 ## Security Note
-This folder may contain private keys and sensitive certificate data. 
+
+This folder may contain private keys and sensitive certificate data.
 
 Ensure it is:
+
 - Excluded from version control (.gitignore)
 - Properly secured in production environments

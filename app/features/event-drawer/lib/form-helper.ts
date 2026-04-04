@@ -1,12 +1,9 @@
-import { UseFormReturn } from "react-hook-form";
-import { CombinedSchema } from "../drawer-schema.validator";
-import { FormStep } from "../types";
-import { getFieldValuesArray, getRRuleData } from "./rrule-preview-helper";
+import { UseFormReturn } from 'react-hook-form';
+import { CombinedSchema } from '../drawer-schema.validator';
+import { FormStep } from '../types';
+import { getFieldValuesArray, getRRuleData } from './rrule-preview-helper';
 
-export const isStepValid = async (
-  formStep: FormStep,
-  methods: UseFormReturn<CombinedSchema>,
-): Promise<{ status: boolean; errorList: string[] }> => {
+export const isStepValid = async (formStep: FormStep, methods: UseFormReturn<CombinedSchema>): Promise<{ status: boolean; errorList: string[] }> => {
   const formValues = methods.getValues();
 
   if (formStep.validationSchema) {
@@ -15,8 +12,8 @@ export const isStepValid = async (
 
     if (!validationResult.success) {
       validationResult.error.issues.forEach((err) => {
-        methods.setError(err.path.join(".") as keyof CombinedSchema, {
-          type: "manual",
+        methods.setError(err.path.join('.') as keyof CombinedSchema, {
+          type: 'manual',
           message: err.message,
         });
 
@@ -51,7 +48,7 @@ export const isFormValid = async (
 };
 
 export const reconcileRecurringEventDates = async (formData: CombinedSchema): Promise<CombinedSchema | null> => {
-  const needsRRuleUpdate = formData.isRecurring === "true" && formData.startDate !== formData.ruleStartDate;
+  const needsRRuleUpdate = formData.isRecurring === 'true' && formData.startDate !== formData.ruleStartDate;
 
   if (!needsRRuleUpdate) {
     return formData;
@@ -101,16 +98,14 @@ function computeMinuteStepData(interval: number) {
 
 export function getValidMinuteAndRolledHour(date: Date, interval?: number): Date {
   const allowed = [5, 10, 15, 20, 30, 60];
-  const validatedInterval = typeof interval === "number" && allowed.includes(interval) ? interval : 15;
+  const validatedInterval = typeof interval === 'number' && allowed.includes(interval) ? interval : 15;
 
   const MINUTE_STEP_DATA = computeMinuteStepData(validatedInterval);
 
   const minute = date.getMinutes();
   const hour = date.getHours();
 
-  const closest = MINUTE_STEP_DATA.stepValues.reduce((prev, curr) =>
-    Math.abs(curr - minute) < Math.abs(prev - minute) ? curr : prev,
-  );
+  const closest = MINUTE_STEP_DATA.stepValues.reduce((prev, curr) => (Math.abs(curr - minute) < Math.abs(prev - minute) ? curr : prev));
 
   const normalizedMinute = normalizeMinuteValue(closest, MINUTE_STEP_DATA);
 

@@ -1,40 +1,40 @@
-import { useFormContext } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { z } from "zod/v4";
+import { useFormContext } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
+import { z } from 'zod/v4';
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-import { Session } from "@/lib/auth-client";
+import { Session } from '@/lib/auth-client';
 
-import { FormStatus } from "./types";
-import { step1Schema } from "./drawer-schema.validator";
+import { FormStatus } from './types';
+import { step1Schema } from './drawer-schema.validator';
 
-import { StatusSelect } from "../status/status-select";
+import { StatusSelect } from '../status/status-select';
 
-import { RoomCategorySelect } from "../rooms/room-category-select";
+import { RoomCategorySelect } from '../rooms/room-category-select';
 
-import { COLOR_OPTIONS, TColors } from "@/lib/types";
+import { COLOR_OPTIONS, TColors } from '@/lib/types';
 
-import { RoomIconComboBox } from "./room-icon-combobox";
-import { RoleMultiSelect } from "../roles/role-multiselect";
-import { RoomPropertyMultiSelect } from "../rooms/room-property-multiselect";
-import { RoomColorSelect } from "./room-color-select";
-import { BadgeColored } from "@/components/ui/badge-colored";
-import { method } from "lodash";
-import { cn } from "@/lib/utils";
-import { EventCard } from "../calendar/components/calendar-scroll-private-event-block";
-import { addHours, format } from "date-fns";
+import { RoomIconComboBox } from './room-icon-combobox';
+import { RoleMultiSelect } from '../roles/role-multiselect';
+import { RoomPropertyMultiSelect } from '../rooms/room-property-multiselect';
+import { RoomColorSelect } from './room-color-select';
+import { BadgeColored } from '@/components/ui/badge-colored';
+import { method } from 'lodash';
+import { cn } from '@/lib/utils';
+import { EventCard } from '../calendar/components/calendar-scroll-private-event-block';
+import { addHours, format } from 'date-fns';
 
 export const Step01Room = ({ formStatus }: { formStatus: FormStatus }) => {
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
 
-  const isReadOnly = formStatus === "Read" || formStatus === "Loading";
+  const isReadOnly = formStatus === 'Read' || formStatus === 'Loading';
 
-  const currentColor = watch("color");
+  const currentColor = watch('color');
 
   return (
     <ScrollArea type="always">
@@ -45,11 +45,7 @@ export const Step01Room = ({ formStatus }: { formStatus: FormStatus }) => {
             name="name"
             render={({ field, fieldState }) => (
               <FormItem className="col-span-2 row-1">
-                {fieldState.invalid ? (
-                  <FormMessage className="leading-none font-medium" />
-                ) : (
-                  <FormLabel>Room Name</FormLabel>
-                )}
+                {fieldState.invalid ? <FormMessage className="leading-none font-medium" /> : <FormLabel>Room Name</FormLabel>}
                 <FormControl>
                   <Input
                     id="title"
@@ -101,12 +97,7 @@ export const Step01Room = ({ formStatus }: { formStatus: FormStatus }) => {
                       field.onChange(value);
                     }}
                   >
-                    <TabsList
-                      className="gap-2"
-                      aria-disabled={isReadOnly}
-                      data-invalid={fieldState.invalid}
-                      aria-invalid={fieldState.invalid}
-                    >
+                    <TabsList className="gap-2" aria-disabled={isReadOnly} data-invalid={fieldState.invalid} aria-invalid={fieldState.invalid}>
                       <TabsTrigger value="true" disabled={isReadOnly}>
                         Show
                       </TabsTrigger>
@@ -206,12 +197,7 @@ export const Step01Room = ({ formStatus }: { formStatus: FormStatus }) => {
               <FormItem className="col-3 row-1">
                 <FormLabel>Display Order</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    disabled={isReadOnly}
-                    value={field.value && String(field.value)}
-                    onChange={field.onChange}
-                  ></Input>
+                  <Input type="number" disabled={isReadOnly} value={field.value && String(field.value)} onChange={field.onChange}></Input>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -237,13 +223,13 @@ function EventBlockPreview({ color }: { color: TColors }) {
   const startDate = new Date();
   const endDate = addHours(startDate, 1);
   return (
-    <div tabIndex={-1} className={cn("w-full h-full", EventCardClasses)} aria-label={"Example Room Event"}>
+    <div tabIndex={-1} className={cn('w-full h-full', EventCardClasses)} aria-label={'Example Room Event'}>
       <div className="flex items-center gap-1.5 ">
-        <p className="truncate font-semibold">{"Example Room Event"}</p>
+        <p className="truncate font-semibold">{'Example Room Event'}</p>
       </div>
       <div className="flex items-center gap-1.5 truncate">
         <p className="truncate">
-          {format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
+          {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
         </p>
       </div>
     </div>

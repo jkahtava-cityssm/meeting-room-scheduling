@@ -1,18 +1,18 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-import { GridEventBlock } from "./calendar-scroll-private-event-block";
-import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from "react";
+import { GridEventBlock } from './calendar-scroll-private-event-block';
+import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from 'react';
 
-import { TIME_BLOCK_SIZE } from "@/lib/types";
-import { useCalendarViewport } from "./calendar-scroll-context";
-import { PublicEventBlock } from "./calendar-scroll-public-event-block";
-import { Skeleton } from "@/components/ui/skeleton";
-import { IEventBlock } from "../webworkers/generic-webworker";
-import { CalendarPermissions } from "../permissions/calendar.permissions";
-import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
-import { addDays } from "date-fns";
-import { LucideLock, LucideShieldBan } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TIME_BLOCK_SIZE } from '@/lib/types';
+import { useCalendarViewport } from './calendar-scroll-context';
+import { PublicEventBlock } from './calendar-scroll-public-event-block';
+import { Skeleton } from '@/components/ui/skeleton';
+import { IEventBlock } from '../webworkers/generic-webworker';
+import { CalendarPermissions } from '../permissions/calendar.permissions';
+import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
+import { addDays } from 'date-fns';
+import { LucideLock, LucideShieldBan } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -60,7 +60,7 @@ export type EventBlockRenderProps = {
 };
 
 export function CalendarScrollColumnPrivate(
-  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock" | "limitToHours" | "limitToSpan">,
+  props: Omit<CalendarScrollColumnProps, 'renderTimeBlock' | 'renderEventBlock' | 'limitToHours' | 'limitToSpan'>,
 ) {
   const { can, canAny } = CalendarPermissions.usePermissions();
 
@@ -75,7 +75,7 @@ export function CalendarScrollColumnPrivate(
         userId={userId}
         onClick={(e) => {
           e.preventDefault();
-          const canReadEvent = canAny("ReadAllEvent", ["ReadSelfEvent", String(eventBlock.event.userId) === userId]);
+          const canReadEvent = canAny('ReadAllEvent', ['ReadSelfEvent', String(eventBlock.event.userId) === userId]);
 
           if (canReadEvent) {
             openEventDrawer({
@@ -101,7 +101,7 @@ export function CalendarScrollColumnPrivate(
         currentDate={p.currentDate}
         totalBlocks={p.totalBlocks}
         blockIndex={p.blockIndex}
-        createEventAllowed={can("CreateEvent")}
+        createEventAllowed={can('CreateEvent')}
         lockDay={p.lockDay}
         lockHour={p.lockHour}
       />
@@ -117,25 +117,18 @@ export function CalendarScrollColumnPrivate(
       minHour={props.minHour}
       maxHour={props.maxHour}
       maxSpan={props.maxSpan}
-      limitToHours={!can("IgnoreHours")}
-      limitToSpan={!can("IgnoreBookingSpan")}
+      limitToHours={!can('IgnoreHours')}
+      limitToSpan={!can('IgnoreBookingSpan')}
     />
   );
 }
 
-export function CalendarScrollColumnPublic(
-  props: Omit<CalendarScrollColumnProps, "renderTimeBlock" | "renderEventBlock">,
-) {
+export function CalendarScrollColumnPublic(props: Omit<CalendarScrollColumnProps, 'renderTimeBlock' | 'renderEventBlock'>) {
   const { viewport, popoverLayer } = useCalendarViewport();
 
   const renderEventBlock = useCallback(
     ({ eventBlock }: EventBlockRenderProps) => (
-      <PublicEventBlock
-        eventBlock={eventBlock}
-        heightInPixels={eventBlock.eventHeight}
-        viewport={viewport}
-        popoverLayer={popoverLayer}
-      />
+      <PublicEventBlock eventBlock={eventBlock} heightInPixels={eventBlock.eventHeight} viewport={viewport} popoverLayer={popoverLayer} />
     ),
     [viewport, popoverLayer],
   );
@@ -146,7 +139,7 @@ export function CalendarScrollColumnPublic(
         totalBlocks={totalBlocks}
         blockIndex={blockIndex}
         disabled={true}
-        aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, "0")}`}
+        aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, '0')}`}
         isReadOnly={true}
       />
     ),
@@ -193,7 +186,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
 
   //
   return (
-    <div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
+    <div className={cn('min-w-45 w-full border-b-2', isLastColumn && 'border-r-2')}>
       <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center border-r">
         <span className="ml-1 text-xs font-semibold text-foreground">{title}</span>
       </div>
@@ -206,16 +199,16 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
             <div
               key={hour}
               className={cn(
-                "grid w-full h-24 relative group",
-                index !== 0 && "border-t-2 ",
-                "after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-px",
-                "after:bg-[linear-gradient(to_right,var(--color-border)_50%,transparent_50%)] after:bg-size-[8px_1px] after:bg-repeat-x",
-                "border-r",
+                'grid w-full h-24 relative group',
+                index !== 0 && 'border-t-2 ',
+                'after:pointer-events-none after:absolute after:inset-x-0 after:top-1/2 after:h-px',
+                'after:bg-[linear-gradient(to_right,var(--color-border)_50%,transparent_50%)] after:bg-size-[8px_1px] after:bg-repeat-x',
+                'border-r',
               )}
               style={{
                 gridTemplateRows: `repeat(${totalBlocks}, 1fr)`,
 
-                contentVisibility: "auto",
+                contentVisibility: 'auto',
                 containIntrinsicSize: `auto ${TIME_BLOCK_SIZE}px`,
               }}
             >
@@ -230,7 +223,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                         />
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent>{"Permission Required to Book Outside of Working Hours"}</TooltipContent>
+                    <TooltipContent>{'Permission Required to Book Outside of Working Hours'}</TooltipContent>
                   </Tooltip>
                 </div>
               )}
@@ -316,7 +309,7 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
       disabled={isDisabled}
       isReadOnly={false}
       onClick={openDrawer}
-      aria-label={`Create event at ${hour}:${String(startMinute).padStart(2, "0")}`}
+      aria-label={`Create event at ${hour}:${String(startMinute).padStart(2, '0')}`}
     />
   );
 });
@@ -337,10 +330,10 @@ const TimeBlockButton = memo(
         type="button"
         disabled={disabled}
         className={cn(
-          "w-full h-full transition-colors relative group flex items-center justify-center",
+          'w-full h-full transition-colors relative group flex items-center justify-center',
 
-          disabled && !isReadOnly && "cursor-not-allowed ",
-          !isReadOnly && "cursor-pointer hover:bg-accent",
+          disabled && !isReadOnly && 'cursor-not-allowed ',
+          !isReadOnly && 'cursor-pointer hover:bg-accent',
 
           className,
         )}
@@ -364,8 +357,5 @@ const MAXIMUM_INTERVAL = 60;
 
 function clampToValidInterval(interval: number) {
   const bounded = Math.min(Math.max(interval, MINIMUM_INTERVAL), MAXIMUM_INTERVAL);
-  return VALID_INTERVALS.reduce(
-    (best, v) => (Math.abs(bounded - v) < Math.abs(bounded - best) ? v : best),
-    VALID_INTERVALS[0],
-  );
+  return VALID_INTERVALS.reduce((best, v) => (Math.abs(bounded - v) < Math.abs(bounded - best) ? v : best), VALID_INTERVALS[0]);
 }

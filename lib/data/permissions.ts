@@ -1,8 +1,8 @@
-import { prisma } from "@/prisma";
-import { Prisma } from "@prisma/client";
-import { Role } from "../auth";
-import z from "zod/v4";
-import { ROLES_ENUM, SessionAction, SessionResource, SessionRole } from "../types";
+import { prisma } from '@/prisma';
+import { Prisma } from '@prisma/client';
+import { Role } from '../auth';
+import z from 'zod/v4';
+import { ROLES_ENUM, SessionAction, SessionResource, SessionRole } from '../types';
 
 export const SPermission = z.object({
   permissionId: z.string(),
@@ -34,10 +34,10 @@ export async function findManyExpandedPermissionSets(
   where?: Prisma.RoleWhereInput,
   tx: Prisma.TransactionClient = prisma,
 ): Promise<IPermissionSet[] | undefined> {
-  const roles = await tx.role.findMany({ where, include: PERMISSION_SET_SELECT, orderBy: { roleId: "asc" } });
+  const roles = await tx.role.findMany({ where, include: PERMISSION_SET_SELECT, orderBy: { roleId: 'asc' } });
   const allResourceActions = await tx.resourceAction.findMany({
     include: { resource: true, action: true },
-    orderBy: { resourceActionId: "asc" },
+    orderBy: { resourceActionId: 'asc' },
   });
 
   return roles?.map((role) => {
@@ -45,15 +45,13 @@ export async function findManyExpandedPermissionSets(
       roleId: String(role.roleId),
       roleName: role.name,
       permissions: allResourceActions.map((resourceAction) => {
-        const permissionInRole = role.roleResourceAction.find(
-          (pa) => pa.resourceActionId === resourceAction.resourceActionId,
-        );
+        const permissionInRole = role.roleResourceAction.find((pa) => pa.resourceActionId === resourceAction.resourceActionId);
 
         const permissionExists = permissionInRole ? permissionInRole.permit : false;
         const permit = role.name === ROLES_ENUM.Admin ? true : permissionExists;
 
         return {
-          permissionId: String(permissionInRole ? permissionInRole.roleResourceActionId : "-1"),
+          permissionId: String(permissionInRole ? permissionInRole.roleResourceActionId : '-1'),
           permit: permit,
           actionId: String(resourceAction.actionId),
           action: resourceAction.action.name,
@@ -89,12 +87,12 @@ const USER_ROLE_SELECT = {
 } as const satisfies Prisma.RoleSelect;
 
 export async function findManyRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma) {
-  const roles = await tx.role.findMany({ where, select: ROLE_SELECT, orderBy: { roleId: "asc" } });
+  const roles = await tx.role.findMany({ where, select: ROLE_SELECT, orderBy: { roleId: 'asc' } });
 
   return roles;
 }
 async function findManyUserRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma) {
-  const roles = await tx.role.findMany({ where, select: USER_ROLE_SELECT, orderBy: { roleId: "asc" } });
+  const roles = await tx.role.findMany({ where, select: USER_ROLE_SELECT, orderBy: { roleId: 'asc' } });
 
   if (!roles || roles.length === 0) {
     return [];
@@ -114,9 +112,7 @@ async function findManyUserRoles(where?: Prisma.RoleWhereInput, tx: Prisma.Trans
               resource: ra.resource.name as SessionResource,
             };
           })
-          .sort((a, b) =>
-            a.resource === b.resource ? a.action.localeCompare(b.action) : a.resource.localeCompare(b.resource),
-          ),
+          .sort((a, b) => (a.resource === b.resource ? a.action.localeCompare(b.action) : a.resource.localeCompare(b.resource))),
       };
     })
     .sort((a, b) => a.roleId - b.roleId);
@@ -154,14 +150,11 @@ const RESOURCE_ACTION_SELECT = {
   action: true,
 } as const satisfies Prisma.ResourceActionSelect;
 
-export async function findManyResourceAction(
-  where?: Prisma.ResourceActionWhereInput,
-  tx: Prisma.TransactionClient = prisma,
-) {
+export async function findManyResourceAction(where?: Prisma.ResourceActionWhereInput, tx: Prisma.TransactionClient = prisma) {
   const resourceActions = await tx.resourceAction.findMany({
     where,
     select: RESOURCE_ACTION_SELECT,
-    orderBy: { resourceActionId: "asc" },
+    orderBy: { resourceActionId: 'asc' },
   });
 
   return resourceActions;

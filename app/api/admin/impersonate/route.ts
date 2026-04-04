@@ -1,17 +1,17 @@
 // app/api/internal/sso/register-microsoft/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-import { guardRoute } from "@/lib/api-guard";
-import { auth, getServerSession } from "@/lib/auth";
-import { headers } from "next/headers";
-import { BadRequestMessage, DeleteMessage, SuccessMessage } from "@/lib/api-helpers";
-import { prisma } from "@/prisma";
-import { request } from "https";
+import { guardRoute } from '@/lib/api-guard';
+import { auth, getServerSession } from '@/lib/auth';
+import { headers } from 'next/headers';
+import { BadRequestMessage, DeleteMessage, SuccessMessage } from '@/lib/api-helpers';
+import { prisma } from '@/prisma';
+import { request } from 'https';
 
 export async function POST(req: NextRequest) {
   return guardRoute(
     req,
-    { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
+    { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { roleId } = await req.json();
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       const roleName = await prisma.role.findFirst({
         select: { name: true },
         where: { roleId: Number(roleId) },
-        orderBy: { roleId: "asc" },
+        orderBy: { roleId: 'asc' },
       });
 
       const session = await prisma.session.update({
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         where: { id: sessionId },
       });
 
-      return SuccessMessage("Created Impersonation", {
+      return SuccessMessage('Created Impersonation', {
         sessionId: session.id,
         impersonatedRole: session.impersonatedRole,
       });
@@ -43,7 +43,7 @@ export async function DELETE(req: NextRequest) {
 
   return guardRoute(
     req,
-    { isImpersonating: { type: "function", check: () => Boolean(session?.session?.impersonatedRole) } },
+    { isImpersonating: { type: 'function', check: () => Boolean(session?.session?.impersonatedRole) } },
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       if (!sessionId) {
         return BadRequestMessage();

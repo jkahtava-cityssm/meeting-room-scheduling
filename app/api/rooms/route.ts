@@ -1,26 +1,23 @@
-import { guardRoute } from "@/lib/api-guard";
-import { CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { guardRoute } from '@/lib/api-guard';
+import { CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 
-import { createRoom, findFirstRoom, findManyRooms, upsertRoom } from "@/lib/data/rooms";
-import { SRoomPUT } from "@/lib/services/rooms";
-import { prisma } from "@/prisma";
-import { NextRequest } from "next/server";
+import { createRoom, findFirstRoom, findManyRooms, upsertRoom } from '@/lib/data/rooms';
+import { SRoomPUT } from '@/lib/services/rooms';
+import { prisma } from '@/prisma';
+import { NextRequest } from 'next/server';
 
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
     {
-      AllOf: [{ ReadRoom: { type: "permission", resource: "Room", action: "Read" } }],
+      AllOf: [{ ReadRoom: { type: 'permission', resource: 'Room', action: 'Read' } }],
     },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
       const roomFilter = permissionCache.isAdmin
         ? {}
         : {
-            OR: [
-              { roomRoles: { some: { roleId: { in: Array.from(permissionCache.roleIdSet || []) } } } },
-              { roomRoles: { none: {} } },
-            ],
+            OR: [{ roomRoles: { some: { roleId: { in: Array.from(permissionCache.roleIdSet || []) } } } }, { roomRoles: { none: {} } }],
           };
 
       const rooms = await findManyRooms(roomFilter);
@@ -29,7 +26,7 @@ export async function GET(req: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("Collected Rooms", rooms);
+      return SuccessMessage('Collected Rooms', rooms);
     },
   );
 }
@@ -39,8 +36,8 @@ export async function PUT(request: NextRequest) {
     request,
     {
       AnyOf: [
-        { UpdateRooms: { type: "permission", resource: "Room", action: "Update" } },
-        { EditRooms: { type: "permission", resource: "Settings", action: "Edit Rooms" } },
+        { UpdateRooms: { type: 'permission', resource: 'Room', action: 'Update' } },
+        { EditRooms: { type: 'permission', resource: 'Settings', action: 'Edit Rooms' } },
       ],
     },
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
@@ -107,10 +104,10 @@ export async function PUT(request: NextRequest) {
       }
 
       if (room.roomId === data.roomId) {
-        return SuccessMessage("Updated Event", room);
+        return SuccessMessage('Updated Event', room);
       }
 
-      return CreatedMessage("Created Event", room);
+      return CreatedMessage('Created Event', room);
     },
     SRoomPUT,
   );
@@ -121,8 +118,8 @@ export async function POST(request: NextRequest) {
     request,
     {
       AnyOf: [
-        { CreateRooms: { type: "permission", resource: "Room", action: "Create" } },
-        { EditRooms: { type: "permission", resource: "Settings", action: "Edit Rooms" } },
+        { CreateRooms: { type: 'permission', resource: 'Room', action: 'Create' } },
+        { EditRooms: { type: 'permission', resource: 'Settings', action: 'Edit Rooms' } },
       ],
     },
     async ({ data }) => {
@@ -170,7 +167,7 @@ export async function POST(request: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return CreatedMessage("Created Room", room);
+      return CreatedMessage('Created Room', room);
     },
     SRoomPUT,
   );

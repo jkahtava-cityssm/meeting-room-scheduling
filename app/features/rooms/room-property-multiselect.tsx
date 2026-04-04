@@ -1,6 +1,6 @@
-import { useRolesQuery } from "@/lib/services/permissions";
-import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
-import { usePropertyQuery } from "@/lib/services/properties";
+import { useRolesQuery } from '@/lib/services/permissions';
+import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
+import { usePropertyQuery } from '@/lib/services/properties';
 
 export function RoomPropertyMultiSelect({
   selectedPropertyIds,
@@ -28,7 +28,7 @@ export function RoomPropertyMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Room Properties" : "Collecting Room Properties"}
+      loadingLabel={error ? 'Error: Loading Room Properties' : 'Collecting Room Properties'}
       placeholderText="Select Properties"
       searchText="Search Properties..."
       noResultText="No properties found"

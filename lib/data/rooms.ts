@@ -1,7 +1,7 @@
-import { prisma } from "@/prisma";
-import type { Prisma } from "@prisma/client";
-import { IRoom, SRoom } from "../schemas";
-import z from "zod/v4";
+import { prisma } from '@/prisma';
+import type { Prisma } from '@prisma/client';
+import { IRoom, SRoom } from '../schemas';
+import z from 'zod/v4';
 
 // Standard room select configuration — used across all DAL functions
 const ROOM_SELECT = {
@@ -31,7 +31,7 @@ export async function findManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const rooms = await tx.room.findMany({
     where,
     select: ROOM_SELECT,
-    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
+    orderBy: [{ displayOrder: { sort: 'asc', nulls: 'last' } }, { roomId: 'asc' }],
   });
 
   return flattenRoom(rooms);
@@ -41,7 +41,7 @@ export async function findFirstRoom(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const room = await tx.room.findFirst({
     where,
     select: ROOM_SELECT,
-    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
+    orderBy: [{ displayOrder: { sort: 'asc', nulls: 'last' } }, { roomId: 'asc' }],
   });
 
   return flattenRoom(room ? [room] : [])[0];
@@ -98,7 +98,7 @@ function flattenRoom(data: RoomWithRelations | RoomWithRelations[]): IRoomInput 
           roomPropertyId: roomProperty.roomPropertyId,
           propertyId: roomProperty.property.propertyId,
           name: roomProperty.property.name,
-          value: roomProperty.value ?? "",
+          value: roomProperty.value ?? '',
           type: roomProperty.property.type,
           createdAt: roomProperty.createdAt,
           updatedAt: roomProperty.updatedAt,

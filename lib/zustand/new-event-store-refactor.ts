@@ -1,6 +1,6 @@
-import { CombinedSchema } from "@/app/features/event-drawer/drawer-schema.validator";
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { CombinedSchema } from '@/app/features/event-drawer/drawer-schema.validator';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 type EventStore = {
   event: CombinedSchema | null;
@@ -11,7 +11,7 @@ type EventStore = {
 };
 
 function getStorageData(): EventStore | null {
-  const storageData = localStorage.getItem("new-event-storage-refactor");
+  const storageData = localStorage.getItem('new-event-storage-refactor');
   if (!storageData) return null;
 
   const parsedData = JSON.parse(storageData);
@@ -29,7 +29,7 @@ export const useEventStore = create<EventStore>()(
       hasEvent: () => get().event !== null,
     }),
     {
-      name: "new-event-storage-refactor",
+      name: 'new-event-storage-refactor',
       storage: createJSONStorage(() => sessionStorage),
     },
   ),

@@ -1,10 +1,10 @@
-import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
 
-import { IEventSingleRoom } from "@/lib/schemas";
-import EventDrawer from "./drawer-root";
-import { EventDrawerPermissions } from "./lib/permissions";
-import { useSession } from "@/contexts/SessionProvider";
-import { CombinedSchema } from "./drawer-schema.validator";
+import { IEventSingleRoom } from '@/lib/schemas';
+import EventDrawer from './drawer-root';
+import { EventDrawerPermissions } from './lib/permissions';
+import { useSession } from '@/contexts/SessionProvider';
+import { CombinedSchema } from './drawer-schema.validator';
 
 export type EventDrawerPayload = {
   creationDate: Date;
@@ -66,6 +66,6 @@ export function SharedEventDrawerProvider({ children }: { children: React.ReactN
 
 export function useSharedEventDrawer() {
   const ctx = useContext(SharedDrawerContext);
-  if (!ctx) throw new Error("useSharedDrawer must be used within SharedEventDrawerProvider");
+  if (!ctx) throw new Error('useSharedDrawer must be used within SharedEventDrawerProvider');
   return ctx;
 }

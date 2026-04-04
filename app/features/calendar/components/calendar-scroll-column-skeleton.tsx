@@ -1,16 +1,16 @@
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
-import { useMemo } from "react";
+import { useMemo } from 'react';
 
-import { TIME_BLOCK_SIZE } from "@/lib/types";
+import { TIME_BLOCK_SIZE } from '@/lib/types';
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function CalendarScrollColumnSkeleton({ hours, isLastColumn }: { hours: number[]; isLastColumn: boolean }) {
   const totalBlocks = 2;
   const middleBlock = useMemo(() => Math.max(0, Math.floor(totalBlocks / 2) - 1), [totalBlocks]);
   return (
-    <div className={cn("min-w-45 w-full border-b-2", isLastColumn && "border-r-2")}>
+    <div className={cn('min-w-45 w-full border-b-2', isLastColumn && 'border-r-2')}>
       <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
         <div className="w-full h-full py-1 px-5">
           <Skeleton className="h-full w-full"></Skeleton>
@@ -24,14 +24,14 @@ export function CalendarScrollColumnSkeleton({ hours, isLastColumn }: { hours: n
               className="grid w-full h-24 relative border-r"
               style={{
                 gridTemplateRows: `repeat(${totalBlocks}, 1fr)`,
-                contentVisibility: "auto",
+                contentVisibility: 'auto',
                 containIntrinsicSize: `auto ${TIME_BLOCK_SIZE}px`,
               }}
             >
               {index !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b-2"></div>}
               {Array.from({ length: totalBlocks }, (_, blockIndex) => {
                 return (
-                  <div key={blockIndex} className={cn("relative")} style={{ height: `${TIME_BLOCK_SIZE}px` }}>
+                  <div key={blockIndex} className={cn('relative')} style={{ height: `${TIME_BLOCK_SIZE}px` }}>
                     {blockIndex !== 0 && <div className="pointer-events-none absolute inset-x-0 top-0 border-b"></div>}
                     <Skeleton className="absolute inset-x-0 top-[2px] h-[44px] transition-colors hover:bg-accent rounded-none"></Skeleton>
 
@@ -55,8 +55,5 @@ const MAXIMUM_INTERVAL = 60;
 
 function clampToValidInterval(interval: number) {
   const bounded = Math.min(Math.max(interval, MINIMUM_INTERVAL), MAXIMUM_INTERVAL);
-  return VALID_INTERVALS.reduce(
-    (best, v) => (Math.abs(bounded - v) < Math.abs(bounded - best) ? v : best),
-    VALID_INTERVALS[0],
-  );
+  return VALID_INTERVALS.reduce((best, v) => (Math.abs(bounded - v) < Math.abs(bounded - best) ? v : best), VALID_INTERVALS[0]);
 }

@@ -1,7 +1,7 @@
-import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
-import { IconName } from "@/components/ui/icon-dynamic";
-import { useRoomsQuery } from "@/lib/services/rooms";
-import { TColors } from "@/lib/types";
+import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
+import { IconName } from '@/components/ui/icon-dynamic';
+import { useRoomsQuery } from '@/lib/services/rooms';
+import { TColors } from '@/lib/types';
 
 export function RoomMultiSelect({
   selectedRoomIds,
@@ -26,9 +26,7 @@ export function RoomMultiSelect({
 
   const availableRooms = data ? data.filter((room) => !excludeRoomIds.includes(String(room.roomId))) : [];
 
-  const effectiveSelection = selectedRoomIds.includes("-1")
-    ? [...availableRooms.map((room) => String(room.roomId))]
-    : selectedRoomIds;
+  const effectiveSelection = selectedRoomIds.includes('-1') ? [...availableRooms.map((room) => String(room.roomId))] : selectedRoomIds;
 
   return (
     <GenericMultiSelect
@@ -37,7 +35,7 @@ export function RoomMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Rooms" : "Collecting Rooms"}
+      loadingLabel={error ? 'Error: Loading Rooms' : 'Collecting Rooms'}
       placeholderText="Select Rooms"
       searchText="Search Rooms..."
       noResultText="No rooms found"
@@ -48,7 +46,7 @@ export function RoomMultiSelect({
       getIcon={(room) => room.icon as IconName}
       getColor={(room) => room.color as TColors}
       className={className}
-      selectAllBadge={{ label: "All Rooms", value: "-1", color: "zinc", icon: "asterisk" }}
+      selectAllBadge={{ label: 'All Rooms', value: '-1', color: 'zinc', icon: 'asterisk' }}
       hideSelectAll={hideSelectAll}
       hideIcon={false}
       hideClearAll={false}

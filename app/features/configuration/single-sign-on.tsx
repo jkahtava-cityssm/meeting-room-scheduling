@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { MicrosoftButton, MicrosoftLabel } from "@/components/ui/microsoft-signin-button";
-import { fetchPOST } from "@/lib/fetch";
-import { usePublicConfiguration } from "@/lib/services/public";
-import { CheckIcon, CheckSquare, Loader2Icon, X } from "lucide-react";
-import Image from "next/image";
-import { useState } from "react";
+import { MicrosoftButton, MicrosoftLabel } from '@/components/ui/microsoft-signin-button';
+import { fetchPOST } from '@/lib/fetch';
+import { usePublicConfiguration } from '@/lib/services/public';
+import { CheckIcon, CheckSquare, Loader2Icon, X } from 'lucide-react';
+import Image from 'next/image';
+import { useState } from 'react';
 
 import {
   AlertDialog,
@@ -17,7 +17,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogSave,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
   const [disabled, setDisabled] = useState(isDisabled);
@@ -30,7 +30,7 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
     setPending(true);
     setDisabled(true);
 
-    const result = await fetchPOST("/api/admin/register-sso", {});
+    const result = await fetchPOST('/api/admin/register-sso', {});
     if (result?.status !== 204) {
       setDisabled(false);
     }
@@ -88,9 +88,7 @@ const WarningDialog: React.FC<{
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>Confirm: SSO Registration Request</AlertDialogTitle>
-        <AlertDialogDescription>
-          This action cannot be reversed from within the application, and requires manual intervention.
-        </AlertDialogDescription>
+        <AlertDialogDescription>This action cannot be reversed from within the application, and requires manual intervention.</AlertDialogDescription>
       </AlertDialogHeader>
 
       <AlertDialogFooter>

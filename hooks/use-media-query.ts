@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = React.useState(false);
@@ -7,9 +7,9 @@ export function useMediaQuery(query: string): boolean {
     function handleChange(e: { matches: boolean | ((prevState: boolean) => boolean) }) {
       setMatches(e.matches);
     }
-    matchQueryList.addEventListener("change", handleChange);
+    matchQueryList.addEventListener('change', handleChange);
     return () => {
-      matchQueryList.removeEventListener("change", handleChange);
+      matchQueryList.removeEventListener('change', handleChange);
     };
   }, [query]);
   return matches;

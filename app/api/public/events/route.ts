@@ -1,10 +1,10 @@
-import { NextRequest } from "next/server";
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from "@/lib/api-helpers";
-import { UTCDate } from "@date-fns/utc";
-import { TStatusKey } from "@/lib/types";
-import { findPublicEvents } from "@/lib/data/public";
-import { endOfDay, startOfDay } from "date-fns";
-import { verifySecretHeader } from "@/lib/server/verifySecretHeader";
+import { NextRequest } from 'next/server';
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
+import { UTCDate } from '@date-fns/utc';
+import { TStatusKey } from '@/lib/types';
+import { findPublicEvents } from '@/lib/data/public';
+import { endOfDay, startOfDay } from 'date-fns';
+import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
 
 export async function GET(request: NextRequest) {
   if (!verifySecretHeader(request)) {
@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
   const searchParams = request.nextUrl.searchParams;
 
-  const startDateParam = searchParams.get("startdate");
-  const endDateParam = searchParams.get("enddate");
+  const startDateParam = searchParams.get('startdate');
+  const endDateParam = searchParams.get('enddate');
 
   if (!startDateParam || !endDateParam) {
     return BadRequestMessage();
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
             },
           },
         ],
-        AND: [{ OR: [{ status: { key: "APPROVED" as TStatusKey } }, { status: { key: "PENDING" as TStatusKey } }] }],
+        AND: [{ OR: [{ status: { key: 'APPROVED' as TStatusKey } }, { status: { key: 'PENDING' as TStatusKey } }] }],
       },
     ],
   });
@@ -47,5 +47,5 @@ export async function GET(request: NextRequest) {
     return InternalServerErrorMessage();
   }
 
-  return SuccessMessage("Collected Events", events);
+  return SuccessMessage('Collected Events', events);
 }

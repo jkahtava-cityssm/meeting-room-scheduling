@@ -1,6 +1,5 @@
-
-import crypto from "crypto";
-import { NextRequest } from "next/server";
+import crypto from 'crypto';
+import { NextRequest } from 'next/server';
 
 export function verifySecretHeader(req: NextRequest) {
   const header = req.headers.get('x-internal-api-key') ?? '';

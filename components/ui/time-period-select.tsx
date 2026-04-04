@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Period, display12HourValue, setDateByType } from "./time-picker-input";
+import * as React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Period, display12HourValue, setDateByType } from './time-picker-input';
 
 export interface PeriodSelectorProps extends React.InputHTMLAttributes<HTMLButtonElement> {
   period: Period;
@@ -16,8 +16,8 @@ export interface PeriodSelectorProps extends React.InputHTMLAttributes<HTMLButto
 export const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelectorProps>(
   ({ period, setPeriod, date, setDate, onLeftFocus, onRightFocus, ...props }, ref) => {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (e.key === "ArrowRight") onRightFocus?.();
-      if (e.key === "ArrowLeft") onLeftFocus?.();
+      if (e.key === 'ArrowRight') onRightFocus?.();
+      if (e.key === 'ArrowLeft') onLeftFocus?.();
     };
 
     const handleValueChange = (value: Period) => {
@@ -30,7 +30,7 @@ export const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelect
       if (date) {
         const tempDate = new Date(date);
         const hours = display12HourValue(date.getHours());
-        setDate(setDateByType(tempDate, hours.toString(), "12hours", period === "AM" ? "PM" : "AM"));
+        setDate(setDateByType(tempDate, hours.toString(), '12hours', period === 'AM' ? 'PM' : 'AM'));
       }
     };
 
@@ -39,7 +39,7 @@ export const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelect
         <SelectTrigger
           id={props.id}
           disabled={props.disabled}
-          aria-invalid={props["aria-invalid"]}
+          aria-invalid={props['aria-invalid']}
           ref={ref}
           className="flex items-center focus:bg-accent focus:text-accent-foreground"
           onKeyDown={handleKeyDown}
@@ -52,7 +52,7 @@ export const TimePeriodSelect = React.forwardRef<HTMLButtonElement, PeriodSelect
         </SelectContent>
       </Select>
     );
-  }
+  },
 );
 
-TimePeriodSelect.displayName = "TimePeriodSelect";
+TimePeriodSelect.displayName = 'TimePeriodSelect';

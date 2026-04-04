@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { createAuthClient } from "better-auth/react";
-import { customSessionClient } from "better-auth/client/plugins";
-import type { auth } from "@/lib/auth";
-import { isEqual } from "lodash";
+import { createAuthClient } from 'better-auth/react';
+import { customSessionClient } from 'better-auth/client/plugins';
+import type { auth } from '@/lib/auth';
+import { isEqual } from 'lodash';
 
 import {
   buildPermissionCache,
@@ -11,9 +11,9 @@ import {
   isGroupRequirementMet,
   PermissionCache,
   PermissionResult,
-} from "./auth-permission-checks";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ssoClient } from "@better-auth/sso/client";
+} from './auth-permission-checks';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ssoClient } from '@better-auth/sso/client';
 
 export const authClient = createAuthClient({
   /** The base URL of the server (optional if you're using the same domain) */

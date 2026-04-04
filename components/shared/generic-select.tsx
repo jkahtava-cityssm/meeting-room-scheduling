@@ -1,10 +1,10 @@
-import { TColors } from "@/lib/types";
-import DynamicIcon, { IconName } from "../ui/icon-dynamic";
-import { Button } from "../ui/button";
-import { CircleX, Loader2Icon } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { BadgeColored } from "../ui/badge-colored";
-import { cn } from "@/lib/utils";
+import { TColors } from '@/lib/types';
+import DynamicIcon, { IconName } from '../ui/icon-dynamic';
+import { Button } from '../ui/button';
+import { CircleX, Loader2Icon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { BadgeColored } from '../ui/badge-colored';
+import { cn } from '@/lib/utils';
 
 type DataSelectProps<T> = {
   list: T[] | undefined;
@@ -29,8 +29,8 @@ export function GenericSelect<T>({
   isLoading,
   isError,
   isDisabled,
-  loadingLabel = "Collecting Data",
-  placeholderText = "Select an option",
+  loadingLabel = 'Collecting Data',
+  placeholderText = 'Select an option',
   dataInvalid = false,
   onChange,
   getId,
@@ -41,13 +41,7 @@ export function GenericSelect<T>({
 }: DataSelectProps<T>) {
   if (isLoading || !list) {
     return (
-      <Button
-        data-invalid={dataInvalid}
-        aria-invalid={dataInvalid}
-        variant={"combobox"}
-        disabled
-        className={cn("min-w-[200px]", className)}
-      >
+      <Button data-invalid={dataInvalid} aria-invalid={dataInvalid} variant={'combobox'} disabled className={cn('min-w-[200px]', className)}>
         {isError ? <CircleX /> : <Loader2Icon className="animate-spin " />}
         {loadingLabel}
       </Button>
@@ -57,30 +51,20 @@ export function GenericSelect<T>({
   if (isDisabled) {
     const selectedItem = list.find((item) => getId(item) === selectedValue);
     return (
-      <Button
-        data-invalid={dataInvalid}
-        aria-invalid={dataInvalid}
-        variant={"combobox"}
-        disabled
-        className={cn("min-w-[200px]", className)}
-      >
+      <Button data-invalid={dataInvalid} aria-invalid={dataInvalid} variant={'combobox'} disabled className={cn('min-w-[200px]', className)}>
         {selectedItem && getColor && getIcon && (
           <BadgeColored color={getColor(selectedItem)} className="h-6 w-6">
-            <DynamicIcon
-              hideBackground={true}
-              color={getColor(selectedItem)}
-              name={getIcon(selectedItem)}
-            ></DynamicIcon>
+            <DynamicIcon hideBackground={true} color={getColor(selectedItem)} name={getIcon(selectedItem)}></DynamicIcon>
           </BadgeColored>
         )}
-        {selectedItem ? getLabel(selectedItem) : ""}
+        {selectedItem ? getLabel(selectedItem) : ''}
       </Button>
     );
   }
 
   return (
     <Select value={selectedValue} onValueChange={onChange}>
-      <SelectTrigger aria-invalid={dataInvalid} data-invalid={dataInvalid} className={cn("min-w-[200px]", className)}>
+      <SelectTrigger aria-invalid={dataInvalid} data-invalid={dataInvalid} className={cn('min-w-[200px]', className)}>
         <SelectValue placeholder={placeholderText} />
       </SelectTrigger>
 

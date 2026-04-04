@@ -1,5 +1,5 @@
-import React from "react";
-import { arraysEqual } from "./multi-select.utils";
+import React from 'react';
+import { arraysEqual } from './multi-select.utils';
 
 /**
  * Core state management hook for MultiSelect component
@@ -12,10 +12,10 @@ export function useMultiSelectState(
 ) {
   const [selectedValues, setSelectedValues] = React.useState<string[]>(defaultValue);
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-  const [searchValue, setSearchValue] = React.useState("");
+  const [searchValue, setSearchValue] = React.useState('');
   const [focusedBadgeIndex, setFocusedBadgeIndex] = React.useState<number>(-1);
-  const [politeMessage, setPoliteMessage] = React.useState("");
-  const [assertiveMessage, setAssertiveMessage] = React.useState("");
+  const [politeMessage, setPoliteMessage] = React.useState('');
+  const [assertiveMessage, setAssertiveMessage] = React.useState('');
 
   const prevDefaultValueRef = React.useRef<string[]>(defaultValue);
   const onValueChangeRef = React.useRef(onValueChange);
@@ -55,22 +55,20 @@ export function useMultiSelectState(
     }
   }, [selectedValues.length, focusedBadgeIndex]);
 
-  const announce = React.useCallback((message: string, priority: "polite" | "assertive" = "polite") => {
-    const setMessage = priority === "assertive" ? setAssertiveMessage : setPoliteMessage;
+  const announce = React.useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
+    const setMessage = priority === 'assertive' ? setAssertiveMessage : setPoliteMessage;
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setMessage(message);
 
     timeoutRef.current = setTimeout(() => {
-      setMessage("");
+      setMessage('');
     }, 500);
   }, []);
 
   const toggleOption = React.useCallback(
     (optionValue: string) => {
-      setSelectedValues((prev) =>
-        prev.includes(optionValue) ? prev.filter((v) => v !== optionValue) : [...prev, optionValue],
-      );
+      setSelectedValues((prev) => (prev.includes(optionValue) ? prev.filter((v) => v !== optionValue) : [...prev, optionValue]));
       if (closeOnSelect) setIsPopoverOpen(false);
     },
     [closeOnSelect],
@@ -84,13 +82,13 @@ export function useMultiSelectState(
   const resetToDefault = React.useCallback(() => {
     setSelectedValues(defaultValue);
     setIsPopoverOpen(false);
-    setSearchValue("");
+    setSearchValue('');
     onValueChange(defaultValue);
   }, [defaultValue, onValueChange]);
 
   const handleTogglePopover = (value: boolean) => {
     if (value) {
-      setSearchValue("");
+      setSearchValue('');
     }
     setIsPopoverOpen(value);
   };

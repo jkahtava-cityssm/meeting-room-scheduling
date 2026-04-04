@@ -1,12 +1,12 @@
-import React, { useRef } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useRef } from 'react';
+import { Button } from '@/components/ui/button';
 
 type YearGridProps = {
   yearList: number[];
   selectedYear: number;
   currentYear: number;
   onClickYear: (date: Date) => void;
-  onNavigateBand: (direction: "prev" | "next") => void;
+  onNavigateBand: (direction: 'prev' | 'next') => void;
   firstYearRef?: React.RefObject<HTMLButtonElement | null>;
   lastYearRef?: React.RefObject<HTMLButtonElement | null>;
 
@@ -47,11 +47,11 @@ export default function YearGrid({
     Home: () => deferFocus(0),
     End: () => deferFocus(lastIndex),
     PageUp: (index) => {
-      onNavigateBand("prev");
+      onNavigateBand('prev');
       deferFocus(index);
     },
     PageDown: (index) => {
-      onNavigateBand("next");
+      onNavigateBand('next');
       deferFocus(index);
     },
     ArrowRight: (index) => moveByOffset(index, 1, 0),
@@ -65,10 +65,10 @@ export default function YearGrid({
     const col = index % totalColumns;
 
     if (nextIndex < 0) {
-      onNavigateBand("prev");
+      onNavigateBand('prev');
       deferFocus(fallback);
     } else if (nextIndex >= yearList.length) {
-      onNavigateBand("next");
+      onNavigateBand('next');
       deferFocus(fallback);
     } else {
       deferFocus(nextIndex);
@@ -113,8 +113,8 @@ export default function YearGrid({
             role="gridcell"
             key={year}
             aria-selected={isSelected}
-            aria-current={isCurrent ? "date" : undefined}
-            aria-label={`Year ${year}${isCurrent ? ", current year" : ""}${isSelected ? ", selected" : ""}`}
+            aria-current={isCurrent ? 'date' : undefined}
+            aria-label={`Year ${year}${isCurrent ? ', current year' : ''}${isSelected ? ', selected' : ''}`}
             type="button"
             tabIndex={isTabbable ? 0 : -1}
             onFocus={() => {
@@ -126,10 +126,10 @@ export default function YearGrid({
               onClickYear(new Date(year, 0, 1));
             }}
             className={`size-14 p-2  focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 hover:text-primary-foreground  hover:bg-primary/50 
-            ${isSelected ? "bg-primary font-semibold text-primary-foreground" : ""}
-            ${isTodayInYear && !isSelected ? "bg-accent text-accent-foreground" : ""}
+            ${isSelected ? 'bg-primary font-semibold text-primary-foreground' : ''}
+            ${isTodayInYear && !isSelected ? 'bg-accent text-accent-foreground' : ''}
             `}
-            variant={"ghost"}
+            variant={'ghost'}
           >
             <div className="flex flex-col justify-center align-middle">
               <div className="flex size-6 items-center justify-center rounded-full text-xs font-medium">{year}</div>

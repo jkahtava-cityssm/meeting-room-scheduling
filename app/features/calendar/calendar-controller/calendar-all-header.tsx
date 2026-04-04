@@ -1,5 +1,5 @@
-"use client";
-import Link from "next/link";
+'use client';
+import Link from 'next/link';
 import {
   Columns,
   Grid3x3,
@@ -12,32 +12,32 @@ import {
   LucideFilter,
   LucideSearch,
   LucideMenuSquare,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { RoomSelect } from "@/app/features/rooms/room-select";
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { RoomSelect } from '@/app/features/rooms/room-select';
 
-import type { TCalendarView, TStatusKey } from "@/lib/types";
-import { navigateDate, navigateURL } from "@/lib/helpers";
-import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
-import { useRouter } from "next/navigation";
+import type { TCalendarView, TStatusKey } from '@/lib/types';
+import { navigateDate, navigateURL } from '@/lib/helpers';
+import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
+import { useRouter } from 'next/navigation';
 
-import { DateNavigator, NavigationButtons } from "./calendar-all-header-date-navigator";
-import { TodayButton } from "./calendar-all-header-today-button";
-import { CalendarPermissions } from "../permissions/calendar.permissions";
+import { DateNavigator, NavigationButtons } from './calendar-all-header-date-navigator';
+import { TodayButton } from './calendar-all-header-today-button';
+import { CalendarPermissions } from '../permissions/calendar.permissions';
 
-import EventDrawer from "../../event-drawer/drawer-root";
-import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
+import EventDrawer from '../../event-drawer/drawer-root';
+import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 
-import { StatusMultiSelect } from "../../status/status-multiselect";
-import { RoomMultiSelect } from "../../rooms/room-multiselect";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { DateControls } from "../view-public/public-date-control";
-import { useState } from "react";
-import { CalendarDayPopover } from "@/components/calendar-day-popover/calendar-day-popover";
-import { formatDate } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { StatusMultiSelect } from '../../status/status-multiselect';
+import { RoomMultiSelect } from '../../rooms/room-multiselect';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+import { DateControls } from '../view-public/public-date-control';
+import { useState } from 'react';
+import { CalendarDayPopover } from '@/components/calendar-day-popover/calendar-day-popover';
+import { formatDate } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export function CalendarHeader({
   view,
@@ -45,10 +45,10 @@ export function CalendarHeader({
   userId,
   permissions,
 }: {
-  view: Exclude<TCalendarView, "all" | "public">;
+  view: Exclude<TCalendarView, 'all' | 'public'>;
   selectedDate: Date;
   userId?: string;
-  permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>;
+  permissions: Record<Exclude<TCalendarView, 'all' | 'public'>, boolean>;
 }) {
   const { day, week, month, year, agenda } = permissions;
 
@@ -58,13 +58,13 @@ export function CalendarHeader({
   const { push } = useRouter();
 
   const handleNavigatePrevious = () => {
-    const previousDate = navigateDate(selectedDate, view, "previous");
+    const previousDate = navigateDate(selectedDate, view, 'previous');
 
     push(navigateURL(previousDate, view));
   };
 
   const handleNavigateNext = () => {
-    const nextDate = navigateDate(selectedDate, view, "next");
+    const nextDate = navigateDate(selectedDate, view, 'next');
 
     push(navigateURL(nextDate, view));
   };
@@ -80,12 +80,7 @@ export function CalendarHeader({
         <div className="hidden sm:flex items-center gap-3">
           <TodayButton view={view} />
 
-          <DateNavigator
-            view={view}
-            selectedDate={selectedDate}
-            onPreviousClick={handleNavigatePrevious}
-            onNextClick={handleNavigateNext}
-          />
+          <DateNavigator view={view} selectedDate={selectedDate} onPreviousClick={handleNavigatePrevious} onNextClick={handleNavigateNext} />
         </div>
 
         <div className="hidden items-center gap-1.5  sm:flex sm:flex-row lg:justify-between lg:ml-auto ">
@@ -119,11 +114,11 @@ export function CalendarHeader({
                 asChild={day}
                 aria-label="View by day"
                 size="icon"
-                variant={view === "day" ? "default" : "outline"}
+                variant={view === 'day' ? 'default' : 'outline'}
                 className="rounded-r-none [&_svg]:size-5"
                 disabled={!day}
               >
-                <Link href={navigateURL(selectedDate, "day")}>
+                <Link href={navigateURL(selectedDate, 'day')}>
                   <List strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -132,11 +127,11 @@ export function CalendarHeader({
                 asChild={week}
                 aria-label="View by week"
                 size="icon"
-                variant={view === "week" ? "default" : "outline"}
+                variant={view === 'week' ? 'default' : 'outline'}
                 className="-ml-px rounded-none [&_svg]:size-5"
                 disabled={!week}
               >
-                <Link href={navigateURL(selectedDate, "week")}>
+                <Link href={navigateURL(selectedDate, 'week')}>
                   <Columns strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -145,11 +140,11 @@ export function CalendarHeader({
                 asChild={month}
                 aria-label="View by month"
                 size="icon"
-                variant={view === "month" ? "default" : "outline"}
+                variant={view === 'month' ? 'default' : 'outline'}
                 className="-ml-px rounded-none [&_svg]:size-5"
                 disabled={!month}
               >
-                <Link href={navigateURL(selectedDate, "month")}>
+                <Link href={navigateURL(selectedDate, 'month')}>
                   <Grid2x2 strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -158,11 +153,11 @@ export function CalendarHeader({
                 asChild={year}
                 aria-label="View by year"
                 size="icon"
-                variant={view === "year" ? "default" : "outline"}
+                variant={view === 'year' ? 'default' : 'outline'}
                 className="-ml-px rounded-none [&_svg]:size-5"
                 disabled={!year}
               >
-                <Link href={navigateURL(selectedDate, "year")}>
+                <Link href={navigateURL(selectedDate, 'year')}>
                   <Grid3x3 strokeWidth={1.8} />
                 </Link>
               </Button>
@@ -171,22 +166,19 @@ export function CalendarHeader({
                 asChild={agenda}
                 aria-label="View by agenda"
                 size="icon"
-                variant={view === "agenda" ? "default" : "outline"}
+                variant={view === 'agenda' ? 'default' : 'outline'}
                 className="-ml-px rounded-l-none [&_svg]:size-5"
                 disabled={!agenda}
               >
-                <Link href={navigateURL(selectedDate, "agenda")}>
+                <Link href={navigateURL(selectedDate, 'agenda')}>
                   <CalendarRange strokeWidth={1.8} />
                 </Link>
               </Button>
             </div>
           </div>
 
-          {!isVerifying && can("CreateEvent") && (
-            <Button
-              className="w-full sm:w-auto"
-              onClick={() => openEventDrawer({ userId: userId, creationDate: new Date() })}
-            >
+          {!isVerifying && can('CreateEvent') && (
+            <Button className="w-full sm:w-auto" onClick={() => openEventDrawer({ userId: userId, creationDate: new Date() })}>
               <Plus />
               Add Event
             </Button>
@@ -211,16 +203,16 @@ const MobileHeader = ({
   view,
   className,
 }: {
-  permissions: Record<Exclude<TCalendarView, "all" | "public">, boolean>;
+  permissions: Record<Exclude<TCalendarView, 'all' | 'public'>, boolean>;
   selectedDate: Date;
-  view: Exclude<TCalendarView, "all" | "public">;
+  view: Exclude<TCalendarView, 'all' | 'public'>;
   className?: string;
 }) => {
   const { day, week, month, year, agenda } = permissions;
   return (
-    <div className={cn("flex items-center gap-2 justify-between", className)}>
+    <div className={cn('flex items-center gap-2 justify-between', className)}>
       <span className="text-lg font-semibold w-35">
-        {formatDate(selectedDate, "MMMM")} {selectedDate.getFullYear()}
+        {formatDate(selectedDate, 'MMMM')} {selectedDate.getFullYear()}
       </span>
       <div>
         <Popover>
@@ -232,44 +224,44 @@ const MobileHeader = ({
           <PopoverContent align="end" className="w-auto">
             <RadioGroup defaultValue={view} value={view} className="gap-4">
               <ConditionalLink
-                href={navigateURL(selectedDate, "day")}
+                href={navigateURL(selectedDate, 'day')}
                 isDisabled={!day}
-                id={"day"}
-                value={"day"}
-                label={"Day"}
+                id={'day'}
+                value={'day'}
+                label={'Day'}
                 icon={<List className="size-4" />}
               ></ConditionalLink>
               <ConditionalLink
-                href={navigateURL(selectedDate, "week")}
+                href={navigateURL(selectedDate, 'week')}
                 isDisabled={!week}
-                id={"week"}
-                value={"week"}
-                label={"Week"}
+                id={'week'}
+                value={'week'}
+                label={'Week'}
                 icon={<Columns className="size-4" />}
               ></ConditionalLink>
               <ConditionalLink
-                href={navigateURL(selectedDate, "month")}
+                href={navigateURL(selectedDate, 'month')}
                 isDisabled={!month}
-                id={"month"}
-                value={"month"}
-                label={"Month"}
+                id={'month'}
+                value={'month'}
+                label={'Month'}
                 icon={<Grid2x2 className="size-4" />}
               ></ConditionalLink>
               <ConditionalLink
-                href={navigateURL(selectedDate, "year")}
+                href={navigateURL(selectedDate, 'year')}
                 isDisabled={!year}
-                id={"year"}
-                value={"year"}
-                label={"Year"}
+                id={'year'}
+                value={'year'}
+                label={'Year'}
                 icon={<Grid3x3 className="size-4" />}
               ></ConditionalLink>
 
               <ConditionalLink
-                href={navigateURL(selectedDate, "agenda")}
+                href={navigateURL(selectedDate, 'agenda')}
                 isDisabled={!agenda}
-                id={"agenda"}
-                value={"agenda"}
-                label={"Agenda"}
+                id={'agenda'}
+                value={'agenda'}
+                label={'Agenda'}
                 icon={<CalendarRange className="size-4" />}
               ></ConditionalLink>
             </RadioGroup>
@@ -344,11 +336,7 @@ const MobileDateControls = ({
   return (
     <div className="grid grid-cols-[auto_1fr_auto] items-center w-full py-2 gap-2 mx-4">
       <Button asChild size="lg" variant="ghost" className="px-2">
-        <Link
-          href={navigateURL(navigateDate(selectedDate, view, "previous"), view)}
-          onClick={onPreviousClick}
-          aria-label="Previous day"
-        >
+        <Link href={navigateURL(navigateDate(selectedDate, view, 'previous'), view)} onClick={onPreviousClick} aria-label="Previous day">
           <ChevronLeft className="h-5 w-5" />
         </Link>
       </Button>
@@ -360,23 +348,19 @@ const MobileDateControls = ({
           value={selectedDate}
           onSelect={(selectedDate) => {
             if (!selectedDate) return;
-            push(navigateURL(selectedDate, "public"));
+            push(navigateURL(selectedDate, 'public'));
           }}
-          placeholder={formatDate(selectedDate, "MMMM do, yyyy")}
+          placeholder={formatDate(selectedDate, 'MMMM do, yyyy')}
           data-invalid={false}
         >
           <Button size="lg" variant="ghost" className="text-base font-semibold px-2">
-            <span className="whitespace-nowrap">{formatDate(selectedDate, "PPP")}</span>
+            <span className="whitespace-nowrap">{formatDate(selectedDate, 'PPP')}</span>
           </Button>
         </CalendarDayPopover>
       </div>
 
       <Button asChild size="lg" variant="ghost" className="px-2">
-        <Link
-          href={navigateURL(navigateDate(selectedDate, view, "next"), view)}
-          onClick={onNextClick}
-          aria-label="Next day"
-        >
+        <Link href={navigateURL(navigateDate(selectedDate, view, 'next'), view)} onClick={onNextClick} aria-label="Next day">
           <ChevronRight className="h-5 w-5" />
         </Link>
       </Button>

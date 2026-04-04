@@ -1,6 +1,6 @@
-import { FormControl, FormField, FormItem } from "@/components/ui/form";
-import InputNumber from "@/components/ui/input-number";
-import { Control, FieldPath, FieldPathByValue, FieldValues } from "react-hook-form";
+import { FormControl, FormField, FormItem } from '@/components/ui/form';
+import InputNumber from '@/components/ui/input-number';
+import { Control, FieldPath, FieldPathByValue, FieldValues } from 'react-hook-form';
 
 export function NumberFormInput<TFieldValues extends FieldValues>({
   control,

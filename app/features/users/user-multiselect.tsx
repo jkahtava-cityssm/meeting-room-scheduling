@@ -1,5 +1,5 @@
-import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
-import { useUsersQuery } from "@/lib/services/users";
+import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
+import { useUsersQuery } from '@/lib/services/users';
 
 export function UserMultiSelect({
   selectedUserIds,
@@ -20,8 +20,7 @@ export function UserMultiSelect({
 }) {
   const { isPending, data, error } = useUsersQuery();
 
-  const filteredUsers =
-    excludeUserIds && data ? data.filter((user) => !excludeUserIds.includes(String(user.userId))) : data;
+  const filteredUsers = excludeUserIds && data ? data.filter((user) => !excludeUserIds.includes(String(user.userId))) : data;
 
   return (
     <GenericMultiSelect
@@ -30,7 +29,7 @@ export function UserMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Users" : "Collecting Users"}
+      loadingLabel={error ? 'Error: Loading Users' : 'Collecting Users'}
       placeholderText="Select Users to Notify"
       searchText="Search users..."
       noResultText="No users found"

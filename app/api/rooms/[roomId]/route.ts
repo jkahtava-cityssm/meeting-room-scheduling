@@ -1,20 +1,14 @@
-import {
-  BadRequestMessage,
-  CreatedMessage,
-  DeleteMessage,
-  InternalServerErrorMessage,
-  SuccessMessage,
-} from "@/lib/api-helpers";
-import { guardRoute } from "@/lib/api-guard";
-import { NextRequest } from "next/server";
-import { deleteManyRooms, findFirstRoom, findManyRooms, upsertRoom } from "@/lib/data/rooms";
-import { prisma } from "@/prisma";
-import { SRoomPUT } from "@/lib/services/rooms";
+import { BadRequestMessage, CreatedMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { guardRoute } from '@/lib/api-guard';
+import { NextRequest } from 'next/server';
+import { deleteManyRooms, findFirstRoom, findManyRooms, upsertRoom } from '@/lib/data/rooms';
+import { prisma } from '@/prisma';
+import { SRoomPUT } from '@/lib/services/rooms';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   return guardRoute(
     request,
-    { EditRooms: { type: "permission", resource: "Settings", action: "Edit Rooms" } },
+    { EditRooms: { type: 'permission', resource: 'Settings', action: 'Edit Rooms' } },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { roomId } = await params;
@@ -29,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("Collected Room", room);
+      return SuccessMessage('Collected Room', room);
     },
   );
 }
@@ -37,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   return guardRoute(
     request,
-    { EditRooms: { type: "permission", resource: "Settings", action: "Edit Rooms" } },
+    { EditRooms: { type: 'permission', resource: 'Settings', action: 'Edit Rooms' } },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const { roomId } = await params;

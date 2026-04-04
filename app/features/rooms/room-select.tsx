@@ -1,7 +1,7 @@
-import { GenericSelect } from "@/components/shared/generic-select";
-import { IconName } from "@/components/ui/icon-dynamic";
-import { TColors } from "@/lib/types";
-import { useRoomsQuery } from "@/lib/services/rooms";
+import { GenericSelect } from '@/components/shared/generic-select';
+import { IconName } from '@/components/ui/icon-dynamic';
+import { TColors } from '@/lib/types';
+import { useRoomsQuery } from '@/lib/services/rooms';
 
 export function RoomSelect({
   selectedRoomId,
@@ -9,7 +9,7 @@ export function RoomSelect({
   onRoomChange,
   dataInvalid = false,
   isDisabled = false,
-  className = "min-w-60",
+  className = 'min-w-60',
 }: {
   selectedRoomId: string;
   includeAllOption: boolean;
@@ -26,7 +26,7 @@ export function RoomSelect({
       selectedValue={selectedRoomId}
       isLoading={isPending}
       isError={!!error}
-      loadingLabel={error ? "Error: Collecting Rooms" : "Collecting Rooms"}
+      loadingLabel={error ? 'Error: Collecting Rooms' : 'Collecting Rooms'}
       placeholderText="Select Room"
       onChange={(value) => {
         onRoomChange(value);

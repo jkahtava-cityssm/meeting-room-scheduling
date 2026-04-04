@@ -1,37 +1,31 @@
-import { Control, useFormContext, useWatch } from "react-hook-form";
-import { z } from "zod/v4";
+import { Control, useFormContext, useWatch } from 'react-hook-form';
+import { z } from 'zod/v4';
 
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 
-import { step2Schema } from "../drawer-schema.validator";
-import { NumberFormInput } from "../components/number-form-input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { step2Schema } from '../drawer-schema.validator';
+import { NumberFormInput } from '../components/number-form-input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-export function DailyForm({
-  control,
-  isReadOnly,
-}: {
-  control: Control<z.infer<typeof step2Schema>>;
-  isReadOnly: boolean;
-}) {
+export function DailyForm({ control, isReadOnly }: { control: Control<z.infer<typeof step2Schema>>; isReadOnly: boolean }) {
   const { setValue } = useFormContext();
 
   const pattern = useWatch({
     control,
-    name: "dailyPattern",
+    name: 'dailyPattern',
   });
 
   return (
     <div className="flex flex-col gap-2">
       <RadioGroup
-        onValueChange={(val) => setValue("dailyPattern", val, { shouldValidate: true })}
+        onValueChange={(val) => setValue('dailyPattern', val, { shouldValidate: true })}
         value={pattern}
         disabled={isReadOnly}
         className="flex flex-col gap-4"
         data-error={false} // Neutralize parent error
       >
         {/* Option 1: Every X days */}
-        <DailyIntervalRow control={control} isActive={pattern === "daily"} isReadOnly={isReadOnly} />
+        <DailyIntervalRow control={control} isActive={pattern === 'daily'} isReadOnly={isReadOnly} />
 
         {/* Option 2: Every Weekday */}
         <DailyWeekdayRow isReadOnly={isReadOnly} />

@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import { format } from "date-fns";
-import { cva } from "class-variance-authority";
-import { BaggageClaim, Clock, Info, MapPin, Refrigerator, Text, User2 } from "lucide-react";
+import { format } from 'date-fns';
+import { cva } from 'class-variance-authority';
+import { BaggageClaim, Clock, Info, MapPin, Refrigerator, Text, User2 } from 'lucide-react';
 
-import { TColors } from "@/lib/types";
-import { IEvent, IEventSingleRoom } from "@/lib/schemas";
+import { TColors } from '@/lib/types';
+import { IEvent, IEventSingleRoom } from '@/lib/schemas';
 
-import { sharedColorVariants } from "@/lib/theme/colorVariants";
-import EventDrawer from "../../event-drawer/drawer-root";
-import { useSharedEventDrawer } from "../../event-drawer/drawer-context";
+import { sharedColorVariants } from '@/lib/theme/colorVariants';
+import EventDrawer from '../../event-drawer/drawer-root';
+import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 
 const agendaEventCardVariants = cva(
-	"flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-	{
-		variants: {
-			color: sharedColorVariants,
-			/*{
+  'flex select-none items-center justify-between gap-3 rounded-md border p-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+  {
+    variants: {
+      color: sharedColorVariants,
+      /*{
         red: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300 [&_.event-dot]:fill-red-600",
         orange:
           "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-300 [&_.event-dot]:fill-orange-600",
@@ -52,91 +52,88 @@ const agendaEventCardVariants = cva(
         stone:
           "border-stone-200 bg-stone-50 text-stone-700 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-300 [&_.event-dot]:fill-stone-600",
       },*/
-		},
-		defaultVariants: {
-			color: "blue",
-		},
-	},
+    },
+    defaultVariants: {
+      color: 'blue',
+    },
+  },
 );
 
 export function AgendaEventCard({ event, userId }: { event: IEventSingleRoom; userId?: string }) {
-	const { openEventDrawer } = useSharedEventDrawer();
+  const { openEventDrawer } = useSharedEventDrawer();
 
-	const startDate = event.startDate;
-	const endDate = event.endDate;
+  const startDate = event.startDate;
+  const endDate = event.endDate;
 
-	const color = event.roomColor as TColors;
-	const agendaEventCardClasses = agendaEventCardVariants({ color });
+  const color = event.roomColor as TColors;
+  const agendaEventCardClasses = agendaEventCardVariants({ color });
 
-	const eventItemsText = event.eventItems?.map(item => item.name).join(", ") || "No items";
+  const eventItemsText = event.eventItems?.map((item) => item.name).join(', ') || 'No items';
 
-	const handleKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === "Enter" || e.key === " ") {
-			e.preventDefault();
-			if (e.currentTarget instanceof HTMLElement) e.currentTarget.click();
-		}
-	};
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (e.currentTarget instanceof HTMLElement) e.currentTarget.click();
+    }
+  };
 
-	return (
-		<div
-			role="button"
-			tabIndex={0}
-			className={agendaEventCardClasses}
-			color={event.roomColor}
-			onKeyDown={handleKeyDown}
-			onClick={() => openEventDrawer({ creationDate: new Date(event.startDate), event: event, userId: userId })}
-		>
-			<div className="flex flex-col gap-2">
-				<div className="flex items-center gap-1.5">
-					<p className="text-md leading-none font-semibold">{event.title}</p>
-				</div>
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className={agendaEventCardClasses}
+      color={event.roomColor}
+      onKeyDown={handleKeyDown}
+      onClick={() => openEventDrawer({ creationDate: new Date(event.startDate), event: event, userId: userId })}
+    >
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-1.5">
+          <p className="text-md leading-none font-semibold">{event.title}</p>
+        </div>
 
-				<div className="mt-1 flex items-center gap-1">
-					<MapPin className="size-5 shrink-0" />
-					{event.eventRooms.length > 1 ? (
-						<div className="columns-2 gap-4 text-xs text-foreground font-medium border-b pb-1 mb-1 pl-1">
-							{event.eventRooms.map((room, index) => (
-								<p
-									key={index}
-									className="break-inside-avoid mb-1 truncate"
-								>
-									{room.name}
-								</p>
-							))}
-						</div>
-					) : (
-						<p className="text-xs text-foreground font-medium pl-1 truncate">{event.roomName}</p>
-					)}
-				</div>
+        <div className="mt-1 flex items-center gap-1">
+          <MapPin className="size-5 shrink-0" />
+          {event.eventRooms.length > 1 ? (
+            <div className="columns-2 gap-4 text-xs text-foreground font-medium border-b pb-1 mb-1 pl-1">
+              {event.eventRooms.map((room, index) => (
+                <p key={index} className="break-inside-avoid mb-1 truncate">
+                  {room.name}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-foreground font-medium pl-1 truncate">{event.roomName}</p>
+          )}
+        </div>
 
-				<div className="flex items-center gap-1">
-					<Clock className="size-5 shrink-0" />
-					<p className="text-xs text-foreground">
-						{format(startDate, "h:mm a")} - {format(endDate, "h:mm a")}
-					</p>
-				</div>
-				<div className="flex items-center gap-1">
-					<User2 className="size-5 shrink-0" />
-					<p className="text-xs text-foreground">{event.userName}</p>
-				</div>
-				<div className="flex items-center gap-1">
-					<Refrigerator className="size-5 shrink-0" />
-					<p className="text-xs text-foreground">{eventItemsText}</p>
-				</div>
-				<div>
-					<div className="flex items-center gap-2 mb-2">
-						<Text className="size-5 shrink-0" />
-						<div>
-							<p className="text-sm font-medium">Description</p>
-						</div>
-					</div>
-					<div className="flex items-center gap-2 pl-7">
-						<p className="text-xs text-foreground">{event.description}</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+        <div className="flex items-center gap-1">
+          <Clock className="size-5 shrink-0" />
+          <p className="text-xs text-foreground">
+            {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          <User2 className="size-5 shrink-0" />
+          <p className="text-xs text-foreground">{event.userName}</p>
+        </div>
+        <div className="flex items-center gap-1">
+          <Refrigerator className="size-5 shrink-0" />
+          <p className="text-xs text-foreground">{eventItemsText}</p>
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Text className="size-5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Description</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pl-7">
+            <p className="text-xs text-foreground">{event.description}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 /**
  * 

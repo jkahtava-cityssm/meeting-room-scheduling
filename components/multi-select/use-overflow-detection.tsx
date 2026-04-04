@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 export function useOverflowDetection(selectedValues: string[]) {
   const GAP_SIZE = 8;
@@ -26,8 +26,8 @@ export function useOverflowDetection(selectedValues: string[]) {
     setMeasurementLimit(estimatedMax);
 
     const shadowChildren = Array.from(shadow.children) as HTMLElement[];
-    const maxCountBadge = shadowChildren.find((el) => el.hasAttribute("data-shadow-plus"));
-    const BadgeList = shadowChildren.filter((el) => !el.hasAttribute("data-shadow-plus"));
+    const maxCountBadge = shadowChildren.find((el) => el.hasAttribute('data-shadow-plus'));
+    const BadgeList = shadowChildren.filter((el) => !el.hasAttribute('data-shadow-plus'));
 
     const maxCountBadgeWidth = maxCountBadge ? maxCountBadge.getBoundingClientRect().width + 4 : MINIMUM_BADGE_WIDTH;
     //723

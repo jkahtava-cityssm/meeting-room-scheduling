@@ -1,11 +1,11 @@
-import * as React from "react";
+import * as React from 'react';
 
-type Side = "right" | "left" | "top" | "bottom";
+type Side = 'right' | 'left' | 'top' | 'bottom';
 
 type Padding = { top: number; right: number; bottom: number; left: number };
 
 function normalizePadding(padding: number | Partial<Padding> | undefined): Padding {
-  if (typeof padding === "number") {
+  if (typeof padding === 'number') {
     return { top: padding, right: padding, bottom: padding, left: padding };
   }
   return {
@@ -23,7 +23,7 @@ export function useScrollPopoverDirection({
   viewport,
   sideOffset = 10,
   collisionPadding,
-  preferOrder = ["right", "left", "bottom", "top"],
+  preferOrder = ['right', 'left', 'bottom', 'top'],
 }: {
   open: boolean;
   triggerRef: React.RefObject<HTMLElement | null>;
@@ -74,10 +74,10 @@ export function useScrollPopoverDirection({
 
     // If none fits, pick the side with the most available space (best worst-case)
     const options: Array<[Side, number]> = [
-      ["right", spaceRight],
-      ["left", spaceLeft],
-      ["bottom", spaceBottom],
-      ["top", spaceTop],
+      ['right', spaceRight],
+      ['left', spaceLeft],
+      ['bottom', spaceBottom],
+      ['top', spaceTop],
     ];
     options.sort((a, c) => c[1] - a[1]);
     return options[0][0];
@@ -112,13 +112,13 @@ export function useScrollPopoverDirection({
       if (next) setSide((prev) => (prev === next ? prev : next));
     };
 
-    boundary.addEventListener("scroll", onScrollOrResize, { passive: true });
-    window.addEventListener("resize", onScrollOrResize, { passive: true });
+    boundary.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
 
     return () => {
       ro.disconnect();
-      boundary.removeEventListener("scroll", onScrollOrResize);
-      window.removeEventListener("resize", onScrollOrResize);
+      boundary.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
     };
   }, [open, viewport, contentRef, recompute]);
 

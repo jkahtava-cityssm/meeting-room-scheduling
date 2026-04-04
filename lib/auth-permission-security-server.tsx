@@ -1,12 +1,12 @@
-import { cache, Suspense } from "react";
-import { getServerSession } from "./auth"; // Your existing session getter
-import { getRolesByUserId } from "./data/permissions";
-import { evaluateGuard, GuardRequirement } from "./api-guard";
-import { buildPermissionCache, PermissionResult } from "./auth-permission-checks";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldCheck, Terminal } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { cache, Suspense } from 'react';
+import { getServerSession } from './auth'; // Your existing session getter
+import { getRolesByUserId } from './data/permissions';
+import { evaluateGuard, GuardRequirement } from './api-guard';
+import { buildPermissionCache, PermissionResult } from './auth-permission-checks';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ShieldCheck, Terminal } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 export function createServerSecurity<const T extends GuardRequirement>(REQUIREMENTS: T) {
   const getSecurity = cache(async () => {
@@ -94,11 +94,11 @@ const DefaultLoadingSkeleton = () => {
 const DefaultAccessDenied = () => {
   return (
     <div className="flex flex-1 min-h-0">
-      <div className={"flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1 p-4"}>
+      <div className={'flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1 p-4'}>
         <Alert variant="destructive" className="mt-4 ">
           <Terminal className="h-4 w-4" />
-          <AlertTitle>{"Access Denied"}</AlertTitle>
-          <AlertDescription>{"You do not have permission to view this content"}</AlertDescription>
+          <AlertTitle>{'Access Denied'}</AlertTitle>
+          <AlertDescription>{'You do not have permission to view this content'}</AlertDescription>
         </Alert>
       </div>
     </div>

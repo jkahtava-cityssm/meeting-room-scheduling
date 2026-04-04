@@ -6,10 +6,7 @@ import z from 'zod/v4';
 import { IEvent, SEvent, utcDateSchema } from '@/lib/schemas';
 import { Prisma } from '@prisma/client';
 import { processEventsAsync } from '@/app/features/calendar/webworkers/generic-webworker-client';
-import {
-  CalendarAction,
-  ISODateString,
-} from '@/app/features/calendar/webworkers/generic-webworker';
+import { CalendarAction, ISODateString } from '@/app/features/calendar/webworkers/generic-webworker';
 import { getDateRange } from '@/app/features/calendar/webworkers/generic-webworker-utilities';
 import { TVisibleHours } from '../types';
 import { QueryError } from '@/contexts/ReactQueryProvider';
@@ -20,12 +17,7 @@ const formatDate = (date: Date) => {
   return formatISO(date);
 };
 
-export const useEventsQuery = (
-  startDate: Date,
-  endDate: Date,
-  userId?: string,
-  enabled: boolean = true,
-) => {
+export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, enabled: boolean = true) => {
   const endpoint = userId ? '/api/events/my-events' : '/api/events';
   const start = formatDate(startDate);
   const end = formatDate(endDate);
@@ -92,12 +84,7 @@ export const useMyEventsQuery = (
   });
 };
 
-export const useEventsByStatusQuery = (
-  startDate: Date,
-  endDate: Date,
-  statusId: string,
-  enabled: boolean = true,
-) => {
+export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) => {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
 
@@ -121,12 +108,7 @@ export const useEventsByStatusQuery = (
   });
 };
 
-export const useTotalEventsByStatusQuery = (
-  statusId: string,
-  startDate?: Date,
-  endDate?: Date,
-  enabled: boolean = true,
-) =>
+export const useTotalEventsByStatusQuery = (statusId: string, startDate?: Date, endDate?: Date, enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.events.totalByStatus(statusId),
     queryFn: async () => {
@@ -146,11 +128,7 @@ export const useTotalEventsByStatusQuery = (
     staleTime: 60 * 1000,
   });
 
-export const useEventQuery = (
-  eventId: number | undefined,
-  userId: string | undefined,
-  enabled: boolean = true,
-) => {
+export const useEventQuery = (eventId: number | undefined, userId: string | undefined, enabled: boolean = true) => {
   const endpoint = userId ? `/api/events/my-events/${eventId}` : `/api/events/${eventId}`;
   return useQuery({
     queryKey: queryKeys.events.detail(eventId),
@@ -271,9 +249,7 @@ export const useEventPatchMutation = () => {
         // If the cached data isn't an array (e.g., total counts), skip it
         if (!Array.isArray(old)) return old;
 
-        return old.map((event: IEvent) =>
-          event.eventId === eventId ? { ...event, ...data } : event,
-        );
+        return old.map((event: IEvent) => (event.eventId === eventId ? { ...event, ...data } : event));
       });
 
       return { previousLists, previousDetail };
@@ -281,10 +257,7 @@ export const useEventPatchMutation = () => {
 
     onError: (err, variables, context) => {
       if (context?.previousDetail) {
-        queryClient.setQueryData(
-          queryKeys.events.detail(variables.data.eventId),
-          context.previousDetail,
-        );
+        queryClient.setQueryData(queryKeys.events.detail(variables.data.eventId), context.previousDetail);
       }
 
       if (context?.previousLists) {

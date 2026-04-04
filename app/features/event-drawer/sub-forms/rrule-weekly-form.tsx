@@ -1,26 +1,20 @@
-import { useWatch, Control } from "react-hook-form";
-import { z } from "zod/v4";
+import { useWatch, Control } from 'react-hook-form';
+import { z } from 'zod/v4';
 
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 
-import { NumberFormInput } from "../components/number-form-input";
+import { NumberFormInput } from '../components/number-form-input';
 
-import { Checkbox } from "@/components/ui/checkbox";
-import { ErrorMessage } from "../components/error-message";
-import { step2Schema } from "../drawer-schema.validator";
+import { Checkbox } from '@/components/ui/checkbox';
+import { ErrorMessage } from '../components/error-message';
+import { step2Schema } from '../drawer-schema.validator';
 
-export function WeeklyForm({
-  control,
-  isReadOnly,
-}: {
-  control: Control<z.infer<typeof step2Schema>>;
-  isReadOnly: boolean;
-}) {
+export function WeeklyForm({ control, isReadOnly }: { control: Control<z.infer<typeof step2Schema>>; isReadOnly: boolean }) {
   return (
     <div className="grid gap-8">
       <div className="flex flex-row gap-2">
         <FormLabel className="min-w-15  justify-end">Every</FormLabel>
-        <NumberFormInput control={control} name={"weekValue"} disabled={isReadOnly} />
+        <NumberFormInput control={control} name={'weekValue'} disabled={isReadOnly} />
         <FormLabel>Weeks</FormLabel>
       </div>
       <div className="flex flex-col flex-wrap gap-2 max-h-40 max-w-60">
@@ -70,31 +64,31 @@ function WeekdayCheckbox({
 
 const WEEKDAYS = [
   {
-    id: "monday",
-    label: "Monday",
+    id: 'monday',
+    label: 'Monday',
   },
   {
-    id: "tuesday",
-    label: "Tuesday",
+    id: 'tuesday',
+    label: 'Tuesday',
   },
   {
-    id: "wednesday",
-    label: "Wednesday",
+    id: 'wednesday',
+    label: 'Wednesday',
   },
   {
-    id: "thursday",
-    label: "Thursday",
+    id: 'thursday',
+    label: 'Thursday',
   },
   {
-    id: "friday",
-    label: "Friday",
+    id: 'friday',
+    label: 'Friday',
   },
   {
-    id: "saturday",
-    label: "Saturday",
+    id: 'saturday',
+    label: 'Saturday',
   },
   {
-    id: "sunday",
-    label: "Sunday",
+    id: 'sunday',
+    label: 'Sunday',
   },
 ] as const;

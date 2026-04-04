@@ -8,12 +8,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogSave,
-} from "@/components/ui/alert-dialog";
-import React from "react";
-import { cn } from "@/lib/utils"; // Assuming you have a cn utility for class merging
-import { CircleAlert, CircleCheckIcon, CircleX, Info } from "lucide-react";
+} from '@/components/ui/alert-dialog';
+import React from 'react';
+import { cn } from '@/lib/utils'; // Assuming you have a cn utility for class merging
+import { CircleAlert, CircleCheckIcon, CircleX, Info } from 'lucide-react';
 
-export type DialogVariant = "warning" | "error" | "info" | "success";
+export type DialogVariant = 'warning' | 'error' | 'info' | 'success';
 
 interface EventDialogProps {
   variant: DialogVariant;
@@ -42,14 +42,14 @@ export const EventDialog: React.FC<EventDialogProps> = ({
   onSave,
   onCancel,
   onConfirm,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
   showSave = false,
   showCancel = false,
   showConfirm = false,
 }) => {
-  const isDestructive = variant === "error" || variant === "warning";
-  const isInformational = variant === "info" || variant === "success";
+  const isDestructive = variant === 'error' || variant === 'warning';
+  const isInformational = variant === 'info' || variant === 'success';
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -57,17 +57,17 @@ export const EventDialog: React.FC<EventDialogProps> = ({
         <AlertDialogHeader>
           <div className="flex flex-row gap-4">
             <div className="shrink-0 pt-1">
-              {variant === "error" && <CircleX size={50} className="text-destructive" />}
-              {variant === "warning" && <CircleAlert size={50} className="text-amber-600" />}
-              {variant === "info" && <Info size={50} className="text-sky-600" />}
-              {variant === "success" && <CircleCheckIcon size={50} className="text-green-600" />}
+              {variant === 'error' && <CircleX size={50} className="text-destructive" />}
+              {variant === 'warning' && <CircleAlert size={50} className="text-amber-600" />}
+              {variant === 'info' && <Info size={50} className="text-sky-600" />}
+              {variant === 'success' && <CircleCheckIcon size={50} className="text-green-600" />}
             </div>
             <div className="flex flex-col gap-1.5">
               <AlertDialogTitle
                 className={cn(
-                  variant === "error" && "text-destructive",
-                  variant === "warning" && "text-amber-600",
-                  variant === "info" && "text-sky-600",
+                  variant === 'error' && 'text-destructive',
+                  variant === 'warning' && 'text-amber-600',
+                  variant === 'info' && 'text-sky-600',
                 )}
               >
                 {title}
@@ -98,7 +98,7 @@ export const EventDialog: React.FC<EventDialogProps> = ({
               onClick={onConfirm}
               className={cn(
                 isDestructive &&
-                  "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+                  'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
               )}
             >
               {confirmText}

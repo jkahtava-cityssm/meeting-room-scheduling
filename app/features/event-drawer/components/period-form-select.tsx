@@ -1,7 +1,7 @@
-import { FormField, FormItem, FormControl } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FormField, FormItem, FormControl } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { Control, FieldPath, FieldPathByValue, FieldValues, useFormContext } from "react-hook-form";
+import { Control, FieldPath, FieldPathByValue, FieldValues, useFormContext } from 'react-hook-form';
 
 export function PeriodFormSelection<TFieldValues extends FieldValues>({
   control,
@@ -37,12 +37,12 @@ export function PeriodFormSelection<TFieldValues extends FieldValues>({
                   id={field.name}
                   data-invalid={fieldState.invalid && showError}
                   aria-invalid={fieldState.invalid && showError}
-                  className={"min-w-23"}
+                  className={'min-w-23'}
                 >
                   <SelectValue placeholder="Select a period" />
                 </SelectTrigger>
               </FormControl>
-              <SelectContent className={"min-w-23"}>
+              <SelectContent className={'min-w-23'}>
                 {periods.map((period) => {
                   return (
                     <SelectItem key={period.id} value={period.id} className="flex-1">
@@ -61,23 +61,23 @@ export function PeriodFormSelection<TFieldValues extends FieldValues>({
 
 const periods = [
   {
-    id: "1",
-    label: "first",
+    id: '1',
+    label: 'first',
   },
   {
-    id: "2",
-    label: "second",
+    id: '2',
+    label: 'second',
   },
   {
-    id: "3",
-    label: "third",
+    id: '3',
+    label: 'third',
   },
   {
-    id: "4",
-    label: "fourth",
+    id: '4',
+    label: 'fourth',
   },
   {
-    id: "-1",
-    label: "last",
+    id: '-1',
+    label: 'last',
   },
 ] as const;

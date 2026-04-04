@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   CalendarAction,
   CalendarDataMap,
@@ -9,7 +9,7 @@ import {
   IUnifiedResponse,
   IWeekData,
   ProcessedDataMap,
-} from "./generic-webworker";
+} from './generic-webworker';
 
 type CalendarState<A extends CalendarAction> = {
   action: A;
@@ -27,61 +27,61 @@ export function useCalendarWorker<A extends CalendarAction>() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-		workerRef.current = new Worker(new URL("./generic-webworker.ts", import.meta.url), { type: "module" });
+    workerRef.current = new Worker(new URL('./generic-webworker.ts', import.meta.url), { type: 'module' });
 
-		workerRef.current.onmessage = (event: MessageEvent<ArrayBuffer>) => {
-			const result = (() => {
-				if (event.data instanceof ArrayBuffer) {
-					const json = new TextDecoder().decode(new Uint8Array(event.data));
-					return JSON.parse(json) as IUnifiedResponse<A>;
-				}
-				return event.data;
-			})();
+    workerRef.current.onmessage = (event: MessageEvent<ArrayBuffer>) => {
+      const result = (() => {
+        if (event.data instanceof ArrayBuffer) {
+          const json = new TextDecoder().decode(new Uint8Array(event.data));
+          return JSON.parse(json) as IUnifiedResponse<A>;
+        }
+        return event.data;
+      })();
 
-			if (result.requestId !== requestIdRef.current) return;
+      if (result.requestId !== requestIdRef.current) return;
 
-			if (result.error) {
-				setError(new Error(result.error));
-				setLoading(false);
-				return;
-			}
+      if (result.error) {
+        setError(new Error(result.error));
+        setLoading(false);
+        return;
+      }
 
-			setData({
-				action: result.action,
-				totalEvents: result.totalEvents,
-				requestId: result.requestId,
-				data: result.data,
-			} as CalendarState<A>);
-			setLoading(false);
-		};
+      setData({
+        action: result.action,
+        totalEvents: result.totalEvents,
+        requestId: result.requestId,
+        data: result.data,
+      } as CalendarState<A>);
+      setLoading(false);
+    };
 
-		workerRef.current.onerror = err => {
-			if (err.error instanceof Error) {
-				setError(err.error);
-			} else {
-				const newError = new Error(err.message || "Unknown Worker Error");
-				newError.name = "WebWorkerError";
+    workerRef.current.onerror = (err) => {
+      if (err.error instanceof Error) {
+        setError(err.error);
+      } else {
+        const newError = new Error(err.message || 'Unknown Worker Error');
+        newError.name = 'WebWorkerError';
 
-				setError(newError);
-			}
+        setError(newError);
+      }
 
-			setLoading(false);
-		};
+      setLoading(false);
+    };
 
-		return () => {
-			workerRef.current?.terminate();
-		};
-	}, []);
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
 
-	const processEvents = useCallback((message: Omit<ICalendarProcessData, "action" | "requestId"> & { action: A }) => {
-		if (!workerRef.current) return;
-		setLoading(true);
-		setError(null);
+  const processEvents = useCallback((message: Omit<ICalendarProcessData, 'action' | 'requestId'> & { action: A }) => {
+    if (!workerRef.current) return;
+    setLoading(true);
+    setError(null);
 
-		const requestId = ++requestIdRef.current;
+    const requestId = ++requestIdRef.current;
 
-		workerRef.current.postMessage({ ...message, requestId });
-	}, []);
+    workerRef.current.postMessage({ ...message, requestId });
+  }, []);
 
   return { data, loading, error, processEvents };
 }

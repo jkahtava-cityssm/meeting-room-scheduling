@@ -1,6 +1,6 @@
-import React from "react";
-import { XIcon, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { XIcon, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ClearButtonProps {
   onClick: () => void;
@@ -20,16 +20,16 @@ export const ClearButton = ({ onClick, totalSelected, isFocused }: ClearButtonPr
       onClick();
     }}
     onKeyDown={(e) => {
-      if (e.key === "Enter" || e.key === " ") {
+      if (e.key === 'Enter' || e.key === ' ') {
         e.stopPropagation();
         onClick();
       }
     }}
     aria-label={`Clear all ${totalSelected} selected options`}
     className={cn(
-      "flex items-center justify-center h-4 w-4 mx-2 text-muted-foreground rounded-sm cursor-auto",
-      "cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ",
-      isFocused && "ring-2 ring-ring ring-offset-1 ",
+      'flex items-center justify-center h-4 w-4 mx-2 text-muted-foreground rounded-sm cursor-auto',
+      'cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ',
+      isFocused && 'ring-2 ring-ring ring-offset-1 ',
     )}
   >
     <XIcon className="h-4 w-4" />
@@ -53,15 +53,15 @@ export const ChevronButton = ({ onClick, isFocused }: ChevronButtonProps) => (
       onClick();
     }}
     onKeyDown={(e) => {
-      if (e.key === "Enter" || e.key === " ") {
+      if (e.key === 'Enter' || e.key === ' ') {
         e.stopPropagation();
         onClick();
       }
     }}
     className={cn(
-      "flex items-center justify-center h-4 w-4 mx-2 text-muted-foreground rounded-sm cursor-auto",
-      "cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ",
-      isFocused && "ring-2 ring-ring ring-offset-1 ",
+      'flex items-center justify-center h-4 w-4 mx-2 text-muted-foreground rounded-sm cursor-auto',
+      'cursor-pointer hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 ',
+      isFocused && 'ring-2 ring-ring ring-offset-1 ',
     )}
   >
     <ChevronDown className="h-4 w-4" />
