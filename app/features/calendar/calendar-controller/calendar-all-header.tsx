@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 import { DateControls } from '../view-public/public-date-control';
 import { useState } from 'react';
 import { CalendarDayPopover } from '@/components/calendar-day-popover/calendar-day-popover';
-import { formatDate } from 'date-fns';
+import { formatDate, set } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -157,7 +157,20 @@ export function CalendarHeader({
           </div>
 
           {allowCreateEvent && (
-            <Button className="w-full sm:w-auto" onClick={() => openEventDrawer({ userId: userId, creationDate: new Date() })}>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => {
+                const now = new Date();
+
+                const combinedDate = set(selectedDate, {
+                  hours: now.getHours(),
+                  minutes: now.getMinutes(),
+                  seconds: now.getSeconds(),
+                });
+
+                openEventDrawer({ userId: userId, creationDate: combinedDate });
+              }}
+            >
               <Plus />
               Add Event
             </Button>
