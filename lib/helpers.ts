@@ -68,14 +68,13 @@ export function rangeText(view: TCalendarView, date: Date) {
 }
 
 export function navigateDate(date: Date, view: TCalendarView, direction: 'previous' | 'next'): Date {
-  const operations = {
+  const operations: Record<string, (date: Date, amount: number) => Date> = {
     agenda: direction === 'next' ? addDays : subDays,
     year: direction === 'next' ? addYears : subYears,
     month: direction === 'next' ? addMonths : subMonths,
     week: direction === 'next' ? addWeeks : subWeeks,
     day: direction === 'next' ? addDays : subDays,
     public: direction === 'next' ? addDays : subDays,
-    request: direction === 'next' ? addDays : subDays,
     all: (date: Date, _: number) => date,
   };
 

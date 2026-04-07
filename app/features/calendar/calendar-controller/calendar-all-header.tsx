@@ -48,10 +48,10 @@ export function CalendarHeader({
   permissions,
   allowCreateEvent,
 }: {
-  view: Exclude<TCalendarView, 'all' | 'public'>;
+  view: Partial<TCalendarView>;
   selectedDate: Date;
   userId?: string;
-  permissions: Record<Exclude<TCalendarView, 'all' | 'public'>, boolean>;
+  permissions: Partial<Record<TCalendarView, boolean>>;
   allowCreateEvent: boolean;
 }) {
   const { day, week, month, year, agenda } = permissions;
@@ -144,7 +144,6 @@ export function CalendarHeader({
               {visibleButtons.map((btn, index) => (
                 <ViewButton
                   key={btn.key}
-                  hasPermission={true}
                   label={btn.label}
                   selectedDate={selectedDate}
                   currentView={view}
@@ -259,9 +258,9 @@ const MobileHeader = ({
   selectedRoomIds,
   setSelectedRoomIds,
 }: {
-  permissions: Record<Exclude<TCalendarView, 'all' | 'public'>, boolean>;
+  permissions: Partial<Record<TCalendarView, boolean>>;
   selectedDate: Date;
-  view: Exclude<TCalendarView, 'all' | 'public'>;
+  view: Partial<TCalendarView>;
   className?: string;
   selectedStatusKeys: TStatusKey[];
   setSelectedStatusKeys: (values: TStatusKey[]) => void;
