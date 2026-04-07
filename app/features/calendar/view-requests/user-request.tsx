@@ -17,13 +17,13 @@ import { GenericError } from '../../../../components/shared/generic-error';
 
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { IRequestGroup } from '../webworkers/generic-webworker';
+import { CalendarAction, IRequestGroup } from '../webworkers/generic-webworker';
 import { useEventPatchMutation } from '@/lib/services/events';
 import { sharedColorVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
 import EventCard from './event-card';
 
-export function CalendarUserRequestView({ date, userId }: { date: Date; userId?: string }) {
+export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
   const {
     interval,
     maxSpan,
@@ -41,7 +41,16 @@ export function CalendarUserRequestView({ date, userId }: { date: Date; userId?:
 
   const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
 
-  const { result, isLoading, error } = usePrivateCalendarEvents('DAY', date, visibleHours, userId, roomIds, selectedStatusKeys, true, 'booking');
+  const { result, isLoading, error } = usePrivateCalendarEvents(
+    action,
+    date,
+    visibleHours,
+    userId,
+    selectedRoomIds,
+    selectedStatusKeys,
+    true,
+    'booking',
+  );
 
   useEffect(() => {
     if (isLoading) {
@@ -63,7 +72,7 @@ export function CalendarUserRequestView({ date, userId }: { date: Date; userId?:
           <></>
         ) : (
           <ScrollArea className="w-full flex-1 min-h-0" type="always">
-            <div className="flex w-full min-w-0 pr-4">
+            <div className="flex flex-col w-full min-w-0 pr-4">
               {result?.data?.requestSections?.map((section) => {
                 return (
                   <div key={section.sectionId} className="border-b">

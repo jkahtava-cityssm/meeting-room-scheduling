@@ -10,6 +10,7 @@ import {
   differenceInMinutes,
   eachDayOfInterval,
   endOfDay,
+  endOfMonth,
   endOfWeek,
   endOfYear,
   format,
@@ -669,12 +670,12 @@ function roundToPrecision(value: number, precision: number) {
   return Math.round(value * adjustment) / adjustment;
 }
 
-export function getDateRange(action: CalendarAction, date: Date) {
+export function getDateRange(action: CalendarAction, date: Date, viewType: 'calendar' | 'booking') {
   switch (action) {
     case 'WEEK':
       return { startDate: startOfWeek(date), endDate: endOfWeek(date) };
     case 'MONTH':
-      return getDaysInView(date); // Using your helper
+      return viewType === 'calendar' ? getDaysInView(date) : { startDate: startOfMonth(date), endDate: endOfMonth(date) };
     case 'YEAR':
       return { startDate: startOfYear(date), endDate: endOfYear(date) };
     case 'DAY':

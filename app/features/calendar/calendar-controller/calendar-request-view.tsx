@@ -11,6 +11,7 @@ import { CalendarProviderPrivate } from '@/contexts/CalendarProviderPrivate';
 import { useCalendarSearchParams } from './use-calendar-search-params';
 import { CalendarUserRequestView } from '../view-requests/user-request';
 import { BookingPermissions } from '../../bookings/components/permissions/booking.permissions';
+import { CalendarAction } from '../webworkers/generic-webworker';
 
 export function CalendarRequestView() {
   const { isVerifying, can, canAny } = BookingPermissions.usePermissions();
@@ -20,11 +21,19 @@ export function CalendarRequestView() {
     month: can('ViewStaffRequests'),
     week: can('ViewStaffRequests'),
     year: can('ViewStaffRequests'),
-    agenda: false,
   };
 
   const { dateValue, view } = useCalendarSearchParams(permissions);
   const hasAccess = canAny(...Object.values(permissions));
+
+  const VIEW_TO_ACTION_MAP: Record<string, CalendarAction> = {
+    day: 'DAY',
+    week: 'WEEK',
+    month: 'MONTH',
+    year: 'YEAR',
+  };
+
+  const currentAction = VIEW_TO_ACTION_MAP[view] ?? 'DAY';
 
   if (isVerifying) {
     return <CalendarLoadingPage />;
@@ -38,15 +47,10 @@ export function CalendarRequestView() {
     <CalendarProviderPrivate>
       <SharedEventDrawerProvider>
         <div className="overflow-hidden rounded-xl border min-w-92 flex flex-1 flex-col">
-          <CalendarHeader
-            view={view as Exclude<TCalendarView, 'all' | 'public'>}
-            selectedDate={dateValue}
-            permissions={permissions}
-            allowCreateEvent={false}
-          />
+          <CalendarHeader view={view} selectedDate={dateValue} permissions={permissions} allowCreateEvent={false} />
 
           <RequirePermission allowed={hasAccess}>
-            <CalendarUserRequestView date={dateValue} />
+            <CalendarUserRequestView action={currentAction} date={dateValue} />
           </RequirePermission>
         </div>
       </SharedEventDrawerProvider>

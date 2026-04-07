@@ -6,7 +6,6 @@ import { CalendarAction, IRequestSection, ISODateString, ProcessedDataMap } from
 import { IEventSingleRoom } from '@/lib/schemas';
 import { TStatusKey, TVisibleHours } from '@/lib/types';
 import { getDateRange } from './generic-webworker-utilities';
-import { usePublicEventsQuery } from '@/lib/services/public';
 
 export function usePrivateCalendarEvents<T extends CalendarAction, V extends 'calendar' | 'booking' = 'calendar'>(
   action: T,
@@ -18,7 +17,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction, V extends 'ca
   enabled: boolean = true,
   viewType: V = 'calendar' as V,
 ) {
-  const range = useMemo(() => getDateRange(action, date), [action, date]);
+  const range = useMemo(() => getDateRange(action, date, viewType), [action, date, viewType]);
 
   const { data: events, isLoading, isFetching, error } = useEventsQuery(range.startDate, range.endDate, userId, enabled);
 

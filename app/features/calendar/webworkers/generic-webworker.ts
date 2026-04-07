@@ -158,7 +158,7 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
     const currentDate = new Date(selectedDate);
 
     // Get DateRange Based on View
-    const range = getDateRange(action, currentDate);
+    const range = getDateRange(action, currentDate, viewType);
 
     const [multiDayEvents, recurringEvents] = await Promise.all([
       calculateMultiDayEventPositions(events, range.startDate, range.endDate),
@@ -173,7 +173,7 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
     const boundedEvents = setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
 
-    const splitMultiRoomEvents = action !== 'AGENDA' && action !== 'MONTH';
+    const splitMultiRoomEvents = viewType === 'calendar' ? action !== 'AGENDA' && action !== 'MONTH' : false;
     const multiRoomEvents = processMultiRoomEvents(boundedEvents, splitMultiRoomEvents, roomIds);
 
     const filtered = filterEventsByRoom(multiRoomEvents, roomIds);
