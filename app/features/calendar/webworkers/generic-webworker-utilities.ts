@@ -419,11 +419,16 @@ function mutateMultiDayEventPositions(
   for (const dateKey in eventsByDate) {
     const firstKey = keys[0];
 
+    const isFirstInstanceinMonth = firstKey === dateKey;
+
     //GET ALL THE EVENTS FOR THE DAY
     const eventsOnThisDay = eventsByDate[dateKey];
 
     // Only place multi-day events that start today
-    const startingMultiDay = eventsOnThisDay.filter((e) => e.multiDay && e.multiDay.position === 'first');
+    // We need to verify if this is also the first day or first iteration
+    // Multi Day events that cross between months need to stay ordered by position
+    // without the firstInstance check it will try and fit them in at random which is wrong.
+    const startingMultiDay = eventsOnThisDay.filter((e) => e.multiDay && (e.multiDay.position === 'first' || isFirstInstanceinMonth));
 
     startingMultiDay.forEach((event) => {
       const currentDaySlots = eventPositions[dateKey];
