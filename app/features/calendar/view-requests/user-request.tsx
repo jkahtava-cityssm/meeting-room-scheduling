@@ -23,7 +23,7 @@ import { sharedColorVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
 import EventCard from './event-card';
 
-export function CalendarRequestView({ date, userId }: { date: Date; userId?: string }) {
+export function CalendarUserRequestView({ date, userId }: { date: Date; userId?: string }) {
   const {
     interval,
     maxSpan,
@@ -41,7 +41,7 @@ export function CalendarRequestView({ date, userId }: { date: Date; userId?: str
 
   const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
 
-  const { result, isLoading, error } = usePrivateCalendarEvents('REQUESTS', date, visibleHours, userId, roomIds, selectedStatusKeys);
+  const { result, isLoading, error } = usePrivateCalendarEvents('DAY', date, visibleHours, userId, roomIds, selectedStatusKeys, true, 'booking');
 
   useEffect(() => {
     if (isLoading) {

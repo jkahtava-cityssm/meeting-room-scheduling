@@ -25,7 +25,8 @@ import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 
 import { format } from 'date-fns';
 import { getDurationText } from '@/lib/helpers';
-import { CalendarPermissions } from '../permissions/calendar.permissions';
+
+import { BookingPermissions } from '../../bookings/components/permissions/booking.permissions';
 
 export default function EventCard({
   event,
@@ -38,7 +39,7 @@ export default function EventCard({
   OnDeny: () => void;
   OnPending: () => void;
 }) {
-  const { can } = CalendarPermissions.usePermissions();
+  const { can } = BookingPermissions.usePermissions();
 
   const { openEventDrawer } = useSharedEventDrawer();
 

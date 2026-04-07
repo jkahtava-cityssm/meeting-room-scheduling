@@ -24,6 +24,8 @@ import { CalendarLoadingPage } from '@/app/(private)/calendar/loading';
 import { RequirePermission } from '../../calendar/calendar-controller/calendar-all-views';
 import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
 import { useStatusQuery } from '@/lib/services/status';
+import { usePrivateCalendarEvents } from '@/app/features/calendar/webworkers/use-calendar-private-events';
+import { CalendarAction } from '@/app/features/calendar/webworkers/generic-webworker';
 
 export interface IUserRequestProcessData {
   events: IEvent[];

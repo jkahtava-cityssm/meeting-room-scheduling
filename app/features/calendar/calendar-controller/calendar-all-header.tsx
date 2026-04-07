@@ -46,16 +46,18 @@ export function CalendarHeader({
   selectedDate,
   userId,
   permissions,
+  allowCreateEvent,
 }: {
   view: Exclude<TCalendarView, 'all' | 'public'>;
   selectedDate: Date;
   userId?: string;
   permissions: Record<Exclude<TCalendarView, 'all' | 'public'>, boolean>;
+  allowCreateEvent: boolean;
 }) {
   const { day, week, month, year, agenda } = permissions;
 
   const { openEventDrawer } = useSharedEventDrawer();
-  const { can, isVerifying } = CalendarPermissions.usePermissions();
+
   const { setSelectedRoomIds, selectedRoomIds, setSelectedStatusKeys, selectedStatusKeys } = usePrivateCalendar();
   const { push } = useRouter();
 
@@ -74,6 +76,16 @@ export function CalendarHeader({
   const handleNavigateRoomChange = (roomIds: string[]) => {
     setSelectedRoomIds(roomIds);
   };
+
+  const buttonList = [
+    { key: 'day', label: 'View by day', icon: <List strokeWidth={1.8} />, view: 'day' },
+    { key: 'week', label: 'View by week', icon: <Columns strokeWidth={1.8} />, view: 'week' },
+    { key: 'month', label: 'View by month', icon: <Grid2x2 strokeWidth={1.8} />, view: 'month' },
+    { key: 'year', label: 'View by year', icon: <Grid3x3 strokeWidth={1.8} />, view: 'year' },
+    { key: 'agenda', label: 'View by agenda', icon: <CalendarRange strokeWidth={1.8} />, view: 'agenda' },
+  ] as const;
+
+  const visibleButtons = buttonList.filter((btn) => permissions[btn.key]);
 
   return (
     <>
@@ -129,52 +141,23 @@ export function CalendarHeader({
         <div className="hidden sm:flex sm:gap-4 sm:flex-row sm:justify-between ">
           <div className="flex flex-col w-full items-center gap-1.5">
             <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
-              <ViewButton
-                hasPermission={day}
-                label="View by day"
-                selectedDate={selectedDate}
-                currentView={view}
-                triggerView={'day'}
-                icon={<List strokeWidth={1.8} />}
-                isFirstButton
-              />
-              <ViewButton
-                hasPermission={week}
-                label="View by week"
-                selectedDate={selectedDate}
-                currentView={view}
-                triggerView={'week'}
-                icon={<Columns strokeWidth={1.8} />}
-              />
-              <ViewButton
-                hasPermission={month}
-                label="View by month"
-                selectedDate={selectedDate}
-                currentView={view}
-                triggerView={'month'}
-                icon={<Grid2x2 strokeWidth={1.8} />}
-              />
-              <ViewButton
-                hasPermission={year}
-                label="View by year"
-                selectedDate={selectedDate}
-                currentView={view}
-                triggerView={'year'}
-                icon={<Grid3x3 strokeWidth={1.8} />}
-              />
-              <ViewButton
-                hasPermission={agenda}
-                label="View by agenda"
-                selectedDate={selectedDate}
-                currentView={view}
-                triggerView={'agenda'}
-                icon={<CalendarRange strokeWidth={1.8} />}
-                isLastButton
-              />
+              {visibleButtons.map((btn, index) => (
+                <ViewButton
+                  key={btn.key}
+                  hasPermission={true}
+                  label={btn.label}
+                  selectedDate={selectedDate}
+                  currentView={view}
+                  triggerView={btn.view}
+                  icon={btn.icon}
+                  isFirstButton={index === 0}
+                  isLastButton={index === visibleButtons.length - 1}
+                />
+              ))}
             </div>
           </div>
 
-          {!isVerifying && can('CreateEvent') && (
+          {allowCreateEvent && (
             <Button className="w-full sm:w-auto" onClick={() => openEventDrawer({ userId: userId, creationDate: new Date() })}>
               <Plus />
               Add Event
@@ -380,7 +363,6 @@ const ViewButton = ({
   currentView,
   triggerView,
   label,
-  hasPermission,
   selectedDate,
   isFirstButton = false,
   isLastButton = false,
@@ -389,14 +371,13 @@ const ViewButton = ({
   currentView: TCalendarView;
   triggerView: TCalendarView;
   label: string;
-  hasPermission: boolean;
   selectedDate: Date;
   isFirstButton?: boolean;
   isLastButton?: boolean;
   icon: React.ReactNode;
 }) => (
   <Button
-    asChild={hasPermission}
+    asChild
     aria-label={label}
     size="icon"
     variant={currentView === triggerView ? 'default' : 'outline'}
@@ -406,7 +387,6 @@ const ViewButton = ({
       isLastButton && 'rounded-l-none',
       !isFirstButton && !isLastButton && 'rounded-none',
     )}
-    disabled={!hasPermission}
   >
     <Link href={navigateURL(selectedDate, triggerView)}>{icon}</Link>
   </Button>

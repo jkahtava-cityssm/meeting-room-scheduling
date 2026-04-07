@@ -27,14 +27,13 @@ import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarLoadingPage } from '@/app/(private)/calendar/loading';
 import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
-import { CalendarRequestView } from '../view-requests/user-request';
 
-function getViewDate(dateParam: string | null) {
+export function getViewDate(dateParam: string | null) {
   return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, 'yyyy-MM-dd', new Date());
 }
 
-function getDefaultView(permissions: Record<string, boolean>): TCalendarView {
-  const priority: TCalendarView[] = ['day', 'week', 'month', 'year', 'agenda'];
+export function getDefaultView(permissions: Record<string, boolean>): Exclude<TCalendarView, 'all' | 'public'> {
+  const priority: Exclude<TCalendarView, 'all' | 'public'>[] = ['day', 'week', 'month', 'year', 'agenda'];
 
   //get the first valid as default
   return priority.find((view) => permissions[view]) ?? 'day';
@@ -44,13 +43,13 @@ function removeTimeFromDate(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-export function CalendarAllViews({ limitedByUserId }: { limitedByUserId: boolean }) {
+export function CalendarMainView({ limitedByUserId, mode }: { limitedByUserId: boolean; mode: 'booking' | 'requests' }) {
   const { session } = useSession();
   const userId = limitedByUserId ? session?.user.id : undefined;
 
   const searchParams = useSearchParams();
   const dateParam = searchParams.get('selectedDate');
-  const viewParam = searchParams.get('view');
+  const viewParam = searchParams.get('view') as Exclude<TCalendarView, 'all' | 'public'>;
 
   const { isVerifying, can, canAny } = CalendarPermissions.usePermissions();
 
@@ -64,7 +63,10 @@ export function CalendarAllViews({ limitedByUserId }: { limitedByUserId: boolean
   const hasAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
   const viewPermissions = { day: viewDay, month: viewMonth, week: viewWeek, year: viewYear, agenda: viewAgenda, request: viewStaffRequests };
 
-  const view = viewParam && CALENDAR_VIEWS.includes(viewParam as TCalendarView) ? viewParam : getDefaultView(viewPermissions);
+  const view =
+    viewParam && CALENDAR_VIEWS.filter((view) => view !== 'public' && view !== 'all').includes(viewParam)
+      ? viewParam
+      : getDefaultView(viewPermissions);
 
   const dateValue = useMemo(() => {
     return getViewDate(dateParam);
@@ -113,13 +115,43 @@ export function CalendarAllViews({ limitedByUserId }: { limitedByUserId: boolean
             <CalendarAgendaView date={dateValue} userId={userId} />
           </RequirePermission>
         )}
-        {view === 'request' && (
-          <RequirePermission allowed={viewStaffRequests}>
-            <CalendarRequestView date={dateValue}></CalendarRequestView>
-          </RequirePermission>
-        )}
       </div>
     </SharedEventDrawerProvider>
+  );
+}
+
+export function CalendarViewSwitcher({
+  view,
+  permissions,
+  date,
+  userId,
+}: {
+  view: Exclude<TCalendarView, 'all' | 'public'>;
+  permissions: Record<string, boolean>;
+  date: Date;
+  userId?: string;
+}) {
+  const isAllowed = permissions[view] ?? false;
+
+  return (
+    <RequirePermission allowed={isAllowed}>
+      {(() => {
+        switch (view) {
+          case 'day':
+            return <CalendarDayView date={date} userId={userId} />;
+          case 'week':
+            return <CalendarWeekView date={date} userId={userId} />;
+          case 'month':
+            return <CalendarMonthView date={date} userId={userId} />;
+          case 'year':
+            return <CalendarYearView date={date} userId={userId} />;
+          case 'agenda':
+            return <CalendarAgendaView date={date} userId={userId} />;
+          default:
+            return null;
+        }
+      })()}
+    </RequirePermission>
   );
 }
 
