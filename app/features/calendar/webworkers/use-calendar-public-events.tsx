@@ -2,10 +2,10 @@ import { usePublicEventsQuery } from '@/lib/services/public';
 import { useCalendarWorker } from './use-generic-webworker';
 import { useEffect, useState } from 'react';
 import { IEventSingleRoom } from '@/lib/schemas';
-import { CalendarAction, ISODateString } from './generic-webworker';
+import { CalendarAction, IRequestSection, ISODateString, ProcessedDataMap } from './generic-webworker';
 import { TVisibleHours } from '@/lib/types';
 
-export function usePublicCalendarEvents<T extends CalendarAction>(
+export function usePublicCalendarEvents<T extends CalendarAction, V extends 'calendar' | 'booking' = 'calendar'>(
   action: T,
   date: Date,
   roomIdList: string[],
@@ -34,6 +34,7 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
       visibleHours: visibleHours,
       multiDayEventsAtTop: false,
       statusKeys: ['APPROVED', 'PENDING', 'INFORMATION'],
+      viewType: 'calendar',
     });
   }, [action, events, date, roomIdList, visibleHours, processEvents]);
 
@@ -44,7 +45,7 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
   }, [isProcessing, data]);
 
   return {
-    result: data,
+    result: data as unknown as CalendarState<T, V>,
     isLoading: isLoading || !hasProcessedForView,
 
     isRefetching: isFetching && !isLoading,
@@ -52,3 +53,11 @@ export function usePublicCalendarEvents<T extends CalendarAction>(
     error: error || workerError,
   };
 }
+
+type CalendarState<A extends CalendarAction, V extends 'calendar' | 'booking'> = {
+  action: A;
+  totalEvents: number;
+  requestId?: number;
+  viewType: V;
+  data: V extends 'booking' ? { requestSections: IRequestSection[] } : ProcessedDataMap[A];
+};

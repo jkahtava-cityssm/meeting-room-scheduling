@@ -1,4 +1,4 @@
-export const CALENDAR_VIEWS = ['day', 'week', 'month', 'year', 'agenda', 'all', 'public', 'request'] as const;
+export const CALENDAR_VIEWS = ['day', 'week', 'month', 'year', 'agenda', 'all', 'public'] as const;
 export type TCalendarView = (typeof CALENDAR_VIEWS)[number];
 
 export const STATUS_KEYS = ['PENDING', 'APPROVED', 'REJECTED', 'INFORMATION'] as const;

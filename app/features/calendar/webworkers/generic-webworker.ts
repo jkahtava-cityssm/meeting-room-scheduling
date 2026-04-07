@@ -21,7 +21,7 @@ import {
 
 // --- Base Interfaces ---
 export type GroupingType = 'date' | 'roomId' | 'none';
-export type CalendarAction = 'AGENDA' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | 'REQUESTS';
+export type CalendarAction = 'AGENDA' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
 export type ISODateString = string & { __brand: 'ISODateString' };
 
 export interface IRequestSection {
@@ -103,7 +103,6 @@ export type CalendarDataMap = {
   WEEK: IWeekData;
   MONTH: { dayViews: IMonthDayView[]; weekViews: IMonthWeekView[] };
   YEAR: { monthViews: IYearMonthView[] };
-  REQUESTS: { requestSections: IRequestSection[] };
 };
 
 export type ProcessedDataMap = {
@@ -112,7 +111,6 @@ export type ProcessedDataMap = {
   WEEK: IWeekData; // Was TProcessedWeekData (Map)
   MONTH: { dayViews: IMonthDayView[]; weekViews: IMonthWeekView[] };
   YEAR: { monthViews: IYearMonthView[] };
-  REQUESTS: { requestSections: IRequestSection[] };
 };
 
 export interface ICalendarProcessData {
@@ -125,15 +123,26 @@ export interface ICalendarProcessData {
   requestId: number;
   userId?: string;
   statusKeys?: TStatusKey[];
+  viewType?: 'calendar' | 'booking';
 }
 
-export interface IUnifiedResponse<A extends CalendarAction = CalendarAction> {
-  action: A;
+export interface IBookingResponse {
+  data: { requestSections: IRequestSection[] };
+  viewType: 'booking';
+}
+
+// Define a specific type for the standard calendar response
+export interface ICalendarResponse<A extends CalendarAction> {
   data: CalendarDataMap[A];
+  viewType: 'calendar';
+}
+
+export type IUnifiedResponse<A extends CalendarAction = CalendarAction> = {
+  action: A;
   totalEvents: number;
   requestId: number;
   error?: string;
-}
+} & (ICalendarResponse<A> | IBookingResponse);
 
 self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
   if (!event.data) return;
@@ -142,7 +151,7 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
   try {
     let payload: ICalendarProcessData | null = event.data;
-    const { action, events, selectedDate, visibleHours, statusKeys, selectedRoomId } = payload;
+    const { action, events, selectedDate, visibleHours, statusKeys, selectedRoomId, viewType = 'calendar' } = payload;
 
     const roomIds = Array.isArray(selectedRoomId) ? selectedRoomId : [selectedRoomId || '-1'];
 
@@ -164,7 +173,7 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
     const boundedEvents = setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
 
-    const splitMultiRoomEvents = action !== 'AGENDA' && action !== 'REQUESTS' && action !== 'MONTH';
+    const splitMultiRoomEvents = action !== 'AGENDA' && action !== 'MONTH';
     const multiRoomEvents = processMultiRoomEvents(boundedEvents, splitMultiRoomEvents, roomIds);
 
     const filtered = filterEventsByRoom(multiRoomEvents, roomIds);
@@ -172,54 +181,55 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
     const sortedEvents = filteredByStatus.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
     // 2. Generic Transformation Logic
-    let resultData: CalendarDataMap[CalendarAction] | null = null;
+    let resultData: unknown | null = null;
 
-    switch (action) {
-      case 'AGENDA':
-        resultData = { sortedEvents };
-        break;
+    if (viewType === 'booking') {
+      resultData = { requestSections: processRequestEvents(sortedEvents) };
+    } else {
+      switch (action) {
+        case 'AGENDA':
+          resultData = { sortedEvents };
+          break;
 
-      case 'DAY':
-        // These all share the "Block" logic with different date ranges
-        const blockResult = transformToRoomBlocks(sortedEvents, viewBounds.from, viewBounds.to);
-        resultData = {
-          roomBlocks: blockResult.roomBlocks,
-          hours: blockResult.hours,
-        };
-        break;
-      case 'WEEK':
-        const weekResult = transformToWeekBlocks(sortedEvents, viewBounds.from, viewBounds.to, range.startDate, range.endDate);
+        case 'DAY':
+          // These all share the "Block" logic with different date ranges
+          const blockResult = transformToRoomBlocks(sortedEvents, viewBounds.from, viewBounds.to);
+          resultData = {
+            roomBlocks: blockResult.roomBlocks,
+            hours: blockResult.hours,
+          };
+          break;
+        case 'WEEK':
+          const weekResult = transformToWeekBlocks(sortedEvents, viewBounds.from, viewBounds.to, range.startDate, range.endDate);
 
-        resultData = {
-          dayBlocks: weekResult.dayBlocks, // This will be a Record for DAY/PUBLIC, and an Array for WEEK
-          hours: weekResult.hours,
-        };
-        break;
-      case 'MONTH':
-        const gridResult = transformToGrid(sortedEvents, currentDate, payload.multiDayEventsAtTop);
-        resultData = { dayViews: gridResult.dayViews, weekViews: gridResult.weekViews };
-        break;
+          resultData = {
+            dayBlocks: weekResult.dayBlocks, // This will be a Record for DAY/PUBLIC, and an Array for WEEK
+            hours: weekResult.hours,
+          };
+          break;
+        case 'MONTH':
+          const gridResult = transformToGrid(sortedEvents, currentDate, payload.multiDayEventsAtTop);
+          resultData = { dayViews: gridResult.dayViews, weekViews: gridResult.weekViews };
+          break;
 
-      case 'YEAR':
-        const yearResult = transformToYearly(sortedEvents, currentDate);
-        resultData = { monthViews: yearResult.monthViews };
-        break;
-      case 'REQUESTS':
-        const requestResult = processRequestEvents(sortedEvents);
-        resultData = { requestSections: requestResult };
-        break;
-      default:
-        throw new Error(`Unsupported action: ${action}`);
+        case 'YEAR':
+          const yearResult = transformToYearly(sortedEvents, currentDate);
+          resultData = { monthViews: yearResult.monthViews };
+          break;
+        default:
+          throw new Error(`Unsupported action: ${action}`);
+      }
     }
 
     if (!resultData) throw new Error('Transformation failed to produce data');
 
-    const response: IUnifiedResponse = {
+    const response = {
       totalEvents: sortedEvents.length,
       action,
       data: resultData,
       requestId,
-    };
+      viewType,
+    } as IUnifiedResponse<CalendarAction>;
 
     const bytes = new TextEncoder().encode(JSON.stringify(response));
     self.postMessage(bytes.buffer, [bytes.buffer]);

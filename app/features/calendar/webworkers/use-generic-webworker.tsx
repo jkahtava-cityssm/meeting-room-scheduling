@@ -6,6 +6,7 @@ import {
   ICalendarProcessData,
   IDayRoomBlock,
   IEventBlock,
+  IRequestSection,
   IUnifiedResponse,
   IWeekData,
   ProcessedDataMap,
@@ -15,7 +16,7 @@ type CalendarState<A extends CalendarAction> = {
   action: A;
   totalEvents: number;
   requestId?: number;
-  data: ProcessedDataMap[A];
+  data: ProcessedDataMap[A] | { requestSections: IRequestSection[] };
 };
 
 export function useCalendarWorker<A extends CalendarAction>() {
@@ -51,7 +52,8 @@ export function useCalendarWorker<A extends CalendarAction>() {
         totalEvents: result.totalEvents,
         requestId: result.requestId,
         data: result.data,
-      } as CalendarState<A>);
+        viewType: result.viewType ?? 'calendar',
+      } as CalendarState<A>); //as CalendarState<A>
       setLoading(false);
     };
 

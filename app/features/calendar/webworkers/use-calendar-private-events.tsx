@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useEventsQuery } from '@/lib/services/events';
 import { useCalendarWorker } from './use-generic-webworker';
-import { CalendarAction, ISODateString } from './generic-webworker';
+import { CalendarAction, IRequestSection, ISODateString, ProcessedDataMap } from './generic-webworker';
 import { IEventSingleRoom } from '@/lib/schemas';
 import { TStatusKey, TVisibleHours } from '@/lib/types';
 import { getDateRange } from './generic-webworker-utilities';
 import { usePublicEventsQuery } from '@/lib/services/public';
 
-export function usePrivateCalendarEvents<T extends CalendarAction>(
+export function usePrivateCalendarEvents<T extends CalendarAction, V extends 'calendar' | 'booking' = 'calendar'>(
   action: T,
   date: Date,
   visibleHours: TVisibleHours | undefined,
@@ -16,6 +16,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   roomId?: string | string[],
   statusKeys?: TStatusKey[],
   enabled: boolean = true,
+  viewType: V = 'calendar' as V,
 ) {
   const range = useMemo(() => getDateRange(action, date), [action, date]);
 
@@ -42,8 +43,9 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
       multiDayEventsAtTop: true,
       userId: userId,
       statusKeys,
+      viewType,
     });
-  }, [events, action, date, roomId, userId, processEvents, visibleHours, statusKeys]);
+  }, [events, action, date, roomId, userId, processEvents, visibleHours, statusKeys, viewType]);
 
   useEffect(() => {
     if (!isProcessing && data) {
@@ -52,10 +54,18 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   }, [isProcessing, data]);
 
   return {
-    result: data,
+    result: data as unknown as CalendarState<T, V>,
     isLoading: isLoading || !hasProcessedForView,
     isRefetching: isFetching && !isLoading,
     isBackgroundProcessing: hasProcessedForView && isProcessing,
     error: error || workerError,
   };
 }
+
+type CalendarState<A extends CalendarAction, V extends 'calendar' | 'booking'> = {
+  action: A;
+  totalEvents: number;
+  requestId?: number;
+  viewType: V;
+  data: V extends 'booking' ? { requestSections: IRequestSection[] } : ProcessedDataMap[A];
+};
