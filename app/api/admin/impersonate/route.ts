@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { guardRoute } from '@/lib/api-guard';
 import { auth, getServerSession } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { BadRequestMessage, DeleteMessage, SuccessMessage } from '@/lib/api-helpers';
+import { addUpdateAudit, BadRequestMessage, DeleteMessage, SuccessMessage } from '@/lib/api-helpers';
 import { prisma } from '@/prisma';
 import { request } from 'https';
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       });
 
       const session = await prisma.session.update({
-        data: { impersonatedRole: roleName?.name || null },
+        data: addUpdateAudit({ impersonatedRole: roleName?.name || null }, sessionUserId),
         where: { id: sessionId },
       });
 
@@ -50,7 +50,7 @@ export async function DELETE(req: NextRequest) {
       }
 
       const session = await prisma.session.update({
-        data: { impersonatedRole: null },
+        data: addUpdateAudit({ impersonatedRole: null }, sessionUserId),
         where: { id: sessionId },
       });
 

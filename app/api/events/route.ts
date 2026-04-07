@@ -4,7 +4,15 @@ import { NextRequest } from 'next/server';
 
 import { UTCDate } from '@date-fns/utc';
 
-import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import {
+  addCreateAudit,
+  addCreateManyAudit,
+  addUpdateAudit,
+  BadRequestMessage,
+  CreatedMessage,
+  InternalServerErrorMessage,
+  SuccessMessage,
+} from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { Prisma } from '@prisma/client';
 import { createEvent, upsertEvent, updateEvent, findManyEvents, findFirstEvent } from '@/lib/data/events';
@@ -40,38 +48,54 @@ export async function POST(request: NextRequest) {
 
       if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
         recurrence = await createRecurrence({
-          data: { rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
+          data: addCreateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
         });
       }
 
-      const event = await createEvent({
-        title,
-        description,
-        startDate,
-        endDate,
-        eventRooms: { createMany: { data: eventRooms.map((roomId: number) => ({ roomId })) } },
-        ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-        status: { connect: { statusId: statusId } },
-        ...(userId && { user: { connect: { id: userId } } }),
-        ...(sessionUserId && { createdByUser: { connect: { id: sessionUserId } } }),
-        ...(sessionUserId && { updatedByUser: { connect: { id: sessionUserId } } }),
-        ...(eventItems && {
-          eventItems: {
-            createMany: {
-              data: eventItems.map((itemId) => ({ itemId })),
-              skipDuplicates: true,
+      const event = await createEvent(
+        addCreateAudit(
+          {
+            title,
+            description,
+            startDate,
+            endDate,
+            eventRooms: {
+              createMany: {
+                data: addCreateManyAudit(
+                  eventRooms.map((roomId: number) => ({ roomId })),
+                  sessionUserId,
+                ),
+              },
             },
+            ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
+            status: { connect: { statusId: statusId } },
+            ...(userId && { user: { connect: { id: userId } } }),
+            ...(eventItems && {
+              eventItems: {
+                createMany: {
+                  data: addCreateManyAudit(
+                    eventItems.map((itemId) => ({ itemId })),
+                    sessionUserId,
+                  ),
+                  skipDuplicates: true,
+                },
+              },
+            }),
+            ...(eventRecipients && {
+              eventRecipients: {
+                createMany: {
+                  data: addCreateManyAudit(
+                    eventRecipients.map((eventRecipientId) => ({ userId: eventRecipientId })),
+                    sessionUserId,
+                  ),
+                  skipDuplicates: true,
+                },
+              },
+            }),
           },
-        }),
-        ...(eventRecipients && {
-          eventRecipients: {
-            createMany: {
-              data: eventRecipients.map((eventRecipientId) => ({ userId: eventRecipientId })),
-              skipDuplicates: true,
-            },
-          },
-        }),
-      });
+          sessionUserId,
+        ),
+      );
 
       if (!event) {
         InternalServerErrorMessage();
@@ -113,9 +137,9 @@ export async function PUT(request: NextRequest) {
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
           recurrence = await upsertRecurrence(
             {
-              create: { rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
+              create: addCreateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
               where: { recurrenceId: recurrenceId ?? -1 },
-              update: { rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
+              update: addUpdateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
             },
             tx,
           );
@@ -126,25 +150,38 @@ export async function PUT(request: NextRequest) {
         const event = await upsertEvent(
           {
             where: { eventId: data.eventId ?? -1 },
-            create: {
-              title,
-              description,
-              startDate,
-              endDate,
-              eventRooms: { createMany: { data: eventRooms.map((roomId: number) => ({ roomId })) } },
-              ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-              status: { connect: { statusId: statusId } },
-              ...(userId && { user: { connect: { id: userId } } }),
-            },
-            update: {
-              title,
-              description,
-              startDate,
-              endDate,
-              status: { connect: { statusId } },
-              recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : recurrenceId ? { disconnect: true } : undefined,
-              ...(userId && { user: { connect: { id: userId } } }),
-            },
+            create: addCreateAudit(
+              {
+                title,
+                description,
+                startDate,
+                endDate,
+                eventRooms: {
+                  createMany: {
+                    data: addCreateManyAudit(
+                      eventRooms.map((roomId: number) => ({ roomId })),
+                      sessionUserId,
+                    ),
+                  },
+                },
+                ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
+                status: { connect: { statusId: statusId } },
+                ...(userId && { user: { connect: { id: userId } } }),
+              },
+              sessionUserId,
+            ),
+            update: addUpdateAudit(
+              {
+                title,
+                description,
+                startDate,
+                endDate,
+                status: { connect: { statusId } },
+                recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : recurrenceId ? { disconnect: true } : undefined,
+                ...(userId && { user: { connect: { id: userId } } }),
+              },
+              sessionUserId,
+            ),
           },
           tx,
         );
@@ -157,7 +194,10 @@ export async function PUT(request: NextRequest) {
           });
 
           await tx.eventRoom.createMany({
-            data: eventRooms.map((roomId) => ({ eventId, roomId: roomId })),
+            data: addCreateManyAudit(
+              eventRooms.map((roomId) => ({ eventId, roomId: roomId })),
+              sessionUserId,
+            ),
             skipDuplicates: true,
           });
         }
@@ -168,7 +208,10 @@ export async function PUT(request: NextRequest) {
           });
 
           await tx.eventRecipient.createMany({
-            data: eventRecipients.map((eventRecipientId) => ({ eventId, userId: eventRecipientId })),
+            data: addCreateManyAudit(
+              eventRecipients.map((eventRecipientId) => ({ eventId, userId: eventRecipientId })),
+              sessionUserId,
+            ),
             skipDuplicates: true,
           });
         }
@@ -179,7 +222,10 @@ export async function PUT(request: NextRequest) {
           });
 
           await tx.eventItem.createMany({
-            data: eventItems.map((itemId) => ({ eventId, itemId })),
+            data: addCreateManyAudit(
+              eventItems.map((itemId) => ({ eventId, itemId })),
+              sessionUserId,
+            ),
             skipDuplicates: true,
           });
         }
@@ -207,7 +253,7 @@ export async function PATCH(request: NextRequest) {
     {
       UpdateEvent: { type: 'permission', resource: 'Event', action: 'Update' },
     },
-    async ({ data }) => {
+    async ({ sessionUserId, data }) => {
       const {
         eventId,
         title,
@@ -230,9 +276,9 @@ export async function PATCH(request: NextRequest) {
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
           recurrence = await upsertRecurrence(
             {
-              create: { rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
+              create: addCreateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
               where: { recurrenceId: recurrenceId || 0 },
-              update: { rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
+              update: addUpdateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
             },
             tx,
           );
@@ -247,6 +293,7 @@ export async function PATCH(request: NextRequest) {
           ...(statusId !== undefined && { status: { connect: { statusId } } }),
           ...(userId !== undefined && { user: userId ? { connect: { id: userId } } : { disconnect: true } }),
           ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
+          ...(sessionUserId && { updatedBy: sessionUserId }),
         };
 
         // 3. Update the Event
@@ -261,7 +308,10 @@ export async function PATCH(request: NextRequest) {
             where: { eventId, roomId: { notIn: eventRooms } },
           });
           await tx.eventRoom.createMany({
-            data: eventRooms.map((roomId: number) => ({ eventId, roomId })),
+            data: addCreateManyAudit(
+              eventRooms.map((roomId: number) => ({ eventId, roomId })),
+              sessionUserId,
+            ),
             skipDuplicates: true,
           });
         }

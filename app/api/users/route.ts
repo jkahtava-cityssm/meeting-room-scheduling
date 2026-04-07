@@ -1,5 +1,5 @@
 import { guardRoute } from '@/lib/api-guard';
-import { CreatedMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage } from '@/lib/api-helpers';
+import { addCreateAudit, addUpdateAudit, CreatedMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage } from '@/lib/api-helpers';
 import { createUser, findManyUsers, upsertUser } from '@/lib/data/users';
 import { SUserPUT } from '@/lib/services/users';
 import { NextRequest } from 'next/server';
@@ -40,29 +40,35 @@ export async function PUT(request: NextRequest) {
         { EditUsers: { type: 'permission', resource: 'Settings', action: 'Edit Users' } },
       ],
     },
-    async ({ data }) => {
+    async ({ sessionUserId, data }) => {
       const updatedUser = await upsertUser({
         where: { id: data.userId },
-        create: {
-          name: data.name,
-          email: data.email,
-          isActive: data.isActive,
-          isManaged: data.isManaged,
-          emailEnabled: data.emailEnabled,
-          department: data.department,
-          jobTitle: data.jobTitle,
-          externalId: data.externalId,
-        },
-        update: {
-          name: data.name,
-          email: data.email,
-          isActive: data.isActive,
-          isManaged: data.isManaged,
-          emailEnabled: data.emailEnabled,
-          department: data.department,
-          jobTitle: data.jobTitle,
-          externalId: data.externalId,
-        },
+        create: addCreateAudit(
+          {
+            name: data.name,
+            email: data.email,
+            isActive: data.isActive,
+            isManaged: data.isManaged,
+            emailEnabled: data.emailEnabled,
+            department: data.department,
+            jobTitle: data.jobTitle,
+            externalId: data.externalId,
+          },
+          sessionUserId,
+        ),
+        update: addUpdateAudit(
+          {
+            name: data.name,
+            email: data.email,
+            isActive: data.isActive,
+            isManaged: data.isManaged,
+            emailEnabled: data.emailEnabled,
+            department: data.department,
+            jobTitle: data.jobTitle,
+            externalId: data.externalId,
+          },
+          sessionUserId,
+        ),
       });
 
       if (!updatedUser) {
@@ -89,17 +95,22 @@ export async function POST(request: NextRequest) {
         { EditUsers: { type: 'permission', resource: 'Settings', action: 'Edit Users' } },
       ],
     },
-    async ({ data }) => {
-      const createdUser = await createUser({
-        name: data.name,
-        email: data.email,
-        isActive: data.isActive,
-        isManaged: data.isManaged,
-        emailEnabled: data.emailEnabled,
-        department: data.department,
-        jobTitle: data.jobTitle,
-        externalId: data.externalId,
-      });
+    async ({ sessionUserId, data }) => {
+      const createdUser = await createUser(
+        addCreateAudit(
+          {
+            name: data.name,
+            email: data.email,
+            isActive: data.isActive,
+            isManaged: data.isManaged,
+            emailEnabled: data.emailEnabled,
+            department: data.department,
+            jobTitle: data.jobTitle,
+            externalId: data.externalId,
+          },
+          sessionUserId,
+        ),
+      );
 
       if (!createdUser) {
         return InternalServerErrorMessage();

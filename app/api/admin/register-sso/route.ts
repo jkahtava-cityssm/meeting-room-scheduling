@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { guardRoute } from '@/lib/api-guard';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { NoContentMessage, SuccessMessage } from '@/lib/api-helpers';
+import { addUpdateAudit, NoContentMessage, SuccessMessage } from '@/lib/api-helpers';
 import { prisma } from '@/prisma';
 
 export async function POST(req: NextRequest) {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         if (result) {
           await prisma.configuration.update({
             where: { key: 'singleSignOnEnabled' },
-            data: { value: 'true' },
+            data: addUpdateAudit({ value: 'true' }, sessionUserId),
           });
         }
 

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { addCreateAudit, addUpdateAudit, BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { findManyExpandedPermissionSets, findManyResourceAction } from '@/lib/data/permissions';
 import { guardRoute } from '@/lib/api-guard';
 import { prisma } from '@/prisma';
@@ -35,7 +35,7 @@ export async function PUT(request: NextRequest) {
     {
       EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' },
     },
-    async () => {
+    async ({ sessionUserId }) => {
       const permissionList: rolePermissionMutations[] = await request.json();
       //{ data: permissionList }: { data: rolePermissionMutations[] }
       if (!permissionList) {
@@ -78,12 +78,15 @@ export async function PUT(request: NextRequest) {
                   resourceActionId: resourceActionId,
                 },
               },
-              update: { permit: p.permit },
-              create: {
-                roleId: Number(p.roleId),
-                resourceActionId: resourceActionId,
-                permit: p.permit,
-              },
+              update: addUpdateAudit({ permit: p.permit }, sessionUserId),
+              create: addCreateAudit(
+                {
+                  roleId: Number(p.roleId),
+                  resourceActionId: resourceActionId,
+                  permit: p.permit,
+                },
+                sessionUserId,
+              ),
             });
           }),
         );

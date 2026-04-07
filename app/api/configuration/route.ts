@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { findManyConfiguration, upsertConfiguration } from '@/lib/data/configuration';
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { addCreateAudit, addUpdateAudit, BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { CONFIGURATION_KEYS, TConfigurationKeys } from '@/lib/types';
 import { SConfigurationPUT } from '@/lib/services/configuration';
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest) {
     {
       EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' },
     },
-    async ({ data }) => {
+    async ({ sessionUserId, data }) => {
       try {
         const results = await prisma.$transaction(
           async (tx) =>
@@ -52,16 +52,22 @@ export async function PUT(request: NextRequest) {
                 return upsertConfiguration(
                   {
                     where: { key: configurationPairs.key },
-                    create: {
-                      key: configurationPairs.key,
-                      value: configurationPairs.value,
-                      name: configurationPairs.name,
-                      type: configurationPairs.type,
-                      description: configurationPairs.description,
-                    },
-                    update: {
-                      value: configurationPairs.value,
-                    },
+                    create: addCreateAudit(
+                      {
+                        key: configurationPairs.key,
+                        value: configurationPairs.value,
+                        name: configurationPairs.name,
+                        type: configurationPairs.type,
+                        description: configurationPairs.description,
+                      },
+                      sessionUserId,
+                    ),
+                    update: addUpdateAudit(
+                      {
+                        value: configurationPairs.value,
+                      },
+                      sessionUserId,
+                    ),
                   },
                   tx,
                 );

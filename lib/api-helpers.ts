@@ -34,6 +34,32 @@ export async function NotFoundMessage(message: string = 'Requested Resource was 
   return NextResponse.json({ message: message }, { status: 404 }); // Not Found
 }
 
+export function addCreateAudit<T extends Record<string, unknown>>(data: T, sessionUserId?: number) {
+  if (!sessionUserId) return data;
+  return {
+    ...data,
+    createdByUser: { connect: { id: sessionUserId } },
+    updatedByUser: { connect: { id: sessionUserId } },
+  } as T & { createdByUser: { connect: { id: number } }; updatedByUser: { connect: { id: number } } };
+}
+
+export function addUpdateAudit<T extends Record<string, unknown>>(data: T, sessionUserId?: number) {
+  if (!sessionUserId) return data;
+  return {
+    ...data,
+    updatedByUser: { connect: { id: sessionUserId } },
+  } as T & { updatedByUser: { connect: { id: number } } };
+}
+
+export function addCreateManyAudit<T extends Record<string, unknown>>(items: T[], sessionUserId?: number) {
+  if (!sessionUserId) return items;
+  return items.map((item) => ({
+    ...item,
+    createdBy: sessionUserId,
+    updatedBy: sessionUserId,
+  })) as Array<T & { createdBy: number; updatedBy: number }>;
+}
+
 export async function VerifyToken(token: string): Promise<{ message: string; data: JWTPayload | undefined }> {
   if (!token) {
     return { message: 'Missing token', data: undefined };

@@ -1,5 +1,7 @@
 import { guardRoute } from '@/lib/api-guard';
 import {
+  addCreateAudit,
+  addUpdateAudit,
   BadRequestMessage,
   CreatedMessage,
   DeleteMessage,
@@ -44,7 +46,7 @@ export async function PUT(request: NextRequest) {
     {
       EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' },
     },
-    async () => {
+    async ({ sessionUserId }) => {
       const body = await request.json().catch(() => null);
       const userId = Number(body?.userId);
       const roleId = Number(body?.roleId);
@@ -57,8 +59,8 @@ export async function PUT(request: NextRequest) {
       try {
         const userRole = await prisma.userRole.upsert({
           where: { userId_roleId: { userId, roleId } },
-          create: { userId, roleId, granted: assignRole },
-          update: { granted: assignRole },
+          create: addCreateAudit({ userId, roleId, granted: assignRole }, sessionUserId),
+          update: addUpdateAudit({ granted: assignRole }, sessionUserId),
         });
 
         return SuccessMessage(assignRole ? 'User role granted.' : 'User role revoked.', userRole);
