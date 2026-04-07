@@ -142,7 +142,9 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
   try {
     let payload: ICalendarProcessData | null = event.data;
-    const { action, events, selectedDate, visibleHours, statusKeys } = payload;
+    const { action, events, selectedDate, visibleHours, statusKeys, selectedRoomId } = payload;
+
+    const roomIds = Array.isArray(selectedRoomId) ? selectedRoomId : [selectedRoomId || '-1'];
 
     const currentDate = new Date(selectedDate);
 
@@ -163,9 +165,9 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
     const boundedEvents = setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
 
     const splitMultiRoomEvents = action !== 'AGENDA' && action !== 'REQUESTS' && action !== 'MONTH';
-    const multiRoomEvents = processMultiRoomEvents(boundedEvents, splitMultiRoomEvents, payload.selectedRoomId || '-1');
+    const multiRoomEvents = processMultiRoomEvents(boundedEvents, splitMultiRoomEvents, roomIds);
 
-    const filtered = filterEventsByRoom(multiRoomEvents, payload.selectedRoomId || '-1');
+    const filtered = filterEventsByRoom(multiRoomEvents, roomIds);
     const filteredByStatus = filterEventsByStatus(filtered, statusKeys ?? []);
 
     const sortedEvents = filteredByStatus.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());

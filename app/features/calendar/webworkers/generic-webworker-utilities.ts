@@ -575,15 +575,13 @@ export function transformToYearly(events: IEventSingleRoom[], selectedDate: Date
   return { totalEvents: events.length, monthViews: monthData };
 }
 
-export function filterEventsByRoom(events: IEventSingleRoom[], selectedRoomId: string[] | string) {
-  const roomIds = Array.isArray(selectedRoomId) ? selectedRoomId : [selectedRoomId];
-
-  if (roomIds.includes('-1')) {
+export function filterEventsByRoom(events: IEventSingleRoom[], selectedRoomId: string[]) {
+  if (selectedRoomId.includes('-1')) {
     return events;
   }
 
   const results = events.filter((event) => {
-    return roomIds.includes(event.roomId.toString());
+    return selectedRoomId.includes(event.roomId.toString());
   });
 
   return results;
@@ -991,7 +989,7 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
   return eventList;
 }
 
-export function processMultiRoomEvents(events: IEvent[], splitMultiRoomEvents: boolean, selectedRoomId: string[] | string): IEventSingleRoom[] {
+export function processMultiRoomEvents(events: IEvent[], splitMultiRoomEvents: boolean, selectedRoomIds: string[] | string): IEventSingleRoom[] {
   const splitEvents: IEventSingleRoom[] = [];
   events.forEach((event) => {
     if (splitMultiRoomEvents) {
