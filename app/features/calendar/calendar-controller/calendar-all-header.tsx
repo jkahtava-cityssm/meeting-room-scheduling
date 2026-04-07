@@ -129,70 +129,48 @@ export function CalendarHeader({
         <div className="hidden sm:flex sm:gap-4 sm:flex-row sm:justify-between ">
           <div className="flex flex-col w-full items-center gap-1.5">
             <div className="inline-flex first:rounded-r-none last:rounded-l-none [&:not(:first-child):not(:last-child)]:rounded-none">
-              <Button
-                asChild={day}
-                aria-label="View by day"
-                size="icon"
-                variant={view === 'day' ? 'default' : 'outline'}
-                className="rounded-r-none [&_svg]:size-5"
-                disabled={!day}
-              >
-                <Link href={navigateURL(selectedDate, 'day')}>
-                  <List strokeWidth={1.8} />
-                </Link>
-              </Button>
-
-              <Button
-                asChild={week}
-                aria-label="View by week"
-                size="icon"
-                variant={view === 'week' ? 'default' : 'outline'}
-                className="-ml-px rounded-none [&_svg]:size-5"
-                disabled={!week}
-              >
-                <Link href={navigateURL(selectedDate, 'week')}>
-                  <Columns strokeWidth={1.8} />
-                </Link>
-              </Button>
-
-              <Button
-                asChild={month}
-                aria-label="View by month"
-                size="icon"
-                variant={view === 'month' ? 'default' : 'outline'}
-                className="-ml-px rounded-none [&_svg]:size-5"
-                disabled={!month}
-              >
-                <Link href={navigateURL(selectedDate, 'month')}>
-                  <Grid2x2 strokeWidth={1.8} />
-                </Link>
-              </Button>
-
-              <Button
-                asChild={year}
-                aria-label="View by year"
-                size="icon"
-                variant={view === 'year' ? 'default' : 'outline'}
-                className="-ml-px rounded-none [&_svg]:size-5"
-                disabled={!year}
-              >
-                <Link href={navigateURL(selectedDate, 'year')}>
-                  <Grid3x3 strokeWidth={1.8} />
-                </Link>
-              </Button>
-
-              <Button
-                asChild={agenda}
-                aria-label="View by agenda"
-                size="icon"
-                variant={view === 'agenda' ? 'default' : 'outline'}
-                className="-ml-px rounded-l-none [&_svg]:size-5"
-                disabled={!agenda}
-              >
-                <Link href={navigateURL(selectedDate, 'agenda')}>
-                  <CalendarRange strokeWidth={1.8} />
-                </Link>
-              </Button>
+              <ViewButton
+                hasPermission={day}
+                label="View by day"
+                selectedDate={selectedDate}
+                currentView={view}
+                triggerView={'day'}
+                icon={<List strokeWidth={1.8} />}
+                isFirstButton
+              />
+              <ViewButton
+                hasPermission={week}
+                label="View by week"
+                selectedDate={selectedDate}
+                currentView={view}
+                triggerView={'week'}
+                icon={<Columns strokeWidth={1.8} />}
+              />
+              <ViewButton
+                hasPermission={month}
+                label="View by month"
+                selectedDate={selectedDate}
+                currentView={view}
+                triggerView={'month'}
+                icon={<Grid2x2 strokeWidth={1.8} />}
+              />
+              <ViewButton
+                hasPermission={year}
+                label="View by year"
+                selectedDate={selectedDate}
+                currentView={view}
+                triggerView={'year'}
+                icon={<Grid3x3 strokeWidth={1.8} />}
+              />
+              <ViewButton
+                hasPermission={agenda}
+                label="View by agenda"
+                selectedDate={selectedDate}
+                currentView={view}
+                triggerView={'agenda'}
+                icon={<CalendarRange strokeWidth={1.8} />}
+                isLastButton
+              />
             </div>
           </div>
 
@@ -397,6 +375,42 @@ const MobileHeader = ({
     </div>
   );
 };
+
+const ViewButton = ({
+  currentView,
+  triggerView,
+  label,
+  hasPermission,
+  selectedDate,
+  isFirstButton = false,
+  isLastButton = false,
+  icon,
+}: {
+  currentView: TCalendarView;
+  triggerView: TCalendarView;
+  label: string;
+  hasPermission: boolean;
+  selectedDate: Date;
+  isFirstButton?: boolean;
+  isLastButton?: boolean;
+  icon: React.ReactNode;
+}) => (
+  <Button
+    asChild={hasPermission}
+    aria-label={label}
+    size="icon"
+    variant={currentView === triggerView ? 'default' : 'outline'}
+    className={cn(
+      '-ml-px [&_svg]:size-5',
+      isFirstButton && 'rounded-r-none',
+      isLastButton && 'rounded-l-none',
+      !isFirstButton && !isLastButton && 'rounded-none',
+    )}
+    disabled={!hasPermission}
+  >
+    <Link href={navigateURL(selectedDate, triggerView)}>{icon}</Link>
+  </Button>
+);
 
 const FilterSummaryButton = ({ label, count, onClick }: { label: string; count: number; onClick: () => void }) => (
   <Button variant="outline" className="w-full h-16 justify-between px-4 rounded-xl border-2" onClick={onClick}>
