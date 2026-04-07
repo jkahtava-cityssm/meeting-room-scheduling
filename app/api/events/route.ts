@@ -293,7 +293,7 @@ export async function PATCH(request: NextRequest) {
           ...(statusId !== undefined && { status: { connect: { statusId } } }),
           ...(userId !== undefined && { user: userId ? { connect: { id: userId } } : { disconnect: true } }),
           ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-          ...(sessionUserId && { updatedBy: sessionUserId }),
+          ...(sessionUserId && { updatedByUser: { connect: { id: sessionUserId } } }),
         };
 
         // 3. Update the Event
