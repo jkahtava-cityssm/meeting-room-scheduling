@@ -31,7 +31,9 @@ export function MonthViewDayEvents({
         {!isLoading &&
           dayRecord.eventRecords.map((record, index) => {
             //const event = cellEvents.find((e) => e.position === position);
-            const eventKey = record.event ? `event-${record.event.eventId}-${dayRecord.dayDate}` : `empty-${record.index}`;
+            const eventKey = record.event
+              ? `event-${record.event.eventId}-day-${record.event.multiDay?.calculatedDate}-room-${record.event.roomId}-${record.event.multiDay?.position}`
+              : `empty-${record.index}`;
 
             if (record.event) {
               return (

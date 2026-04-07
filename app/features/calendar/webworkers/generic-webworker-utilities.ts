@@ -413,7 +413,11 @@ function mutateMultiDayEventPositions(
   eventsByID: Record<number, IEventSingleRoom[]>,
   multiDayEventsAtTop: boolean = false,
 ) {
+  const keys = Object.keys(eventsByDate);
+
   for (const dateKey in eventsByDate) {
+    const firstKey = keys[0];
+
     //GET ALL THE EVENTS FOR THE DAY
     const eventsOnThisDay = eventsByDate[dateKey];
 
@@ -987,7 +991,7 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
   return eventList;
 }
 
-export function processMultiRoomEvents(events: IEvent[], splitMultiRoomEvents: boolean): IEventSingleRoom[] {
+export function processMultiRoomEvents(events: IEvent[], splitMultiRoomEvents: boolean, selectedRoomId: string[] | string): IEventSingleRoom[] {
   const splitEvents: IEventSingleRoom[] = [];
   events.forEach((event) => {
     if (splitMultiRoomEvents) {
@@ -1002,12 +1006,13 @@ export function processMultiRoomEvents(events: IEvent[], splitMultiRoomEvents: b
         });
       });
     } else {
+      const room = event.eventRooms.find((room) => selectedRoomIds.includes(String(room.roomId)));
       splitEvents.push({
         ...event,
-        roomId: event.eventRooms[0].roomId,
-        roomColor: event.eventRooms[0].color,
-        roomIcon: event.eventRooms[0].icon,
-        roomName: event.eventRooms[0].name,
+        roomId: room?.roomId ?? -2,
+        roomColor: room?.color ?? 'zinc',
+        roomIcon: room?.icon ?? 'bug',
+        roomName: room?.name ?? 'error',
         multiRoom: event.eventRooms.length > 1,
       });
     }

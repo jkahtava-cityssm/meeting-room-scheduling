@@ -255,7 +255,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
           eventBlocks.map((block) => {
             return (
               <div
-                key={`event-${block.event.eventId}-start-${new Date(block.event.startDate).getTime()}`}
+                key={`event-${block.event.eventId}-start-${new Date(block.event.startDate).getTime()}-room-${block.event.roomId}`}
                 className="absolute p-1"
                 style={block.eventStyle}
               >
