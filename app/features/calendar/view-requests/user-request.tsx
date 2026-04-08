@@ -1,7 +1,7 @@
 'use client';
 import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
 import { CalendarDayColumnCalendar } from '../sidebar-day-picker/calendar-day-column-calendar';
@@ -27,22 +27,12 @@ import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useGridColumns } from './use-grid-columns';
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
-  const {
-    interval,
-    maxSpan,
-    visibleHours,
-    fallbackHours,
-    visibleRooms,
-    selectedRoomIds,
-    selectedStatusKeys,
-    configurationError,
-    roomError,
-    setIsHeaderLoading,
-    setTotalEvents,
-    statusLookup,
-  } = usePrivateCalendar();
+  const { visibleHours, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusLookup } = usePrivateCalendar();
 
-  const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
+  const groupIdRef = useRef<string | null>(null);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const { columns } = useGridColumns(parentRef);
 
   const { result, isLoading, error } = usePrivateCalendarEvents(
     action,
@@ -67,8 +57,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const isEmpty = false;
   const isMounting = false;
-
-  const columns = useGridColumns();
 
   type VirtualRowItem =
     | { type: 'SECTION_HEADER'; data: string }
@@ -98,29 +86,88 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     return list;
   }, [result?.data?.requestSections, columns]);
 
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const estimateSize = useCallback(
-    (index: number) => {
-      const item = flatData[index];
-      if (item.type === 'SECTION_HEADER') return 40;
-      if (item.type === 'GROUP_HEADER') return 40;
-      return 450;
-    },
-    [flatData],
-  );
-
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
-    estimateSize,
+    estimateSize: useCallback(
+      (index: number) => {
+        const item = flatData[index];
+        if (item.type === 'SECTION_HEADER') return 40;
+        if (item.type === 'GROUP_HEADER') return 40;
+        return 450;
+      },
+      [flatData],
+    ),
     getScrollElement: () => parentRef.current,
     measureElement: (el) => el.getBoundingClientRect().height,
     overscan: 5,
   });
 
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
+  const scrollOffset = rowVirtualizer.scrollOffset || 0;
+
+  const stickyInfo = useMemo(() => {
+    // Find the item currently at the top of the viewport
+    const activeItem = virtualItems.find((item) => {
+      return scrollOffset >= item.start && scrollOffset < item.start + item.size;
+    });
+
+    if (!activeItem) return { section: null, group: null };
+
+    let activeSection: string | null = null;
+    let activeGroup: IRequestGroup | null = null;
+
+    // Search backwards to find the current context
+    for (let i = activeItem.index; i >= 0; i--) {
+      const item = flatData[i];
+
+      if (!activeGroup && item.type === 'GROUP_HEADER') {
+        activeGroup = item.data;
+      }
+
+      if (item.type === 'SECTION_HEADER') {
+        activeSection = item.data;
+
+        if (!activeGroup) {
+          // Look forward slightly to find the immediate group if we are at the section start
+          const nextItem = flatData[i + 1];
+          if (nextItem?.type === 'GROUP_HEADER') {
+            activeGroup = nextItem.data;
+          }
+        }
+        break;
+      }
+    }
+
+    return { section: activeSection, group: activeGroup };
+  }, [scrollOffset, virtualItems, flatData]);
+
   useEffect(() => {
+    if (stickyInfo.group) {
+      groupIdRef.current = stickyInfo.group.groupId;
+    }
+  }, [stickyInfo.group]);
+
+  useLayoutEffect(() => {
     rowVirtualizer.measure();
-  }, [columns, rowVirtualizer]);
+
+    const groupId = groupIdRef.current;
+    if (!groupId) return;
+
+    const newIndex = flatData.findIndex((item) => {
+      if (item.type === 'GROUP_HEADER') return item.data.groupId === groupId;
+      return false;
+    });
+
+    if (newIndex !== -1) {
+      requestAnimationFrame(() => {
+        rowVirtualizer.scrollToIndex(newIndex, {
+          align: 'start',
+          behavior: 'auto',
+        });
+      });
+    }
+  }, [columns, flatData, rowVirtualizer]);
 
   const badgeVariants = cva('', {
     variants: {
@@ -134,9 +181,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const patchEvent = useEventPatchMutation();
 
   const handleApprove = useCallback(
-    (id: number) => {
-      patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('APPROVED') } });
-    },
+    (id: number) => patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('APPROVED') } }),
     [patchEvent, statusLookup],
   );
 
@@ -155,17 +200,35 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   );
 
   return (
-    <div className="flex flex-1 min-h-0">
+    <div className="flex flex-1 min-h-0 relative">
+      {stickyInfo.section && (
+        <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
+          <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 shadow-sm h-10 pointer-events-auto flex items-center">
+            <span className="text-md ">{stickyInfo.section}</span>
+          </div>
+          {stickyInfo.group && (
+            <div
+              className={cn(
+                'p-2 shadow-sm h-10 border-b-2 pointer-events-auto flex items-center transition-colors border-t',
+                badgeVariants({ color: stickyInfo.group.groupColor }),
+              )}
+            >
+              <span className="text-md">{stickyInfo.group.groupName}</span>
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex flex-col min-h-0 min-w-0 flex-1">
         <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={parentRef}>
           <div
+            key={`virtual-container-cols-${columns}`}
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
               width: '100%',
               position: 'relative',
             }}
           >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            {virtualItems.map((virtualRow) => {
               const item = flatData[virtualRow.index];
               return (
                 <div
@@ -181,13 +244,13 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   }}
                 >
                   {item.type === 'SECTION_HEADER' && (
-                    <div className="sticky top-0 bg-accent text-primary p-2 border-2 border-accent/50 shadow-sm h-10 z-20">
+                    <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">
                       <span className="text-md font-bold">{item.data}</span>
                     </div>
                   )}
 
                   {item.type === 'GROUP_HEADER' && (
-                    <div className={cn('sticky top-10 p-2 shadow-sm h-10 border-2 z-10', badgeVariants({ color: item.data.groupColor }))}>
+                    <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.data.groupColor }))}>
                       <span className="text-md">{item.data.groupName}</span>
                     </div>
                   )}
@@ -210,7 +273,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
               );
             })}
           </div>
-          <ScrollBar orientation="vertical" />
+          <ScrollBar orientation="vertical" className="z-50" />
         </ScrollArea>
       </div>
     </div>
