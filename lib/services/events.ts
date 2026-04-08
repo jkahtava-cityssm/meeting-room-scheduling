@@ -49,8 +49,9 @@ export const useMyEventsQuery = (
   visibleHours: TVisibleHours,
   roomId?: string | string[],
   enabled: boolean = true,
+  viewType: 'calendar' | 'booking' = 'calendar',
 ) => {
-  const range = getDateRange(action, date);
+  const range = getDateRange(action, date, viewType);
   const start = formatDate(range.startDate);
   const end = formatDate(range.endDate);
 

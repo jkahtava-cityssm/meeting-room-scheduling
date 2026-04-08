@@ -88,6 +88,7 @@ export function CalendarMainView({ limitedByUserId, mode }: { limitedByUserId: b
           selectedDate={dateValue}
           userId={userId}
           permissions={viewPermissions}
+          allowCreateEvent={can('CreateEvent')}
         />
 
         {view === 'day' && (

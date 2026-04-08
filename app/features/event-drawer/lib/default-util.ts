@@ -61,11 +61,13 @@ export const getFormDefaults = (creationDate: Date, userId?: string, validMinute
   } as CombinedSchema;
 };
 
-export const mapEventToSchema = (event: IEventSingleRoom): CombinedSchema => {
+export const mapEventToSchema = (event: IEventSingleRoom | IEvent): CombinedSchema => {
+  const isSingleEvent = 'roomId' in event;
+
   const SEventFormDefaults = {
     eventId: String(event.eventId),
     userId: event.userId ? String(event.userId) : '',
-    roomId: event.roomId ? String(event.roomId) : '',
+    roomId: isSingleEvent ? String(event.roomId) : '',
     eventRecipientIds: event.eventRecipients ? event.eventRecipients.map((user) => String(user.userId)) : [],
     eventRoomIds: event.eventRooms.map((er) => String(er.roomId)),
     title: event.title,
