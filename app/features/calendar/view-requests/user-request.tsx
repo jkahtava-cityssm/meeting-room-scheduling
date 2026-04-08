@@ -1,7 +1,7 @@
 'use client';
 import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
 import { CalendarDayColumnCalendar } from '../sidebar-day-picker/calendar-day-column-calendar';
@@ -100,14 +100,19 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const parentRef = useRef<HTMLDivElement>(null);
 
-  const rowVirtualizer = useVirtualizer({
-    count: flatData.length,
-    estimateSize: (index) => {
+  const estimateSize = useCallback(
+    (index: number) => {
       const item = flatData[index];
       if (item.type === 'SECTION_HEADER') return 40;
       if (item.type === 'GROUP_HEADER') return 40;
-      return 450; // Our EventCard height
+      return 450;
     },
+    [flatData],
+  );
+
+  const rowVirtualizer = useVirtualizer({
+    count: flatData.length,
+    estimateSize,
     getScrollElement: () => parentRef.current,
     measureElement: (el) => el.getBoundingClientRect().height,
     overscan: 5,
@@ -127,6 +132,27 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   });
 
   const patchEvent = useEventPatchMutation();
+
+  const handleApprove = useCallback(
+    (id: number) => {
+      patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('APPROVED') } });
+    },
+    [patchEvent, statusLookup],
+  );
+
+  const handleDeny = useCallback(
+    (id: number) => {
+      patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('REJECTED') } });
+    },
+    [patchEvent, statusLookup],
+  );
+
+  const handlePending = useCallback(
+    (id: number) => {
+      patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('PENDING') } });
+    },
+    [patchEvent, statusLookup],
+  );
 
   return (
     <div className="flex flex-1 min-h-0">
@@ -167,15 +193,15 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   )}
 
                   {item.type === 'EVENT_ROW' && (
-                    <div className={cn('grid gap-4 p-4 w-full', columns === 3 ? 'grid-cols-3' : columns === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
+                    <div className="grid gap-4 p-4 w-full" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                       {item.data.map((event: IEventSingleRoom) => (
                         <EventCard
                           key={event.eventId}
                           event={event}
                           index={virtualRow.index}
-                          OnPending={() => patchEvent.mutate({ data: { eventId: event.eventId, statusId: statusLookup('PENDING') } })}
-                          OnApprove={() => patchEvent.mutate({ data: { eventId: event.eventId, statusId: statusLookup('APPROVED') } })}
-                          OnDeny={() => patchEvent.mutate({ data: { eventId: event.eventId, statusId: statusLookup('REJECTED') } })}
+                          OnPending={handlePending}
+                          OnApprove={handleApprove}
+                          OnDeny={handleDeny}
                         />
                       ))}
                     </div>

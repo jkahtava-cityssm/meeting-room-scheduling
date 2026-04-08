@@ -36,9 +36,9 @@ export const EventCard = React.memo(
     {
       event: IEventSingleRoom;
       index: number;
-      OnApprove: () => void;
-      OnDeny: () => void;
-      OnPending: () => void;
+      OnApprove: (value: number) => void;
+      OnDeny: (value: number) => void;
+      OnPending: (value: number) => void;
     }
   >(({ event, index, OnApprove, OnDeny, OnPending }, ref) => {
     const { can } = BookingPermissions.usePermissions();
@@ -137,17 +137,17 @@ export const EventCard = React.memo(
               {/* Top Row: The two available status actions */}
               <div className="grid grid-cols-2 gap-2">
                 {event.status.name !== 'Confirmed' && (
-                  <ButtonColored color="green" size="sm" className="w-full" onClick={OnApprove}>
+                  <ButtonColored color="green" size="sm" className="w-full" onClick={() => OnApprove(event.eventId)}>
                     Confirm
                   </ButtonColored>
                 )}
                 {event.status.name !== 'Rejected' && (
-                  <ButtonColored color="red" size="sm" className="w-full" onClick={OnDeny}>
+                  <ButtonColored color="red" size="sm" className="w-full" onClick={() => OnDeny(event.eventId)}>
                     Reject
                   </ButtonColored>
                 )}
                 {event.status.name !== 'Pending Review' && (
-                  <ButtonColored color="slate" size="sm" className="w-full" onClick={OnPending}>
+                  <ButtonColored color="slate" size="sm" className="w-full" onClick={() => OnPending(event.eventId)}>
                     Pending
                   </ButtonColored>
                 )}
@@ -170,101 +170,6 @@ export const EventCard = React.memo(
           </CardFooter>
         </Card>
       </div>
-    );
-
-    return (
-      <Card className="w-100 p-2 flex flex-col">
-        <CardHeader className="min-w-0 overflow-hidden space-y-4">
-          <CardTitle className="pb-2 mb-1 border-b">
-            <div className="flex flex-row w-full justify-between items-center gap-2">
-              {/* Status Badge */}
-              <div className="min-w-0 shrink-0 ">
-                <BadgeColored color={event.status.color as TColors} className="flex items-center gap-1">
-                  <DynamicIcon hideBackground color={event.status.color as TColors} name={event.status.icon as IconName} />
-                  <span className="truncate">{event.status.name}</span>
-                </BadgeColored>
-              </div>
-            </div>
-
-            <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-              <SendHorizonal className="size-4 shrink-0" />
-              <p className="text-xs font-medium">{format(event.createdAt, 'PPP @ p')}</p>
-            </div>
-          </CardTitle>
-
-          <CardTitle className="text-lg font-bold truncate">{event.title}</CardTitle>
-
-          <CardDescription className="space-y-2">
-            {/* Location / Multi-Room Logic */}
-            <div className="flex items-start gap-2">
-              <MapPin className="size-4 mt-0.5 shrink-0" />
-              <div className="min-w-0 flex-1">
-                {event.multiRoom ? (
-                  <div className="grid grid-cols-2 gap-2 border-b pb-2 mb-1">
-                    {event.eventRooms.map((room) => (
-                      <div key={room.roomId} className="min-w-0">
-                        <BadgeColored color={room.color as TColors} className="w-full">
-                          <span className="truncate block text-[10px]">{room.name}</span>
-                        </BadgeColored>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-foreground font-medium">{event.roomName}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Date & Time Info */}
-            <div className="grid gap-1.5">
-              <div className="flex items-center gap-2 text-xs text-foreground font-medium">
-                <CalendarRange className="size-4 shrink-0 text-muted-foreground" />
-                <span>{formatDateRange(event)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-foreground font-medium">
-                <Clock className="size-4 shrink-0 text-muted-foreground" />
-                <span>{formatTimeRange(event)}</span>
-              </div>
-            </div>
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="flex-1">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Text className="size-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Details</span>
-            </div>
-            <p className="text-xs text-foreground leading-relaxed line-clamp-4 pl-6">{event.description || 'No description provided.'}</p>
-          </div>
-        </CardContent>
-
-        <CardFooter className="flex flex-col sm:flex-row gap-2 pt-4">
-          <div className="flex flex-1 gap-2">
-            {event.status.name !== 'Confirmed' && (
-              <ButtonColored color="green" className="flex-1" onClick={OnApprove}>
-                Confirm
-              </ButtonColored>
-            )}
-            {event.status.name !== 'Rejected' && (
-              <ButtonColored color="red" className="flex-1" onClick={OnDeny}>
-                Reject
-              </ButtonColored>
-            )}
-          </div>
-
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto"
-            onClick={(e) => {
-              e.preventDefault();
-              if (canReadEvent) openEventDrawer({ creationDate: new Date(event.startDate), event });
-            }}
-          >
-            Review
-          </Button>
-        </CardFooter>
-      </Card>
     );
   }),
 );

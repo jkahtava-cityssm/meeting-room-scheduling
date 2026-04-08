@@ -154,7 +154,7 @@ export const SEventPUT = z.object({
   userId: z.coerce.number().nullable().optional(),
   statusId: z.coerce.number(),
   title: z.string().min(1, 'Title is required'),
-  description: z.string().default(''),
+  description: z.string(),
   startDate: utcDateSchema,
   endDate: utcDateSchema,
   recurrenceId: z.coerce.number().nullable().optional(),
