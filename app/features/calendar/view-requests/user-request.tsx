@@ -25,14 +25,20 @@ import { EventCard } from './event-card';
 import { IEventSingleRoom } from '@/lib/schemas';
 import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useGridColumns } from './use-grid-columns';
+import { TStatusKey } from '@/lib/types';
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
-  const { visibleHours, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusLookup } = usePrivateCalendar();
+  const { visibleHours, selectedRoomIds, selectedStatusKeys, setSelectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusLookup } =
+    usePrivateCalendar();
 
   const groupIdRef = useRef<string | null>(null);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const { columns } = useGridColumns(parentRef);
+
+  useEffect(() => {
+    setSelectedStatusKeys(['PENDING']);
+  }, [setSelectedStatusKeys]);
 
   const { result, isLoading, error } = usePrivateCalendarEvents(
     action,
@@ -88,18 +94,31 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
+    getScrollElement: () => parentRef.current,
     estimateSize: useCallback(
       (index: number) => {
         const item = flatData[index];
         if (item.type === 'SECTION_HEADER') return 40;
         if (item.type === 'GROUP_HEADER') return 40;
-        return 450;
+        return 600;
       },
       [flatData],
     ),
-    getScrollElement: () => parentRef.current,
-    measureElement: (el) => el.getBoundingClientRect().height,
-    overscan: 5,
+
+    measureElement: (el) => {
+      // 1. Cast to HTMLElement
+      const htmlEl = el as HTMLElement;
+      const index = Number(htmlEl.getAttribute('data-index'));
+      const item = flatData[index];
+
+      // 2. HARDCODE header heights to match your CSS 'h-10'
+      // This prevents the 1px-2px "flicker" when headers hit the top
+      if (item?.type.includes('HEADER')) return 40;
+
+      // 3. Measure event rows normally
+      return htmlEl.offsetHeight;
+    },
+    overscan: 10,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -201,23 +220,23 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   return (
     <div className="flex flex-1 min-h-0 relative">
-      {stickyInfo.section && (
-        <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
+      <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none h-20">
+        {stickyInfo.section && (
           <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 shadow-sm h-10 pointer-events-auto flex items-center">
-            <span className="text-md ">{stickyInfo.section}</span>
+            {stickyInfo.section}
           </div>
-          {stickyInfo.group && (
-            <div
-              className={cn(
-                'p-2 shadow-sm h-10 border-b-2 pointer-events-auto flex items-center transition-colors border-t',
-                badgeVariants({ color: stickyInfo.group.groupColor }),
-              )}
-            >
-              <span className="text-md">{stickyInfo.group.groupName}</span>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+        {stickyInfo.group && (
+          <div
+            className={cn(
+              'p-2 shadow-sm h-10 border-b-2 pointer-events-auto flex items-center transition-colors border-t',
+              badgeVariants({ color: stickyInfo.group.groupColor }),
+            )}
+          >
+            {stickyInfo.group.groupName}
+          </div>
+        )}
+      </div>
       <div className="flex flex-col min-h-0 min-w-0 flex-1">
         <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={parentRef}>
           <div
@@ -256,7 +275,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   )}
 
                   {item.type === 'EVENT_ROW' && (
-                    <div className="grid gap-4 p-4 w-full" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+                    <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                       {item.data.map((event: IEventSingleRoom) => (
                         <EventCard
                           key={event.eventId}
@@ -282,52 +301,4 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
-}
-
-function GroupSection({ requestGroup }: { requestGroup: IRequestGroup }) {
-  const { statusLookup } = usePrivateCalendar();
-  const patchEvent = useEventPatchMutation();
-
-  const badgeVariants = cva('', {
-    variants: {
-      color: sharedColorVariants,
-    },
-    defaultVariants: {
-      color: 'slate',
-    },
-  });
-
-  return (
-    <div className="w-full">
-      <div className={cn('sticky top-10 p-2  shadow-sm h-10 border-2 rounded-b-sm', badgeVariants({ color: requestGroup.groupColor }))}>
-        <span className={cn('flex-1 text-md')}> {requestGroup.groupName}</span>
-      </div>
-      <div className="flex flex-wrap gap-4 p-4 ">
-        {requestGroup.groupEvents.map((event, idx) => {
-          return (
-            <EventCard
-              key={String(event.eventId)}
-              event={event}
-              OnPending={() => {
-                patchEvent.mutate({
-                  data: { eventId: event.eventId, statusId: statusLookup('PENDING') },
-                });
-              }}
-              OnApprove={() => {
-                patchEvent.mutate({
-                  data: { eventId: event.eventId, statusId: statusLookup('APPROVED') },
-                });
-              }}
-              OnDeny={() => {
-                patchEvent.mutate({
-                  data: { eventId: event.eventId, statusId: statusLookup('REJECTED') },
-                });
-              }}
-              index={0}
-            ></EventCard>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
