@@ -99,7 +99,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       (index: number) => {
         const item = flatData[index];
         if (item.type === 'SECTION_HEADER') return 40;
-        if (item.type === 'GROUP_HEADER') return 40;
+        if (item.type === 'GROUP_HEADER') return 43;
         return 600;
       },
       [flatData],
@@ -107,18 +107,16 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
     measureElement: (el) => {
       // 1. Cast to HTMLElement
-      const htmlEl = el as HTMLElement;
-      const index = Number(htmlEl.getAttribute('data-index'));
+      const index = Number(el.getAttribute('data-index'));
       const item = flatData[index];
 
-      // 2. HARDCODE header heights to match your CSS 'h-10'
-      // This prevents the 1px-2px "flicker" when headers hit the top
-      if (item?.type.includes('HEADER')) return 40;
+      if (item?.type === 'SECTION_HEADER') return 40;
+      if (item?.type === 'GROUP_HEADER') return 43;
 
       // 3. Measure event rows normally
-      return htmlEl.offsetHeight;
+      return el.getBoundingClientRect().height;
     },
-    overscan: 10,
+    overscan: 5,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
