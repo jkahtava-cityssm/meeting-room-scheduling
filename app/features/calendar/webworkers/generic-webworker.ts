@@ -173,7 +173,8 @@ self.onmessage = async (event: MessageEvent<ICalendarProcessData>) => {
 
     const boundedEvents = setMultiDayEventBoundaries([...multiDayEvents, ...recurringEvents], viewBounds.from, viewBounds.to);
 
-    const splitMultiRoomEvents = viewType === 'calendar' ? action !== 'AGENDA' && action !== 'MONTH' : false;
+    const splitMultiRoomEvents = viewType === 'calendar' && (action === 'DAY' || action === 'YEAR');
+
     const multiRoomEvents = processMultiRoomEvents(boundedEvents, splitMultiRoomEvents, roomIds);
 
     const filtered = filterEventsByRoom(multiRoomEvents, roomIds);
