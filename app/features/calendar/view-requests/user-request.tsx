@@ -238,7 +238,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       <div className="flex flex-col min-h-0 min-w-0 flex-1">
         <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={parentRef}>
           <div
-            key={`virtual-container-cols-${columns}`}
+            //key={`virtual-container-cols-${columns}`}
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
               width: '100%',
