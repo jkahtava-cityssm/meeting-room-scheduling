@@ -1063,7 +1063,7 @@ export function processRequestEvents(events: IEventSingleRoom[]): IRequestSectio
 
       return {
         sectionId: dateKey,
-        sectionTitle: dateKey,
+        sectionTitle: format(new Date(dateKey + 'T00:00:00'), 'PPP'),
         sectionGroups: sortedGroups,
       };
     });
