@@ -70,17 +70,15 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const columns = useGridColumns();
 
-  type VirtualItemType =
-    | { type: 'SECTION_HEADER'; data: string; id: string }
-    | { type: 'GROUP_HEADER'; data: IRequestGroup; id: string }
-    | { type: 'EVENT'; data: IEventSingleRoom; id: string };
+  type VirtualRowItem =
+    | { type: 'SECTION_HEADER'; data: string }
+    | { type: 'GROUP_HEADER'; data: IRequestGroup }
+    | { type: 'EVENT_ROW'; data: IEventSingleRoom[] };
 
   // Helper to chunk the events
-  const chunkArray = (arr: any[], size: number) =>
-    Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
 
   const flatData = useMemo(() => {
-    const list: any[] = [];
+    const list: VirtualRowItem[] = [];
     // Use a simple media query check or a hook like useBreakpoint()
     // For this example, let's assume 'columns' is 1 (mobile) or 3 (desktop)
 
@@ -191,6 +189,10 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       </div>
     </div>
   );
+}
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
 }
 
 function GroupSection({ requestGroup }: { requestGroup: IRequestGroup }) {
