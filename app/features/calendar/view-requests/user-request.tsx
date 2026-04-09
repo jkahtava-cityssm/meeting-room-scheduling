@@ -27,11 +27,11 @@ import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useGridColumns } from './use-grid-columns';
 import { TStatusKey } from '@/lib/types';
 
-export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
-  const SECTION_HEADER_PX = 40;
-  const GROUP_HEADER_PX = 40;
-  const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
+const SECTION_HEADER_PX = 40;
+const GROUP_HEADER_PX = 40;
+const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
 
+export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
   const { visibleHours, selectedRoomIds, selectedStatusKeys, setSelectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusLookup } =
     usePrivateCalendar();
 
@@ -125,7 +125,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       return el.getBoundingClientRect().height;
     },
     overscan: 5,
-    scrollPaddingStart: HEADER_PX,
+    scrollPaddingStart: SECTION_HEADER_PX,
     getItemKey: (index) => flatData[index]?.key ?? index,
   });
 
@@ -139,7 +139,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
     const activeItem = [...virtualItems].reverse().find((v) => v.start <= top) ?? virtualItems[0];
 
-    if (!activeItem) return { section: null, group: null };
+    if (!activeItem) return { section: null, group: null, groupId: null };
 
     let activeSection: string | null = null;
     let activeGroup: IRequestGroup | null = null;
@@ -166,29 +166,27 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       }
     }
 
-    return { section: activeSection, group: activeGroup };
+    return { section: activeSection, group: activeGroup, groupId: activeGroup?.groupId ?? null };
   }, [scrollOffset, virtualItems, flatData]);
 
   useLayoutEffect(() => {
-    if (stickyInfo.group?.groupId) {
-      groupIdRef.current = stickyInfo.group.groupId;
-    }
-  }, [stickyInfo.group?.groupId]);
+    const isColumnTransition = prevColsRef.current !== clampedColumn;
+    if (isColumnTransition) return;
+
+    groupIdRef.current = stickyInfo.groupId;
+  }, [clampedColumn, stickyInfo.groupId]);
 
   useLayoutEffect(() => {
     if (!parentRef.current) return;
-
-    const prev = prevColsRef.current;
+    if (prevColsRef.current === clampedColumn) return;
     prevColsRef.current = clampedColumn;
-
-    // Only act when layout (columns) changes
-    if (prev === clampedColumn) return;
 
     const groupId = groupIdRef.current;
     if (!groupId) return;
 
     const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.data.groupId === groupId);
-    if (newIndex < 0) return;
+    
+    if (newIndex === -1) return;
 
     // Reset measurements only when columns changed
     rowVirtualizer.measure(); // resets cached sizes [1](https://tanstack.dev/virtual/latest/docs/api/virtualizer)
