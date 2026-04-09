@@ -32,7 +32,8 @@ interface ICalendarContext {
   roomError: Error | null;
   isConfigurationPending: boolean;
   isRoomsPending: boolean;
-  statusLookup: (key: TStatusKey) => number | undefined;
+  statusIdLookupByKey: (key: TStatusKey) => number | undefined;
+  statusKeyLookupById: (id: number) => TStatusKey | undefined;
 }
 
 const CalendarContext = createContext<ICalendarContext | null>(null);
@@ -61,9 +62,16 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
     return Array.from({ length: totalFallbackHours }, (_, i) => i + minFallBackHour);
   }, [visibleHours]);
 
-  const statusLookup = useCallback(
+  const statusIdLookupByKey = useCallback(
     (key: TStatusKey) => {
       return statuses?.find((s) => s.key === key)?.statusId;
+    },
+    [statuses],
+  );
+
+  const statusKeyLookupById = useCallback(
+    (id: number) => {
+      return statuses?.find((s) => s.statusId === id)?.key as TStatusKey | undefined;
     },
     [statuses],
   );
@@ -85,7 +93,8 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
       setSelectedRoomIds,
       selectedStatusKeys,
       setSelectedStatusKeys,
-      statusLookup,
+      statusKeyLookupById,
+      statusIdLookupByKey,
       visibleRooms,
       visibleHours,
       fallbackHours,
@@ -103,7 +112,8 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
       handleSelectDate,
       selectedRoomIds,
       selectedStatusKeys,
-      statusLookup,
+      statusIdLookupByKey,
+      statusKeyLookupById,
       visibleRooms,
       visibleHours,
       fallbackHours,
