@@ -28,6 +28,10 @@ import { useGridColumns } from './use-grid-columns';
 import { TStatusKey } from '@/lib/types';
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
+  const SECTION_HEADER_PX = 40;
+  const GROUP_HEADER_PX = 40;
+  const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
+
   const { visibleHours, selectedRoomIds, selectedStatusKeys, setSelectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusLookup } =
     usePrivateCalendar();
 
@@ -35,6 +39,10 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const parentRef = useRef<HTMLDivElement>(null);
   const { columns } = useGridColumns(parentRef);
+
+  const clampedColumn = Math.max(1, columns || 1);
+
+  const prevColsRef = useRef(clampedColumn);
 
   useEffect(() => {
     setSelectedStatusKeys(['PENDING']);
@@ -65,9 +73,9 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const isMounting = false;
 
   type VirtualRowItem =
-    | { type: 'SECTION_HEADER'; data: string }
-    | { type: 'GROUP_HEADER'; data: IRequestGroup }
-    | { type: 'EVENT_ROW'; data: IEventSingleRoom[] };
+    | { type: 'SECTION_HEADER'; key: string; data: string }
+    | { type: 'GROUP_HEADER'; key: string; data: IRequestGroup }
+    | { type: 'EVENT_ROW'; key: string; data: IEventSingleRoom[] };
 
   // Helper to chunk the events
 
@@ -77,20 +85,20 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     // For this example, let's assume 'columns' is 1 (mobile) or 3 (desktop)
 
     result?.data?.requestSections?.forEach((section) => {
-      list.push({ type: 'SECTION_HEADER', data: section.sectionTitle });
+      list.push({ type: 'SECTION_HEADER', key: `section:${section.sectionTitle}`, data: section.sectionTitle });
 
       section.sectionGroups.forEach((group) => {
-        list.push({ type: 'GROUP_HEADER', data: group });
+        list.push({ type: 'GROUP_HEADER', key: `group:${group.groupId}`, data: group });
 
         // Chunk the events into rows
-        const eventRows = chunkArray(group.groupEvents, columns);
-        eventRows.forEach((rowEvents) => {
-          list.push({ type: 'EVENT_ROW', data: rowEvents });
+        const eventRows = chunkArray(group.groupEvents, clampedColumn);
+        eventRows.forEach((rowEvents, rowIndex) => {
+          list.push({ type: 'EVENT_ROW', key: `events:${group.groupId}:${rowIndex}`, data: rowEvents });
         });
       });
     });
     return list;
-  }, [result?.data?.requestSections, columns]);
+  }, [result?.data?.requestSections, clampedColumn]);
 
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
@@ -98,8 +106,8 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     estimateSize: useCallback(
       (index: number) => {
         const item = flatData[index];
-        if (item.type === 'SECTION_HEADER') return 40;
-        if (item.type === 'GROUP_HEADER') return 43;
+        if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
+        if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
         return 600;
       },
       [flatData],
@@ -110,13 +118,15 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       const index = Number(el.getAttribute('data-index'));
       const item = flatData[index];
 
-      if (item?.type === 'SECTION_HEADER') return 40;
-      if (item?.type === 'GROUP_HEADER') return 43;
+      if (item?.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
+      if (item?.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
 
       // 3. Measure event rows normally
       return el.getBoundingClientRect().height;
     },
     overscan: 5,
+    scrollPaddingStart: HEADER_PX,
+    getItemKey: (index) => flatData[index]?.key ?? index,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -125,9 +135,9 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const stickyInfo = useMemo(() => {
     // Find the item currently at the top of the viewport
-    const activeItem = virtualItems.find((item) => {
-      return scrollOffset >= item.start && scrollOffset < item.start + item.size;
-    });
+    const top = scrollOffset + HEADER_PX + 1;
+
+    const activeItem = [...virtualItems].reverse().find((v) => v.start <= top) ?? virtualItems[0];
 
     if (!activeItem) return { section: null, group: null };
 
@@ -159,32 +169,35 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     return { section: activeSection, group: activeGroup };
   }, [scrollOffset, virtualItems, flatData]);
 
-  useEffect(() => {
-    if (stickyInfo.group) {
+  useLayoutEffect(() => {
+    if (stickyInfo.group?.groupId) {
       groupIdRef.current = stickyInfo.group.groupId;
     }
-  }, [stickyInfo.group]);
+  }, [stickyInfo.group?.groupId]);
 
   useLayoutEffect(() => {
-    rowVirtualizer.measure();
+    if (!parentRef.current) return;
+
+    const prev = prevColsRef.current;
+    prevColsRef.current = clampedColumn;
+
+    // Only act when layout (columns) changes
+    if (prev === clampedColumn) return;
 
     const groupId = groupIdRef.current;
     if (!groupId) return;
 
-    const newIndex = flatData.findIndex((item) => {
-      if (item.type === 'GROUP_HEADER') return item.data.groupId === groupId;
-      return false;
-    });
+    const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.data.groupId === groupId);
+    if (newIndex < 0) return;
 
-    if (newIndex !== -1) {
-      requestAnimationFrame(() => {
-        rowVirtualizer.scrollToIndex(newIndex, {
-          align: 'start',
-          behavior: 'auto',
-        });
-      });
-    }
-  }, [columns, flatData, rowVirtualizer]);
+    // Reset measurements only when columns changed
+    rowVirtualizer.measure(); // resets cached sizes [1](https://tanstack.dev/virtual/latest/docs/api/virtualizer)
+
+    // Scroll after measurement has a chance to apply
+    requestAnimationFrame(() => {
+      rowVirtualizer.scrollToIndex(newIndex, { align: 'start', behavior: 'auto' });
+    });
+  }, [clampedColumn, flatData, rowVirtualizer]);
 
   const badgeVariants = cva('', {
     variants: {
@@ -273,7 +286,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   )}
 
                   {item.type === 'EVENT_ROW' && (
-                    <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+                    <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${clampedColumn}, minmax(0, 1fr))` }}>
                       {item.data.map((event: IEventSingleRoom) => (
                         <EventCard
                           key={event.eventId}
