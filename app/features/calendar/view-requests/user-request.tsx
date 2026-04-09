@@ -1,7 +1,7 @@
 'use client';
 import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import { CalendarDayColumnCalendar } from '../sidebar-day-picker/calendar-day-column-calendar';
@@ -32,8 +32,21 @@ const GROUP_HEADER_PX = 40;
 const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
-  const { visibleHours, selectedRoomIds, selectedStatusKeys, setSelectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusLookup } =
-    usePrivateCalendar();
+  const [removingEventIds, setRemovingEventIds] = useState<Set<number>>(() => new Set());
+
+  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(() => new Set());
+  const collapseTimersRef = useRef<Map<string, number>>(new Map());
+
+  const {
+    visibleHours,
+    selectedRoomIds,
+    selectedStatusKeys,
+    setSelectedStatusKeys,
+    setIsHeaderLoading,
+    setTotalEvents,
+    statusIdLookupByKey,
+    statusKeyLookupById,
+  } = usePrivateCalendar();
 
   const groupIdRef = useRef<string | null>(null);
 
@@ -73,32 +86,151 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const isMounting = false;
 
   type VirtualRowItem =
-    | { type: 'SECTION_HEADER'; key: string; data: string }
-    | { type: 'GROUP_HEADER'; key: string; data: IRequestGroup }
+    | { type: 'SECTION_HEADER'; key: string; data: string; isRemoving: boolean }
+    | { type: 'GROUP_HEADER'; key: string; data: IRequestGroup; isRemoving: boolean }
     | { type: 'EVENT_ROW'; key: string; data: IEventSingleRoom[] };
 
   // Helper to chunk the events
 
-  const flatData = useMemo(() => {
-    const list: VirtualRowItem[] = [];
-    // Use a simple media query check or a hook like useBreakpoint()
-    // For this example, let's assume 'columns' is 1 (mobile) or 3 (desktop)
+  const removingGroupIds = useMemo(() => {
+    const ids = new Set<string>();
 
     result?.data?.requestSections?.forEach((section) => {
-      list.push({ type: 'SECTION_HEADER', key: `section:${section.sectionTitle}`, data: section.sectionTitle });
+      section.sectionGroups.forEach((group) => {
+        const allEventsRemoving = group.groupEvents.length > 0 && group.groupEvents.every((e) => removingEventIds.has(e.eventId));
+
+        if (allEventsRemoving) {
+          ids.add(group.groupId);
+        }
+      });
+    });
+
+    return ids;
+  }, [result?.data?.requestSections, removingEventIds]);
+
+  const removingSectionIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    result?.data?.requestSections?.forEach((section) => {
+      if (section.sectionGroups.length === 0) return;
+
+      const allGroupsRemoving = section.sectionGroups.every((group) => removingGroupIds.has(group.groupId));
+
+      if (allGroupsRemoving) {
+        ids.add(section.sectionTitle);
+      }
+    });
+
+    return ids;
+  }, [result?.data?.requestSections, removingGroupIds]);
+
+  const flatData = useMemo(() => {
+    const list: VirtualRowItem[] = [];
+
+    result?.data?.requestSections?.forEach((section, sectionIndex) => {
+      const isRemovingSection = removingSectionIds.has(section.sectionTitle);
+
+      const hasAnyVisibleGroup = section.sectionGroups.some((group) => {
+        const hasVisibleEvents = group.groupEvents.some(
+          (e) => selectedStatusKeys.includes(e.status.key as TStatusKey) || removingEventIds.has(e.eventId),
+        );
+
+        return hasVisibleEvents || removingGroupIds.has(group.groupId);
+      });
+
+      if (!hasAnyVisibleGroup && !isRemovingSection) return;
+
+      list.push({
+        type: 'SECTION_HEADER',
+        key: `section:${sectionIndex}:${section.sectionTitle}`,
+        data: section.sectionTitle,
+        isRemoving: isRemovingSection,
+      });
 
       section.sectionGroups.forEach((group) => {
-        list.push({ type: 'GROUP_HEADER', key: `group:${group.groupId}`, data: group });
+        const visibleEvents = group.groupEvents.filter(
+          (event) => selectedStatusKeys.includes(event.status.key as TStatusKey) || removingEventIds.has(event.eventId),
+        );
+
+        const isRemovingGroup = removingGroupIds.has(group.groupId);
+
+        if (visibleEvents.length === 0 && !isRemovingGroup) return;
+
+        list.push({ type: 'GROUP_HEADER', key: `group:${sectionIndex}:${group.groupId}`, data: group, isRemoving: isRemovingGroup });
 
         // Chunk the events into rows
-        const eventRows = chunkArray(group.groupEvents, clampedColumn);
+        const eventRows = chunkArray(visibleEvents, clampedColumn);
         eventRows.forEach((rowEvents, rowIndex) => {
-          list.push({ type: 'EVENT_ROW', key: `events:${group.groupId}:${rowIndex}`, data: rowEvents });
+          list.push({ type: 'EVENT_ROW', key: `events:${sectionIndex}:${group.groupId}:${rowIndex}`, data: rowEvents });
         });
       });
     });
     return list;
-  }, [result?.data?.requestSections, clampedColumn]);
+  }, [result?.data?.requestSections, removingSectionIds, removingGroupIds, clampedColumn, selectedStatusKeys, removingEventIds]);
+
+  const isRemovingItem = useCallback(
+    (item: VirtualRowItem) => {
+      if (item.type === 'EVENT_ROW') {
+        return item.data.length > 0 && item.data.every((e) => removingEventIds.has(e.eventId));
+      }
+      // headers already carry isRemoving
+      return item.isRemoving === true;
+    },
+    [removingEventIds],
+  );
+
+  const itemByKey = useMemo(() => new Map(flatData.map((i) => [i.key, i] as const)), [flatData]);
+
+  useEffect(() => {
+    const timers = collapseTimersRef.current;
+
+    // 1) Schedule collapse for items that are removing but not yet collapsed
+    for (const item of flatData) {
+      if (!isRemovingItem(item)) continue;
+
+      const k = item.key;
+      if (collapsedKeys.has(k) || timers.has(k)) continue;
+
+      const duration = item.type === 'EVENT_ROW' ? 200 : 300; // match your CSS: cards 200ms, headers 300ms
+
+      const t = window.setTimeout(() => {
+        setCollapsedKeys((prev) => {
+          if (prev.has(k)) return prev;
+          const next = new Set(prev);
+          next.add(k);
+          return next;
+        });
+        timers.delete(k);
+      }, duration);
+
+      timers.set(k, t);
+    }
+
+    // 2) Cancel scheduled collapses + uncollapse if item is no longer removing
+    for (const [k, t] of timers) {
+      const item = itemByKey.get(k);
+      if (!item || !isRemovingItem(item)) {
+        clearTimeout(t);
+        timers.delete(k);
+      }
+    }
+
+    // 3) Drop collapsed keys that no longer exist or are no longer removing
+    setCollapsedKeys((prev) => {
+      let changed = false;
+      const next = new Set(prev);
+
+      for (const k of prev) {
+        const item = itemByKey.get(k);
+        if (!item || !isRemovingItem(item)) {
+          next.delete(k);
+          changed = true;
+        }
+      }
+
+      return changed ? next : prev;
+    });
+  }, [flatData, isRemovingItem, collapsedKeys, itemByKey]);
 
   const rowVirtualizer = useVirtualizer({
     count: flatData.length,
@@ -106,17 +238,24 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     estimateSize: useCallback(
       (index: number) => {
         const item = flatData[index];
+
+        if (collapsedKeys.has(item.key)) return 0;
+
         if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
         if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
         return 600;
       },
-      [flatData],
+      [collapsedKeys, flatData],
     ),
 
     measureElement: (el) => {
       // 1. Cast to HTMLElement
       const index = Number(el.getAttribute('data-index'));
       const item = flatData[index];
+
+      if (!item) return 0;
+
+      if (collapsedKeys.has(item.key)) return 0;
 
       if (item?.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
       if (item?.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
@@ -177,6 +316,11 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   }, [clampedColumn, stickyInfo.groupId]);
 
   useLayoutEffect(() => {
+    if (collapsedKeys.size === 0) return;
+    rowVirtualizer.measure();
+  }, [collapsedKeys, rowVirtualizer]);
+
+  useLayoutEffect(() => {
     if (!parentRef.current) return;
     if (prevColsRef.current === clampedColumn) return;
     prevColsRef.current = clampedColumn;
@@ -185,7 +329,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     if (!groupId) return;
 
     const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.data.groupId === groupId);
-    
+
     if (newIndex === -1) return;
 
     // Reset measurements only when columns changed
@@ -209,23 +353,49 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const patchEvent = useEventPatchMutation();
 
   const handleApprove = useCallback(
-    (id: number) => patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('APPROVED') } }),
-    [patchEvent, statusLookup],
+    (id: number) => {
+      setRemovingEventIds((prev) => new Set(prev).add(id));
+      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') } });
+    },
+    [patchEvent, statusIdLookupByKey],
   );
 
   const handleDeny = useCallback(
     (id: number) => {
-      patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('REJECTED') } });
+      setRemovingEventIds((prev) => new Set(prev).add(id));
+      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') } });
     },
-    [patchEvent, statusLookup],
+    [patchEvent, statusIdLookupByKey],
   );
 
   const handlePending = useCallback(
     (id: number) => {
-      patchEvent.mutate({ data: { eventId: id, statusId: statusLookup('PENDING') } });
+      setRemovingEventIds((prev) => new Set(prev).add(id));
+      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') } });
     },
-    [patchEvent, statusLookup],
+    [patchEvent, statusIdLookupByKey],
   );
+
+  useEffect(() => {
+    if (removingEventIds.size === 0) return;
+
+    const stillPresent = new Set<number>();
+
+    result?.data?.requestSections?.forEach((section) => {
+      section.sectionGroups.forEach((group) => {
+        group.groupEvents.forEach((event) => {
+          if (removingEventIds.has(event.eventId)) {
+            stillPresent.add(event.eventId);
+          }
+        });
+      });
+    });
+
+    // Only clear IDs that the server has removed
+    if (stillPresent.size !== removingEventIds.size) {
+      setRemovingEventIds(stillPresent);
+    }
+  }, [result?.data?.requestSections, removingEventIds]);
 
   return (
     <div className="flex flex-1 min-h-0 relative">
@@ -272,29 +442,59 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   }}
                 >
                   {item.type === 'SECTION_HEADER' && (
-                    <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">
-                      <span className="text-md font-bold">{item.data}</span>
+                    <div
+                      className={cn(
+                        'overflow-hidden transition-[height,opacity,transform] duration-300 ease-in-out',
+                        item.isRemoving && 'opacity-0 -translate-y-2',
+                      )}
+                    >
+                      <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">{item.data}</div>
                     </div>
                   )}
 
                   {item.type === 'GROUP_HEADER' && (
-                    <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.data.groupColor }))}>
-                      <span className="text-md">{item.data.groupName}</span>
+                    <div
+                      className={cn(
+                        'overflow-hidden transition-[height,opacity,transform] duration-300 ease-in-out',
+                        item.isRemoving && 'opacity-0 -translate-y-1',
+                      )}
+                    >
+                      <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.data.groupColor }))}>
+                        <span className="text-md">{item.data.groupName}</span>
+                      </div>
                     </div>
                   )}
 
                   {item.type === 'EVENT_ROW' && (
-                    <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${clampedColumn}, minmax(0, 1fr))` }}>
-                      {item.data.map((event: IEventSingleRoom) => (
-                        <EventCard
-                          key={event.eventId}
-                          event={event}
-                          index={virtualRow.index}
-                          OnPending={handlePending}
-                          OnApprove={handleApprove}
-                          OnDeny={handleDeny}
-                        />
-                      ))}
+                    <div
+                      className={cn(
+                        'overflow-hidden transition-[height,opacity] duration-300 ease-in-out',
+                        item.data.every((e) => removingEventIds.has(e.eventId)) && 'opacity-0',
+                      )}
+                    >
+                      <div
+                        className="grid gap-4 p-4 w-full items-stretch"
+                        style={{ gridTemplateColumns: `repeat(${clampedColumn}, minmax(0, 1fr))` }}
+                      >
+                        {item.data.map((event: IEventSingleRoom) => {
+                          const isRemoving = removingEventIds.has(event.eventId);
+
+                          return (
+                            <div
+                              key={event.eventId}
+                              className={cn('transition-[opacity,transform] duration-200 ease-out', isRemoving && 'opacity-0 scale-95')}
+                            >
+                              <EventCard
+                                event={event}
+                                index={virtualRow.index}
+                                OnPending={handlePending}
+                                OnApprove={handleApprove}
+                                OnDeny={handleDeny}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
