@@ -23,7 +23,7 @@ import { sharedColorVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
 import { EventCard } from './event-card';
 import { IEventSingleRoom } from '@/lib/schemas';
-import { useVirtualizer, useWindowVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, useWindowVirtualizer, VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 import { useGridColumns } from './use-grid-columns';
 import { TStatusKey } from '@/lib/types';
 
@@ -178,6 +178,20 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     return list;
   }, [result?.data?.requestSections, removingSectionIds, removingGroupIds, selectedStatusKeys, removingEventIds, clampedColumn, removingEvents]);
 
+  type ScrollAnchor = {
+    key: string;
+    index: number;
+    offsetWithinItem: number;
+  };
+
+  const latestFlatDataRef = useRef(flatData);
+  useEffect(() => {
+    latestFlatDataRef.current = flatData;
+  }, [flatData]);
+
+  const liveAnchorRef = useRef<ScrollAnchor | null>(null);
+  const pendingRestoreRef = useRef<ScrollAnchor | null>(null);
+
   const isRemovingItem = useCallback(
     (item: VirtualRowItem) => {
       if (item.type === 'GROUP_ROW') {
@@ -210,12 +224,16 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       const duration = item.type === 'GROUP_ROW' ? 200 : 300; // match CSS
 
       const t = window.setTimeout(() => {
+        // capture anchor right before collapsing height to 0
+        pendingRestoreRef.current = liveAnchorRef.current;
+
         setCollapsedKeys((prev) => {
           if (prev.has(k)) return prev;
           const next = new Set(prev);
           next.add(k);
           return next;
         });
+
         timers.delete(k);
       }, duration);
 
@@ -248,20 +266,19 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     });
   }, [flatData, isRemovingItem, collapsedKeys, itemByKey]);
 
-  const rowVirtualizer = useVirtualizer({
+  const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLDivElement>({
     count: flatData.length,
     getScrollElement: () => parentRef.current,
+
     estimateSize: useCallback(
       (index: number) => {
         const item = flatData[index];
-
-        if (collapsedKeys.has(item.key)) return 0;
 
         if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
         if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
         return 650;
       },
-      [collapsedKeys, flatData],
+      [flatData],
     ),
 
     measureElement: (el) => {
@@ -270,17 +287,37 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
       if (!item) return 0;
 
-      if (collapsedKeys.has(item.key)) return 0;
-
-      if (item?.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
-      if (item?.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
-
       return el.getBoundingClientRect().height;
     },
     overscan: 5,
     scrollPaddingStart: SECTION_HEADER_PX,
     getItemKey: (index) => flatData[index]?.key ?? index,
   });
+
+  // Inside your component
+  const [isRestoring, setIsRestoring] = useState(false);
+  const anchorRef = useRef<{ key: string; offset: number } | null>(null);
+
+  // This function finds the first visible item and saves how far it is from the top
+  const captureAnchor = useCallback(() => {
+    const virtualItems = rowVirtualizer.getVirtualItems();
+    if (virtualItems.length === 0) return;
+
+    // We find the first item that is actually visible (or the first in the virtual list)
+    const anchorItem = virtualItems[0];
+    const scrollElement = parentRef.current;
+
+    if (anchorItem && scrollElement) {
+      // Distance from the top of the container to the top of the item
+      const itemTop = anchorItem.start;
+      const containerScroll = scrollElement.scrollTop;
+
+      anchorRef.current = {
+        key: anchorItem.key as string,
+        offset: containerScroll - itemTop, // How many pixels of this item are scrolled past
+      };
+    }
+  }, [rowVirtualizer]);
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
@@ -329,11 +366,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   }, [clampedColumn, stickyInfo.groupId]);
 
   useLayoutEffect(() => {
-    if (collapsedKeys.size === 0) return;
-    rowVirtualizer.measure();
-  }, [collapsedKeys, rowVirtualizer]);
-
-  useLayoutEffect(() => {
     if (!parentRef.current) return;
     if (prevColsRef.current === clampedColumn) return;
     prevColsRef.current = clampedColumn;
@@ -354,6 +386,24 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     });
   }, [clampedColumn, flatData, rowVirtualizer]);
 
+  useLayoutEffect(() => {
+    if (anchorRef.current && parentRef.current) {
+      const { key, offset } = anchorRef.current;
+
+      // Find where our anchor item is in the NEW list
+      const newItems = rowVirtualizer.getVirtualItems();
+      const foundItem = newItems.find((item) => item.key === key);
+
+      if (foundItem) {
+        const newScrollTop = foundItem.start + offset;
+        parentRef.current.scrollTop = newScrollTop;
+      }
+
+      // Clear the anchor so it doesn't interfere with normal scrolling
+      anchorRef.current = null;
+    }
+  }, [flatData, rowVirtualizer]);
+
   const badgeVariants = cva('', {
     variants: {
       color: sharedColorVariants,
@@ -367,26 +417,29 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const handleApprove = useCallback(
     (id: number) => {
+      captureAnchor();
       setRemovingEvents((prev) => new Map(prev).set(id, 'APPROVED'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') } });
     },
-    [patchEvent, statusIdLookupByKey],
+    [captureAnchor, patchEvent, statusIdLookupByKey],
   );
 
   const handleDeny = useCallback(
     (id: number) => {
+      captureAnchor();
       setRemovingEvents((prev) => new Map(prev).set(id, 'REJECTED'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') } });
     },
-    [patchEvent, statusIdLookupByKey],
+    [captureAnchor, patchEvent, statusIdLookupByKey],
   );
 
   const handlePending = useCallback(
     (id: number) => {
+      captureAnchor();
       setRemovingEvents((prev) => new Map(prev).set(id, 'PENDING'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') } });
     },
-    [patchEvent, statusIdLookupByKey],
+    [captureAnchor, patchEvent, statusIdLookupByKey],
   );
 
   useEffect(() => {
