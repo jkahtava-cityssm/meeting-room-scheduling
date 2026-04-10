@@ -67,6 +67,16 @@ export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.Use
   });
 }
 
+export async function upsertUserRole(userId: number, roleId: number, granted: boolean, sessionUserId: number, tx: Prisma.TransactionClient = prisma) {
+  const userRole = await prisma.userRole.upsert({
+    where: { userId_roleId: { userId, roleId } },
+    create: { userId, roleId, granted, createdBy: sessionUserId, updatedBy: sessionUserId },
+    update: { granted, updatedBy: sessionUserId },
+  });
+
+  return userRole;
+}
+
 export async function getDefaultRole(tx: Prisma.TransactionClient = prisma): Promise<{ roleId: number | null; name: string | null }> {
   const defaultRole = await tx.configuration.findFirst({
     where: { key: 'defaultUserRole' },

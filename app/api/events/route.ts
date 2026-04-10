@@ -4,15 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { UTCDate } from '@date-fns/utc';
 
-import {
-  addCreateAudit,
-  addCreateManyAudit,
-  addUpdateAudit,
-  BadRequestMessage,
-  CreatedMessage,
-  InternalServerErrorMessage,
-  SuccessMessage,
-} from '@/lib/api-helpers';
+import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { Prisma } from '@prisma/client';
 import { createEvent, upsertEvent, updateEvent, findManyEvents, findFirstEvent } from '@/lib/data/events';
@@ -47,54 +39,23 @@ export async function POST(request: NextRequest) {
       let recurrence = null;
 
       if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
-        recurrence = await createRecurrence({
-          data: addCreateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
-        });
+        recurrence = await createRecurrence({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId);
       }
 
       const event = await createEvent(
-        addCreateAudit(
-          {
-            title,
-            description,
-            startDate,
-            endDate,
-            eventRooms: {
-              createMany: {
-                data: addCreateManyAudit(
-                  eventRooms.map((roomId: number) => ({ roomId })),
-                  sessionUserId,
-                ),
-              },
-            },
-            ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-            status: { connect: { statusId: statusId } },
-            ...(userId && { user: { connect: { id: userId } } }),
-            ...(eventItems && {
-              eventItems: {
-                createMany: {
-                  data: addCreateManyAudit(
-                    eventItems.map((itemId) => ({ itemId })),
-                    sessionUserId,
-                  ),
-                  skipDuplicates: true,
-                },
-              },
-            }),
-            ...(eventRecipients && {
-              eventRecipients: {
-                createMany: {
-                  data: addCreateManyAudit(
-                    eventRecipients.map((eventRecipientId) => ({ userId: eventRecipientId })),
-                    sessionUserId,
-                  ),
-                  skipDuplicates: true,
-                },
-              },
-            }),
-          },
-          sessionUserId,
-        ),
+        {
+          title,
+          description,
+          startDate,
+          endDate,
+          roomIds: eventRooms,
+          statusId,
+          recurrenceId: recurrence?.recurrenceId,
+          userId: userId,
+          itemIds: eventItems,
+          recipientIds: eventRecipients,
+        },
+        sessionUserId,
       );
 
       if (!event) {
@@ -150,38 +111,30 @@ export async function PUT(request: NextRequest) {
         const event = await upsertEvent(
           {
             where: { eventId: data.eventId ?? -1 },
-            create: addCreateAudit(
-              {
-                title,
-                description,
-                startDate,
-                endDate,
-                eventRooms: {
-                  createMany: {
-                    data: addCreateManyAudit(
-                      eventRooms.map((roomId: number) => ({ roomId })),
-                      sessionUserId,
-                    ),
-                  },
+            create: {
+              title,
+              description,
+              startDate,
+              endDate,
+              eventRooms: {
+                createMany: {
+                  data: eventRooms.map((roomId: number) => ({ roomId })),
                 },
-                ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-                status: { connect: { statusId: statusId } },
-                ...(userId && { user: { connect: { id: userId } } }),
               },
-              sessionUserId,
-            ),
-            update: addUpdateAudit(
-              {
-                title,
-                description,
-                startDate,
-                endDate,
-                status: { connect: { statusId } },
-                recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : recurrenceId ? { disconnect: true } : undefined,
-                ...(userId && { user: { connect: { id: userId } } }),
-              },
-              sessionUserId,
-            ),
+              ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
+              status: { connect: { statusId: statusId } },
+              ...(userId && { user: { connect: { id: userId } } }),
+            },
+
+            update: {
+              title,
+              description,
+              startDate,
+              endDate,
+              status: { connect: { statusId } },
+              recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : recurrenceId ? { disconnect: true } : undefined,
+              ...(userId && { user: { connect: { id: userId } } }),
+            },
           },
           tx,
         );

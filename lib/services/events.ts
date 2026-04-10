@@ -151,7 +151,7 @@ export const useEventQuery = (eventId: number | undefined, userId: string | unde
 
 export const SEventPUT = z.object({
   eventId: z.coerce.number().optional(),
-  userId: z.coerce.number().nullable().optional(),
+  userId: z.coerce.number().optional(),
   statusId: z.coerce.number(),
   title: z.string().min(1, 'Title is required'),
   description: z.string(),

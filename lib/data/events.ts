@@ -14,11 +14,60 @@ const EVENT_INCLUDE = {
 } as const satisfies Prisma.EventInclude;
 
 // Create an event — the DAL controls which relations are included.
-export async function createEvent(data: Prisma.EventCreateInput, tx: Prisma.TransactionClient = prisma) {
+export async function createEvent(
+  data: {
+    title: string;
+    description: string;
+    startDate: Date;
+    endDate: Date;
+    roomIds: number[];
+    statusId: number;
+    recurrenceId?: number;
+    userId?: number;
+    itemIds?: number[];
+    recipientIds?: number[];
+  },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
   const event = await tx.event.create({
-    data,
+    data: {
+      title: data.title,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      eventRooms: {
+        createMany: {
+          data: data.roomIds.map((roomId: number) => ({ roomId })),
+        },
+      },
+      ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
+      status: { connect: { statusId: data.statusId } },
+      ...(data.userId && { user: { connect: { id: data.userId } } }),
+      ...(data.itemIds && {
+        eventItems: {
+          createMany: {
+            data: data.itemIds.map((itemId) => ({ itemId })),
+
+            skipDuplicates: true,
+          },
+        },
+      }),
+      ...(data.recipientIds && {
+        eventRecipients: {
+          createMany: {
+            data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId })),
+
+            skipDuplicates: true,
+          },
+        },
+      }),
+      createdByUser: { connect: { id: sessionUserId } },
+      updatedByUser: { connect: { id: sessionUserId } },
+    },
     include: EVENT_INCLUDE,
   });
+
   return flattenEvent(event);
 }
 

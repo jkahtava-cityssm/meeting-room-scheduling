@@ -1,11 +1,14 @@
 import { prisma } from '@/prisma';
 import type { Prisma } from '@prisma/client';
 
-// Note: Recurrence DAL functions accept full args objects, allowing callers to specify
-// their own include/select configuration. Consider standardizing include/select here if needed.
-
-export async function createRecurrence(args: Prisma.RecurrenceCreateArgs, tx: Prisma.TransactionClient = prisma) {
-  return tx.recurrence.create(args);
+export async function createRecurrence(
+  data: { rule: string; description: string; startDate: Date; endDate: Date },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.recurrence.create({
+    data: { rule: data.rule, description: data.description, startDate: data.startDate, endDate: data.endDate, createdBy: sessionUserId },
+  });
 }
 
 export async function upsertRecurrence(args: Prisma.RecurrenceUpsertArgs, tx: Prisma.TransactionClient = prisma) {

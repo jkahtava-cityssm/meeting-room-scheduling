@@ -126,22 +126,6 @@ export async function getRolesByUserId(userId: number) {
   return await findManyUserRoles({ userRole: { some: { userId, granted: true } } });
 }
 
-export async function upsertRoleResourceAction(
-  params: {
-    where: Prisma.RoleResourceActionWhereUniqueInput;
-    create: Prisma.RoleResourceActionCreateInput;
-    update: Prisma.RoleResourceActionUpdateInput;
-  },
-  tx: Prisma.TransactionClient = prisma,
-) {
-  return tx.roleResourceAction.upsert({
-    where: params.where,
-    create: params.create,
-    update: params.update,
-    include: ROLE_RESOURCE_ACTION,
-  });
-}
-
 const RESOURCE_ACTION_SELECT = {
   resourceActionId: true,
   resourceId: true,
@@ -160,6 +144,26 @@ export async function findManyResourceAction(where?: Prisma.ResourceActionWhereI
   return resourceActions;
 }
 
+export async function upsertRoleResourceAction(
+  roleId: number,
+  resourceActionId: number,
+  permit: boolean,
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return await prisma.roleResourceAction.upsert({
+    where: {
+      roleId_resourceActionId: {
+        roleId,
+        resourceActionId,
+      },
+    },
+    update: { permit, updatedBy: sessionUserId },
+    create: { roleId, resourceActionId, permit, createdBy: sessionUserId, updatedBy: sessionUserId },
+    include: ROLE_RESOURCE_ACTION,
+  });
+}
+
 export async function upsertResourceAction(
   params: {
     where: Prisma.ResourceActionWhereUniqueInput;
@@ -173,5 +177,16 @@ export async function upsertResourceAction(
     create: params.create,
     update: params.update,
     include: RESOURCE_ACTION,
+  });
+}
+
+export async function updateSession(
+  data: { sessionId: number; impersonatedRole?: string },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return await tx.session.update({
+    data: { impersonatedRole: data.impersonatedRole, updatedBy: sessionUserId },
+    where: { id: data.sessionId },
   });
 }

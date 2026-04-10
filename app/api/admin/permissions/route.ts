@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 
-import { addCreateAudit, addUpdateAudit, BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
-import { findManyExpandedPermissionSets, findManyResourceAction } from '@/lib/data/permissions';
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { findManyExpandedPermissionSets, findManyResourceAction, upsertRoleResourceAction } from '@/lib/data/permissions';
 import { guardRoute } from '@/lib/api-guard';
 import { prisma } from '@/prisma';
 
@@ -66,30 +66,14 @@ export async function PUT(request: NextRequest) {
       );
 
       try {
-        const results = await prisma.$transaction(
-          permissionList.map((p) => {
+        const results = await prisma.$transaction(async (tx) => {
+          return permissionList.map(async (p) => {
             const resourceActionId = resourceActionLookup.get(`${p.resourceId}-${p.actionId}`);
             if (!resourceActionId) throw new Error(`Mapping not found for Res:${p.resourceId} Act:${p.actionId}`);
 
-            return prisma.roleResourceAction.upsert({
-              where: {
-                roleId_resourceActionId: {
-                  roleId: Number(p.roleId),
-                  resourceActionId: resourceActionId,
-                },
-              },
-              update: addUpdateAudit({ permit: p.permit }, sessionUserId),
-              create: addCreateAudit(
-                {
-                  roleId: Number(p.roleId),
-                  resourceActionId: resourceActionId,
-                  permit: p.permit,
-                },
-                sessionUserId,
-              ),
-            });
-          }),
-        );
+            return await upsertRoleResourceAction(Number(p.roleId), resourceActionId, p.permit, sessionUserId, tx);
+          });
+        });
 
         return SuccessMessage('Updated Permissions', results);
       } catch (error) {

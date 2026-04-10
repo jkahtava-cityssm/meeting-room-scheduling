@@ -1,7 +1,5 @@
 import { guardRoute } from '@/lib/api-guard';
 import {
-  addCreateAudit,
-  addUpdateAudit,
   BadRequestMessage,
   CreatedMessage,
   DeleteMessage,
@@ -10,7 +8,7 @@ import {
   NotFoundMessage,
   SuccessMessage,
 } from '@/lib/api-helpers';
-import { findManyUsersWithRoles } from '@/lib/data/users';
+import { findManyUsersWithRoles, upsertUserRole } from '@/lib/data/users';
 import { prisma } from '@/prisma';
 import { Prisma } from '@prisma/client';
 import { NextRequest } from 'next/server';
@@ -57,11 +55,7 @@ export async function PUT(request: NextRequest) {
       }
 
       try {
-        const userRole = await prisma.userRole.upsert({
-          where: { userId_roleId: { userId, roleId } },
-          create: addCreateAudit({ userId, roleId, granted: assignRole }, sessionUserId),
-          update: addUpdateAudit({ granted: assignRole }, sessionUserId),
-        });
+        const userRole = await upsertUserRole(userId, roleId, assignRole, sessionUserId);
 
         return SuccessMessage(assignRole ? 'User role granted.' : 'User role revoked.', userRole);
       } catch (e: unknown) {

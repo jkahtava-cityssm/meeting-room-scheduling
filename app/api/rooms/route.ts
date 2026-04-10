@@ -1,5 +1,5 @@
 import { guardRoute } from '@/lib/api-guard';
-import { addCreateAudit, addCreateManyAudit, addUpdateAudit, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 
 import { createManyRoomRole, createRoom, findFirstRoom, findManyRooms, upsertRoom, upsertRoomProperty } from '@/lib/data/rooms';
 import { SRoomPUT } from '@/lib/services/rooms';

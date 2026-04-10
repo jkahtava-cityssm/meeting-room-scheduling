@@ -70,17 +70,31 @@ export async function findManyConfiguration(
 }
 
 export async function upsertConfiguration(
-  params: {
-    where: Prisma.ConfigurationWhereUniqueInput;
-    create: Prisma.ConfigurationCreateInput;
-    update: Prisma.ConfigurationUpdateInput;
+  data: {
+    key: string;
+    value: string;
+    name: string;
+    type: string;
+    description: string;
   },
+  sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
   return tx.configuration.upsert({
-    where: params.where,
-    create: params.create,
-    update: params.update,
+    where: { key: data.key },
+    create: {
+      key: data.key,
+      value: data.value,
+      name: data.name,
+      type: data.type,
+      description: data.description,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+    },
+    update: {
+      value: data.value,
+      updatedBy: sessionUserId,
+    },
     select: CONFIGURATION_SELECT,
   });
 }

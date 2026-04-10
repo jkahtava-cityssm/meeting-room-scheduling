@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { findManyConfiguration, upsertConfiguration } from '@/lib/data/configuration';
-import { addCreateAudit, addUpdateAudit, BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { CONFIGURATION_KEYS, TConfigurationKeys } from '@/lib/types';
 import { SConfigurationPUT } from '@/lib/services/configuration';
@@ -51,24 +51,13 @@ export async function PUT(request: NextRequest) {
               data.map((configurationPairs) => {
                 return upsertConfiguration(
                   {
-                    where: { key: configurationPairs.key },
-                    create: addCreateAudit(
-                      {
-                        key: configurationPairs.key,
-                        value: configurationPairs.value,
-                        name: configurationPairs.name,
-                        type: configurationPairs.type,
-                        description: configurationPairs.description,
-                      },
-                      sessionUserId,
-                    ),
-                    update: addUpdateAudit(
-                      {
-                        value: configurationPairs.value,
-                      },
-                      sessionUserId,
-                    ),
+                    key: configurationPairs.key,
+                    value: configurationPairs.value,
+                    name: configurationPairs.name,
+                    type: configurationPairs.type,
+                    description: configurationPairs.description,
                   },
+                  sessionUserId,
                   tx,
                 );
               }),

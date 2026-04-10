@@ -4,9 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { guardRoute } from '@/lib/api-guard';
 import { auth, getServerSession } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { addUpdateAudit, BadRequestMessage, DeleteMessage, SuccessMessage } from '@/lib/api-helpers';
+import { BadRequestMessage, DeleteMessage, SuccessMessage } from '@/lib/api-helpers';
 import { prisma } from '@/prisma';
 import { request } from 'https';
+import { updateSession } from '@/lib/data/permissions';
 
 export async function POST(req: NextRequest) {
   return guardRoute(
@@ -25,10 +26,7 @@ export async function POST(req: NextRequest) {
         orderBy: { roleId: 'asc' },
       });
 
-      const session = await prisma.session.update({
-        data: addUpdateAudit({ impersonatedRole: roleName?.name || null }, sessionUserId),
-        where: { id: sessionId },
-      });
+      const session = await updateSession({ sessionId, impersonatedRole: roleName?.name }, sessionUserId);
 
       return SuccessMessage('Created Impersonation', {
         sessionId: session.id,
@@ -49,10 +47,7 @@ export async function DELETE(req: NextRequest) {
         return BadRequestMessage();
       }
 
-      const session = await prisma.session.update({
-        data: addUpdateAudit({ impersonatedRole: null }, sessionUserId),
-        where: { id: sessionId },
-      });
+      const session = await updateSession({ sessionId, impersonatedRole: undefined }, sessionUserId);
 
       return DeleteMessage();
     },
