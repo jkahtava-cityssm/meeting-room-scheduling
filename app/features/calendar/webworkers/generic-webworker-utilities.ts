@@ -1040,7 +1040,8 @@ export function processRequestEvents(events: IEventSingleRoom[]): IRequestSectio
       requestSections.get(roomId)!.groupEvents.push(event);
     } else {
       requestSections.set(roomId, {
-        groupId: roomId,
+        groupKey: `section[${dateKey}]:room[${roomId}]`,
+        groupRoomId: roomId,
         groupName: event.multiRoom ? 'Multiple Rooms' : event.roomName,
         groupColor: event.multiRoom ? 'zinc' : (event.roomColor as TColors),
         groupEvents: [event],
@@ -1062,7 +1063,8 @@ export function processRequestEvents(events: IEventSingleRoom[]): IRequestSectio
         .sort((a, b) => a.groupName.localeCompare(b.groupName));
 
       return {
-        sectionId: dateKey,
+        sectionKey: `section[${dateKey}]`,
+        sectionDate: dateKey,
         sectionTitle: format(new Date(dateKey + 'T00:00:00'), 'PPP'),
         sectionGroups: sortedGroups,
       };

@@ -25,13 +25,15 @@ export type CalendarAction = 'AGENDA' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
 export type ISODateString = string & { __brand: 'ISODateString' };
 
 export interface IRequestSection {
-  sectionId: string;
+  sectionKey: string;
+  sectionDate: string;
   sectionTitle: string;
   sectionGroups: IRequestGroup[];
 }
 
 export interface IRequestGroup {
-  groupId: string;
+  groupKey: string;
+  groupRoomId: string;
   groupName: string;
   groupColor: TColors;
   groupEvents: IEventSingleRoom[];

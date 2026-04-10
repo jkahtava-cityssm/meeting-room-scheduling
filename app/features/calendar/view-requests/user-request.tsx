@@ -17,7 +17,7 @@ import { GenericError } from '../../../../components/shared/generic-error';
 
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { CalendarAction, IRequestGroup } from '../webworkers/generic-webworker';
+import { CalendarAction, IRequestGroup, IRequestSection } from '../webworkers/generic-webworker';
 import { useEventPatchMutation } from '@/lib/services/events';
 import { sharedColorVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
@@ -32,7 +32,9 @@ const GROUP_HEADER_PX = 40;
 const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
-  const [removingEventIds, setRemovingEventIds] = useState<Set<number>>(() => new Set());
+  const [removingEvents, setRemovingEvents] = useState<Map<number, TStatusKey>>(() => new Map());
+
+  const removingEventIds = useMemo(() => new Set(removingEvents.keys()), [removingEvents]);
 
   const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(() => new Set());
   const collapseTimersRef = useRef<Map<string, number>>(new Map());
@@ -48,7 +50,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     statusKeyLookupById,
   } = usePrivateCalendar();
 
-  const groupIdRef = useRef<string | null>(null);
+  const groupKeyRef = useRef<string | null>(null);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const { columns } = useGridColumns(parentRef);
@@ -88,25 +90,30 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   type VirtualRowItem =
     | { type: 'SECTION_HEADER'; key: string; data: string; isRemoving: boolean }
     | { type: 'GROUP_HEADER'; key: string; data: IRequestGroup; isRemoving: boolean }
-    | { type: 'EVENT_ROW'; key: string; data: IEventSingleRoom[] };
-
-  // Helper to chunk the events
+    | { type: 'GROUP_ROW'; key: string; data: IEventSingleRoom[] };
 
   const removingGroupIds = useMemo(() => {
     const ids = new Set<string>();
 
     result?.data?.requestSections?.forEach((section) => {
       section.sectionGroups.forEach((group) => {
-        const allEventsRemoving = group.groupEvents.length > 0 && group.groupEvents.every((e) => removingEventIds.has(e.eventId));
+        const allEventsWillBeHidden = group.groupEvents.every((e) => {
+          const targetStatus = removingEvents.get(e.eventId);
+          const currentStatusVisible = selectedStatusKeys.includes(e.status.key as TStatusKey);
 
-        if (allEventsRemoving) {
-          ids.add(group.groupId);
+          if (removingEvents.has(e.eventId)) {
+            return !selectedStatusKeys.includes(targetStatus!);
+          }
+          return !currentStatusVisible;
+        });
+
+        if (group.groupEvents.length > 0 && allEventsWillBeHidden) {
+          ids.add(group.groupKey);
         }
       });
     });
-
     return ids;
-  }, [result?.data?.requestSections, removingEventIds]);
+  }, [result?.data?.requestSections, removingEvents, selectedStatusKeys]);
 
   const removingSectionIds = useMemo(() => {
     const ids = new Set<string>();
@@ -114,7 +121,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     result?.data?.requestSections?.forEach((section) => {
       if (section.sectionGroups.length === 0) return;
 
-      const allGroupsRemoving = section.sectionGroups.every((group) => removingGroupIds.has(group.groupId));
+      const allGroupsRemoving = section.sectionGroups.every((group) => removingGroupIds.has(group.groupKey));
 
       if (allGroupsRemoving) {
         ids.add(section.sectionTitle);
@@ -127,7 +134,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const flatData = useMemo(() => {
     const list: VirtualRowItem[] = [];
 
-    result?.data?.requestSections?.forEach((section, sectionIndex) => {
+    result?.data?.requestSections?.forEach((section) => {
       const isRemovingSection = removingSectionIds.has(section.sectionTitle);
 
       const hasAnyVisibleGroup = section.sectionGroups.some((group) => {
@@ -135,48 +142,57 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
           (e) => selectedStatusKeys.includes(e.status.key as TStatusKey) || removingEventIds.has(e.eventId),
         );
 
-        return hasVisibleEvents || removingGroupIds.has(group.groupId);
+        return hasVisibleEvents || removingGroupIds.has(group.groupKey);
       });
 
       if (!hasAnyVisibleGroup && !isRemovingSection) return;
 
       list.push({
         type: 'SECTION_HEADER',
-        key: `section:${sectionIndex}:${section.sectionTitle}`,
+        key: section.sectionKey,
         data: section.sectionTitle,
         isRemoving: isRemovingSection,
       });
 
       section.sectionGroups.forEach((group) => {
-        const visibleEvents = group.groupEvents.filter(
-          (event) => selectedStatusKeys.includes(event.status.key as TStatusKey) || removingEventIds.has(event.eventId),
-        );
+        const visibleEvents = group.groupEvents.filter((event) => {
+          const isCurrentVisible = selectedStatusKeys.includes(event.status.key as TStatusKey);
+          const targetStatus = removingEvents.get(event.eventId);
+          const isTargetVisible = targetStatus ? selectedStatusKeys.includes(targetStatus) : false;
 
-        const isRemovingGroup = removingGroupIds.has(group.groupId);
+          return isCurrentVisible || isTargetVisible;
+        });
+        const isRemovingGroup = removingGroupIds.has(group.groupKey);
 
         if (visibleEvents.length === 0 && !isRemovingGroup) return;
 
-        list.push({ type: 'GROUP_HEADER', key: `group:${sectionIndex}:${group.groupId}`, data: group, isRemoving: isRemovingGroup });
+        list.push({ type: 'GROUP_HEADER', key: group.groupKey, data: group, isRemoving: isRemovingGroup });
 
         // Chunk the events into rows
-        const eventRows = chunkArray(visibleEvents, clampedColumn);
-        eventRows.forEach((rowEvents, rowIndex) => {
-          list.push({ type: 'EVENT_ROW', key: `events:${sectionIndex}:${group.groupId}:${rowIndex}`, data: rowEvents });
+        const eventRows = chunkArray<IEventSingleRoom>(visibleEvents, clampedColumn);
+        eventRows.forEach((eventRow) => {
+          list.push({ type: 'GROUP_ROW', key: `${group.groupKey}:events[${eventRow.map((e) => e.eventId).join('-')}]`, data: eventRow });
         });
       });
     });
     return list;
-  }, [result?.data?.requestSections, removingSectionIds, removingGroupIds, clampedColumn, selectedStatusKeys, removingEventIds]);
+  }, [result?.data?.requestSections, removingSectionIds, removingGroupIds, selectedStatusKeys, removingEventIds, clampedColumn, removingEvents]);
 
   const isRemovingItem = useCallback(
     (item: VirtualRowItem) => {
-      if (item.type === 'EVENT_ROW') {
-        return item.data.length > 0 && item.data.every((e) => removingEventIds.has(e.eventId));
+      if (item.type === 'GROUP_ROW') {
+        return (
+          item.data.length > 0 &&
+          item.data.every((e) => {
+            const targetStatus = removingEvents.get(e.eventId);
+            // Only mark as removing if it's actually leaving the filter
+            return targetStatus && !selectedStatusKeys.includes(targetStatus);
+          })
+        );
       }
-      // headers already carry isRemoving
       return item.isRemoving === true;
     },
-    [removingEventIds],
+    [removingEvents, selectedStatusKeys],
   );
 
   const itemByKey = useMemo(() => new Map(flatData.map((i) => [i.key, i] as const)), [flatData]);
@@ -184,14 +200,14 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   useEffect(() => {
     const timers = collapseTimersRef.current;
 
-    // 1) Schedule collapse for items that are removing but not yet collapsed
+    // Schedule collapse for items that are removing but not yet collapsed
     for (const item of flatData) {
       if (!isRemovingItem(item)) continue;
 
       const k = item.key;
       if (collapsedKeys.has(k) || timers.has(k)) continue;
 
-      const duration = item.type === 'EVENT_ROW' ? 200 : 300; // match your CSS: cards 200ms, headers 300ms
+      const duration = item.type === 'GROUP_ROW' ? 200 : 300; // match CSS
 
       const t = window.setTimeout(() => {
         setCollapsedKeys((prev) => {
@@ -206,7 +222,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       timers.set(k, t);
     }
 
-    // 2) Cancel scheduled collapses + uncollapse if item is no longer removing
+    // Cancel removal if item is no longer removing
     for (const [k, t] of timers) {
       const item = itemByKey.get(k);
       if (!item || !isRemovingItem(item)) {
@@ -215,7 +231,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       }
     }
 
-    // 3) Drop collapsed keys that no longer exist or are no longer removing
+    // Drop collapsed keys that no longer exist or are no longer removing
     setCollapsedKeys((prev) => {
       let changed = false;
       const next = new Set(prev);
@@ -243,13 +259,12 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
         if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
         if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
-        return 600;
+        return 650;
       },
       [collapsedKeys, flatData],
     ),
 
     measureElement: (el) => {
-      // 1. Cast to HTMLElement
       const index = Number(el.getAttribute('data-index'));
       const item = flatData[index];
 
@@ -260,7 +275,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       if (item?.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
       if (item?.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
 
-      // 3. Measure event rows normally
       return el.getBoundingClientRect().height;
     },
     overscan: 5,
@@ -273,7 +287,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const scrollOffset = rowVirtualizer.scrollOffset || 0;
 
   const stickyInfo = useMemo(() => {
-    // Find the item currently at the top of the viewport
     const top = scrollOffset + HEADER_PX + 1;
 
     const activeItem = [...virtualItems].reverse().find((v) => v.start <= top) ?? virtualItems[0];
@@ -283,7 +296,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     let activeSection: string | null = null;
     let activeGroup: IRequestGroup | null = null;
 
-    // Search backwards to find the current context
+    // Search backwards to find the current Group and Section
     for (let i = activeItem.index; i >= 0; i--) {
       const item = flatData[i];
 
@@ -295,7 +308,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         activeSection = item.data;
 
         if (!activeGroup) {
-          // Look forward slightly to find the immediate group if we are at the section start
+          // Look forward slightly to find the immediate group if we are at the start
           const nextItem = flatData[i + 1];
           if (nextItem?.type === 'GROUP_HEADER') {
             activeGroup = nextItem.data;
@@ -305,14 +318,14 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       }
     }
 
-    return { section: activeSection, group: activeGroup, groupId: activeGroup?.groupId ?? null };
+    return { section: activeSection, group: activeGroup, groupId: activeGroup?.groupKey ?? null };
   }, [scrollOffset, virtualItems, flatData]);
 
   useLayoutEffect(() => {
     const isColumnTransition = prevColsRef.current !== clampedColumn;
     if (isColumnTransition) return;
 
-    groupIdRef.current = stickyInfo.groupId;
+    groupKeyRef.current = stickyInfo.groupId;
   }, [clampedColumn, stickyInfo.groupId]);
 
   useLayoutEffect(() => {
@@ -325,15 +338,15 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     if (prevColsRef.current === clampedColumn) return;
     prevColsRef.current = clampedColumn;
 
-    const groupId = groupIdRef.current;
-    if (!groupId) return;
+    const groupKey = groupKeyRef.current;
+    if (!groupKey) return;
 
-    const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.data.groupId === groupId);
+    const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.data.groupKey === groupKey);
 
     if (newIndex === -1) return;
 
-    // Reset measurements only when columns changed
-    rowVirtualizer.measure(); // resets cached sizes [1](https://tanstack.dev/virtual/latest/docs/api/virtualizer)
+    // Reset measurements when columns changed
+    rowVirtualizer.measure();
 
     // Scroll after measurement has a chance to apply
     requestAnimationFrame(() => {
@@ -354,7 +367,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const handleApprove = useCallback(
     (id: number) => {
-      setRemovingEventIds((prev) => new Set(prev).add(id));
+      setRemovingEvents((prev) => new Map(prev).set(id, 'APPROVED'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') } });
     },
     [patchEvent, statusIdLookupByKey],
@@ -362,7 +375,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const handleDeny = useCallback(
     (id: number) => {
-      setRemovingEventIds((prev) => new Set(prev).add(id));
+      setRemovingEvents((prev) => new Map(prev).set(id, 'REJECTED'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') } });
     },
     [patchEvent, statusIdLookupByKey],
@@ -370,32 +383,36 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const handlePending = useCallback(
     (id: number) => {
-      setRemovingEventIds((prev) => new Set(prev).add(id));
+      setRemovingEvents((prev) => new Map(prev).set(id, 'PENDING'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') } });
     },
     [patchEvent, statusIdLookupByKey],
   );
 
   useEffect(() => {
-    if (removingEventIds.size === 0) return;
+    if (removingEvents.size === 0) return;
 
-    const stillPresent = new Set<number>();
+    const currentServerStatuses = new Map<number, TStatusKey>();
+    result?.data?.requestSections?.forEach((s) =>
+      s.sectionGroups.forEach((g) => g.groupEvents.forEach((e) => currentServerStatuses.set(e.eventId, e.status.key as TStatusKey))),
+    );
 
-    result?.data?.requestSections?.forEach((section) => {
-      section.sectionGroups.forEach((group) => {
-        group.groupEvents.forEach((event) => {
-          if (removingEventIds.has(event.eventId)) {
-            stillPresent.add(event.eventId);
-          }
-        });
-      });
+    const nextRemovingEvents = new Map(removingEvents);
+    let changed = false;
+
+    removingEvents.forEach((targetStatus, id) => {
+      const serverStatus = currentServerStatuses.get(id);
+
+      if (!serverStatus || serverStatus === targetStatus) {
+        nextRemovingEvents.delete(id);
+        changed = true;
+      }
     });
 
-    // Only clear IDs that the server has removed
-    if (stillPresent.size !== removingEventIds.size) {
-      setRemovingEventIds(stillPresent);
+    if (changed) {
+      setRemovingEvents(nextRemovingEvents);
     }
-  }, [result?.data?.requestSections, removingEventIds]);
+  }, [result?.data?.requestSections, removingEvents]);
 
   return (
     <div className="flex flex-1 min-h-0 relative">
@@ -465,7 +482,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                     </div>
                   )}
 
-                  {item.type === 'EVENT_ROW' && (
+                  {item.type === 'GROUP_ROW' && (
                     <div
                       className={cn(
                         'overflow-hidden transition-[height,opacity] duration-300 ease-in-out',
