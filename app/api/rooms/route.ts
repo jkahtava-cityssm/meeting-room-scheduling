@@ -1,7 +1,7 @@
 import { guardRoute } from '@/lib/api-guard';
 import { addCreateAudit, addCreateManyAudit, addUpdateAudit, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 
-import { createRoom, findFirstRoom, findManyRooms, upsertRoom } from '@/lib/data/rooms';
+import { createManyRoomRole, createRoom, findFirstRoom, findManyRooms, upsertRoom, upsertRoomProperty } from '@/lib/data/rooms';
 import { SRoomPUT } from '@/lib/services/rooms';
 import { prisma } from '@/prisma';
 import { NextRequest } from 'next/server';
@@ -44,30 +44,15 @@ export async function PUT(request: NextRequest) {
       const room = await prisma.$transaction(async (tx) => {
         const updatedRoom = await upsertRoom(
           {
-            where: { roomId: data.roomId },
-            create: addCreateAudit(
-              {
-                name: data.name,
-                color: data.color,
-                icon: data.icon,
-                publicFacing: data.publicFacing,
-                displayOrder: data.displayOrder,
-                roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
-              },
-              sessionUserId,
-            ),
-            update: addUpdateAudit(
-              {
-                name: data.name,
-                color: data.color,
-                icon: data.icon,
-                publicFacing: data.publicFacing,
-                displayOrder: data.displayOrder,
-                roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
-              },
-              sessionUserId,
-            ),
+            roomId: data.roomId,
+            name: data.name,
+            color: data.color,
+            icon: data.icon,
+            publicFacing: data.publicFacing,
+            displayOrder: data.displayOrder,
+            roomCategoryId: data.roomCategoryId,
           },
+          sessionUserId,
           tx,
         );
 
@@ -79,13 +64,11 @@ export async function PUT(request: NextRequest) {
             where: { roomId, roleId: { notIn: roleIds } },
           });
 
-          await tx.roomRole.createMany({
-            data: addCreateManyAudit(
-              roleIds.map((roleId) => ({ roomId, roleId })),
-              sessionUserId,
-            ),
-            skipDuplicates: true,
-          });
+          await createManyRoomRole(
+            roleIds.map((roleId) => ({ roomId, roleId })),
+            sessionUserId,
+            tx,
+          );
         }
         if (data.roomProperty) {
           const propertyIds = data.roomProperty.map((p) => p.propertyId);
@@ -94,15 +77,7 @@ export async function PUT(request: NextRequest) {
             where: { roomId, propertyId: { notIn: propertyIds } },
           });
 
-          await Promise.all(
-            data.roomProperty.map((prop) =>
-              tx.roomProperty.upsert({
-                where: { roomId_propertyId: { roomId, propertyId: prop.propertyId || -1 } },
-                update: addUpdateAudit({ value: prop.value }, sessionUserId),
-                create: addCreateAudit({ roomId, value: prop.value, propertyId: Number(prop.propertyId) }, sessionUserId),
-              }),
-            ),
-          );
+          await Promise.all(data.roomProperty.map((prop) => upsertRoomProperty(roomId, prop.propertyId, prop.value, sessionUserId, tx)));
         }
 
         return await findFirstRoom({ roomId }, tx);
@@ -134,17 +109,16 @@ export async function POST(request: NextRequest) {
     async ({ sessionUserId, data }) => {
       const room = await prisma.$transaction(async (tx) => {
         const createdRoom = await createRoom(
-          addCreateAudit(
-            {
-              name: data.name,
-              color: data.color,
-              icon: data.icon,
-              publicFacing: data.publicFacing,
-              displayOrder: data.displayOrder,
-              roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
-            },
-            sessionUserId,
-          ),
+          {
+            name: data.name,
+            color: data.color,
+            icon: data.icon,
+            publicFacing: data.publicFacing,
+            displayOrder: data.displayOrder,
+            roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
+          },
+          sessionUserId,
+
           tx,
         );
 
@@ -152,27 +126,17 @@ export async function POST(request: NextRequest) {
         if (data.roomRoles) {
           const roleIds = data.roomRoles.map((r) => r.roleId);
 
-          await tx.roomRole.createMany({
-            data: addCreateManyAudit(
-              roleIds.map((roleId) => ({ roomId, roleId })),
-              sessionUserId,
-            ),
-            skipDuplicates: true,
-          });
+          await createManyRoomRole(
+            roleIds.map((roleId) => ({ roomId, roleId })),
+            sessionUserId,
+            tx,
+          );
         }
 
         if (data.roomProperty) {
           const propertyIds = data.roomProperty.map((p) => p.propertyId);
 
-          await Promise.all(
-            data.roomProperty.map((prop) =>
-              tx.roomProperty.upsert({
-                where: { roomId_propertyId: { roomId, propertyId: prop.propertyId || -1 } },
-                update: addUpdateAudit({ value: prop.value }, sessionUserId),
-                create: addCreateAudit({ roomId, value: prop.value, propertyId: Number(prop.propertyId) }, sessionUserId),
-              }),
-            ),
-          );
+          await Promise.all(data.roomProperty.map((prop) => upsertRoomProperty(roomId, prop.propertyId, prop.value, sessionUserId, tx)));
         }
 
         return await findFirstRoom({ roomId }, tx);
