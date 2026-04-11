@@ -7,7 +7,16 @@ import { UTCDate } from '@date-fns/utc';
 import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { Prisma } from '@prisma/client';
-import { createEvent, upsertEvent, updateEvent, findManyEvents, findFirstEvent } from '@/lib/data/events';
+import {
+  createEvent,
+  upsertEvent,
+  updateEvent,
+  findManyEvents,
+  findFirstEvent,
+  createManyEventRoom,
+  createManyEventRecipients,
+  createManyEventItems,
+} from '@/lib/data/events';
 import { createRecurrence, upsertRecurrence, deleteRecurrence } from '@/lib/data/recurrence';
 import { SEventPATCH, SEventPUT } from '@/lib/services/events';
 
@@ -76,6 +85,7 @@ export async function PUT(request: NextRequest) {
     },
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
       const {
+        eventId,
         userId,
         statusId,
         title,
@@ -97,11 +107,8 @@ export async function PUT(request: NextRequest) {
 
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
           recurrence = await upsertRecurrence(
-            {
-              create: addCreateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
-              where: { recurrenceId: recurrenceId ?? -1 },
-              update: addUpdateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
-            },
+            { recurrenceId, rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
+            sessionUserId,
             tx,
           );
         } else if (recurrenceId) {
@@ -110,32 +117,19 @@ export async function PUT(request: NextRequest) {
 
         const event = await upsertEvent(
           {
-            where: { eventId: data.eventId ?? -1 },
-            create: {
-              title,
-              description,
-              startDate,
-              endDate,
-              eventRooms: {
-                createMany: {
-                  data: eventRooms.map((roomId: number) => ({ roomId })),
-                },
-              },
-              ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-              status: { connect: { statusId: statusId } },
-              ...(userId && { user: { connect: { id: userId } } }),
-            },
-
-            update: {
-              title,
-              description,
-              startDate,
-              endDate,
-              status: { connect: { statusId } },
-              recurrence: recurrence ? { connect: { recurrenceId: recurrence.recurrenceId } } : recurrenceId ? { disconnect: true } : undefined,
-              ...(userId && { user: { connect: { id: userId } } }),
-            },
+            eventId: data.eventId,
+            title,
+            description,
+            startDate,
+            endDate,
+            roomIds: eventRooms,
+            statusId,
+            recurrenceId: recurrence?.recurrenceId,
+            userId: userId,
+            itemIds: eventItems,
+            recipientIds: eventRecipients,
           },
+          sessionUserId,
           tx,
         );
 
@@ -146,13 +140,14 @@ export async function PUT(request: NextRequest) {
             where: { eventId, roomId: { notIn: eventRooms } },
           });
 
-          await tx.eventRoom.createMany({
-            data: addCreateManyAudit(
-              eventRooms.map((roomId) => ({ eventId, roomId: roomId })),
-              sessionUserId,
-            ),
-            skipDuplicates: true,
-          });
+          await createManyEventRoom(
+            {
+              eventId: eventId,
+              eventRooms: eventRooms,
+            },
+            sessionUserId,
+            tx,
+          );
         }
 
         if (eventRecipients) {
@@ -160,13 +155,7 @@ export async function PUT(request: NextRequest) {
             where: { eventId, eventRecipientId: { notIn: eventRecipients } },
           });
 
-          await tx.eventRecipient.createMany({
-            data: addCreateManyAudit(
-              eventRecipients.map((eventRecipientId) => ({ eventId, userId: eventRecipientId })),
-              sessionUserId,
-            ),
-            skipDuplicates: true,
-          });
+          await createManyEventRecipients({ eventId: eventId, eventRecipients: eventRecipients }, sessionUserId, tx);
         }
 
         if (eventItems) {
@@ -174,13 +163,7 @@ export async function PUT(request: NextRequest) {
             where: { eventId, itemId: { notIn: eventItems } },
           });
 
-          await tx.eventItem.createMany({
-            data: addCreateManyAudit(
-              eventItems.map((itemId) => ({ eventId, itemId })),
-              sessionUserId,
-            ),
-            skipDuplicates: true,
-          });
+          await createManyEventItems({ eventId: eventId, eventItems: eventItems }, sessionUserId, tx);
         }
 
         return await findFirstEvent({ eventId: eventId });
@@ -228,11 +211,8 @@ export async function PATCH(request: NextRequest) {
         let recurrence = undefined;
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
           recurrence = await upsertRecurrence(
-            {
-              create: addCreateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
-              where: { recurrenceId: recurrenceId || 0 },
-              update: addUpdateAudit({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId),
-            },
+            { recurrenceId, rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
+            sessionUserId,
             tx,
           );
         }
@@ -255,18 +235,18 @@ export async function PATCH(request: NextRequest) {
           data: updateData,
         });
 
-        // 4. Handle Room updates if provided (Syncing the many-to-many)
         if (eventRooms) {
           await tx.eventRoom.deleteMany({
             where: { eventId, roomId: { notIn: eventRooms } },
           });
-          await tx.eventRoom.createMany({
-            data: addCreateManyAudit(
-              eventRooms.map((roomId: number) => ({ eventId, roomId })),
-              sessionUserId,
-            ),
-            skipDuplicates: true,
-          });
+          await createManyEventRoom(
+            {
+              eventId: eventId,
+              eventRooms: eventRooms,
+            },
+            sessionUserId,
+            tx,
+          );
         }
 
         return await findFirstEvent({ eventId }, tx);

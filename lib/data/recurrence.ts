@@ -11,8 +11,23 @@ export async function createRecurrence(
   });
 }
 
-export async function upsertRecurrence(args: Prisma.RecurrenceUpsertArgs, tx: Prisma.TransactionClient = prisma) {
-  return tx.recurrence.upsert(args);
+export async function upsertRecurrence(
+  data: { recurrenceId?: number; rule: string; description: string; startDate: Date; endDate: Date },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.recurrence.upsert({
+    where: { recurrenceId: data.recurrenceId },
+    create: {
+      rule: data.rule,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+    },
+    update: { rule: data.rule, description: data.description, startDate: data.startDate, endDate: data.endDate, updatedBy: sessionUserId },
+  });
 }
 
 export async function deleteRecurrence(args: Prisma.RecurrenceDeleteArgs, tx: Prisma.TransactionClient = prisma) {

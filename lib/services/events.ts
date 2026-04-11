@@ -157,7 +157,7 @@ export const SEventPUT = z.object({
   description: z.string(),
   startDate: utcDateSchema,
   endDate: utcDateSchema,
-  recurrenceId: z.coerce.number().nullable().optional(),
+  recurrenceId: z.coerce.number().optional(),
   rule: z.string().optional(),
   ruleDescription: z.string().optional(),
   ruleStartDate: utcDateSchema.optional(),
