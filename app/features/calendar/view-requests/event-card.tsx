@@ -56,7 +56,14 @@ export const EventCard = React.memo(
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
               <BadgeColored color={event.status.color as TColors} className="shrink-0 max-w-full [&>svg]:size-4 p-1">
-                <DynamicIcon hideBackground={true} color={event.status.color as TColors} name={event.status.icon as IconName}></DynamicIcon>
+                <div className="size-4 shrink-0">
+                  <DynamicIcon
+                    hideBackground={true}
+                    color={event.status.color as TColors}
+                    name={event.status.icon as IconName}
+                    className="size-4"
+                  ></DynamicIcon>
+                </div>
                 <span className="truncate block">{event.status.name}</span>
               </BadgeColored>
               <div className="flex items-center gap-1">
