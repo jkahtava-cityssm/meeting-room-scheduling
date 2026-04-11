@@ -39,20 +39,10 @@
   - Made the column `updated_by` on table `room_property` required. This step will fail if there are existing NULL values in that column.
   - Made the column `created_by` on table `room_role` required. This step will fail if there are existing NULL values in that column.
   - Made the column `updated_by` on table `room_role` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `created_by` on table `sso_provider` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `updated_by` on table `sso_provider` required. This step will fail if there are existing NULL values in that column.
   - Made the column `created_by` on table `status` required. This step will fail if there are existing NULL values in that column.
   - Made the column `updated_by` on table `status` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `created_by` on table `user` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `updated_by` on table `user` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `created_by` on table `user_account` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `updated_by` on table `user_account` required. This step will fail if there are existing NULL values in that column.
   - Made the column `created_by` on table `user_role` required. This step will fail if there are existing NULL values in that column.
   - Made the column `updated_by` on table `user_role` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `created_by` on table `user_session` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `updated_by` on table `user_session` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `created_by` on table `user_verification` required. This step will fail if there are existing NULL values in that column.
-  - Made the column `updated_by` on table `user_verification` required. This step will fail if there are existing NULL values in that column.
 
 */
 INSERT INTO "user" (
@@ -84,21 +74,7 @@ ON CONFLICT (user_id) DO UPDATE SET
     is_active = EXCLUDED.is_active,
     external_id = EXCLUDED.external_id;
 
--- user_session
-UPDATE "user_session" SET created_by = 0 WHERE created_by IS NULL;
-UPDATE "user_session" SET updated_by = 0 WHERE updated_by IS NULL;
 
--- user_account
-UPDATE "user_account" SET created_by = 0 WHERE created_by IS NULL;
-UPDATE "user_account" SET updated_by = 0 WHERE updated_by IS NULL;
-
--- user_verification
-UPDATE "user_verification" SET created_by = 0 WHERE created_by IS NULL;
-UPDATE "user_verification" SET updated_by = 0 WHERE updated_by IS NULL;
-
--- sso_provider
-UPDATE "sso_provider" SET created_by = 0 WHERE created_by IS NULL;
-UPDATE "sso_provider" SET updated_by = 0 WHERE updated_by IS NULL;
 
 -- room
 UPDATE "room" SET created_by = 0 WHERE created_by IS NULL;
@@ -305,11 +281,6 @@ ALTER TABLE "status" DROP CONSTRAINT "status_created_by_fkey";
 -- DropForeignKey
 ALTER TABLE "status" DROP CONSTRAINT "status_updated_by_fkey";
 
--- DropForeignKey
-ALTER TABLE "user_account" DROP CONSTRAINT "user_account_created_by_fkey";
-
--- DropForeignKey
-ALTER TABLE "user_account" DROP CONSTRAINT "user_account_updated_by_fkey";
 
 -- DropForeignKey
 ALTER TABLE "user_role" DROP CONSTRAINT "user_role_created_by_fkey";
@@ -317,17 +288,6 @@ ALTER TABLE "user_role" DROP CONSTRAINT "user_role_created_by_fkey";
 -- DropForeignKey
 ALTER TABLE "user_role" DROP CONSTRAINT "user_role_updated_by_fkey";
 
--- DropForeignKey
-ALTER TABLE "user_session" DROP CONSTRAINT "user_session_created_by_fkey";
-
--- DropForeignKey
-ALTER TABLE "user_session" DROP CONSTRAINT "user_session_updated_by_fkey";
-
--- DropForeignKey
-ALTER TABLE "user_verification" DROP CONSTRAINT "user_verification_created_by_fkey";
-
--- DropForeignKey
-ALTER TABLE "user_verification" DROP CONSTRAINT "user_verification_updated_by_fkey";
 
 -- AlterTable
 ALTER TABLE "action" ALTER COLUMN "created_by" SET NOT NULL,
@@ -406,46 +366,15 @@ ALTER TABLE "room_role" ALTER COLUMN "created_by" SET NOT NULL,
 ALTER COLUMN "updated_by" SET NOT NULL;
 
 -- AlterTable
-ALTER TABLE "sso_provider" ALTER COLUMN "created_by" SET NOT NULL,
-ALTER COLUMN "updated_by" SET NOT NULL;
-
--- AlterTable
 ALTER TABLE "status" ALTER COLUMN "created_by" SET NOT NULL,
-ALTER COLUMN "updated_by" SET NOT NULL;
-
--- AlterTable
-ALTER TABLE "user_account" ALTER COLUMN "created_by" SET NOT NULL,
 ALTER COLUMN "updated_by" SET NOT NULL;
 
 -- AlterTable
 ALTER TABLE "user_role" ALTER COLUMN "created_by" SET NOT NULL,
 ALTER COLUMN "updated_by" SET NOT NULL;
 
--- AlterTable
-ALTER TABLE "user_session" ALTER COLUMN "created_by" SET NOT NULL,
-ALTER COLUMN "updated_by" SET NOT NULL;
 
--- AlterTable
-ALTER TABLE "user_verification" ALTER COLUMN "created_by" SET NOT NULL,
-ALTER COLUMN "updated_by" SET NOT NULL;
 
--- AddForeignKey
-ALTER TABLE "user_session" ADD CONSTRAINT "user_session_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_session" ADD CONSTRAINT "user_session_updated_by_fkey" FOREIGN KEY ("updated_by") REFERENCES "user"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_account" ADD CONSTRAINT "user_account_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_account" ADD CONSTRAINT "user_account_updated_by_fkey" FOREIGN KEY ("updated_by") REFERENCES "user"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_verification" ADD CONSTRAINT "user_verification_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "user_verification" ADD CONSTRAINT "user_verification_updated_by_fkey" FOREIGN KEY ("updated_by") REFERENCES "user"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "room" ADD CONSTRAINT "room_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "user"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
