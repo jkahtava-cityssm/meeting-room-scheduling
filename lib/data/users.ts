@@ -98,25 +98,80 @@ export async function getDefaultRole(tx: Prisma.TransactionClient = prisma): Pro
 }
 
 export async function upsertUser(
-  params: {
-    where: Prisma.UserWhereUniqueInput;
-    create: Prisma.UserCreateInput;
-    update: Prisma.UserUpdateInput;
+  data: {
+    userId?: number;
+    name: string;
+    email: string;
+    isActive: boolean;
+    isManaged: boolean;
+    emailEnabled: boolean;
+    department?: string;
+    jobTitle?: string;
+    externalId?: string;
   },
+  sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
   const user = await tx.user.upsert({
-    where: params.where,
-    create: params.create,
-    update: params.update,
+    where: { id: data.userId },
+    create: {
+      name: data.name,
+      email: data.email,
+      isActive: data.isActive,
+      isManaged: data.isManaged,
+      emailEnabled: data.emailEnabled,
+      department: data.department,
+      jobTitle: data.jobTitle,
+      externalId: data.externalId,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+    },
+    update: {
+      name: data.name,
+      email: data.email,
+      isActive: data.isActive,
+      isManaged: data.isManaged,
+      emailEnabled: data.emailEnabled,
+      department: data.department,
+      jobTitle: data.jobTitle,
+      externalId: data.externalId,
+      updatedBy: sessionUserId,
+    },
     select: USER_SELECT,
   });
 
   return mapBaseUser(user);
 }
 
-export async function createUser(data: Prisma.UserCreateInput, tx: Prisma.TransactionClient = prisma) {
-  const user = await tx.user.create({ data, select: USER_SELECT });
+export async function createUser(
+  data: {
+    name: string;
+    email: string;
+    isActive: boolean;
+    isManaged: boolean;
+    emailEnabled: boolean;
+    department?: string;
+    jobTitle?: string;
+    externalId?: string;
+  },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  const user = await tx.user.create({
+    data: {
+      name: data.name,
+      email: data.email,
+      isActive: data.isActive,
+      isManaged: data.isManaged,
+      emailEnabled: data.emailEnabled,
+      department: data.department,
+      jobTitle: data.jobTitle,
+      externalId: data.externalId,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+    },
+    select: USER_SELECT,
+  });
 
   return mapBaseUser(user);
 }

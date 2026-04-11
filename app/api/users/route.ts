@@ -1,5 +1,5 @@
 import { guardRoute } from '@/lib/api-guard';
-import { addCreateAudit, addUpdateAudit, CreatedMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage } from '@/lib/api-helpers';
+import { CreatedMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage } from '@/lib/api-helpers';
 import { createUser, findManyUsers, upsertUser } from '@/lib/data/users';
 import { SUserPUT } from '@/lib/services/users';
 import { NextRequest } from 'next/server';
@@ -41,35 +41,19 @@ export async function PUT(request: NextRequest) {
       ],
     },
     async ({ sessionUserId, data }) => {
-      const updatedUser = await upsertUser({
-        where: { id: data.userId },
-        create: addCreateAudit(
-          {
-            name: data.name,
-            email: data.email,
-            isActive: data.isActive,
-            isManaged: data.isManaged,
-            emailEnabled: data.emailEnabled,
-            department: data.department,
-            jobTitle: data.jobTitle,
-            externalId: data.externalId,
-          },
-          sessionUserId,
-        ),
-        update: addUpdateAudit(
-          {
-            name: data.name,
-            email: data.email,
-            isActive: data.isActive,
-            isManaged: data.isManaged,
-            emailEnabled: data.emailEnabled,
-            department: data.department,
-            jobTitle: data.jobTitle,
-            externalId: data.externalId,
-          },
-          sessionUserId,
-        ),
-      });
+      const updatedUser = await upsertUser(
+        {
+          name: data.name,
+          email: data.email,
+          isActive: data.isActive,
+          isManaged: data.isManaged,
+          emailEnabled: data.emailEnabled,
+          department: data.department,
+          jobTitle: data.jobTitle,
+          externalId: data.externalId,
+        },
+        sessionUserId,
+      );
 
       if (!updatedUser) {
         return InternalServerErrorMessage();
@@ -97,19 +81,17 @@ export async function POST(request: NextRequest) {
     },
     async ({ sessionUserId, data }) => {
       const createdUser = await createUser(
-        addCreateAudit(
-          {
-            name: data.name,
-            email: data.email,
-            isActive: data.isActive,
-            isManaged: data.isManaged,
-            emailEnabled: data.emailEnabled,
-            department: data.department,
-            jobTitle: data.jobTitle,
-            externalId: data.externalId,
-          },
-          sessionUserId,
-        ),
+        {
+          name: data.name,
+          email: data.email,
+          isActive: data.isActive,
+          isManaged: data.isManaged,
+          emailEnabled: data.emailEnabled,
+          department: data.department,
+          jobTitle: data.jobTitle,
+          externalId: data.externalId,
+        },
+        sessionUserId,
       );
 
       if (!createdUser) {

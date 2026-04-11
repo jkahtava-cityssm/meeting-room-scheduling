@@ -98,3 +98,21 @@ export async function upsertConfiguration(
     select: CONFIGURATION_SELECT,
   });
 }
+
+export async function updateConfiguration(
+  data: {
+    key: string;
+    value: string;
+  },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.configuration.update({
+    where: { key: data.key },
+    data: {
+      value: data.value,
+      updatedBy: sessionUserId,
+    },
+    select: CONFIGURATION_SELECT,
+  });
+}

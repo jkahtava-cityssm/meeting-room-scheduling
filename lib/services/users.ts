@@ -45,9 +45,9 @@ export const SUserPUT = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string(),
   emailEnabled: z.union([z.boolean(), z.stringbool()]),
-  department: z.string().optional().nullable(),
-  jobTitle: z.string().optional().nullable(),
-  externalId: z.string().optional().nullable(),
+  department: z.string().optional(),
+  jobTitle: z.string().optional(),
+  externalId: z.string().optional(),
   isActive: z.union([z.boolean(), z.stringbool()]),
   isManaged: z.union([z.boolean(), z.stringbool()]),
 });
