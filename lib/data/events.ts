@@ -39,6 +39,7 @@ export async function createEvent(
       eventRooms: {
         createMany: {
           data: data.roomIds.map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
+          skipDuplicates: true,
         },
       },
       ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
@@ -48,7 +49,6 @@ export async function createEvent(
         eventItems: {
           createMany: {
             data: data.itemIds.map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-
             skipDuplicates: true,
           },
         },
@@ -57,7 +57,6 @@ export async function createEvent(
         eventRecipients: {
           createMany: {
             data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-
             skipDuplicates: true,
           },
         },
@@ -96,6 +95,7 @@ export async function upsertEvent(
     eventRooms: {
       createMany: {
         data: data.roomIds.map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
+        skipDuplicates: true,
       },
     },
     ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
@@ -105,7 +105,6 @@ export async function upsertEvent(
       eventItems: {
         createMany: {
           data: data.itemIds.map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-
           skipDuplicates: true,
         },
       },

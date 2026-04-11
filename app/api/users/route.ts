@@ -43,6 +43,7 @@ export async function PUT(request: NextRequest) {
     async ({ sessionUserId, data }) => {
       const updatedUser = await upsertUser(
         {
+          userId: data.userId,
           name: data.name,
           email: data.email,
           isActive: data.isActive,
