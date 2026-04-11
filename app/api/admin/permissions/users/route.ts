@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest) {
       }
 
       try {
-        const userRole = await upsertUserRole(userId, roleId, assignRole, sessionUserId);
+        const userRole = await upsertUserRole({ userId, roleId, granted: assignRole }, sessionUserId);
 
         return SuccessMessage(assignRole ? 'User role granted.' : 'User role revoked.', userRole);
       } catch (e: unknown) {

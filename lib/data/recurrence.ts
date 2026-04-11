@@ -7,7 +7,14 @@ export async function createRecurrence(
   tx: Prisma.TransactionClient = prisma,
 ) {
   return tx.recurrence.create({
-    data: { rule: data.rule, description: data.description, startDate: data.startDate, endDate: data.endDate, createdBy: sessionUserId },
+    data: {
+      rule: data.rule,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+    },
   });
 }
 

@@ -38,7 +38,7 @@ export async function createEvent(
       endDate: data.endDate,
       eventRooms: {
         createMany: {
-          data: data.roomIds.map((roomId: number) => ({ roomId })),
+          data: data.roomIds.map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
         },
       },
       ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
@@ -47,7 +47,7 @@ export async function createEvent(
       ...(data.itemIds && {
         eventItems: {
           createMany: {
-            data: data.itemIds.map((itemId) => ({ itemId })),
+            data: data.itemIds.map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
 
             skipDuplicates: true,
           },
@@ -56,7 +56,7 @@ export async function createEvent(
       ...(data.recipientIds && {
         eventRecipients: {
           createMany: {
-            data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId })),
+            data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId, createdBy: sessionUserId, updatedBy: sessionUserId })),
 
             skipDuplicates: true,
           },
@@ -95,7 +95,7 @@ export async function upsertEvent(
     endDate: data.endDate,
     eventRooms: {
       createMany: {
-        data: data.roomIds.map((roomId: number) => ({ roomId })),
+        data: data.roomIds.map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
       },
     },
     ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
@@ -104,7 +104,7 @@ export async function upsertEvent(
     ...(data.itemIds && {
       eventItems: {
         createMany: {
-          data: data.itemIds.map((itemId) => ({ itemId })),
+          data: data.itemIds.map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
 
           skipDuplicates: true,
         },
@@ -113,7 +113,7 @@ export async function upsertEvent(
     ...(data.recipientIds && {
       eventRecipients: {
         createMany: {
-          data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId })),
+          data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId, createdBy: sessionUserId, updatedBy: sessionUserId })),
           skipDuplicates: true,
         },
       },

@@ -67,11 +67,27 @@ export async function findManyUsersWithRoles(roleId?: number, where?: Prisma.Use
   });
 }
 
-export async function upsertUserRole(userId: number, roleId: number, granted: boolean, sessionUserId: number, tx: Prisma.TransactionClient = prisma) {
-  const userRole = await prisma.userRole.upsert({
-    where: { userId_roleId: { userId, roleId } },
-    create: { userId, roleId, granted, createdBy: sessionUserId, updatedBy: sessionUserId },
-    update: { granted, updatedBy: sessionUserId },
+export async function upsertUserRole(
+  data: { userId: number; roleId: number; granted: boolean },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  const userRole = await tx.userRole.upsert({
+    where: { userId_roleId: { userId: data.userId, roleId: data.roleId } },
+    create: { userId: data.userId, roleId: data.roleId, granted: data.granted, createdBy: sessionUserId, updatedBy: sessionUserId },
+    update: { granted: data.granted, updatedBy: sessionUserId },
+  });
+
+  return userRole;
+}
+
+export async function createUserRole(
+  data: { userId: number; roleId: number; granted: boolean },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  const userRole = await tx.userRole.create({
+    data: { userId: data.userId, roleId: data.roleId, granted: data.granted, createdBy: sessionUserId, updatedBy: sessionUserId },
   });
 
   return userRole;

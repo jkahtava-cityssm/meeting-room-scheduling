@@ -63,7 +63,7 @@ async function FindCreateAction(name: string): Promise<Action> {
   let record = await prisma.action.findFirst({ where: { name: name }, orderBy: { actionId: 'asc' } });
 
   if (!record) {
-    record = await prisma.action.create({ data: { name: name } });
+    record = await prisma.action.create({ data: { name: name, createdBy: 0, updatedBy: 0 } });
   }
 
   return record;
@@ -84,7 +84,7 @@ async function FindCreateRole(name: string): Promise<Role> {
   let record = await prisma.role.findFirst({ where: { name: name } });
 
   if (!record) {
-    record = await prisma.role.create({ data: { name: name } });
+    record = await prisma.role.create({ data: { name: name, createdBy: 0, updatedBy: 0 } });
   }
 
   return record;
@@ -105,7 +105,7 @@ async function FindCreateResource(name: string): Promise<Resource> {
   let record = await prisma.resource.findFirst({ where: { name: name }, orderBy: { resourceId: 'asc' } });
 
   if (!record) {
-    record = await prisma.resource.create({ data: { name: name } });
+    record = await prisma.resource.create({ data: { name: name, createdBy: 0, updatedBy: 0 } });
   }
 
   return record;
@@ -133,7 +133,7 @@ async function FindCreateResourceActionRecord(resourceId: number, actionId: numb
 
   if (!record) {
     record = await prisma.resourceAction.create({
-      data: { resourceId: resourceId, actionId: actionId },
+      data: { resourceId: resourceId, actionId: actionId, createdBy: 0, updatedBy: 0 },
     });
   }
 
@@ -148,7 +148,7 @@ async function FindCreateRoleResourceAction(roleId: number, resourceActionId: nu
 
   if (!record) {
     record = await prisma.roleResourceAction.create({
-      data: { roleId: roleId, resourceActionId: resourceActionId, permit: permit },
+      data: { roleId: roleId, resourceActionId: resourceActionId, permit: permit, createdBy: 0, updatedBy: 0 },
     });
   }
 
@@ -220,7 +220,7 @@ async function FindCreateUserRole(roleId: number, userId: number) {
 
   if (!record) {
     record = await prisma.userRole.create({
-      data: { roleId: roleId, userId: userId },
+      data: { roleId: roleId, userId: userId, createdBy: 0, updatedBy: 0 },
     });
   }
 
@@ -234,7 +234,7 @@ async function FindCreateConfigurationSetting(key: TConfigurationKeys, name: str
 
   if (!record) {
     record = await prisma.configuration.create({
-      data: { key: key, name: name, description: description, value: value, type: type },
+      data: { key: key, name: name, description: description, value: value, type: type, createdBy: 0, updatedBy: 0 },
     });
   }
   return record;
@@ -248,7 +248,7 @@ async function FindCreateRoomCategory(name: string) {
 
   if (!record) {
     record = await prisma.roomCategory.create({
-      data: { name: name },
+      data: { name: name, createdBy: 0, updatedBy: 0 },
     });
   }
   return record;
@@ -264,11 +264,14 @@ async function FindCreateRoomProperty(roomId: number, propertyId: number, value:
     },
     update: {
       value: value,
+      updatedBy: 0,
     },
     create: {
       roomId: roomId,
       propertyId: propertyId,
       value: value,
+      createdBy: 0,
+      updatedBy: 0,
     },
   });
 }
@@ -281,10 +284,14 @@ async function FindCreateProperty(name: string, type: string) {
     update: {
       name: name,
       type: type,
+      createdBy: 0,
+      updatedBy: 0,
     },
     create: {
       name: name,
       type: type,
+      createdBy: 0,
+      updatedBy: 0,
     },
   });
 }
@@ -293,7 +300,7 @@ async function FindCreateItem(name: string): Promise<Item> {
   let record = await prisma.item.findFirst({ where: { name: name }, orderBy: { itemId: 'asc' } });
 
   if (!record) {
-    record = await prisma.item.create({ data: { name: name } });
+    record = await prisma.item.create({ data: { name: name, createdBy: 0, updatedBy: 0 } });
   }
 
   return record;
@@ -321,6 +328,8 @@ async function FindCreateRooms(
         roomCategoryId: roomCategoryId,
         publicFacing: isPublicFacing,
         displayOrder: displayOrder,
+        createdBy: 0,
+        updatedBy: 0,
       },
     });
   }
@@ -331,7 +340,7 @@ async function FindCreateRooms(
 
       if (!roomRole) {
         roomRole = await prisma.roomRole.create({
-          data: { roomId: record!.roomId, roleId: roleId },
+          data: { roomId: record!.roomId, roleId: roleId, createdBy: 0, updatedBy: 0 },
         });
       }
     }
@@ -346,7 +355,7 @@ async function FindCreateEventStatus(name: string, icon: IconName, color: TColor
 
   if (!record) {
     record = await prisma.status.create({
-      data: { name: name, icon: icon, color: color, key: key },
+      data: { name: name, icon: icon, color: color, key: key, createdBy: 0, updatedBy: 0 },
     });
   }
   return record;
@@ -418,6 +427,8 @@ async function FindCreateEventRecipients(userId: number, eventId: number) {
     create: {
       userId: userId,
       eventId: eventId,
+      createdBy: 0,
+      updatedBy: 0,
     },
   });
 }
@@ -527,6 +538,8 @@ async function CreateRandomEvents(
         userId: userList[userIndex].id,
         createdAt: startDate.toISOString(),
         updatedAt: startDate.toISOString(),
+        createdBy: 0,
+        updatedBy: 0,
       },
     });
 
@@ -742,6 +755,8 @@ async function CreateEdgeCaseMultiDayEvents(
           userId: userList[userIndex].id,
           createdAt: new Date(),
           updatedAt: new Date(),
+          createdBy: 0,
+          updatedBy: 0,
         },
       });
 
@@ -838,6 +853,8 @@ async function CreateEdgeCaseMultiDayEvents(
               userId: userList[userIndex].id,
               createdAt: new Date(),
               updatedAt: new Date(),
+              createdBy: 0,
+              updatedBy: 0,
             },
           });
 
@@ -878,6 +895,8 @@ function generateRandomRoomList(
 
   return Array.from(selectedRooms).map((id) => ({
     roomId: id,
+    createdBy: 0,
+    updatedBy: 0,
   }));
 }
 
@@ -1060,6 +1079,8 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
       startDate: firstStartDate,
       endDate: newEndDate, //newRule.all().at(-1) ?? "",
       description: newRule.toText() ?? '',
+      createdBy: 0,
+      updatedBy: 0,
     },
   });
 
@@ -1172,6 +1193,22 @@ async function createLinkedServer() {
 }
 
 async function main() {
+  const SYSTEM_USER = await prisma.user.upsert({
+    where: { id: 0 },
+    update: {},
+    create: {
+      id: 0,
+      name: 'SYSTEM',
+      email: '',
+      emailVerified: false,
+      image: null,
+      externalId: '000',
+      isActive: false,
+      createdBy: 0,
+      updatedBy: 0,
+    },
+  });
+
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();

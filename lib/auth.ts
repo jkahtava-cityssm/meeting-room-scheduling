@@ -9,7 +9,7 @@ import { SessionAction, SessionResource, SessionRole } from './types';
 
 import { getCachedUserRoles } from './auth-role-cache';
 import { nextCookies } from 'better-auth/next-js';
-import { getDefaultRole } from './data/users';
+import { createUserRole, getDefaultRole } from './data/users';
 import { fetchPrivateCachedUserRole } from './server/private';
 
 export type User = {
@@ -156,8 +156,6 @@ async function createDefaultRole(userId: number) {
   const role = await prisma.role.findFirst({ where: { roleId: roleId }, orderBy: { roleId: 'asc' } });
 
   if (role) {
-    await prisma.userRole.create({
-      data: { userId: userId, roleId: role.roleId, granted: true },
-    });
+    await createUserRole({ userId: userId, roleId: role.roleId, granted: true }, 0);
   }
 }
