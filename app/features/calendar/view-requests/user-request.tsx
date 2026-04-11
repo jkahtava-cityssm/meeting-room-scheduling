@@ -276,7 +276,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
         if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
         if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
-        return 650;
+        return 580;
       },
       [flatData],
     ),

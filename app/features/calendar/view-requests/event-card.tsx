@@ -49,7 +49,7 @@ export const EventCard = React.memo(
 
     return (
       <div ref={ref} data-index={index} className="py-2">
-        <Card className="min-h-112.5 w-100 flex flex-col overflow-hidden py-4">
+        <Card className="h-145 w-100 flex flex-col overflow-hidden py-4">
           <CardHeader className="min-w-0 space-y-3 shrink-0 px-4">
             <div className="flex flex-row w-full justify-between items-center min-w-0">
               <CardTitle className="truncate text-lg flex-1">{event.title}</CardTitle>
