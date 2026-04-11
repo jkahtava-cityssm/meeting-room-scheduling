@@ -209,6 +209,8 @@ async function findCreateUser(userData: {
       image: userData.image ?? null,
       externalId: userData.employeeNumber,
       isActive: userData.employeeActive ?? true,
+      createdBy: 0,
+      updatedBy: 0,
     },
   });
 }
@@ -1244,50 +1246,6 @@ async function main() {
     await FindCreateConfigurationSetting(config.key, config.name, config.description, String(config.defaultValue), config.type);
   }
 
-  /*await FindCreateConfigurationSetting(
-    "visibleHoursStart",
-    "Earliest Visible Hour",
-    "The earliest hour that is visible in the calendar view.",
-    VISIBLE_HOUR_START.toString(),
-    "number",
-  );
-  await FindCreateConfigurationSetting(
-    "visibleHoursEnd",
-    "Latest Visible Hour",
-    "The latest hour that is visible in the calendar view.",
-    VISIBLE_HOUR_END.toString(),
-    "number",
-  );
-  await FindCreateConfigurationSetting(
-    "timeSlotInterval",
-    "Event Time Slots",
-    "The time interval (in minutes) for each event slot in the calendar view.",
-    TIME_SLOT_INTERVAL_MINUTES.toString(),
-    "number",
-  );
-  await FindCreateConfigurationSetting(
-    "singleSignOnEnabled",
-    "Single Sign On",
-    "Whether Single Sign On is enabled for the application.",
-    "false",
-    "boolean",
-  );
-  await FindCreateConfigurationSetting(
-    "defaultUserRole",
-    "Default Role",
-    "The default role assigned to new users.",
-    String(roles["User"].roleId),
-    "number",
-  );
-
-  await FindCreateConfigurationSetting(
-    "maxBookingSpan",
-    "Max Booking Span",
-    "0 = no limit, determines the maximum number in the future a user can create events",
-    "30",
-    "number",
-  );
-*/
   const roomList: {
     roomId: number;
     name: string;
@@ -1353,7 +1311,7 @@ async function main() {
 
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
     console.log('Seeding Random Users...');
-    await prisma.user.deleteMany();
+    await prisma.user.deleteMany({ where: { NOT: { id: 0 } } });
     CreateRandomUsers(50);
   }
 
