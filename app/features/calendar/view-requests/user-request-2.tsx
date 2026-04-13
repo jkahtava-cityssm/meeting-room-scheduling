@@ -58,6 +58,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const { flatData, rowVirtualizer, collapsedKeys } = useCalendarVirtualization({
     requestSections: result?.data?.requestSections,
+    overscanSize: action === 'YEAR' ? 100 : 15,
     clampedColumn: columns,
     removingEvents,
     removingEventIds,

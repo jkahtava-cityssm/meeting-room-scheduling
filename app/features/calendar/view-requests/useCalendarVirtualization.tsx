@@ -8,10 +8,12 @@ import { TStatusKey } from '@/lib/types';
 const SECTION_HEADER_PX = 40;
 const GROUP_HEADER_PX = 40;
 const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
+const ROW_PX = 628;
 
 export function useCalendarVirtualization({
   requestSections,
   clampedColumn,
+  overscanSize,
   removingEvents,
   removingEventIds,
   removingGroupIds,
@@ -21,6 +23,7 @@ export function useCalendarVirtualization({
 }: {
   requestSections: IRequestSection[];
   clampedColumn: number;
+  overscanSize: number;
   removingEvents: Map<number, TStatusKey>;
   removingEventIds: Set<number>;
   removingGroupIds: Set<string>;
@@ -137,7 +140,7 @@ export function useCalendarVirtualization({
         const item = flatData[index];
         if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
         if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
-        return 628;
+        return ROW_PX;
       },
       [flatData],
     ),
@@ -146,7 +149,7 @@ export function useCalendarVirtualization({
       const item = flatData[index];
       return item ? el.getBoundingClientRect().height : 0;
     },
-    overscan: 5,
+    overscan: overscanSize,
     scrollPaddingStart: SECTION_HEADER_PX,
     getItemKey: (index) => flatData[index]?.key ?? index,
   });
