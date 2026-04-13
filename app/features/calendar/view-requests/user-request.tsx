@@ -81,6 +81,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
     if (result && !isLoading) {
       setIsHeaderLoading(false);
+      setTotalEvents(result.totalEvents);
     }
   }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
