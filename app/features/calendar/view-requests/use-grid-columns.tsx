@@ -31,7 +31,7 @@ export function useGridColumns(externalRef?: RefObject<HTMLElement | null>, dela
           const newColumnCount = calculateColumns(width);
 
           // Only trigger a re-render if the column count actually changed
-          setColumns((prev) => (prev !== newColumnCount ? newColumnCount : prev));
+          setColumns((prev) => (prev !== newColumnCount ? Math.max(1, newColumnCount || 1) : prev));
         }, delay);
       }
     });
