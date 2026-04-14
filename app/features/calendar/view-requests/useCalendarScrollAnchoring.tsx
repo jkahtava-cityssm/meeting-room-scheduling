@@ -1,8 +1,8 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
-import { IRequestGroup } from '../webworkers/generic-webworker';
+import { IRequestGroup, IRequestSection } from '../webworkers/generic-webworker';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { VirtualRowItem } from './user-request-2';
-import { TColors } from '@/lib/types';
+import { TColors, TStatusKey } from '@/lib/types';
 
 const SECTION_HEADER_PX = 40;
 const GROUP_HEADER_PX = 40;
@@ -116,3 +116,63 @@ export function useCalendarScrollAnchoring({
 
   return { captureAnchor, stickyInfo };
 }
+
+export const getRemovedKeys = (flatData: VirtualRowItem[], targetEventId: number, newStatus: TStatusKey, selectedStatusKeys: TStatusKey[]) => {
+  const removedKeys = new Set<string>();
+  const sectionKeys = new Set<string>();
+  const groupKeys = new Set<string>();
+  const rowKeys = new Set<string>();
+
+  // 1. Identify if the status change results in hiding the event
+  const isMovingToHidden = !selectedStatusKeys.includes(newStatus);
+  if (!isMovingToHidden) {
+    return { removedKeys, sectionKeys, groupKeys, rowKeys };
+  }
+
+  // 2. Identify Rows that will become empty
+  // We filter first so we have a complete list of "dying" rows to check against headers
+  flatData.forEach((item) => {
+    if (item.type === 'GROUP_ROW') {
+      const remainingEvents = item.data.filter((e) => e.eventId !== targetEventId);
+      if (remainingEvents.length === 0) {
+        rowKeys.add(item.key);
+        removedKeys.add(item.key);
+      }
+    }
+  });
+
+  // 3. Identify Groups that will have no visible rows
+  const groupHeaders = flatData.filter((i): i is Extract<VirtualRowItem, { type: 'GROUP_HEADER' }> => i.type === 'GROUP_HEADER');
+
+  groupHeaders.forEach((group) => {
+    // Find all rows belonging to this group via key prefix
+    const rowsInGroup = flatData.filter((i) => i.type === 'GROUP_ROW' && i.key.startsWith(group.key));
+
+    // If all rows that belong to this group are in the 'rowKeys' set, the group is removed
+    if (rowsInGroup.length > 0 && rowsInGroup.every((row) => rowKeys.has(row.key))) {
+      groupKeys.add(group.key);
+      removedKeys.add(group.key);
+    }
+  });
+
+  // 4. Identify Sections that will have no visible groups
+  const sectionHeaders = flatData.filter((i): i is Extract<VirtualRowItem, { type: 'SECTION_HEADER' }> => i.type === 'SECTION_HEADER');
+
+  sectionHeaders.forEach((section) => {
+    // Find all groups belonging to this section via key prefix
+    const groupsInSection = groupHeaders.filter((g) => g.key.startsWith(section.key));
+
+    // If all groups in this section are now in the 'groupKeys' set, the section is removed
+    if (groupsInSection.length > 0 && groupsInSection.every((group) => groupKeys.has(group.key))) {
+      sectionKeys.add(section.key);
+      removedKeys.add(section.key);
+    }
+  });
+
+  return {
+    removedKeys,
+    sectionKeys,
+    groupKeys,
+    rowKeys,
+  };
+};
