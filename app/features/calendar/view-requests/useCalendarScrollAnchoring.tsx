@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { IRequestGroup } from '../webworkers/generic-webworker';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { VirtualRowItem } from './user-request-2';
+import { TColors } from '@/lib/types';
 
 const SECTION_HEADER_PX = 40;
 const GROUP_HEADER_PX = 40;
@@ -43,30 +44,48 @@ export function useCalendarScrollAnchoring({
   const stickyInfo = useMemo(() => {
     const top = scrollOffset + HEADER_PX + 1;
     const activeItem = [...virtualItems].reverse().find((v) => v.start <= top) ?? virtualItems[0];
-    if (!activeItem) return { section: null, group: null, groupId: null };
+    if (!activeItem) return { sectionKey: null, sectionName: null, groupKey: null, groupName: null, groupColor: null };
 
-    let activeSection: string | null = null;
-    let activeGroup: IRequestGroup | null = null;
+    let activeSectionKey: string | null = null;
+    let activeSectionName: string | null = null;
+    let activeGroupKey: string | null = null;
+    let activeGroupName: string | null = null;
+    let activeGroupColor: TColors | null = null;
     for (let i = activeItem.index; i >= 0; i--) {
       const item = flatData[i];
-      if (!activeGroup && item.type === 'GROUP_HEADER') activeGroup = item.data;
+      if (!activeGroupKey && item.type === 'GROUP_HEADER') {
+        activeGroupKey = item.key;
+        activeGroupName = item.groupName;
+        activeGroupColor = item.groupColor;
+      }
       if (item.type === 'SECTION_HEADER') {
-        activeSection = item.data;
-        if (!activeGroup) {
+        activeSectionKey = item.key;
+        activeSectionName = item.sectionName;
+        if (!activeGroupKey) {
           const nextItem = flatData[i + 1];
-          if (nextItem?.type === 'GROUP_HEADER') activeGroup = nextItem.data;
+          if (nextItem?.type === 'GROUP_HEADER') {
+            activeGroupKey = nextItem.key;
+            activeGroupName = nextItem.groupName;
+            activeGroupColor = nextItem.groupColor;
+          }
         }
         break;
       }
     }
-    return { section: activeSection, group: activeGroup, groupId: activeGroup?.groupKey ?? null };
+    return {
+      sectionKey: activeSectionKey,
+      sectionName: activeSectionName,
+      groupKey: activeGroupKey,
+      groupName: activeGroupName,
+      groupColor: activeGroupColor,
+    };
   }, [scrollOffset, virtualItems, flatData]);
 
   useLayoutEffect(() => {
     if (prevColsRef.current === clampedColumn) {
-      groupKeyRef.current = stickyInfo.groupId;
+      groupKeyRef.current = stickyInfo.groupKey;
     }
-  }, [clampedColumn, stickyInfo.groupId]);
+  }, [clampedColumn, stickyInfo.groupKey]);
 
   useLayoutEffect(() => {
     if (!parentRef.current || prevColsRef.current === clampedColumn) return;
@@ -74,7 +93,7 @@ export function useCalendarScrollAnchoring({
     const groupKey = groupKeyRef.current;
     if (!groupKey) return;
 
-    const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.data.groupKey === groupKey);
+    const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.key === groupKey);
     if (newIndex === -1) return;
 
     rowVirtualizer.measure();
