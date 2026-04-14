@@ -25,7 +25,7 @@ import { EventCard } from './event-card';
 import { IEventSingleRoom } from '@/lib/schemas';
 import { useVirtualizer, useWindowVirtualizer, VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 import { useGridColumns } from './use-grid-columns';
-import { TStatusKey } from '@/lib/types';
+import { TColors, TStatusKey } from '@/lib/types';
 import { useCalendarEventData } from './useCalendarEventData';
 import { useCalendarVirtualization } from './useCalendarVirtualization';
 import { useCalendarScrollAnchoring } from './useCalendarScrollAnchoring';
@@ -35,8 +35,8 @@ const GROUP_HEADER_PX = 40;
 const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
 
 export type VirtualRowItem =
-  | { type: 'SECTION_HEADER'; key: string; data: string; isRemoving: boolean }
-  | { type: 'GROUP_HEADER'; key: string; data: IRequestGroup; isRemoving: boolean }
+  | { type: 'SECTION_HEADER'; key: string; sectionName: string; isRemoving: boolean }
+  | { type: 'GROUP_HEADER'; key: string; groupName: string; groupColor: TColors; isRemoving: boolean }
   | { type: 'GROUP_ROW'; key: string; data: IEventSingleRoom[] };
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
@@ -119,19 +119,19 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   return (
     <div className="flex flex-1 min-h-0 relative">
       <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none h-20">
-        {stickyInfo.section && (
+        {stickyInfo.sectionKey && (
           <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 shadow-sm h-10 pointer-events-auto flex items-center">
-            {stickyInfo.section}
+            {stickyInfo.sectionName}
           </div>
         )}
-        {stickyInfo.group && (
+        {stickyInfo.groupName && (
           <div
             className={cn(
               'p-2 shadow-sm h-10 border-b-2 pointer-events-auto flex items-center transition-colors border-t',
-              badgeVariants({ color: stickyInfo.group.groupColor }),
+              badgeVariants({ color: stickyInfo.groupColor }),
             )}
           >
-            {stickyInfo.group.groupName}
+            {stickyInfo.groupName}
           </div>
         )}
       </div>
@@ -167,7 +167,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                         item.isRemoving && 'opacity-0 -translate-y-2',
                       )}
                     >
-                      <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">{item.data}</div>
+                      <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">{item.sectionName}</div>
                     </div>
                   )}
 
@@ -178,8 +178,8 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                         item.isRemoving && 'opacity-0 -translate-y-1',
                       )}
                     >
-                      <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.data.groupColor }))}>
-                        <span className="text-md">{item.data.groupName}</span>
+                      <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.groupColor }))}>
+                        <span className="text-md">{item.groupName}</span>
                       </div>
                     </div>
                   )}

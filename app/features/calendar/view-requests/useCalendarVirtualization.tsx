@@ -50,7 +50,7 @@ export function useCalendarVirtualization({
       list.push({
         type: 'SECTION_HEADER',
         key: section.sectionKey,
-        data: section.sectionTitle,
+        sectionName: section.sectionTitle,
         isRemoving: isRemovingSection,
       });
 
@@ -64,11 +64,17 @@ export function useCalendarVirtualization({
         const isRemovingGroup = removingGroupIds.has(group.groupKey);
         if (visibleEvents.length === 0 && !isRemovingGroup) return;
 
-        list.push({ type: 'GROUP_HEADER', key: group.groupKey, data: group, isRemoving: isRemovingGroup });
+        list.push({
+          type: 'GROUP_HEADER',
+          key: group.groupKey,
+          groupName: group.groupName,
+          groupColor: group.groupColor,
+          isRemoving: isRemovingGroup,
+        });
 
         const eventRows = chunkArray<IEventSingleRoom>(visibleEvents, clampedColumn);
-        eventRows.forEach((eventRow) => {
-          list.push({ type: 'GROUP_ROW', key: `${group.groupKey}:events[${eventRow.map((e) => e.eventId).join('-')}]`, data: eventRow });
+        eventRows.forEach((eventRow, rowIndex) => {
+          list.push({ type: 'GROUP_ROW', key: `${group.groupKey}:events[${rowIndex}]`, data: eventRow });
         });
       });
     });
