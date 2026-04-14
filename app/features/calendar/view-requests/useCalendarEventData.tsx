@@ -39,12 +39,8 @@ export function useCalendarEventData(action: CalendarAction, date: Date, userId?
     result?.data?.requestSections?.forEach((section) => {
       section.sectionGroups.forEach((group) => {
         const allEventsWillBeHidden = group.groupEvents.every((e) => {
-          const targetStatus = removingEvents.get(e.eventId);
-          const currentStatusVisible = selectedStatusKeys.includes(e.status.key as TStatusKey);
-          if (removingEvents.has(e.eventId)) {
-            return !selectedStatusKeys.includes(targetStatus!);
-          }
-          return !currentStatusVisible;
+          const statusToVerify = removingEvents.get(e.eventId) ?? (e.status.key as TStatusKey);
+          return !selectedStatusKeys.includes(statusToVerify);
         });
         if (group.groupEvents.length > 0 && allEventsWillBeHidden) {
           ids.add(group.groupKey);
