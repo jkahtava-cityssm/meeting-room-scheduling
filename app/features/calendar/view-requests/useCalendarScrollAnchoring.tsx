@@ -12,11 +12,13 @@ export function useCalendarScrollAnchoring({
   flatData,
   clampedColumn,
   parentRef,
+  isRemovingItem,
 }: {
   rowVirtualizer: Virtualizer<HTMLDivElement, HTMLDivElement>;
   flatData: VirtualRowItem[];
   clampedColumn: number;
   parentRef: React.RefObject<HTMLDivElement | null>;
+  isRemovingItem: (item: VirtualRowItem) => boolean;
 }) {
   const anchorRef = useRef<{ key: string; offset: number } | null>(null);
   const prevColsRef = useRef(clampedColumn);

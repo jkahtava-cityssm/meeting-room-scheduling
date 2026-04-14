@@ -162,7 +162,7 @@ export function useCalendarVirtualization({
     getItemKey: (index) => flatData[index]?.key ?? index,
   });
 
-  return { flatData, rowVirtualizer, collapsedKeys };
+  return { flatData, rowVirtualizer, collapsedKeys, isRemovingItem };
 }
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
