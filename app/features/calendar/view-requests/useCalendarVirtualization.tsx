@@ -138,16 +138,24 @@ export function useCalendarVirtualization({
     estimateSize: useCallback(
       (index: number) => {
         const item = flatData[index];
+
+        if (!item) return 0;
+        if (collapsedKeys.has(item.key)) return 0;
+
         if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
         if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
         return ROW_PX;
       },
-      [flatData],
+      [collapsedKeys, flatData],
     ),
     measureElement: (el) => {
       const index = Number(el.getAttribute('data-index'));
       const item = flatData[index];
-      return item ? el.getBoundingClientRect().height : 0;
+      if (!item) return 0;
+
+      if (collapsedKeys.has(item.key)) return 0;
+
+      return el.getBoundingClientRect().height;
     },
     overscan: overscanSize,
     scrollPaddingStart: SECTION_HEADER_PX,
