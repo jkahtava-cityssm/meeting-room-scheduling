@@ -7,6 +7,7 @@ import { TColors, TStatusKey } from '@/lib/types';
 const SECTION_HEADER_PX = 40;
 const GROUP_HEADER_PX = 40;
 const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
+const ROW_PX = 628;
 
 export function useCalendarScrollAnchoring({
   rowVirtualizer,
@@ -14,29 +15,63 @@ export function useCalendarScrollAnchoring({
   clampedColumn,
   parentRef,
   isRemovingItem,
+  selectedStatusKeys,
 }: {
   rowVirtualizer: Virtualizer<HTMLDivElement, HTMLDivElement>;
   flatData: VirtualRowItem[];
   clampedColumn: number;
   parentRef: React.RefObject<HTMLDivElement | null>;
   isRemovingItem: (item: VirtualRowItem) => boolean;
+  selectedStatusKeys: TStatusKey[];
 }) {
   const anchorRef = useRef<{ key: string; offset: number } | null>(null);
   const prevColsRef = useRef(clampedColumn);
   const groupKeyRef = useRef<string | null>(null);
 
-  const captureAnchor = useCallback(() => {
-    const virtualItems = rowVirtualizer.getVirtualItems();
-    if (virtualItems.length === 0) return;
-    const anchorItem = virtualItems[0];
-    const scrollElement = parentRef.current;
-    if (anchorItem && scrollElement) {
+  const captureAnchor = useCallback(
+    (targetEventId: number, newStatus: TStatusKey) => {
+      const scrollElement = parentRef.current;
+      if (!scrollElement) return;
+
+      const currentScrollTop = scrollElement.scrollTop;
+      const virtualItems = rowVirtualizer.getVirtualItems();
+      const topVisibleItem = virtualItems[0];
+
+      if (!topVisibleItem) return;
+
+      const { removedKeys } = getRemovedKeys(flatData, targetEventId, newStatus, selectedStatusKeys);
+
+      // We sum up what is ALREADY removing + what is ABOUT to be removed
+      let pendingShrinkage = 0;
+
+      for (let i = 0; i < topVisibleItem.index; i++) {
+        const item = flatData[i];
+
+        if (removedKeys.has(item.key)) {
+          switch (item.type) {
+            case 'GROUP_ROW':
+              pendingShrinkage += ROW_PX;
+              break;
+            case 'GROUP_HEADER':
+              pendingShrinkage += GROUP_HEADER_PX;
+              break;
+            case 'SECTION_HEADER':
+              pendingShrinkage += SECTION_HEADER_PX;
+              break;
+          }
+        }
+      }
+
+      //console.log({ item: topVisibleItem, top: currentScrollTop, shrink: pendingShrinkage, keys: removedKeys });
+
       anchorRef.current = {
-        key: anchorItem.key as string,
-        offset: scrollElement.scrollTop - anchorItem.start,
+        key: 'absolute-coord',
+        //index: topVisibleItem.index,
+        offset: currentScrollTop - pendingShrinkage,
       };
-    }
-  }, [rowVirtualizer, parentRef]);
+    },
+    [parentRef, rowVirtualizer, flatData, selectedStatusKeys],
+  );
 
   const virtualItems = rowVirtualizer.getVirtualItems();
   const scrollOffset = rowVirtualizer.scrollOffset || 0;
@@ -105,10 +140,16 @@ export function useCalendarScrollAnchoring({
   useLayoutEffect(() => {
     if (anchorRef.current && parentRef.current) {
       const { key, offset } = anchorRef.current;
-      const newItems = rowVirtualizer.getVirtualItems();
-      const foundItem = newItems.find((item) => item.key === key);
-      if (foundItem) {
-        parentRef.current.scrollTop = foundItem.start + offset;
+
+      if (key === 'absolute-coord') {
+        parentRef.current.scrollTop = offset;
+      } else {
+        // Fallback: Original key-based anchoring logic
+        const newItems = rowVirtualizer.getVirtualItems();
+        const foundItem = newItems.find((item) => item.key === key);
+        if (foundItem) {
+          parentRef.current.scrollTop = foundItem.start + offset;
+        }
       }
       anchorRef.current = null;
     }

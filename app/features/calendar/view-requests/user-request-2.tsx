@@ -28,7 +28,7 @@ import { useGridColumns } from './use-grid-columns';
 import { TColors, TStatusKey } from '@/lib/types';
 import { useCalendarEventData } from './useCalendarEventData';
 import { useCalendarVirtualization } from './useCalendarVirtualization';
-import { useCalendarScrollAnchoring } from './useCalendarScrollAnchoring';
+import { getRemovedKeys, useCalendarScrollAnchoring } from './useCalendarScrollAnchoring';
 
 const SECTION_HEADER_PX = 40;
 const GROUP_HEADER_PX = 40;
@@ -74,6 +74,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     clampedColumn: columns,
     parentRef,
     isRemovingItem,
+    selectedStatusKeys,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -91,7 +92,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const handleApprove = useCallback(
     (id: number) => {
-      captureAnchor();
+      captureAnchor(id, 'APPROVED');
       setRemovingEvents((prev) => new Map(prev).set(id, 'APPROVED'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') } });
     },
@@ -100,7 +101,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const handleDeny = useCallback(
     (id: number) => {
-      captureAnchor();
+      captureAnchor(id, 'REJECTED');
       setRemovingEvents((prev) => new Map(prev).set(id, 'REJECTED'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') } });
     },
@@ -109,7 +110,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const handlePending = useCallback(
     (id: number) => {
-      captureAnchor();
+      captureAnchor(id, 'PENDING');
       setRemovingEvents((prev) => new Map(prev).set(id, 'PENDING'));
       patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') } });
     },
