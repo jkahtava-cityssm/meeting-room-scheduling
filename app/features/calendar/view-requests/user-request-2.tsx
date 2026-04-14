@@ -56,7 +56,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     statusIdLookupByKey,
   } = useCalendarEventData(action, date, userId);
 
-  const { flatData, rowVirtualizer, collapsedKeys } = useCalendarVirtualization({
+  const { flatData, rowVirtualizer, collapsedKeys, isRemovingItem } = useCalendarVirtualization({
     requestSections: result?.data?.requestSections,
     overscanSize: action === 'YEAR' ? 100 : 15,
     clampedColumn: columns,
@@ -73,6 +73,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     flatData,
     clampedColumn: columns,
     parentRef,
+    isRemovingItem,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
