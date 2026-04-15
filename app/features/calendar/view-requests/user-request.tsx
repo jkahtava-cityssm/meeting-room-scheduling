@@ -295,16 +295,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       const anchorItem = virtualItems.find((item) => item.start + item.size > currentScroll) || virtualItems[0];
 
       // 2. Calculate how many pixels will disappear ABOVE this anchor item
-      /*const shrinkage = getPendingShrinkage(
-        flatData,
-        id,
-        newStatus,
-        selectedStatusKeys,
-        anchorItem.index, // We only care about items before this index
-        clampedColumn,
-      );*/
-
-      const shrinkage = getPendingShrinkage2(
+      const shrinkage = getPendingShrinkage(
         flatData,
         id,
         newStatus,
@@ -313,12 +304,21 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         clampedColumn,
       );
 
-      //console.log(shrinkage, shrinkage2);
+      const shrinkage2 = getPendingShrinkage2(
+        flatData,
+        id,
+        newStatus,
+        selectedStatusKeys,
+        anchorItem.index, // We only care about items before this index
+        clampedColumn,
+      );
+
+      console.log(shrinkage, shrinkage2);
       // 3. Store the anchor with the shrinkage adjustment
       // We subtract shrinkage because the list is about to get shorter
       anchorRef.current = {
         key: anchorItem.key as string,
-        offset: currentScroll - shrinkage,
+        offset: currentScroll - shrinkage2,
       };
 
       /*if (shrinkage > 0) {
@@ -538,7 +538,8 @@ function getPendingShrinkage2(
   topVisibleItemIndex: number,
   clampedColumn: number,
 ): number {
-  // 1. Event stays visible → no shrink
+  // The event is changing to a visible status key
+  // As a result it will not be removed so no calculations are required.
   if (selectedStatusKeys.includes(newStatus)) return 0;
 
   let totalShrinkage = 0;
@@ -546,7 +547,7 @@ function getPendingShrinkage2(
   const processedGroups = new Set<string>();
   const processedSections = new Set<string>();
 
-  // --- Pre-scan membership ---
+  //Build lookup Sets
   const groupContainsTarget = new Set<string>();
   const sectionContainsTarget = new Set<string>();
   const groupHeaderMap = new Map<string, Extract<VirtualRowItem, { type: 'GROUP_HEADER' }>>();
@@ -564,7 +565,6 @@ function getPendingShrinkage2(
     }
   }
 
-  // --- Main loop ---
   for (let i = 0; i < topVisibleItemIndex; i++) {
     const item = flatData[i];
 
@@ -580,15 +580,18 @@ function getPendingShrinkage2(
 
       if (!groupHeader) continue;
 
+      // We do not care which event is removed, only that a single event is being removed
       const newEventCount = groupHeader.eventCount - 1;
+
+      // Calculate whether removing the event changes the number of rows in the grou
       const newRowCount = Math.ceil(newEventCount / clampedColumn);
 
-      // Row shrink
+      // If rows collapse, each removed row contributes to total shrinkage
       if (newRowCount < groupHeader.rowCount) {
         totalShrinkage += (groupHeader.rowCount - newRowCount) * ROW_PX;
       }
 
-      // Group header removal
+      // If no events remain, the group header is removed from the layout
       if (newEventCount === 0) {
         totalShrinkage += GROUP_HEADER_PX;
       }
@@ -602,8 +605,11 @@ function getPendingShrinkage2(
 
       if (!sectionContainsTarget.has(sKey)) continue;
 
-      // Only event in section is the target
-      if (item.totalEventCount === 1) {
+      // Remove an event from the Section to see if it would also become empty
+      const newSectionEventCount = item.totalEventCount - 1;
+
+      // If the section becomes empty, its header is removed from the layout
+      if (newSectionEventCount === 0) {
         totalShrinkage += SECTION_HEADER_PX;
       }
     }
