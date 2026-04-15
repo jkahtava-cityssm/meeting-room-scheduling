@@ -12,6 +12,10 @@ import { useCalendarSearchParams } from './use-calendar-search-params';
 import { CalendarUserRequestView } from '../view-requests/user-request';
 import { BookingPermissions } from '../../bookings/components/permissions/booking.permissions';
 import { CalendarAction } from '../webworkers/generic-webworker';
+import CalendarMonthPicker from '@/components/calendar-month-picker/CalendarMonthPicker';
+import CalendarYearPicker from '@/components/calendar-year-picker/CalendarYearPicker';
+import { CalendarDayPicker } from '@/components/calendar-day-picker/CalendarDayPicker';
+import { CalendarWeekPicker } from '@/components/calendar-week-picker/CalendarWeekPicker';
 
 export function CalendarRequestView() {
   const { isVerifying, can, canAny } = BookingPermissions.usePermissions();
@@ -50,7 +54,15 @@ export function CalendarRequestView() {
           <CalendarHeader view={view} selectedDate={dateValue} permissions={permissions} allowCreateEvent={false} />
 
           <RequirePermission allowed={hasAccess}>
-            <CalendarUserRequestView action={currentAction} date={dateValue} />
+            <div className="flex flex-1 min-h-0">
+              <CalendarUserRequestView action={currentAction} date={dateValue} />
+              <div className="hidden w-74 divide-y border-l md:block">
+                {view === 'month' && <CalendarMonthPicker selectedDate={dateValue}></CalendarMonthPicker>}
+                {view === 'year' && <CalendarYearPicker selectedDate={dateValue}></CalendarYearPicker>}
+                {view === 'week' && <CalendarWeekPicker selectedDate={dateValue}></CalendarWeekPicker>}
+                {view === 'day' && <CalendarDayPicker selectedDate={dateValue}></CalendarDayPicker>}
+              </div>
+            </div>
           </RequirePermission>
         </div>
       </SharedEventDrawerProvider>
