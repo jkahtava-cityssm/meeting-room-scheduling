@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { format, isSameMonth } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type MonthGridProps = {
   monthList: Date[];
@@ -10,7 +11,7 @@ type MonthGridProps = {
   onNavigate: (direction: 'prev' | 'next') => void;
   firstMonthRef?: React.RefObject<HTMLButtonElement | null>;
   lastMonthRef?: React.RefObject<HTMLButtonElement | null>;
-
+  className?: string;
   lastFocusedMonth: Date | null;
   onUpdateLastFocusedMonth: (date: Date | null) => void;
 };
@@ -23,7 +24,7 @@ export default function MonthGrid({
   onNavigate,
   firstMonthRef,
   lastMonthRef,
-
+  className,
   lastFocusedMonth,
   onUpdateLastFocusedMonth,
 }: MonthGridProps) {
@@ -89,7 +90,7 @@ export default function MonthGrid({
       ref={gridRef}
       role="grid"
       aria-label="Month selection"
-      className="grid grid-cols-4 gap-x-0.5 gap-y-2"
+      className={cn('grid grid-cols-4 gap-x-0.5 gap-y-2', className)}
       tabIndex={-1}
       onFocus={(e) => {
         if (e.target === gridRef.current) {

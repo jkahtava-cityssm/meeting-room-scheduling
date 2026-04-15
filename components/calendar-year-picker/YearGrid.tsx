@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type YearGridProps = {
   yearList: number[];
@@ -9,7 +10,7 @@ type YearGridProps = {
   onNavigateBand: (direction: 'prev' | 'next') => void;
   firstYearRef?: React.RefObject<HTMLButtonElement | null>;
   lastYearRef?: React.RefObject<HTMLButtonElement | null>;
-
+  className?: string;
   lastFocusedYear: number | null;
   onUpdateLastFocusedYear: (year: number | null) => void;
 };
@@ -22,7 +23,7 @@ export default function YearGrid({
   onNavigateBand,
   firstYearRef,
   lastYearRef,
-
+  className,
   lastFocusedYear,
   onUpdateLastFocusedYear,
 }: YearGridProps) {
@@ -88,7 +89,7 @@ export default function YearGrid({
       ref={gridRef}
       role="grid"
       aria-label="Year selection"
-      className="grid grid-cols-4 gap-x-0.5 gap-y-1.5"
+      className={cn('grid grid-cols-4 gap-x-0.5 gap-y-1.5', className)}
       tabIndex={-1}
       onFocus={(e) => {
         if (e.target === gridRef.current) {

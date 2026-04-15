@@ -45,10 +45,8 @@ export default function CalendarMonthPicker({ selectedDate }: { selectedDate: Da
       <MonthPickerNavigation currentDate={currentDate} onMonthChange={(date: Date) => setCurrentDate(date)} onNavigate={navigateBlock} />
 
       <div className="flex-1 mx-8 mb-3 min-h-65">
-        <div className="flex justify-center w-full mt-2">
-          <div className="text-xs font-medium text-muted-foreground h-4">Select Month</div>
-        </div>
         <MonthGrid
+          className={'pt-6'}
           monthList={monthList}
           selectedMonth={selectedDate}
           currentMonth={currentDate}
