@@ -1,6 +1,6 @@
 import { formatISO } from 'date-fns';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch';
 import z from 'zod/v4';
 import { IEvent, SEvent, utcDateSchema } from '@/lib/schemas';
@@ -24,6 +24,7 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
 
   return useQuery({
     queryKey: queryKeys.events.user(start, end, userId),
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const result = await fetchGET(endpoint, {
         startdate: start,
@@ -219,7 +220,7 @@ export const useEventPatchMutation = () => {
       return fetchPATCH('/api/events', data);
     },
 
-    onMutate: async ({ data }) => {
+    /*onMutate: async ({ data }) => {
       const eventId = data.eventId;
 
       // 1. Define the specific detail key
@@ -254,9 +255,9 @@ export const useEventPatchMutation = () => {
       });
 
       return { previousLists, previousDetail };
-    },
+    },*/
 
-    onError: (err, variables, context) => {
+    /*onError: (err, variables, context) => {
       if (context?.previousDetail) {
         queryClient.setQueryData(queryKeys.events.detail(variables.data.eventId), context.previousDetail);
       }
@@ -266,7 +267,7 @@ export const useEventPatchMutation = () => {
           queryClient.setQueryData(key, value);
         });
       }
-    },
+    },*/
 
     onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });

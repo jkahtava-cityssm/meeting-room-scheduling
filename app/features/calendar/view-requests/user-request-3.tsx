@@ -95,6 +95,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const isMounting = false;
 
   const flatData = useMemo(() => {
+    console.log('FLAT DATA RECALCULATE');
     const list: VirtualRowItem[] = [];
     result?.data?.requestSections?.forEach((section) => {
       list.push({
@@ -164,7 +165,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     getItemKey: (index) => flatData[index]?.key ?? index,
   });
 
-  rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => true;
+  //rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => true;
 
   const anchorRef = useRef<{ key: string; offset: number } | null>(null);
 
@@ -251,17 +252,33 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   useLayoutEffect(() => {
     if (anchorRef.current && parentRef.current && flatData.length > 0) {
-      // Clear anchor immediately so we don't loop
-      const anchor = anchorRef.current;
-      anchorRef.current = null;
+      const { offset, key } = anchorRef.current;
+      const preCorrectionScroll = parentRef.current.scrollTop;
 
-      // Force virtualizer to sync with new data lengths immediately
+      console.log('--- 2. DATA ARRIVED / LAYOUT EFFECT ---');
+      console.log(`[Sync] Anchor Key: ${key}, Required Offset: ${offset}`);
+      console.log(`[Sync] Browser current scrollTop: ${preCorrectionScroll}`);
+      // 1. Clear the ref immediately
+      //anchorRef.current = null;
+
+      // 2. TELL THE VIRTUALIZER TO RE-CALCULATE
+      // This is the most important step. It clears the old coordinate cache.
       rowVirtualizer.measure();
 
-      // Use scrollToOffset to land exactly on our shrunken target
-      rowVirtualizer.scrollToOffset(anchor.offset, {
-        align: 'start',
-        behavior: 'auto', // Keep 'auto' for instant snap; 'smooth' will cause jitters here
+      // 3. APPLY THE CORRECTION
+      // We use a raw scrollTop set here because it's more reliable
+      // for "locking" position than the virtualizer's scrollToOffset
+      // during a heavy DOM churn.
+      parentRef.current.scrollTop = offset;
+
+      console.log(`[Sync] Scroll adjusted to: ${parentRef.current.scrollTop}`);
+
+      // 4. SYNC VIRTUALIZER
+      // Force one more frame sync to ensure the virtualizer
+      // doesn't think we are still at the old scroll position.
+      requestAnimationFrame(() => {
+        console.log(`[Sync] RAF Syncing Virtualizer to: ${offset}`);
+        rowVirtualizer.scrollToOffset(offset);
       });
     }
   }, [flatData, rowVirtualizer]);
@@ -276,6 +293,8 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   });
 
   const patchEvent = useEventPatchMutation();
+
+  const activeMutationsRef = useRef(0);
 
   const handleStatusChange = useCallback(
     (id: number, newStatus: TStatusKey) => {
@@ -298,8 +317,10 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         clampedColumn,
       );
 
-      //const test = getRemovedKeys(flatData, id, newStatus, selectedStatusKeys, anchorItem.index);
-      console.log(currentScroll, anchorItem.start, shrinkage);
+      console.log('--- 1. CLICK TRIGGERED ---');
+      console.log(`[Predict] Event: ${id}, Shrinkage: ${shrinkage}px`);
+      console.log(`[Predict] Current Scroll: ${currentScroll}, Target Scroll: ${currentScroll - shrinkage}`);
+
       // 3. Store the anchor with the shrinkage adjustment
       // We subtract shrinkage because the list is about to get shorter
       anchorRef.current = {
@@ -307,15 +328,34 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         offset: currentScroll - shrinkage,
       };
 
-      if (shrinkage > 0) {
+      /*if (shrinkage > 0) {
         parentRef.current.scrollTop = currentScroll - shrinkage;
-      }
+      }*/
 
       // 4. Trigger mutation
+
+      activeMutationsRef.current += 1;
+
       setRemovingEvents((prev) => new Map(prev).set(id, newStatus));
-      patchEvent.mutate({
-        data: { eventId: id, statusId: statusIdLookupByKey(newStatus) },
-      });
+      patchEvent.mutate(
+        {
+          data: { eventId: id, statusId: statusIdLookupByKey(newStatus) },
+        },
+        /*{
+          onSettled: () => {
+            activeMutationsRef.current -= 1;
+
+            // If no more mutations are pending, we can safely clear the anchor
+            // after the final data paint. We use a small delay to ensure the
+            // last invalidation refetch has finished rendering.
+            if (activeMutationsRef.current === 0) {
+              setTimeout(() => {
+                anchorRef.current = null;
+              }, 100);
+            }
+          },
+        },*/
+      );
     },
     [rowVirtualizer, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
   );
@@ -381,6 +421,10 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
           >
             {virtualItems.map((virtualRow) => {
               const item = flatData[virtualRow.index];
+              if (virtualRow.index === 0) {
+                // Only log the first item to avoid spamming
+                console.log(`[Render] First Visible Item: ${virtualRow.key} at Y: ${virtualRow.start}`);
+              }
               return (
                 <div
                   key={virtualRow.key}
@@ -395,23 +439,13 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   }}
                 >
                   {item.type === 'SECTION_HEADER' && (
-                    <div
-                      className={cn(
-                        'overflow-hidden transition-[height,opacity,transform] duration-300 ease-in-out',
-                        item.isRemoving && 'opacity-0 -translate-y-2',
-                      )}
-                    >
+                    <div className={cn('overflow-hidden ')}>
                       <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">{item.sectionName}</div>
                     </div>
                   )}
 
                   {item.type === 'GROUP_HEADER' && (
-                    <div
-                      className={cn(
-                        'overflow-hidden transition-[height,opacity,transform] duration-300 ease-in-out',
-                        item.isRemoving && 'opacity-0 -translate-y-1',
-                      )}
-                    >
+                    <div className={cn('overflow-hidden ')}>
                       <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.groupColor }))}>
                         <span className="text-md">{item.groupName}</span>
                       </div>
@@ -419,21 +453,13 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   )}
 
                   {item.type === 'GROUP_ROW' && (
-                    <div
-                      className={cn(
-                        'overflow-hidden transition-[height,opacity] duration-300 ease-in-out',
-                        item.data.every((e) => removingEventIds.has(e.eventId)) && 'opacity-0',
-                      )}
-                    >
+                    <div className={cn('overflow-hidden')}>
                       <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                         {item.data.map((event: IEventSingleRoom) => {
                           const isRemoving = removingEventIds.has(event.eventId);
 
                           return (
-                            <div
-                              key={event.eventId}
-                              className={cn('transition-[opacity,transform] duration-200 ease-out', isRemoving && 'opacity-0 scale-95')}
-                            >
+                            <div key={event.eventId}>
                               <EventCard
                                 event={event}
                                 index={virtualRow.index}
