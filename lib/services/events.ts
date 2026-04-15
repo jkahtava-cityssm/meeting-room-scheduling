@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client';
 import { processEventsAsync } from '@/app/features/calendar/webworkers/generic-webworker-client';
 import { CalendarAction, ISODateString } from '@/app/features/calendar/webworkers/generic-webworker';
 import { getDateRange } from '@/app/features/calendar/webworkers/generic-webworker-utilities';
-import { TVisibleHours } from '../types';
+import { TStatusKey, TVisibleHours } from '../types';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
 
@@ -216,11 +216,11 @@ export const useEventPatchMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ data }: { data: IEventPATCH }) => {
+    mutationFn: async ({ data, statusKey }: { data: IEventPATCH; statusKey: TStatusKey }) => {
       return fetchPATCH('/api/events', data);
     },
 
-    /*onMutate: async ({ data }) => {
+    onMutate: async ({ data, statusKey }) => {
       const eventId = data.eventId;
 
       // 1. Define the specific detail key
@@ -242,6 +242,7 @@ export const useEventPatchMutation = () => {
         queryClient.setQueryData(detailKey, (old: IEvent) => ({
           ...old,
           ...data,
+          status: { ...old.status, key: statusKey },
         }));
       }
 
@@ -251,13 +252,13 @@ export const useEventPatchMutation = () => {
         // If the cached data isn't an array (e.g., total counts), skip it
         if (!Array.isArray(old)) return old;
 
-        return old.map((event: IEvent) => (event.eventId === eventId ? { ...event, ...data } : event));
+        return old.map((event: IEvent) => (event.eventId === eventId ? { ...event, ...data, status: { ...event.status, key: statusKey } } : event));
       });
 
       return { previousLists, previousDetail };
-    },*/
+    },
 
-    /*onError: (err, variables, context) => {
+    onError: (err, variables, context) => {
       if (context?.previousDetail) {
         queryClient.setQueryData(queryKeys.events.detail(variables.data.eventId), context.previousDetail);
       }
@@ -267,7 +268,7 @@ export const useEventPatchMutation = () => {
           queryClient.setQueryData(key, value);
         });
       }
-    },*/
+    },
 
     onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });

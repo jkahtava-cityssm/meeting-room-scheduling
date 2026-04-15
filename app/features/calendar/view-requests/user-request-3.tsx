@@ -340,6 +340,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       patchEvent.mutate(
         {
           data: { eventId: id, statusId: statusIdLookupByKey(newStatus) },
+          statusKey: newStatus,
         },
         /*{
           onSettled: () => {
