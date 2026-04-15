@@ -1,7 +1,7 @@
 import { IEventSingleRoom } from '@/lib/schemas';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VirtualRowItem } from './user-request-2';
+import { VirtualRowItem } from './user-request';
 import { IRequestSection } from '../webworkers/generic-webworker';
 import { TStatusKey } from '@/lib/types';
 

@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { IRequestGroup, IRequestSection } from '../webworkers/generic-webworker';
 import { Virtualizer } from '@tanstack/react-virtual';
-import { VirtualRowItem } from './user-request-2';
+import { VirtualRowItem } from './user-request';
 import { TColors, TStatusKey } from '@/lib/types';
 
 const SECTION_HEADER_PX = 40;
