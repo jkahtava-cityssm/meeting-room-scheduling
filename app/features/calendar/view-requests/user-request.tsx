@@ -34,9 +34,9 @@ const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
 const ROW_PX = 628;
 
 export type VirtualRowItem =
-  | { type: 'SECTION_HEADER'; key: string; sectionName: string; isRemoving: boolean }
-  | { type: 'GROUP_HEADER'; key: string; groupName: string; groupColor: TColors; isRemoving: boolean }
-  | { type: 'GROUP_ROW'; key: string; data: IEventSingleRoom[] };
+  | { type: 'SECTION_HEADER'; key: string; sectionName: string; totalEventCount: number }
+  | { type: 'GROUP_HEADER'; key: string; sectionKey: string; groupName: string; groupColor: TColors; eventCount: number; rowCount: number }
+  | { type: 'GROUP_ROW'; key: string; sectionKey: string; groupKey: string; rowIndex: number; data: IEventSingleRoom[] };
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
   const [removingEvents, setRemovingEvents] = useState<Map<number, TStatusKey>>(() => new Map());
@@ -95,28 +95,40 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const isMounting = false;
 
   const flatData = useMemo(() => {
-    console.log('FLAT DATA RECALCULATE');
     const list: VirtualRowItem[] = [];
     result?.data?.requestSections?.forEach((section) => {
+      const sectionEvents = section.sectionGroups.flatMap((g) => g.groupEvents);
+
       list.push({
         type: 'SECTION_HEADER',
         key: section.sectionKey,
         sectionName: section.sectionTitle,
-        isRemoving: false,
+        totalEventCount: sectionEvents.length,
       });
 
       section.sectionGroups.forEach((group) => {
+        const rowCount = Math.ceil(group.groupEvents.length / clampedColumn);
+
         list.push({
           type: 'GROUP_HEADER',
           key: group.groupKey,
+          sectionKey: section.sectionKey,
           groupName: group.groupName,
           groupColor: group.groupColor,
-          isRemoving: false,
+          eventCount: group.groupEvents.length,
+          rowCount,
         });
 
         const eventRows = chunkArray<IEventSingleRoom>(group.groupEvents, clampedColumn);
         eventRows.forEach((eventRow, rowIndex) => {
-          list.push({ type: 'GROUP_ROW', key: `${group.groupKey}:events[${rowIndex}]`, data: eventRow });
+          list.push({
+            type: 'GROUP_ROW',
+            key: `${group.groupKey}:events[${rowIndex}]`,
+            sectionKey: section.sectionKey,
+            groupKey: group.groupKey,
+            rowIndex,
+            data: eventRow,
+          });
         });
       });
     });
@@ -239,12 +251,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       const { offset, key } = anchorRef.current;
       const preCorrectionScroll = parentRef.current.scrollTop;
 
-      console.log('--- 2. DATA ARRIVED / LAYOUT EFFECT ---');
-      console.log(`[Sync] Anchor Key: ${key}, Required Offset: ${offset}`);
-      console.log(`[Sync] Browser current scrollTop: ${preCorrectionScroll}`);
-      // 1. Clear the ref immediately
-      //anchorRef.current = null;
-
       // 2. TELL THE VIRTUALIZER TO RE-CALCULATE
       // This is the most important step. It clears the old coordinate cache.
       rowVirtualizer.measure();
@@ -255,15 +261,12 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       // during a heavy DOM churn.
       parentRef.current.scrollTop = offset;
 
-      console.log(`[Sync] Scroll adjusted to: ${parentRef.current.scrollTop}`);
-
       // 4. SYNC VIRTUALIZER
       // Force one more frame sync to ensure the virtualizer
       // doesn't think we are still at the old scroll position.
-      requestAnimationFrame(() => {
-        console.log(`[Sync] RAF Syncing Virtualizer to: ${offset}`);
+      /* requestAnimationFrame(() => {
         rowVirtualizer.scrollToOffset(offset);
-      });
+      });*/
     }
   }, [flatData, parentRef, rowVirtualizer]);
 
@@ -292,7 +295,16 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       const anchorItem = virtualItems.find((item) => item.start + item.size > currentScroll) || virtualItems[0];
 
       // 2. Calculate how many pixels will disappear ABOVE this anchor item
-      const shrinkage = getPendingShrinkage(
+      /*const shrinkage = getPendingShrinkage(
+        flatData,
+        id,
+        newStatus,
+        selectedStatusKeys,
+        anchorItem.index, // We only care about items before this index
+        clampedColumn,
+      );*/
+
+      const shrinkage = getPendingShrinkage2(
         flatData,
         id,
         newStatus,
@@ -301,10 +313,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         clampedColumn,
       );
 
-      console.log('--- 1. CLICK TRIGGERED ---');
-      console.log(`[Predict] Event: ${id}, Shrinkage: ${shrinkage}px`);
-      console.log(`[Predict] Current Scroll: ${currentScroll}, Target Scroll: ${currentScroll - shrinkage}`);
-
+      //console.log(shrinkage, shrinkage2);
       // 3. Store the anchor with the shrinkage adjustment
       // We subtract shrinkage because the list is about to get shorter
       anchorRef.current = {
@@ -437,10 +446,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
           >
             {virtualItems.map((virtualRow) => {
               const item = flatData[virtualRow.index];
-              if (virtualRow.index === 0) {
-                // Only log the first item to avoid spamming
-                console.log(`[Render] First Visible Item: ${virtualRow.key} at Y: ${virtualRow.start}`);
-              }
+
               return (
                 <div
                   key={virtualRow.key}
@@ -522,6 +528,88 @@ function EmptyMessage({ title, message, icon }: { title: string; message: string
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+}
+
+function getPendingShrinkage2(
+  flatData: VirtualRowItem[],
+  targetEventId: number,
+  newStatus: TStatusKey,
+  selectedStatusKeys: TStatusKey[],
+  topVisibleItemIndex: number,
+  clampedColumn: number,
+): number {
+  // 1. Event stays visible → no shrink
+  if (selectedStatusKeys.includes(newStatus)) return 0;
+
+  let totalShrinkage = 0;
+
+  const processedGroups = new Set<string>();
+  const processedSections = new Set<string>();
+
+  // --- Pre-scan membership ---
+  const groupContainsTarget = new Set<string>();
+  const sectionContainsTarget = new Set<string>();
+  const groupHeaderMap = new Map<string, Extract<VirtualRowItem, { type: 'GROUP_HEADER' }>>();
+
+  for (const item of flatData) {
+    if (item.type === 'GROUP_HEADER') {
+      groupHeaderMap.set(item.key, item);
+    }
+
+    if (item.type === 'GROUP_ROW') {
+      if (item.data.some((e) => e.eventId === targetEventId)) {
+        groupContainsTarget.add(item.groupKey);
+        sectionContainsTarget.add(item.sectionKey);
+      }
+    }
+  }
+
+  // --- Main loop ---
+  for (let i = 0; i < topVisibleItemIndex; i++) {
+    const item = flatData[i];
+
+    // ========== GROUP SHRINK ==========
+    if (item.type === 'GROUP_ROW') {
+      const gKey = item.groupKey;
+      if (processedGroups.has(gKey)) continue;
+      processedGroups.add(gKey);
+
+      if (!groupContainsTarget.has(gKey)) continue;
+
+      const groupHeader = groupHeaderMap.get(gKey);
+
+      if (!groupHeader) continue;
+
+      const newEventCount = groupHeader.eventCount - 1;
+      const newRowCount = Math.ceil(newEventCount / clampedColumn);
+
+      // Row shrink
+      if (newRowCount < groupHeader.rowCount) {
+        totalShrinkage += (groupHeader.rowCount - newRowCount) * ROW_PX;
+      }
+
+      // Group header removal
+      if (newEventCount === 0) {
+        totalShrinkage += GROUP_HEADER_PX;
+      }
+    }
+
+    // ========== SECTION SHRINK ==========
+    if (item.type === 'SECTION_HEADER') {
+      const sKey = item.key;
+      if (processedSections.has(sKey)) continue;
+      processedSections.add(sKey);
+
+      if (!sectionContainsTarget.has(sKey)) continue;
+
+      // Only event in section is the target
+      if (item.totalEventCount === 1) {
+        totalShrinkage += SECTION_HEADER_PX;
+      }
+    }
+  }
+
+  return totalShrinkage;
 }
 
 function getPendingShrinkage(
