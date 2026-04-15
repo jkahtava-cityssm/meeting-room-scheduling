@@ -1,48 +1,53 @@
-import { useEffect, useState, useRef, RefObject } from 'react';
+import { useState, useCallback, useRef, RefObject } from 'react';
 
-export function useGridColumns(externalRef?: RefObject<HTMLElement | null>, delay = 150) {
+export function useGridColumns(delay = 150) {
   const [columns, setColumns] = useState(1);
-  // Use the provided ref or create a fallback one
-  const internalRef = useRef<HTMLDivElement>(null);
-  const containerRef = externalRef || internalRef;
-
+  const observerRef = useRef<ResizeObserver | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const node = containerRef.current;
-    if (!node) return;
+  const parentRef = useRef<HTMLDivElement>(null);
 
-    const calculateColumns = (width: number) => {
-      const availableWidth = width - 32;
-      const count = Math.floor((availableWidth + 16) / (400 + 16));
+  const calculateColumns = (width: number) => {
+    const availableWidth = width - 32;
+    const count = Math.floor((availableWidth + 16) / (400 + 16));
+    return Math.max(1, count);
+  };
 
-      return Math.max(1, count);
-    };
+  const setContainerRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      //Sync the Ref Object for the Virtualizer and handleStatusChange
+      parentRef.current = node;
 
-    const observer = new ResizeObserver((entries) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      //Cleanup old observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
-      const entry = entries[0];
-      if (entry) {
-        const { width } = entry.contentRect;
-
-        timeoutRef.current = setTimeout(() => {
-          const newColumnCount = calculateColumns(width);
-
-          // Only trigger a re-render if the column count actually changed
-          setColumns((prev) => (prev !== newColumnCount ? Math.max(1, newColumnCount || 1) : prev));
-        }, delay);
-      }
-    });
-
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [containerRef, delay]);
 
-  return { columns, containerRef };
+      if (node) {
+        const observer = new ResizeObserver((entries) => {
+          const entry = entries[0];
+          if (entry) {
+            const { width } = entry.contentRect;
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+            timeoutRef.current = setTimeout(() => {
+              const newCount = calculateColumns(width);
+              setColumns((prev) => (prev !== newCount ? newCount : prev));
+            }, delay);
+          }
+        });
+
+        observer.observe(node);
+        observerRef.current = observer;
+
+        const initialCount = calculateColumns(node.offsetWidth);
+        setColumns(initialCount);
+      }
+    },
+    [delay],
+  );
+
+  return { columns, setContainerRef, parentRef };
 }

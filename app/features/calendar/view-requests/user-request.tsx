@@ -59,8 +59,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const groupKeyRef = useRef<string | null>(null);
 
-  const parentRef = useRef<HTMLDivElement>(null);
-  const { columns } = useGridColumns(parentRef);
+  const { columns, setContainerRef, parentRef } = useGridColumns();
 
   const clampedColumn = Math.max(1, columns || 1);
 
@@ -266,7 +265,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         rowVirtualizer.scrollToOffset(offset);
       });
     }
-  }, [flatData, rowVirtualizer]);
+  }, [flatData, parentRef, rowVirtualizer]);
 
   const badgeVariants = cva('', {
     variants: {
@@ -343,7 +342,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         },*/
       );
     },
-    [rowVirtualizer, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
+    [parentRef, rowVirtualizer, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
   );
 
   const handleApprove = useCallback(
@@ -427,7 +426,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         )}
       </div>
       <div className="flex flex-col min-h-0 min-w-0 flex-1">
-        <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={parentRef} viewportClassName="[overflow-anchor:none]">
+        <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={setContainerRef} viewportClassName="[overflow-anchor:none]">
           <div
             //key={`virtual-container-cols-${columns}`}
             style={{
