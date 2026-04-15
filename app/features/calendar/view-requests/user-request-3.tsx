@@ -251,14 +251,17 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   useLayoutEffect(() => {
     if (anchorRef.current && parentRef.current && flatData.length > 0) {
-      const { key, offset } = anchorRef.current;
-      //const newIndex = flatData.findIndex((item) => item.key === key);
+      // Clear anchor immediately so we don't loop
+      const anchor = anchorRef.current;
+      anchorRef.current = null;
 
-      requestAnimationFrame(() => {
-        rowVirtualizer.scrollToOffset(offset, {
-          align: 'start',
-          behavior: 'auto',
-        });
+      // Force virtualizer to sync with new data lengths immediately
+      rowVirtualizer.measure();
+
+      // Use scrollToOffset to land exactly on our shrunken target
+      rowVirtualizer.scrollToOffset(anchor.offset, {
+        align: 'start',
+        behavior: 'auto', // Keep 'auto' for instant snap; 'smooth' will cause jitters here
       });
     }
   }, [flatData, rowVirtualizer]);
@@ -295,14 +298,18 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         clampedColumn,
       );
 
-      const test = getRemovedKeys(flatData, id, newStatus, selectedStatusKeys, anchorItem.index);
-      console.log(currentScroll, anchorItem.start, test, shrinkage);
+      //const test = getRemovedKeys(flatData, id, newStatus, selectedStatusKeys, anchorItem.index);
+      console.log(currentScroll, anchorItem.start, shrinkage);
       // 3. Store the anchor with the shrinkage adjustment
       // We subtract shrinkage because the list is about to get shorter
       anchorRef.current = {
         key: anchorItem.key as string,
         offset: currentScroll - shrinkage,
       };
+
+      if (shrinkage > 0) {
+        parentRef.current.scrollTop = currentScroll - shrinkage;
+      }
 
       // 4. Trigger mutation
       setRemovingEvents((prev) => new Map(prev).set(id, newStatus));
@@ -528,180 +535,4 @@ function getPendingShrinkage(
   }
 
   return totalShrinkage;
-}
-
-/*function getPendingShrinkage(
-  flatData: VirtualRowItem[],
-  targetEventId: number,
-  newStatus: TStatusKey,
-  selectedStatusKeys: TStatusKey[],
-  topVisibleItemIndex: number,
-): number {
-  // 1. If the new status is still visible, nothing is removed.
-  if (selectedStatusKeys.includes(newStatus)) return 0;
-
-  const removedKeys = new Set<string>();
-
-  // Counters to track the "Empty" state of parents
-  const groupTotalRows = new Map<string, number>();
-  const groupRemovedRows = new Map<string, number>();
-
-  const sectionTotalGroups = new Map<string, number>();
-  const sectionRemovedGroups = new Map<string, number>();
-
-  // Helper functions based on your key shapes
-  const getGroupKey = (rowKey: string) => rowKey.split(':events')[0];
-  const getSectionKey = (key: string) => key.split(':room')[0];
-
-  // 2. FIRST PASS: Map out the structure and identify rows to be killed
-  for (const item of flatData) {
-    const itemKey = item.key;
-
-    if (item.type === 'GROUP_ROW') {
-      const gKey = getGroupKey(itemKey);
-
-      // Increment total rows count for this group
-      groupTotalRows.set(gKey, (groupTotalRows.get(gKey) || 0) + 1);
-
-      // A row is removed ONLY if the targetEvent was the only thing in it
-      const isLastEventInRow = item.data.length === 1 && item.data[0].eventId === targetEventId;
-
-      if (isLastEventInRow) {
-        removedKeys.add(itemKey);
-        groupRemovedRows.set(gKey, (groupRemovedRows.get(gKey) || 0) + 1);
-      }
-    } else if (item.type === 'GROUP_HEADER') {
-      const sKey = getSectionKey(itemKey);
-      // Increment total groups count for this section
-      sectionTotalGroups.set(sKey, (sectionTotalGroups.get(sKey) || 0) + 1);
-    }
-  }
-
-  // 3. SECOND PASS: Determine which headers are actually empty
-  // Check groups first
-  groupRemovedRows.forEach((removedCount, gKey) => {
-    const totalInGroup = groupTotalRows.get(gKey) || 0;
-
-    // Only remove group if ALL its rows are gone
-    if (removedCount === totalInGroup && totalInGroup > 0) {
-      removedKeys.add(gKey);
-
-      // If group is removed, report it to the section
-      const sKey = getSectionKey(gKey);
-      sectionRemovedGroups.set(sKey, (sectionRemovedGroups.get(sKey) || 0) + 1);
-    }
-  });
-
-  // Check sections next
-  sectionRemovedGroups.forEach((removedCount, sKey) => {
-    const totalInSection = sectionTotalGroups.get(sKey) || 0;
-
-    // Only remove section if ALL its groups are gone
-    if (removedCount === totalInSection && totalInSection > 0) {
-      removedKeys.add(sKey);
-    }
-  });
-
-  // 4. THIRD PASS: Calculate pixel height for items ABOVE the fold
-  let pendingShrinkage = 0;
-  for (let i = 0; i < topVisibleItemIndex; i++) {
-    const item = flatData[i];
-
-    if (removedKeys.has(item.key)) {
-      switch (item.type) {
-        case 'GROUP_ROW':
-          pendingShrinkage += ROW_PX;
-          break;
-        case 'GROUP_HEADER':
-          pendingShrinkage += GROUP_HEADER_PX;
-          break;
-        case 'SECTION_HEADER':
-          pendingShrinkage += SECTION_HEADER_PX;
-          break;
-      }
-    }
-  }
-
-  return pendingShrinkage;
-}*/
-
-function getRemovedKeys(
-  flatData: VirtualRowItem[],
-  targetEventId: number,
-  newStatus: TStatusKey,
-  selectedStatusKeys: TStatusKey[],
-  topVisibleItemIndex: number,
-) {
-  const removedKeys = new Set<string>();
-  const sectionKeys = new Set<string>();
-  const groupKeys = new Set<string>();
-  const rowKeys = new Set<string>();
-
-  // 1. Identify if the status change results in hiding the event
-  const isMovingToHidden = !selectedStatusKeys.includes(newStatus);
-  if (!isMovingToHidden) {
-    return { removedKeys, sectionKeys, groupKeys, rowKeys };
-  }
-
-  flatData.forEach((item) => {
-    if (item.type === 'GROUP_ROW') {
-      const remainingEvents = item.data.filter((e) => e.eventId !== targetEventId);
-      if (remainingEvents.length === 0) {
-        rowKeys.add(item.key);
-        removedKeys.add(item.key);
-      }
-    }
-  });
-
-  // 3. Identify Groups that will have no visible rows
-  const groupHeaders = flatData.filter((i): i is Extract<VirtualRowItem, { type: 'GROUP_HEADER' }> => i.type === 'GROUP_HEADER');
-
-  groupHeaders.forEach((group) => {
-    // Find all rows belonging to this group via key prefix
-    const rowsInGroup = flatData.filter((i) => i.type === 'GROUP_ROW' && i.key.startsWith(group.key));
-
-    // If all rows that belong to this group are in the 'rowKeys' set, the group is removed
-    if (rowsInGroup.length > 0 && rowsInGroup.every((row) => rowKeys.has(row.key))) {
-      groupKeys.add(group.key);
-      removedKeys.add(group.key);
-    }
-  });
-
-  // 4. Identify Sections that will have no visible groups
-  const sectionHeaders = flatData.filter((i): i is Extract<VirtualRowItem, { type: 'SECTION_HEADER' }> => i.type === 'SECTION_HEADER');
-
-  sectionHeaders.forEach((section) => {
-    // Find all groups belonging to this section via key prefix
-    const groupsInSection = groupHeaders.filter((g) => g.key.startsWith(section.key));
-
-    // If all groups in this section are now in the 'groupKeys' set, the section is removed
-    if (groupsInSection.length > 0 && groupsInSection.every((group) => groupKeys.has(group.key))) {
-      removedKeys.add(section.key);
-    }
-  });
-
-  let pendingShrinkage = 0;
-
-  for (let i = 0; i < topVisibleItemIndex; i++) {
-    const item = flatData[i];
-
-    if (removedKeys.has(item.key)) {
-      switch (item.type) {
-        case 'GROUP_ROW':
-          pendingShrinkage += ROW_PX;
-          break;
-        case 'GROUP_HEADER':
-          pendingShrinkage += GROUP_HEADER_PX;
-          break;
-        case 'SECTION_HEADER':
-          pendingShrinkage += SECTION_HEADER_PX;
-          break;
-      }
-    }
-  }
-
-  return {
-    removedKeys,
-    pendingShrinkage,
-  };
 }
