@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
 
       const startDateParam = searchParams.get('startdate');
       const endDateParam = searchParams.get('enddate');
-      const statusId = searchParams.get('statusId');
+      const statusKey = searchParams.get('statusKey');
 
-      if (!startDateParam || !endDateParam || !statusId) {
+      if (!startDateParam || !endDateParam || !statusKey) {
         return BadRequestMessage();
       }
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           {
             createdAt: { lte: EndDate, gte: StartDate },
           },
-          { statusId: Number(statusId) },
+          { status: { key: statusKey } },
         ],
       };
       const events = await findManyEvents(whereClause);

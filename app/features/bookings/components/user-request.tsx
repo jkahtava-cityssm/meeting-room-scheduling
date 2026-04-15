@@ -106,9 +106,9 @@ export default function UserRequests() {
 
   const workerRef = useRef<Worker | null>(null);
   const [roomId, setRoomId] = useState<string>('-1');
-  const [statusId, setStatusId] = useState<string>('1');
+  const [statusKey, setStatusKey] = useState<string>('PENDING');
 
-  const { data: events } = useEventsByStatusQuery(startDate, endDate, statusId);
+  const { data: events } = useEventsByStatusQuery(startDate, endDate, statusKey);
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -124,7 +124,7 @@ export default function UserRequests() {
 
   useEffect(() => {
     setLoading(true);
-  }, [dateValue, statusId, view]);
+  }, [dateValue, statusKey, view]);
 
   useEffect(() => {
     //This is mostly as an example for myself, technically this processing should likely be done on the server side.
@@ -183,14 +183,14 @@ export default function UserRequests() {
         view={view as TCalendarView}
         selectedDate={dateValue}
         roomId={roomId}
-        statusId={statusId}
+        statusId={statusKey}
         isHeaderLoading={isLoading}
         totalEvents={totalEvents}
         OnRoomChange={(value) => {
           setRoomId(value);
         }}
         OnStatusChange={(value) => {
-          setStatusId(value);
+          setStatusKey(value);
         }}
       />
       <div className="flex h-[calc(100vh-180px)]">

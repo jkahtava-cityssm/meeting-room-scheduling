@@ -86,17 +86,17 @@ export const useMyEventsQuery = (
   });
 };
 
-export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId: string, enabled: boolean = true) => {
+export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusKey: string, enabled: boolean = true) => {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
 
   return useQuery({
-    queryKey: queryKeys.events.status(start, end, statusId),
+    queryKey: queryKeys.events.status(start, end, statusKey),
     queryFn: async () => {
       const result = await fetchGET('/api/events/status', {
         startdate: start,
         enddate: end,
-        statusId: statusId,
+        statusKey: statusKey,
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
@@ -110,14 +110,14 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusId:
   });
 };
 
-export const useTotalEventsByStatusQuery = (statusId: string, startDate?: Date, endDate?: Date, enabled: boolean = true) =>
+export const useTotalEventsByStatusQuery = (statusKey: string, startDate?: Date, endDate?: Date, enabled: boolean = true) =>
   useQuery({
-    queryKey: queryKeys.events.totalByStatus(statusId),
+    queryKey: queryKeys.events.totalByStatus(statusKey),
     queryFn: async () => {
       const result = await fetchGET('/api/events/status/counts', {
         startdate: startDate ? formatDate(startDate) : undefined,
         enddate: endDate ? formatDate(endDate) : undefined,
-        statusId: statusId,
+        statusKey: statusKey,
       });
 
       if (!result.data) throw new Error('Invalid total events');

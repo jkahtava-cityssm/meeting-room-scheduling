@@ -1,4 +1,4 @@
-import { countEvents as countEventsDAL } from '@/lib/data/events';
+import { countEvents } from '@/lib/data/events';
 
 import { NextRequest } from 'next/server';
 
@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
 
       const startDateParam = searchParams.get('startdate');
       const endDateParam = searchParams.get('enddate');
-      const statusId = searchParams.get('statusId');
+      const statusKey = searchParams.get('statusKey');
 
-      if (!statusId) {
+      if (!statusKey) {
         return BadRequestMessage();
       }
 
@@ -32,9 +32,9 @@ export async function GET(request: NextRequest) {
           : {};
 
       const whereClause: import('@prisma/client').Prisma.EventWhereInput = {
-        AND: [timeClause, { statusId: Number(statusId) }],
+        AND: [timeClause, { status: { key: statusKey } }],
       };
-      const total = await countEventsDAL(whereClause);
+      const total = await countEvents(whereClause);
 
       if (total === undefined || total === null) {
         return InternalServerErrorMessage();

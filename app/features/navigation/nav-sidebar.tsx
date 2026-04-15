@@ -102,7 +102,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
 
-  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery('1');
+  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery('PENDING');
 
   return (
     <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
