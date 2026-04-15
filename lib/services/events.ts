@@ -24,7 +24,7 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
 
   return useQuery({
     queryKey: queryKeys.events.user(start, end, userId),
-    placeholderData: keepPreviousData,
+    //placeholderData: keepPreviousData,
     queryFn: async () => {
       const result = await fetchGET(endpoint, {
         startdate: start,

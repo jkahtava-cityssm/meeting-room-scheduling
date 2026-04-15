@@ -9,7 +9,7 @@ import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
 import { CalendarHeader } from './calendar-all-header';
 import { CalendarProviderPrivate } from '@/contexts/CalendarProviderPrivate';
 import { useCalendarSearchParams } from './use-calendar-search-params';
-import { CalendarUserRequestView } from '../view-requests/user-request-3';
+import { CalendarUserRequestView } from '../view-requests/user-request';
 import { BookingPermissions } from '../../bookings/components/permissions/booking.permissions';
 import { CalendarAction } from '../webworkers/generic-webworker';
 

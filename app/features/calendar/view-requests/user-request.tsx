@@ -25,11 +25,18 @@ import { EventCard } from './event-card';
 import { IEventSingleRoom } from '@/lib/schemas';
 import { useVirtualizer, useWindowVirtualizer, VirtualItem, Virtualizer } from '@tanstack/react-virtual';
 import { useGridColumns } from './use-grid-columns';
-import { TStatusKey } from '@/lib/types';
+import { TColors, TStatusKey } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SECTION_HEADER_PX = 40;
 const GROUP_HEADER_PX = 40;
 const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
+const ROW_PX = 628;
+
+export type VirtualRowItem =
+  | { type: 'SECTION_HEADER'; key: string; sectionName: string; isRemoving: boolean }
+  | { type: 'GROUP_HEADER'; key: string; groupName: string; groupColor: TColors; isRemoving: boolean }
+  | { type: 'GROUP_ROW'; key: string; data: IEventSingleRoom[] };
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
   const [removingEvents, setRemovingEvents] = useState<Map<number, TStatusKey>>(() => new Map());
@@ -88,96 +95,34 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const isEmpty = false;
   const isMounting = false;
 
-  type VirtualRowItem =
-    | { type: 'SECTION_HEADER'; key: string; data: string; isRemoving: boolean }
-    | { type: 'GROUP_HEADER'; key: string; data: IRequestGroup; isRemoving: boolean }
-    | { type: 'GROUP_ROW'; key: string; data: IEventSingleRoom[] };
-
-  const removingGroupIds = useMemo(() => {
-    const ids = new Set<string>();
-
-    result?.data?.requestSections?.forEach((section) => {
-      section.sectionGroups.forEach((group) => {
-        const allEventsWillBeHidden = group.groupEvents.every((e) => {
-          const targetStatus = removingEvents.get(e.eventId);
-          const currentStatusVisible = selectedStatusKeys.includes(e.status.key as TStatusKey);
-
-          if (removingEvents.has(e.eventId)) {
-            return !selectedStatusKeys.includes(targetStatus!);
-          }
-          return !currentStatusVisible;
-        });
-
-        if (group.groupEvents.length > 0 && allEventsWillBeHidden) {
-          ids.add(group.groupKey);
-        }
-      });
-    });
-    return ids;
-  }, [result?.data?.requestSections, removingEvents, selectedStatusKeys]);
-
-  const removingSectionIds = useMemo(() => {
-    const ids = new Set<string>();
-
-    result?.data?.requestSections?.forEach((section) => {
-      if (section.sectionGroups.length === 0) return;
-
-      const allGroupsRemoving = section.sectionGroups.every((group) => removingGroupIds.has(group.groupKey));
-
-      if (allGroupsRemoving) {
-        ids.add(section.sectionTitle);
-      }
-    });
-
-    return ids;
-  }, [result?.data?.requestSections, removingGroupIds]);
-
   const flatData = useMemo(() => {
+    console.log('FLAT DATA RECALCULATE');
     const list: VirtualRowItem[] = [];
-
     result?.data?.requestSections?.forEach((section) => {
-      const isRemovingSection = removingSectionIds.has(section.sectionTitle);
-
-      const hasAnyVisibleGroup = section.sectionGroups.some((group) => {
-        const hasVisibleEvents = group.groupEvents.some(
-          (e) => selectedStatusKeys.includes(e.status.key as TStatusKey) || removingEventIds.has(e.eventId),
-        );
-
-        return hasVisibleEvents || removingGroupIds.has(group.groupKey);
-      });
-
-      if (!hasAnyVisibleGroup && !isRemovingSection) return;
-
       list.push({
         type: 'SECTION_HEADER',
         key: section.sectionKey,
-        data: section.sectionTitle,
-        isRemoving: isRemovingSection,
+        sectionName: section.sectionTitle,
+        isRemoving: false,
       });
 
       section.sectionGroups.forEach((group) => {
-        const visibleEvents = group.groupEvents.filter((event) => {
-          const isCurrentVisible = selectedStatusKeys.includes(event.status.key as TStatusKey);
-          const targetStatus = removingEvents.get(event.eventId);
-          const isTargetVisible = targetStatus ? selectedStatusKeys.includes(targetStatus) : false;
-
-          return isCurrentVisible || isTargetVisible;
+        list.push({
+          type: 'GROUP_HEADER',
+          key: group.groupKey,
+          groupName: group.groupName,
+          groupColor: group.groupColor,
+          isRemoving: false,
         });
-        const isRemovingGroup = removingGroupIds.has(group.groupKey);
 
-        if (visibleEvents.length === 0 && !isRemovingGroup) return;
-
-        list.push({ type: 'GROUP_HEADER', key: group.groupKey, data: group, isRemoving: isRemovingGroup });
-
-        // Chunk the events into rows
-        const eventRows = chunkArray<IEventSingleRoom>(visibleEvents, clampedColumn);
-        eventRows.forEach((eventRow) => {
-          list.push({ type: 'GROUP_ROW', key: `${group.groupKey}:events[${eventRow.map((e) => e.eventId).join('-')}]`, data: eventRow });
+        const eventRows = chunkArray<IEventSingleRoom>(group.groupEvents, clampedColumn);
+        eventRows.forEach((eventRow, rowIndex) => {
+          list.push({ type: 'GROUP_ROW', key: `${group.groupKey}:events[${rowIndex}]`, data: eventRow });
         });
       });
     });
     return list;
-  }, [result?.data?.requestSections, removingSectionIds, removingGroupIds, selectedStatusKeys, removingEventIds, clampedColumn, removingEvents]);
+  }, [result?.data?.requestSections, clampedColumn]);
 
   type ScrollAnchor = {
     key: string;
@@ -193,80 +138,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   const liveAnchorRef = useRef<ScrollAnchor | null>(null);
   const pendingRestoreRef = useRef<ScrollAnchor | null>(null);
 
-  const isRemovingItem = useCallback(
-    (item: VirtualRowItem) => {
-      if (item.type === 'GROUP_ROW') {
-        return (
-          item.data.length > 0 &&
-          item.data.every((e) => {
-            const targetStatus = removingEvents.get(e.eventId);
-            // Only mark as removing if it's actually leaving the filter
-            return targetStatus && !selectedStatusKeys.includes(targetStatus);
-          })
-        );
-      }
-      return item.isRemoving === true;
-    },
-    [removingEvents, selectedStatusKeys],
-  );
-
-  const itemByKey = useMemo(() => new Map(flatData.map((i) => [i.key, i] as const)), [flatData]);
-
-  useEffect(() => {
-    const timers = collapseTimersRef.current;
-
-    // Schedule collapse for items that are removing but not yet collapsed
-    for (const item of flatData) {
-      if (!isRemovingItem(item)) continue;
-
-      const k = item.key;
-      if (collapsedKeys.has(k) || timers.has(k)) continue;
-
-      const duration = item.type === 'GROUP_ROW' ? 200 : 300; // match CSS
-
-      const t = window.setTimeout(() => {
-        // capture anchor right before collapsing height to 0
-        pendingRestoreRef.current = liveAnchorRef.current;
-
-        setCollapsedKeys((prev) => {
-          if (prev.has(k)) return prev;
-          const next = new Set(prev);
-          next.add(k);
-          return next;
-        });
-
-        timers.delete(k);
-      }, duration);
-
-      timers.set(k, t);
-    }
-
-    // Cancel removal if item is no longer removing
-    for (const [k, t] of timers) {
-      const item = itemByKey.get(k);
-      if (!item || !isRemovingItem(item)) {
-        clearTimeout(t);
-        timers.delete(k);
-      }
-    }
-
-    // Drop collapsed keys that no longer exist or are no longer removing
-    setCollapsedKeys((prev) => {
-      let changed = false;
-      const next = new Set(prev);
-
-      for (const k of prev) {
-        const item = itemByKey.get(k);
-        if (!item || !isRemovingItem(item)) {
-          next.delete(k);
-          changed = true;
-        }
-      }
-
-      return changed ? next : prev;
-    });
-  }, [flatData, isRemovingItem, collapsedKeys, itemByKey]);
-
   const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLDivElement>({
     count: flatData.length,
     getScrollElement: () => parentRef.current,
@@ -277,7 +148,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
         if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
         if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
-        return 628;
+        return ROW_PX;
       },
       [flatData],
     ),
@@ -295,113 +166,105 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     getItemKey: (index) => flatData[index]?.key ?? index,
   });
 
-  // Inside your component
-  const [isRestoring, setIsRestoring] = useState(false);
+  rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => false;
+
   const anchorRef = useRef<{ key: string; offset: number } | null>(null);
-
-  // This function finds the first visible item and saves how far it is from the top
-  const captureAnchor = useCallback(() => {
-    const virtualItems = rowVirtualizer.getVirtualItems();
-    if (virtualItems.length === 0) return;
-
-    // We find the first item that is actually visible (or the first in the virtual list)
-    const anchorItem = virtualItems[0];
-    const scrollElement = parentRef.current;
-
-    if (anchorItem && scrollElement) {
-      // Distance from the top of the container to the top of the item
-      const itemTop = anchorItem.start;
-      const containerScroll = scrollElement.scrollTop;
-
-      anchorRef.current = {
-        key: anchorItem.key as string,
-        offset: containerScroll - itemTop, // How many pixels of this item are scrolled past
-      };
-    }
-  }, [rowVirtualizer]);
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
   const scrollOffset = rowVirtualizer.scrollOffset || 0;
 
   const stickyInfo = useMemo(() => {
-    const top = scrollOffset + HEADER_PX + 1;
-
+    const top = scrollOffset + (GROUP_HEADER_PX + GROUP_HEADER_PX / 2) + 1;
     const activeItem = [...virtualItems].reverse().find((v) => v.start <= top) ?? virtualItems[0];
+    if (!activeItem) return { sectionKey: null, sectionName: null, groupKey: null, groupName: null, groupColor: null };
 
-    if (!activeItem) return { section: null, group: null, groupId: null };
-
-    let activeSection: string | null = null;
-    let activeGroup: IRequestGroup | null = null;
-
-    // Search backwards to find the current Group and Section
+    let activeSectionKey: string | null = null;
+    let activeSectionName: string | null = null;
+    let activeGroupKey: string | null = null;
+    let activeGroupName: string | null = null;
+    let activeGroupColor: TColors | null = null;
     for (let i = activeItem.index; i >= 0; i--) {
       const item = flatData[i];
-
-      if (!activeGroup && item.type === 'GROUP_HEADER') {
-        activeGroup = item.data;
+      if (!activeGroupKey && item.type === 'GROUP_HEADER') {
+        activeGroupKey = item.key;
+        activeGroupName = item.groupName;
+        activeGroupColor = item.groupColor;
       }
-
       if (item.type === 'SECTION_HEADER') {
-        activeSection = item.data;
-
-        if (!activeGroup) {
-          // Look forward slightly to find the immediate group if we are at the start
+        activeSectionKey = item.key;
+        activeSectionName = item.sectionName;
+        if (!activeGroupKey) {
           const nextItem = flatData[i + 1];
           if (nextItem?.type === 'GROUP_HEADER') {
-            activeGroup = nextItem.data;
+            activeGroupKey = nextItem.key;
+            activeGroupName = nextItem.groupName;
+            activeGroupColor = nextItem.groupColor;
           }
         }
         break;
       }
     }
-
-    return { section: activeSection, group: activeGroup, groupId: activeGroup?.groupKey ?? null };
+    return {
+      sectionKey: activeSectionKey,
+      sectionName: activeSectionName,
+      groupKey: activeGroupKey,
+      groupName: activeGroupName,
+      groupColor: activeGroupColor,
+    };
   }, [scrollOffset, virtualItems, flatData]);
 
   useLayoutEffect(() => {
-    const isColumnTransition = prevColsRef.current !== clampedColumn;
-    if (isColumnTransition) return;
-
-    groupKeyRef.current = stickyInfo.groupId;
-  }, [clampedColumn, stickyInfo.groupId]);
+    if (prevColsRef.current === clampedColumn) {
+      groupKeyRef.current = stickyInfo.groupKey;
+    }
+  }, [clampedColumn, stickyInfo.groupKey]);
 
   useLayoutEffect(() => {
-    if (!parentRef.current) return;
-    if (prevColsRef.current === clampedColumn) return;
+    if (!parentRef.current || prevColsRef.current === clampedColumn) return;
     prevColsRef.current = clampedColumn;
-
     const groupKey = groupKeyRef.current;
     if (!groupKey) return;
 
-    const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.data.groupKey === groupKey);
-
+    const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.key === groupKey);
     if (newIndex === -1) return;
 
-    // Reset measurements when columns changed
     rowVirtualizer.measure();
-
-    // Scroll after measurement has a chance to apply
     requestAnimationFrame(() => {
       rowVirtualizer.scrollToIndex(newIndex, { align: 'start', behavior: 'auto' });
     });
-  }, [clampedColumn, flatData, rowVirtualizer]);
+  }, [clampedColumn, flatData, rowVirtualizer, parentRef]);
 
   useLayoutEffect(() => {
-    if (anchorRef.current && parentRef.current) {
-      const { key, offset } = anchorRef.current;
+    if (anchorRef.current && parentRef.current && flatData.length > 0) {
+      const { offset, key } = anchorRef.current;
+      const preCorrectionScroll = parentRef.current.scrollTop;
 
-      // Find where our anchor item is in the NEW list
-      const newItems = rowVirtualizer.getVirtualItems();
-      const foundItem = newItems.find((item) => item.key === key);
+      console.log('--- 2. DATA ARRIVED / LAYOUT EFFECT ---');
+      console.log(`[Sync] Anchor Key: ${key}, Required Offset: ${offset}`);
+      console.log(`[Sync] Browser current scrollTop: ${preCorrectionScroll}`);
+      // 1. Clear the ref immediately
+      //anchorRef.current = null;
 
-      if (foundItem) {
-        const newScrollTop = foundItem.start + offset;
-        parentRef.current.scrollTop = newScrollTop;
-      }
+      // 2. TELL THE VIRTUALIZER TO RE-CALCULATE
+      // This is the most important step. It clears the old coordinate cache.
+      rowVirtualizer.measure();
 
-      // Clear the anchor so it doesn't interfere with normal scrolling
-      anchorRef.current = null;
+      // 3. APPLY THE CORRECTION
+      // We use a raw scrollTop set here because it's more reliable
+      // for "locking" position than the virtualizer's scrollToOffset
+      // during a heavy DOM churn.
+      parentRef.current.scrollTop = offset;
+
+      console.log(`[Sync] Scroll adjusted to: ${parentRef.current.scrollTop}`);
+
+      // 4. SYNC VIRTUALIZER
+      // Force one more frame sync to ensure the virtualizer
+      // doesn't think we are still at the old scroll position.
+      requestAnimationFrame(() => {
+        console.log(`[Sync] RAF Syncing Virtualizer to: ${offset}`);
+        rowVirtualizer.scrollToOffset(offset);
+      });
     }
   }, [flatData, rowVirtualizer]);
 
@@ -416,74 +279,135 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const patchEvent = useEventPatchMutation();
 
+  const activeMutationsRef = useRef(0);
+
+  const handleStatusChange = useCallback(
+    (id: number, newStatus: TStatusKey) => {
+      if (!parentRef.current) return;
+
+      // 1. Get current virtual items to find what's at the top
+      const currentScroll = parentRef.current.scrollTop;
+      const virtualItems = rowVirtualizer.getVirtualItems();
+      if (virtualItems.length === 0 || !parentRef.current) return;
+
+      const anchorItem = virtualItems.find((item) => item.start + item.size > currentScroll) || virtualItems[0];
+
+      // 2. Calculate how many pixels will disappear ABOVE this anchor item
+      const shrinkage = getPendingShrinkage(
+        flatData,
+        id,
+        newStatus,
+        selectedStatusKeys,
+        anchorItem.index, // We only care about items before this index
+        clampedColumn,
+      );
+
+      console.log('--- 1. CLICK TRIGGERED ---');
+      console.log(`[Predict] Event: ${id}, Shrinkage: ${shrinkage}px`);
+      console.log(`[Predict] Current Scroll: ${currentScroll}, Target Scroll: ${currentScroll - shrinkage}`);
+
+      // 3. Store the anchor with the shrinkage adjustment
+      // We subtract shrinkage because the list is about to get shorter
+      anchorRef.current = {
+        key: anchorItem.key as string,
+        offset: currentScroll - shrinkage,
+      };
+
+      /*if (shrinkage > 0) {
+        parentRef.current.scrollTop = currentScroll - shrinkage;
+      }*/
+
+      // 4. Trigger mutation
+
+      activeMutationsRef.current += 1;
+
+      setRemovingEvents((prev) => new Map(prev).set(id, newStatus));
+      patchEvent.mutate(
+        {
+          data: { eventId: id, statusId: statusIdLookupByKey(newStatus) },
+          statusKey: newStatus,
+        },
+        /*{
+          onSettled: () => {
+            activeMutationsRef.current -= 1;
+
+            // If no more mutations are pending, we can safely clear the anchor
+            // after the final data paint. We use a small delay to ensure the
+            // last invalidation refetch has finished rendering.
+            if (activeMutationsRef.current === 0) {
+              setTimeout(() => {
+                anchorRef.current = null;
+              }, 100);
+            }
+          },
+        },*/
+      );
+    },
+    [rowVirtualizer, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
+  );
+
   const handleApprove = useCallback(
     (id: number) => {
-      captureAnchor();
-      setRemovingEvents((prev) => new Map(prev).set(id, 'APPROVED'));
-      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') }, statusKey: 'APPROVED' });
+      handleStatusChange(id, 'APPROVED');
+      //captureAnchor();
+      //setRemovingEvents((prev) => new Map(prev).set(id, 'APPROVED'));
+      //patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') } });
     },
-    [captureAnchor, patchEvent, statusIdLookupByKey],
+    [handleStatusChange],
   );
 
   const handleDeny = useCallback(
     (id: number) => {
-      captureAnchor();
-      setRemovingEvents((prev) => new Map(prev).set(id, 'REJECTED'));
-      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') }, statusKey: 'REJECTED' });
+      handleStatusChange(id, 'REJECTED');
+      //captureAnchor();
+      //setRemovingEvents((prev) => new Map(prev).set(id, 'REJECTED'));
+      //patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') } });
     },
-    [captureAnchor, patchEvent, statusIdLookupByKey],
+    [handleStatusChange],
   );
 
   const handlePending = useCallback(
     (id: number) => {
-      captureAnchor();
-      setRemovingEvents((prev) => new Map(prev).set(id, 'PENDING'));
-      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') }, statusKey: 'PENDING' });
+      handleStatusChange(id, 'PENDING');
+      //captureAnchor();
+      //setRemovingEvents((prev) => new Map(prev).set(id, 'PENDING'));
+      //patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') } });
     },
-    [captureAnchor, patchEvent, statusIdLookupByKey],
+    [handleStatusChange],
   );
 
-  useEffect(() => {
-    if (removingEvents.size === 0) return;
+  if (error) {
+    return <GenericError error={error} />;
+  }
 
-    const currentServerStatuses = new Map<number, TStatusKey>();
-    result?.data?.requestSections?.forEach((s) =>
-      s.sectionGroups.forEach((g) => g.groupEvents.forEach((e) => currentServerStatuses.set(e.eventId, e.status.key as TStatusKey))),
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 min-h-0 relative">
+        <div className="flex flex-1 flex-col space-y-2">
+          <div className="flex-1 flex flex-col">
+            <Skeleton className="flex-1 w-full"></Skeleton>
+          </div>
+        </div>
+      </div>
     );
-
-    const nextRemovingEvents = new Map(removingEvents);
-    let changed = false;
-
-    removingEvents.forEach((targetStatus, id) => {
-      const serverStatus = currentServerStatuses.get(id);
-
-      if (!serverStatus || serverStatus === targetStatus) {
-        nextRemovingEvents.delete(id);
-        changed = true;
-      }
-    });
-
-    if (changed) {
-      setRemovingEvents(nextRemovingEvents);
-    }
-  }, [result?.data?.requestSections, removingEvents]);
+  }
 
   return (
     <div className="flex flex-1 min-h-0 relative">
       <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none h-20">
-        {stickyInfo.section && (
+        {stickyInfo.sectionKey && (
           <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 shadow-sm h-10 pointer-events-auto flex items-center">
-            {stickyInfo.section}
+            {stickyInfo.sectionName}
           </div>
         )}
-        {stickyInfo.group && (
+        {stickyInfo.groupName && (
           <div
             className={cn(
               'p-2 shadow-sm h-10 border-b-2 pointer-events-auto flex items-center transition-colors border-t',
-              badgeVariants({ color: stickyInfo.group.groupColor }),
+              badgeVariants({ color: stickyInfo.groupColor }),
             )}
           >
-            {stickyInfo.group.groupName}
+            {stickyInfo.groupName}
           </div>
         )}
       </div>
@@ -499,6 +423,10 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
           >
             {virtualItems.map((virtualRow) => {
               const item = flatData[virtualRow.index];
+              if (virtualRow.index === 0) {
+                // Only log the first item to avoid spamming
+                console.log(`[Render] First Visible Item: ${virtualRow.key} at Y: ${virtualRow.start}`);
+              }
               return (
                 <div
                   key={virtualRow.key}
@@ -513,48 +441,27 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                   }}
                 >
                   {item.type === 'SECTION_HEADER' && (
-                    <div
-                      className={cn(
-                        'overflow-hidden transition-[height,opacity,transform] duration-300 ease-in-out',
-                        item.isRemoving && 'opacity-0 -translate-y-2',
-                      )}
-                    >
-                      <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">{item.data}</div>
+                    <div className={cn('overflow-hidden ')}>
+                      <div className="bg-accent text-primary p-2 border-b-2 border-accent/50 h-10 flex items-center">{item.sectionName}</div>
                     </div>
                   )}
 
                   {item.type === 'GROUP_HEADER' && (
-                    <div
-                      className={cn(
-                        'overflow-hidden transition-[height,opacity,transform] duration-300 ease-in-out',
-                        item.isRemoving && 'opacity-0 -translate-y-1',
-                      )}
-                    >
-                      <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.data.groupColor }))}>
-                        <span className="text-md">{item.data.groupName}</span>
+                    <div className={cn('overflow-hidden ')}>
+                      <div className={cn('p-2 h-10 border-b-2 flex items-center border-t', badgeVariants({ color: item.groupColor }))}>
+                        <span className="text-md">{item.groupName}</span>
                       </div>
                     </div>
                   )}
 
                   {item.type === 'GROUP_ROW' && (
-                    <div
-                      className={cn(
-                        'overflow-hidden transition-[height,opacity] duration-300 ease-in-out',
-                        item.data.every((e) => removingEventIds.has(e.eventId)) && 'opacity-0',
-                      )}
-                    >
-                      <div
-                        className="grid gap-4 p-4 w-full items-stretch"
-                        style={{ gridTemplateColumns: `repeat(${clampedColumn}, minmax(0, 1fr))` }}
-                      >
+                    <div className={cn('overflow-hidden')}>
+                      <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                         {item.data.map((event: IEventSingleRoom) => {
                           const isRemoving = removingEventIds.has(event.eventId);
 
                           return (
-                            <div
-                              key={event.eventId}
-                              className={cn('transition-[opacity,transform] duration-200 ease-out', isRemoving && 'opacity-0 scale-95')}
-                            >
+                            <div key={event.eventId}>
                               <EventCard
                                 event={event}
                                 index={virtualRow.index}
@@ -581,4 +488,79 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
 function chunkArray<T>(arr: T[], size: number): T[][] {
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+}
+
+function getPendingShrinkage(
+  flatData: VirtualRowItem[],
+  targetEventId: number,
+  newStatus: TStatusKey,
+  selectedStatusKeys: TStatusKey[],
+  topVisibleItemIndex: number,
+  clampedColumn: number,
+): number {
+  // 1. If the event is moving to a status that is still visible, it won't be removed
+  if (selectedStatusKeys.includes(newStatus)) return 0;
+
+  let totalShrinkage = 0;
+  const processedGroups = new Set<string>();
+  const processedSections = new Set<string>();
+
+  for (let i = 0; i < topVisibleItemIndex; i++) {
+    const item = flatData[i];
+
+    // --- CASE 1: GROUP REF LOW & REMOVAL ---
+    if (item.type === 'GROUP_ROW') {
+      const gKey = item.key.split(':events')[0];
+      if (processedGroups.has(gKey)) continue;
+      processedGroups.add(gKey);
+
+      // Find all rows belonging to this specific group in the current flatData
+      const groupRows = flatData.filter((row) => row.type === 'GROUP_ROW' && row.key.startsWith(gKey)) as Extract<
+        VirtualRowItem,
+        { type: 'GROUP_ROW' }
+      >[];
+
+      const allEventsInGroup = groupRows.flatMap((r) => r.data);
+      const currentRowCount = groupRows.length;
+
+      // Calculate how many rows will exist after removal
+      const remainingEvents = allEventsInGroup.filter((e) => e.eventId !== targetEventId);
+      const newRowCount = Math.ceil(remainingEvents.length / clampedColumn);
+
+      // Calculate pixel loss for rows
+      if (currentRowCount > newRowCount) {
+        totalShrinkage += (currentRowCount - newRowCount) * ROW_PX;
+      }
+
+      // If the group becomes completely empty, the GROUP_HEADER will also vanish
+      if (newRowCount === 0) {
+        totalShrinkage += GROUP_HEADER_PX;
+      }
+    }
+
+    // --- CASE 2: SECTION HEADER REMOVAL ---
+    if (item.type === 'SECTION_HEADER') {
+      const sKey = item.key;
+      if (processedSections.has(sKey)) continue;
+      processedSections.add(sKey);
+
+      // A section is removed if EVERY event in EVERY group within it is gone
+      // We look ahead in the flatData to find all events belonging to this section
+      const sectionRows = flatData.filter((row) => row.type === 'GROUP_ROW' && row.key.startsWith(sKey)) as Extract<
+        VirtualRowItem,
+        { type: 'GROUP_ROW' }
+      >[];
+
+      const allEventsInSection = sectionRows.flatMap((r) => r.data);
+
+      // If the ONLY event left in the whole section is the one we are removing...
+      const sectionWillBeEmpty = allEventsInSection.every((e) => e.eventId === targetEventId);
+
+      if (sectionWillBeEmpty) {
+        totalShrinkage += SECTION_HEADER_PX;
+      }
+    }
+  }
+
+  return totalShrinkage;
 }
