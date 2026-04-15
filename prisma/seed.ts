@@ -363,6 +363,16 @@ async function FindCreateEventStatus(name: string, icon: IconName, color: TColor
   return record;
 }
 
+async function getActiveEventStatus(key: TStatusKey): Promise<{ statusId: number }> {
+  const result = await prisma.status.findFirstOrThrow({
+    where: { key: key },
+    select: { statusId: true },
+    orderBy: { statusId: 'asc' },
+  });
+
+  return result;
+}
+
 function FindRoomID(
   roomName: string,
   rooms: { name: string; createdAt: Date; updatedAt: Date; roomId: number; color: string; icon: string | null }[],
@@ -449,6 +459,8 @@ async function CreateRandomEvents(
   visibleHoursEnd: number = 8,
   timeSlotInterval: number = 15,
   maxRangeInDays: number = 30,
+  generateAfterDate: Date = new Date(),
+  createOnlyRecurring: boolean = false,
 ) {
   timeSlotInterval = validateTimeSlotInterval(timeSlotInterval);
 
@@ -457,17 +469,18 @@ async function CreateRandomEvents(
   visibleHoursEnd = validated.visibleHoursEnd;
 
   // Date range: maxRangeInDays days before and after Now()
-  const startRange = addDays(new Date(), maxRangeInDays);
-  const endRange = addDays(new Date(), -maxRangeInDays);
+  const startRange = addDays(generateAfterDate, maxRangeInDays);
+  const endRange = addDays(generateAfterDate, -maxRangeInDays);
 
   const userList = await getActiveUsers();
+  const { statusId: pendingStatusId } = await getActiveEventStatus('PENDING');
 
   const intervalsInHour = 60 / timeSlotInterval;
   const hourInterval = visibleHoursEnd - visibleHoursStart;
 
   for (let index = 0; index < maxEvents; index++) {
     // Determine if this is a multi-day event (10% chance)
-    const isMultiDay = Math.random() < 0.1;
+    const isMultiDay = createOnlyRecurring ? 0 : Math.random() < 0.1;
 
     const startDate = new Date(startRange.getTime() + Math.random() * (endRange.getTime() - startRange.getTime()));
 
@@ -535,8 +548,8 @@ async function CreateRandomEvents(
         endDate: endDate.toISOString(),
         title: EVENTS[eventIndex],
         description: getRandomDescription(),
-        recurrenceId: await CreateRandomRecurrence(startDate, endDate),
-        statusId: 1,
+        recurrenceId: await CreateRandomRecurrence(startDate, endDate, createOnlyRecurring),
+        statusId: pendingStatusId,
         userId: userList[userIndex].id,
         createdAt: startDate.toISOString(),
         updatedAt: startDate.toISOString(),
@@ -632,6 +645,7 @@ async function CreateEdgeCaseMultiDayEvents(
   }[],
 ) {
   const userList = await getActiveUsers();
+  const { statusId: pendingStatusId } = await getActiveEventStatus('PENDING');
   const baseDate = new Date();
   baseDate.setDate(baseDate.getDate()); // Start 10 days in the future
   baseDate.setHours(0, 0, 0, 0); // Start at midnight
@@ -753,7 +767,7 @@ async function CreateEdgeCaseMultiDayEvents(
           title: edgeCase.name,
           description: edgeCase.description,
           recurrenceId: null,
-          statusId: 1,
+          statusId: pendingStatusId,
           userId: userList[userIndex].id,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -851,7 +865,7 @@ async function CreateEdgeCaseMultiDayEvents(
               title: dstCase.name,
               description: dstCase.description,
               recurrenceId: null,
-              statusId: 1,
+              statusId: pendingStatusId,
               userId: userList[userIndex].id,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -920,13 +934,13 @@ function randomToggle(chance: '75' | '50' | '25' | '10') {
   }
 }
 
-async function CreateRandomRecurrence(startDate: Date, endDate: Date) {
+async function CreateRandomRecurrence(startDate: Date, endDate: Date, createOnlyRecurring: boolean = false) {
   //IGNORE MULTI DAY EVENTS WE DONT WANT MULTI DAY RECURRING EVENTS
   if (differenceInDays(endOfDay(endDate), startOfDay(startDate)) >= 1) {
     return undefined;
   }
 
-  const TypeValue = RECURRENCE_TYPE[Math.floor(Math.random() * RECURRENCE_TYPE.length)];
+  const TypeValue = createOnlyRecurring ? 'Occurrences' : RECURRENCE_TYPE[Math.floor(Math.random() * RECURRENCE_TYPE.length)];
   const PatternValue = RECURRENCE_PATTERN[Math.floor(Math.random() * RECURRENCE_PATTERN.length)];
 
   const occurrences = Math.floor(Math.random() * 100) + 1;
@@ -1194,7 +1208,43 @@ async function createLinkedServer() {
   await prisma.$executeRawUnsafe(`CALL public.insert_avanti_users();`);
 }
 
+async function deleteAllData() {
+  await prisma.eventRoom.deleteMany();
+  await prisma.eventRecipient.deleteMany();
+  await prisma.eventItem.deleteMany();
+  await prisma.roomProperty.deleteMany();
+  await prisma.roomRole.deleteMany();
+  await prisma.roleResourceAction.deleteMany();
+  await prisma.resourceAction.deleteMany();
+
+  await prisma.event.deleteMany();
+  await prisma.room.deleteMany();
+  await prisma.userRole.deleteMany();
+  await prisma.sSOProvider.deleteMany();
+  await prisma.account.deleteMany();
+  await prisma.session.deleteMany();
+
+  await prisma.recurrence.deleteMany();
+  await prisma.recurrenceCancellation.deleteMany();
+  await prisma.recurrenceException.deleteMany();
+  await prisma.roomCategory.deleteMany();
+  await prisma.property.deleteMany();
+  await prisma.role.deleteMany();
+  await prisma.resource.deleteMany();
+  await prisma.action.deleteMany();
+  await prisma.item.deleteMany();
+  await prisma.status.deleteMany();
+  await prisma.verification.deleteMany();
+  await prisma.configuration.deleteMany();
+
+  await prisma.user.deleteMany();
+}
+
 async function main() {
+  console.log('Deleting All Data...');
+  await deleteAllData();
+
+  console.log('Creating System User...');
   const SYSTEM_USER = await prisma.user.upsert({
     where: { id: 0 },
     update: {},
@@ -1211,7 +1261,7 @@ async function main() {
     },
   });
 
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
+  /*if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
     await prisma.session.deleteMany();
     await prisma.account.deleteMany();
     await prisma.user.deleteMany();
@@ -1223,7 +1273,13 @@ async function main() {
   await prisma.role.deleteMany();
   await prisma.action.deleteMany();
   await prisma.resource.deleteMany();
-  await prisma.roleResourceAction.deleteMany();
+  await prisma.roleResourceAction.deleteMany();*/
+
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
+    console.log('Seeding Random Users...');
+    //await prisma.user.deleteMany({ where: { NOT: { id: 0 } } });
+    CreateRandomUsers(50);
+  }
 
   const actions = await FindCreateActionList();
   const resources = await FindCreateResourceList();
@@ -1309,12 +1365,6 @@ async function main() {
     await createLinkedServer();
   }
 
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
-    console.log('Seeding Random Users...');
-    await prisma.user.deleteMany({ where: { NOT: { id: 0 } } });
-    CreateRandomUsers(50);
-  }
-
   if (process.env.ADMIN_USER_EMAIL) {
     const ADMIN_USER = await prisma.user.upsert({
       where: { email: process.env.ADMIN_USER_EMAIL },
@@ -1326,6 +1376,8 @@ async function main() {
         image: null,
         externalId: '000',
         isActive: true,
+        createdBy: 0,
+        updatedBy: 0,
       },
     });
     const adminRole = await FindCreateRole('Admin');
@@ -1340,6 +1392,8 @@ async function main() {
     CreateRandomEvents(roomList, 200, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES);
 
     CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825);
+
+    CreateRandomEvents(roomList, 2000, VISIBLE_HOUR_START, VISIBLE_HOUR_END, TIME_SLOT_INTERVAL_MINUTES, 1825, addDays(new Date(), 1825), true);
 
     console.log('Seeding Edge Case Multi-Day Events...');
     await CreateEdgeCaseMultiDayEvents(roomList);
