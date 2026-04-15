@@ -20,7 +20,7 @@ export default function MonthPickerNavigation({
         onClick={() => onNavigate('prev')}
         aria-label="Previous block of years"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4 fill-foreground" />
       </Button>
 
       <div className="flex items-center gap-1">
@@ -33,7 +33,7 @@ export default function MonthPickerNavigation({
         onClick={() => onNavigate('next')}
         aria-label="Next block of years"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4 fill-foreground" />
       </Button>
     </div>
   );

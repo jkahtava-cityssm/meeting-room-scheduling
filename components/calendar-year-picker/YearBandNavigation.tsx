@@ -24,7 +24,7 @@ export default function YearBandNavigation({
         onClick={() => onNavigateBand('prev')}
         aria-label="Previous band of years"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-4 w-4  fill-foreground" />
       </Button>
 
       <div className="flex items-center gap-1">
@@ -37,7 +37,7 @@ export default function YearBandNavigation({
         onClick={() => onNavigateBand('next')}
         aria-label="Next band of years"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-4 w-4  fill-foreground" />
       </Button>
     </div>
   );
