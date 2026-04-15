@@ -77,16 +77,19 @@ function SectionLayout({ formattedDate, roomSections }: { formattedDate: string;
                   OnPending={() => {
                     patchEvent.mutate({
                       data: { eventId: eventCard.event.eventId, statusId: statusLookup('PENDING') },
+                      statusKey: 'PENDING',
                     });
                   }}
                   OnApprove={() => {
                     patchEvent.mutate({
                       data: { eventId: eventCard.event.eventId, statusId: statusLookup('APPROVED') },
+                      statusKey: 'APPROVED',
                     });
                   }}
                   OnDeny={() => {
                     patchEvent.mutate({
                       data: { eventId: eventCard.event.eventId, statusId: statusLookup('REJECTED') },
+                      statusKey: 'REJECTED',
                     });
                   }}
                 ></EventCard>
