@@ -94,7 +94,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     (id: number) => {
       captureAnchor(id, 'APPROVED');
       setRemovingEvents((prev) => new Map(prev).set(id, 'APPROVED'));
-      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') } });
+      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') }, statusKey: 'APPROVED' });
     },
     [captureAnchor, patchEvent, setRemovingEvents, statusIdLookupByKey],
   );
@@ -103,7 +103,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     (id: number) => {
       captureAnchor(id, 'REJECTED');
       setRemovingEvents((prev) => new Map(prev).set(id, 'REJECTED'));
-      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') } });
+      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') }, statusKey: 'REJECTED' });
     },
     [captureAnchor, patchEvent, setRemovingEvents, statusIdLookupByKey],
   );
@@ -112,7 +112,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     (id: number) => {
       captureAnchor(id, 'PENDING');
       setRemovingEvents((prev) => new Map(prev).set(id, 'PENDING'));
-      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') } });
+      patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') }, statusKey: 'PENDING' });
     },
     [captureAnchor, patchEvent, setRemovingEvents, statusIdLookupByKey],
   );
