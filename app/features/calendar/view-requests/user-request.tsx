@@ -12,7 +12,7 @@ import { CalendarScrollColumnPrivate } from '../components/calendar-scroll-colum
 
 import { CalendarScrollContainerSkeleton } from '../components/calendar-scroll-container-skeleton';
 
-import { LoaderCircle, LucideCalendarDays, Terminal } from 'lucide-react';
+import { LoaderCircle, LucideCalendarDays, LucideDoorOpen, LucidePartyPopper, Terminal } from 'lucide-react';
 import { GenericError } from '../../../../components/shared/generic-error';
 
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
@@ -392,6 +392,21 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     );
   }
 
+  const emptyState =
+    selectedRoomIds.length === 0
+      ? { title: 'No Room Selected', message: 'Please choose a room', icon: <LucideDoorOpen /> }
+      : flatData.length === 0
+        ? {
+            title: 'No Events Found',
+            message: "There don't appear to be events associated with this date",
+            icon: <LucidePartyPopper />,
+          }
+        : null;
+
+  if (emptyState) {
+    return <EmptyMessage title={emptyState.title} message={emptyState.message} icon={emptyState.icon} />;
+  }
+
   return (
     <div className="flex flex-1 min-h-0 relative">
       <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none h-20">
@@ -481,6 +496,26 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
           </div>
           <ScrollBar orientation="vertical" className="z-50" />
         </ScrollArea>
+      </div>
+    </div>
+  );
+}
+
+function EmptyMessage({ title, message, icon }: { title: string; message: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex flex-1 min-h-0 relative">
+      <div className="flex flex-1 flex-col space-y-2">
+        <div className="flex-1 flex flex-col">
+          <div className="flex flex-1 flex-col  p-4">
+            <Empty className="border border-dashed flex flex-1 flex-col items-center justify-center">
+              <EmptyHeader>
+                <EmptyMedia>{icon}</EmptyMedia>
+                <EmptyTitle>{title}</EmptyTitle>
+                <EmptyDescription>{message}</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          </div>
+        </div>
       </div>
     </div>
   );
