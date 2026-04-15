@@ -34,17 +34,45 @@ const HEADER_PX = SECTION_HEADER_PX + GROUP_HEADER_PX;
 const ROW_PX = 628;
 
 export type VirtualRowItem =
-  | { type: 'SECTION_HEADER'; key: string; sectionName: string; totalEventCount: number }
-  | { type: 'GROUP_HEADER'; key: string; sectionKey: string; groupName: string; groupColor: TColors; eventCount: number; rowCount: number }
-  | { type: 'GROUP_ROW'; key: string; sectionKey: string; groupKey: string; rowIndex: number; data: IEventSingleRoom[] };
+  | {
+      type: 'SECTION_HEADER';
+      key: string;
+      sectionKey: string;
+      sectionName: string;
+      groupKey: string | null;
+      groupName: string | null;
+      groupColor: TColors | null;
+      totalEventCount: number;
+    }
+  | {
+      type: 'GROUP_HEADER';
+      key: string;
+      sectionKey: string;
+      sectionName: string;
+      groupKey: string | null;
+      groupName: string | null;
+      groupColor: TColors | null;
+      eventCount: number;
+      rowCount: number;
+    }
+  | {
+      type: 'GROUP_ROW';
+      key: string;
+      sectionKey: string;
+      sectionName: string;
+      groupKey: string | null;
+      groupName: string | null;
+      groupColor: TColors | null;
+      rowIndex: number;
+      data: IEventSingleRoom[];
+    };
 
 export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
   const [removingEvents, setRemovingEvents] = useState<Map<number, TStatusKey>>(() => new Map());
 
   const removingEventIds = useMemo(() => new Set(removingEvents.keys()), [removingEvents]);
 
-  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(() => new Set());
-  const collapseTimersRef = useRef<Map<string, number>>(new Map());
+  const itemTypeRef = useRef<Array<'SECTION_HEADER' | 'GROUP_HEADER' | 'GROUP_ROW'>>([]);
 
   const {
     visibleHours,
@@ -91,9 +119,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     }
   }, [isLoading, result, setIsHeaderLoading, setTotalEvents]);
 
-  const isEmpty = false;
-  const isMounting = false;
-
   const flatData = useMemo(() => {
     const list: VirtualRowItem[] = [];
     result?.data?.requestSections?.forEach((section) => {
@@ -102,7 +127,11 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
       list.push({
         type: 'SECTION_HEADER',
         key: section.sectionKey,
+        sectionKey: section.sectionKey,
         sectionName: section.sectionTitle,
+        groupKey: null,
+        groupName: null,
+        groupColor: null,
         totalEventCount: sectionEvents.length,
       });
 
@@ -113,6 +142,8 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
           type: 'GROUP_HEADER',
           key: group.groupKey,
           sectionKey: section.sectionKey,
+          sectionName: section.sectionTitle,
+          groupKey: group.groupKey,
           groupName: group.groupName,
           groupColor: group.groupColor,
           eventCount: group.groupEvents.length,
@@ -125,7 +156,10 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
             type: 'GROUP_ROW',
             key: `${group.groupKey}:events[${rowIndex}]`,
             sectionKey: section.sectionKey,
+            sectionName: section.sectionTitle,
             groupKey: group.groupKey,
+            groupName: group.groupName,
+            groupColor: group.groupColor,
             rowIndex,
             data: eventRow,
           });
@@ -135,46 +169,29 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     return list;
   }, [result?.data?.requestSections, clampedColumn]);
 
-  type ScrollAnchor = {
-    key: string;
-    index: number;
-    offsetWithinItem: number;
-  };
+  useEffect(() => {
+    itemTypeRef.current = flatData.map((item) => item.type);
+  }, [flatData]);
 
   const latestFlatDataRef = useRef(flatData);
   useEffect(() => {
     latestFlatDataRef.current = flatData;
   }, [flatData]);
 
-  const liveAnchorRef = useRef<ScrollAnchor | null>(null);
-  const pendingRestoreRef = useRef<ScrollAnchor | null>(null);
-
   const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLDivElement>({
     count: flatData.length,
     getScrollElement: () => parentRef.current,
 
-    estimateSize: useCallback(
-      (index: number) => {
-        const item = flatData[index];
+    estimateSize: useCallback((index: number) => {
+      const type = itemTypeRef.current[index];
 
-        if (item.type === 'SECTION_HEADER') return SECTION_HEADER_PX;
-        if (item.type === 'GROUP_HEADER') return GROUP_HEADER_PX;
-        return ROW_PX;
-      },
-      [flatData],
-    ),
-
-    measureElement: (el) => {
-      const index = Number(el.getAttribute('data-index'));
-      const item = flatData[index];
-
-      if (!item) return 0;
-
-      return el.getBoundingClientRect().height;
-    },
-    overscan: 5,
+      if (type === 'SECTION_HEADER') return SECTION_HEADER_PX;
+      if (type === 'GROUP_HEADER') return GROUP_HEADER_PX;
+      return ROW_PX;
+    }, []),
+    overscan: 15,
     scrollPaddingStart: SECTION_HEADER_PX,
-    getItemKey: (index) => flatData[index]?.key ?? index,
+    getItemKey: (index) => flatData[index].key,
   });
 
   rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => false;
@@ -240,7 +257,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     const newIndex = flatData.findIndex((item) => item.type === 'GROUP_HEADER' && item.key === groupKey);
     if (newIndex === -1) return;
 
-    rowVirtualizer.measure();
     requestAnimationFrame(() => {
       rowVirtualizer.scrollToIndex(newIndex, { align: 'start', behavior: 'auto' });
     });
@@ -248,25 +264,9 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   useLayoutEffect(() => {
     if (anchorRef.current && parentRef.current && flatData.length > 0) {
-      const { offset, key } = anchorRef.current;
-      const preCorrectionScroll = parentRef.current.scrollTop;
+      const { offset } = anchorRef.current;
 
-      // 2. TELL THE VIRTUALIZER TO RE-CALCULATE
-      // This is the most important step. It clears the old coordinate cache.
-      rowVirtualizer.measure();
-
-      // 3. APPLY THE CORRECTION
-      // We use a raw scrollTop set here because it's more reliable
-      // for "locking" position than the virtualizer's scrollToOffset
-      // during a heavy DOM churn.
-      parentRef.current.scrollTop = offset;
-
-      // 4. SYNC VIRTUALIZER
-      // Force one more frame sync to ensure the virtualizer
-      // doesn't think we are still at the old scroll position.
-      /* requestAnimationFrame(() => {
-        rowVirtualizer.scrollToOffset(offset);
-      });*/
+      rowVirtualizer.scrollToOffset(offset);
     }
   }, [flatData, parentRef, rowVirtualizer]);
 
