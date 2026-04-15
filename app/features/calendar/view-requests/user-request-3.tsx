@@ -165,32 +165,16 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     getItemKey: (index) => flatData[index]?.key ?? index,
   });
 
-  //rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => true;
+  rowVirtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => false;
 
   const anchorRef = useRef<{ key: string; offset: number } | null>(null);
-
-  // This function finds the first visible item and saves how far it is from the top
-  const captureAnchor = useCallback(
-    (eventId: number, status: TStatusKey) => {
-      const virtualItems = rowVirtualizer.getVirtualItems();
-      if (virtualItems.length === 0 || !parentRef.current) return;
-
-      const anchorItem = virtualItems.find((item) => item.start >= parentRef.current!.scrollTop) || virtualItems[0];
-
-      anchorRef.current = {
-        key: anchorItem.key as string,
-        offset: parentRef.current.scrollTop - anchorItem.start,
-      };
-    },
-    [rowVirtualizer],
-  );
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
   const scrollOffset = rowVirtualizer.scrollOffset || 0;
 
   const stickyInfo = useMemo(() => {
-    const top = scrollOffset + HEADER_PX + 1;
+    const top = scrollOffset + (GROUP_HEADER_PX + GROUP_HEADER_PX / 2) + 1;
     const activeItem = [...virtualItems].reverse().find((v) => v.start <= top) ?? virtualItems[0];
     if (!activeItem) return { sectionKey: null, sectionName: null, groupKey: null, groupName: null, groupColor: null };
 
