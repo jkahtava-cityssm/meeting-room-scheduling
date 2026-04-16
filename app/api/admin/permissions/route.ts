@@ -1,15 +1,15 @@
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
 
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { findManyExpandedPermissionSets, findManyResourceAction } from "@/lib/data/permissions";
-import { guardRoute } from "@/lib/api-guard";
-import { prisma } from "@/prisma";
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { findManyExpandedPermissionSets, findManyResourceAction, upsertRoleResourceAction } from '@/lib/data/permissions';
+import { guardRoute } from '@/lib/api-guard';
+import { prisma } from '@/prisma';
 
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
 
-    { EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" } },
+    { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const permissionSets = await findManyExpandedPermissionSets();
 
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("PermissionSets Found", permissionSets);
+      return SuccessMessage('PermissionSets Found', permissionSets);
     },
   );
 }
@@ -33,9 +33,9 @@ export async function PUT(request: NextRequest) {
   return guardRoute(
     request,
     {
-      EditPermission: { type: "permission", resource: "Settings", action: "Edit Permissions" },
+      EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' },
     },
-    async () => {
+    async ({ sessionUserId }) => {
       const permissionList: rolePermissionMutations[] = await request.json();
       //{ data: permissionList }: { data: rolePermissionMutations[] }
       if (!permissionList) {
@@ -62,38 +62,22 @@ export async function PUT(request: NextRequest) {
         })),
       });
       const resourceActionLookup = new Map(
-        resourceActions.map((resourceAction) => [
-          `${resourceAction.resourceId}-${resourceAction.actionId}`,
-          resourceAction.resourceActionId,
-        ]),
+        resourceActions.map((resourceAction) => [`${resourceAction.resourceId}-${resourceAction.actionId}`, resourceAction.resourceActionId]),
       );
 
       try {
-        const results = await prisma.$transaction(
-          permissionList.map((p) => {
+        const results = await prisma.$transaction(async (tx) => {
+          return permissionList.map(async (p) => {
             const resourceActionId = resourceActionLookup.get(`${p.resourceId}-${p.actionId}`);
             if (!resourceActionId) throw new Error(`Mapping not found for Res:${p.resourceId} Act:${p.actionId}`);
 
-            return prisma.roleResourceAction.upsert({
-              where: {
-                roleId_resourceActionId: {
-                  roleId: Number(p.roleId),
-                  resourceActionId: resourceActionId,
-                },
-              },
-              update: { permit: p.permit },
-              create: {
-                roleId: Number(p.roleId),
-                resourceActionId: resourceActionId,
-                permit: p.permit,
-              },
-            });
-          }),
-        );
+            return await upsertRoleResourceAction(Number(p.roleId), resourceActionId, p.permit, sessionUserId, tx);
+          });
+        });
 
-        return SuccessMessage("Updated Permissions", results);
+        return SuccessMessage('Updated Permissions', results);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error occurred";
+        const message = error instanceof Error ? error.message : 'Unknown error occurred';
         return BadRequestMessage(message);
       }
     },

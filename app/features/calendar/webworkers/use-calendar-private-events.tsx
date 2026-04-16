@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from 'react';
 
-import { useEventsQuery } from "@/lib/services/events";
-import { useCalendarWorker } from "./use-generic-webworker";
-import { CalendarAction, ISODateString } from "./generic-webworker";
-import { IEvent } from "@/lib/schemas";
-import { TStatusKey, TVisibleHours } from "@/lib/types";
-import { getDateRange } from "./generic-webworker-utilities";
-import { usePublicEventsQuery } from "@/lib/services/public";
+import { useEventsQuery } from '@/lib/services/events';
+import { useCalendarWorker } from './use-generic-webworker';
+import { CalendarAction, IRequestSection, ISODateString, ProcessedDataMap } from './generic-webworker';
+import { IEventSingleRoom } from '@/lib/schemas';
+import { TStatusKey, TVisibleHours } from '@/lib/types';
+import { getDateRange } from './generic-webworker-utilities';
 
-export function usePrivateCalendarEvents<T extends CalendarAction>(
+export function usePrivateCalendarEvents<T extends CalendarAction, V extends 'calendar' | 'booking' = 'calendar'>(
   action: T,
   date: Date,
   visibleHours: TVisibleHours | undefined,
@@ -16,15 +15,11 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   roomId?: string | string[],
   statusKeys?: TStatusKey[],
   enabled: boolean = true,
+  viewType: V = 'calendar' as V,
 ) {
-  const range = useMemo(() => getDateRange(action, date), [action, date]);
+  const range = useMemo(() => getDateRange(action, date, viewType), [action, date, viewType]);
 
-  const {
-    data: events,
-    isLoading,
-    isFetching,
-    error,
-  } = useEventsQuery(range.startDate, range.endDate, userId, enabled);
+  const { data: events, isLoading, isFetching, error } = useEventsQuery(range.startDate, range.endDate, userId, enabled);
 
   const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 
@@ -39,7 +34,7 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   useEffect(() => {
     if (!events || !visibleHours) return;
     processEvents({
-      events: events as IEvent[],
+      events: events as IEventSingleRoom[],
       selectedDate: date.toISOString() as ISODateString,
       selectedRoomId: roomId,
       action: action,
@@ -47,8 +42,9 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
       multiDayEventsAtTop: true,
       userId: userId,
       statusKeys,
+      viewType,
     });
-  }, [events, action, date, roomId, userId, processEvents, visibleHours, statusKeys]);
+  }, [events, action, date, roomId, userId, processEvents, visibleHours, statusKeys, viewType]);
 
   useEffect(() => {
     if (!isProcessing && data) {
@@ -57,10 +53,18 @@ export function usePrivateCalendarEvents<T extends CalendarAction>(
   }, [isProcessing, data]);
 
   return {
-    result: data,
+    result: data as unknown as CalendarState<T, V>,
     isLoading: isLoading || !hasProcessedForView,
     isRefetching: isFetching && !isLoading,
     isBackgroundProcessing: hasProcessedForView && isProcessing,
     error: error || workerError,
   };
 }
+
+type CalendarState<A extends CalendarAction, V extends 'calendar' | 'booking'> = {
+  action: A;
+  totalEvents: number;
+  requestId?: number;
+  viewType: V;
+  data: V extends 'booking' ? { requestSections: IRequestSection[] } : ProcessedDataMap[A];
+};

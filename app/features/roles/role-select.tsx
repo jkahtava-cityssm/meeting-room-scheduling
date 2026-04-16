@@ -1,9 +1,9 @@
-"use client";
-import { GenericSelect } from "@/components/shared/generic-select";
-import { IconName } from "@/components/ui/icon-dynamic";
-import { TColors } from "@/lib/types";
-import { useRolesQuery } from "@/lib/services/permissions";
-import { cn } from "@/lib/utils";
+'use client';
+import { GenericSelect } from '@/components/shared/generic-select';
+import { IconName } from '@/components/ui/icon-dynamic';
+import { TColors } from '@/lib/types';
+import { useRolesQuery } from '@/lib/services/permissions';
+import { cn } from '@/lib/utils';
 
 export function RoleSelect({
   selectedRoleId,
@@ -30,17 +30,17 @@ export function RoleSelect({
       selectedValue={selectedRoleId}
       isLoading={isPending}
       isError={!!error}
-      loadingLabel={error ? "Error: Collecting Roles" : "Collecting Roles"}
+      loadingLabel={error ? 'Error: Collecting Roles' : 'Collecting Roles'}
       onChange={(value) => {
         onRoleChange(value);
       }}
       getId={(role) => role.roleId.toString()}
       getLabel={(role) => role.name}
-      getColor={(role) => "invisible" as TColors}
+      getColor={(role) => 'invisible' as TColors}
       //getIcon={(role) => "" as IconName}
       dataInvalid={dataInvalid}
       isDisabled={isDisabled}
-      className={cn("min-w-20", className)}
+      className={cn('min-w-20', className)}
     />
   );
 }

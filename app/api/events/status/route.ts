@@ -1,25 +1,25 @@
-import { findManyEvents } from "@/lib/data/events";
+import { findManyEvents } from '@/lib/data/events';
 
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
 
-import { UTCDate } from "@date-fns/utc";
+import { UTCDate } from '@date-fns/utc';
 
-import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { guardRoute } from "@/lib/api-guard";
+import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { guardRoute } from '@/lib/api-guard';
 
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { IsPublic: { type: "role", role: "Public" } },
+    { IsPublic: { type: 'role', role: 'Public' } },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
-      const startDateParam = searchParams.get("startdate");
-      const endDateParam = searchParams.get("enddate");
-      const statusId = searchParams.get("statusId");
+      const startDateParam = searchParams.get('startdate');
+      const endDateParam = searchParams.get('enddate');
+      const statusKey = searchParams.get('statusKey');
 
-      if (!startDateParam || !endDateParam || !statusId) {
+      if (!startDateParam || !endDateParam || !statusKey) {
         return BadRequestMessage();
       }
 
@@ -42,12 +42,12 @@ export async function GET(request: NextRequest) {
         AND: [{ statusId: Number(statusId) }],
       };*/
 
-      const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
+      const whereClause: import('@prisma/client').Prisma.EventWhereInput = {
         AND: [
           {
             createdAt: { lte: EndDate, gte: StartDate },
           },
-          { statusId: Number(statusId) },
+          { status: { key: statusKey } },
         ],
       };
       const events = await findManyEvents(whereClause);
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("Collected Events", events);
+      return SuccessMessage('Collected Events', events);
     },
   );
 }

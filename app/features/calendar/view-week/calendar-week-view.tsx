@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { format, parse } from "date-fns";
-import { usePrivateCalendar } from "@/contexts/CalendarProviderPrivate";
+import { format, parse } from 'date-fns';
+import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { CalendarWeekViewSkeleton } from "./skeleton-calendar-week-view";
-import { CalendarScrollContainerPrivate } from "../components/calendar-scroll-container";
-import { CalendarScrollColumnPrivate } from "../components/calendar-scroll-column";
+import { CalendarWeekViewSkeleton } from './skeleton-calendar-week-view';
+import { CalendarScrollContainerPrivate } from '../components/calendar-scroll-container';
+import { CalendarScrollColumnPrivate } from '../components/calendar-scroll-column';
 
-import { cn } from "@/lib/utils";
-import { usePrivateCalendarEvents } from "../webworkers/use-calendar-private-events";
-import { IEventBlock } from "../webworkers/generic-webworker";
-import { CalendarScrollContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
-import { GenericError } from "../../../../components/shared/generic-error";
-import { TStatusKey } from "@/lib/types";
+import { cn } from '@/lib/utils';
+import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-events';
+import { IEventBlock } from '../webworkers/generic-webworker';
+import { CalendarScrollContainerSkeleton } from '../components/calendar-scroll-container-skeleton';
+import { GenericError } from '../../../../components/shared/generic-error';
+import { TStatusKey } from '@/lib/types';
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const {
@@ -31,19 +31,9 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     setTotalEvents,
   } = usePrivateCalendar();
 
-  const roomIds = useMemo(
-    () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
-    [visibleRooms],
-  );
+  const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
 
-  const { result, isLoading, error } = usePrivateCalendarEvents(
-    "WEEK",
-    date,
-    visibleHours,
-    userId,
-    selectedRoomIds,
-    selectedStatusKeys,
-  );
+  const { result, isLoading, error } = usePrivateCalendarEvents('WEEK', date, visibleHours, userId, selectedRoomIds, selectedStatusKeys);
 
   useEffect(() => {
     if (isLoading) {
@@ -94,7 +84,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
   return (
     <>
       <div className="flex flex-1 min-h-0">
-        <div className={cn("flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1")}>
+        <div className={cn('flex flex-col min-h-0  min-w-0 transition-[width] duration-600 ease-in-out flex-1')}>
           {isMounting ? (
             <>
               <CalendarScrollContainerSkeleton hours={fallbackHours} totalColumns={7} />
@@ -106,14 +96,14 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                   <CalendarScrollColumnPrivate
                     key={day.date}
                     loadingBlocks={isLoading}
-                    title={format(parse(day.date, "yyyy-MM-dd", new Date()), "EE d")}
+                    title={format(parse(day.date, 'yyyy-MM-dd', new Date()), 'EE d')}
                     interval={interval}
                     roomId={undefined}
                     userId={userId}
                     hours={result?.data.hours || []}
                     eventBlocks={day.blocks || []}
                     isLastColumn={daysToRender.length - 1 === dayIndex}
-                    currentDate={parse(day.date, "yyyy-MM-dd", new Date())}
+                    currentDate={parse(day.date, 'yyyy-MM-dd', new Date())}
                     maxHour={visibleHours ? visibleHours.to : 24}
                     minHour={visibleHours ? visibleHours.from : 0}
                     maxSpan={maxSpan}

@@ -1,6 +1,6 @@
 // use-room-filtering.ts
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { PUBLIC_IROOM } from "@/lib/services/public";
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { PUBLIC_IROOM } from '@/lib/services/public';
 
 export function useRoomFiltering(rooms: PUBLIC_IROOM[] | undefined) {
   // Instant state for checkboxes
@@ -40,9 +40,7 @@ export function useRoomFiltering(rooms: PUBLIC_IROOM[] | undefined) {
 
   const filterByProjector = useCallback(() => {
     if (!rooms) return;
-    const projectorIds = rooms
-      .filter((r) => r.roomProperty?.some((p) => p.name === "HasProjector" && p.value === "true"))
-      .map((r) => r.roomId);
+    const projectorIds = rooms.filter((r) => r.roomProperty?.some((p) => p.name === 'HasProjector' && p.value === 'true')).map((r) => r.roomId);
     setCheckedRooms(new Set(projectorIds));
   }, [rooms]);
 

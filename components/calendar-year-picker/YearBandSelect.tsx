@@ -1,7 +1,7 @@
-import React from "react";
-import { parse } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import React from 'react';
+import { parse } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export default function YearBandSelect({
   selectedDate,
@@ -20,9 +20,9 @@ export default function YearBandSelect({
     <Select
       value={bandLabel}
       onValueChange={(value) => {
-        const [startStr] = value.split(" - ");
+        const [startStr] = value.split(' - ');
         const nextYear = Number(startStr);
-        const parsed = parse(String(nextYear), "yyyy", new Date());
+        const parsed = parse(String(nextYear), 'yyyy', new Date());
         onYearChange?.(parsed);
       }}
     >

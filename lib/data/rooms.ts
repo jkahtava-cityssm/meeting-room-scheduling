@@ -1,7 +1,7 @@
-import { prisma } from "@/prisma";
-import type { Prisma } from "@prisma/client";
-import { IRoom, SRoom } from "../schemas";
-import z from "zod/v4";
+import { prisma } from '@/prisma';
+import type { Prisma } from '@prisma/client';
+import { IRoom, SRoom } from '../schemas';
+import z from 'zod/v4';
 
 // Standard room select configuration — used across all DAL functions
 const ROOM_SELECT = {
@@ -31,7 +31,7 @@ export async function findManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const rooms = await tx.room.findMany({
     where,
     select: ROOM_SELECT,
-    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
+    orderBy: [{ displayOrder: { sort: 'asc', nulls: 'last' } }, { roomId: 'asc' }],
   });
 
   return flattenRoom(rooms);
@@ -41,7 +41,7 @@ export async function findFirstRoom(where?: Prisma.RoomWhereInput, tx: Prisma.Tr
   const room = await tx.room.findFirst({
     where,
     select: ROOM_SELECT,
-    orderBy: [{ displayOrder: { sort: "asc", nulls: "last" } }, { roomId: "asc" }],
+    orderBy: [{ displayOrder: { sort: 'asc', nulls: 'last' } }, { roomId: 'asc' }],
   });
 
   return flattenRoom(room ? [room] : [])[0];
@@ -54,30 +54,61 @@ export async function deleteManyRooms(where?: Prisma.RoomWhereInput, tx: Prisma.
 }
 
 export async function upsertRoom(
-  params: {
-    where: Prisma.RoomWhereUniqueInput;
-    create: Prisma.RoomCreateInput;
-    update: Prisma.RoomUpdateInput;
-  },
+  data: { roomId?: number; name: string; color: string; icon: string; publicFacing: boolean; displayOrder?: number; roomCategoryId: number },
+  sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
   const room = await tx.room.upsert({
-    where: params.where,
-    create: params.create,
-    update: params.update,
+    where: { roomId: data.roomId },
+    create: {
+      name: data.name,
+      color: data.color,
+      icon: data.icon,
+      publicFacing: data.publicFacing,
+      displayOrder: data.displayOrder,
+      roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
+      createdByUser: { connect: { id: sessionUserId } },
+      updatedByUser: { connect: { id: sessionUserId } },
+    },
+    update: {
+      name: data.name,
+      color: data.color,
+      icon: data.icon,
+      publicFacing: data.publicFacing,
+      displayOrder: data.displayOrder,
+      roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
+      updatedByUser: { connect: { id: sessionUserId } },
+    },
     select: ROOM_SELECT,
   });
 
   return flattenRoom(room);
 }
 
-export async function createRoom(create: Prisma.RoomCreateInput, tx: Prisma.TransactionClient = prisma) {
+export async function createRoom(
+  create: Omit<Prisma.RoomCreateInput, 'createdBy' | 'updatedBy' | 'createdByUser' | 'updatedByUser'>,
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
   const room = await tx.room.create({
-    data: create,
+    data: { ...create, createdByUser: { connect: { id: sessionUserId } }, updatedByUser: { connect: { id: sessionUserId } } },
     select: ROOM_SELECT,
   });
 
   return flattenRoom(room);
+}
+
+export async function createManyRoomRole(
+  create: Omit<Prisma.RoomRoleCreateManyInput, 'createdBy' | 'updatedBy' | 'createdByUser' | 'updatedByUser'>[],
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return await tx.roomRole.createMany({
+    data: create.map((roomRole) => {
+      return { ...roomRole, createdBy: sessionUserId, updatedBy: sessionUserId };
+    }),
+    skipDuplicates: true,
+  });
 }
 
 type RoomWithRelations = Prisma.RoomGetPayload<{ select: typeof ROOM_SELECT }>;
@@ -98,7 +129,7 @@ function flattenRoom(data: RoomWithRelations | RoomWithRelations[]): IRoomInput 
           roomPropertyId: roomProperty.roomPropertyId,
           propertyId: roomProperty.property.propertyId,
           name: roomProperty.property.name,
-          value: roomProperty.value ?? "",
+          value: roomProperty.value ?? '',
           type: roomProperty.property.type,
           createdAt: roomProperty.createdAt,
           updatedAt: roomProperty.updatedAt,
@@ -115,4 +146,42 @@ function flattenRoom(data: RoomWithRelations | RoomWithRelations[]): IRoomInput 
   });
 
   return isArray ? mapped : mapped[0];
+}
+
+export async function upsertRoomProperty(
+  roomId: number,
+  propertyId: number,
+  value: string,
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  const roomProperty = await tx.roomProperty.upsert({
+    where: { roomId_propertyId: { roomId, propertyId } },
+    create: {
+      roomId,
+      propertyId,
+      //room: { connect: { roomId } },
+      value,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+      //property: { connect: { propertyId: propertyId } },
+      //createdByUser: { connect: { id: sessionUserId } },
+      //updatedByUser: { connect: { id: sessionUserId } },
+    },
+    update: {
+      value,
+      updatedBy: sessionUserId,
+      // updatedByUser: { connect: { id: sessionUserId } },
+    },
+  });
+
+  return roomProperty;
+}
+
+export async function createRoomProperty(create: Prisma.RoomPropertyCreateInput, sessionUserId: number, tx: Prisma.TransactionClient = prisma) {
+  const roomProperty = await tx.roomProperty.create({
+    data: { ...create, createdByUser: { connect: { id: sessionUserId } }, updatedByUser: { connect: { id: sessionUserId } } },
+  });
+
+  return roomProperty;
 }

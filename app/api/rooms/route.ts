@@ -1,26 +1,23 @@
-import { guardRoute } from "@/lib/api-guard";
-import { CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
+import { guardRoute } from '@/lib/api-guard';
+import { CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 
-import { createRoom, findFirstRoom, findManyRooms, upsertRoom } from "@/lib/data/rooms";
-import { SRoomPUT } from "@/lib/services/rooms";
-import { prisma } from "@/prisma";
-import { NextRequest } from "next/server";
+import { createManyRoomRole, createRoom, findFirstRoom, findManyRooms, upsertRoom, upsertRoomProperty } from '@/lib/data/rooms';
+import { SRoomPUT } from '@/lib/services/rooms';
+import { prisma } from '@/prisma';
+import { NextRequest } from 'next/server';
 
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
     {
-      AllOf: [{ ReadRoom: { type: "permission", resource: "Room", action: "Read" } }],
+      AllOf: [{ ReadRoom: { type: 'permission', resource: 'Room', action: 'Read' } }],
     },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
       const roomFilter = permissionCache.isAdmin
         ? {}
         : {
-            OR: [
-              { roomRoles: { some: { roleId: { in: Array.from(permissionCache.roleIdSet || []) } } } },
-              { roomRoles: { none: {} } },
-            ],
+            OR: [{ roomRoles: { some: { roleId: { in: Array.from(permissionCache.roleIdSet || []) } } } }, { roomRoles: { none: {} } }],
           };
 
       const rooms = await findManyRooms(roomFilter);
@@ -29,7 +26,7 @@ export async function GET(req: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("Collected Rooms", rooms);
+      return SuccessMessage('Collected Rooms', rooms);
     },
   );
 }
@@ -39,32 +36,23 @@ export async function PUT(request: NextRequest) {
     request,
     {
       AnyOf: [
-        { UpdateRooms: { type: "permission", resource: "Room", action: "Update" } },
-        { EditRooms: { type: "permission", resource: "Settings", action: "Edit Rooms" } },
+        { UpdateRooms: { type: 'permission', resource: 'Room', action: 'Update' } },
+        { EditRooms: { type: 'permission', resource: 'Settings', action: 'Edit Rooms' } },
       ],
     },
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
       const room = await prisma.$transaction(async (tx) => {
         const updatedRoom = await upsertRoom(
           {
-            where: { roomId: data.roomId },
-            create: {
-              name: data.name,
-              color: data.color,
-              icon: data.icon,
-              publicFacing: data.publicFacing,
-              displayOrder: data.displayOrder,
-              roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
-            },
-            update: {
-              name: data.name,
-              color: data.color,
-              icon: data.icon,
-              publicFacing: data.publicFacing,
-              displayOrder: data.displayOrder,
-              roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
-            },
+            roomId: data.roomId,
+            name: data.name,
+            color: data.color,
+            icon: data.icon,
+            publicFacing: data.publicFacing,
+            displayOrder: data.displayOrder,
+            roomCategoryId: data.roomCategoryId,
           },
+          sessionUserId,
           tx,
         );
 
@@ -76,10 +64,11 @@ export async function PUT(request: NextRequest) {
             where: { roomId, roleId: { notIn: roleIds } },
           });
 
-          await tx.roomRole.createMany({
-            data: roleIds.map((roleId) => ({ roomId, roleId })),
-            skipDuplicates: true,
-          });
+          await createManyRoomRole(
+            roleIds.map((roleId) => ({ roomId, roleId })),
+            sessionUserId,
+            tx,
+          );
         }
         if (data.roomProperty) {
           const propertyIds = data.roomProperty.map((p) => p.propertyId);
@@ -88,15 +77,7 @@ export async function PUT(request: NextRequest) {
             where: { roomId, propertyId: { notIn: propertyIds } },
           });
 
-          await Promise.all(
-            data.roomProperty.map((prop) =>
-              tx.roomProperty.upsert({
-                where: { roomId_propertyId: { roomId, propertyId: prop.propertyId || -1 } },
-                update: { value: prop.value },
-                create: { roomId, value: prop.value, propertyId: Number(prop.propertyId) },
-              }),
-            ),
-          );
+          await Promise.all(data.roomProperty.map((prop) => upsertRoomProperty(roomId, prop.propertyId, prop.value, sessionUserId, tx)));
         }
 
         return await findFirstRoom({ roomId }, tx);
@@ -107,10 +88,10 @@ export async function PUT(request: NextRequest) {
       }
 
       if (room.roomId === data.roomId) {
-        return SuccessMessage("Updated Event", room);
+        return SuccessMessage('Updated Event', room);
       }
 
-      return CreatedMessage("Created Event", room);
+      return CreatedMessage('Created Event', room);
     },
     SRoomPUT,
   );
@@ -121,11 +102,11 @@ export async function POST(request: NextRequest) {
     request,
     {
       AnyOf: [
-        { CreateRooms: { type: "permission", resource: "Room", action: "Create" } },
-        { EditRooms: { type: "permission", resource: "Settings", action: "Edit Rooms" } },
+        { CreateRooms: { type: 'permission', resource: 'Room', action: 'Create' } },
+        { EditRooms: { type: 'permission', resource: 'Settings', action: 'Edit Rooms' } },
       ],
     },
-    async ({ data }) => {
+    async ({ sessionUserId, data }) => {
       const room = await prisma.$transaction(async (tx) => {
         const createdRoom = await createRoom(
           {
@@ -136,6 +117,8 @@ export async function POST(request: NextRequest) {
             displayOrder: data.displayOrder,
             roomCategory: { connect: { roomCategoryId: data.roomCategoryId } },
           },
+          sessionUserId,
+
           tx,
         );
 
@@ -143,24 +126,17 @@ export async function POST(request: NextRequest) {
         if (data.roomRoles) {
           const roleIds = data.roomRoles.map((r) => r.roleId);
 
-          await tx.roomRole.createMany({
-            data: roleIds.map((roleId) => ({ roomId, roleId })),
-            skipDuplicates: true,
-          });
+          await createManyRoomRole(
+            roleIds.map((roleId) => ({ roomId, roleId })),
+            sessionUserId,
+            tx,
+          );
         }
 
         if (data.roomProperty) {
           const propertyIds = data.roomProperty.map((p) => p.propertyId);
 
-          await Promise.all(
-            data.roomProperty.map((prop) =>
-              tx.roomProperty.upsert({
-                where: { roomId_propertyId: { roomId, propertyId: prop.propertyId || -1 } },
-                update: { value: prop.value },
-                create: { roomId, value: prop.value, propertyId: Number(prop.propertyId) },
-              }),
-            ),
-          );
+          await Promise.all(data.roomProperty.map((prop) => upsertRoomProperty(roomId, prop.propertyId, prop.value, sessionUserId, tx)));
         }
 
         return await findFirstRoom({ roomId }, tx);
@@ -170,7 +146,7 @@ export async function POST(request: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return CreatedMessage("Created Room", room);
+      return CreatedMessage('Created Room', room);
     },
     SRoomPUT,
   );

@@ -1,6 +1,6 @@
-import { ServerNavigationPermissions } from "@/lib/permissions/navigation-permissions";
+import { ServerNavigationPermissions } from '@/lib/permissions/navigation-permissions';
 
-import PrivateUserView from "./private-user-view";
+import PrivateUserView from './private-user-view';
 
 export default async function UserView() {
   return (

@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-export type Period = "AM" | "PM";
+export type Period = 'AM' | 'PM';
 export type TimeInterval = 1 | 5 | 10 | 15 | 20 | 30 | 45 | 60;
 
 interface UseTimePickerProps {
@@ -80,18 +80,18 @@ export function useTimePicker({
   }, []);
 
   const updateTimeValue = React.useCallback(
-    (type: "hour" | "minute", timeValue: string, updateNow: boolean = false) => {
+    (type: 'hour' | 'minute', timeValue: string, updateNow: boolean = false) => {
       if (!updateNow) {
-        if (type === "hour") setTempHours(timeValue);
-        if (type === "minute") setTempMinutes(timeValue);
+        if (type === 'hour') setTempHours(timeValue);
+        if (type === 'minute') setTempMinutes(timeValue);
       }
 
       // Clear existing debounced timers
-      if (type === "hour" && debounceHourTimerRef.current) {
+      if (type === 'hour' && debounceHourTimerRef.current) {
         clearTimeout(debounceHourTimerRef.current);
         debounceHourTimerRef.current = null;
       }
-      if (type === "minute" && debounceMinuteTimerRef.current) {
+      if (type === 'minute' && debounceMinuteTimerRef.current) {
         clearTimeout(debounceMinuteTimerRef.current);
         debounceMinuteTimerRef.current = null;
       }
@@ -106,7 +106,7 @@ export function useTimePicker({
 
         let clampedDate: Date;
 
-        if (type === "hour") {
+        if (type === 'hour') {
           let hourValue: number;
 
           if (parsedTimeValue === 24 || parsedTimeValue === 0 || parsedTimeValue >= 12) {
@@ -136,8 +136,8 @@ export function useTimePicker({
         performUpdate();
       } else {
         const timer = setTimeout(performUpdate, clampDelay);
-        if (type === "hour") debounceHourTimerRef.current = timer;
-        if (type === "minute") debounceMinuteTimerRef.current = timer;
+        if (type === 'hour') debounceHourTimerRef.current = timer;
+        if (type === 'minute') debounceMinuteTimerRef.current = timer;
       }
     },
     [is24HourTime, getClampedDate, getClosestSnap, setDate, clampDelay],
@@ -161,17 +161,15 @@ export function useTimePicker({
   const display = React.useMemo(() => {
     const hours = date.getHours();
     //IF 24 PAD WITH ZEROS, IF 12 HOUR, GET REMAINDER USING MODULUS, IF 0 SET TO 12, ELSE PASS REMAINDER PAD WITH ZEROS
-    const displayHour = is24HourTime
-      ? hours.toString().padStart(2, "0")
-      : (hours % 12 || 12).toString().padStart(2, "0");
+    const displayHour = is24HourTime ? hours.toString().padStart(2, '0') : (hours % 12 || 12).toString().padStart(2, '0');
 
     //WHEN TYPING tempHours AND tempMinutes GET UPDATED
     //ONCE A TIME EXPIRES OR BLUR OCCURS THE VALUES ARE CLAMPED AND NULLIFIED
     //ONCE NULLIFIED IT UPDATES THE ITEM TO SHOW THE CLAMPED HOUR AND MINUTE
     return {
       hour: tempHours ?? displayHour,
-      minutes: tempMinutes ?? date.getMinutes().toString().padStart(2, "0"),
-      period: (hours >= 12 ? "PM" : "AM") as Period,
+      minutes: tempMinutes ?? date.getMinutes().toString().padStart(2, '0'),
+      period: (hours >= 12 ? 'PM' : 'AM') as Period,
     };
   }, [date, is24HourTime, tempHours, tempMinutes]);
 
@@ -184,12 +182,12 @@ export function useTimePicker({
     //CHECKS IF THE NEXT VALUE IS A DIGIT, OTHERWISE IT IGNORES THE KEY
     if (!/^\d$/.test(next)) return prev;
     //CONCATENATE THE OLD AND NEW STRING, REMOVE ANYTHING PAST 2 CHARACTERS THEN PAD
-    return (prev + next).slice(-2).padStart(2, "0");
+    return (prev + next).slice(-2).padStart(2, '0');
   }, []);
 
   //REMOVE THE CLOSEST VALUE AND PAD A ZERO
   const popDigit = React.useCallback((prev: string) => {
-    return ("0" + prev).slice(0, 2);
+    return ('0' + prev).slice(0, 2);
   }, []);
 
   const incrementHours = React.useCallback(() => {
@@ -253,7 +251,7 @@ export function useTimePicker({
 
   //UPDATE THE TIME IF THE PERIOD IS TOGGLED
   const togglePeriod = React.useCallback(
-    (period?: "AM" | "PM") => {
+    (period?: 'AM' | 'PM') => {
       const currentDate = dateRef.current;
       const currentHours = currentDate.getHours();
       const currentMinutes = currentDate.getMinutes();
@@ -261,7 +259,7 @@ export function useTimePicker({
       let targetHours: number;
       if (period) {
         const hour12Base = currentHours % 12;
-        targetHours = period === "PM" ? hour12Base + 12 : hour12Base;
+        targetHours = period === 'PM' ? hour12Base + 12 : hour12Base;
       } else {
         const isPM = currentHours >= 12;
         targetHours = isPM ? currentHours - 12 : currentHours + 12;
@@ -272,8 +270,8 @@ export function useTimePicker({
   );
 
   const handleBackspace = React.useCallback(
-    (type: "hour" | "minute") => {
-      const prev = type === "hour" ? (tempHours ?? display.hour) : (tempMinutes ?? display.minutes);
+    (type: 'hour' | 'minute') => {
+      const prev = type === 'hour' ? (tempHours ?? display.hour) : (tempMinutes ?? display.minutes);
 
       const shifted = popDigit(prev);
       updateTimeValue(type, shifted, false);
@@ -282,7 +280,7 @@ export function useTimePicker({
   );
 
   const handleManualInput = React.useCallback(
-    (type: "hour" | "minute", char: string) => {
+    (type: 'hour' | 'minute', char: string) => {
       const now = Date.now();
       const isFreshInput = now - lastInputTimeRef.current > clampDelay;
       lastInputTimeRef.current = now;
@@ -293,11 +291,9 @@ export function useTimePicker({
 
       const calculateHour = is24HourTime ? currentHours : currentHours % 12 || 12;
 
-      const currentValue = type === "hour" ? calculateHour : currentMinutes;
+      const currentValue = type === 'hour' ? calculateHour : currentMinutes;
 
-      const prevValue = isFreshInput
-        ? "00"
-        : ((type === "hour" ? tempHours : tempMinutes) ?? currentValue.toString().padStart(2, "0"));
+      const prevValue = isFreshInput ? '00' : ((type === 'hour' ? tempHours : tempMinutes) ?? currentValue.toString().padStart(2, '0'));
       const nextValue = pushDigit(prevValue, char.slice(-1));
 
       updateTimeValue(type, nextValue, false);
@@ -314,15 +310,15 @@ export function useTimePicker({
   }, []);
 
   const handleBlur = React.useCallback(
-    (type: "hour" | "minute", val: string) => {
+    (type: 'hour' | 'minute', val: string) => {
       window.requestAnimationFrame(() => updateTimeValue(type, val, true));
     },
     [updateTimeValue],
   );
 
   const forceClamp = React.useCallback(() => {
-    if (tempHours !== null) updateTimeValue("hour", tempHours, true);
-    if (tempMinutes !== null) updateTimeValue("minute", tempMinutes, true);
+    if (tempHours !== null) updateTimeValue('hour', tempHours, true);
+    if (tempMinutes !== null) updateTimeValue('minute', tempMinutes, true);
   }, [tempHours, tempMinutes, updateTimeValue]);
 
   return {

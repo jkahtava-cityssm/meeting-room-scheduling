@@ -1,35 +1,35 @@
-import { QueryError } from "@/contexts/ReactQueryProvider";
-import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from "@/lib/fetch";
-import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from "@/lib/schemas";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { property } from "lodash";
-import { z } from "zod/v4";
-import { queryKeys } from "./querykeys";
+import { QueryError } from '@/contexts/ReactQueryProvider';
+import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from '@/lib/fetch';
+import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from '@/lib/schemas';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { property } from 'lodash';
+import { z } from 'zod/v4';
+import { queryKeys } from './querykeys';
 
 const AllRooms: IRoom = {
   roomId: -1,
-  name: "All Rooms",
-  color: "zinc",
+  name: 'All Rooms',
+  color: 'zinc',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  icon: "asterisk",
+  icon: 'asterisk',
   publicFacing: false,
   displayOrder: null,
   roomCategoryId: -1,
   roomCategory: {
     roomCategoryId: -1,
-    name: "All",
+    name: 'All',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
 };
 
 export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolean = true) => {
-  const type = includeAllOption ? "all" : "existing";
+  const type = includeAllOption ? 'all' : 'existing';
   return useQuery({
     queryKey: queryKeys.rooms.list(type),
     queryFn: async () => {
-      const result = await fetchGET("/api/rooms");
+      const result = await fetchGET('/api/rooms');
       if (includeAllOption) {
         result.data.unshift(AllRooms);
       }
@@ -37,7 +37,7 @@ export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolea
       const parsedResult = z.array(SRoom).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid room data", "useRoomsQuery", parsedResult.error);
+        throw new QueryError('Invalid room data', 'useRoomsQuery', parsedResult.error);
       }
 
       return parsedResult.data;
@@ -57,7 +57,7 @@ export const useRoomQuery = (roomId: number | undefined, enabled: boolean = true
       const parsedResult = z.array(SRoom).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid room data", "useRoomQuery", parsedResult.error);
+        throw new QueryError('Invalid room data', 'useRoomQuery', parsedResult.error);
       }
 
       return parsedResult.data[0];
@@ -117,12 +117,12 @@ export const useRoomCategoryQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.rooms.categories(),
     queryFn: async () => {
-      const result = await fetchGET("/api/rooms/categories");
+      const result = await fetchGET('/api/rooms/categories');
 
       const parsedResult = z.array(SRoomCategory).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid room category data", "useRoomsCategoriesQuery", parsedResult.error);
+        throw new QueryError('Invalid room category data', 'useRoomsCategoriesQuery', parsedResult.error);
       }
 
       return parsedResult.data;

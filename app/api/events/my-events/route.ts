@@ -1,13 +1,13 @@
-import { prisma } from "@/prisma";
+import { prisma } from '@/prisma';
 
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
 
-import { UTCDate } from "@date-fns/utc";
+import { UTCDate } from '@date-fns/utc';
 
-import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { guardRoute } from "@/lib/api-guard";
-import { findManyEvents } from "@/lib/data/events";
-import { TColors, TStatusKey } from "@/lib/types";
+import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { guardRoute } from '@/lib/api-guard';
+import { findManyEvents } from '@/lib/data/events';
+import { TColors, TStatusKey } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
   return guardRoute(
@@ -15,16 +15,16 @@ export async function GET(request: NextRequest) {
 
     {
       AnyOf: [
-        { hasReadAll: { type: "permission", resource: "Event", action: "Read All" } },
-        { hasReadSelf: { type: "permission", resource: "Event", action: "Read Self" } },
+        { hasReadAll: { type: 'permission', resource: 'Event', action: 'Read All' } },
+        { hasReadSelf: { type: 'permission', resource: 'Event', action: 'Read Self' } },
       ],
     },
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
-      const startDateParam = searchParams.get("startdate");
-      const endDateParam = searchParams.get("enddate");
-      const hasUserId = searchParams.get("userId");
+      const startDateParam = searchParams.get('startdate');
+      const endDateParam = searchParams.get('enddate');
+      const hasUserId = searchParams.get('userId');
 
       if (!startDateParam || !endDateParam || !hasUserId) {
         return BadRequestMessage();
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       const StartDate: UTCDate = new UTCDate(startDateParam);
       const EndDate: UTCDate = new UTCDate(endDateParam);
 
-      const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
+      const whereClause: import('@prisma/client').Prisma.EventWhereInput = {
         AND: [
           {
             OR: [
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
               {
                 AND: [
                   { userId: { not: Number(sessionUserId) } },
-                  { OR: [{ status: { key: "APPROVED" as TStatusKey } }, { status: { key: "PENDING" as TStatusKey } }] },
+                  { OR: [{ status: { key: 'APPROVED' as TStatusKey } }, { status: { key: 'PENDING' as TStatusKey } }] },
                 ],
               },
             ],
@@ -72,10 +72,15 @@ export async function GET(request: NextRequest) {
         }
         return {
           ...event, // Keep IDs, Dates, and Room/Status structures
-          title: permissions.hasReadAll ? event.title : event.status?.key === "APPROVED" ? "Booked" : "Requested",
-          description: permissions.hasReadAll ? event.description : "",
+          title: permissions.hasReadAll ? event.title : event.status?.key === 'APPROVED' ? 'Booked' : 'Requested',
+          description: permissions.hasReadAll ? event.description : '',
           userId: permissions.hasReadAll ? event.userId : null,
-          room: { ...event.room, color: event.status?.key === "APPROVED" ? "approved" : ("disabled" as TColors) },
+          eventRooms: event.eventRooms.map((room) => {
+            return {
+              ...room,
+              color: event.status?.key === 'APPROVED' ? 'approved' : ('disabled' as TColors),
+            };
+          }),
         };
       });
 
@@ -83,7 +88,7 @@ export async function GET(request: NextRequest) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("Collected Events", processedData);
+      return SuccessMessage('Collected Events', processedData);
     },
   );
 }

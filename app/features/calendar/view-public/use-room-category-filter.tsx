@@ -1,5 +1,5 @@
-import { PUBLIC_IROOM } from "@/lib/services/public";
-import { useMemo } from "react";
+import { PUBLIC_IROOM } from '@/lib/services/public';
+import { useMemo } from 'react';
 
 export interface BaseRoom {
   roomId: string | number;

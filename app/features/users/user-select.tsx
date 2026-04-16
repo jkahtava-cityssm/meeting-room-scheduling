@@ -1,15 +1,15 @@
-import { GenericSelect } from "@/components/shared/generic-select";
-import { IconName } from "@/components/ui/icon-dynamic";
-import { TColors } from "@/lib/types";
-import { useRoomsQuery } from "@/lib/services/rooms";
-import { useUsersQuery } from "@/lib/services/users";
+import { GenericSelect } from '@/components/shared/generic-select';
+import { IconName } from '@/components/ui/icon-dynamic';
+import { TColors } from '@/lib/types';
+import { useRoomsQuery } from '@/lib/services/rooms';
+import { useUsersQuery } from '@/lib/services/users';
 
 export function UserSelect({
   selectedUserId,
   onRoomChange,
   dataInvalid = false,
   isDisabled = false,
-  className = "min-w-60",
+  className = 'min-w-60',
 }: {
   selectedUserId: string;
   onRoomChange: (value: string) => void;
@@ -25,7 +25,7 @@ export function UserSelect({
       selectedValue={selectedUserId}
       isLoading={isPending}
       isError={!!error}
-      loadingLabel={error ? "Error: Collecting Members" : "Collecting Members"}
+      loadingLabel={error ? 'Error: Collecting Members' : 'Collecting Members'}
       placeholderText="Select Member"
       onChange={(value) => {
         onRoomChange(value);

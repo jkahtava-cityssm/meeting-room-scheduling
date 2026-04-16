@@ -1,16 +1,16 @@
-import { prisma } from "@/prisma";
-import { betterAuth, Session } from "better-auth";
-import { sso } from "@better-auth/sso";
-import { customSession } from "better-auth/plugins";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+import { prisma } from '@/prisma';
+import { betterAuth, Session } from 'better-auth';
+import { sso } from '@better-auth/sso';
+import { customSession } from 'better-auth/plugins';
+import { prismaAdapter } from 'better-auth/adapters/prisma';
 
-import { headers } from "next/headers";
-import { SessionAction, SessionResource, SessionRole } from "./types";
+import { headers } from 'next/headers';
+import { SessionAction, SessionResource, SessionRole } from './types';
 
-import { getCachedUserRoles } from "./auth-role-cache";
-import { nextCookies } from "better-auth/next-js";
-import { getDefaultRole } from "./data/users";
-import { fetchPrivateCachedUserRole } from "./server/private";
+import { getCachedUserRoles } from './auth-role-cache';
+import { nextCookies } from 'better-auth/next-js';
+import { createUserRole, getDefaultRole } from './data/users';
+import { fetchPrivateCachedUserRole } from './server/private';
 
 export type User = {
   userId: string | undefined | null;
@@ -38,7 +38,7 @@ export type Permission = {
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: "postgresql",
+    provider: 'postgresql',
   }),
   advanced: {
     database: { useNumberId: true, generateId: false },
@@ -59,22 +59,22 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
-    additionalFields: { impersonatedRole: { type: "string", required: false } },
+    additionalFields: { impersonatedRole: { type: 'string', required: false } },
     cookieCache: {
       enabled: true,
       maxAge: 10 * 60, // 5 Minutes
-      strategy: "compact",
+      strategy: 'compact',
       refreshCache: { updateAge: 60 * 2 },
     },
   },
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["microsoft", "github"],
+      trustedProviders: ['microsoft', 'github'],
       updateUserInfoOnLink: true,
     },
   },
-  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(",").filter(Boolean) || [],
+  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(',').filter(Boolean) || [],
 
   databaseHooks: {
     session: {
@@ -106,7 +106,7 @@ export const auth = betterAuth({
 
   plugins: [
     sso({
-      modelName: "SSOProvider",
+      modelName: 'SSOProvider',
     }),
 
     customSession(async ({ user, session }) => {
@@ -149,15 +149,13 @@ async function createDefaultRole(userId: number) {
 
   const roleId = Number(defaultRole.roleId);
   if (!Number.isFinite(roleId)) {
-    console.warn("Default role ID is not set or invalid. Skipping default role assignment.");
+    console.warn('Default role ID is not set or invalid. Skipping default role assignment.');
     return;
   }
 
-  const role = await prisma.role.findFirst({ where: { roleId: roleId }, orderBy: { roleId: "asc" } });
+  const role = await prisma.role.findFirst({ where: { roleId: roleId }, orderBy: { roleId: 'asc' } });
 
   if (role) {
-    await prisma.userRole.create({
-      data: { userId: userId, roleId: role.roleId, granted: true },
-    });
+    await createUserRole({ userId: userId, roleId: role.roleId, granted: true }, 0);
   }
 }

@@ -1,10 +1,10 @@
-"use client";
-import { createContext, useContext, useRef, useState, useCallback, useMemo } from "react";
+'use client';
+import { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
 
-import { IUser } from "@/lib/schemas";
-import { UserDrawerPermissions } from "./lib/permissions";
+import { IUser } from '@/lib/schemas';
+import { UserDrawerPermissions } from './lib/permissions';
 
-import UserDrawer from "./drawer-root";
+import UserDrawer from './drawer-root';
 
 export type UserDrawerPayload = {
   user?: IUser;
@@ -45,12 +45,7 @@ export function SharedUserDrawerProvider({ children }: { children: React.ReactNo
       {children}
       {/* Offscreen trigger wrapped by the single UserDrawer instance */}
       <UserDrawerPermissions.Provider>
-        <UserDrawer
-          user={payload?.user}
-          isOpen={isOpen}
-          onOpen={() => setIsOpen(true)}
-          onClose={() => closeUserDrawer()}
-        />
+        <UserDrawer user={payload?.user} isOpen={isOpen} onOpen={() => setIsOpen(true)} onClose={() => closeUserDrawer()} />
       </UserDrawerPermissions.Provider>
     </SharedDrawerContext.Provider>
   );
@@ -58,6 +53,6 @@ export function SharedUserDrawerProvider({ children }: { children: React.ReactNo
 
 export function useSharedUserDrawer() {
   const ctx = useContext(SharedDrawerContext);
-  if (!ctx) throw new Error("useSharedDrawer must be used within SharedUserDrawerProvider");
+  if (!ctx) throw new Error('useSharedDrawer must be used within SharedUserDrawerProvider');
   return ctx;
 }

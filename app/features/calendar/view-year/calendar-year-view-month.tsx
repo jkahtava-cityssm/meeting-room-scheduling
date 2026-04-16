@@ -1,20 +1,20 @@
-import { useRouter } from "next/navigation";
-import YearViewDayCell from "@/app/features/calendar/view-year/calendar-year-view-day-cell";
+import { useRouter } from 'next/navigation';
+import YearViewDayCell from '@/app/features/calendar/view-year/calendar-year-view-day-cell';
 
-import React from "react";
+import React from 'react';
 
-import { navigateURL } from "@/lib/helpers";
-import { IYearMonthView } from "../webworkers/generic-webworker";
+import { navigateURL } from '@/lib/helpers';
+import { IYearMonthView } from '../webworkers/generic-webworker';
 
 //const YearViewDayCell = React.lazy(() => import("@/components/calendar/calendar-year-view-day-cell"));
 
 export default function YearViewMonth({ month, userId }: { month: IYearMonthView; userId?: string }) {
   const { push } = useRouter();
 
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const handleClick = () => {
-    push(navigateURL(new Date(month.monthDate), "month"));
+    push(navigateURL(new Date(month.monthDate), 'month'));
   };
 
   return (

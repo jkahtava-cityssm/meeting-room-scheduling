@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState } from 'react';
 
 // use-step-navigation.ts
 export const useStepNavigation = (totalSteps: number, validateStep: (index: number) => Promise<boolean>) => {
@@ -8,8 +8,8 @@ export const useStepNavigation = (totalSteps: number, validateStep: (index: numb
     nextError: false,
   });
 
-  const handleStepChange = async (direction: "next" | "back") => {
-    const isMovingNext = direction === "next";
+  const handleStepChange = async (direction: 'next' | 'back') => {
+    const isMovingNext = direction === 'next';
     const canMove = isMovingNext ? currentStepIndex < totalSteps - 1 : currentStepIndex > 0;
 
     if (!canMove) return;
@@ -32,8 +32,8 @@ export const useStepNavigation = (totalSteps: number, validateStep: (index: numb
   return {
     currentStepIndex,
     navigationStatus,
-    nextStep: () => handleStepChange("next"),
-    previousStep: () => handleStepChange("back"),
+    nextStep: () => handleStepChange('next'),
+    previousStep: () => handleStepChange('back'),
     resetNavigation,
     goToStep: (index: number) => index >= 0 && index < totalSteps && setCurrentStepIndex(index),
   };

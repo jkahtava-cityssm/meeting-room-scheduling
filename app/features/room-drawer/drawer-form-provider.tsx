@@ -1,19 +1,19 @@
-import { createContext, useRef, useState } from "react";
-import { Form, FormProvider } from "react-hook-form";
+import { createContext, useRef, useState } from 'react';
+import { Form, FormProvider } from 'react-hook-form';
 
-import { FormStep, MultiStepFormContextProps } from "./types";
+import { FormStep, MultiStepFormContextProps } from './types';
 
-import { useContext } from "react";
-import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from "@/components/ui/sheet";
-import { useDisclosure } from "@/hooks/use-disclosure";
+import { useContext } from 'react';
+import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from '@/components/ui/sheet';
+import { useDisclosure } from '@/hooks/use-disclosure';
 
-import React from "react";
-import { IRoom } from "@/lib/schemas";
+import React from 'react';
+import { IRoom } from '@/lib/schemas';
 
-import { useRoomFormLogic } from "./use-multi-step-logic";
-import { useSession } from "@/contexts/SessionProvider";
-import { DrawerDialog } from "./components/dialog";
-import FormFooter from "./form-footer";
+import { useRoomFormLogic } from './use-multi-step-logic';
+import { useSession } from '@/contexts/SessionProvider';
+import { DrawerDialog } from './components/dialog';
+import FormFooter from './form-footer';
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 
@@ -68,8 +68,8 @@ export const MultiStepForm = ({
           onConfirm={() => logic.handleDialogAction(logic.dialogConfig?.confirmAction)}
           onCancel={() => logic.handleDialogAction(logic.dialogConfig?.cancelAction)}
           onSave={() => logic.handleDialogAction(logic.dialogConfig?.saveAction)}
-          confirmText={logic.dialogConfig.confirmText ?? "Confirm"}
-          cancelText={logic.dialogConfig.cancelText ?? "Cancel"}
+          confirmText={logic.dialogConfig.confirmText ?? 'Confirm'}
+          cancelText={logic.dialogConfig.cancelText ?? 'Cancel'}
           showSave={logic.dialogConfig.showSave}
           showConfirm={logic.dialogConfig.showConfirm}
           showCancel={logic.dialogConfig.showCancel}
@@ -82,7 +82,7 @@ export const MultiStepForm = ({
 export const useMultiStepForm = () => {
   const context = useContext(MultiStepFormContext);
   if (!context) {
-    throw new Error("useMultiStepForm must be used within MultiStepForm.Provider");
+    throw new Error('useMultiStepForm must be used within MultiStepForm.Provider');
   }
   return context;
 };

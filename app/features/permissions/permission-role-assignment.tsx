@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownAz,
   ArrowUpAz,
@@ -14,31 +14,26 @@ import {
   LucideShieldUser,
   Minus,
   X,
-} from "lucide-react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-import { GenericSelect } from "@/components/shared/generic-select";
-import { ComboBox, ComboBoxTrigger } from "@/components/ui/combobox";
-import {
-  IUserWithRoles,
-  usePermissionUserQuery,
-  usePermissionUserRoleMutationUpsert,
-  useRolesQuery,
-} from "@/lib/services/permissions";
-import { GenericComboBox } from "@/components/shared/generic-combobox";
-import { RoleComboBox } from "../roles/role-combobox";
-import { useUsersQuery } from "@/lib/services/users";
-import { cn } from "@/lib/utils";
-import { useDebounce } from "@/hooks/use-debounce";
-import React from "react";
-import { GenericError } from "../../../components/shared/generic-error";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getDistinctValuesByKey } from "@/lib/helpers";
+} from 'lucide-react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { GenericSelect } from '@/components/shared/generic-select';
+import { ComboBox, ComboBoxTrigger } from '@/components/ui/combobox';
+import { IUserWithRoles, usePermissionUserQuery, usePermissionUserRoleMutationUpsert, useRolesQuery } from '@/lib/services/permissions';
+import { GenericComboBox } from '@/components/shared/generic-combobox';
+import { RoleComboBox } from '../roles/role-combobox';
+import { useUsersQuery } from '@/lib/services/users';
+import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
+import React from 'react';
+import { GenericError } from '../../../components/shared/generic-error';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getDistinctValuesByKey } from '@/lib/helpers';
 
 export interface Employee {
   id: number;
@@ -61,27 +56,27 @@ interface UserFilters {
 }
 
 const STATUS_OPTIONS = [
-  { label: "Enabled", value: "true" },
-  { label: "Disabled", value: "false" },
+  { label: 'Enabled', value: 'true' },
+  { label: 'Disabled', value: 'false' },
 ];
 
 const ASSIGNED_OPTIONS = [
-  { label: "Assigned", value: "true" },
-  { label: "Not Assigned", value: "false" },
+  { label: 'Assigned', value: 'true' },
+  { label: 'Not Assigned', value: 'false' },
 ];
 
 const defaultFilters: UserFilters = {
-  name: "",
-  email: "",
-  employeeNumber: "",
+  name: '',
+  email: '',
+  employeeNumber: '',
   department: [],
-  status: ["true"],
+  status: ['true'],
   assigned: [],
 };
 
-type SortColumn = "name" | "email" | "employeeNumber" | "department" | "status" | "assigned";
+type SortColumn = 'name' | 'email' | 'employeeNumber' | 'department' | 'status' | 'assigned';
 
-type SortDirection = "desc" | "asc" | null;
+type SortDirection = 'desc' | 'asc' | null;
 
 export function UserRoleAssignmentList() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -99,18 +94,18 @@ export function UserRoleAssignmentList() {
 
   const toggleSort = useCallback((key: SortColumn) => {
     setSort((prev) => {
-      if (prev.key !== key) return { key, dir: "desc" };
-      if (prev.dir === "desc") return { key, dir: "asc" };
+      if (prev.key !== key) return { key, dir: 'desc' };
+      if (prev.dir === 'desc') return { key, dir: 'asc' };
 
       return { key: null, dir: null };
     });
   }, []);
 
-  const isSortedAsc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "asc", [sort]);
-  const isSortedDesc = useCallback((key: SortColumn) => sort.key === key && sort.dir === "desc", [sort]);
+  const isSortedAsc = useCallback((key: SortColumn) => sort.key === key && sort.dir === 'asc', [sort]);
+  const isSortedDesc = useCallback((key: SortColumn) => sort.key === key && sort.dir === 'desc', [sort]);
 
   const departmentList = useMemo(() => {
-    return data ? getDistinctValuesByKey(data, "department") : [];
+    return data ? getDistinctValuesByKey(data, 'department') : [];
   }, [data]);
 
   const { debouncedValue: debouncedFilters } = useDebounce(filters, 500);
@@ -127,27 +122,27 @@ export function UserRoleAssignmentList() {
 
         // 2. Extract value from the user object based on the key
         switch (key) {
-          case "name":
-          case "email":
-          case "employeeNumber":
-            const userVal = String(user[key as keyof typeof user] || "").toLowerCase();
+          case 'name':
+          case 'email':
+          case 'employeeNumber':
+            const userVal = String(user[key as keyof typeof user] || '').toLowerCase();
             return userVal.includes(String(filterValue).toLowerCase());
 
-          case "department":
+          case 'department':
             // Expects filterValue to be an array of strings
-            return (filterValue as string[]).includes(user.department || "");
+            return (filterValue as string[]).includes(user.department || '');
 
-          case "status":
+          case 'status':
             // status: ["true"] or ["false"]
             return (filterValue as string[]).includes(String(user.isActive));
 
-          case "assigned": {
+          case 'assigned': {
             const isAssigned = user.roles.some((r) => String(r.roleId) === currentRole?.id);
             const filterArr = filterValue as string[];
 
             // Logic: If both true and false are selected (length 2), show everyone.
             // Otherwise, check if the calculated 'isAssigned' matches the selected toggle.
-            if (filterArr.includes("true") && filterArr.includes("false")) return true;
+            if (filterArr.includes('true') && filterArr.includes('false')) return true;
             return filterArr.includes(String(isAssigned));
           }
 
@@ -162,17 +157,17 @@ export function UserRoleAssignmentList() {
   const getSortValue = useCallback(
     (user: IUserWithRoles, key: SortColumn) => {
       switch (key) {
-        case "name":
-          return (user.name ?? "") as string;
-        case "email":
-          return (user.email ?? "") as string;
-        case "employeeNumber":
+        case 'name':
+          return (user.name ?? '') as string;
+        case 'email':
+          return (user.email ?? '') as string;
+        case 'employeeNumber':
           return Number(user.externalId ?? 0);
-        case "department":
-          return (user.department ?? "") as string;
-        case "status":
+        case 'department':
+          return (user.department ?? '') as string;
+        case 'status':
           return user.isActive ? 1 : 0; // 1 enabled, 0 disabled
-        case "assigned": {
+        case 'assigned': {
           const isAssigned = user.roles?.some((role) => String(role.roleId) === currentRole?.id && role.granted);
           return isAssigned ? 1 : 0;
         }
@@ -188,20 +183,20 @@ export function UserRoleAssignmentList() {
     const key = sort.key;
     const dir = sort.dir;
 
-    const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
+    const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
 
     const cmp = (userA: IUserWithRoles, userB: IUserWithRoles) => {
       const va = getSortValue(userA, key);
       const vb = getSortValue(userB, key);
 
-      if (typeof va === "string" && typeof vb === "string") {
+      if (typeof va === 'string' && typeof vb === 'string') {
         return collator.compare(va, vb);
       }
       // number/boolean compare
       return va === vb ? 0 : va > vb ? 1 : -1;
     };
 
-    const factor = dir === "asc" ? 1 : -1;
+    const factor = dir === 'asc' ? 1 : -1;
 
     // slice() to avoid mutating original; modern JS sort is stable.
     return filteredEmployee.slice().sort((a, b) => factor * cmp(a, b));
@@ -250,11 +245,7 @@ export function UserRoleAssignmentList() {
 
       <div className="shrink-0 p-4 pb-0">
         <div className="flex flex-row gap-3 mb-4 items-center ">
-          <RoleComboBox
-            selectedRoleId={currentRole?.id}
-            onRoleChange={(id, label) => setCurrentRole({ id, label })}
-            className={"w-50"}
-          />
+          <RoleComboBox selectedRoleId={currentRole?.id} onRoleChange={(id, label) => setCurrentRole({ id, label })} className={'w-50'} />
 
           {hasFilters && (
             <Button
@@ -277,59 +268,51 @@ export function UserRoleAssignmentList() {
           <div className="grid grid-cols-2 md:grid-cols-6 items-center border-b p-2 sticky top-0 bg-background z-10">
             <FilterHeader
               title="Name"
-              isSortedAsc={isSortedAsc("name")}
-              isSortedDesc={isSortedDesc("name")}
-              onToggleSort={() => toggleSort("name")}
-              onClearFilter={() => clearFilter("name")}
+              isSortedAsc={isSortedAsc('name')}
+              isSortedDesc={isSortedDesc('name')}
+              onToggleSort={() => toggleSort('name')}
+              onClearFilter={() => clearFilter('name')}
               isFiltered={filters.name.length > 0}
             >
-              <DebouncedInput
-                placeholder="Search names..."
-                onChange={(value) => onFilter(value, "name")}
-                value={filters.name}
-              />
+              <DebouncedInput placeholder="Search names..." onChange={(value) => onFilter(value, 'name')} value={filters.name} />
             </FilterHeader>
 
             <div className="hidden md:block">
               <FilterHeader
                 title="Email"
-                isSortedAsc={isSortedAsc("email")}
-                isSortedDesc={isSortedDesc("email")}
-                onToggleSort={() => toggleSort("email")}
-                onClearFilter={() => clearFilter("email")}
+                isSortedAsc={isSortedAsc('email')}
+                isSortedDesc={isSortedDesc('email')}
+                onToggleSort={() => toggleSort('email')}
+                onClearFilter={() => clearFilter('email')}
                 isFiltered={filters.email.length > 0}
               >
-                <DebouncedInput
-                  placeholder="Search emails..."
-                  value={filters.email}
-                  onChange={(value) => onFilter(value, "email")}
-                />
+                <DebouncedInput placeholder="Search emails..." value={filters.email} onChange={(value) => onFilter(value, 'email')} />
               </FilterHeader>
             </div>
 
             <div className="font-bold min-w-0 hidden md:block text-center">
               <FilterHeader
                 title="Employee #"
-                isSortedAsc={isSortedAsc("employeeNumber")}
-                isSortedDesc={isSortedDesc("employeeNumber")}
-                onToggleSort={() => toggleSort("employeeNumber")}
-                onClearFilter={() => clearFilter("employeeNumber")}
+                isSortedAsc={isSortedAsc('employeeNumber')}
+                isSortedDesc={isSortedDesc('employeeNumber')}
+                onToggleSort={() => toggleSort('employeeNumber')}
+                onClearFilter={() => clearFilter('employeeNumber')}
                 isFiltered={filters.employeeNumber.length > 0}
               >
                 <DebouncedInput
                   placeholder="Search numbers..."
                   value={filters.employeeNumber}
-                  onChange={(value) => onFilter(value, "employeeNumber")}
+                  onChange={(value) => onFilter(value, 'employeeNumber')}
                 />
               </FilterHeader>
             </div>
             <div className="font-bold min-w-0 hidden md:block text-center">
               <FilterHeader
                 title="Department"
-                isSortedAsc={isSortedAsc("department")}
-                isSortedDesc={isSortedDesc("department")}
-                onToggleSort={() => toggleSort("department")}
-                onClearFilter={() => clearFilter("department")}
+                isSortedAsc={isSortedAsc('department')}
+                isSortedDesc={isSortedDesc('department')}
+                onToggleSort={() => toggleSort('department')}
+                onClearFilter={() => clearFilter('department')}
                 isFiltered={filters.department.length > 0}
                 totalSelected={filters.department.length}
               >
@@ -340,7 +323,7 @@ export function UserRoleAssignmentList() {
                       <div key={dept} className="flex flex-row items-center gap-2 text-sm">
                         <DebouncedCheckbox
                           checked={filters.department.includes(dept)}
-                          onCheckedChange={(value) => onToggleFilterList(dept, "department")}
+                          onCheckedChange={(value) => onToggleFilterList(dept, 'department')}
                         />
                         {dept}
                       </div>
@@ -354,10 +337,10 @@ export function UserRoleAssignmentList() {
               <FilterHeader
                 title="Status"
                 center
-                isSortedAsc={isSortedAsc("status")}
-                isSortedDesc={isSortedDesc("status")}
-                onToggleSort={() => toggleSort("status")}
-                onClearFilter={() => clearFilter("status")}
+                isSortedAsc={isSortedAsc('status')}
+                isSortedDesc={isSortedDesc('status')}
+                onToggleSort={() => toggleSort('status')}
+                onClearFilter={() => clearFilter('status')}
                 isFiltered={filters.status.length > 0}
                 totalSelected={filters.status.length}
               >
@@ -366,7 +349,7 @@ export function UserRoleAssignmentList() {
                     <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
                       <DebouncedCheckbox
                         checked={filters.status.includes(option.value)}
-                        onCheckedChange={() => onToggleFilterList(option.value, "status")}
+                        onCheckedChange={() => onToggleFilterList(option.value, 'status')}
                       />
                       {option.label}
                     </div>
@@ -378,10 +361,10 @@ export function UserRoleAssignmentList() {
               <FilterHeader
                 title="Assigned"
                 center
-                isSortedAsc={isSortedAsc("assigned")}
-                isSortedDesc={isSortedDesc("assigned")}
-                onToggleSort={() => toggleSort("assigned")}
-                onClearFilter={() => clearFilter("assigned")}
+                isSortedAsc={isSortedAsc('assigned')}
+                isSortedDesc={isSortedDesc('assigned')}
+                onToggleSort={() => toggleSort('assigned')}
+                onClearFilter={() => clearFilter('assigned')}
                 isFiltered={filters.assigned.length > 0}
                 totalSelected={filters.assigned.length}
               >
@@ -390,7 +373,7 @@ export function UserRoleAssignmentList() {
                     <div key={option.label} className="flex flex-row items-center gap-2 text-sm">
                       <DebouncedCheckbox
                         checked={filters.assigned.includes(option.value)}
-                        onCheckedChange={() => onToggleFilterList(option.value, "assigned")}
+                        onCheckedChange={() => onToggleFilterList(option.value, 'assigned')}
                       />
                       {option.label}
                     </div>
@@ -433,10 +416,7 @@ export function UserRoleAssignmentList() {
                   <div key={employee.userId} className="contents">
                     {/* Name Column */}
                     <div className="flex items-center gap-2 py-2">
-                      <button
-                        onClick={() => toggleRow(employee.userId)}
-                        className="md:hidden p-1 hover:bg-slate-100 rounded"
-                      >
+                      <button onClick={() => toggleRow(employee.userId)} className="md:hidden p-1 hover:bg-slate-100 rounded">
                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </button>
                       <span className="font-medium truncate">{employee.name}</span>
@@ -446,9 +426,7 @@ export function UserRoleAssignmentList() {
                     <div className="hidden md:block text-sm truncate px-2">{employee.email}</div>
                     <div className="hidden md:block text-sm truncate">{employee.externalId}</div>
                     <div className="hidden md:block text-sm truncate">{employee.department}</div>
-                    <div className="hidden md:block text-sm truncate text-center">
-                      {employee.isActive ? "Enabled" : "Disabled"}
-                    </div>
+                    <div className="hidden md:block text-sm truncate text-center">{employee.isActive ? 'Enabled' : 'Disabled'}</div>
 
                     {/* Toggle Column */}
                     <div className="flex justify-center py-2">
@@ -526,27 +504,24 @@ const FilterHeader = ({
 
   return (
     <div className="min-w-0 flex items-center font-bold">
-      <div className={cn("min-w-0 inline-flex items-center ", center && "mx-auto")}>
+      <div className={cn('min-w-0 inline-flex items-center ', center && 'mx-auto')}>
         <Button
           variant="link"
-          size={"sm"}
-          className={cn(
-            "min-w-0  h-7 px-2 text-sm font-semibold gap-1",
-            center ? "justify-center text-center" : "justify-start text-left",
-          )}
+          size={'sm'}
+          className={cn('min-w-0  h-7 px-2 text-sm font-semibold gap-1', center ? 'justify-center text-center' : 'justify-start text-left')}
           title={isSortedAsc || isSortedDesc ? `Sort by ${title}` : title}
           onClick={onToggleSort}
         >
-          <span className={cn("block truncate", center && "mx-auto text-center")}>{title}</span>
+          <span className={cn('block truncate', center && 'mx-auto text-center')}>{title}</span>
           {sortIcon && <span className="ml-0.5">{sortIcon}</span>}
         </Button>
 
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant={"ghost"}
-              size={"icon"}
-              className={cn("h-7 w-7 shrink-0", isFiltered && "text-primary")}
+              variant={'ghost'}
+              size={'icon'}
+              className={cn('h-7 w-7 shrink-0', isFiltered && 'text-primary')}
               title={isFiltered ? `${totalSelected} filters applied` : `Filter by ${title}`}
               aria-pressed={isFiltered}
             >
@@ -558,7 +533,7 @@ const FilterHeader = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium leading-none text-sm">Filter {title}</h4>
-                <Button variant={"ghost"} size={"icon"} className="size-6" onClick={onClearFilter}>
+                <Button variant={'ghost'} size={'icon'} className="size-6" onClick={onClearFilter}>
                   <X />
                 </Button>
               </div>
@@ -580,7 +555,7 @@ const FilterHeader = ({
   );
 };
 
-interface DebouncedInputProps extends Omit<React.ComponentProps<typeof Input>, "onChange"> {
+interface DebouncedInputProps extends Omit<React.ComponentProps<typeof Input>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   debounce?: number;
@@ -609,7 +584,7 @@ const DebouncedInput = ({ value, onChange, debounce = 150, ...props }: Debounced
   return <Input {...props} value={localValue} onChange={(e) => setLocalValue(e.target.value)} />;
 };
 
-interface DebouncedCheckboxProps extends Omit<React.ComponentProps<typeof Checkbox>, "onCheckedChange"> {
+interface DebouncedCheckboxProps extends Omit<React.ComponentProps<typeof Checkbox>, 'onCheckedChange'> {
   checked: boolean;
   onCheckedChange: (value: boolean) => void;
   debounce?: number;

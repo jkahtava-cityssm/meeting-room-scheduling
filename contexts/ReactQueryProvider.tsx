@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider, isServer } from "@tanstack/react-query";
-import * as React from "react";
-import { ZodError } from "zod";
-import z from "zod/v4";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider, isServer } from '@tanstack/react-query';
+import * as React from 'react';
+import { ZodError } from 'zod';
+import z from 'zod/v4';
 
 export class QueryError extends Error {
   public hookName: string;
@@ -11,7 +11,7 @@ export class QueryError extends Error {
 
   constructor(message: string, hookName: string, zodError?: ZodError) {
     super(message);
-    this.name = "Error";
+    this.name = 'Error';
     this.hookName = hookName;
     this.zodError = zodError;
 
@@ -29,8 +29,8 @@ function makeQueryClient() {
     queryCache: new QueryCache({
       onError: (error, query) => {
         // Only log in the browser and in development mode
-        if (!isServer && process.env.NODE_ENV === "development") {
-          const queryKey = query.queryKey.join(", ");
+        if (!isServer && process.env.NODE_ENV === 'development') {
+          const queryKey = query.queryKey.join(', ');
 
           if (error instanceof QueryError) {
             console.group(`Query Error: ${error.hookName}`);
@@ -40,9 +40,7 @@ function makeQueryClient() {
               const errorMap = new Map<string, { message: string; code: string }>();
 
               error.zodError.issues.forEach((issue) => {
-                const cleanPath = issue.path
-                  .filter((segment) => typeof segment !== "number" && isNaN(Number(segment)))
-                  .join(".");
+                const cleanPath = issue.path.filter((segment) => typeof segment !== 'number' && isNaN(Number(segment))).join('.');
 
                 if (!errorMap.has(cleanPath)) {
                   errorMap.set(cleanPath, {
@@ -67,8 +65,8 @@ function makeQueryClient() {
     }),
     mutationCache: new MutationCache({
       onError: (error) => {
-        if (!isServer && process.env.NODE_ENV === "development") {
-          console.error("Mutation Error:", error);
+        if (!isServer && process.env.NODE_ENV === 'development') {
+          console.error('Mutation Error:', error);
         }
       },
     }),

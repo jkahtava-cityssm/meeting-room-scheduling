@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
-import { Session, useSession as useBetterAuthSession } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
+import { Session, useSession as useBetterAuthSession } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 // Context and Provider
 const SessionContext = createContext<{ isPending: boolean; session: Session | null } | null>(null);
@@ -24,7 +24,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isPending && !session) {
-      router.push("/");
+      router.push('/');
     }
   }, [isPending, session, router]);
 
@@ -52,7 +52,7 @@ function SessionBridge({ onUpdate }: { onUpdate: (pending: boolean, nextData: Se
 // Custom hook
 export function useSession() {
   const context = useContext(SessionContext);
-  if (!context) throw new Error("useSession must be used within a SessionProvider");
+  if (!context) throw new Error('useSession must be used within a SessionProvider');
   return context;
 }
 

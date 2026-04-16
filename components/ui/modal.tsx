@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Dialog,
@@ -9,9 +9,9 @@ import {
   DialogHeader,
   DialogDescription,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
-import { Button } from "./button";
+import { Button } from './button';
 
 export function Modal({ children }: { children: React.ReactNode }) {
   /*const [showExitConfirmation, setShowExitConfirmation] = useState(false);
@@ -38,8 +38,7 @@ export function Modal({ children }: { children: React.ReactNode }) {
           <DialogHeader>
             <DialogTitle>Add New Event</DialogTitle>
             <DialogDescription>
-              This is just and example of how to use the form. In a real application, you would call the API to create
-              the event
+              This is just and example of how to use the form. In a real application, you would call the API to create the event
             </DialogDescription>
           </DialogHeader>
           {children}

@@ -1,13 +1,13 @@
-import { prisma } from "@/prisma";
-import type { Prisma } from "@prisma/client";
-import { CONFIGURATION_KEYS, TConfigurationKeys } from "../types";
-import { z } from "zod/v4";
+import { prisma } from '@/prisma';
+import type { Prisma } from '@prisma/client';
+import { CONFIGURATION_KEYS, TConfigurationKeys } from '../types';
+import { z } from 'zod/v4';
 
-export const SConfigurationEntry = z.discriminatedUnion("type", [
+export const SConfigurationEntry = z.discriminatedUnion('type', [
   z.object({
     key: z.string(),
     name: z.string(),
-    type: z.literal("boolean"),
+    type: z.literal('boolean'),
     value: z.union([z.boolean(), z.stringbool()]), //z.preprocess((val) => val === "true" || val === true, z.boolean()),
     description: z.string().nullable(),
   }),
@@ -15,7 +15,7 @@ export const SConfigurationEntry = z.discriminatedUnion("type", [
   z.object({
     key: z.string(),
     name: z.string(),
-    type: z.literal("number"),
+    type: z.literal('number'),
     value: z.preprocess((val) => Number(val), z.number()),
     description: z.string().nullable(),
   }),
@@ -23,7 +23,7 @@ export const SConfigurationEntry = z.discriminatedUnion("type", [
   z.object({
     key: z.string(),
     name: z.string(),
-    type: z.literal("string"),
+    type: z.literal('string'),
     value: z.string(),
     description: z.string().nullable(),
   }),
@@ -43,7 +43,7 @@ export interface IConfigurationRecord {
   key: TConfigurationKeys;
   name: string;
   value: string | number | boolean;
-  type: "string" | "number" | "boolean";
+  type: 'string' | 'number' | 'boolean';
   description: string;
 }
 
@@ -57,30 +57,62 @@ export async function findManyConfiguration(
   const configEntries = await tx.configuration.findMany({
     where,
     select: CONFIGURATION_SELECT,
-    orderBy: { configurationId: "asc" },
+    orderBy: { configurationId: 'asc' },
   });
 
   return configEntries.map((entry) => ({
     key: entry.key as TConfigurationKeys,
     name: entry.name,
     value: entry.value,
-    type: entry.type as "string" | "number" | "boolean",
-    description: entry.description ?? "",
+    type: entry.type as 'string' | 'number' | 'boolean',
+    description: entry.description ?? '',
   }));
 }
 
 export async function upsertConfiguration(
-  params: {
-    where: Prisma.ConfigurationWhereUniqueInput;
-    create: Prisma.ConfigurationCreateInput;
-    update: Prisma.ConfigurationUpdateInput;
+  data: {
+    key: string;
+    value: string;
+    name: string;
+    type: string;
+    description: string;
   },
+  sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
   return tx.configuration.upsert({
-    where: params.where,
-    create: params.create,
-    update: params.update,
+    where: { key: data.key },
+    create: {
+      key: data.key,
+      value: data.value,
+      name: data.name,
+      type: data.type,
+      description: data.description,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+    },
+    update: {
+      value: data.value,
+      updatedBy: sessionUserId,
+    },
+    select: CONFIGURATION_SELECT,
+  });
+}
+
+export async function updateConfiguration(
+  data: {
+    key: string;
+    value: string;
+  },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.configuration.update({
+    where: { key: data.key },
+    data: {
+      value: data.value,
+      updatedBy: sessionUserId,
+    },
     select: CONFIGURATION_SELECT,
   });
 }

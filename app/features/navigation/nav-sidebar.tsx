@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 
-import { Calendar, ChevronRight, LifeBuoy, NotebookPen, Send, Settings2 } from "lucide-react";
+import { Calendar, ChevronRight, LifeBuoy, NotebookPen, Send, Settings2 } from 'lucide-react';
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -16,24 +16,24 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar";
-import Link from "next/link";
-import DynamicIcon, { IconName } from "../../../components/ui/icon-dynamic";
-import Image from "next/image";
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
+import DynamicIcon, { IconName } from '../../../components/ui/icon-dynamic';
+import Image from 'next/image';
 
-import { Sidebar, SidebarContent, SidebarFooter } from "@/components/ui/sidebar";
-import { navigateURL } from "@/lib/helpers";
-import { Skeleton } from "../../../components/ui/skeleton";
-import { useSession } from "@/contexts/SessionProvider";
-import { useVerifySessionRequirement } from "@/lib/auth-client";
+import { Sidebar, SidebarContent, SidebarFooter } from '@/components/ui/sidebar';
+import { navigateURL } from '@/lib/helpers';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { useSession } from '@/contexts/SessionProvider';
+import { useVerifySessionRequirement } from '@/lib/auth-client';
 
-import { BadgeColored } from "../../../components/ui/badge-colored";
-import { useTotalEventsByStatusQuery } from "@/lib/services/events";
-import { endOfDay, format, parse, startOfDay } from "date-fns";
-import { useMemo } from "react";
-import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
-import { useSearchParams } from "next/navigation";
-import { NavigationPermissions } from "./permissions/navigation.permissions";
+import { BadgeColored } from '../../../components/ui/badge-colored';
+import { useTotalEventsByStatusQuery } from '@/lib/services/events';
+import { endOfDay, format, parse, startOfDay } from 'date-fns';
+import { useMemo } from 'react';
+import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
+import { useSearchParams } from 'next/navigation';
+import { NavigationPermissions } from './permissions/navigation.permissions';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isPending } = useSession();
@@ -80,29 +80,29 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const searchParams = useSearchParams();
 
-  const dateParam = searchParams.get("selectedDate");
+  const dateParam = searchParams.get('selectedDate');
 
   const dateValue = useMemo(() => {
-    return dateParam ? parse(dateParam, "yyyy-MM-dd", new Date()) : null;
+    return dateParam ? parse(dateParam, 'yyyy-MM-dd', new Date()) : null;
   }, [dateParam]);
 
-  const viewDay = can("ViewCalendarDay");
-  const viewMonth = can("ViewCalendarMonth");
-  const viewWeek = can("ViewCalendarWeek");
-  const viewYear = can("ViewCalendarYear");
-  const viewAgenda = can("ViewCalendarAgenda");
-  const viewStaffRequests = can("ViewStaffRequests");
+  const viewDay = can('ViewCalendarDay');
+  const viewMonth = can('ViewCalendarMonth');
+  const viewWeek = can('ViewCalendarWeek');
+  const viewYear = can('ViewCalendarYear');
+  const viewAgenda = can('ViewCalendarAgenda');
+  const viewStaffRequests = can('ViewStaffRequests');
 
   const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
 
-  const editPermissions = can("EditPermissions");
-  const editRooms = can("EditRooms");
-  const editConfiguration = can("EditConfiguration");
-  const editUsers = can("EditUsers");
+  const editPermissions = can('EditPermissions');
+  const editRooms = can('EditRooms');
+  const editConfiguration = can('EditConfiguration');
+  const editUsers = can('EditUsers');
 
   const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
 
-  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery("1");
+  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery('PENDING');
 
   return (
     <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
@@ -116,67 +116,33 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <SideBarGroup title="Application">
-          <SideBarPrimaryMenuItem title={"Availability"} icon={<NotebookPen />} url={"/availability"} />
-          <SideBarPrimaryMenuItem title={"My Bookings"} icon={<Send />} url={"/bookings/user-view"} />
+          <SideBarPrimaryMenuItem title={'Availability'} icon={<NotebookPen />} url={'/availability'} />
+          <SideBarPrimaryMenuItem title={'My Bookings'} icon={<Send />} url={'/bookings/user-view'} />
           {hasCalendarAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={true} title={"Calendar"} icon={<Calendar />}>
+            <SideBarCollapsibleGroup isOpenByDefault={true} title={'Calendar'} icon={<Calendar />}>
               {viewStaffRequests && (
                 <SideBarSubMenuItem
-                  title={"Requests"}
-                  url={"/bookings/user-requests"}
+                  title={'Requests'}
+                  url={'/bookings/user-requests' + navigateURL(dateValue, 'day')}
                   iconName="circle-question-mark"
-                  rightIndicator={
-                    <BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : "-"}</BadgeColored>
-                  }
+                  rightIndicator={<BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : '-'}</BadgeColored>}
                 />
               )}
               {viewAgenda && (
-                <SideBarSubMenuItem
-                  title={"Agenda View"}
-                  url={"/calendar" + navigateURL(dateValue, "agenda")}
-                  iconName="calendar-range"
-                />
+                <SideBarSubMenuItem title={'Agenda View'} url={'/calendar' + navigateURL(dateValue, 'agenda')} iconName="calendar-range" />
               )}
-              {viewDay && (
-                <SideBarSubMenuItem
-                  title={"Day View"}
-                  url={"/calendar" + navigateURL(dateValue, "day")}
-                  iconName="list"
-                />
-              )}
-              {viewWeek && (
-                <SideBarSubMenuItem
-                  title={"Week View"}
-                  url={"/calendar" + navigateURL(dateValue, "week")}
-                  iconName="columns"
-                />
-              )}
-              {viewMonth && (
-                <SideBarSubMenuItem
-                  title={"Month View"}
-                  url={"/calendar" + navigateURL(dateValue, "month")}
-                  iconName="grid-2x2"
-                />
-              )}
-              {viewYear && (
-                <SideBarSubMenuItem
-                  title={"Year View"}
-                  url={"/calendar" + navigateURL(dateValue, "year")}
-                  iconName="grid-3x3"
-                />
-              )}
+              {viewDay && <SideBarSubMenuItem title={'Day View'} url={'/calendar' + navigateURL(dateValue, 'day')} iconName="list" />}
+              {viewWeek && <SideBarSubMenuItem title={'Week View'} url={'/calendar' + navigateURL(dateValue, 'week')} iconName="columns" />}
+              {viewMonth && <SideBarSubMenuItem title={'Month View'} url={'/calendar' + navigateURL(dateValue, 'month')} iconName="grid-2x2" />}
+              {viewYear && <SideBarSubMenuItem title={'Year View'} url={'/calendar' + navigateURL(dateValue, 'year')} iconName="grid-3x3" />}
             </SideBarCollapsibleGroup>
           )}
           {hasSettingsAccess && (
-            <SideBarCollapsibleGroup isOpenByDefault={false} title={"Settings"} icon={<Settings2 />}>
-              {editRooms && <SideBarSubMenuItem title={"Manage Rooms"} url={"/settings/manage-rooms"} />}
-              {editPermissions && (
-                <SideBarSubMenuItem title={"Manage Permissions"} url={"/settings/manage-permissions"} />
-              )}
-              {editConfiguration && (
-                <SideBarSubMenuItem title={"Manage Configuration"} url={"/settings/manage-configuration"} />
-              )}
-              {editUsers && <SideBarSubMenuItem title={"Manage Users"} url={"/settings/manage-users"} />}
+            <SideBarCollapsibleGroup isOpenByDefault={false} title={'Settings'} icon={<Settings2 />}>
+              {editRooms && <SideBarSubMenuItem title={'Manage Rooms'} url={'/settings/manage-rooms'} />}
+              {editPermissions && <SideBarSubMenuItem title={'Manage Permissions'} url={'/settings/manage-permissions'} />}
+              {editConfiguration && <SideBarSubMenuItem title={'Manage Configuration'} url={'/settings/manage-configuration'} />}
+              {editUsers && <SideBarSubMenuItem title={'Manage Users'} url={'/settings/manage-users'} />}
             </SideBarCollapsibleGroup>
           )}
         </SideBarGroup>
@@ -184,7 +150,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SideBarGroup title="">
-          <SideBarPrimaryMenuItem title={"Support"} icon={<LifeBuoy />} url={"#"} />
+          <SideBarPrimaryMenuItem title={'Support'} icon={<LifeBuoy />} url={'#'} />
         </SideBarGroup>
       </SidebarFooter>
     </Sidebar>
@@ -192,7 +158,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 }
 
 export function SideBarHeaderGroup({
-  imagePath = "/images/menu_logo.svg",
+  imagePath = '/images/menu_logo.svg',
   altText,
   title,
   subtitle,

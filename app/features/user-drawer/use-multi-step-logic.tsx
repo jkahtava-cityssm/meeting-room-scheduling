@@ -1,22 +1,16 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
-import { CombinedSchema, CombinedUserSchema } from "./drawer-schema.validator";
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod/v4';
+import { CombinedSchema, CombinedUserSchema } from './drawer-schema.validator';
 
-import { isFormValid, isStepValid } from "./lib/form-helper";
-import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from "./types";
-import { IUser } from "@/lib/schemas";
-import { getFormDefaults, mapUserToSchema } from "./lib/default-util";
+import { isFormValid, isStepValid } from './lib/form-helper';
+import { ButtonActions, FormStatus, FormStep, MultiStepFormContextProps } from './types';
+import { IUser } from '@/lib/schemas';
+import { getFormDefaults, mapUserToSchema } from './lib/default-util';
 
-import { useStepNavigation } from "./use-step-navigation";
-import {
-  SUserPUT,
-  useUserQuery,
-  useUsersMutationCreate,
-  useUsersMutationDelete,
-  useUsersMutationUpsert,
-} from "@/lib/services/users";
+import { useStepNavigation } from './use-step-navigation';
+import { SUserPUT, useUserQuery, useUsersMutationCreate, useUsersMutationDelete, useUsersMutationUpsert } from '@/lib/services/users';
 
 export const useMultiStepFormLogic = (props: {
   user?: IUser;
@@ -42,7 +36,7 @@ export const useMultiStepFormLogic = (props: {
   const methods = useForm<CombinedSchema>({
     resolver: zodResolver(CombinedUserSchema),
     defaultValues: defaultFormValues,
-    mode: "onChange",
+    mode: 'onChange',
   });
 
   useEffect(() => {
@@ -50,28 +44,28 @@ export const useMultiStepFormLogic = (props: {
       originRef.current = document.activeElement as HTMLElement;
 
       methods.reset(defaultFormValues);
-      setStatus(defaultFormValues.userId === "0" ? "New" : "Read");
+      setStatus(defaultFormValues.userId === '0' ? 'New' : 'Read');
     }
   }, [props.isOpen, methods, defaultFormValues]);
 
   const { data: collectedEvent, isFetching, refetch } = useUserQuery(Number(defaultFormValues.userId), false);
 
-  const [status, setStatus] = useState<FormStatus>(defaultFormValues.userId === "0" ? "New" : "Read");
+  const [status, setStatus] = useState<FormStatus>(defaultFormValues.userId === '0' ? 'New' : 'Read');
 
   const formStatus = useMemo(
     () => ({
-      isNew: status === "New",
-      isEditing: status === "Edit",
-      isReadOnly: status === "Read",
-      isLoading: status === "Loading" || isFetching,
+      isNew: status === 'New',
+      isEditing: status === 'Edit',
+      isReadOnly: status === 'Read',
+      isLoading: status === 'Loading' || isFetching,
       isSaving: mutationCreate.isPending || mutationUpsert.isPending,
       isDeleting: mutationDelete.isPending,
-      isDisabled: status === "Loading" || mutationCreate.isPending || mutationUpsert.isPending,
+      isDisabled: status === 'Loading' || mutationCreate.isPending || mutationUpsert.isPending,
     }),
     [status, isFetching, mutationCreate.isPending, mutationUpsert.isPending, mutationDelete.isPending],
   );
 
-  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps["dialogConfig"]>(null);
+  const [dialogConfig, setDialogConfig] = useState<MultiStepFormContextProps['dialogConfig']>(null);
 
   const validateStep = async (index: number) => {
     const result = await isStepValid(props.formSteps[index], methods);
@@ -88,16 +82,16 @@ export const useMultiStepFormLogic = (props: {
       const parsedData = mapUserToSchema(collectedEvent);
       methods.reset(parsedData);
 
-      setStatus("Edit");
+      setStatus('Edit');
     }
     if (formStatus.isLoading && !isFetching && !collectedEvent) {
-      setStatus("Read");
+      setStatus('Read');
     }
   }, [collectedEvent, isFetching, methods, formStatus.isLoading]);
 
   const resetForm = useCallback(() => {
     methods.reset(defaultFormValues);
-    setStatus(defaultFormValues.userId === "0" ? "New" : "Read");
+    setStatus(defaultFormValues.userId === '0' ? 'New' : 'Read');
     resetNavigation();
     props.onClose();
   }, [defaultFormValues, methods, props, resetNavigation]);
@@ -108,13 +102,13 @@ export const useMultiStepFormLogic = (props: {
 
     if (!formState.status) {
       setDialogConfig({
-        variant: "info",
-        title: "Submission Incomplete",
-        description: "Errors have been identified, and they must be fixed before submission can occur",
-        confirmText: "Continue Editing",
+        variant: 'info',
+        title: 'Submission Incomplete',
+        description: 'Errors have been identified, and they must be fixed before submission can occur',
+        confirmText: 'Continue Editing',
         errors: formState.errorList,
         showConfirm: true,
-        confirmAction: "none",
+        confirmAction: 'none',
       });
 
       return;
@@ -138,15 +132,15 @@ export const useMultiStepFormLogic = (props: {
   };
 
   const handleOpenChange = useCallback(() => {
-    if (methods.formState.isDirty && status !== "Read") {
+    if (methods.formState.isDirty && status !== 'Read') {
       setDialogConfig({
-        variant: "warning",
-        title: "Unsaved Changes",
-        description: "You have unsaved changes. Are you sure you want to close?",
-        confirmText: "Dismiss Form",
-        cancelText: "Continue Editing",
-        confirmAction: "dismiss",
-        cancelAction: "none",
+        variant: 'warning',
+        title: 'Unsaved Changes',
+        description: 'You have unsaved changes. Are you sure you want to close?',
+        confirmText: 'Dismiss Form',
+        cancelText: 'Continue Editing',
+        confirmAction: 'dismiss',
+        cancelAction: 'none',
         showConfirm: true,
         showCancel: true,
       });
@@ -160,26 +154,26 @@ export const useMultiStepFormLogic = (props: {
 
     if (data && !isError) {
       methods.reset(mapUserToSchema(data));
-      setStatus("Edit");
+      setStatus('Edit');
       return;
     }
 
     if (isError || !data) {
-      setStatus("Read");
+      setStatus('Read');
       setDialogConfig({
-        variant: "warning",
-        title: "Edit Failed",
+        variant: 'warning',
+        title: 'Edit Failed',
         description: "We couldn't retrieve the latest event details. Please try again later.",
-        confirmText: "Close",
+        confirmText: 'Close',
         showConfirm: true,
-        confirmAction: "none",
+        confirmAction: 'none',
       });
     }
   }, [methods, refetch]);
 
   const onDelete = useCallback(() => {
     //If ID === 0, this is a new record, and does not exist in the DB
-    if (defaultFormValues.userId === "0") {
+    if (defaultFormValues.userId === '0') {
       resetForm();
     } else {
       mutationDelete.mutate(Number(defaultFormValues.userId), {

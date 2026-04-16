@@ -1,18 +1,18 @@
-import { cva } from "class-variance-authority";
-import { sharedColorVariants, sharedIconBackgrounVariants } from "@/lib/theme/colorVariants";
-import { cn } from "@/lib/utils";
+import { cva } from 'class-variance-authority';
+import { sharedColorVariants, sharedIconBackgrounVariants } from '@/lib/theme/colorVariants';
+import { cn } from '@/lib/utils';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { CalendarRange, CalendarSync, Clock, Hourglass, MapPin, Text } from "lucide-react";
+import { CalendarRange, CalendarSync, Clock, Hourglass, MapPin, Text } from 'lucide-react';
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { TColors } from "@/lib/types";
+import { Skeleton } from '@/components/ui/skeleton';
+import { TColors } from '@/lib/types';
 
 export default function SkeletonBookingList() {
   const breakpoints = true
-    ? "w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)"
-    : "w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)";
+    ? 'w-(--public-calendar-sidebar-w-min) sm:w-(--public-calendar-sidebar-w-sm) lg:w-(--public-calendar-sidebar-w-lg) xl:w-(--public-calendar-sidebar-w-xl)'
+    : 'w-(--public-calendar-w-min) sm:w-(--public-calendar-w-sm) lg:w-(--public-calendar-w-lg)';
 
   return (
     <div className={`flex flex-1 flex-col ${breakpoints}`}>
@@ -31,41 +31,41 @@ export function SectionLayoutSkeleton() {
   //{format(date, "EEEE, MMMM d, yyyy")
   return (
     <div className="border-b">
-      <div className="sticky top-0 bg-accent text-accent p-2  shadow-sm  h-10 z-10" data-date={"formattedDate"}>
-        <Skeleton className={"w-60 h-5.5 bg-primary/25"}></Skeleton>
+      <div className="sticky top-0 bg-accent text-accent p-2  shadow-sm  h-10 z-10" data-date={'formattedDate'}>
+        <Skeleton className={'w-60 h-5.5 bg-primary/25'}></Skeleton>
       </div>
 
       <div className="grid">
-        <RoomSectionSkeleton color={"emerald"}></RoomSectionSkeleton>
-        <RoomSectionSkeleton color={"blue"}></RoomSectionSkeleton>
-        <RoomSectionSkeleton color={"indigo"}></RoomSectionSkeleton>
+        <RoomSectionSkeleton color={'emerald'}></RoomSectionSkeleton>
+        <RoomSectionSkeleton color={'blue'}></RoomSectionSkeleton>
+        <RoomSectionSkeleton color={'indigo'}></RoomSectionSkeleton>
       </div>
     </div>
   );
 }
 
 function RoomSectionSkeleton({ color }: { color: TColors }) {
-  const roomTitleVariant = cva("sticky z-5 top-10 p-2  shadow-sm h-10 border-2 rounded-b-sm", {
+  const roomTitleVariant = cva('sticky z-5 top-10 p-2  shadow-sm h-10 border-2 rounded-b-sm', {
     variants: {
       color: sharedColorVariants,
     },
     defaultVariants: {
-      color: "slate",
+      color: 'slate',
     },
   });
-  const roomTest = cva("", {
+  const roomTest = cva('', {
     variants: {
       color: sharedIconBackgrounVariants,
     },
     defaultVariants: {
-      color: "slate",
+      color: 'slate',
     },
   });
 
   return (
     <div className="w-full">
       <div className={roomTitleVariant({ color: color })}>
-        <Skeleton className={cn("w-60 h-5.5 ", roomTest({ color: color }))}></Skeleton>
+        <Skeleton className={cn('w-60 h-5.5 ', roomTest({ color: color }))}></Skeleton>
       </div>
       <div className="flex flex-wrap gap-4 p-4 ">
         <CardSkeleton></CardSkeleton>

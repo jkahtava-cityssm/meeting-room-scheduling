@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import { parse } from "date-fns";
+import { parse } from 'date-fns';
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from 'react';
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from 'next/navigation';
 
-import { DateControls, DateControlSkeleton } from "./public-date-control";
-import { RoomCategoryLayout } from "./public-room-filter";
+import { DateControls, DateControlSkeleton } from './public-date-control';
+import { RoomCategoryLayout } from './public-room-filter';
 
-import { Button } from "@/components/ui/button";
-import { FilterIcon, LucideCalendarDays, LucideDoorClosedLocked, LucideDoorOpen } from "lucide-react";
-import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
+import { Button } from '@/components/ui/button';
+import { FilterIcon, LucideCalendarDays, LucideDoorClosedLocked, LucideDoorOpen } from 'lucide-react';
+import { ButtonGroup, ButtonGroupSeparator } from '@/components/ui/button-group';
 
-import { CalendarScrollContainerPublic } from "../components/calendar-scroll-container";
-import { CalendarScrollColumnPublic } from "../components/calendar-scroll-column";
-import { useRoomFiltering } from "./use-room-filtering";
-import { usePublicCalendarEvents } from "../webworkers/use-calendar-public-events";
-import { RoomCategorySkeleton } from "./public-room-filter-skeleton";
-import { Skeleton } from "@/components/ui/skeleton";
-import { usePublicCalendar } from "@/contexts/CalendarProviderPublic";
-import { CalendarContainerSkeleton } from "../components/calendar-scroll-container-skeleton";
-import { GenericError } from "../../../../components/shared/generic-error";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { CalendarScrollContainerPublic } from '../components/calendar-scroll-container';
+import { CalendarScrollColumnPublic } from '../components/calendar-scroll-column';
+import { useRoomFiltering } from './use-room-filtering';
+import { usePublicCalendarEvents } from '../webworkers/use-calendar-public-events';
+import { RoomCategorySkeleton } from './public-room-filter-skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usePublicCalendar } from '@/contexts/CalendarProviderPublic';
+import { CalendarContainerSkeleton } from '../components/calendar-scroll-container-skeleton';
+import { GenericError } from '../../../../components/shared/generic-error';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 function getViewDate(dateParam: string | null) {
-  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, "yyyy-MM-dd", new Date());
+  return dateParam === null ? removeTimeFromDate(new Date()) : parse(dateParam, 'yyyy-MM-dd', new Date());
 }
 
 function removeTimeFromDate(date: Date) {
@@ -35,33 +35,18 @@ function removeTimeFromDate(date: Date) {
 
 export function CalendarPublicView() {
   const searchParams = useSearchParams();
-  const dateParam = searchParams.get("selectedDate");
+  const dateParam = searchParams.get('selectedDate');
 
   const dateValue = useMemo(() => {
     return getViewDate(dateParam);
   }, [dateParam]);
 
-  const {
-    interval,
-    visibleRooms,
-    visibleHours,
-    fallbackHours,
-    configurationError,
-    roomError,
-    isConfigurationPending,
-    isRoomsPending,
-  } = usePublicCalendar();
+  const { interval, visibleRooms, visibleHours, fallbackHours, configurationError, roomError, isConfigurationPending, isRoomsPending } =
+    usePublicCalendar();
 
-  const roomIds = useMemo(
-    () => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []),
-    [visibleRooms],
-  );
+  const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
 
-  const {
-    result,
-    isLoading: isEventsLoading,
-    error: eventError,
-  } = usePublicCalendarEvents("DAY", dateValue, roomIds, visibleHours);
+  const { result, isLoading: isEventsLoading, error: eventError } = usePublicCalendarEvents('DAY', dateValue, roomIds, visibleHours);
 
   const { checkedRooms, debouncedRooms, toggleRoom, filterByProjector, selectAll } = useRoomFiltering(visibleRooms);
 
@@ -118,11 +103,7 @@ export function CalendarPublicView() {
             <RoomCategorySkeleton />
           ) : (
             <ScrollArea className="w-full flex-1 min-h-0" type="always">
-              <RoomCategoryLayout
-                checkedRooms={checkedRooms}
-                onToggleRoom={toggleRoom}
-                rooms={visibleRooms || []}
-              ></RoomCategoryLayout>
+              <RoomCategoryLayout checkedRooms={checkedRooms} onToggleRoom={toggleRoom} rooms={visibleRooms || []}></RoomCategoryLayout>
             </ScrollArea>
           )}
         </div>
@@ -132,11 +113,7 @@ export function CalendarPublicView() {
       <div className="flex-1 flex flex-col min-w-0 gap-2 min-h-0 ">
         {/* HEADER: Date Nav stacks middle item on top if narrow */}
 
-        {isMounting ? (
-          <DateControlSkeleton selectedDate={dateValue} />
-        ) : (
-          <DateControls selectedDate={dateValue}></DateControls>
-        )}
+        {isMounting ? <DateControlSkeleton selectedDate={dateValue} /> : <DateControls selectedDate={dateValue}></DateControls>}
         {/* MAIN PANEL: Grows to take space */}
 
         {noRoomData || configurationError || eventError ? (
@@ -153,8 +130,8 @@ export function CalendarPublicView() {
                     : configurationError
                       ? configurationError.message
                       : noRoomData
-                        ? "No Rooms Found"
-                        : "Unknown Cause"}
+                        ? 'No Rooms Found'
+                        : 'Unknown Cause'}
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>{roomError && <GenericError error={roomError} />}</EmptyContent>

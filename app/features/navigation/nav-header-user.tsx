@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { CheckSquare, ChevronDown, RefreshCw, SunMoon } from "lucide-react";
+import { CheckSquare, ChevronDown, RefreshCw, SunMoon } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,24 +10,24 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { SignOutMenuItem } from "../../../components/sign-out-button";
-import { Skeleton } from "../../../components/ui/skeleton";
-import { Switch } from "../../../components/ui/switch";
-import { useTheme } from "next-themes";
-import { IUser } from "./nav-header";
-import { authClient, getSessionRoles, Session, useVerifySessionRequirement } from "@/lib/auth-client";
-import { useRevalidateAndInvalidate } from "@/hooks/use-revalidate-cache";
-import { GroupedPermissionRequirement } from "@/lib/auth-permission-checks";
-import { RoleSelect } from "@/app/features/roles/role-select";
-import { useState } from "react";
-import { Button } from "../../../components/ui/button";
-import { fetchDELETE, fetchPOST } from "@/lib/fetch";
-import { useRouter } from "next/navigation";
+} from '@/components/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { SignOutMenuItem } from '../../../components/sign-out-button';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { Switch } from '../../../components/ui/switch';
+import { useTheme } from 'next-themes';
+import { IUser } from './nav-header';
+import { authClient, getSessionRoles, Session, useVerifySessionRequirement } from '@/lib/auth-client';
+import { useRevalidateAndInvalidate } from '@/hooks/use-revalidate-cache';
+import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
+import { RoleSelect } from '@/app/features/roles/role-select';
+import { useState } from 'react';
+import { Button } from '../../../components/ui/button';
+import { fetchDELETE, fetchPOST } from '@/lib/fetch';
+import { useRouter } from 'next/navigation';
 
 const PAGE_PERMISSIONS = {
-  IsAdmin: { type: "role", role: "Admin" },
+  IsAdmin: { type: 'role', role: 'Admin' },
 } as const satisfies GroupedPermissionRequirement;
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
@@ -50,7 +50,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
   const listRoles = getSessionRoles(session);
 
   const handleAddImpersonation = async (roleId: string) => {
-    const result = await fetchPOST("/api/admin/impersonate", { roleId: roleId });
+    const result = await fetchPOST('/api/admin/impersonate', { roleId: roleId });
     const session = await authClient.getSession({
       query: {
         disableCookieCache: true,
@@ -62,7 +62,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
   };
 
   const handleRemoveImpersonation = async () => {
-    const result = await fetchDELETE("/api/admin/impersonate");
+    const result = await fetchDELETE('/api/admin/impersonate');
     const session = await authClient.getSession({
       query: {
         disableCookieCache: true,
@@ -89,20 +89,13 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="w-(--radix-dropdown-menu-trigger-width) min-w-56 max-w-75 rounded-lg"
-            >
+            <SidebarMenuButton size="lg" className="w-(--radix-dropdown-menu-trigger-width) min-w-56 max-w-75 rounded-lg">
               {
                 //rounded-2xl
               }
               <Avatar className="h-8 w-8 border-2">
                 {user.image ? (
-                  <AvatarImage
-                    src={user.image}
-                    alt={user.name}
-                    className={resolvedTheme === "dark" ? "mask-radial-from-50%" : ""}
-                  />
+                  <AvatarImage src={user.image} alt={user.name} className={resolvedTheme === 'dark' ? 'mask-radial-from-50%' : ''} />
                 ) : (
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 )}
@@ -116,7 +109,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "bottom"}
+            side={isMobile ? 'bottom' : 'bottom'}
             align="end"
             sideOffset={4}
           >
@@ -124,15 +117,15 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
               <DropdownMenuItem
                 onClick={(event) => {
                   event.preventDefault();
-                  setTheme(resolvedTheme === "dark" ? "light" : "dark");
+                  setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
                 }}
               >
                 <SunMoon />
                 Dark Mode
                 <Switch
-                  checked={resolvedTheme === "dark"}
+                  checked={resolvedTheme === 'dark'}
                   onClick={() => {
-                    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+                    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
                   }}
                 ></Switch>
               </DropdownMenuItem>
@@ -140,12 +133,12 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
             <DropdownMenuSeparator />
             <SignOutMenuItem />
 
-            {process.env.NEXT_PUBLIC_ENVIRONMENT === "development" && (
+            {process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' && (
               <>
                 <DropdownMenuSeparator />
                 <div className="px-3 py-2 text-xs text-muted-foreground">
                   <div>
-                    <span className="font-medium">Roles:</span> {listRoles?.join(", ")}
+                    <span className="font-medium">Roles:</span> {listRoles?.join(', ')}
                   </div>
                 </div>
               </>
@@ -156,14 +149,14 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                 <DropdownMenuSeparator />
                 <div className="flex flex-row gap-1">
                   <RoleSelect
-                    selectedRoleId={selectedRoleId ? selectedRoleId : ""}
+                    selectedRoleId={selectedRoleId ? selectedRoleId : ''}
                     onRoleChange={setSelectedRoleId}
-                    excludeRoleNames={["Admin"]}
-                    className={"w-full"}
+                    excludeRoleNames={['Admin']}
+                    className={'w-full'}
                   ></RoleSelect>
                   <Button
                     disabled={!selectedRoleId}
-                    onClick={() => handleAddImpersonation(selectedRoleId ? selectedRoleId : "")}
+                    onClick={() => handleAddImpersonation(selectedRoleId ? selectedRoleId : '')}
                     className=" bg-transparent aria-invalid:hover:text-destructive dark:aria-invalid:hover:bg-destructive/10 dark:bg-input/30 dark:hover:bg-input/50 text-muted-foreground border-input border hover:bg-accent   "
                   >
                     <CheckSquare />
@@ -195,7 +188,7 @@ export default function RefreshMenuItem() {
     const result = await revalidateAndInvalidate();
     if (result.success) {
     } else {
-      console.error("Error:", result.error);
+      console.error('Error:', result.error);
     }
   };
 

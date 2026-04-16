@@ -1,5 +1,5 @@
-import { GenericComboBox } from "@/components/shared/generic-combobox";
-import { useRolesQuery } from "@/lib/services/permissions";
+import { GenericComboBox } from '@/components/shared/generic-combobox';
+import { useRolesQuery } from '@/lib/services/permissions';
 
 export function RoleComboBox({
   selectedRoleId,
@@ -28,7 +28,7 @@ export function RoleComboBox({
       selectedValue={selectedRoleId}
       isLoading={isPending}
       isError={!!error}
-      loadingLabel={error ? "Error: Collecting Roles" : "Collecting Roles"}
+      loadingLabel={error ? 'Error: Collecting Roles' : 'Collecting Roles'}
       onSelect={(id, label) => {
         onRoleChange(id, label);
       }}
@@ -36,9 +36,9 @@ export function RoleComboBox({
       getLabel={(role) => role.name}
       className={className}
       isDisabled={isDisabled}
-      placeholderText={"Select Role"}
-      searchText={"Search Roles"}
-      noResultText={"No Roles Found"}
+      placeholderText={'Select Role'}
+      searchText={'Search Roles'}
+      noResultText={'No Roles Found'}
       dataInvalid={dataInvalid}
     />
   );

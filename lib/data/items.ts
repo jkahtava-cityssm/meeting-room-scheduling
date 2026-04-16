@@ -1,5 +1,5 @@
-import { prisma } from "@/prisma";
-import { Prisma } from "@prisma/client";
+import { prisma } from '@/prisma';
+import { Prisma } from '@prisma/client';
 
 const ITEM_SELECT = {
   itemId: true,
@@ -12,7 +12,7 @@ export async function findManyItems(where?: Prisma.ItemWhereInput, tx: Prisma.Tr
   const Items = await tx.item.findMany({
     where,
     select: ITEM_SELECT,
-    orderBy: [{ itemId: "asc" }],
+    orderBy: [{ itemId: 'asc' }],
   });
 
   return Items;

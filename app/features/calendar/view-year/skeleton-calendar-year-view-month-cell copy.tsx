@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { format, getDaysInMonth, startOfMonth } from "date-fns";
+import { Skeleton } from '@/components/ui/skeleton';
+import { format, getDaysInMonth, startOfMonth } from 'date-fns';
 
 function getDays(selectedDate: Date) {
   const totalDays = getDaysInMonth(selectedDate);
@@ -12,12 +12,12 @@ function getDays(selectedDate: Date) {
 }
 
 export function YearViewMonthSkeleton({ date }: { date: Date }) {
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div className="flex flex-col">
       <Skeleton className="w-full h-10 rounded-t-lg rounded-b-none border px-3 py-2 text-sm font-semibold text-center">
-        {format(date, "MMMM")}
+        {format(date, 'MMMM')}
       </Skeleton>
       <div className="flex-1 space-y-2 rounded-b-lg border border-t-0 p-3">
         <div className="grid grid-cols-7 gap-x-0.5 text-center">

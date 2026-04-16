@@ -1,26 +1,26 @@
-import { countEvents as countEventsDAL } from "@/lib/data/events";
+import { countEvents } from '@/lib/data/events';
 
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
 
-import { UTCDate } from "@date-fns/utc";
+import { UTCDate } from '@date-fns/utc';
 
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from "@/lib/api-helpers";
-import { guardRoute } from "@/lib/api-guard";
-import { format } from "date-fns";
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { guardRoute } from '@/lib/api-guard';
+import { format } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { IsPublic: { type: "role", role: "Public" } },
+    { IsPublic: { type: 'role', role: 'Public' } },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
 
-      const startDateParam = searchParams.get("startdate");
-      const endDateParam = searchParams.get("enddate");
-      const statusId = searchParams.get("statusId");
+      const startDateParam = searchParams.get('startdate');
+      const endDateParam = searchParams.get('enddate');
+      const statusKey = searchParams.get('statusKey');
 
-      if (!statusId) {
+      if (!statusKey) {
         return BadRequestMessage();
       }
 
@@ -31,16 +31,16 @@ export async function GET(request: NextRequest) {
             }
           : {};
 
-      const whereClause: import("@prisma/client").Prisma.EventWhereInput = {
-        AND: [timeClause, { statusId: Number(statusId) }],
+      const whereClause: import('@prisma/client').Prisma.EventWhereInput = {
+        AND: [timeClause, { status: { key: statusKey } }],
       };
-      const total = await countEventsDAL(whereClause);
+      const total = await countEvents(whereClause);
 
       if (total === undefined || total === null) {
         return InternalServerErrorMessage();
       }
 
-      return SuccessMessage("Collected Total Events", { total });
+      return SuccessMessage('Collected Total Events', { total });
     },
   );
 }

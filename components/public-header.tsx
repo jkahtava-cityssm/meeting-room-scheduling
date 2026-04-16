@@ -1,5 +1,5 @@
-"use client";
-import React, { useState } from "react";
+'use client';
+import React, { useState } from 'react';
 
 interface HeaderProps {
   left?: React.ReactNode;
@@ -16,9 +16,7 @@ export function PublicHeader({ left, title, right, children }: HeaderProps) {
       <header className="bg-background sticky top-0 z-50 w-full border-b">
         {/* Floating title behind */}
         <div className="absolute inset-0 flex justify-center items-center pointer-events-none z-0">
-          <h1 className="truncate max-w-[200px] text-lg font-bold xs:text-2xl text-center pointer-events-auto xs:max-w-full">
-            {title}
-          </h1>
+          <h1 className="truncate max-w-[200px] text-lg font-bold xs:text-2xl text-center pointer-events-auto xs:max-w-full">{title}</h1>
         </div>
 
         {/* Foreground layout */}

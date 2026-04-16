@@ -1,18 +1,18 @@
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
 
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef } from 'react';
 
-import { navigateURL } from "@/lib/helpers";
+import { navigateURL } from '@/lib/helpers';
 
-import { addMonths, addYears, format, isSameMonth, parse, startOfMonth, startOfYear } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { addMonths, addYears, format, isSameMonth, parse, startOfMonth, startOfYear } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import MonthPickerNavigation from "./MonthPickerNavigation";
-import { date } from "zod";
-import MonthGrid from "./MonthGrid";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import MonthPickerNavigation from './MonthPickerNavigation';
+import { date } from 'zod';
+import MonthGrid from './MonthGrid';
 
 export default function CalendarMonthPicker({ selectedDate }: { selectedDate: Date }) {
   const [currentDate, setCurrentDate] = React.useState<Date>(selectedDate);
@@ -24,13 +24,13 @@ export default function CalendarMonthPicker({ selectedDate }: { selectedDate: Da
   const { push } = useRouter();
 
   const handleNavigate = (date: Date) => {
-    push(navigateURL(date, "month"));
+    push(navigateURL(date, 'month'));
   };
 
-  const navigateBlock = (direction: "prev" | "next") => {
-    setCurrentDate(addYears(currentDate, direction === "prev" ? -1 : 1));
+  const navigateBlock = (direction: 'prev' | 'next') => {
+    setCurrentDate(addYears(currentDate, direction === 'prev' ? -1 : 1));
     setTimeout(() => {
-      if (direction === "prev") lastMonthRef.current?.focus();
+      if (direction === 'prev') lastMonthRef.current?.focus();
       else firstMonthRef.current?.focus();
     }, 0);
   };
@@ -42,17 +42,11 @@ export default function CalendarMonthPicker({ selectedDate }: { selectedDate: Da
 
   return (
     <div className="flex flex-col">
-      <MonthPickerNavigation
-        currentDate={currentDate}
-        onMonthChange={(date: Date) => setCurrentDate(date)}
-        onNavigate={navigateBlock}
-      />
+      <MonthPickerNavigation currentDate={currentDate} onMonthChange={(date: Date) => setCurrentDate(date)} onNavigate={navigateBlock} />
 
       <div className="flex-1 mx-8 mb-3 min-h-65">
-        <div className="flex justify-center w-full mt-2">
-          <div className="text-xs font-medium text-muted-foreground h-4">Select Month</div>
-        </div>
         <MonthGrid
+          className={'pt-6'}
           monthList={monthList}
           selectedMonth={selectedDate}
           currentMonth={currentDate}

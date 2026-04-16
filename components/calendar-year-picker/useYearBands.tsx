@@ -1,16 +1,16 @@
-import { useMemo } from "react";
+import { useMemo } from 'react';
 
 export function useYearBands(selectedYear: number, yearsPerBand: number = 16, totalBandsToGenerate: number = 9) {
   if (yearsPerBand <= 0) {
-    throw new Error("yearsPerBand must be greater than 0");
+    throw new Error('yearsPerBand must be greater than 0');
   }
 
   if (selectedYear <= 0) {
-    throw new Error("selectedYear must be greater than 0");
+    throw new Error('selectedYear must be greater than 0');
   }
 
   if (totalBandsToGenerate <= 0) {
-    throw new Error("totalBandsToGenerate must be greater than 0");
+    throw new Error('totalBandsToGenerate must be greater than 0');
   }
 
   const bands = useMemo(() => {
@@ -29,7 +29,7 @@ export function useYearBands(selectedYear: number, yearsPerBand: number = 16, to
   }, [bands, selectedYear]);
 
   const bandLabel = useMemo(() => {
-    return yearList.length ? `${yearList[0]} - ${yearList[yearList.length - 1]}` : "";
+    return yearList.length ? `${yearList[0]} - ${yearList[yearList.length - 1]}` : '';
   }, [yearList]);
 
   const getBandLabel = (band: number[]) => `${band[0]} - ${band[band.length - 1]}`;

@@ -1,17 +1,6 @@
-"use client";
-import { useMemo, useState } from "react";
-import {
-  ArrowDownAz,
-  ArrowUpAz,
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  Filter,
-  FilterX,
-  LoaderCircle,
-  LucideShieldUser,
-  X,
-} from "lucide-react";
+'use client';
+import { useMemo, useState } from 'react';
+import { ArrowDownAz, ArrowUpAz, ChevronDown, ChevronUp, Eye, Filter, FilterX, LoaderCircle, LucideShieldUser, X } from 'lucide-react';
 
 import {
   ColumnDef,
@@ -25,42 +14,42 @@ import {
   useReactTable,
   Column,
   createColumnHelper,
-} from "@tanstack/react-table";
+} from '@tanstack/react-table';
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 
-import { useUsersQuery } from "@/lib/services/users";
-import { cn } from "@/lib/utils";
+import { useUsersQuery } from '@/lib/services/users';
+import { cn } from '@/lib/utils';
 
-import React from "react";
-import { GenericError } from "../../../components/shared/generic-error";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import React from 'react';
+import { GenericError } from '../../../components/shared/generic-error';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
-import { getDistinctValuesByKey } from "@/lib/helpers";
-import { IUser } from "@/lib/schemas";
-import { useSharedUserDrawer } from "../user-drawer/drawer-context";
+import { getDistinctValuesByKey } from '@/lib/helpers';
+import { IUser } from '@/lib/schemas';
+import { useSharedUserDrawer } from '../user-drawer/drawer-context';
 
 const STATUS_OPTIONS = [
-  { label: "Active", value: "true" },
-  { label: "Disabled", value: "false" },
+  { label: 'Active', value: 'true' },
+  { label: 'Disabled', value: 'false' },
 ];
 
 const USER_TYPE_OPTIONS = [
-  { label: "Internal", value: "true" },
-  { label: "External", value: "false" },
+  { label: 'Internal', value: 'true' },
+  { label: 'External', value: 'false' },
 ];
 
 const EMAIL_OPTIONS = [
-  { label: "Allowed", value: "true" },
-  { label: "Blocked", value: "false" },
+  { label: 'Allowed', value: 'true' },
+  { label: 'Blocked', value: 'false' },
 ];
 
-const DEFAULT_FILTERS = [{ id: "isActive", value: ["true"] }];
+const DEFAULT_FILTERS = [{ id: 'isActive', value: ['true'] }];
 
 const MOBILE_COL_SPAN = 2;
 
@@ -70,7 +59,7 @@ export function UserLayout() {
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
-    { id: "isActive", value: ["true"] }, // Default filter
+    { id: 'isActive', value: ['true'] }, // Default filter
   ]);
 
   const [expanded, setExpanded] = useState({});
@@ -78,15 +67,13 @@ export function UserLayout() {
   const departmentList = useMemo(() => {
     if (!data) return [];
 
-    return getDistinctValuesByKey(data, "department").filter((dept): dept is string => !!dept);
+    return getDistinctValuesByKey(data, 'department').filter((dept): dept is string => !!dept);
   }, [data]);
 
   const isDefaultState = useMemo(() => {
     if (columnFilters.length !== DEFAULT_FILTERS.length) return false;
 
-    return columnFilters.every(
-      (f) => f.id === "isActive" && Array.isArray(f.value) && f.value[0] === "true" && f.value.length === 1,
-    );
+    return columnFilters.every((f) => f.id === 'isActive' && Array.isArray(f.value) && f.value[0] === 'true' && f.value.length === 1);
   }, [columnFilters]);
 
   const prevIsDefault = React.useRef(isDefaultState);
@@ -99,7 +86,7 @@ export function UserLayout() {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor("name", {
+      columnHelper.accessor('name', {
         size: 250,
         minSize: 250,
         maxSize: 250,
@@ -108,7 +95,7 @@ export function UserLayout() {
           <FilterHeader title="Name" column={column}>
             <DebouncedInput
               placeholder="Search names..."
-              value={(column.getFilterValue() as string) ?? ""}
+              value={(column.getFilterValue() as string) ?? ''}
               onChange={(value) => column.setFilterValue(value)}
             />
           </FilterHeader>
@@ -122,7 +109,7 @@ export function UserLayout() {
           </div>
         ),
       }),
-      columnHelper.accessor("department", {
+      columnHelper.accessor('department', {
         size: 200,
         header: ({ column }) => (
           <div className="hidden md:block ">
@@ -138,14 +125,14 @@ export function UserLayout() {
         },
         cell: ({ getValue }) => <div className="hidden md:block text-sm truncate">{getValue() as string}</div>,
       }),
-      columnHelper.accessor("email", {
+      columnHelper.accessor('email', {
         size: 250,
         header: ({ column }) => (
           <div className="hidden md:block ">
             <FilterHeader title="Email" column={column}>
               <DebouncedInput
                 placeholder="Search email..."
-                value={(column.getFilterValue() as string) ?? ""}
+                value={(column.getFilterValue() as string) ?? ''}
                 onChange={(value) => column.setFilterValue(value)}
               />
             </FilterHeader>
@@ -165,25 +152,23 @@ export function UserLayout() {
           </div>
         ),
       }),
-      columnHelper.accessor("externalId", {
+      columnHelper.accessor('externalId', {
         size: 120,
         header: ({ column }) => (
           <div className="hidden md:block justify-items-center">
             <FilterHeader title="Employee #" column={column}>
               <DebouncedInput
                 placeholder="Search numbers..."
-                value={(column.getFilterValue() as string) ?? ""}
+                value={(column.getFilterValue() as string) ?? ''}
                 onChange={(value) => column.setFilterValue(value)}
               />
             </FilterHeader>
           </div>
         ),
-        cell: ({ getValue }) => (
-          <div className="hidden md:block text-center text-sm truncate">{getValue() as string}</div>
-        ),
+        cell: ({ getValue }) => <div className="hidden md:block text-center text-sm truncate">{getValue() as string}</div>,
       }),
 
-      columnHelper.accessor("isActive", {
+      columnHelper.accessor('isActive', {
         size: 120,
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
@@ -191,10 +176,7 @@ export function UserLayout() {
           return (
             <div className="hidden md:block">
               <FilterHeader title="Status" center column={column}>
-                <CheckboxFilterGroup
-                  column={column}
-                  options={STATUS_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))}
-                />
+                <CheckboxFilterGroup column={column} options={STATUS_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))} />
               </FilterHeader>
             </div>
           );
@@ -209,13 +191,11 @@ export function UserLayout() {
         cell: ({ getValue }) => {
           const value = getValue();
           const option = STATUS_OPTIONS.find((opt) => opt.value === String(value));
-          return (
-            <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>
-          );
+          return <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>;
         },
       }),
 
-      columnHelper.accessor("isManaged", {
+      columnHelper.accessor('isManaged', {
         size: 120,
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
@@ -223,10 +203,7 @@ export function UserLayout() {
           return (
             <div className="hidden md:block">
               <FilterHeader title="Type" center column={column}>
-                <CheckboxFilterGroup
-                  column={column}
-                  options={USER_TYPE_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))}
-                />
+                <CheckboxFilterGroup column={column} options={USER_TYPE_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))} />
               </FilterHeader>
             </div>
           );
@@ -241,13 +218,11 @@ export function UserLayout() {
         cell: ({ getValue }) => {
           const value = getValue();
           const option = USER_TYPE_OPTIONS.find((opt) => opt.value === String(value));
-          return (
-            <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>
-          );
+          return <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>;
         },
       }),
 
-      columnHelper.accessor("emailEnabled", {
+      columnHelper.accessor('emailEnabled', {
         size: 120,
         header: ({ column }) => {
           const currentFilters = (column.getFilterValue() as string[]) ?? [];
@@ -255,10 +230,7 @@ export function UserLayout() {
           return (
             <div className="hidden md:block">
               <FilterHeader title="Email" center column={column}>
-                <CheckboxFilterGroup
-                  column={column}
-                  options={EMAIL_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))}
-                />
+                <CheckboxFilterGroup column={column} options={EMAIL_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))} />
               </FilterHeader>
             </div>
           );
@@ -273,14 +245,12 @@ export function UserLayout() {
         cell: ({ getValue }) => {
           const value = getValue();
           const option = EMAIL_OPTIONS.find((opt) => opt.value === String(value));
-          return (
-            <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>
-          );
+          return <div className="hidden md:block text-sm truncate text-center">{option ? option.label : String(value)}</div>;
         },
       }),
 
       columnHelper.display({
-        id: "action",
+        id: 'action',
 
         size: 100,
         minSize: 100,
@@ -290,7 +260,7 @@ export function UserLayout() {
         header: () => {
           const hasChanged = prevIsDefault.current !== isDefaultState;
 
-          const animationClasses = hasChanged ? "animate-in fade-in zoom-in duration-200" : "";
+          const animationClasses = hasChanged ? 'animate-in fade-in zoom-in duration-200' : '';
           return (
             <div className="flex items-center justify-center min-w-0 font-bold">
               {!isDefaultState ? (
@@ -299,7 +269,7 @@ export function UserLayout() {
                   size="sm"
                   onClick={() => setColumnFilters(DEFAULT_FILTERS)}
                   className={cn(
-                    "h-7 text-destructive hover:bg-destructive/10",
+                    'h-7 text-destructive hover:bg-destructive/10',
                     animationClasses, // Only applied when flipping into this state
                   )}
                 >
@@ -307,7 +277,7 @@ export function UserLayout() {
                   <span className="text-[10px] uppercase">Clear</span>
                 </Button>
               ) : (
-                <span className={cn("text-sm", animationClasses)}>Actions</span>
+                <span className={cn('text-sm', animationClasses)}>Actions</span>
               )}
             </div>
           );
@@ -355,10 +325,7 @@ export function UserLayout() {
   }
 
   return (
-    <div
-      className="flex flex-col h-full w-full rounded-lg border pr-4"
-      style={{ "--col-count": columnCount } as React.CSSProperties}
-    >
+    <div className="flex flex-col h-full w-full rounded-lg border pr-4" style={{ '--col-count': columnCount } as React.CSSProperties}>
       <div className=" gap-4 p-4  flex flex-row items-center justify-between border-b">
         <div className="flex items-center gap-3 h-14 font-bold text-xl">Users</div>
         <div className="flex items-center gap-2">
@@ -379,18 +346,18 @@ export function UserLayout() {
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header, index, headerCells) => {
-                    const isName = header.column.id === "name";
-                    const isAction = header.column.id === "action";
+                    const isName = header.column.id === 'name';
+                    const isAction = header.column.id === 'action';
                     const isLastScrollingCell = index === headerCells.length - 2;
                     return (
                       <th
                         key={header.id}
                         style={{ width: header.column.getSize() }}
                         className={cn(
-                          "px-4 py-2 text-left font-medium bg-background",
-                          isName && "sticky left-0 z-40 shadow-sticky-x",
-                          isAction && "sticky right-0 z-40 text-center  shadow-sticky-x",
-                          !isName && !isAction && ["hidden md:table-cell", !isLastScrollingCell && "border-r"],
+                          'px-4 py-2 text-left font-medium bg-background',
+                          isName && 'sticky left-0 z-40 shadow-sticky-x',
+                          isAction && 'sticky right-0 z-40 text-center  shadow-sticky-x',
+                          !isName && !isAction && ['hidden md:table-cell', !isLastScrollingCell && 'border-r'],
                         )}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -433,8 +400,8 @@ export function UserLayout() {
                   <React.Fragment key={row.id}>
                     <tr className="border-b hover:bg-muted group">
                       {row.getVisibleCells().map((cell, index, allCells) => {
-                        const isName = cell.column.id === "name";
-                        const isAction = cell.column.id === "action";
+                        const isName = cell.column.id === 'name';
+                        const isAction = cell.column.id === 'action';
                         const isLastScrollingCell = index === allCells.length - 2;
 
                         return (
@@ -442,10 +409,10 @@ export function UserLayout() {
                             key={cell.id}
                             style={{ width: cell.column.getSize() }}
                             className={cn(
-                              "px-4 py-2 align-middle truncate group-hover:bg-muted",
-                              isName && "sticky left-0 z-20  bg-background shadow-sticky-x",
-                              isAction && "sticky right-0 z-20  bg-background text-center shadow-sticky-x",
-                              !isName && !isAction && ["hidden md:table-cell", !isLastScrollingCell && "border-r"],
+                              'px-4 py-2 align-middle truncate group-hover:bg-muted',
+                              isName && 'sticky left-0 z-20  bg-background shadow-sticky-x',
+                              isAction && 'sticky right-0 z-20  bg-background text-center shadow-sticky-x',
+                              !isName && !isAction && ['hidden md:table-cell', !isLastScrollingCell && 'border-r'],
                             )}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -469,25 +436,13 @@ export function UserLayout() {
                               <span>{row.original.externalId}</span>
 
                               <span className="text-muted-foreground font-medium">Status:</span>
-                              <span>
-                                {STATUS_OPTIONS.find((option) => option.value === String(row.original.isActive))?.label}
-                              </span>
+                              <span>{STATUS_OPTIONS.find((option) => option.value === String(row.original.isActive))?.label}</span>
 
                               <span className="text-muted-foreground font-medium">User Type:</span>
-                              <span>
-                                {
-                                  USER_TYPE_OPTIONS.find((option) => option.value === String(row.original.isManaged))
-                                    ?.label
-                                }
-                              </span>
+                              <span>{USER_TYPE_OPTIONS.find((option) => option.value === String(row.original.isManaged))?.label}</span>
 
                               <span className="text-muted-foreground font-medium">Send Notifications</span>
-                              <span>
-                                {
-                                  EMAIL_OPTIONS.find((option) => option.value === String(row.original.emailEnabled))
-                                    ?.label
-                                }
-                              </span>
+                              <span>{EMAIL_OPTIONS.find((option) => option.value === String(row.original.emailEnabled))?.label}</span>
                             </div>
                           </div>
                         </td>
@@ -521,21 +476,16 @@ const FilterHeader = <TData, TValue>({
   const sortDir = column.getIsSorted();
 
   return (
-    <div className={cn("flex items-center font-bold", center && "justify-center")}>
-      <Button
-        variant="link"
-        size="sm"
-        className="h-7 px-2 font-semibold gap-1"
-        onClick={() => column.toggleSorting(sortDir === "asc")}
-      >
+    <div className={cn('flex items-center font-bold', center && 'justify-center')}>
+      <Button variant="link" size="sm" className="h-7 px-2 font-semibold gap-1" onClick={() => column.toggleSorting(sortDir === 'asc')}>
         {title}
-        {sortDir === "asc" && <ArrowDownAz className="h-4 w-4" />}
-        {sortDir === "desc" && <ArrowUpAz className="h-4 w-4" />}
+        {sortDir === 'asc' && <ArrowDownAz className="h-4 w-4" />}
+        {sortDir === 'desc' && <ArrowUpAz className="h-4 w-4" />}
       </Button>
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className={cn("h-7 w-7", isFiltered && "text-primary")}>
+          <Button variant="ghost" size="icon" className={cn('h-7 w-7', isFiltered && 'text-primary')}>
             {isFiltered ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
           </Button>
         </PopoverTrigger>
@@ -564,7 +514,7 @@ function DebouncedInput({
   value: string;
   onChange: (value: string) => void;
   debounce?: number;
-} & Omit<React.ComponentProps<"input">, "onChange">) {
+} & Omit<React.ComponentProps<'input'>, 'onChange'>) {
   const [localValue, setLocalValue] = useState(value);
 
   const onChangeRef = React.useRef(onChange);
@@ -587,13 +537,7 @@ function DebouncedInput({
 }
 
 // 1. Create a dedicated Filter component
-const CheckboxFilterGroup = <TData, TValue>({
-  column,
-  options,
-}: {
-  column: Column<TData, TValue>;
-  options: { label: string; value: string }[];
-}) => {
+const CheckboxFilterGroup = <TData, TValue>({ column, options }: { column: Column<TData, TValue>; options: { label: string; value: string }[] }) => {
   const currentFilters = (column.getFilterValue() as string[]) ?? [];
 
   return (
@@ -603,9 +547,7 @@ const CheckboxFilterGroup = <TData, TValue>({
           <Checkbox
             checked={currentFilters.includes(opt.value)}
             onCheckedChange={(checked) => {
-              const nextValue = checked
-                ? [...currentFilters, opt.value]
-                : currentFilters.filter((v) => v !== opt.value);
+              const nextValue = checked ? [...currentFilters, opt.value] : currentFilters.filter((v) => v !== opt.value);
               column.setFilterValue(nextValue.length > 0 ? nextValue : undefined);
             }}
           />

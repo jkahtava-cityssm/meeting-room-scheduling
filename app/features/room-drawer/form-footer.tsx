@@ -1,20 +1,11 @@
-import React, { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { SheetFooter } from "@/components/ui/sheet";
-import {
-  SaveIcon,
-  CalendarPlus,
-  Loader2Icon,
-  PenBoxIcon,
-  CircleX,
-  ArrowLeftCircle,
-  ArrowRightCircle,
-  Trash2,
-} from "lucide-react";
+import React, { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { SheetFooter } from '@/components/ui/sheet';
+import { SaveIcon, CalendarPlus, Loader2Icon, PenBoxIcon, CircleX, ArrowLeftCircle, ArrowRightCircle, Trash2 } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
-import { useMultiStepForm } from "./drawer-form-provider";
-import { RoomDrawerPermissions } from "./lib/permissions";
+import { cn } from '@/lib/utils';
+import { useMultiStepForm } from './drawer-form-provider';
+import { RoomDrawerPermissions } from './lib/permissions';
 
 const FormFooter = () => {
   const ctx = useMultiStepForm();
@@ -24,25 +15,24 @@ const FormFooter = () => {
   const actions = {
     save: {
       show: ctx.isEditing || ctx.isNew,
-      disabled:
-        (ctx.isEditing ? !can("UpdateRoom") : !can("CreateRoom")) || ctx.mutationUpsert.isPending || isVerifying,
-      label: ctx.isEditing ? "Save" : "Create",
+      disabled: (ctx.isEditing ? !can('UpdateRoom') : !can('CreateRoom')) || ctx.mutationUpsert.isPending || isVerifying,
+      label: ctx.isEditing ? 'Save' : 'Create',
       icon: ctx.isEditing ? <SaveIcon /> : <CalendarPlus />,
       loading: ctx.mutationUpsert.isPending,
     },
     edit: {
       show: ctx.isReadOnly || ctx.isLoading,
-      disabled: !can("UpdateRoom") || ctx.isLoading || isVerifying,
+      disabled: !can('UpdateRoom') || ctx.isLoading || isVerifying,
       loading: ctx.isLoading,
     },
     delete: {
-      show: ctx.isEditing && can("DeleteRoom"),
+      show: ctx.isEditing && can('DeleteRoom'),
       disabled: ctx.mutationDelete.isPending || isVerifying,
       loading: ctx.mutationDelete.isPending,
     },
     nav: {
-      backVariant: ctx.previousStepHasError ? "outline_destructive" : "outline",
-      nextVariant: ctx.nextStepHasError ? "outline_destructive" : "outline",
+      backVariant: ctx.previousStepHasError ? 'outline_destructive' : 'outline',
+      nextVariant: ctx.nextStepHasError ? 'outline_destructive' : 'outline',
       show: false,
       isFirst: ctx.isFirstStep,
       isLast: ctx.isLastStep,
@@ -68,7 +58,7 @@ const FormFooter = () => {
         Cancel
       </Button>
 
-      <div className={cn("flex flex-row md:gap-6 md:grow md:justify-center", !actions.nav.show && "invisible")}>
+      <div className={cn('flex flex-row md:gap-6 md:grow md:justify-center', !actions.nav.show && 'invisible')}>
         <Button
           variant={actions.nav.backVariant}
           className="basis-[48%] mr-auto md:basis-24 md:mr-0"
@@ -87,10 +77,10 @@ const FormFooter = () => {
         </Button>
       </div>
 
-      <div className={cn("flex flex-row h-9 md:w-24", !actions.delete.show && "invisible")}>
+      <div className={cn('flex flex-row h-9 md:w-24', !actions.delete.show && 'invisible')}>
         <Button
           variant="outline_destructive"
-          className={"grow md:w-24"}
+          className={'grow md:w-24'}
           onClick={ctx.onDelete}
           disabled={actions.delete.disabled}
           tabIndex={actions.delete.show ? 0 : -1}

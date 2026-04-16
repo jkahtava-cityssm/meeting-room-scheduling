@@ -1,21 +1,21 @@
-import React, { useRef } from "react";
-import { useRouter } from "next/navigation";
-import { format, startOfYear } from "date-fns";
-import { Button } from "@/components/ui/button";
+import React, { useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { format, startOfYear } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
-import { navigateURL } from "@/lib/helpers";
+import { navigateURL } from '@/lib/helpers';
 
-import YearGrid from "./YearGrid";
+import YearGrid from './YearGrid';
 
-import YearBandNavigation from "./YearBandNavigation";
-import { useYearBands } from "./useYearBands";
+import YearBandNavigation from './YearBandNavigation';
+import { useYearBands } from './useYearBands';
 
 export default function CalendarYearPicker({ selectedDate }: { selectedDate: Date }) {
   const [currentDate, setCurrentDate] = React.useState<Date>(selectedDate);
   const [lastFocusedYear, setLastFocusedYear] = React.useState<number | null>(null);
 
-  const selectedYear = Number(format(selectedDate, "yyyy"));
-  const currentYear = Number(format(currentDate, "yyyy"));
+  const selectedYear = Number(format(selectedDate, 'yyyy'));
+  const currentYear = Number(format(currentDate, 'yyyy'));
   const { push } = useRouter();
 
   const { bands, yearList, bandLabel } = useYearBands(currentYear);
@@ -24,15 +24,15 @@ export default function CalendarYearPicker({ selectedDate }: { selectedDate: Dat
   const lastYearRef = useRef<HTMLButtonElement | null>(null);
 
   const handleNavigate = (date: Date) => {
-    push(navigateURL(date, "year"));
+    push(navigateURL(date, 'year'));
   };
 
-  const navigateBlock = (direction: "prev" | "next") => {
+  const navigateBlock = (direction: 'prev' | 'next') => {
     const { start, end } = getBlockBounds(currentYear);
-    const targetYear = direction === "prev" ? start - 1 : end + 1;
+    const targetYear = direction === 'prev' ? start - 1 : end + 1;
     setCurrentDate(new Date(targetYear, 0, 1));
     setTimeout(() => {
-      if (direction === "prev") lastYearRef.current?.focus();
+      if (direction === 'prev') lastYearRef.current?.focus();
       else firstYearRef.current?.focus();
     }, 0);
   };
@@ -56,10 +56,8 @@ export default function CalendarYearPicker({ selectedDate }: { selectedDate: Dat
 
       {/* Year Grid */}
       <div className="flex-1 mx-8 mb-1.5 min-h-65">
-        <div className="flex justify-center w-full mt-2">
-          <div className="text-xs font-medium text-muted-foreground h-4">Select Year</div>
-        </div>
         <YearGrid
+          className={'pt-6'}
           yearList={yearList}
           selectedYear={selectedYear}
           currentYear={currentYear}

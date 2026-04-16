@@ -1,8 +1,8 @@
-import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react";
+import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from 'lucide-react';
 
-import type { TCalendarView } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import type { TCalendarView } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 export function CalendarHeaderSkeleton({ view }: { view: TCalendarView }) {
   return (
@@ -34,35 +34,35 @@ export function CalendarHeaderSkeleton({ view }: { view: TCalendarView }) {
           <div className="inline-flex ">
             <Skeleton
               className={`w-9 h-9 rounded-r-none inline-flex items-center justify-center border-b-primary border-r-1 ${
-                view === "day" ? "bg-primary text-primary-foreground shadow-xs" : ""
+                view === 'day' ? 'bg-primary text-primary-foreground shadow-xs' : ''
               }`}
             >
               <List size={16} strokeWidth={1} />
             </Skeleton>
             <Skeleton
               className={`w-9 h-9 rounded-none inline-flex items-center justify-center border-b-primary border-r-1 ${
-                view === "week" ? "bg-primary text-primary-foreground shadow-xs" : ""
+                view === 'week' ? 'bg-primary text-primary-foreground shadow-xs' : ''
               }`}
             >
               <Columns size={16} strokeWidth={1} />
             </Skeleton>
             <Skeleton
               className={`w-9 h-9 rounded-none inline-flex items-center justify-center border-b-primary border-r-1 ${
-                view === "month" ? "bg-primary text-primary-foreground shadow-xs" : ""
+                view === 'month' ? 'bg-primary text-primary-foreground shadow-xs' : ''
               }`}
             >
               <Grid2x2 size={16} strokeWidth={1} />
             </Skeleton>
             <Skeleton
               className={`w-9 h-9 rounded-none inline-flex items-center justify-center border-b-primary border-r-1 ${
-                view === "year" ? "bg-primary text-primary-foreground shadow-xs" : ""
+                view === 'year' ? 'bg-primary text-primary-foreground shadow-xs' : ''
               }`}
             >
               <Grid3x3 size={16} strokeWidth={1} />
             </Skeleton>
             <Skeleton
               className={`w-9 h-9 rounded-l-none inline-flex items-center justify-center border-b-primary border-l-1 ${
-                view === "agenda" ? "bg-primary text-primary-foreground shadow-xs" : ""
+                view === 'agenda' ? 'bg-primary text-primary-foreground shadow-xs' : ''
               }`}
             >
               <CalendarRange size={16} strokeWidth={1} />

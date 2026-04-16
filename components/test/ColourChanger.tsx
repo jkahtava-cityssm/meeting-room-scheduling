@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { COLOR_OPTIONS, TColors } from "@/lib/types";
-import { useState } from "react";
-import { Button } from "../ui/button";
+import { COLOR_OPTIONS, TColors } from '@/lib/types';
+import { useState } from 'react';
+import { Button } from '../ui/button';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { ButtonColored } from "../ui/button-colored";
-import { PublicEventCard } from "@/app/features/calendar/components/calendar-scroll-public-event-block";
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { ButtonColored } from '../ui/button-colored';
+import { PublicEventCard } from '@/app/features/calendar/components/calendar-scroll-public-event-block';
 
 export const ColorCycler = () => {
   const [index, setIndex] = useState(0);
 
-  const handleClick = (direction: "next" | "back") => {
-    const offset = direction === "next" ? 1 : -1;
+  const handleClick = (direction: 'next' | 'back') => {
+    const offset = direction === 'next' ? 1 : -1;
     const nextIndex = (index + offset + COLOR_OPTIONS.length) % COLOR_OPTIONS.length;
     setIndex(nextIndex);
   };
@@ -25,8 +25,8 @@ export const ColorCycler = () => {
         Current color: <strong>{currentColor}</strong>
       </p>
       <div className="mb-4 flex gap-4">
-        <Button onClick={() => handleClick("next")}>Next Color</Button>
-        <Button onClick={() => handleClick("back")}>Previous Color</Button>
+        <Button onClick={() => handleClick('next')}>Next Color</Button>
+        <Button onClick={() => handleClick('back')}>Previous Color</Button>
       </div>
       <div className="grid grid-cols-12 gap-1">
         {COLOR_OPTIONS.map((color) => {

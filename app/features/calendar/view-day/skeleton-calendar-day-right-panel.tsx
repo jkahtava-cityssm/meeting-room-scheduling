@@ -1,5 +1,5 @@
-import { DayPicker } from "@/components/ui/day-picker";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DayPicker } from '@/components/ui/day-picker';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function SkeletonCalendarEventListRightPanel({ date }: { date: Date }) {
   //const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startOfWeek(new Date()), i));

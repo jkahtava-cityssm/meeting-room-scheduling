@@ -1,7 +1,7 @@
-import { GenericMultiSelect } from "@/components/shared/generic-multiselect";
-import { IconName } from "@/components/ui/icon-dynamic";
-import { useStatusQuery } from "@/lib/services/status";
-import { TColors } from "@/lib/types";
+import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
+import { IconName } from '@/components/ui/icon-dynamic';
+import { useStatusQuery } from '@/lib/services/status';
+import { TColors } from '@/lib/types';
 
 export function StatusMultiSelect({
   selectedStatusKeys,
@@ -29,7 +29,7 @@ export function StatusMultiSelect({
       isLoading={isPending}
       isDisabled={isDisabled}
       isError={!!error}
-      loadingLabel={error ? "Error: Loading Status" : "Collecting Status"}
+      loadingLabel={error ? 'Error: Loading Status' : 'Collecting Status'}
       placeholderText="Select Status"
       searchText="Search Status..."
       noResultText="No status found"
@@ -40,12 +40,13 @@ export function StatusMultiSelect({
       getColor={(status) => status.color as TColors}
       getIcon={(status) => status.icon as IconName}
       className={className}
-      selectAllBadge={{ label: "All Statuses", value: "-1", color: "zinc", icon: "asterisk" }}
+      selectAllBadge={{ label: 'All Statuses', value: '-1', color: 'zinc', icon: 'asterisk' }}
       hideSelectAll={false}
       hideIcon={false}
-      hideClearAll={true}
+      hideClearAll={false}
       hideClearSingle={true}
       hideMoreLabel={true}
+      overflowLabel="Status Selected"
     />
   );
 }

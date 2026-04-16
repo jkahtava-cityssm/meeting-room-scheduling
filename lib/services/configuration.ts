@@ -1,21 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchGET, fetchPOST, fetchPUT } from "../fetch";
-import z from "zod/v4";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchGET, fetchPOST, fetchPUT } from '../fetch';
+import z from 'zod/v4';
 
-import { CONFIG_MANIFEST, TConfigurationKeys, TConfigurationRecord } from "../types";
-import { SConfigurationEntry } from "../data/configuration";
-import { QueryError } from "@/contexts/ReactQueryProvider";
-import { queryKeys } from "./querykeys";
+import { CONFIG_MANIFEST, TConfigurationKeys, TConfigurationRecord } from '../types';
+import { SConfigurationEntry } from '../data/configuration';
+import { QueryError } from '@/contexts/ReactQueryProvider';
+import { queryKeys } from './querykeys';
 
 export const useConfigurationQuery = (keys?: TConfigurationKeys[], enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.configuration.filtered(keys),
     queryFn: async () => {
-      const result = await fetchGET("/api/configuration", keys ? { keys: keys } : undefined);
+      const result = await fetchGET('/api/configuration', keys ? { keys: keys } : undefined);
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid configuration data", "useConfigurationQuery", parsedResult.error);
+        throw new QueryError('Invalid configuration data', 'useConfigurationQuery', parsedResult.error);
       }
 
       return parsedResult.data;
@@ -28,11 +28,11 @@ export const usePrivateConfigurationQuery = (keys?: TConfigurationKeys[], enable
   return useQuery({
     queryKey: queryKeys.configuration.filtered(keys),
     queryFn: async () => {
-      const result = await fetchGET("/api/configuration", keys ? { keys: keys } : undefined);
+      const result = await fetchGET('/api/configuration', keys ? { keys: keys } : undefined);
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
 
       if (!parsedResult.success) {
-        throw new QueryError("Invalid configuration data", "usePrivateConfigurationQuery", parsedResult.error);
+        throw new QueryError('Invalid configuration data', 'usePrivateConfigurationQuery', parsedResult.error);
       }
 
       const defaults = Object.fromEntries(CONFIG_MANIFEST.map((m) => [m.key, m.defaultValue])) as TConfigurationRecord;
@@ -54,7 +54,7 @@ export const SConfigurationPUT = z.object({
   key: z.coerce.string(),
   value: z.coerce.string(),
   name: z.coerce.string(),
-  type: z.enum(["boolean", "number", "string"]),
+  type: z.enum(['boolean', 'number', 'string']),
   description: z.coerce.string(),
 });
 
