@@ -338,6 +338,24 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     [parentRef, rowVirtualizer, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
   );
 
+  useEffect(() => {
+    if (removingEvents.size === 0) return;
+    const currentServerStatuses = new Map<number, TStatusKey>();
+    result?.data?.requestSections?.forEach((s) =>
+      s.sectionGroups.forEach((g) => g.groupEvents.forEach((e) => currentServerStatuses.set(e.eventId, e.status.key as TStatusKey))),
+    );
+    const nextRemovingEvents = new Map(removingEvents);
+    let changed = false;
+    removingEvents.forEach((targetStatus, id) => {
+      const serverStatus = currentServerStatuses.get(id);
+      if (!serverStatus || serverStatus === targetStatus) {
+        nextRemovingEvents.delete(id);
+        changed = true;
+      }
+    });
+    if (changed) setRemovingEvents(nextRemovingEvents);
+  }, [result?.data?.requestSections, removingEvents]);
+
   if (error) {
     return <GenericError error={error} />;
   }
@@ -432,9 +450,11 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                     <div className={cn('overflow-hidden')}>
                       <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                         {item.data.map((event: IEventSingleRoom) => {
+                          const isRemoving = removingEventIds.has(event.eventId);
+                          console.log(isRemoving);
                           return (
                             <div key={event.eventId}>
-                              <EventCard event={event} index={virtualRow.index} onStatusChange={handleStatusChange} />
+                              <EventCard event={event} index={virtualRow.index} onStatusChange={handleStatusChange} isUpdating={isRemoving} />
                             </div>
                           );
                         })}

@@ -10,6 +10,7 @@ import {
   CirclePlus,
   Clock,
   Hourglass,
+  Loader2,
   LucideCircleX,
   MapPin,
   Save,
@@ -29,6 +30,7 @@ import { getDurationText } from '@/lib/helpers';
 import { BookingPermissions } from '../../bookings/components/permissions/booking.permissions';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 export const EventCard = React.memo(
   React.forwardRef<
@@ -37,8 +39,9 @@ export const EventCard = React.memo(
       event: IEventSingleRoom;
       index: number;
       onStatusChange: (id: number, newStatus: TStatusKey) => void;
+      isUpdating: boolean;
     }
-  >(({ event, index, onStatusChange }, ref) => {
+  >(({ event, index, onStatusChange, isUpdating }, ref) => {
     const { can } = BookingPermissions.usePermissions();
 
     const { openEventDrawer } = useSharedEventDrawer();
@@ -47,7 +50,17 @@ export const EventCard = React.memo(
 
     return (
       <div ref={ref} data-index={index} className="py-2">
-        <Card className="h-145 w-100 flex flex-col overflow-hidden py-4">
+        <Card
+          className={cn(
+            'h-145 w-100 flex flex-col overflow-hidden py-4 transition-all duration-200 relative',
+            isUpdating && 'opacity-60 grayscale-[0.3] pointer-events-none select-none',
+          )}
+        >
+          {isUpdating && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/40 backdrop-blur-[1px]">
+              <Loader2 className="animate-spin size-8 text-primary" />
+            </div>
+          )}
           <CardHeader className="min-w-0 space-y-3 shrink-0 px-4">
             <div className="flex flex-row w-full justify-between items-center min-w-0">
               <CardTitle className="truncate text-lg flex-1">{event.title}</CardTitle>
@@ -142,17 +155,35 @@ export const EventCard = React.memo(
               {/* Top Row: The two available status actions */}
               <div className="grid grid-cols-2 gap-2">
                 {event.status.name !== 'Confirmed' && (
-                  <ButtonColored color="green" size="sm" className="w-full" onClick={() => onStatusChange(event.eventId, 'APPROVED')}>
+                  <ButtonColored
+                    color="green"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onStatusChange(event.eventId, 'APPROVED')}
+                    disabled={isUpdating}
+                  >
                     Confirm
                   </ButtonColored>
                 )}
                 {event.status.name !== 'Rejected' && (
-                  <ButtonColored color="red" size="sm" className="w-full" onClick={() => onStatusChange(event.eventId, 'REJECTED')}>
+                  <ButtonColored
+                    color="red"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onStatusChange(event.eventId, 'REJECTED')}
+                    disabled={isUpdating}
+                  >
                     Reject
                   </ButtonColored>
                 )}
                 {event.status.name !== 'Pending Review' && (
-                  <ButtonColored color="slate" size="sm" className="w-full" onClick={() => onStatusChange(event.eventId, 'PENDING')}>
+                  <ButtonColored
+                    color="slate"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => onStatusChange(event.eventId, 'PENDING')}
+                    disabled={isUpdating}
+                  >
                     Pending
                   </ButtonColored>
                 )}
@@ -168,6 +199,7 @@ export const EventCard = React.memo(
                     openEventDrawer({ creationDate: new Date(event.startDate), event: event });
                   }
                 }}
+                disabled={isUpdating}
               >
                 View Event Details
               </Button>

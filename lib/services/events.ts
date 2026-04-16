@@ -220,7 +220,7 @@ export const useEventPatchMutation = () => {
       return fetchPATCH('/api/events', data);
     },
 
-    onMutate: async ({ data, statusKey }) => {
+    /*onMutate: async ({ data, statusKey }) => {
       const eventId = data.eventId;
 
       // 1. Define the specific detail key
@@ -268,7 +268,7 @@ export const useEventPatchMutation = () => {
           queryClient.setQueryData(key, value);
         });
       }
-    },
+    },*/
 
     onSettled: (data, error, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
