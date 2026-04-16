@@ -321,21 +321,22 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
       const anchorItem = virtualItems.find((item) => item.start + item.size > currentScroll) || virtualItems[0];
 
-      const shrinkage = getPendingShrinkage(flatData, id, newStatus, selectedStatusKeys, anchorItem.index, clampedColumn);
-
+      const nextRemovingEvents = new Map(removingEvents).set(id, newStatus);
+      const shrinkage = getPendingShrinkage(flatData, nextRemovingEvents, newStatus, selectedStatusKeys, anchorItem.index, clampedColumn);
+      console.log(shrinkage);
       // We subtract shrinkage because the list is about to get shorter
       anchorRef.current = {
         key: anchorItem.key as string,
         offset: currentScroll - shrinkage,
       };
 
-      setRemovingEvents((prev) => new Map(prev).set(id, newStatus));
+      setRemovingEvents(nextRemovingEvents);
       patchEvent.mutate({
         data: { eventId: id, statusId: statusIdLookupByKey(newStatus) },
         statusKey: newStatus,
       });
     },
-    [parentRef, rowVirtualizer, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
+    [parentRef, rowVirtualizer, removingEvents, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
   );
 
   useEffect(() => {
@@ -498,7 +499,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 
 function getPendingShrinkage(
   flatData: VirtualRowItem[],
-  targetEventId: number,
+  removingEvents: Map<number, TStatusKey>,
   newStatus: TStatusKey,
   selectedStatusKeys: TStatusKey[],
   topVisibleItemIndex: number,
@@ -510,31 +511,41 @@ function getPendingShrinkage(
 
   let totalShrinkage = 0;
 
-  const processedGroups = new Set<string>();
-  const processedSections = new Set<string>();
+  const removingIds = new Set<number>();
+  removingEvents.forEach((status, id) => {
+    if (!selectedStatusKeys.includes(status)) {
+      removingIds.add(id);
+    }
+  });
 
-  //Build lookup Sets
-  const groupContainsTarget = new Set<string>();
-  const sectionContainsTarget = new Set<string>();
+  if (removingIds.size === 0) return 0;
+
+  // 2. Map out counts of pending removals per group and section
+  const groupRemovalCounts = new Map<string, number>();
+  const sectionRemovalCounts = new Map<string, number>();
   const groupHeaderMap = new Map<string, Extract<VirtualRowItem, { type: 'GROUP_HEADER' }>>();
 
+  // Scan full dataset to build context for counts
   for (const item of flatData) {
     if (item.type === 'GROUP_HEADER') {
       groupHeaderMap.set(item.key, item);
     }
 
     if (item.type === 'GROUP_ROW') {
-      if (item.data.some((e) => e.eventId === targetEventId)) {
-        const gKey = item.groupKey;
-        if (gKey) {
-          groupContainsTarget.add(gKey);
+      const gKey = item.groupKey;
+      const sKey = item.sectionKey;
+
+      item.data.forEach((event) => {
+        if (removingIds.has(event.eventId)) {
+          if (gKey) groupRemovalCounts.set(gKey, (groupRemovalCounts.get(gKey) || 0) + 1);
+          if (sKey) sectionRemovalCounts.set(sKey, (sectionRemovalCounts.get(sKey) || 0) + 1);
         }
-        if (item.sectionKey) {
-          sectionContainsTarget.add(item.sectionKey);
-        }
-      }
+      });
     }
   }
+
+  const processedGroups = new Set<string>();
+  const processedSections = new Set<string>();
 
   for (let i = 0; i < topVisibleItemIndex; i++) {
     const item = flatData[i];
@@ -543,16 +554,17 @@ function getPendingShrinkage(
     if (item.type === 'GROUP_ROW') {
       const gKey = item.groupKey;
       if (!gKey || processedGroups.has(gKey)) continue;
-      processedGroups.add(gKey);
 
-      if (!groupContainsTarget.has(gKey)) continue;
+      const removals = groupRemovalCounts.get(gKey) || 0;
+      if (removals === 0) continue;
 
       const groupHeader = groupHeaderMap.get(gKey);
-
       if (!groupHeader) continue;
 
-      // We do not care which event is removed, only that a single event is being removed
-      const newEventCount = groupHeader.eventCount - 1;
+      processedGroups.add(gKey);
+
+      // We know that Events needs to be removed from this group
+      const newEventCount = Math.max(0, groupHeader.eventCount - removals);
 
       // Calculate whether removing the event changes the number of rows in the grou
       const newRowCount = Math.ceil(newEventCount / clampedColumn);
@@ -574,10 +586,13 @@ function getPendingShrinkage(
       if (!sKey || processedSections.has(sKey)) continue;
       processedSections.add(sKey);
 
-      if (!sectionContainsTarget.has(sKey)) continue;
+      const removals = sectionRemovalCounts.get(sKey) || 0;
+      if (removals === 0) continue;
+
+      processedSections.add(sKey);
 
       // Remove an event from the Section to see if it would also become empty
-      const newSectionEventCount = item.totalEventCount - 1;
+      const newSectionEventCount = item.totalEventCount - removals;
 
       // If the section becomes empty, its header is removed from the layout
       if (newSectionEventCount === 0) {
