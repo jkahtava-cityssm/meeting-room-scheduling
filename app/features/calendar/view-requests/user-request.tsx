@@ -451,7 +451,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                       <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                         {item.data.map((event: IEventSingleRoom) => {
                           const isRemoving = removingEventIds.has(event.eventId);
-                          console.log(isRemoving);
+
                           return (
                             <div key={event.eventId}>
                               <EventCard event={event} index={virtualRow.index} onStatusChange={handleStatusChange} isUpdating={isRemoving} />
