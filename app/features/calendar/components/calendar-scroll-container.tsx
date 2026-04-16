@@ -43,7 +43,13 @@ const CalendarScrollContainerBase = React.memo(function CalendarScrollContainerB
 
   return (
     <CalendarScrollProvider value={contextValue}>
-      <ScrollArea className="w-full flex-1 min-h-0" type="always" viewportRef={setViewport} popoverLayerRef={setPopoverLayer}>
+      <ScrollArea
+        className="w-full flex-1 min-h-0"
+        type="always"
+        viewportRef={setViewport}
+        popoverLayerRef={setPopoverLayer}
+        viewportClassName="[scroll-padding-top:44px]"
+      >
         <div className="relative flex min-w-0 w-full">
           <HourColumn hours={hours} />
 
