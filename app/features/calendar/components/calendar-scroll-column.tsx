@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-import { GridEventBlock } from './calendar-scroll-private-event-block';
+import { GridEventBlock } from './calendar-scroll-private-event-block-old';
 import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from 'react';
 
 import { TIME_BLOCK_SIZE } from '@/lib/types';
@@ -13,6 +13,7 @@ import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 import { addDays } from 'date-fns';
 import { LucideLock, LucideShieldBan } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { PrivateEventBlock } from './calendar-scroll-private-event-block';
 
 export type PrivateCallback = {
   currentDate: Date;
@@ -62,6 +63,7 @@ export type EventBlockRenderProps = {
 export function CalendarScrollColumnPrivate(
   props: Omit<CalendarScrollColumnProps, 'renderTimeBlock' | 'renderEventBlock' | 'limitToHours' | 'limitToSpan'>,
 ) {
+  const { viewport, popoverLayer } = useCalendarViewport();
   const { can, canAny } = CalendarPermissions.usePermissions();
 
   const { openEventDrawer } = useSharedEventDrawer();
@@ -69,7 +71,30 @@ export function CalendarScrollColumnPrivate(
 
   const renderEventBlock = useCallback(
     ({ eventBlock, userId }: EventBlockRenderProps) => (
-      <GridEventBlock
+      <PrivateEventBlock
+        onClick={(e) => {
+          e.preventDefault();
+          const canReadEvent = canAny('ReadAllEvent', ['ReadSelfEvent', String(eventBlock.event.userId) === userId]);
+
+          if (canReadEvent) {
+            openEventDrawer({
+              creationDate: new Date(eventBlock.event.startDate),
+              event: eventBlock.event,
+              userId,
+              roomId,
+            });
+          }
+        }}
+        eventBlock={eventBlock}
+        heightInPixels={eventBlock.eventHeight}
+        viewport={viewport}
+        popoverLayer={popoverLayer}
+      />
+    ),
+    [canAny, openEventDrawer, popoverLayer, roomId, viewport],
+  );
+  /*
+  <GridEventBlock
         eventBlock={eventBlock}
         heightInPixels={eventBlock.eventHeight}
         userId={userId}
@@ -87,9 +112,7 @@ export function CalendarScrollColumnPrivate(
           }
         }}
       />
-    ),
-    [canAny, openEventDrawer, roomId],
-  );
+  */
 
   const renderTimeBlock = useCallback(
     (p: TimeBlockRenderProps) => (
