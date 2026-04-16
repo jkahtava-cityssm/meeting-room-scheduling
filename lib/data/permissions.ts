@@ -186,7 +186,7 @@ export async function updateSession(
   tx: Prisma.TransactionClient = prisma,
 ) {
   return await tx.session.update({
-    data: { impersonatedRole: data.impersonatedRole, updatedBy: sessionUserId },
+    data: { impersonatedRole: data.impersonatedRole ?? null, updatedBy: sessionUserId },
     where: { id: data.sessionId },
   });
 }
