@@ -252,7 +252,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
     // Define the threshold for when a header becomes "sticky"
     // (e.g., the item at the top of the viewport)
-    const topThreshold = scrollOffset + HEADER_PX;
+    const topThreshold = scrollOffset + HEADER_PX / 2;
 
     // Find the first virtual item that has passed the threshold
     // We use .find() on virtualItems which is usually a very small array (e.g., 10-20 items)
