@@ -200,47 +200,66 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
+  const itemMetaMap = useMemo(() => {
+    const map = new Map<
+      number,
+      {
+        sectionKey: string | null;
+        sectionName: string | null;
+        groupKey: string | null;
+        groupName: string | null;
+        groupColor: TColors | null;
+      }
+    >();
+
+    let currentSection: VirtualRowItem | null = null;
+    let currentGroup: VirtualRowItem | null = null;
+
+    flatData.forEach((item, index) => {
+      if (item.type === 'SECTION_HEADER') {
+        currentSection = item;
+        currentGroup = null; // Reset group when section changes
+      } else if (item.type === 'GROUP_HEADER') {
+        currentGroup = item;
+      }
+
+      map.set(index, {
+        sectionKey: currentSection?.sectionKey ?? null,
+        sectionName: currentSection?.sectionName ?? null,
+        groupKey: currentGroup?.groupKey ?? null,
+        groupName: currentGroup?.groupName ?? null,
+        groupColor: currentGroup?.groupColor ?? null,
+      });
+    });
+
+    return map;
+  }, [flatData]);
+
   const scrollOffset = rowVirtualizer.scrollOffset || 0;
 
   const stickyInfo = useMemo(() => {
-    const top = scrollOffset + (GROUP_HEADER_PX + GROUP_HEADER_PX / 2) + 1;
-    const activeItem = [...virtualItems].reverse().find((v) => v.start <= top) ?? virtualItems[0];
-    if (!activeItem) return { sectionKey: null, sectionName: null, groupKey: null, groupName: null, groupColor: null };
-
-    let activeSectionKey: string | null = null;
-    let activeSectionName: string | null = null;
-    let activeGroupKey: string | null = null;
-    let activeGroupName: string | null = null;
-    let activeGroupColor: TColors | null = null;
-    for (let i = activeItem.index; i >= 0; i--) {
-      const item = flatData[i];
-      if (!activeGroupKey && item.type === 'GROUP_HEADER') {
-        activeGroupKey = item.key;
-        activeGroupName = item.groupName;
-        activeGroupColor = item.groupColor;
-      }
-      if (item.type === 'SECTION_HEADER') {
-        activeSectionKey = item.key;
-        activeSectionName = item.sectionName;
-        if (!activeGroupKey) {
-          const nextItem = flatData[i + 1];
-          if (nextItem?.type === 'GROUP_HEADER') {
-            activeGroupKey = nextItem.key;
-            activeGroupName = nextItem.groupName;
-            activeGroupColor = nextItem.groupColor;
-          }
-        }
-        break;
-      }
+    if (virtualItems.length === 0) {
+      return { sectionKey: null, sectionName: null, groupKey: null, groupName: null, groupColor: null };
     }
-    return {
-      sectionKey: activeSectionKey,
-      sectionName: activeSectionName,
-      groupKey: activeGroupKey,
-      groupName: activeGroupName,
-      groupColor: activeGroupColor,
-    };
-  }, [scrollOffset, virtualItems, flatData]);
+
+    // Define the threshold for when a header becomes "sticky"
+    // (e.g., the item at the top of the viewport)
+    const topThreshold = scrollOffset + HEADER_PX;
+
+    // Find the first virtual item that has passed the threshold
+    // We use .find() on virtualItems which is usually a very small array (e.g., 10-20 items)
+    const topItem = virtualItems.find((v) => v.start + v.size > topThreshold) || virtualItems[0];
+
+    return (
+      itemMetaMap.get(topItem.index) || {
+        sectionKey: null,
+        sectionName: null,
+        groupKey: null,
+        groupName: null,
+        groupColor: null,
+      }
+    );
+  }, [scrollOffset, virtualItems, itemMetaMap]);
 
   useLayoutEffect(() => {
     if (prevColsRef.current === clampedColumn) {
@@ -559,8 +578,13 @@ function getPendingShrinkage2(
 
     if (item.type === 'GROUP_ROW') {
       if (item.data.some((e) => e.eventId === targetEventId)) {
-        groupContainsTarget.add(item.groupKey);
-        sectionContainsTarget.add(item.sectionKey);
+        const gKey = item.groupKey;
+        if (gKey) {
+          groupContainsTarget.add(gKey);
+        }
+        if (item.sectionKey) {
+          sectionContainsTarget.add(item.sectionKey);
+        }
       }
     }
   }
@@ -571,7 +595,7 @@ function getPendingShrinkage2(
     // ========== GROUP SHRINK ==========
     if (item.type === 'GROUP_ROW') {
       const gKey = item.groupKey;
-      if (processedGroups.has(gKey)) continue;
+      if (!gKey || processedGroups.has(gKey)) continue;
       processedGroups.add(gKey);
 
       if (!groupContainsTarget.has(gKey)) continue;
@@ -600,7 +624,7 @@ function getPendingShrinkage2(
     // ========== SECTION SHRINK ==========
     if (item.type === 'SECTION_HEADER') {
       const sKey = item.key;
-      if (processedSections.has(sKey)) continue;
+      if (!sKey || processedSections.has(sKey)) continue;
       processedSections.add(sKey);
 
       if (!sectionContainsTarget.has(sKey)) continue;
