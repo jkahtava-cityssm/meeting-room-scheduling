@@ -18,7 +18,7 @@ import {
   Text,
 } from 'lucide-react';
 
-import { TColors } from '@/lib/types';
+import { TColors, TStatusKey } from '@/lib/types';
 import { IconColored } from '@/components/ui/icon-colored';
 import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
 import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
@@ -36,11 +36,9 @@ export const EventCard = React.memo(
     {
       event: IEventSingleRoom;
       index: number;
-      OnApprove: (value: number) => void;
-      OnDeny: (value: number) => void;
-      OnPending: (value: number) => void;
+      onStatusChange: (id: number, newStatus: TStatusKey) => void;
     }
-  >(({ event, index, OnApprove, OnDeny, OnPending }, ref) => {
+  >(({ event, index, onStatusChange }, ref) => {
     const { can } = BookingPermissions.usePermissions();
 
     const { openEventDrawer } = useSharedEventDrawer();
@@ -144,17 +142,17 @@ export const EventCard = React.memo(
               {/* Top Row: The two available status actions */}
               <div className="grid grid-cols-2 gap-2">
                 {event.status.name !== 'Confirmed' && (
-                  <ButtonColored color="green" size="sm" className="w-full" onClick={() => OnApprove(event.eventId)}>
+                  <ButtonColored color="green" size="sm" className="w-full" onClick={() => onStatusChange(event.eventId, 'APPROVED')}>
                     Confirm
                   </ButtonColored>
                 )}
                 {event.status.name !== 'Rejected' && (
-                  <ButtonColored color="red" size="sm" className="w-full" onClick={() => OnDeny(event.eventId)}>
+                  <ButtonColored color="red" size="sm" className="w-full" onClick={() => onStatusChange(event.eventId, 'REJECTED')}>
                     Reject
                   </ButtonColored>
                 )}
                 {event.status.name !== 'Pending Review' && (
-                  <ButtonColored color="slate" size="sm" className="w-full" onClick={() => OnPending(event.eventId)}>
+                  <ButtonColored color="slate" size="sm" className="w-full" onClick={() => onStatusChange(event.eventId, 'PENDING')}>
                     Pending
                   </ButtonColored>
                 )}

@@ -321,94 +321,21 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
       const anchorItem = virtualItems.find((item) => item.start + item.size > currentScroll) || virtualItems[0];
 
-      // 2. Calculate how many pixels will disappear ABOVE this anchor item
-      const shrinkage = getPendingShrinkage(
-        flatData,
-        id,
-        newStatus,
-        selectedStatusKeys,
-        anchorItem.index, // We only care about items before this index
-        clampedColumn,
-      );
+      const shrinkage = getPendingShrinkage(flatData, id, newStatus, selectedStatusKeys, anchorItem.index, clampedColumn);
 
-      const shrinkage2 = getPendingShrinkage2(
-        flatData,
-        id,
-        newStatus,
-        selectedStatusKeys,
-        anchorItem.index, // We only care about items before this index
-        clampedColumn,
-      );
-
-      console.log(shrinkage, shrinkage2);
-      // 3. Store the anchor with the shrinkage adjustment
       // We subtract shrinkage because the list is about to get shorter
       anchorRef.current = {
         key: anchorItem.key as string,
-        offset: currentScroll - shrinkage2,
+        offset: currentScroll - shrinkage,
       };
 
-      /*if (shrinkage > 0) {
-        parentRef.current.scrollTop = currentScroll - shrinkage;
-      }*/
-
-      // 4. Trigger mutation
-
-      activeMutationsRef.current += 1;
-
       setRemovingEvents((prev) => new Map(prev).set(id, newStatus));
-      patchEvent.mutate(
-        {
-          data: { eventId: id, statusId: statusIdLookupByKey(newStatus) },
-          statusKey: newStatus,
-        },
-        /*{
-          onSettled: () => {
-            activeMutationsRef.current -= 1;
-
-            // If no more mutations are pending, we can safely clear the anchor
-            // after the final data paint. We use a small delay to ensure the
-            // last invalidation refetch has finished rendering.
-            if (activeMutationsRef.current === 0) {
-              setTimeout(() => {
-                anchorRef.current = null;
-              }, 100);
-            }
-          },
-        },*/
-      );
+      patchEvent.mutate({
+        data: { eventId: id, statusId: statusIdLookupByKey(newStatus) },
+        statusKey: newStatus,
+      });
     },
     [parentRef, rowVirtualizer, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
-  );
-
-  const handleApprove = useCallback(
-    (id: number) => {
-      handleStatusChange(id, 'APPROVED');
-      //captureAnchor();
-      //setRemovingEvents((prev) => new Map(prev).set(id, 'APPROVED'));
-      //patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('APPROVED') } });
-    },
-    [handleStatusChange],
-  );
-
-  const handleDeny = useCallback(
-    (id: number) => {
-      handleStatusChange(id, 'REJECTED');
-      //captureAnchor();
-      //setRemovingEvents((prev) => new Map(prev).set(id, 'REJECTED'));
-      //patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('REJECTED') } });
-    },
-    [handleStatusChange],
-  );
-
-  const handlePending = useCallback(
-    (id: number) => {
-      handleStatusChange(id, 'PENDING');
-      //captureAnchor();
-      //setRemovingEvents((prev) => new Map(prev).set(id, 'PENDING'));
-      //patchEvent.mutate({ data: { eventId: id, statusId: statusIdLookupByKey('PENDING') } });
-    },
-    [handleStatusChange],
   );
 
   if (error) {
@@ -505,17 +432,9 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
                     <div className={cn('overflow-hidden')}>
                       <div className="grid gap-4 p-4 w-full items-stretch" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
                         {item.data.map((event: IEventSingleRoom) => {
-                          const isRemoving = removingEventIds.has(event.eventId);
-
                           return (
                             <div key={event.eventId}>
-                              <EventCard
-                                event={event}
-                                index={virtualRow.index}
-                                OnPending={handlePending}
-                                OnApprove={handleApprove}
-                                OnDeny={handleDeny}
-                              />
+                              <EventCard event={event} index={virtualRow.index} onStatusChange={handleStatusChange} />
                             </div>
                           );
                         })}
@@ -557,7 +476,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
 }
 
-function getPendingShrinkage2(
+function getPendingShrinkage(
   flatData: VirtualRowItem[],
   targetEventId: number,
   newStatus: TStatusKey,
@@ -642,81 +561,6 @@ function getPendingShrinkage2(
 
       // If the section becomes empty, its header is removed from the layout
       if (newSectionEventCount === 0) {
-        totalShrinkage += SECTION_HEADER_PX;
-      }
-    }
-  }
-
-  return totalShrinkage;
-}
-
-function getPendingShrinkage(
-  flatData: VirtualRowItem[],
-  targetEventId: number,
-  newStatus: TStatusKey,
-  selectedStatusKeys: TStatusKey[],
-  topVisibleItemIndex: number,
-  clampedColumn: number,
-): number {
-  // 1. If the event is moving to a status that is still visible, it won't be removed
-  if (selectedStatusKeys.includes(newStatus)) return 0;
-
-  let totalShrinkage = 0;
-  const processedGroups = new Set<string>();
-  const processedSections = new Set<string>();
-
-  for (let i = 0; i < topVisibleItemIndex; i++) {
-    const item = flatData[i];
-
-    // --- CASE 1: GROUP REF LOW & REMOVAL ---
-    if (item.type === 'GROUP_ROW') {
-      const gKey = item.key.split(':events')[0];
-      if (processedGroups.has(gKey)) continue;
-      processedGroups.add(gKey);
-
-      // Find all rows belonging to this specific group in the current flatData
-      const groupRows = flatData.filter((row) => row.type === 'GROUP_ROW' && row.key.startsWith(gKey)) as Extract<
-        VirtualRowItem,
-        { type: 'GROUP_ROW' }
-      >[];
-
-      const allEventsInGroup = groupRows.flatMap((r) => r.data);
-      const currentRowCount = groupRows.length;
-
-      // Calculate how many rows will exist after removal
-      const remainingEvents = allEventsInGroup.filter((e) => e.eventId !== targetEventId);
-      const newRowCount = Math.ceil(remainingEvents.length / clampedColumn);
-
-      // Calculate pixel loss for rows
-      if (currentRowCount > newRowCount) {
-        totalShrinkage += (currentRowCount - newRowCount) * ROW_PX;
-      }
-
-      // If the group becomes completely empty, the GROUP_HEADER will also vanish
-      if (newRowCount === 0) {
-        totalShrinkage += GROUP_HEADER_PX;
-      }
-    }
-
-    // --- CASE 2: SECTION HEADER REMOVAL ---
-    if (item.type === 'SECTION_HEADER') {
-      const sKey = item.key;
-      if (processedSections.has(sKey)) continue;
-      processedSections.add(sKey);
-
-      // A section is removed if EVERY event in EVERY group within it is gone
-      // We look ahead in the flatData to find all events belonging to this section
-      const sectionRows = flatData.filter((row) => row.type === 'GROUP_ROW' && row.key.startsWith(sKey)) as Extract<
-        VirtualRowItem,
-        { type: 'GROUP_ROW' }
-      >[];
-
-      const allEventsInSection = sectionRows.flatMap((r) => r.data);
-
-      // If the ONLY event left in the whole section is the one we are removing...
-      const sectionWillBeEmpty = allEventsInSection.every((e) => e.eventId === targetEventId);
-
-      if (sectionWillBeEmpty) {
         totalShrinkage += SECTION_HEADER_PX;
       }
     }
