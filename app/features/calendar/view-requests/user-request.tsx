@@ -124,14 +124,22 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     result?.data?.requestSections?.forEach((section) => {
       const sectionEvents = section.sectionGroups.flatMap((g) => g.groupEvents);
 
+      const firstGroup = section.sectionGroups[0] || {};
+
+      const group = {
+        groupKey: firstGroup.groupKey || null,
+        groupName: firstGroup.groupName || null,
+        groupColor: firstGroup.groupColor || null,
+      };
+
       list.push({
         type: 'SECTION_HEADER',
         key: section.sectionKey,
         sectionKey: section.sectionKey,
         sectionName: section.sectionTitle,
-        groupKey: null,
-        groupName: null,
-        groupColor: null,
+        groupKey: group.groupKey,
+        groupName: group.groupName,
+        groupColor: group.groupColor,
         totalEventCount: sectionEvents.length,
       });
 
@@ -218,7 +226,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     flatData.forEach((item, index) => {
       if (item.type === 'SECTION_HEADER') {
         currentSection = item;
-        currentGroup = null; // Reset group when section changes
+        currentGroup = item; // Reset group when section changes
       } else if (item.type === 'GROUP_HEADER') {
         currentGroup = item;
       }
