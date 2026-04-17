@@ -1,12 +1,12 @@
 'use client';
 
-import { BookingPermissions } from '@/app/features/bookings/components/permissions/booking.permissions';
 import { CalendarRequestView } from '@/app/features/calendar/calendar-controller/calendar-request-view';
+import { CalendarPermissions } from '@/app/features/calendar/permissions/calendar.permissions';
 
 export default function PrivateUserRequests() {
   return (
-    <BookingPermissions.Provider>
+    <CalendarPermissions.Provider>
       <CalendarRequestView />
-    </BookingPermissions.Provider>
+    </CalendarPermissions.Provider>
   );
 }

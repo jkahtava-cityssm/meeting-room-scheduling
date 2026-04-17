@@ -6,6 +6,7 @@ const PAGE_PERMISSIONS = {
   CreateEvent: { type: 'permission', resource: 'Event', action: 'Create' },
   ReadAllEvent: { type: 'permission', resource: 'Event', action: 'Read All' },
   ReadSelfEvent: { type: 'permission', resource: 'Event', action: 'Read Self' },
+  UpateEventStatus: { type: 'permission', resource: 'Event', action: 'Change Status' },
   ViewCalendarDay: { type: 'permission', resource: 'Calendar', action: 'View Day' },
   ViewStaffRequests: { type: 'permission', resource: 'Calendar', action: 'View Staff Requests' },
   ViewCalendarWeek: { type: 'permission', resource: 'Calendar', action: 'View Week' },
@@ -22,3 +23,18 @@ const PAGE_PERMISSIONS = {
 } as const satisfies GroupedPermissionRequirement;
 
 export const CalendarPermissions = createClientSecurity(PAGE_PERMISSIONS);
+
+/*
+const PAGE_PERMISSIONS = {
+  ReadAllEvent: { type: 'permission', resource: 'Event', action: 'Read All' },
+  UpateEventStatus: { type: 'permission', resource: 'Event', action: 'Change Status' },
+  ViewCalendarDay: { type: 'permission', resource: 'Calendar', action: 'View Day' },
+  ViewCalendarWeek: { type: 'permission', resource: 'Calendar', action: 'View Week' },
+  ViewCalendarMonth: { type: 'permission', resource: 'Calendar', action: 'View Month' },
+  ViewCalendarYear: { type: 'permission', resource: 'Calendar', action: 'View Year' },
+  ViewCalendarAgenda: { type: 'permission', resource: 'Calendar', action: 'View Agenda' },
+  ViewStaffRequests: { type: 'permission', resource: 'Calendar', action: 'View Staff Requests' },
+} as const satisfies GroupedPermissionRequirement;
+
+export const BookingPermissions = createClientSecurity(PAGE_PERMISSIONS);
+*/

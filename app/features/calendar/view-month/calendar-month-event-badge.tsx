@@ -82,6 +82,8 @@ export const MonthEventBadge = forwardRef<HTMLButtonElement, MonthEventBadgeProp
     }
   };
 
+  const eventTitle = event.multiDay ? event.multiDay.description + ' - ' + event.title : event.title;
+
   return (
     <button
       type="button"
@@ -90,13 +92,13 @@ export const MonthEventBadge = forwardRef<HTMLButtonElement, MonthEventBadgeProp
       color={event.roomColor}
       className={cn('flex flex-1 appearance-none bg-transparent border-0 p-0 m-0 font-inherit text-inherit leading-none', eventBadgeClasses)}
       onKeyDown={handleKeyDown}
-      aria-label={buttonProps['aria-label'] ?? event.title}
+      aria-label={buttonProps['aria-label'] ?? eventTitle}
       {...buttonProps}
     >
       <div className="flex items-center gap-1.5 truncate">
-        {renderDays && <span className="text-xs font-semibold truncate">{event.title}</span>}
+        {renderDays && <span className="text-xs font-semibold truncate">{eventTitle}</span>}
 
-        {renderBadgeText && <p className="flex-1 truncate font-semibold">{event.title}</p>}
+        {renderBadgeText && <p className="flex-1 truncate font-semibold">{eventTitle}</p>}
       </div>
       {renderStartTime && <span className="hidden lg:block">{format(new Date(event.startDate), 'h:mm a')}</span>}
       {renderEndTime && <span className="hidden lg:block">{format(new Date(event.endDate), 'h:mm a')}</span>}

@@ -97,6 +97,7 @@ export const SUser = z.object({
 
 export const SMultiDay = z.object({
   position: z.enum(['first', 'last', 'middle', 'single']),
+  description: z.string(),
   calculatedDate: z.string(),
   isEndAtMidnight: z.boolean().optional(),
   originalEndDate: z.string().optional(),
@@ -131,6 +132,8 @@ export const SEvent = z.object({
   recurrence: SRecurrence.nullish(),
   createdAt: DateSchema,
   updatedAt: DateSchema,
+  createdBy: z.string(),
+  updatedBy: z.string(),
   multiDay: SMultiDay.optional(),
   multiRoom: z.boolean().optional(),
 });

@@ -26,7 +26,7 @@ import { RoomColorSelect } from './room-color-select';
 import { BadgeColored } from '@/components/ui/badge-colored';
 import { method } from 'lodash';
 import { cn } from '@/lib/utils';
-import { EventCard } from '../calendar/components/calendar-scroll-private-event-block';
+import { EventCard } from '../calendar/components/calendar-scroll-private-event-block-old';
 import { addHours, format } from 'date-fns';
 
 export const Step01Room = ({ formStatus }: { formStatus: FormStatus }) => {

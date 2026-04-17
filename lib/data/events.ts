@@ -11,6 +11,8 @@ const EVENT_INCLUDE = {
   recurrence: true,
   status: true,
   user: { select: { name: true, email: true } },
+  createdByUser: { select: { name: true } },
+  updatedByUser: { select: { name: true } },
 } as const satisfies Prisma.EventInclude;
 
 // Create an event — the DAL controls which relations are included.
@@ -179,14 +181,15 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
   const events = isArray ? data : [data];
 
   const mapped = events.map((event) => {
-    //Remove User Property
-    const { user, ...other } = event;
+    //Remove Properties
+    const { user, createdByUser, updatedByUser, ...other } = event;
 
     return {
       ...event,
       userName: user?.name,
       userEmail: user?.email,
-
+      createdBy: event.createdByUser.name,
+      updatedBy: event.updatedByUser.name,
       eventItems: event.eventItems
         ? event.eventItems.map((eventItem) => {
             return {

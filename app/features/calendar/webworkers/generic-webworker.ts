@@ -7,7 +7,6 @@ import {
   calculateViewBoundaries,
   filterEventsByRoom,
   filterEventsByStatus,
-  generateMultiDayEventsInPeriod,
   generateRecurringEventsInPeriod,
   getDateRange,
   processMultiRoomEvents,
