@@ -27,10 +27,10 @@ import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 import { format } from 'date-fns';
 import { getDurationText } from '@/lib/helpers';
 
-import { BookingPermissions } from '../../bookings/components/permissions/booking.permissions';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { CalendarPermissions } from '../permissions/calendar.permissions';
 
 export const EventCard = React.memo(
   React.forwardRef<
@@ -42,11 +42,12 @@ export const EventCard = React.memo(
       isUpdating: boolean;
     }
   >(({ event, index, onStatusChange, isUpdating }, ref) => {
-    const { can } = BookingPermissions.usePermissions();
+    const { can } = CalendarPermissions.usePermissions();
 
     const { openEventDrawer } = useSharedEventDrawer();
 
     const canReadEvent = can('ReadAllEvent');
+    const canChangeStatus = can('UpateEventStatus');
 
     return (
       <div ref={ref} data-index={index} className="py-2">
@@ -160,7 +161,7 @@ export const EventCard = React.memo(
                     size="sm"
                     className="w-full"
                     onClick={() => onStatusChange(event.eventId, 'APPROVED')}
-                    disabled={isUpdating}
+                    disabled={isUpdating || !canChangeStatus}
                   >
                     Confirm
                   </ButtonColored>
@@ -171,7 +172,7 @@ export const EventCard = React.memo(
                     size="sm"
                     className="w-full"
                     onClick={() => onStatusChange(event.eventId, 'REJECTED')}
-                    disabled={isUpdating}
+                    disabled={isUpdating || !canChangeStatus}
                   >
                     Reject
                   </ButtonColored>
@@ -182,7 +183,7 @@ export const EventCard = React.memo(
                     size="sm"
                     className="w-full"
                     onClick={() => onStatusChange(event.eventId, 'PENDING')}
-                    disabled={isUpdating}
+                    disabled={isUpdating || !canChangeStatus}
                   >
                     Pending
                   </ButtonColored>

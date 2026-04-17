@@ -31,8 +31,7 @@ import { cn } from '@/lib/utils';
 
 import { id } from 'date-fns/locale';
 import { type } from 'os';
-import EventCard from '../bookings/components/event-card';
-import { IRoomSection } from '../bookings/components/types';
+
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { BadgeColored } from '@/components/ui/badge-colored';

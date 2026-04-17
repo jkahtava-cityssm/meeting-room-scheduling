@@ -10,7 +10,7 @@ import { CalendarHeader } from './calendar-all-header';
 import { CalendarProviderPrivate } from '@/contexts/CalendarProviderPrivate';
 import { useCalendarSearchParams } from './use-calendar-search-params';
 import { CalendarUserRequestView } from '../view-requests/user-request';
-import { BookingPermissions } from '../../bookings/components/permissions/booking.permissions';
+
 import { CalendarAction } from '../webworkers/generic-webworker';
 import CalendarMonthPicker from '@/components/calendar-month-picker/CalendarMonthPicker';
 import CalendarYearPicker from '@/components/calendar-year-picker/CalendarYearPicker';
@@ -18,7 +18,7 @@ import { CalendarDayPicker } from '@/components/calendar-day-picker/CalendarDayP
 import { CalendarWeekPicker } from '@/components/calendar-week-picker/CalendarWeekPicker';
 
 export function CalendarRequestView() {
-  const { isVerifying, can, canAny } = BookingPermissions.usePermissions();
+  const { isVerifying, can, canAny } = CalendarPermissions.usePermissions();
 
   const permissions = {
     day: can('ViewStaffRequests'),
