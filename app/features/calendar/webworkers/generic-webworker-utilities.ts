@@ -1089,7 +1089,6 @@ export function generateRecurringEventsInPeriod(events: IEvent[], periodStart: D
 
       eventList.push({
         ...event,
-        title: 'Series' + (event.title ? ' - ' + event.title : ''),
         startDate: set(event.startDate, { year, month, date }).toISOString(),
         endDate: set(event.endDate, { year, month, date }).toISOString(),
       });
