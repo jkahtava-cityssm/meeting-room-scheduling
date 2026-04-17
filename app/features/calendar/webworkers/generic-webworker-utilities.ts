@@ -777,121 +777,6 @@ function isSingleDayEventEndAtMidnight(startDate: Date, endDate: Date): boolean 
   }
 }
 
-export function generateMultiDayEventsInPeriod(
-  events: IEventSingleRoom[],
-  periodStart: Date,
-  periodEnd: Date,
-  minStartTime: number,
-  maxEndTime: number,
-) {
-  const eventList: IEventSingleRoom[] = [];
-
-  for (const event of events) {
-    if (event.recurrenceId !== null) continue;
-
-    const currentStartDate = new Date(event.startDate);
-    const currentEndDate = new Date(event.endDate);
-
-    // Check if event ends at midnight
-    const endAtMidnight = endsAtMidnight(currentStartDate, currentEndDate);
-    const adjustedEndDate = endAtMidnight ? getAdjustedEndDateForMultiDay(currentEndDate) : currentEndDate;
-
-    // Handle all-day events
-    if (isSingleAllDayEvent(currentStartDate, currentEndDate)) {
-      if (isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd })) {
-        eventList.push({
-          ...event,
-          multiDay: {
-            position: 'single',
-            calculatedDate: currentStartDate.toISOString(),
-            isEndAtMidnight: endAtMidnight,
-            originalEndDate: currentEndDate.toISOString(),
-          },
-        });
-      }
-      continue;
-    }
-
-    const totalDaysBetween = differenceInDays(endOfDay(adjustedEndDate), startOfDay(currentStartDate));
-
-    // Single-day events
-    if (totalDaysBetween === 0) {
-      eventList.push({
-        ...event,
-        multiDay: endAtMidnight
-          ? {
-              position: 'single',
-              calculatedDate: currentStartDate.toISOString(),
-              isEndAtMidnight: true,
-              originalEndDate: currentEndDate.toISOString(),
-            }
-          : undefined,
-      });
-      continue;
-    }
-
-    // Multi-day: split into segments with actual time boundaries
-    for (let dayIndex = 0; dayIndex <= totalDaysBetween; dayIndex++) {
-      const newDay = set(addDays(currentStartDate, dayIndex), { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
-
-      if (!isWithinInterval(newDay, { start: periodStart, end: periodEnd })) {
-        continue;
-      }
-
-      const newEvent = {
-        ...event,
-        eventIsSplit: true,
-        title: `Day ${dayIndex + 1} of ${totalDaysBetween + 1}` + (event.title ? ' - ' + event.title : ''),
-      };
-
-      if (dayIndex === 0) {
-        // First day
-        newEvent.endDate = set(currentStartDate, {
-          hours: maxEndTime,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0,
-        }).toISOString();
-        newEvent.multiDay = {
-          position: 'first',
-          calculatedDate: currentStartDate.toISOString(),
-          isEndAtMidnight: false,
-        };
-      } else if (dayIndex === totalDaysBetween) {
-        // Last day
-        newEvent.startDate = set(adjustedEndDate, {
-          hours: minStartTime,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0,
-        }).toISOString();
-        newEvent.multiDay = {
-          position: 'last',
-          calculatedDate: adjustedEndDate.toISOString(),
-          isEndAtMidnight: endAtMidnight,
-          originalEndDate: endAtMidnight ? currentEndDate.toISOString() : undefined,
-        };
-      } else {
-        // Middle days
-        newEvent.startDate = set(newDay, {
-          hours: minStartTime,
-          minutes: 0,
-          seconds: 0,
-          milliseconds: 0,
-        }).toISOString();
-        newEvent.endDate = set(newDay, { hours: maxEndTime, minutes: 0, seconds: 0, milliseconds: 0 }).toISOString();
-        newEvent.multiDay = {
-          position: 'middle',
-          calculatedDate: newDay.toISOString(),
-          isEndAtMidnight: false,
-        };
-      }
-      eventList.push(newEvent);
-    }
-  }
-  return eventList;
-}
-
 export function calculateMultiDayEventPositions(events: IEvent[], periodStart: Date, periodEnd: Date) {
   const eventList: IEvent[] = [];
 
@@ -914,6 +799,7 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
           ...event,
           multiDay: {
             position: 'single',
+            description: `All Day`,
             calculatedDate: currentStartDate.toISOString(),
             isEndAtMidnight: endAtMidnight,
             originalEndDate: currentEndDate.toISOString(),
@@ -930,6 +816,7 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
           ...event,
           multiDay: {
             position: 'single',
+            description: `All Day`,
             calculatedDate: currentStartDate.toISOString(),
             isEndAtMidnight: true,
             originalEndDate: currentEndDate.toISOString(),
@@ -961,7 +848,6 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
 
       const newEvent = {
         ...event,
-        title: `Day ${dayIndex + 1} of ${totalDaysBetween + 1}` + (event.title ? ' - ' + event.title : ''),
       };
 
       let position: 'first' | 'middle' | 'last';
@@ -983,6 +869,7 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
 
       newEvent.multiDay = {
         position,
+        description: `Day ${dayIndex + 1} of ${totalDaysBetween + 1}`,
         calculatedDate,
         isEndAtMidnight: endAtMidnight && dayIndex === totalDaysBetween,
         originalEndDate: endAtMidnight ? currentEndDate.toISOString() : undefined,
