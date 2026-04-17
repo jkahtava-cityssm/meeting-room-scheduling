@@ -132,6 +132,8 @@ export const SEvent = z.object({
   recurrence: SRecurrence.nullish(),
   createdAt: DateSchema,
   updatedAt: DateSchema,
+  createdBy: z.string(),
+  updatedBy: z.string(),
   multiDay: SMultiDay.optional(),
   multiRoom: z.boolean().optional(),
 });

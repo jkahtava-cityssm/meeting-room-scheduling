@@ -252,7 +252,7 @@
 @theme inline {
   --breakpoint-xxs: 23.5rem;
   --breakpoint-xs: 30rem;
-
+  --text-xxs: 0.65rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);

@@ -6,12 +6,17 @@ import { useEffect, useRef, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { cva } from 'class-variance-authority';
-import { sharedColorVariants } from '@/lib/theme/colorVariants';
+import { sharedColorVariants, sharedTextVariants } from '@/lib/theme/colorVariants';
 import { useScrollPopoverDirection } from './use-scroll-popover-direction';
 
 import { TColors, TStatusKey } from '@/lib/types';
 import { IEventBlock } from '../webworkers/generic-webworker';
 import { IEventSingleRoom } from '@/lib/schemas';
+
+import { BadgeColored } from '@/components/ui/badge-colored';
+import { Calendar, Clock, LucideDoorClosed, LucideDoorOpen, SendHorizonal, User } from 'lucide-react';
+import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
+import { CalendarPermissions } from '../permissions/calendar.permissions';
 
 type Props = {
   viewport: HTMLDivElement | null;
@@ -35,6 +40,8 @@ export const EventCard = cva(
 );
 
 export function PrivateEventBlock({ viewport, popoverLayer, eventBlock, heightInPixels, onClick }: Props) {
+  const { can } = CalendarPermissions.usePermissions();
+
   const [popoverIsOpen, setPopoverOpen] = useState(false);
 
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -166,6 +173,21 @@ export function PrivateEventBlock({ viewport, popoverLayer, eventBlock, heightIn
 
   const timeRange = getTimeRangeLabel(eventBlock.event);
 
+  const showEventType = eventBlock.event.multiDay || eventBlock.event.recurrence;
+
+  const eventType = eventBlock.event.recurrence ? 'Series/Recurring' : eventBlock.event.multiDay?.description;
+
+  const textVariants = cva('', {
+    variants: {
+      color: sharedTextVariants,
+    },
+    defaultVariants: {
+      color: 'slate',
+    },
+  });
+
+  const ReadAll = can('ReadAllEvent');
+
   return (
     <Popover open={popoverIsOpen} onOpenChange={setPopoverOpen}>
       <div className="w-full" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleInternalClick} onBlur={handleMouseLeave}>
@@ -180,9 +202,12 @@ export function PrivateEventBlock({ viewport, popoverLayer, eventBlock, heightIn
           >
             <div className="flex flex-col gap-1">
               <p className="truncate font-semibold">{eventBlock.event.title}</p>
+              {showEventType && (
+                <p className="truncate">
+                  {eventBlock.event.recurrence ? 'Series/Recurring' : eventBlock.event.multiDay ? eventBlock.event.multiDay.description : ''}
+                </p>
+              )}
               <p className="truncate">{timeRange}</p>
-              <p className="mt-2 truncate">{eventBlock.event.recurrence ? 'Series' : eventBlock.event.multiDay ? 'Day 0' : ''}</p>
-              <p className="truncate">{eventBlock.event.status.name}</p>
             </div>
           </button>
         </PopoverTrigger>
@@ -202,16 +227,65 @@ export function PrivateEventBlock({ viewport, popoverLayer, eventBlock, heightIn
         onCloseAutoFocus={(e) => e.preventDefault()}
         role="tooltip"
         aria-hidden="true"
-        className="z-5 pointer-events-none w-64 p-3 shadow-xl"
+        className="z-5 pointer-events-none w-fit min-w-64 max-w-96 p-3 shadow-xl"
       >
         <div className="space-y-1">
-          <div className="flex h-8 items-center border-b border-muted-foreground">
-            <p className="text-sm font-medium">{eventBlock.event.roomName}</p>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <DynamicIcon color={eventBlock.event.status.color as TColors} name={eventBlock.event.status.icon as IconName} className="size-3.5" />
+            <span className={cn(textVariants({ color: eventBlock.event.status.color as TColors }), 'text-xs')}>{eventBlock.event.status.name}</span>
+          </div>
+          <div className="flex flex-col  gap-1 border-b pb-1 mb-1 border-muted-foreground">
+            <div className="flex items-center gap-1">
+              <p className="text-sm text-foreground font-medium">{eventBlock.event.title}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <LucideDoorOpen className="size-3.5" />
+            <span className="text-sm text-primary/80">{eventBlock.event.roomName}</span>
           </div>
 
-          <p className="text-sm text-primary/80">{isApproved ? 'Booked' : 'Requested'}</p>
-          <p className="text-sm text-primary/80">{timeRange}</p>
-          <p className="text-sm text-primary/80">{eventBlock.event.title}</p>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Calendar className="size-3.5" />
+            <span className="text-sm text-primary/80">{eventType}</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="size-3.5" />
+            <span className="text-sm text-primary/80">{timeRange}</span>
+          </div>
+          {ReadAll && (
+            <>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <User className="size-3.5" />
+                <span className="text-sm text-primary/80">{eventBlock.event.userName}</span>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <span className="border-b border-dashed"></span>
+                <div className="flex flex-col">
+                  <div className="flex flex-row justify-between">
+                    <span className="text-xxs ">Created By: </span>
+                    <span className="text-xxs">{eventBlock.event.createdBy}</span>
+                  </div>
+                  <div className="flex flex-row justify-between">
+                    <span className="text-xxs ">Created On: </span>
+                    <span className="text-xxs">{format(eventBlock.event.createdAt, 'PPP @ p')}</span>
+                  </div>
+                </div>
+                <span className="border-b border-dashed"></span>
+                <div className="flex flex-col">
+                  <div className="flex flex-row justify-between">
+                    <span className="text-xxs ">Modified By: </span>
+                    <span className="text-xxs">{eventBlock.event.updatedBy}</span>
+                  </div>
+                  <div className="flex flex-row justify-between">
+                    <span className="text-xxs ">Modified On: </span>
+                    <span className="text-xxs">{format(eventBlock.event.updatedAt, 'PPP @ p')}</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </PopoverContent>
     </Popover>
