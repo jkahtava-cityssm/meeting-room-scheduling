@@ -244,10 +244,12 @@ export function PrivateEventBlock({ viewport, popoverLayer, eventBlock, heightIn
             <span className="text-sm text-primary/80">{eventBlock.event.roomName}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Calendar className="size-3.5" />
-            <span className="text-sm text-primary/80">{eventType}</span>
-          </div>
+          {showEventType && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Calendar className="size-3.5" />
+              <span className="text-sm text-primary/80">{eventType}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Clock className="size-3.5" />
