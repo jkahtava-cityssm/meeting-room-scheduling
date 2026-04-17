@@ -15,6 +15,7 @@ model User {
   emailVerified Boolean @default(false) @map("email_verified")
   emailEnabled  Boolean @default(true) @map("email_enabled")
   image         String?
+  uuid          String? @unique @db.Uuid
   externalId    String? @map("external_id")
   department    String? @map("department")
   jobTitle      String? @map("job_title")
@@ -40,15 +41,14 @@ model User {
   employees  User[] @relation("EmployeeToSupervisor")
 
   // Self-audit relations
-  createdByUser User?  @relation("UserCreatedBy", fields: [createdBy], references: [id])
-  updatedByUser User?  @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
+  createdByUser User? @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
 
-  
-  usersCreated  User[] @relation("UserCreatedBy")
-  usersUpdated  User[] @relation("UserUpdatedBy")
+  usersCreated User[] @relation("UserCreatedBy")
+  usersUpdated User[] @relation("UserUpdatedBy")
 
-    providerCreated  SSOProvider[] @relation("ProviderCreatedBy")
-  providerUpdated  SSOProvider[] @relation("ProviderUpdatedBy")
+  providerCreated SSOProvider[] @relation("ProviderCreatedBy")
+  providerUpdated SSOProvider[] @relation("ProviderUpdatedBy")
 
   // Account audit back-relations
   accountsCreated Account[] @relation("AccountCreatedBy")
