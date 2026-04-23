@@ -7,38 +7,24 @@ import { sendTestEmail } from './testEmail';
 // Load Environment Variables
 loadEnvConfig(process.cwd());
 
-let runCount = 0;
+const cronSchedule = process.argv[2] || '0 3 * * *';
 
-const task = cron.schedule('* * * * * *', async () => {
-  console.log(`\n--- [Run #${runCount}] Cron Triggered at ${new Date().toLocaleTimeString()} ---`);
-  runCount++;
+console.log(`Worker initialized with schedule: "${cronSchedule}"`);
+
+async function runJob() {
+  console.log(`[${new Date().toLocaleTimeString()}] Sync Starting`);
+
   try {
-    if (runCount === 1) {
-      console.log('Testing Database connection...');
-      await prisma.configuration.findFirst();
-      console.log('DB Check Successful.');
-
-      console.log(' Waiting 10 seconds...');
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-
-      console.log('Task sequence finished.');
-
-      console.log('\nStopping scheduler and exiting test...');
-
-      await syncEntraUsers();
-
-      //await sendTestEmail('j.kahtava@cityssm.on.ca', 'j.kahtava@cityssm.on.ca');
-
-      //Kill the scheduler, since we are testing it
-      task.stop();
-      await prisma.$disconnect();
-      process.exit(0);
-    }
+    await syncEntraUsers();
+    console.log(`[${new Date().toLocaleTimeString()}]  Sync Completed`);
   } catch (error) {
-    console.error('Cron Task Error:', error);
-    process.exit(1);
+    console.error('Sync Error:', error);
   }
+}
+
+// Schedule the recurring task
+cron.schedule(cronSchedule, async () => {
+  await runJob();
 });
 
-// Start the scheduler
-task.start();
+console.log(`Worker is now resident. Monitoring for schedule: ${cronSchedule}...`);

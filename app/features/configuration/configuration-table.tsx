@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { GenericError } from '@/components/shared/generic-error';
 import { useRevalidateAndInvalidate } from '@/hooks/use-revalidate-cache';
 import { RevalidateButton } from './revalidate-api';
+import { SchedulerControls } from '@/jobs/SchedulerControls';
 
 export function ConfigurationPage() {
   const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
@@ -121,6 +122,7 @@ export function ConfigurationPage() {
           <div className="min-h-[70px] border-b flex items-center ">
             <RevalidateButton />
           </div>
+          <SchedulerControls></SchedulerControls>
         </div>
       </ScrollArea>
 
