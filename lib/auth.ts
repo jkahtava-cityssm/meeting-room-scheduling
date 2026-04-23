@@ -41,7 +41,7 @@ export const auth = betterAuth({
     provider: 'postgresql',
   }),
   advanced: {
-    database: { useNumberId: true, generateId: false },
+    database: { useNumberId: true, generateId: 'serial' },
   },
   socialProviders: {
     github: {
@@ -64,7 +64,7 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: 10 * 60, // 5 Minutes
       strategy: 'compact',
-      refreshCache: { updateAge: 60 * 2 },
+      //refreshCache: { updateAge: 60 * 2 },
     },
   },
   account: {
