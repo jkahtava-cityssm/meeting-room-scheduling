@@ -113,6 +113,13 @@ export const CONFIG_MANIFEST = [
     defaultValue: 30,
     type: 'number',
   },
+  {
+    key: 'ENTRA_SYNC_SCHEDULE',
+    name: 'Entra Sync Schedule',
+    description: 'Cron expression for scheduling Entra user synchronization (minute hour day month weekday).',
+    defaultValue: '0 3 * * *',
+    type: 'string',
+  },
 ] as const;
 
 export type TConfigurationKeys = (typeof CONFIG_MANIFEST)[number]['key'];

@@ -1,41 +1,66 @@
 'use server';
 
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
-import { platform } from 'node:os';
-import { getSchedulerStatus } from './checkEntraScheduler';
-
-const execPromise = promisify(exec);
+import {
+  loadSchedulerMetadata,
+  validatePID,
+  deleteSchedulerMetadata,
+  getSchedulerStatus as getSchedulerStatusFromManager,
+} from '@/lib/scheduler/manager';
 
 export async function stopGlobalScheduler() {
-  const isWindows = platform() === 'win32';
-
   try {
-    // 1. Check if it's even running first
-    const { isRunning } = await getSchedulerStatus();
-    if (!isRunning) {
-      return { success: true, message: 'Scheduler is not currently running.' };
+    // Load stored metadata
+    const metadata = loadSchedulerMetadata();
+
+    if (!metadata) {
+      return { success: true, message: 'Scheduler is not currently running (no metadata found).' };
     }
 
-    // 2. Run the platform-specific kill command
-    if (isWindows) {
-      /**
-       * Windows: taskkill
-       * /FI filters by window title (which tsx sets)
-       * /F forces the termination
-       */
-      await execPromise('taskkill /FI "windowtitle eq tsx jobs/scheduler.ts*" /F');
-    } else {
-      /**
-       * Unix: pkill
-       * -f matches against the full command line
-       */
-      await execPromise('pkill -f "tsx jobs/scheduler.ts"');
+    // Validate that the stored PID is actually our scheduler
+    const isValid = validatePID(metadata.pid, metadata.processMarker);
+
+    if (!isValid) {
+      console.warn(`[Scheduler] Stored PID ${metadata.pid} is invalid or process not found`);
+      deleteSchedulerMetadata();
+      return {
+        success: true,
+        message: 'Stored scheduler process was no longer running. Metadata cleaned up.',
+      };
     }
 
-    return { success: true, message: 'Scheduler stopped successfully.' };
+    // Now kill the validated process
+    try {
+      process.kill(metadata.pid, 'SIGTERM');
+      console.log(`[Scheduler] Sent SIGTERM to PID ${metadata.pid}`);
+
+      // Wait a moment, then force kill if still running
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      try {
+        process.kill(metadata.pid, 'SIGKILL');
+        console.log(`[Scheduler] Sent SIGKILL to PID ${metadata.pid}`);
+      } catch {
+        // Process already dead, that's fine
+      }
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ESRCH') {
+        // ESRCH means process not found, which is okay
+        console.error('[Scheduler] Error killing process:', err);
+      }
+    }
+
+    // Clean up metadata file
+    deleteSchedulerMetadata();
+
+    return {
+      success: true,
+      message: `Scheduler stopped successfully (PID: ${metadata.pid}).`,
+    };
   } catch (err) {
-    console.error('Stop Error:', err);
-    return { success: false, error: 'Failed to stop the scheduler process.' };
+    console.error('[Scheduler] Stop Error:', err);
+    return {
+      success: false,
+      error: `Failed to stop the scheduler: ${err instanceof Error ? err.message : 'Unknown error'}`,
+    };
   }
 }
