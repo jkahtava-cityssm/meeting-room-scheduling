@@ -41,7 +41,7 @@ export async function PUT(request: NextRequest) {
   return guardRoute(
     request,
     {
-      EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' },
+      EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' },
     },
     async ({ sessionUserId, data }) => {
       try {
