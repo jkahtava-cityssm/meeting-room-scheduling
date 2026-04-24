@@ -5,7 +5,6 @@ CREATE TABLE "system_process" (
     "tag" TEXT NOT NULL,
     "pid" INTEGER NOT NULL,
     "parameter" TEXT NOT NULL,
-    "requires_restart" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "created_by" INTEGER NOT NULL,

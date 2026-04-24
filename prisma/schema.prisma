@@ -679,7 +679,6 @@ model SystemProcess {
   tag             String
   pid             Int      @map("pid")
   parameter       String   @map("parameter")
-  requiresRestart Boolean  @default(false) @map("requires_restart")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
