@@ -1,35 +1,33 @@
 'use server';
 
 import { spawn } from 'node:child_process';
-import {
-  getScheduleFromDB,
-  validateCronExpression,
-  generateProcessMarker,
-  saveSchedulerMetadata,
-  isSchedulerRunning,
-  killOrphanedSchedulers,
-  getSchedulerStatus as getSchedulerStatusFromManager,
-} from '@/lib/scheduler/manager';
+import { getSystemProcess, validateCronExpression, findProcessById, killOrphanedSchedulers, saveSystemProcess } from '@/lib/scheduler/manager';
+import path from 'path';
 
-export async function startGlobalScheduler(schedule?: string) {
+export async function startGlobalScheduler(systemProcessKey: string, schedule?: string) {
   try {
-    // Check if scheduler is already running with valid PID/marker
-    if (isSchedulerRunning()) {
+    const ENTRA_SYNC_TAG = `${systemProcessKey}_${process.env.DATABASE_NAME ? process.env.DATABASE_NAME : 'unknown'}`.toUpperCase();
+
+    const processEntry = await getSystemProcess(systemProcessKey);
+
+    const activeProcess = findProcessById(processEntry?.pid || 0, processEntry?.tag || '');
+
+    if (activeProcess && processEntry) {
       console.log('[Scheduler] Scheduler is already running. No action taken.');
-      const status = getSchedulerStatusFromManager();
+
       return {
         success: false,
         message: 'Scheduler is already running in the background.',
-        currentPid: status.pid,
-        currentSchedule: status.schedule,
+        currentPid: activeProcess.pid,
+        currentSchedule: processEntry.parameter,
       };
     }
 
     // Clean up any orphaned schedulers first
-    killOrphanedSchedulers();
+    killOrphanedSchedulers(ENTRA_SYNC_TAG, processEntry?.pid || 0);
 
     // Use provided schedule or fetch from DB
-    const finalSchedule = schedule || (await getScheduleFromDB());
+    const finalSchedule = processEntry?.parameter || '0 3 * * *'; // default to 3 AM daily if not set
 
     // Validate cron expression
     if (!validateCronExpression(finalSchedule)) {
@@ -39,15 +37,17 @@ export async function startGlobalScheduler(schedule?: string) {
       };
     }
 
-    // Generate unique marker for this process
-    const marker = generateProcessMarker();
-
-    console.log(`[Scheduler] Starting scheduler with marker: ${marker}`);
+    console.log(`[Scheduler] Starting scheduler with tag: ${ENTRA_SYNC_TAG}`);
     console.log(`[Scheduler] Schedule: ${finalSchedule}`);
 
+    const parts = ['dist', 'scheduler-wrapper.js'];
+    const scriptPath = path.join(process.cwd(), ...parts);
+
+    console.log(`[Scheduler] Script path: ${scriptPath}`);
+
     // Build command to spawn scheduler-wrapper
-    const command = `npx`;
-    const args = ['tsx', 'jobs/scheduler-wrapper.ts', '--schedule', finalSchedule, '--marker', marker];
+    const command = `node`;
+    const args = [scriptPath, '--schedule', finalSchedule, '--marker', ENTRA_SYNC_TAG];
 
     // Launch the worker as detached process so it survives web server restart
     const child = spawn(command, args, {
@@ -68,13 +68,13 @@ export async function startGlobalScheduler(schedule?: string) {
     child.unref(); // Tell Node not to wait for child process to exit
 
     // Save metadata with the new PID and marker
-    saveSchedulerMetadata(pid, finalSchedule, marker);
+    saveSystemProcess(pid, finalSchedule, ENTRA_SYNC_TAG, systemProcessKey);
 
     return {
       success: true,
       message: `Scheduler started with schedule: ${finalSchedule}`,
       pid,
-      marker,
+      marker: ENTRA_SYNC_TAG,
       schedule: finalSchedule,
     };
   } catch (err) {

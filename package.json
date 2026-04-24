@@ -14,7 +14,8 @@
     "lint": "next lint",
     "worker": "tsx jobs/scheduler.ts",
     "scheduler": "tsx jobs/scheduler-wrapper.ts",
-    "scheduler:start": "tsx jobs/scheduler-wrapper.ts --schedule \"0 3 * * *\""
+    "scheduler:start": "tsx jobs/scheduler-wrapper.ts --schedule \"0 3 * * *\"",
+    "build:scheduler": "esbuild jobs/scheduler-wrapper.ts --bundle --platform=node --outfile=dist/scheduler-wrapper.js"
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",

@@ -1,27 +1,21 @@
 'use server';
 
-import {
-  loadSchedulerMetadata,
-  validatePID,
-  deleteSchedulerMetadata,
-  getSchedulerStatus as getSchedulerStatusFromManager,
-} from '@/lib/scheduler/manager';
+import { findProcessById, getSystemProcess, resetSystemProcess } from '@/lib/scheduler/manager';
 
-export async function stopGlobalScheduler() {
+export async function stopGlobalScheduler(systemProcessKey: string) {
   try {
-    // Load stored metadata
-    const metadata = loadSchedulerMetadata();
+    const processEntry = await getSystemProcess(systemProcessKey);
 
-    if (!metadata) {
+    const activeProcess = findProcessById(processEntry?.pid || 0, processEntry?.tag || '');
+
+    if (!processEntry || !activeProcess) {
       return { success: true, message: 'Scheduler is not currently running (no metadata found).' };
     }
 
-    // Validate that the stored PID is actually our scheduler
-    const isValid = validatePID(metadata.pid, metadata.processMarker);
+    if (!activeProcess) {
+      console.warn(`[Scheduler] Stored PID ${processEntry?.pid} is invalid or process not found`);
 
-    if (!isValid) {
-      console.warn(`[Scheduler] Stored PID ${metadata.pid} is invalid or process not found`);
-      deleteSchedulerMetadata();
+      resetSystemProcess(systemProcessKey);
       return {
         success: true,
         message: 'Stored scheduler process was no longer running. Metadata cleaned up.',
@@ -30,15 +24,15 @@ export async function stopGlobalScheduler() {
 
     // Now kill the validated process
     try {
-      process.kill(metadata.pid, 'SIGTERM');
-      console.log(`[Scheduler] Sent SIGTERM to PID ${metadata.pid}`);
+      process.kill(activeProcess.pid, 'SIGTERM');
+      console.log(`[Scheduler] Sent SIGTERM to PID ${activeProcess.pid}`);
 
       // Wait a moment, then force kill if still running
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       try {
-        process.kill(metadata.pid, 'SIGKILL');
-        console.log(`[Scheduler] Sent SIGKILL to PID ${metadata.pid}`);
+        process.kill(activeProcess.pid, 'SIGKILL');
+        console.log(`[Scheduler] Sent SIGKILL to PID ${activeProcess.pid}`);
       } catch {
         // Process already dead, that's fine
       }
@@ -50,11 +44,11 @@ export async function stopGlobalScheduler() {
     }
 
     // Clean up metadata file
-    deleteSchedulerMetadata();
+    resetSystemProcess(systemProcessKey);
 
     return {
       success: true,
-      message: `Scheduler stopped successfully (PID: ${metadata.pid}).`,
+      message: `Scheduler stopped successfully (PID: ${activeProcess.pid}).`,
     };
   } catch (err) {
     console.error('[Scheduler] Stop Error:', err);

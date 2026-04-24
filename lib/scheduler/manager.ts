@@ -12,29 +12,19 @@ import { platform } from 'node:os';
 import { prisma } from '@/prisma';
 import type { SchedulerMetadata, SchedulerStatus } from './types';
 
-// Metadata file location
-const METADATA_FILE = join(process.cwd(), '.scheduler-metadata.json');
-
-/**
- * Fetch scheduler cron schedule from database Configuration table
- * Falls back to environment variable if database unavailable
- */
-export async function getScheduleFromDB(): Promise<string> {
-  const envFallback = process.env.ENTRA_SYNC_SCHEDULE || '0 3 * * *';
-
+export async function getSystemProcess(processKey: string) {
   try {
-    const config = await prisma.configuration.findUnique({
-      where: { key: 'ENTRA_SYNC_SCHEDULE' },
+    const systemProcess = await prisma.systemProcess.findFirst({
+      select: { pid: true, tag: true, parameter: true, updatedAt: true },
+      where: { key: processKey },
     });
 
-    if (config?.value) {
-      return config.value;
-    }
-  } catch (err) {
-    console.warn('[Scheduler] Database unavailable, using fallback schedule:', envFallback);
-  }
+    console.log(`[Scheduler] Metadata saved - PID: ${systemProcess?.pid}, Marker: ${systemProcess?.tag}`);
 
-  return envFallback;
+    return systemProcess;
+  } catch (err) {
+    console.error('[Scheduler] Failed to save metadata:', err);
+  }
 }
 
 /**
@@ -49,71 +39,48 @@ export function validateCronExpression(cron: string): boolean {
 }
 
 /**
- * Generate unique process marker for this scheduler
- * Format: SCHEDULER_DB_<DATABASE_NAME>_<UUID>
- */
-export function generateProcessMarker(): string {
-  const dbName = process.env.DATABASE_NAME || 'unknown';
-  const uuid = randomUUID();
-  return `SCHEDULER_DB_${dbName}_${uuid}`;
-}
-
-/**
- * Hash a cron expression for change detection
- */
-export function hashSchedule(schedule: string): string {
-  return createHash('sha256').update(schedule).digest('hex');
-}
-
-/**
  * Save scheduler metadata to file
  */
-export function saveSchedulerMetadata(pid: number, schedule: string, marker: string): void {
-  const metadata: SchedulerMetadata = {
-    pid,
-    databaseName: process.env.DATABASE_NAME || 'unknown',
-    startTime: Date.now(),
-    scheduleHash: hashSchedule(schedule),
-    processMarker: marker,
-    schedule,
-  };
-
+export async function saveSystemProcess(pid: number, schedule: string, processTag: string, processKey: string, userId: number = 0) {
   try {
-    writeFileSync(METADATA_FILE, JSON.stringify(metadata, null, 2));
-    console.log(`[Scheduler] Metadata saved - PID: ${pid}, Marker: ${marker}`);
+    const process = await prisma.systemProcess.upsert({
+      create: { pid, key: processKey, tag: processTag, parameter: schedule, createdBy: userId, updatedBy: userId },
+      update: { pid, parameter: schedule, updatedBy: userId },
+      where: { key: processKey },
+    });
+
+    console.log(`[Scheduler] Metadata saved - PID: ${pid}, Marker: ${processTag}`);
+  } catch (err) {
+    console.error('[Scheduler] Failed to save metadata:', err);
+  }
+}
+
+export function updateSystemProcess(processKey: string, pid?: number, schedule?: string, processTag?: string, userId: number = 0): void {
+  try {
+    prisma.systemProcess.update({
+      data: { pid, key: processKey, tag: processTag, parameter: schedule, createdBy: userId, updatedBy: userId },
+      where: { key: processKey },
+    });
+
+    console.log(`[Scheduler] Metadata saved - PID: ${pid}, Marker: ${processTag}`);
   } catch (err) {
     console.error('[Scheduler] Failed to save metadata:', err);
   }
 }
 
 /**
- * Load scheduler metadata from file
- */
-export function loadSchedulerMetadata(): SchedulerMetadata | null {
-  if (!existsSync(METADATA_FILE)) {
-    return null;
-  }
-
-  try {
-    const content = readFileSync(METADATA_FILE, 'utf-8');
-    return JSON.parse(content) as SchedulerMetadata;
-  } catch (err) {
-    console.error('[Scheduler] Failed to load metadata:', err);
-    return null;
-  }
-}
-
-/**
  * Delete metadata file
  */
-export function deleteSchedulerMetadata(): void {
+export async function resetSystemProcess(processKey: string) {
   try {
-    if (existsSync(METADATA_FILE)) {
-      unlinkSync(METADATA_FILE);
-      console.log('[Scheduler] Metadata file deleted');
-    }
+    await prisma.systemProcess.update({
+      data: { requiresRestart: true, pid: 0, updatedBy: 0 },
+      where: { key: processKey },
+    });
+
+    console.log('[Scheduler] System Process reset');
   } catch (err) {
-    console.error('[Scheduler] Failed to delete metadata:', err);
+    console.error('[Scheduler] Failed to reset System Process:', err);
   }
 }
 
@@ -121,43 +88,59 @@ export function deleteSchedulerMetadata(): void {
  * Validate that a stored PID is actually our scheduler
  * Checks: PID exists, process command line contains marker and DATABASE_NAME
  */
-export function validatePID(storedPID: number, expectedMarker: string): boolean {
+export function findProcessById(storedPID: number, processTag: string) {
   const isWindows = platform() === 'win32';
-  const dbName = process.env.DATABASE_NAME || 'unknown';
 
   try {
     if (isWindows) {
       // Windows: use tasklist to get running processes
-      try {
-        const output = execSync(`tasklist /pid ${storedPID} /fo csv`, {
-          encoding: 'utf-8',
-          timeout: 5000,
-        });
-        // If tasklist returns output, process exists
-        if (!output.includes(storedPID.toString())) {
-          return false;
-        }
-      } catch {
-        return false; // Process doesn't exist
+
+      const psScript = `
+                  Get-CimInstance Win32_Process -Filter "ProcessId = ${storedPID}" |
+                  ForEach-Object {
+                      $cmdLine = $_.CommandLine;
+                      $match = [regex]::Match($cmdLine, '--marker\\s+([^\\s]+)');
+                      
+                      [PSCustomObject]@{
+                          pid    = $_.ProcessId;
+                          marker = if ($match.Success) { $match.Groups[1].Value } else { "Unknown" };
+                      }
+                  } | ConvertTo-Json -Compress
+              `
+        .trim()
+        .replace(/\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/"/g, '\\"');
+
+      const cmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psScript}"`;
+      const stdout = execSync(cmd, { encoding: 'utf-8' }).trim();
+
+      if (!stdout) return null;
+
+      const data = JSON.parse(stdout);
+      // Ensure it contains our marker or db name to be considered "found"
+      if (data.marker && data.marker.toLowerCase() === processTag.toLowerCase()) {
+        return { pid: data.pid, marker: data.marker };
       }
+      return null;
     } else {
-      // Linux/Mac: check if process exists via /proc
-      const cmdlineFile = `/proc/${storedPID}/cmdline`;
-      if (!existsSync(cmdlineFile)) {
-        return false;
-      }
+      const cmd = `ps -p ${storedPID} -o command=`;
+      const stdout = execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
 
-      const cmdline = readFileSync(cmdlineFile, 'utf-8');
+      if (!stdout) return null;
 
-      // Verify marker and database name are in the command line
-      if (!cmdline.includes(expectedMarker) || !cmdline.includes(dbName)) {
-        return false;
+      if (stdout.includes(processTag)) {
+        const match = stdout.match(/--marker\s+([^\s]+)/);
+        const extractedMarker = match ? match[1] : 'Unknown';
+
+        return {
+          pid: storedPID,
+          marker: extractedMarker,
+        };
       }
     }
-
-    return true;
   } catch (err) {
-    return false;
+    return null;
   }
 }
 
@@ -165,68 +148,93 @@ export function validatePID(storedPID: number, expectedMarker: string): boolean 
  * Find all orphaned scheduler processes for this database
  * Returns PIDs of processes with same DATABASE_NAME tag but potentially different/old markers
  */
-export function findOrphanedSchedulers(): number[] {
+
+interface ProcessInfo {
+  pid: number;
+  marker: string;
+}
+
+export function findProcessByTag(processTag: string, activeProcessID: number): number[] {
   const isWindows = platform() === 'win32';
-  const dbName = process.env.DATABASE_NAME || 'unknown';
-  const marker = `SCHEDULER_DB_${dbName}_`;
+
   const orphans: number[] = [];
 
   try {
     if (isWindows) {
-      // Windows: use tasklist
-      const output = execSync('tasklist /fo csv /nh', {
-        encoding: 'utf-8',
-        timeout: 5000,
-      });
+      try {
+        const psScript = `
+                  Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%--marker ${processTag}%' AND NOT CommandLine LIKE '%Get-CimInstance%'" | 
+                  ForEach-Object {
+                      $cmdLine = $_.CommandLine;
+                      $match = [regex]::Match($cmdLine, '--marker\\s+([^\\s]+)');
+                      
+                      [PSCustomObject]@{
+                          pid    = $_.ProcessId;
+                          parent  = $_.ParentProcessId;
+                          marker = if ($match.Success) { $match.Groups[1].Value } else { "Unknown" };
+                          command = $cmdLine;
+                      }
+                  } | ConvertTo-Json -Compress
+              `
+          .trim()
+          .replace(/\n/g, ' ')
+          .replace(/\s+/g, ' ')
+          .replace(/"/g, '\\"');
 
-      const lines = output.split('\n');
-      for (const line of lines) {
-        if (line.includes('tsx') && line.includes('scheduler-wrapper')) {
-          // This is likely a scheduler process
-          // Try to extract command to check for our marker
-          try {
-            const pid = parseInt(line.split(',')[1]);
-            if (isNaN(pid)) continue;
+        const formattedCmd = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psScript}"`;
+        const stdout = execSync(formattedCmd, { encoding: 'utf-8' }).trim();
 
-            const cmdOutput = execSync(`wmic process where ProcessId=${pid} get CommandLine /format:csv`, {
-              encoding: 'utf-8',
-              timeout: 5000,
-            });
+        if (!stdout || stdout.trim() === '') return [];
 
-            if (cmdOutput.includes(marker)) {
-              orphans.push(pid);
-            }
-          } catch {
-            // Skip this process
+        const rawData = JSON.parse(stdout);
+        const processObject: ProcessInfo[] = Array.isArray(rawData) ? rawData : [rawData];
+
+        for (const process of processObject) {
+          if (process.marker && process.pid !== activeProcessID) {
+            orphans.push(process.pid);
           }
         }
+      } catch (e) {
+        console.warn('[Scheduler] No matching processes found or error occurred:', e);
+        return [];
       }
+      return orphans;
     } else {
-      // Linux/Mac: use pgrep and check /proc
       try {
-        const pids = execSync(`pgrep -f "scheduler-wrapper"`, {
+        // -e: all processes
+        // -o pid,args: only output the PID and the full command line
+        const output = execSync('ps -e -o pid,args', {
           encoding: 'utf-8',
           timeout: 5000,
-        })
-          .trim()
-          .split('\n');
+        });
 
-        for (const pidStr of pids) {
-          const pid = parseInt(pidStr);
-          if (isNaN(pid)) continue;
+        const lines = output.trim().split('\n');
 
-          try {
-            const cmdline = readFileSync(`/proc/${pid}/cmdline`, 'utf-8');
-            if (cmdline.includes(marker)) {
-              orphans.push(pid);
-            }
-          } catch {
-            // Process might have exited, skip
+        for (const line of lines) {
+          // Split by first whitespace to get PID and everything else as the command
+          const match = line.trim().match(/^(\d+)\s+(.+)$/);
+          if (!match) continue;
+
+          const pid = parseInt(match[1], 10);
+          const fullCommand = match[2];
+
+          // 1. Check if it's our wrapper script
+          // 2. Check if it contains our specific marker
+          // 3. Ensure it's not THIS current process (if the marker is in our own env)
+          if (
+            fullCommand.includes('scheduler-wrapper') &&
+            fullCommand.includes(processTag) &&
+            process.pid !== activeProcessID &&
+            pid !== process.pid
+          ) {
+            orphans.push(pid);
           }
         }
-      } catch {
-        // pgrep found nothing
+      } catch (e) {
+        // ps failed or no processes found
+        console.warn('[Scheduler] Linux process lookup failed:', e);
       }
+      return orphans;
     }
   } catch (err) {
     console.error('[Scheduler] Error finding orphaned schedulers:', err);
@@ -239,8 +247,8 @@ export function findOrphanedSchedulers(): number[] {
  * Kill orphaned schedulers for this database
  * Gracefully terminates with SIGTERM, then SIGKILL if needed
  */
-export function killOrphanedSchedulers(): void {
-  const orphans = findOrphanedSchedulers();
+export function killOrphanedSchedulers(processKey: string, activeProcessID: number): void {
+  const orphans = findProcessByTag(processKey, activeProcessID);
   const dbName = process.env.DATABASE_NAME || 'unknown';
 
   if (orphans.length === 0) {
@@ -270,84 +278,83 @@ export function killOrphanedSchedulers(): void {
   }
 }
 
-/**
- * Check if a scheduler is currently running
- */
-export function isSchedulerRunning(): boolean {
-  const metadata = loadSchedulerMetadata();
-  if (!metadata) {
-    return false;
+export function getNextCronOccurrence(cron: string): string | null {
+  const parts = cron.split(/\s+/);
+  if (parts.length < 4) return null;
+
+  const [mStr, hStr, dStr, moStr] = parts;
+
+  // Early Validation & Parsing
+  const parsePart = (s: string) => (s === '*' ? null : parseInt(s, 10));
+
+  const targetHour = parsePart(hStr);
+  const targetDay = parsePart(dStr);
+  const targetMonth = parsePart(moStr);
+  const tempMinute = parseInt(mStr, 10);
+
+  if (isNaN(tempMinute)) return null;
+  if (targetHour !== null && (targetHour < 0 || targetHour > 23)) return null;
+  if (targetDay !== null && (targetDay < 1 || targetDay > 31)) return null;
+  if (targetMonth !== null && (targetMonth < 1 || targetMonth > 12)) return null;
+
+  const now = new Date();
+  const next = new Date(now.getTime());
+  next.setSeconds(0, 0);
+  next.setMilliseconds(0);
+
+  // Clamp Minute to intervals
+  const intervals = [0, 15, 30, 45];
+  let targetMinute: number;
+
+  const clamped = intervals.find((i) => i >= tempMinute);
+
+  if (clamped === undefined) {
+    // If input was 46-59, we move to the 00 mark of the NEXT hour
+    targetMinute = 0;
+    next.setHours(next.getHours() + 1);
+  } else {
+    targetMinute = clamped;
   }
 
-  return validatePID(metadata.pid, metadata.processMarker);
-}
-
-/**
- * Get current scheduler status
- */
-export function getSchedulerStatus(): SchedulerStatus {
-  const metadata = loadSchedulerMetadata();
-
-  if (!metadata) {
-    return { isRunning: false };
+  // If the clamped target is in the past/current minute of this hour, move to next hour
+  if (next.getHours() === now.getHours() && targetMinute <= now.getMinutes()) {
+    next.setHours(next.getHours() + 1);
   }
 
-  const isRunning = validatePID(metadata.pid, metadata.processMarker);
+  next.setMinutes(targetMinute);
 
-  if (!isRunning) {
-    return { isRunning: false };
+  // 2. Matching Loop
+  let iterations = 0;
+  while (iterations < 500) {
+    const curMonth = next.getMonth() + 1;
+    const curDay = next.getDate();
+    const curHour = next.getHours();
+
+    if (targetMonth !== null && targetMonth !== curMonth) {
+      next.setMonth(next.getMonth() + 1, 1);
+      next.setHours(0, targetMinute, 0, 0);
+      iterations++;
+      continue;
+    }
+
+    if (targetDay !== null && targetDay !== curDay) {
+      next.setDate(targetDay);
+      if (next.getDate() !== targetDay) {
+        next.setMonth(next.getMonth() + 1, 1);
+      }
+      next.setHours(0, targetMinute, 0, 0);
+      iterations++;
+      continue;
+    }
+
+    if (targetHour !== null && targetHour !== curHour) {
+      next.setHours(next.getHours() + 1, targetMinute, 0, 0);
+      iterations++;
+      continue;
+    }
+
+    return next.toISOString();
   }
 
-  return {
-    isRunning: true,
-    pid: metadata.pid,
-    schedule: metadata.schedule,
-    processMarker: metadata.processMarker,
-    startTime: metadata.startTime,
-  };
-}
-
-/**
- * Initialize scheduler on app startup
- * Validates stored PID, cleans up orphans, and logs status
- */
-export async function initializeSchedulerOnAppStart(): Promise<void> {
-  console.log('[Scheduler] Initializing on app startup...');
-
-  const metadata = loadSchedulerMetadata();
-
-  if (!metadata) {
-    console.log('[Scheduler] No stored metadata found');
-    killOrphanedSchedulers(); // Clean up any stray processes
-    return;
-  }
-
-  const isValid = validatePID(metadata.pid, metadata.processMarker);
-
-  if (isValid) {
-    console.log(`[Scheduler] Scheduler is running - PID: ${metadata.pid}, Marker: ${metadata.processMarker}`);
-    return;
-  }
-
-  console.log('[Scheduler] Stored PID is invalid or process has died');
-  deleteSchedulerMetadata();
-  killOrphanedSchedulers(); // Clean up any orphaned processes
-  console.log('[Scheduler] Cleanup complete');
-}
-
-/**
- * Update schedule in database and trigger restart
- * This is called from the API endpoint
- */
-export async function updateScheduleInDB(newSchedule: string): Promise<void> {
-  if (!validateCronExpression(newSchedule)) {
-    throw new Error(`Invalid cron expression: ${newSchedule}`);
-  }
-
-  await prisma.configuration.update({
-    where: { key: 'ENTRA_SYNC_SCHEDULE' },
-    data: { value: newSchedule },
-  });
-
-  console.log(`[Scheduler] Schedule updated in database: ${newSchedule}`);
+  return null;
 }

@@ -7,15 +7,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/prisma';
-import {
-  getScheduleFromDB,
-  validateCronExpression,
-  getSchedulerStatus as getSchedulerStatusFromManager,
-  updateScheduleInDB,
-  loadSchedulerMetadata,
-} from '@/lib/scheduler/manager';
+import { findProcessById, getNextCronOccurrence, getSystemProcess, updateSystemProcess, validateCronExpression } from '@/lib/scheduler/manager';
 import { startGlobalScheduler } from '@/jobs/startEntraSheduler';
 import { stopGlobalScheduler } from '@/jobs/stopEntraScheduler';
+
+const SYSTEM_PROCESS_KEY = 'ENTRA_SYNC_SCHEDULER';
 
 /**
  * GET /api/configuration/scheduler
@@ -24,21 +20,18 @@ import { stopGlobalScheduler } from '@/jobs/stopEntraScheduler';
 export async function GET() {
   try {
     // Fetch current schedule from DB
-    const schedule = await getScheduleFromDB();
+    const processEntry = await getSystemProcess(SYSTEM_PROCESS_KEY);
 
-    // Get scheduler status
-    const status = getSchedulerStatusFromManager();
-
-    // Load metadata for additional details
-    const metadata = loadSchedulerMetadata();
+    const activeProcess = findProcessById(processEntry?.pid || 0, processEntry?.tag || '');
 
     return NextResponse.json({
       success: true,
-      schedule,
-      status,
-      pid: metadata?.pid || null,
-      marker: metadata?.processMarker || null,
-      startTime: metadata?.startTime || null,
+      schedule: processEntry?.parameter,
+      isRunning: activeProcess?.pid ? true : false,
+      pid: processEntry?.pid || null,
+      marker: processEntry?.tag || null,
+      startTime: processEntry?.updatedAt || null,
+      nextRuntime: processEntry?.parameter ? getNextCronOccurrence(processEntry.parameter) : null,
     });
   } catch (err) {
     console.error('[API] Scheduler GET error:', err);
@@ -76,17 +69,17 @@ export async function PATCH(request: NextRequest) {
     console.log(`[API] Updating scheduler schedule to: ${newSchedule}`);
 
     // Update schedule in database
-    await updateScheduleInDB(newSchedule);
+    updateSystemProcess('ENTRA_SYNC_SCHEDULE', undefined, newSchedule);
 
     // Stop the old scheduler
-    const stopResult = await stopGlobalScheduler();
+    const stopResult = await stopGlobalScheduler('ENTRA_SYNC_SCHEDULER');
     if (!stopResult.success) {
       console.warn('[API] Failed to stop old scheduler:', stopResult.error);
       // Continue anyway - we might have orphaned process
     }
 
     // Start new scheduler with updated schedule
-    const startResult = await startGlobalScheduler(newSchedule);
+    const startResult = await startGlobalScheduler('ENTRA_SYNC_SCHEDULER', newSchedule);
     if (!startResult.success) {
       return NextResponse.json(
         {
@@ -98,7 +91,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Fetch updated status
-    const updatedStatus = getSchedulerStatusFromManager();
+    //const updatedStatus = getSchedulerStatusFromManager();
 
     return NextResponse.json({
       success: true,
@@ -106,7 +99,7 @@ export async function PATCH(request: NextRequest) {
       schedule: newSchedule,
       pid: startResult.pid,
       marker: startResult.marker,
-      status: updatedStatus,
+      status: 'updatedStatus',
     });
   } catch (err) {
     console.error('[API] Scheduler PATCH error:', err);
@@ -114,6 +107,46 @@ export async function PATCH(request: NextRequest) {
       {
         success: false,
         error: `Failed to update scheduler: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST() {
+  try {
+    const result = await startGlobalScheduler('ENTRA_SYNC_SCHEDULER');
+
+    if (!result.success) {
+      return NextResponse.json(result, { status: 400 });
+    }
+
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE() {
+  try {
+    const result = await stopGlobalScheduler('ENTRA_SYNC_SCHEDULER');
+
+    if (!result.success) {
+      return NextResponse.json(result, { status: 400 });
+    }
+
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: err instanceof Error ? err.message : 'Unknown error',
       },
       { status: 500 },
     );
