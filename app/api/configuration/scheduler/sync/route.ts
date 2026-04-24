@@ -1,4 +1,4 @@
-import { syncEntraUsers } from '@/jobs/syncEntraUsers';
+import { syncEntraUsers } from '@/jobs/EntraSync/syncEntraUsers';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
