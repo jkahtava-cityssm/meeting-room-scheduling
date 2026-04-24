@@ -18,11 +18,11 @@ export async function getSystemProcess(processKey: string) {
 /**
  * Save scheduler metadata to database
  */
-export async function saveSystemProcess(pid: number, schedule: string, processTag: string, processKey: string, userId: number = 0) {
+export async function saveSystemProcess(pid: number, parameter: string, processTag: string, processKey: string, userId: number = 0) {
   try {
     const process = await prisma.systemProcess.upsert({
-      create: { pid, key: processKey, tag: processTag, parameter: schedule, createdBy: userId, updatedBy: userId },
-      update: { pid, parameter: schedule, updatedBy: userId },
+      create: { pid, key: processKey, tag: processTag, parameter: parameter, createdBy: userId, updatedBy: userId },
+      update: { pid, parameter: parameter, updatedBy: userId },
       where: { key: processKey },
     });
 
@@ -32,10 +32,10 @@ export async function saveSystemProcess(pid: number, schedule: string, processTa
   }
 }
 
-export async function updateSystemProcess(processKey: string, pid?: number, schedule?: string, processTag?: string, userId: number = 0) {
+export async function updateSystemProcess(processKey: string, pid?: number, parameter?: string, processTag?: string, userId: number = 0) {
   try {
     const process = await prisma.systemProcess.update({
-      data: { pid: pid, key: processKey, tag: processTag, parameter: schedule, createdBy: userId, updatedBy: userId },
+      data: { pid: pid, key: processKey, tag: processTag, parameter: parameter, createdBy: userId, updatedBy: userId },
       where: { key: processKey },
     });
 

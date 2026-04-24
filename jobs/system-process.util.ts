@@ -254,19 +254,17 @@ export async function stopBackgroundProcess(systemProcessKey: string) {
 interface SpawnOptions {
   systemProcessKey: string;
   scriptPath: string[];
-  args?: string[];
   defaultParameter?: string;
   validate?: (param: string) => boolean;
 }
 
-export async function startBackgroundProcess({ systemProcessKey, scriptPath, args = [], defaultParameter = '', validate }: SpawnOptions) {
+export async function startBackgroundProcess({ systemProcessKey, scriptPath, defaultParameter, validate }: SpawnOptions) {
   try {
     // 1. Create a unique identifier tag
-    const dbName = process.env.DATABASE_NAME || 'unknown';
     const processTag = `${systemProcessKey}_${process.env.DATABASE_NAME ? process.env.DATABASE_NAME : 'unknown'}`.toUpperCase();
 
-    // 2. Check for existing process
     const processEntry = await getSystemProcess(systemProcessKey);
+
     const activeProcess = findProcessById(processEntry?.pid || 0, processEntry?.tag || '');
 
     if (activeProcess && processEntry) {
@@ -280,11 +278,35 @@ export async function startBackgroundProcess({ systemProcessKey, scriptPath, arg
 
     // 3. Cleanup & Parameter Resolution
     await stopOrphanedProcesses(processTag, processEntry?.pid || 0);
-    const finalParam = processEntry?.parameter || defaultParameter;
 
-    if (validate && !validate(finalParam)) {
-      return { success: false, error: `Validation failed for parameter: ${finalParam}` };
+    const parameterJSON = processEntry?.parameter || defaultParameter;
+
+    if (!parameterJSON) {
+      return {
+        success: false,
+        error: `No parameter provided for process '${systemProcessKey}' and no existing parameter found in database.`,
+      };
     }
+
+    let parameter: Record<string, string> = {};
+    try {
+      parameter = JSON.parse(parameterJSON);
+    } catch (e) {
+      return {
+        success: false,
+        error: `Failed to parse parameter JSON for process '${systemProcessKey}': ${e instanceof Error ? e.message : 'Unknown error'}`,
+      };
+    }
+
+    const args: string[] = [];
+    for (const [key, value] of Object.entries(parameter)) {
+      args.push(`--${key}`);
+      args.push(String(value));
+    }
+
+    /* if (validate && !validate(finalParam)) {
+      return { success: false, error: `Validation failed for parameter: ${finalParam}` };
+    }*/
 
     // 4. Resolve Absolute Script Path
     const absolutePath = path.join(process.cwd(), ...scriptPath);
@@ -303,14 +325,14 @@ export async function startBackgroundProcess({ systemProcessKey, scriptPath, arg
     child.unref();
 
     // 6. Persistence
-    await saveSystemProcess(pid, finalParam, processTag, systemProcessKey);
+    await saveSystemProcess(pid, parameterJSON, processTag, systemProcessKey);
 
     return {
       success: true,
       message: `Process '${systemProcessKey}' started successfully.`,
       pid,
       tag: processTag,
-      parameter: finalParam,
+      parameter: parameterJSON,
     };
   } catch (err) {
     console.error(`[ProcessManager] Error starting ${systemProcessKey}:`, err);

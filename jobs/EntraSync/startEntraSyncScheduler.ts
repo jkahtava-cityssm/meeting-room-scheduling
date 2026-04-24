@@ -1,12 +1,24 @@
 'use server';
 
 import { spawn } from 'node:child_process';
-import { findProcessById, stopOrphanedProcesses } from '@/jobs/system-process.util';
+import { findProcessById, startBackgroundProcess, stopOrphanedProcesses } from '@/jobs/system-process.util';
 import path from 'path';
 import { validateCronExpression } from './scheduler-util';
 import { getSystemProcess, saveSystemProcess } from '../system-process.data';
 
-export async function startGlobalScheduler(systemProcessKey: string, schedule?: string) {
+export async function startGlobalScheduler(schedule?: string) {
+  const systemProcessKey = 'ENTRA_SYNC_SCHEDULER';
+  const processEntry = await getSystemProcess(systemProcessKey);
+
+  const processSchedule = processEntry?.parameter || '0 3 * * *';
+
+  await startBackgroundProcess({
+    systemProcessKey: systemProcessKey,
+    scriptPath: ['dist', 'scheduler-wrapper.js'],
+    args: ['--schedule', processSchedule],
+    defaultParameter: 'standard-sync',
+  });
+
   try {
     const ENTRA_SYNC_TAG = `${systemProcessKey}_${process.env.DATABASE_NAME ? process.env.DATABASE_NAME : 'unknown'}`.toUpperCase();
 
@@ -87,3 +99,5 @@ export async function startGlobalScheduler(systemProcessKey: string, schedule?: 
     };
   }
 }
+
+// Example: Starting a generic sync worker
