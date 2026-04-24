@@ -13,9 +13,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GenericError } from '@/components/shared/generic-error';
-import { useRevalidateAndInvalidate } from '@/hooks/use-revalidate-cache';
+
 import { RevalidateButton } from './revalidate-api';
-import { SchedulerControls } from '@/jobs/SchedulerControls';
+
+import { CronInput, SchedulerStatus } from './entra-sync';
+import { useEntraSyncProcess } from './use-entra-sync-process';
+import { cn } from '@/lib/utils';
 
 export function ConfigurationPage() {
   const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
@@ -23,6 +26,8 @@ export function ConfigurationPage() {
   const [isChanged, setChanged] = useState(false);
   //const [resourceActions, setResourceActions] = useState<ResourceActions | undefined>(undefined);
   const configurationMutation = useConfigurationMutationUpsert();
+
+  const { config, loading, refreshStatus, startScheduler, stopScheduler, updateSchedule, validateCronExpression } = useEntraSyncProcess();
 
   useEffect(() => {
     if (serverConfiguration) {
@@ -96,7 +101,7 @@ export function ConfigurationPage() {
       </div>
       {/* The Container is the Grid */}
       <ScrollArea className="w-full flex-1 min-h-0 p-4" type="always">
-        <div className="grid grid-cols-[min-content_1fr] items-center gap-y-0 ">
+        <div className="grid grid-cols-[min-content_1fr] items-stretch gap-y-0 ">
           {workingConfiguration?.map((entry) => (
             // We use React.Fragment or just flat divs because
             // the children of the grid must be the columns themselves.
@@ -122,7 +127,31 @@ export function ConfigurationPage() {
           <div className="min-h-[70px] border-b flex items-center ">
             <RevalidateButton />
           </div>
-          <SchedulerControls></SchedulerControls>
+
+          <ConfigRow
+            label={'ENTRA ID'}
+            description="Certain API routes are cached to reduced the number of database calls. Especially for values that dont change very often"
+          >
+            <div className="flex flex-col gap-2">
+              <SchedulerStatus
+                config={config}
+                loading={loading}
+                isRunning={config.isRunning}
+                onRefresh={refreshStatus}
+                onStart={startScheduler}
+                onStop={stopScheduler}
+              ></SchedulerStatus>
+              <div className="flex flex-col gap-2">
+                <CronInput
+                  initialCron={config.schedule}
+                  onUpdate={updateSchedule}
+                  isRunning={config.isRunning}
+                  loading={loading}
+                  validateCronExpression={validateCronExpression}
+                />
+              </div>
+            </div>
+          </ConfigRow>
         </div>
       </ScrollArea>
 
@@ -143,6 +172,28 @@ export function ConfigurationPage() {
           </Button>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function ConfigRow({
+  label,
+  description,
+  children,
+  className = 'min-h-[70px]',
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div style={{ display: 'contents' }}>
+      <div className={cn('border-b flex flex-col justify-center pr-6 py-4', className)}>
+        <label className="text-xs font-bold uppercase tracking-widest text-foreground/70">{label}</label>
+        {description && <p className="text-xs text-muted-foreground mt-1.5 max-w-md leading-relaxed">{description}</p>}
+      </div>
+      <div className={cn('border-b flex items-center py-4', className)}>{children}</div>
     </div>
   );
 }
