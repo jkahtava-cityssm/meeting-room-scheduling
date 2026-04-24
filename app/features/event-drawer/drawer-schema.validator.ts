@@ -10,8 +10,8 @@ export const BaseRecurrence = z.object({
   ruleStartDate: z.string(),
   ruleEndDate: z.string(),
   untilDate: z.string(),
-  durationType: z.enum(DURATION_OPTIONS).refine((val) => val !== '', {
-    message: 'Recurrence duration is missing ',
+  durationType: z.enum(DURATION_OPTIONS, {
+    error: 'Recurrence duration is missing',
   }),
   occurrences: z.string(),
 });
