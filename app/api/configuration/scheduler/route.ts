@@ -7,9 +7,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/prisma';
-import { findProcessById, getNextCronOccurrence, getSystemProcess, updateSystemProcess, validateCronExpression } from '@/lib/scheduler/manager';
-import { startGlobalScheduler } from '@/jobs/startEntraSheduler';
-import { stopGlobalScheduler } from '@/jobs/stopEntraScheduler';
+import { findProcessById, getSystemProcess, updateSystemProcess } from '@/jobs/system-process.util';
+import { startGlobalScheduler } from '@/jobs/EntraSync/startEntraSyncScheduler';
+import { stopGlobalScheduler } from '@/jobs/EntraSync/stopEntraSyncScheduler';
+import { validateCronExpression } from '@/jobs/EntraSync/scheduler-util';
 
 const SYSTEM_PROCESS_KEY = 'ENTRA_SYNC_SCHEDULER';
 
@@ -69,36 +70,14 @@ export async function PATCH(request: NextRequest) {
     console.log(`[API] Updating scheduler schedule to: ${newSchedule}`);
 
     // Update schedule in database
-    updateSystemProcess('ENTRA_SYNC_SCHEDULE', undefined, newSchedule);
-
-    // Stop the old scheduler
-    const stopResult = await stopGlobalScheduler('ENTRA_SYNC_SCHEDULER');
-    if (!stopResult.success) {
-      console.warn('[API] Failed to stop old scheduler:', stopResult.error);
-      // Continue anyway - we might have orphaned process
-    }
-
-    // Start new scheduler with updated schedule
-    const startResult = await startGlobalScheduler('ENTRA_SYNC_SCHEDULER', newSchedule);
-    if (!startResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Failed to restart scheduler: ${startResult.error}`,
-        },
-        { status: 500 },
-      );
-    }
-
-    // Fetch updated status
-    //const updatedStatus = getSchedulerStatusFromManager();
+    await updateSystemProcess('ENTRA_SYNC_SCHEDULER', undefined, newSchedule);
 
     return NextResponse.json({
       success: true,
       message: 'Scheduler schedule updated and process restarted',
       schedule: newSchedule,
-      pid: startResult.pid,
-      marker: startResult.marker,
+      pid: null,
+      marker: null,
       status: 'updatedStatus',
     });
   } catch (err) {
