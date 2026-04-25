@@ -1,11 +1,7 @@
-import { upsertUser } from '@/lib/data/users';
 import { prisma } from '@/prisma';
 import { ClientSecretCredential } from '@azure/identity';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { Prisma } from '@prisma/client';
-
-import * as fs from 'fs';
 
 interface GraphLicense {
   disabledPlans: string[];
@@ -22,17 +18,6 @@ interface GraphUser {
   onPremisesSyncEnabled: boolean | null;
   onPremisesDistinguishedName: string | null;
   assignedLicenses: GraphLicense[];
-}
-
-interface MappedUser {
-  uuid: string;
-  name: string;
-  email: string;
-  enabled: boolean;
-  onPremiseEnabled: boolean | null;
-  departments: string[];
-  other: string | null;
-  totalLicenses: number;
 }
 
 export async function syncEntraUsers() {
@@ -152,22 +137,4 @@ export async function syncEntraUsers() {
     console.error('Database sync failed:', error);
     throw error;
   }
-}
-
-function exportUsersToFile(mappedUsers: MappedUser[], fileName: string) {
-  const headers = ['UUID', 'Name', 'Email', 'Enabled', 'OnPremiseSync', 'Departments', 'TotalLicenses', 'DistinguishedName'];
-
-  const rows = mappedUsers.map((user) => [
-    user.uuid,
-    `"${user.name}"`,
-    user.email,
-    user.enabled,
-    user.onPremiseEnabled,
-    `"${user.departments.join('; ')}"`,
-    user.totalLicenses,
-    `"${user.other || ''}"`,
-  ]);
-  const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-
-  fs.writeFileSync(fileName, csvContent);
 }

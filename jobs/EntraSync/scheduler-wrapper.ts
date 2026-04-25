@@ -25,7 +25,7 @@ const schedule = values.schedule || process.env.ENTRA_SYNC_SCHEDULE || '0 3 * * 
 const marker = values.marker || `SCHEDULER_${process.pid}`;
 
 // Store marker in environment for process inspection
-process.env.SCHEDULER_PROCESS_MARKER = marker;
+//process.env.SCHEDULER_PROCESS_MARKER = marker;
 
 console.log(`[${new Date().toISOString()}] Scheduler initialized: ${marker}`);
 console.log(`[${new Date().toISOString()}] Schedule: ${schedule}`);
