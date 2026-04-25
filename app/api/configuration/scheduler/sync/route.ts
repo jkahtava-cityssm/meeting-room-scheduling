@@ -1,4 +1,4 @@
-import { syncEntraUsers } from '@/jobs/EntraSync/syncEntraUsers';
+import { syncEntraUsers } from '@/jobs/EntraSync/entra-sync-users';
 import { guardRoute } from '@/lib/api-guard';
 import { NextRequest, NextResponse } from 'next/server';
 

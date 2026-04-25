@@ -32,7 +32,7 @@ console.log(`[${new Date().toISOString()}] Schedule: ${schedule}`);
 console.log(`[${new Date().toISOString()}] PID: ${process.pid}`);
 
 // Import sync function
-import { syncEntraUsers } from './syncEntraUsers';
+import { syncEntraUsers } from './entra-sync-users';
 
 // Schedule the recurring task
 try {
