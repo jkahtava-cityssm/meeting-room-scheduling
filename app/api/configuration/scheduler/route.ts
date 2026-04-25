@@ -10,7 +10,7 @@ import {
   startEntraSyncScheduler,
   stopEntraSyncScheduler,
   updateEntraSyncSchedule,
-} from '@/jobs/EntraSync/entra-sync-server-utils';
+} from '@/jobs/entra-sync/entra-sync-server-utils';
 
 /**
  * GET /api/configuration/scheduler

@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { execSync } from 'child_process';
 
 const projectRoot = process.cwd();
@@ -7,29 +7,28 @@ const sourceDir = join(projectRoot, 'jobs');
 const targetDir = join(projectRoot, '.next', 'standalone', 'jobs');
 
 // Files to compile
-const filesToCompile = ['entra-sync-process.ts'];
+const filesToCompile = ['entra-sync/entra-sync-process.ts'];
 
-console.log('[Build] Compiling scheduler files...');
+console.log('[Build] Compiling files...');
 console.log(`[Build] Source: ${sourceDir}`);
 console.log(`[Build] Target: ${targetDir}`);
 
 try {
-  // Ensure target directory exists
-  if (!existsSync(targetDir)) {
-    mkdirSync(targetDir, { recursive: true });
-    console.log(`[Build] Created directory: ${targetDir}`);
-  }
-
   // Compile each file using tsc
   for (const file of filesToCompile) {
     const sourceFile = join(sourceDir, file);
-    const targetFile = join(targetDir, file.replace('.ts', '.js'));
+
+    const fileSubdir = dirname(file);
+    const specificTargetDir = join(targetDir, fileSubdir);
 
     if (!existsSync(sourceFile)) {
       console.warn(`[Build] Warning: Source file not found: ${sourceFile}`);
       continue;
     }
 
+    if (!existsSync(specificTargetDir)) {
+      mkdirSync(specificTargetDir, { recursive: true });
+    }
     console.log(`[Build] Compiling ${file}...`);
 
     // Use npx tsc to compile the single file
@@ -39,15 +38,22 @@ try {
       execSync(command, { stdio: 'inherit' });
       console.log(`[Build] Compiled: ${file}`);
     } catch (err) {
-      console.error(`[Build] Failed to compile ${file}:`, err.message);
+      if (err instanceof Error) {
+        console.error(`[Build] Failed to compile ${file}:`, err.message);
+      } else {
+        console.error(`[Build] Failed to compile ${file}:`, err);
+      }
       process.exit(1);
     }
   }
 
-  console.log('[Build] Scheduler compilation complete');
-  console.log(`[Build] Compiled files available at: ${targetDir}`);
+  console.log('[Build] Compilation complete');
   process.exit(0);
 } catch (err) {
-  console.error('[Build] Build failed:', err.message);
+  if (err instanceof Error) {
+    console.error('[Build] Build failed:', err.message);
+  } else {
+    console.error('[Build] Build failed:', err);
+  }
   process.exit(1);
 }

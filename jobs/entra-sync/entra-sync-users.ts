@@ -1,4 +1,4 @@
-import { prisma } from '@/prisma';
+import { prisma } from '../../prisma';
 import { ClientSecretCredential } from '@azure/identity';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
