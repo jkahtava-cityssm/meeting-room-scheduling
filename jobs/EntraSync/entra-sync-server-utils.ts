@@ -2,7 +2,7 @@
 import { EntraSyncSchema } from '../schema';
 import { getSystemProcess, saveSystemProcess, updateSystemProcess } from '../system-process.data';
 import { findProcessById, startBackgroundProcess, stopBackgroundProcess } from '../system-process.util';
-import { getNextCronOccurrence } from './scheduler-util';
+import { getNextCronOccurrence } from '../cron-util';
 
 const SYSTEM_PROCESS_KEY = 'ENTRA_SYNC_SCHEDULER';
 
@@ -19,7 +19,7 @@ export async function createEntraSyncSchedulerProcessEntry() {
 export async function startEntraSyncScheduler() {
   return await startBackgroundProcess({
     systemProcessKey: SYSTEM_PROCESS_KEY,
-    scriptPath: ['dist', 'scheduler-wrapper.js'],
+    scriptPath: ['dist', 'entra-sync-process.js'],
     schema: EntraSyncSchema,
   });
 }

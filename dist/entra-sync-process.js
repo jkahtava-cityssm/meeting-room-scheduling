@@ -17912,7 +17912,7 @@ var require_azureTokenCredentials = __commonJS({
   }
 });
 
-// jobs/EntraSync/scheduler-wrapper.ts
+// jobs/EntraSync/entra-sync-process.ts
 var import_env = __toESM(require_dist());
 var import_node_cron = __toESM(require_node_cron());
 var import_node_util8 = require("node:util");
@@ -33264,7 +33264,7 @@ async function syncEntraUsers() {
   }
 }
 
-// jobs/EntraSync/scheduler-wrapper.ts
+// jobs/EntraSync/entra-sync-process.ts
 (0, import_env.loadEnvConfig)(process.cwd());
 var { values } = (0, import_node_util8.parseArgs)({
   options: {

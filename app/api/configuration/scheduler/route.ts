@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { findProcessById } from '@/jobs/system-process.util';
-import { getNextCronOccurrence, validateCronExpression } from '@/jobs/EntraSync/scheduler-util';
+import { getNextCronOccurrence, validateCronExpression } from '@/jobs/cron-util';
 import { guardRoute } from '@/lib/api-guard';
 import { getSystemProcess, updateSystemProcess } from '@/jobs/system-process.data';
 import {
@@ -10,7 +10,7 @@ import {
   startEntraSyncScheduler,
   stopEntraSyncScheduler,
   updateEntraSyncSchedule,
-} from '@/jobs/EntraSync/scheduler-server-utils';
+} from '@/jobs/EntraSync/entra-sync-server-utils';
 
 /**
  * GET /api/configuration/scheduler

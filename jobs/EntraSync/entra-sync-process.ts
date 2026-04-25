@@ -3,7 +3,7 @@
  * Spawned as a detached child process
  *
  * Usage:
- *   tsx jobs/scheduler-wrapper.ts --schedule "0 3 * * *" --marker "SCHEDULER_DB_meeting_room_scheduling_abc123"
+ *   tsx jobs/entra-sync-process.ts --schedule "0 3 * * *" --marker "SCHEDULER_DB_meeting_room_scheduling_abc123"
  */
 
 import { loadEnvConfig } from '@next/env';

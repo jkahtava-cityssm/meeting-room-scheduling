@@ -7,7 +7,7 @@ const sourceDir = join(projectRoot, 'jobs');
 const targetDir = join(projectRoot, '.next', 'standalone', 'jobs');
 
 // Files to compile
-const filesToCompile = ['scheduler-wrapper.ts'];
+const filesToCompile = ['entra-sync-process.ts'];
 
 console.log('[Build] Compiling scheduler files...');
 console.log(`[Build] Source: ${sourceDir}`);
