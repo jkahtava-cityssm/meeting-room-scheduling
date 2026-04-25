@@ -34,21 +34,17 @@ console.log(`[${new Date().toISOString()}] PID: ${process.pid}`);
 // Import sync function
 import { syncEntraUsers } from './syncEntraUsers';
 
-async function runJob() {
-  console.log(`[${new Date().toLocaleTimeString()}] Sync Starting`);
-
-  try {
-    await syncEntraUsers();
-    console.log(`[${new Date().toLocaleTimeString()}] Sync Completed`);
-  } catch (error) {
-    console.error('[Scheduler] Sync Error:', error);
-  }
-}
-
 // Schedule the recurring task
 try {
   cron.schedule(schedule, async () => {
-    await runJob();
+    console.log(`[${new Date().toLocaleTimeString()}] Sync Starting`);
+
+    try {
+      await syncEntraUsers();
+      console.log(`[${new Date().toLocaleTimeString()}] Sync Completed`);
+    } catch (error) {
+      console.error('[Scheduler] Sync Error:', error);
+    }
   });
 
   console.log(`[${new Date().toLocaleTimeString()}] Worker is resident. Monitoring for schedule: ${schedule}...`);

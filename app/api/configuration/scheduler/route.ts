@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { findProcessById } from '@/jobs/system-process.util';
-import { startGlobalScheduler } from '@/jobs/EntraSync/startEntraSyncScheduler';
-import { stopGlobalScheduler } from '@/jobs/EntraSync/stopEntraSyncScheduler';
 import { getNextCronOccurrence, validateCronExpression } from '@/jobs/EntraSync/scheduler-util';
 import { guardRoute } from '@/lib/api-guard';
 import { getSystemProcess, updateSystemProcess } from '@/jobs/system-process.data';
-
-const SYSTEM_PROCESS_KEY = 'ENTRA_SYNC_SCHEDULER';
+import {
+  createEntraSyncSchedulerProcessEntry,
+  pollEntraSyncScheduler,
+  startEntraSyncScheduler,
+  stopEntraSyncScheduler,
+  updateEntraSyncSchedule,
+} from '@/jobs/EntraSync/scheduler-server-utils';
 
 /**
  * GET /api/configuration/scheduler
@@ -19,20 +22,19 @@ export async function GET(request: NextRequest) {
     { EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } },
     async ({ sessionUserId }) => {
       try {
-        // get the process information from the database.
-        const processEntry = await getSystemProcess(SYSTEM_PROCESS_KEY);
+        const results = await pollEntraSyncScheduler();
 
-        //using the information in the database determine if the process is running.
-        const activeProcess = findProcessById(processEntry?.pid || 0, processEntry?.tag || '');
+        if (!results) {
+          const newEntry = await createEntraSyncSchedulerProcessEntry();
+          const results = await pollEntraSyncScheduler();
+          if (!newEntry || !results) {
+            return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
+          }
+        }
 
         return NextResponse.json({
           success: true,
-          schedule: processEntry?.parameter,
-          isRunning: activeProcess?.pid ? true : false,
-          pid: processEntry?.pid || null,
-          marker: processEntry?.tag || null,
-          startTime: processEntry?.updatedAt || null,
-          nextRuntime: processEntry?.parameter ? getNextCronOccurrence(processEntry.parameter) : null,
+          ...results,
         });
       } catch (err) {
         console.error('[API] Scheduler GET error:', err);
@@ -76,7 +78,7 @@ export async function PATCH(request: NextRequest) {
         console.log(`[API] Updating scheduler schedule to: ${newSchedule}`);
 
         // Update schedule in database
-        await updateSystemProcess(SYSTEM_PROCESS_KEY, undefined, newSchedule);
+        await updateEntraSyncSchedule(newSchedule, sessionUserId);
 
         return NextResponse.json({
           success: true,
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
     { EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } },
     async ({ sessionUserId }) => {
       try {
-        const result = await startGlobalScheduler(SYSTEM_PROCESS_KEY);
+        const result = await startEntraSyncScheduler();
 
         if (!result.success) {
           return NextResponse.json(result, { status: 400 });
@@ -142,7 +144,7 @@ export async function DELETE(request: NextRequest) {
     { EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } },
     async ({ sessionUserId }) => {
       try {
-        const result = await stopGlobalScheduler(SYSTEM_PROCESS_KEY);
+        const result = await stopEntraSyncScheduler();
 
         if (!result.success) {
           return NextResponse.json(result, { status: 400 });

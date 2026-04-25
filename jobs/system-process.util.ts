@@ -4,14 +4,16 @@ import { execSync, spawn } from 'node:child_process';
 import path from 'path';
 
 import { platform } from 'node:os';
-import { getSystemProcess, resetSystemProcess, saveSystemProcess } from './system-process.data';
+import { getSystemProcess, resetSystemProcess, saveSystemProcess, updateSystemProcess } from './system-process.data';
+import { update } from 'lodash';
+import { z, ZodType } from 'zod/v4';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Find a given Process by PID and determine if it contains our tag.
  * Returns the pid and tag, otherwise null
  */
-export function findProcessById(storedPID: number, processTag: string) {
+export async function findProcessById(storedPID: number, processTag: string) {
   const isWindows = platform() === 'win32';
 
   try {
@@ -22,7 +24,7 @@ export function findProcessById(storedPID: number, processTag: string) {
                   Get-CimInstance Win32_Process -Filter "ProcessId = ${storedPID}" |
                   ForEach-Object {
                       $cmdLine = $_.CommandLine;
-                      $match = [regex]::Match($cmdLine, '--tag\\s+([^\\s]+)');
+                      $match = [regex]::Match($cmdLine, '--marker\\s+([^\\s]+)');
                       
                       [PSCustomObject]@{
                           pid    = $_.ProcessId;
@@ -51,7 +53,7 @@ export function findProcessById(storedPID: number, processTag: string) {
       const stdout = execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
 
       if (!stdout) return null;
-      const match = stdout.match(/--tag\s+([^\s]+)/);
+      const match = stdout.match(/--marker\s+([^\s]+)/);
       const extractedMarker = match ? match[1] : 'Unknown';
 
       if (extractedMarker && extractedMarker.toLowerCase() === processTag.toLowerCase()) {
@@ -78,7 +80,7 @@ interface ProcessInfo {
   marker: string;
 }
 
-export function findProcessByTag(processTag: string, activeProcessID: number): number[] {
+export async function findProcessByTag(processTag: string, activeProcessID: number): Promise<number[]> {
   const isWindows = platform() === 'win32';
 
   const orphans: number[] = [];
@@ -87,10 +89,10 @@ export function findProcessByTag(processTag: string, activeProcessID: number): n
     if (isWindows) {
       try {
         const psScript = `
-                  Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%--tag ${processTag}%' AND NOT CommandLine LIKE '%Get-CimInstance%'" | 
+                  Get-CimInstance Win32_Process -Filter "CommandLine LIKE '%--marker ${processTag}%' AND NOT CommandLine LIKE '%Get-CimInstance%'" | 
                   ForEach-Object {
                       $cmdLine = $_.CommandLine;
-                      $match = [regex]::Match($cmdLine, '--tag\\s+([^\\s]+)');
+                      $match = [regex]::Match($cmdLine, '--marker\\s+([^\\s]+)');
                       
                       [PSCustomObject]@{
                           pid    = $_.ProcessId;
@@ -143,7 +145,7 @@ export function findProcessByTag(processTag: string, activeProcessID: number): n
           const fullCommand = match[2];
 
           //check if the tag is found, and that its not the active process or the Node process
-          if (fullCommand.includes('--tag') && fullCommand.includes(processTag) && process.pid !== activeProcessID && pid !== process.pid) {
+          if (fullCommand.includes('--marker') && fullCommand.includes(processTag) && process.pid !== activeProcessID && pid !== process.pid) {
             orphans.push(pid);
           }
         }
@@ -165,7 +167,7 @@ export function findProcessByTag(processTag: string, activeProcessID: number): n
  * Gracefully terminates with SIGTERM, then SIGKILL if needed
  */
 export async function stopOrphanedProcesses(processKey: string, activeProcessID: number): Promise<void> {
-  const orphans = findProcessByTag(processKey, activeProcessID);
+  const orphans = await findProcessByTag(processKey, activeProcessID);
   const dbName = process.env.DATABASE_NAME || 'unknown';
 
   if (orphans.length === 0) {
@@ -201,14 +203,15 @@ export async function stopBackgroundProcess(systemProcessKey: string) {
   try {
     const processEntry = await getSystemProcess(systemProcessKey);
 
-    const activeProcess = findProcessById(processEntry?.pid || 0, processEntry?.tag || '');
+    if (!processEntry) {
+      return { success: true, message: `Process '${systemProcessKey}' could not be found.` };
+    }
 
-    if (!processEntry || !activeProcess) {
-      if (processEntry) {
-        await resetSystemProcess(systemProcessKey);
-      }
+    const activeProcess = await findProcessById(processEntry.pid, processEntry.tag);
 
-      return { success: true, message: `Process '${systemProcessKey}' is not currently running.` };
+    if (!activeProcess) {
+      await resetSystemProcess(systemProcessKey);
+      return { success: true, message: `Process '${systemProcessKey}' is not currently running (stale PID cleaned).` };
     }
 
     const activePID = activeProcess.pid;
@@ -251,23 +254,31 @@ export async function stopBackgroundProcess(systemProcessKey: string) {
   }
 }
 
-interface SpawnOptions {
+export async function startBackgroundProcess<T extends Record<string, unknown>>({
+  systemProcessKey,
+  scriptPath,
+  schema,
+}: {
   systemProcessKey: string;
   scriptPath: string[];
-  defaultParameter?: string;
-  validate?: (param: string) => boolean;
-}
-
-export async function startBackgroundProcess({ systemProcessKey, scriptPath, defaultParameter, validate }: SpawnOptions) {
+  schema: ZodType<T>;
+}) {
   try {
-    // 1. Create a unique identifier tag
+    // Create a unique identifier tag
     const processTag = `${systemProcessKey}_${process.env.DATABASE_NAME ? process.env.DATABASE_NAME : 'unknown'}`.toUpperCase();
 
-    const processEntry = await getSystemProcess(systemProcessKey);
+    const processEntry = await getSystemProcess(systemProcessKey, schema);
 
-    const activeProcess = findProcessById(processEntry?.pid || 0, processEntry?.tag || '');
+    if (!processEntry || !('parameter' in processEntry)) {
+      return {
+        success: false,
+        error: `No valid process configuration found for key: ${systemProcessKey}`,
+      };
+    }
 
-    if (activeProcess && processEntry) {
+    const activeProcess = await findProcessById(processEntry.pid, processEntry.tag);
+
+    if (activeProcess) {
       return {
         success: false,
         message: `Process '${systemProcessKey}' is already running.`,
@@ -276,43 +287,20 @@ export async function startBackgroundProcess({ systemProcessKey, scriptPath, def
       };
     }
 
-    // 3. Cleanup & Parameter Resolution
-    await stopOrphanedProcesses(processTag, processEntry?.pid || 0);
-
-    const parameterJSON = processEntry?.parameter || defaultParameter;
-
-    if (!parameterJSON) {
-      return {
-        success: false,
-        error: `No parameter provided for process '${systemProcessKey}' and no existing parameter found in database.`,
-      };
-    }
-
-    let parameter: Record<string, string> = {};
-    try {
-      parameter = JSON.parse(parameterJSON);
-    } catch (e) {
-      return {
-        success: false,
-        error: `Failed to parse parameter JSON for process '${systemProcessKey}': ${e instanceof Error ? e.message : 'Unknown error'}`,
-      };
-    }
+    // Cleanup & Parameter Resolution
+    await stopOrphanedProcesses(processTag, processEntry.pid);
 
     const args: string[] = [];
-    for (const [key, value] of Object.entries(parameter)) {
+    for (const [key, value] of Object.entries(processEntry.parameter)) {
       args.push(`--${key}`);
       args.push(String(value));
     }
 
-    /* if (validate && !validate(finalParam)) {
-      return { success: false, error: `Validation failed for parameter: ${finalParam}` };
-    }*/
-
-    // 4. Resolve Absolute Script Path
+    // Resolve Absolute Script Path
     const absolutePath = path.join(process.cwd(), ...scriptPath);
 
-    // 5. Spawn Process
-    const child = spawn('node', [absolutePath, ...args, '--tag', processTag], {
+    // Spawn Process
+    const child = spawn('node', [absolutePath, ...args, '--marker', processTag], {
       detached: true,
       stdio: 'ignore',
       shell: false,
@@ -324,15 +312,15 @@ export async function startBackgroundProcess({ systemProcessKey, scriptPath, def
 
     child.unref();
 
-    // 6. Persistence
-    await saveSystemProcess(pid, parameterJSON, processTag, systemProcessKey);
+    // Update Process Record
+    await updateSystemProcess({ processKey: systemProcessKey, pid, processTag });
 
     return {
       success: true,
       message: `Process '${systemProcessKey}' started successfully.`,
       pid,
       tag: processTag,
-      parameter: parameterJSON,
+      parameter: processEntry.parameter,
     };
   } catch (err) {
     console.error(`[ProcessManager] Error starting ${systemProcessKey}:`, err);
