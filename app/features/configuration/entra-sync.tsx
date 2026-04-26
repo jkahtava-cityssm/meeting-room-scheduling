@@ -65,7 +65,8 @@ export function EntraSyncConfiguration() {
 
   useEffect(() => {
     refreshStatus();
-    const interval = setInterval(refreshStatus, 60000);
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    const interval = setInterval(refreshStatus, FIVE_MINUTES);
     return () => clearInterval(interval);
   }, [refreshStatus]);
 
