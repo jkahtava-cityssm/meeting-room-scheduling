@@ -8,7 +8,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update 
-RUN apt-get install -y --no-install-recommends openssl ca-certificates curl 
+RUN apt-get install -y --no-install-recommends openssl ca-certificates curl procps 
 RUN rm -rf /var/lib/apt/lists/*
 
 # ---------- deps ----------
