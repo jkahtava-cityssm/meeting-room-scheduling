@@ -7,6 +7,7 @@ import { platform } from 'node:os';
 import { getSystemProcess, resetSystemProcess, saveSystemProcess, updateSystemProcess } from './system-process.data';
 import { update } from 'lodash';
 import { z, ZodType } from 'zod/v4';
+import { existsSync } from 'node:fs';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
@@ -297,12 +298,20 @@ export async function startBackgroundProcess<T extends Record<string, unknown>>(
     }
 
     // Resolve Absolute Script Path
-    const absolutePath = path.join(process.cwd(), ...scriptPath);
+    const absolutePath = await getBundledJobPath(scriptPath);
+
+    if (!existsSync(absolutePath)) {
+      console.error(`[ProcessManager] Script not found at ${absolutePath}. `);
+      return {
+        success: false,
+        error: `Script not found at ${absolutePath}. Did you run the build script?`,
+      };
+    }
 
     // Spawn Process
     const child = spawn('node', [absolutePath, ...args, '--marker', processTag], {
       detached: true,
-      stdio: 'ignore',
+      stdio: 'inherit',
       shell: false,
       windowsHide: true,
     });
@@ -329,4 +338,23 @@ export async function startBackgroundProcess<T extends Record<string, unknown>>(
       error: err instanceof Error ? err.message : 'Unknown error',
     };
   }
+}
+
+export async function getBundledJobPath(scriptPath: string[]): Promise<string> {
+  const currentWorkDir = process.cwd();
+
+  const searchBases = [path.join(currentWorkDir, 'jobs'), path.join(currentWorkDir, '.next', 'standalone', 'jobs')];
+
+  const pathParts = [...scriptPath];
+  const lastPart = pathParts.pop() || '';
+  const fileName = lastPart.endsWith('.js') ? lastPart : `${lastPart}.js`;
+
+  for (const base of searchBases) {
+    const fullPath = path.join(base, ...pathParts, fileName);
+    if (existsSync(fullPath)) {
+      return fullPath;
+    }
+  }
+
+  return path.join(currentWorkDir, 'jobs', ...pathParts, fileName);
 }

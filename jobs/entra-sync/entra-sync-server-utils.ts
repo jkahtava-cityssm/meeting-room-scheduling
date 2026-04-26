@@ -19,7 +19,7 @@ export async function createEntraSyncSchedulerProcessEntry() {
 export async function startEntraSyncScheduler() {
   return await startBackgroundProcess({
     systemProcessKey: SYSTEM_PROCESS_KEY,
-    scriptPath: ['jobs', 'entra-sync', 'entra-sync-process.js'],
+    scriptPath: ['entra-sync', 'entra-sync-process.js'],
     schema: EntraSyncSchema,
   });
 }
