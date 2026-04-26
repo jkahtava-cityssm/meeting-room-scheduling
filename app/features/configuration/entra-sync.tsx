@@ -1,18 +1,143 @@
-import { CirclePlay, CircleStop, Loader2, LucidePlay, LucideRefreshCw, Save, Square } from 'lucide-react';
+import { CirclePlay, CircleStop, Loader2, LucideRefreshCw, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { SchedulerConfig } from './use-entra-sync-process';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { sharedTextVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
+
+export interface SchedulerConfig {
+  schedule: string;
+  isRunning: boolean;
+  pid: number | null;
+  startTime: number | null;
+  nextRuntime?: string | null;
+}
+
+export function EntraSyncConfiguration() {
+  const [loading, setLoading] = useState(false);
+
+  const [config, setConfig] = useState<SchedulerConfig>({
+    schedule: '',
+    isRunning: false,
+    pid: null,
+    startTime: null,
+    nextRuntime: null,
+  });
+
+  const [localSchedule, setLocalSchedule] = useState('');
+  const [pendingSchedule, setPendingSchedule] = useState('');
+
+  const isDirty = pendingSchedule !== localSchedule && localSchedule !== '';
+
+  const isDirtyRef = useRef(isDirty);
+
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
+
+  const refreshStatus = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/configuration/scheduler');
+      const data = await response.json();
+      if (data.success) {
+        setConfig({
+          schedule: data.schedule,
+          isRunning: data.isRunning,
+          pid: data.pid,
+          startTime: data.startTime,
+          nextRuntime: data.nextRuntime,
+        });
+
+        if (!isDirtyRef.current) {
+          setLocalSchedule(data.schedule);
+          setPendingSchedule(data.schedule);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh scheduler:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshStatus();
+    const interval = setInterval(refreshStatus, 60000);
+    return () => clearInterval(interval);
+  }, [refreshStatus]);
+
+  const handleStart = async () => {
+    setLoading(true);
+    await fetch('/api/configuration/scheduler', { method: 'POST' });
+    await refreshStatus();
+  };
+
+  const handleStop = async () => {
+    setLoading(true);
+
+    await fetch('/api/configuration/scheduler', { method: 'DELETE' });
+    await refreshStatus();
+  };
+
+  const handleUpdateSchedule = async () => {
+    if (!validateCronExpression(pendingSchedule)) return;
+    setLoading(true);
+
+    const response = await fetch('/api/configuration/scheduler', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ schedule: pendingSchedule }),
+    });
+    if (response.ok) {
+      setLocalSchedule(pendingSchedule);
+      await refreshStatus();
+    }
+  };
+
+  const handleResetSchedule = () => {
+    setPendingSchedule(localSchedule);
+  };
+
+  const validateCronExpression = (cron: string) => {
+    // Basic regex: 5 fields separated by spaces
+    const cronRegex =
+      /^(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*|\?)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)$/;
+    return cronRegex.test(cron.trim());
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <SchedulerStatus
+        config={config}
+        loading={loading}
+        isRunning={config.isRunning}
+        isModified={isDirty}
+        onRefresh={refreshStatus}
+        onStart={handleStart}
+        onStop={handleStop}
+      ></SchedulerStatus>
+      <div className="flex flex-col gap-2">
+        <CronInput
+          currentSchedule={pendingSchedule}
+          onPendingChange={setPendingSchedule}
+          onSave={handleUpdateSchedule}
+          onReset={handleResetSchedule}
+          isModified={isDirty}
+          disabled={loading || config.isRunning}
+        />
+      </div>
+    </div>
+  );
+}
 
 export function SchedulerStatus({
   config,
   loading,
   isRunning,
+  isModified,
   onRefresh,
   onStart,
   onStop,
@@ -20,6 +145,7 @@ export function SchedulerStatus({
   config: SchedulerConfig;
   loading: boolean;
   isRunning: boolean;
+  isModified: boolean;
   onRefresh: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -74,12 +200,12 @@ export function SchedulerStatus({
             {loading ? <Loader2 className="animate-spin size-6" /> : <LucideRefreshCw className="size-6" />}
           </Button>
           {isRunning ? (
-            <Button variant={'ghost'} size={'icon'} onClick={onStop} disabled={loading || !isRunning}>
-              {loading ? <Loader2 className="animate-spin size-6" /> : <CircleStop className="size-6 " />}
+            <Button variant={'ghost'} size={'icon'} onClick={onStop} disabled={loading}>
+              {<CircleStop className="size-6 " />}
             </Button>
           ) : (
-            <Button variant={'ghost'} size={'icon'} onClick={onStart} disabled={loading || isRunning}>
-              {loading ? <Loader2 className="animate-spin size-6" /> : <CirclePlay className="size-6" />}
+            <Button variant={'ghost'} size={'icon'} onClick={onStart} disabled={loading || isModified}>
+              {<CirclePlay className="size-6" />}
             </Button>
           )}
         </div>
@@ -89,46 +215,40 @@ export function SchedulerStatus({
 }
 
 export function CronInput({
-  initialCron,
-  loading,
-  isRunning,
-  onUpdate,
-  validateCronExpression,
+  currentSchedule,
+  onPendingChange,
+  onSave,
+  onReset,
+  isModified,
+  disabled,
 }: {
-  initialCron: string;
-  loading: boolean;
-  isRunning: boolean;
-  onUpdate: (cron: string) => Promise<void>;
-  validateCronExpression: (cron: string) => boolean;
+  currentSchedule: string;
+  onPendingChange: (val: string) => void;
+  onSave: () => void;
+  onReset: () => void;
+  isModified: boolean;
+  disabled: boolean;
 }) {
   const [minute, setMinute] = useState('0');
-  const [hour, setHour] = useState('');
+  const [hour, setHour] = useState('3');
   const [day, setDay] = useState('*');
   const [month, setMonth] = useState('*');
-  const [isUpdating, setIsUpdating] = useState(false);
 
   // Sync internal state when initialCron changes (e.g., after a refresh)
   useEffect(() => {
-    const parts = initialCron.split(' ');
+    const parts = currentSchedule.split(' ');
     if (parts.length >= 5) {
       setMinute(parts[0]);
-      setHour(parts[1] === '*' ? '' : parts[1]);
+      setHour(parts[1]);
       setDay(parts[2]);
       setMonth(parts[3]);
     }
-  }, [initialCron]);
+  }, [currentSchedule]);
 
-  const handleSave = async () => {
-    const cronString = buildCronString(minute, hour, day, month);
-    if (!validateCronExpression(cronString)) return;
-
-    setIsUpdating(true);
-    await onUpdate(cronString);
-    setIsUpdating(false);
-  };
-
-  const disabled = loading || isRunning;
-  const wasModified = buildCronString(minute, hour, day, month) !== initialCron;
+  useEffect(() => {
+    const current = buildCronString(minute, hour, day, month);
+    onPendingChange(current);
+  }, [minute, hour, day, month, onPendingChange]);
 
   return (
     <div className="flex flex-col  gap-2 border-t pt-2">
@@ -137,7 +257,7 @@ export function CronInput({
           <label className="text-[10px] font-bold uppercase">Minute</label>
 
           <Select disabled={disabled} value={minute} onValueChange={setMinute}>
-            <SelectTrigger className="w-full min-w-9">
+            <SelectTrigger className="w-19">
               <SelectValue placeholder="Select an option" />
             </SelectTrigger>
 
@@ -166,12 +286,19 @@ export function CronInput({
           <label className="text-[10px] font-bold uppercase">Month</label>
           <CronSelect disabled={disabled} value={month} onValueChange={setMonth} includeAnyOption={true} minValue={1} maxValue={12} />
         </div>
-        <div className="flex flex-col justify-center  items-center gap-1">
-          {wasModified && (
-            <Button variant={'ghost'} size={'icon'} onClick={handleSave} disabled={disabled}>
-              {loading ? <Loader2 className="animate-spin size-6" /> : <Save className="size-6" />}
-            </Button>
-          )}
+        <div className="flex flex-col justify-end  items-center ">
+          <div className="flex flex-row gap-1">
+            {isModified && (
+              <Button variant={'ghost'} size={'icon'} onClick={onReset} disabled={disabled}>
+                {<X className="size-6" />}
+              </Button>
+            )}
+            {isModified && (
+              <Button variant={'ghost'} size={'icon'} onClick={onSave} disabled={disabled}>
+                {<Save className="size-6" />}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -181,7 +308,7 @@ export function CronInput({
 function buildCronString(minute: string, hour: string, day: string, month: string) {
   const cronString = `${minute || '0'} ${hour || '3'} ${day || '*'} ${month || '*'} *`;
 
-  return `${minute} ${hour} ${day} ${month} *`;
+  return cronString;
 }
 
 function CronSelect({
@@ -210,7 +337,7 @@ function CronSelect({
 
   return (
     <Select disabled={disabled} value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-full min-w-9">
+      <SelectTrigger className="w-19">
         <SelectValue placeholder="Select an option" />
       </SelectTrigger>
 

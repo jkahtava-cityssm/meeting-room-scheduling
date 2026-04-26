@@ -16,18 +16,15 @@ import { GenericError } from '@/components/shared/generic-error';
 
 import { RevalidateButton } from './revalidate-api';
 
-import { CronInput, SchedulerStatus } from './entra-sync';
-import { useEntraSyncProcess } from './use-entra-sync-process';
+import { EntraSyncConfiguration } from './entra-sync';
+
 import { cn } from '@/lib/utils';
 
 export function ConfigurationPage() {
   const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
   const [workingConfiguration, setWorkingConfiguration] = useState<TConfigurationEntry[] | undefined>(undefined);
   const [isChanged, setChanged] = useState(false);
-  //const [resourceActions, setResourceActions] = useState<ResourceActions | undefined>(undefined);
   const configurationMutation = useConfigurationMutationUpsert();
-
-  const { config, loading, refreshStatus, startScheduler, stopScheduler, updateSchedule, validateCronExpression } = useEntraSyncProcess();
 
   useEffect(() => {
     if (serverConfiguration) {
@@ -132,25 +129,7 @@ export function ConfigurationPage() {
             label={'ENTRA ID'}
             description="Certain API routes are cached to reduced the number of database calls. Especially for values that dont change very often"
           >
-            <div className="flex flex-col gap-2">
-              <SchedulerStatus
-                config={config}
-                loading={loading}
-                isRunning={config.isRunning}
-                onRefresh={refreshStatus}
-                onStart={startScheduler}
-                onStop={stopScheduler}
-              ></SchedulerStatus>
-              <div className="flex flex-col gap-2">
-                <CronInput
-                  initialCron={config.schedule}
-                  onUpdate={updateSchedule}
-                  isRunning={config.isRunning}
-                  loading={loading}
-                  validateCronExpression={validateCronExpression}
-                />
-              </div>
-            </div>
+            <EntraSyncConfiguration></EntraSyncConfiguration>
           </ConfigRow>
         </div>
       </ScrollArea>
