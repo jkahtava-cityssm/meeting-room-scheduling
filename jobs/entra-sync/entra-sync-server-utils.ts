@@ -19,7 +19,7 @@ export async function createEntraSyncSchedulerProcessEntry() {
 export async function startEntraSyncScheduler() {
   return await startBackgroundProcess({
     systemProcessKey: SYSTEM_PROCESS_KEY,
-    scriptPath: ['dist', 'entra-sync-process.js'],
+    scriptPath: ['jobs', 'entra-sync', 'entra-sync-process.js'],
     schema: EntraSyncSchema,
   });
 }
@@ -29,7 +29,7 @@ export async function stopEntraSyncScheduler() {
 }
 
 export async function updateEntraSyncSchedule(newSchedule: string, sessionUserId: number) {
-  await updateSystemProcess({ processKey: SYSTEM_PROCESS_KEY, parameter: `{ schedule: ${newSchedule} }`, userId: sessionUserId });
+  await updateSystemProcess({ processKey: SYSTEM_PROCESS_KEY, parameter: `{ "schedule": "${newSchedule}" }`, userId: sessionUserId });
 }
 
 export async function pollEntraSyncScheduler(): Promise<{

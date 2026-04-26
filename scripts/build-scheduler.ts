@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from 'fs';
-import { dirname, join } from 'path';
+import { dirname, join, parse } from 'path';
 import { execSync } from 'child_process';
 
 const projectRoot = process.cwd();
@@ -21,6 +21,10 @@ try {
     const fileSubdir = dirname(file);
     const specificTargetDir = join(targetDir, fileSubdir);
 
+    const fileNameWithoutExt = parse(file).name;
+    const outputFileName = `${fileNameWithoutExt}.js`;
+    const outputFile = join(specificTargetDir, outputFileName);
+
     if (!existsSync(sourceFile)) {
       console.warn(`[Build] Warning: Source file not found: ${sourceFile}`);
       continue;
@@ -32,8 +36,9 @@ try {
     console.log(`[Build] Compiling ${file}...`);
 
     // Use npx tsc to compile the single file
-    const command = `npx tsc "${sourceFile}" --outDir "${targetDir}" --module commonjs --target es2020 --strict false --esModuleInterop true --skipLibCheck true --forceConsistentCasingInFileNames true`;
-
+    const command = `esbuild "${sourceFile}" --bundle --platform=node --outfile=${outputFile} `;
+    //--bundle --platform=node --outfile=dist/entra-sync-process.js
+    //--module commonjs --target es2020 --strict false --esModuleInterop true --skipLibCheck true --forceConsistentCasingInFileNames true
     try {
       execSync(command, { stdio: 'inherit' });
       console.log(`[Build] Compiled: ${file}`);

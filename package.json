@@ -13,9 +13,8 @@
     "start": "next start",
     "lint": "next lint",
     "worker": "tsx jobs/scheduler.ts",
-    "scheduler": "tsx jobs/entra-sync/entra-sync-process.ts",
-    "scheduler:start": "tsx jobs/entra-sync/entra-sync-process.ts --schedule \"0 3 * * *\"",
-    "build:scheduler": "esbuild jobs/entra-sync/entra-sync-process.ts --bundle --platform=node --outfile=dist/entra-sync-process.js"
+    "build:scheduler": "tsx scripts/build-scheduler.ts",
+    "sync:start": "tsx jobs/entra-sync/entra-sync-process.ts --schedule \"0 3 * * *\""
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",
