@@ -5,7 +5,6 @@ import { getNextCronOccurrence, validateCronExpression } from '@/jobs/cron-util'
 import { guardRoute } from '@/lib/api-guard';
 import { getSystemProcess, updateSystemProcess } from '@/jobs/system-process.data';
 import {
-  createEntraSyncSchedulerProcessEntry,
   pollEntraSyncScheduler,
   startEntraSyncScheduler,
   stopEntraSyncScheduler,
@@ -25,11 +24,7 @@ export async function GET(request: NextRequest) {
         const results = await pollEntraSyncScheduler();
 
         if (!results) {
-          const newEntry = await createEntraSyncSchedulerProcessEntry();
-          const results = await pollEntraSyncScheduler();
-          if (!newEntry || !results) {
-            return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
-          }
+          return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
         }
 
         return NextResponse.json({
