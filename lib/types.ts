@@ -121,6 +121,13 @@ export const CONFIG_MANIFEST = [
     defaultValue: 30,
     type: 'number',
   },
+  {
+    key: 'bookingEmail',
+    name: 'Booking Email',
+    description: 'The email address that receives booking notifications and inquiries.',
+    defaultValue: '',
+    type: 'string',
+  },
 ] as const;
 
 export type TConfigurationKeys = (typeof CONFIG_MANIFEST)[number]['key'];
