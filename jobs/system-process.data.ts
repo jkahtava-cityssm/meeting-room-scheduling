@@ -1,3 +1,4 @@
+import { TSystemProcess } from '@/lib/types';
 import { prisma } from '@/prisma';
 import z, { ZodType } from 'zod/v4';
 
@@ -66,7 +67,7 @@ export async function saveSystemProcess({
   pid: number;
   parameter: string;
   processTag: string;
-  processKey: string;
+  processKey: TSystemProcess;
   userId?: number;
 }) {
   try {
@@ -90,7 +91,7 @@ export async function updateSystemProcess({
   processTag,
   userId = 0,
 }: {
-  processKey: string;
+  processKey: TSystemProcess;
   pid?: number;
   parameter?: string;
   processTag?: string;

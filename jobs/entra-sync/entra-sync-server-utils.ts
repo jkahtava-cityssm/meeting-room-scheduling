@@ -3,18 +3,10 @@ import { EntraSyncSchema } from '../schema';
 import { getSystemProcess, saveSystemProcess, updateSystemProcess } from '../system-process.data';
 import { findProcessById, startBackgroundProcess, stopBackgroundProcess } from '../system-process.util';
 import { getNextCronOccurrence } from '../cron-util';
+import { SYSTEM_PROCESS_MANIFEST } from '@/lib/types';
 
-const SYSTEM_PROCESS_KEY = 'ENTRA_SYNC_SCHEDULER';
-
-export async function createEntraSyncSchedulerProcessEntry() {
-  const processTag = `${SYSTEM_PROCESS_KEY}_${process.env.DATABASE_NAME ? process.env.DATABASE_NAME : 'unknown'}`.toUpperCase();
-  return await saveSystemProcess({
-    processKey: SYSTEM_PROCESS_KEY,
-    pid: 0,
-    parameter: '{"schedule": "0 3 * * *"}',
-    processTag: processTag,
-  });
-}
+const SYSTEM_PROCESS_KEY = SYSTEM_PROCESS_MANIFEST['ENTRA_SYNC_SCHEDULER'].key;
+const SYSTEM_PROCESS_DEFAULT_PARAMETER = SYSTEM_PROCESS_MANIFEST['ENTRA_SYNC_SCHEDULER'].defaultParameter;
 
 export async function startEntraSyncScheduler() {
   return await startBackgroundProcess({

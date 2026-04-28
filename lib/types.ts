@@ -67,7 +67,15 @@ export const CONFIGURATION_KEYS = [
   'maxBookingSpan',
 ] as const;
 
+export const SYSTEM_PROCESS_MANIFEST = {
+  ENTRA_SYNC_SCHEDULER: {
+    key: 'ENTRA_SYNC_SCHEDULER',
+    defaultParameter: '{ "schedule": "0 3 * * *" }',
+  },
+} as const;
 //export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
+
+export type TSystemProcess = keyof typeof SYSTEM_PROCESS_MANIFEST;
 
 export const CONFIG_MANIFEST = [
   {
@@ -112,13 +120,6 @@ export const CONFIG_MANIFEST = [
     description: '0 = no limit, determines the maximum number in the future a user can create events',
     defaultValue: 30,
     type: 'number',
-  },
-  {
-    key: 'ENTRA_SYNC_SCHEDULE',
-    name: 'Entra Sync Schedule',
-    description: 'Cron expression for scheduling Entra user synchronization (minute hour day month weekday).',
-    defaultValue: '0 3 * * *',
-    type: 'string',
   },
 ] as const;
 
