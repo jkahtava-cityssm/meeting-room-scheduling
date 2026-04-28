@@ -119,16 +119,11 @@ export function EntraSyncConfiguration() {
         onRefresh={refreshStatus}
         onStart={handleStart}
         onStop={handleStop}
+        onSave={handleUpdateSchedule}
+        onReset={handleResetSchedule}
       ></SchedulerStatus>
       <div className="flex flex-col gap-2">
-        <CronInput
-          currentSchedule={pendingSchedule}
-          onPendingChange={setPendingSchedule}
-          onSave={handleUpdateSchedule}
-          onReset={handleResetSchedule}
-          isModified={isDirty}
-          disabled={loading || config.isRunning}
-        />
+        <CronInput currentSchedule={pendingSchedule} onPendingChange={setPendingSchedule} disabled={loading || config.isRunning} />
       </div>
     </div>
   );
@@ -142,6 +137,8 @@ export function SchedulerStatus({
   onRefresh,
   onStart,
   onStop,
+  onSave,
+  onReset,
 }: {
   config: SchedulerConfig;
   loading: boolean;
@@ -150,6 +147,8 @@ export function SchedulerStatus({
   onRefresh: () => void;
   onStart: () => void;
   onStop: () => void;
+  onSave: () => void;
+  onReset: () => void;
 }) {
   const textVariants = cva('', {
     variants: {
@@ -200,12 +199,21 @@ export function SchedulerStatus({
           <Button variant={'ghost'} size={'icon'} onClick={onRefresh} disabled={loading}>
             {loading ? <Loader2 className="animate-spin size-6" /> : <LucideRefreshCw className="size-6" />}
           </Button>
-          {isRunning ? (
+          {isModified ? (
+            <div className="flex flex-col">
+              <Button variant={'ghost'} size={'icon'} onClick={onSave} disabled={loading || isRunning}>
+                {<Save className="size-6" />}
+              </Button>
+              <Button variant={'ghost'} size={'icon'} onClick={onReset}>
+                {<X className="size-6" />}
+              </Button>
+            </div>
+          ) : isRunning ? (
             <Button variant={'ghost'} size={'icon'} onClick={onStop} disabled={loading}>
               {<CircleStop className="size-6 " />}
             </Button>
           ) : (
-            <Button variant={'ghost'} size={'icon'} onClick={onStart} disabled={loading || isModified}>
+            <Button variant={'ghost'} size={'icon'} onClick={onStart} disabled={loading}>
               {<CirclePlay className="size-6" />}
             </Button>
           )}
@@ -218,16 +226,10 @@ export function SchedulerStatus({
 export function CronInput({
   currentSchedule,
   onPendingChange,
-  onSave,
-  onReset,
-  isModified,
   disabled,
 }: {
   currentSchedule: string;
   onPendingChange: (val: string) => void;
-  onSave: () => void;
-  onReset: () => void;
-  isModified: boolean;
   disabled: boolean;
 }) {
   const [minute, setMinute] = useState('0');
@@ -237,6 +239,7 @@ export function CronInput({
 
   // Sync internal state when initialCron changes (e.g., after a refresh)
   useEffect(() => {
+    if (!currentSchedule) return;
     const parts = currentSchedule.split(' ');
     if (parts.length >= 5) {
       setMinute(parts[0]);
@@ -253,7 +256,7 @@ export function CronInput({
 
   return (
     <div className="flex flex-col  gap-2 border-t pt-2">
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <div className="flex flex-col items-center gap-1">
           <label className="text-[10px] font-bold uppercase">Minute</label>
 
@@ -286,20 +289,6 @@ export function CronInput({
         <div className="flex flex-col  items-center gap-1">
           <label className="text-[10px] font-bold uppercase">Month</label>
           <CronSelect disabled={disabled} value={month} onValueChange={setMonth} includeAnyOption={true} minValue={1} maxValue={12} />
-        </div>
-        <div className="flex flex-col justify-end  items-center ">
-          <div className="flex flex-row gap-1">
-            {isModified && (
-              <Button variant={'ghost'} size={'icon'} onClick={onReset} disabled={disabled}>
-                {<X className="size-6" />}
-              </Button>
-            )}
-            {isModified && (
-              <Button variant={'ghost'} size={'icon'} onClick={onSave} disabled={disabled}>
-                {<Save className="size-6" />}
-              </Button>
-            )}
-          </div>
         </div>
       </div>
     </div>
