@@ -8,6 +8,7 @@ import { getSystemProcess, resetSystemProcess, saveSystemProcess, updateSystemPr
 import { update } from 'lodash';
 import { z, ZodType } from 'zod/v4';
 import { existsSync } from 'node:fs';
+import { TSystemProcess } from '@/lib/types';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
@@ -260,7 +261,7 @@ export async function startBackgroundProcess<T extends Record<string, unknown>>(
   scriptPath,
   schema,
 }: {
-  systemProcessKey: string;
+  systemProcessKey: TSystemProcess;
   scriptPath: string[];
   schema: ZodType<T>;
 }) {
