@@ -90,7 +90,7 @@ export const CONFIG_MANIFEST = [
     key: 'visibleHoursEnd',
     name: 'Latest Visible Hour',
     description: 'The latest hour that is visible in the calendar view.',
-    defaultValue: 8,
+    defaultValue: 17,
     type: 'number',
   },
   {
