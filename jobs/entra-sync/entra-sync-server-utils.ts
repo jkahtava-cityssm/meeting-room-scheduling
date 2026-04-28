@@ -21,7 +21,14 @@ export async function stopEntraSyncScheduler() {
 }
 
 export async function updateEntraSyncSchedule(newSchedule: string, sessionUserId: number) {
-  await updateSystemProcess({ processKey: SYSTEM_PROCESS_KEY, parameter: `{ "schedule": "${newSchedule}" }`, userId: sessionUserId });
+  const currentParams = JSON.parse(SYSTEM_PROCESS_DEFAULT_PARAMETER);
+
+  const updatedParams = {
+    ...currentParams,
+    schedule: newSchedule,
+  };
+
+  await updateSystemProcess({ processKey: SYSTEM_PROCESS_KEY, parameter: JSON.stringify(updatedParams), userId: sessionUserId });
 }
 
 export async function pollEntraSyncScheduler(): Promise<{
