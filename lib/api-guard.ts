@@ -8,6 +8,7 @@ import { buildPermissionCache, isGroupRequirementMet, PermissionCache, Permissio
 
 import { getRolesByUserId } from './data/permissions';
 import { prettifyError, ZodType } from 'zod/v4';
+import { findFirstUser } from './data/users';
 
 export type LabeledRequirements = {
   [label: string]: PermissionRequirement | PermissionRequirement[];
@@ -41,6 +42,7 @@ export async function guardRoute<const T extends GuardRequirement, S = undefined
 
   handler: (args: {
     sessionUserId: number;
+    sessionUserEmail: string | null;
     permissionCache: PermissionCache;
     permissions: PermissionResult<T>;
     sessionId: number | null;
@@ -91,15 +93,18 @@ export async function guardRoute<const T extends GuardRequirement, S = undefined
   }
 
   return handler({
-    sessionUserId: user.userId,
     permissionCache,
     permissions,
     sessionId: user.sessionId,
+    sessionUserId: user.userId,
+    sessionUserEmail: user.email,
     data: validatedData as S,
   });
 }
 
-async function getUserFromRequest(req: NextRequest): Promise<{ userId: number; roles: Role[]; sessionId: number | null } | null> {
+async function getUserFromRequest(
+  req: NextRequest,
+): Promise<{ userId: number; roles: Role[]; sessionId: number | null; email: string | null } | null> {
   const authHeader = req.headers.get('authorization');
   const token = (authHeader || '').split('Bearer ').at(1);
   if (token) {
@@ -120,13 +125,17 @@ async function getUserFromRequest(req: NextRequest): Promise<{ userId: number; r
 
     if (!roles) return null;
 
-    return { userId: account.userId, roles, sessionId: null };
+    const user = await findFirstUser({ id: account.userId });
+
+    if (!user) return null;
+
+    return { userId: account.userId, roles, sessionId: null, email: user.email };
   }
 
   const session = await getServerSession();
   if (!session) return null;
 
-  return { userId: Number(session.user.id), roles: session.user.roles, sessionId: Number(session.session?.id) };
+  return { userId: Number(session.user.id), roles: session.user.roles, sessionId: Number(session.session?.id), email: session.user.email };
 }
 
 export async function evaluateGuard<T extends GuardRequirement>(
