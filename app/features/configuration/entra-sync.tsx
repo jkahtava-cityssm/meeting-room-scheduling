@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { sharedTextVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
+import { fetchDELETE, fetchGET, fetchPATCH, fetchPOST } from '@/lib/fetch';
 
 export interface SchedulerConfig {
   schedule: string;
@@ -40,7 +41,7 @@ export function EntraSyncConfiguration() {
   const refreshStatus = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/configuration/scheduler');
+      const response = await fetchGET('/api/configuration/scheduler');
       const data = await response.json();
       if (data.success) {
         setConfig({
@@ -72,14 +73,14 @@ export function EntraSyncConfiguration() {
 
   const handleStart = async () => {
     setLoading(true);
-    await fetch('/api/configuration/scheduler', { method: 'POST' });
+    await fetchPOST('/api/configuration/scheduler', {});
     await refreshStatus();
   };
 
   const handleStop = async () => {
     setLoading(true);
+    await fetchDELETE('/api/configuration/scheduler');
 
-    await fetch('/api/configuration/scheduler', { method: 'DELETE' });
     await refreshStatus();
   };
 
@@ -87,11 +88,7 @@ export function EntraSyncConfiguration() {
     if (!validateCronExpression(pendingSchedule)) return;
     setLoading(true);
 
-    const response = await fetch('/api/configuration/scheduler', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ schedule: pendingSchedule }),
-    });
+    const response = await fetchPATCH('/api/configuration/scheduler', { schedule: pendingSchedule });
     if (response.ok) {
       setLocalSchedule(pendingSchedule);
       await refreshStatus();
