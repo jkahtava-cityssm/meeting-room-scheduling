@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { sharedTextVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
-import { fetchDELETE, fetchGET, fetchPATCH, fetchPOST } from '@/lib/fetch';
+import { fetchDELETE, fetchGET, fetchPATCH, fetchPOST } from '@/lib/fetch-client';
 
 export interface SchedulerConfig {
   schedule: string;

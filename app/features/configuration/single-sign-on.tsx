@@ -1,7 +1,7 @@
 'use client';
 
 import { MicrosoftButton, MicrosoftLabel } from '@/components/ui/microsoft-signin-button';
-import { fetchPOST } from '@/lib/fetch';
+import { fetchPOST } from '@/lib/fetch-client';
 import { usePublicConfiguration } from '@/lib/services/public';
 import { CheckIcon, CheckSquare, Loader2Icon, X } from 'lucide-react';
 import Image from 'next/image';

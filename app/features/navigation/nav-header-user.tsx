@@ -23,7 +23,7 @@ import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
 import { RoleSelect } from '@/app/features/roles/role-select';
 import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
-import { fetchDELETE, fetchPOST } from '@/lib/fetch';
+import { fetchDELETE, fetchPOST } from '@/lib/fetch-client';
 import { useRouter } from 'next/navigation';
 
 const PAGE_PERMISSIONS = {

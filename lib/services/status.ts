@@ -1,5 +1,5 @@
 import { QueryError } from '@/contexts/ReactQueryProvider';
-import { fetchGET } from '@/lib/fetch';
+import { fetchGET } from '@/lib/fetch-client';
 import { IStatus, SStatus } from '@/lib/schemas';
 import { useQuery } from '@tanstack/react-query';
 import z from 'zod/v4';

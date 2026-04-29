@@ -9,7 +9,6 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Loader2Icon } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
-import { fetchPOST } from '@/lib/fetch';
 
 const signInGitHub = async (callback: string) => {
   const data = await signIn.social({

@@ -1,5 +1,5 @@
 import { useSession } from '@/contexts/SessionProvider';
-import { fetchPOST } from '@/lib/fetch';
+import { fetchPOST } from '@/lib/fetch-client';
 import { queryKeys } from '@/lib/services/querykeys';
 import { useQueryClient } from '@tanstack/react-query';
 

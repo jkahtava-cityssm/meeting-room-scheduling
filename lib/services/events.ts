@@ -1,7 +1,7 @@
 import { formatISO } from 'date-fns';
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch';
+import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch-client';
 import z from 'zod/v4';
 import { IEvent, SEvent, utcDateSchema } from '@/lib/schemas';
 import { Prisma } from '@prisma/client';

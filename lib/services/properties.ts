@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchGET } from '../fetch';
+import { fetchGET } from '../fetch-client';
 import z from 'zod/v4';
 import { SProperty } from '../schemas';
 import { QueryError } from '@/contexts/ReactQueryProvider';

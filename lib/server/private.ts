@@ -1,6 +1,9 @@
-import { Role } from '../auth';
-import { SessionRole } from '../types';
+'use server';
 
+import { Role } from '../auth';
+import { privateServerGET } from '../fetch-server';
+import { SessionRole } from '../types';
+/*
 export async function fetchPrivateCachedUserRole(
   userId: number,
   tag: string,
@@ -9,7 +12,14 @@ export async function fetchPrivateCachedUserRole(
   const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${userId}/roles`;
   return privateServerGET(url, { impersonatingRole: impersonatingRole }, 300, [tag]);
 }
+*/
 
+// 4. The User Role example
+export async function fetchPrivateCachedUserRole(userId: number, tag: string, impersonatingRole?: SessionRole) {
+  return privateServerGET(`/api/users/${userId}/roles`, { impersonatingRole }, 300, [tag]);
+}
+
+/*
 export async function privateServerGET(url: string, params: object = {}, revalidate: number = 0, tags?: string[]) {
   const queryString = Object.entries(params)
     .map((param) => {
@@ -38,3 +48,4 @@ export async function privateServerGET(url: string, params: object = {}, revalid
     throw new Error(`${res.status} - ${res.statusText}, ${url} [${message}]`);
   });
 }
+*/

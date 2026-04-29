@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchGET, fetchPOST, fetchPUT } from '../fetch';
+import { fetchGET, fetchPOST, fetchPUT } from '../fetch-client';
 import z from 'zod/v4';
 
 import { CONFIG_MANIFEST, TConfigurationKeys, TConfigurationRecord } from '../types';
