@@ -50,7 +50,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
   const listRoles = getSessionRoles(session);
 
   const handleAddImpersonation = async (roleId: string) => {
-    const result = await fetchPOST('/api/admin/impersonate', { roleId: roleId });
+    const result = await fetchPOST<{ sessionId: string; impersonatedRole: string }>('/api/admin/impersonate', { roleId: roleId });
     const session = await authClient.getSession({
       query: {
         disableCookieCache: true,
@@ -62,7 +62,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
   };
 
   const handleRemoveImpersonation = async () => {
-    const result = await fetchDELETE('/api/admin/impersonate');
+    const result = await fetchDELETE<null>(`/api/admin/impersonate`);
     const session = await authClient.getSession({
       query: {
         disableCookieCache: true,

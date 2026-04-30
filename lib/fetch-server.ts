@@ -1,14 +1,23 @@
 'use server';
 
-type ServerFetchOptions = {
-  params?: Record<string, string | number | boolean | undefined>;
+type ApiResponse<T> = {
+  message?: string;
+  data?: T;
+  success?: boolean;
+  error?: string;
+};
+
+type FetchParams = Record<string, string | number | boolean | string[] | undefined>;
+
+type FetchOptions = {
+  params?: FetchParams;
   data?: object;
   revalidate?: number;
   tags?: string[];
   headers?: Record<string, string>;
 };
 
-async function serverRequest<T>(url: string, method: string, options: ServerFetchOptions = {}): Promise<T> {
+async function serverRequest<T>(url: string, method: string, options: FetchOptions = {}): Promise<T> {
   const { params, data, revalidate, tags, headers } = options;
 
   const fullUrl = new URL(url, process.env.NEXT_PUBLIC_BASE_URL);
@@ -48,13 +57,8 @@ async function serverRequest<T>(url: string, method: string, options: ServerFetc
   return response.json();
 }
 
-export async function privateServerGET<T>(
-  url: string,
-  params: Record<string, string | number | boolean | undefined> = {},
-  revalidate: number = 0,
-  tags?: string[],
-) {
-  return serverRequest<T>(url, 'GET', {
+export async function privateServerGET<T>(url: string, params: FetchParams = {}, revalidate: number = 0, tags?: string[]) {
+  return serverRequest<ApiResponse<T>>(url, 'GET', {
     params,
     revalidate,
     tags,
@@ -62,5 +66,5 @@ export async function privateServerGET<T>(
 }
 
 export async function privateServerPOST<T>(url: string, data: object) {
-  return serverRequest<T>(url, 'POST', { data });
+  return serverRequest<ApiResponse<T>>(url, 'POST', { data });
 }

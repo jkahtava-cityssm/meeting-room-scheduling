@@ -98,8 +98,17 @@ export async function fetchPATCH(url: string, data: object) {
 
  */
 
+type ApiResponse<T> = {
+  message?: string;
+  data?: T;
+  success?: boolean;
+  error?: string;
+};
+
+type FetchParams = Record<string, string | number | boolean | string[] | undefined>;
+
 type FetchOptions = {
-  params?: Record<string, string | number | boolean | undefined>;
+  params?: FetchParams;
   data?: object;
   revalidate?: number;
   tags?: string[];
@@ -114,7 +123,12 @@ async function clientRequest<T>(url: string, method: string, options: FetchOptio
   if (params) {
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null) {
-        fullUrl.searchParams.append(key, String(val));
+        if (Array.isArray(val)) {
+          // This creates ?keys=val1&keys=val2...
+          val.forEach((v) => fullUrl.searchParams.append(key, String(v)));
+        } else {
+          fullUrl.searchParams.append(key, String(val));
+        }
       }
     });
   }
@@ -146,27 +160,22 @@ async function clientRequest<T>(url: string, method: string, options: FetchOptio
   return response.json();
 }
 
-export async function fetchGET<T>(
-  url: string,
-  params: Record<string, string | number | boolean | undefined> = {},
-  revalidate: number = 0,
-  tags?: string[],
-) {
-  return clientRequest<T>(url, 'GET', { params, revalidate, tags });
+export async function fetchGET<T>(url: string, params: FetchParams = {}, revalidate: number = 0, tags?: string[]) {
+  return clientRequest<ApiResponse<T>>(url, 'GET', { params, revalidate, tags });
 }
 
 export async function fetchPOST<T>(url: string, data: object) {
-  return clientRequest<T>(url, 'POST', { data });
+  return clientRequest<ApiResponse<T>>(url, 'POST', { data });
 }
 
 export async function fetchPUT<T>(url: string, data: object) {
-  return clientRequest<T>(url, 'PUT', { data });
+  return clientRequest<ApiResponse<T>>(url, 'PUT', { data });
 }
 
 export async function fetchDELETE<T>(url: string) {
-  return clientRequest<T>(url, 'DELETE');
+  return clientRequest<ApiResponse<T>>(url, 'DELETE');
 }
 
 export async function fetchPATCH<T>(url: string, data: object) {
-  return clientRequest<T>(url, 'PATCH', { data });
+  return clientRequest<ApiResponse<T>>(url, 'PATCH', { data });
 }

@@ -1,6 +1,7 @@
 'use server';
 
 import { Role } from '../auth';
+import { IRole, IRolePermissions } from '../data/permissions';
 import { privateServerGET } from '../fetch-server';
 import { SessionRole } from '../types';
 /*
@@ -16,7 +17,7 @@ export async function fetchPrivateCachedUserRole(
 
 // 4. The User Role example
 export async function fetchPrivateCachedUserRole(userId: number, tag: string, impersonatingRole?: SessionRole) {
-  return privateServerGET(`/api/users/${userId}/roles`, { impersonatingRole }, 300, [tag]);
+  return privateServerGET<IRolePermissions[]>(`/api/users/${userId}/roles`, { impersonatingRole }, 300, [tag]);
 }
 
 /*

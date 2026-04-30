@@ -155,3 +155,7 @@ export type IRecurrence = z.infer<typeof SRecurrence>;
 export type IRoom = z.infer<typeof SRoom>;
 
 export type IUser = z.infer<typeof SUser>;
+
+export type IItem = z.infer<typeof SItem>;
+
+export type IProperty = z.infer<typeof SProperty>;

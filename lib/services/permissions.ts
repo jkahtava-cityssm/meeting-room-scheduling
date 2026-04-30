@@ -3,7 +3,7 @@ import { formatISO } from 'date-fns';
 import { fetchGET, fetchPUT } from '../fetch-client';
 import { useSession } from '../auth-client';
 import { SStatus, SUser } from '../schemas';
-import { IRole, SPermissionSet, SRole } from '../data/permissions';
+import { IPermissionSet, IRole, SPermissionSet, SRole } from '../data/permissions';
 import z from 'zod/v4';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
@@ -16,7 +16,7 @@ export const usePermissionsQuery = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.permissions.sets(),
     queryFn: async () => {
-      const result = await fetchGET('/api/admin/permissions');
+      const result = await fetchGET<IPermissionSet[]>('/api/admin/permissions');
       const parsedResult = z.array(SPermissionSet).safeParse(result.data);
 
       if (!parsedResult.success) {
@@ -40,10 +40,10 @@ export const useRolesQuery = (includeNoneOption: boolean = false, enabled: boole
   return useQuery({
     queryKey: queryKeys.permissions.list(type),
     queryFn: async () => {
-      const result = await fetchGET('/api/admin/permissions/roles');
+      const result = await fetchGET<IRole[]>('/api/admin/permissions/roles');
 
       if (includeNoneOption) {
-        result.data.unshift(None);
+        result.data?.unshift(None);
       }
 
       const parsedResult = z.array(SRole).safeParse(result.data);
@@ -68,7 +68,7 @@ type rolePermissionMutations = {
 export const usePermissionMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: rolePermissionMutations[]) => fetchPUT(`/api/admin/permissions`, data),
+    mutationFn: async (data: rolePermissionMutations[]) => fetchPUT<null>(`/api/admin/permissions`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.permissions.all });
     },
@@ -84,7 +84,7 @@ export const usePermissionUserQuery = (roleId?: string, enabled: boolean = true)
   return useQuery({
     queryKey: queryKeys.permissions.userByRole(roleId),
     queryFn: async () => {
-      const result = await fetchGET('/api/admin/permissions/users', { roleId: roleId });
+      const result = await fetchGET<IUserWithRoles[]>('/api/admin/permissions/users', { roleId: roleId });
       const parsedResult = z.array(SUserWithRoles).safeParse(result.data);
 
       if (!parsedResult.success) throw new Error(`Invalid user permissions data: ${z.prettifyError(parsedResult.error)}`);
@@ -99,7 +99,7 @@ export const usePermissionUserRoleMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { roleId: string; userId: string; assignRole: boolean; roleName: string }) =>
-      fetchPUT(`/api/admin/permissions/users`, {
+      fetchPUT<null>(`/api/admin/permissions/users`, {
         userId: data.userId,
         roleId: data.roleId,
         assignRole: data.assignRole,

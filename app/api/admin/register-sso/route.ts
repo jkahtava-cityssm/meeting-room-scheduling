@@ -1,4 +1,3 @@
-// app/api/internal/sso/register-microsoft/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 import { guardRoute } from '@/lib/api-guard';

@@ -18,10 +18,10 @@ export const useStatusQuery = (includeAllOption: boolean = false, enabled: boole
   return useQuery({
     queryKey: queryKeys.references.statusList(type),
     queryFn: async () => {
-      const result = await fetchGET(`/api/references/status`, undefined, 180, ['status']);
+      const result = await fetchGET<IStatus[]>(`/api/references/status`, undefined, 180, ['status']);
 
       if (includeAllOption) {
-        result.data.unshift(AllStatus);
+        result.data?.unshift(AllStatus);
       }
 
       const parsedResult = z.array(SStatus).safeParse(result.data);

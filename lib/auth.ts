@@ -120,7 +120,7 @@ export const auth = betterAuth({
 
       const result = await fetchPrivateCachedUserRole(userId, cacheKey, impersonatingRole as SessionRole);
 
-      const roles = result ? result.data : [];
+      const roles = result.data ? result.data : [];
       return {
         user: {
           ...user,

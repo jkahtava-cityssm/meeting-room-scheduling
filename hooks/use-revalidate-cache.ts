@@ -23,12 +23,12 @@ export function useRevalidateAndInvalidate() {
 
   const revalidateAndInvalidate = async () => {
     try {
-      const response = await fetchPOST('/api/admin/revalidate', {
+      const response = await fetchPOST<null>('/api/admin/revalidate', {
         paths,
         tags,
       });
 
-      if (response.status !== 204) {
+      if (!response.success) {
         throw new Error('Failed to revalidate paths');
       }
 

@@ -30,8 +30,8 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
     setPending(true);
     setDisabled(true);
 
-    const result = await fetchPOST('/api/admin/register-sso', {});
-    if (result?.status !== 204) {
+    const result = await fetchPOST<null>('/api/admin/register-sso', {});
+    if (result?.success) {
       setDisabled(false);
     }
     setPending(false);

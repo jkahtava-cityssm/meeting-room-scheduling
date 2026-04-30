@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchGET } from '../fetch-client';
 import z from 'zod/v4';
-import { SItem } from '../schemas';
+import { IItem, SItem } from '../schemas';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
 
@@ -9,7 +9,7 @@ export const useItemsQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.references.items(),
     queryFn: async () => {
-      const result = await fetchGET('/api/references/items');
+      const result = await fetchGET<IItem[]>('/api/references/items');
 
       const parsedResult = z.array(SItem).safeParse(result.data);
 

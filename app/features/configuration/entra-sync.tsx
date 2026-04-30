@@ -16,6 +16,19 @@ export interface SchedulerConfig {
   nextRuntime?: string | null;
 }
 
+type SchedulerStatusResponse = {
+  success: boolean;
+  schedule?: string;
+  isRunning?: boolean;
+  pid?: number | null;
+  startTime?: number | null;
+  nextRuntime?: string | null;
+  marker?: string | null;
+  status?: string;
+  message?: string;
+  error?: string;
+};
+
 export function EntraSyncConfiguration() {
   const [loading, setLoading] = useState(false);
 
@@ -41,20 +54,19 @@ export function EntraSyncConfiguration() {
   const refreshStatus = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetchGET('/api/configuration/scheduler');
-      const data = await response.json();
-      if (data.success) {
+      const response = await fetchGET<SchedulerStatusResponse>('/api/configuration/scheduler');
+      if (response.success) {
         setConfig({
-          schedule: data.schedule,
-          isRunning: data.isRunning,
-          pid: data.pid,
-          startTime: data.startTime,
-          nextRuntime: data.nextRuntime,
+          schedule: response.data?.schedule ?? '',
+          isRunning: response.data?.isRunning ?? false,
+          pid: response.data?.pid ?? null,
+          startTime: response.data?.startTime ?? null,
+          nextRuntime: response.data?.nextRuntime ?? null,
         });
 
         if (!isDirtyRef.current) {
-          setLocalSchedule(data.schedule);
-          setPendingSchedule(data.schedule);
+          setLocalSchedule(response.data?.schedule ?? '');
+          setPendingSchedule(response.data?.schedule ?? '');
         }
       }
     } catch (err) {
@@ -73,13 +85,13 @@ export function EntraSyncConfiguration() {
 
   const handleStart = async () => {
     setLoading(true);
-    await fetchPOST('/api/configuration/scheduler', {});
+    await fetchPOST<SchedulerStatusResponse>('/api/configuration/scheduler', {});
     await refreshStatus();
   };
 
   const handleStop = async () => {
     setLoading(true);
-    await fetchDELETE('/api/configuration/scheduler');
+    await fetchDELETE<SchedulerStatusResponse>('/api/configuration/scheduler');
 
     await refreshStatus();
   };
@@ -88,8 +100,8 @@ export function EntraSyncConfiguration() {
     if (!validateCronExpression(pendingSchedule)) return;
     setLoading(true);
 
-    const response = await fetchPATCH('/api/configuration/scheduler', { schedule: pendingSchedule });
-    if (response.ok) {
+    const response = await fetchPATCH<SchedulerStatusResponse>('/api/configuration/scheduler', { schedule: pendingSchedule });
+    if (response.success) {
       setLocalSchedule(pendingSchedule);
       await refreshStatus();
     }

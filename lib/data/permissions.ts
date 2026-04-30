@@ -73,6 +73,16 @@ export const SRole = z.object({
 
 export type IRole = z.infer<typeof SRole>;
 
+export type IRolePermissions = {
+  roleId: number;
+  name: SessionRole;
+  permissions: {
+    permit: boolean;
+    action: SessionAction;
+    resource: SessionResource;
+  }[];
+};
+
 const ROLE_SELECT = {
   roleId: true,
   name: true,
@@ -91,7 +101,7 @@ export async function findManyRoles(where?: Prisma.RoleWhereInput, tx: Prisma.Tr
 
   return roles;
 }
-async function findManyUserRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma) {
+async function findManyUserRoles(where?: Prisma.RoleWhereInput, tx: Prisma.TransactionClient = prisma): Promise<IRolePermissions[]> {
   const roles = await tx.role.findMany({ where, select: USER_ROLE_SELECT, orderBy: { roleId: 'asc' } });
 
   if (!roles || roles.length === 0) {

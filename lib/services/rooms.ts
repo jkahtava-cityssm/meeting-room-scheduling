@@ -6,6 +6,9 @@ import { property } from 'lodash';
 import { z } from 'zod/v4';
 import { queryKeys } from './querykeys';
 
+type IRoomCategory = z.infer<typeof SRoomCategory>;
+type IRoomProperty = z.infer<typeof SRoomProperty>;
+
 const AllRooms: IRoom = {
   roomId: -1,
   name: 'All Rooms',
@@ -29,9 +32,9 @@ export const useRoomsQuery = (includeAllOption: boolean = false, enabled: boolea
   return useQuery({
     queryKey: queryKeys.rooms.list(type),
     queryFn: async () => {
-      const result = await fetchGET('/api/rooms');
+      const result = await fetchGET<IRoom[]>('/api/rooms');
       if (includeAllOption) {
-        result.data.unshift(AllRooms);
+        result.data?.unshift(AllRooms);
       }
 
       const parsedResult = z.array(SRoom).safeParse(result.data);
@@ -52,7 +55,7 @@ export const useRoomQuery = (roomId: number | undefined, enabled: boolean = true
   useQuery({
     queryKey: queryKeys.rooms.detail(roomId),
     queryFn: async () => {
-      const result = await fetchGET(`/api/rooms/${roomId}`);
+      const result = await fetchGET<IRoom[]>(`/api/rooms/${roomId}`);
 
       const parsedResult = z.array(SRoom).safeParse(result.data);
 
@@ -84,10 +87,10 @@ export type IRoomPUT = z.infer<typeof SRoomPUT>;
 export const useRoomsMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: IRoomPUT) => fetchPUT(`/api/rooms`, data),
+    mutationFn: async (data: IRoomPUT) => fetchPUT<IRoom>(`/api/rooms`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.detail(response.data.roomId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.detail(response.data?.roomId) });
     },
   });
 };
@@ -95,7 +98,7 @@ export const useRoomsMutationUpsert = () => {
 export const useRoomsMutationDelete = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (roomId: number) => fetchDELETE(`/api/rooms/${roomId}`),
+    mutationFn: async (roomId: number) => fetchDELETE<null>(`/api/rooms/${roomId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
     },
@@ -105,10 +108,10 @@ export const useRoomsMutationDelete = () => {
 export const useRoomsMutationCreate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: IRoomPUT) => fetchPOST(`/api/rooms`, data),
+    mutationFn: async (data: IRoomPUT) => fetchPOST<IRoom>(`/api/rooms`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.rooms.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.detail(response.data.roomId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms.detail(response.data?.roomId) });
     },
   });
 };
@@ -117,7 +120,7 @@ export const useRoomCategoryQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.rooms.categories(),
     queryFn: async () => {
-      const result = await fetchGET('/api/rooms/categories');
+      const result = await fetchGET<IRoomCategory[]>('/api/rooms/categories');
 
       const parsedResult = z.array(SRoomCategory).safeParse(result.data);
 
