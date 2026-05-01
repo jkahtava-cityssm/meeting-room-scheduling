@@ -1,9 +1,10 @@
 'use server';
 
 type ApiResponse<T> = {
+  data: T | null;
+  status: number;
   message?: string;
-  data?: T;
-  success?: boolean;
+  success: boolean;
   error?: string;
 };
 
@@ -17,19 +18,25 @@ type FetchOptions = {
   headers?: Record<string, string>;
 };
 
-async function serverRequest<T>(url: string, method: string, options: FetchOptions = {}): Promise<T> {
+async function serverRequest<T>(url: string, method: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
   const { params, data, revalidate, tags, headers } = options;
 
+  // 1. Build URL with query parameters
   const fullUrl = new URL(url, process.env.NEXT_PUBLIC_BASE_URL);
-
   if (params) {
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null) {
-        fullUrl.searchParams.append(key, String(val));
+        if (Array.isArray(val)) {
+          // This creates ?keys=val1&keys=val2...
+          val.forEach((v) => fullUrl.searchParams.append(key, String(v)));
+        } else {
+          fullUrl.searchParams.append(key, String(val));
+        }
       }
     });
   }
 
+  // 2. Execute Request
   const response = await fetch(fullUrl.toString(), {
     method,
     headers: {
@@ -38,27 +45,45 @@ async function serverRequest<T>(url: string, method: string, options: FetchOptio
       ...headers,
     },
     body: data ? JSON.stringify(data) : undefined,
-    // If revalidate is provided, use it. Otherwise, default to 'no-store' for fresh server data.
-    cache: revalidate ? undefined : 'no-store',
     next: {
       revalidate,
       tags,
     },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const message = errorData.message || response.statusText;
-    throw new Error(`Server Fetch Error: ${response.status} - ${url} [${message}]`);
+  const status = response.status;
+  const success = response.ok;
+
+  if (status === 204) {
+    return { data: null as T, status, success: true };
   }
 
-  if (response.status === 204) return {} as T;
+  const json = await response.json().catch(() => ({}));
 
-  return response.json();
+  // 3. Centralized Error Handling
+  if (!success) {
+    const errorData = await response.json().catch(() => ({}));
+    const message = errorData.message || response.statusText;
+    throw new Error(`${response.status} - ${response.statusText}, ${url} [${message}]`);
+    //Might want to do this instead of throwing an error?
+    /*return { 
+      data: null as T, 
+      status, 
+      success: false, 
+      message: json.message || response.statusText 
+    };*/
+  }
+
+  return {
+    data: json.data ?? json,
+    status,
+    success: true,
+    message: json.message,
+  };
 }
 
 export async function privateServerGET<T>(url: string, params: FetchParams = {}, revalidate: number = 0, tags?: string[]) {
-  return serverRequest<ApiResponse<T>>(url, 'GET', {
+  return serverRequest<T>(url, 'GET', {
     params,
     revalidate,
     tags,
@@ -66,5 +91,5 @@ export async function privateServerGET<T>(url: string, params: FetchParams = {},
 }
 
 export async function privateServerPOST<T>(url: string, data: object) {
-  return serverRequest<ApiResponse<T>>(url, 'POST', { data });
+  return serverRequest<T>(url, 'POST', { data });
 }

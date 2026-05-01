@@ -99,9 +99,10 @@ export async function fetchPATCH(url: string, data: object) {
  */
 
 type ApiResponse<T> = {
+  data: T | null;
+  status: number;
   message?: string;
-  data?: T;
-  success?: boolean;
+  success: boolean;
   error?: string;
 };
 
@@ -115,7 +116,7 @@ type FetchOptions = {
   headers?: Record<string, string>;
 };
 
-async function clientRequest<T>(url: string, method: string, options: FetchOptions = {}): Promise<T> {
+async function clientRequest<T>(url: string, method: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
   const { params, data, revalidate, tags, headers } = options;
 
   // 1. Build URL with query parameters
@@ -147,35 +148,53 @@ async function clientRequest<T>(url: string, method: string, options: FetchOptio
     },
   });
 
+  const status = response.status;
+  const success = response.ok;
+
+  if (status === 204) {
+    return { data: null as T, status, success: true };
+  }
+
+  const json = await response.json().catch(() => ({}));
+
   // 3. Centralized Error Handling
-  if (!response.ok) {
+  if (!success) {
     const errorData = await response.json().catch(() => ({}));
     const message = errorData.message || response.statusText;
     throw new Error(`${response.status} - ${response.statusText}, ${url} [${message}]`);
+    //Might want to do this instead of throwing an error?
+    /*return { 
+      data: null as T, 
+      status, 
+      success: false, 
+      message: json.message || response.statusText 
+    };*/
   }
 
-  // Handle empty responses (like 204 No Content)
-  if (response.status === 204) return {} as T;
-
-  return response.json();
+  return {
+    data: json.data ?? json,
+    status,
+    success: true,
+    message: json.message,
+  };
 }
 
 export async function fetchGET<T>(url: string, params: FetchParams = {}, revalidate: number = 0, tags?: string[]) {
-  return clientRequest<ApiResponse<T>>(url, 'GET', { params, revalidate, tags });
+  return clientRequest<T>(url, 'GET', { params, revalidate, tags });
 }
 
 export async function fetchPOST<T>(url: string, data: object) {
-  return clientRequest<ApiResponse<T>>(url, 'POST', { data });
+  return clientRequest<T>(url, 'POST', { data });
 }
 
 export async function fetchPUT<T>(url: string, data: object) {
-  return clientRequest<ApiResponse<T>>(url, 'PUT', { data });
+  return clientRequest<T>(url, 'PUT', { data });
 }
 
 export async function fetchDELETE<T>(url: string) {
-  return clientRequest<ApiResponse<T>>(url, 'DELETE');
+  return clientRequest<T>(url, 'DELETE');
 }
 
 export async function fetchPATCH<T>(url: string, data: object) {
-  return clientRequest<ApiResponse<T>>(url, 'PATCH', { data });
+  return clientRequest<T>(url, 'PATCH', { data });
 }
