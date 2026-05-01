@@ -143,6 +143,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {editPermissions && <SideBarSubMenuItem title={'Manage Permissions'} url={'/settings/manage-permissions'} />}
               {editConfiguration && <SideBarSubMenuItem title={'Manage Configuration'} url={'/settings/manage-configuration'} />}
               {editUsers && <SideBarSubMenuItem title={'Manage Users'} url={'/settings/manage-users'} />}
+              {editConfiguration && <SideBarSubMenuItem title={'API Tests'} url={'/settings/manage-api'} />}
             </SideBarCollapsibleGroup>
           )}
         </SideBarGroup>
