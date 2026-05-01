@@ -201,20 +201,27 @@ async function findCreateUser(userData: {
   image?: string | null;
   employeeActive?: boolean;
 }) {
-  return await prisma.user.upsert({
+  let user = await prisma.user.findFirst({
     where: { email: userData.email },
-    update: {}, // Leave empty to avoid overwriting existing test data
-    create: {
-      name: userData.name,
-      email: userData.email,
-      emailVerified: userData.emailVerified ?? false,
-      image: userData.image ?? null,
-      externalId: userData.employeeNumber,
-      isActive: userData.employeeActive ?? true,
-      createdBy: 0,
-      updatedBy: 0,
-    },
   });
+
+  // 2. If not found, create them
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        name: userData.name,
+        email: userData.email,
+        emailVerified: userData.emailVerified ?? false,
+        image: userData.image ?? null,
+        externalId: userData.employeeNumber,
+        isActive: userData.employeeActive ?? true,
+        createdBy: 0,
+        updatedBy: 0,
+      },
+    });
+  }
+
+  return user;
 }
 
 async function FindCreateUserRole(roleId: number, userId: number) {
@@ -1298,22 +1305,16 @@ async function main() {
   });
 
   if (process.env.ADMIN_USER_EMAIL) {
-    const ADMIN_USER = await prisma.user.upsert({
-      where: { email: process.env.ADMIN_USER_EMAIL },
-      update: {},
-      create: {
-        name: 'Admin User',
-        email: process.env.ADMIN_USER_EMAIL,
-        emailVerified: false,
-        image: null,
-        externalId: '000',
-        isActive: true,
-        createdBy: 0,
-        updatedBy: 0,
-      },
+    const adminUser = await findCreateUser({
+      email: process.env.ADMIN_USER_EMAIL,
+      name: 'Admin User',
+      employeeNumber: '000',
+      emailVerified: false,
+      employeeActive: true,
     });
+
     const adminRole = await FindCreateRole('Admin');
-    const adminUserRole = await FindCreateUserRole(adminRole.roleId, ADMIN_USER.id);
+    const adminUserRole = await FindCreateUserRole(adminRole.roleId, adminUser.id);
   }
 
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
