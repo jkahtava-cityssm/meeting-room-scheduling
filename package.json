@@ -14,7 +14,8 @@
     "lint": "next lint",
     "worker": "tsx jobs/scheduler.ts",
     "build:scheduler": "tsx scripts/build-scheduler.ts",
-    "sync:start": "tsx jobs/entra-sync/entra-sync-process.ts --schedule \"0 3 * * *\""
+    "sync:start": "tsx jobs/entra-sync/entra-sync-process.ts --schedule \"0 3 * * *\"",
+    "build:schema": "tsx scripts/build-schema.ts && prisma generate"
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",
