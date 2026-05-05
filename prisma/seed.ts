@@ -1292,15 +1292,12 @@ async function main() {
     where: { id: 0 },
     update: {},
     create: {
-      id: 0,
       name: 'SYSTEM',
       email: '',
       emailVerified: false,
       image: null,
       externalId: '000',
       isActive: false,
-      createdBy: 0,
-      updatedBy: 0,
     },
   });
 

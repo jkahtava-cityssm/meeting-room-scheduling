@@ -22,7 +22,7 @@ const signInEntra = async (callback: string) => {
   const data = await signIn.social({
     provider: 'microsoft',
     callbackURL: callback,
-    scopes: ['email', 'openid', 'profile', 'offline_access', 'User.Read'],
+    scopes: ['email', 'openid', 'profile', 'offline_access', 'User.Read', 'User.Read.All', 'User.ReadBasic.All', 'Mail.Send'],
   });
   return data;
 };
@@ -45,7 +45,7 @@ export function SignInMicrosoft() {
     <>
       <MicrosoftButton onClick={() => signInEntra(callbackURL)}>
         <Image
-          src="/images/ms-symbollockup_mssymbol_19.svg"
+          src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/ms-symbollockup_mssymbol_19.svg`}
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"
           width={21}
           height={21}
@@ -74,7 +74,11 @@ export function SignInGithub() {
       <Button onClick={() => signInGitHub(callbackURL)}>
         {mounted ? (
           <Image
-            src={resolvedTheme === 'light' ? '/images/github-mark-white.svg' : '/images/github-mark.svg'}
+            src={
+              resolvedTheme === 'light'
+                ? `${process.env.NEXT_PUBLIC_BASE_URL}/images/github-mark-white.svg`
+                : `${process.env.NEXT_PUBLIC_BASE_URL}/images/github-mark.svg`
+            }
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={21}
             height={21}
@@ -103,7 +107,7 @@ export function SignInMicrosoftSSO() {
     <>
       <MicrosoftButton onClick={() => signInEntraSSO(callbackURL)}>
         <Image
-          src="/images/ms-symbollockup_mssymbol_19.svg"
+          src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/ms-symbollockup_mssymbol_19.svg`}
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"
           width={21}
           height={21}

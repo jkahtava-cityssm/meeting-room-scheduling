@@ -35,6 +35,8 @@ const nextConfig: NextConfig = {
 
 module.exports = {
   output: 'standalone',
+  basePath: '/meeting',
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;

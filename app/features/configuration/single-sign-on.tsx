@@ -43,7 +43,7 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
         <>
           <MicrosoftLabel>
             <Image
-              src="/images/ms-symbollockup_mssymbol_19.svg"
+              src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/ms-symbollockup_mssymbol_19.svg`}
               alt="An image of the crest and wreath of the city of Sault Ste. Marie"
               width={21}
               height={21}

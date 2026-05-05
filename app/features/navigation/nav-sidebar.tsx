@@ -107,7 +107,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
       <SideBarHeaderGroup
-        imagePath="/images/menu_logo.svg"
+        imagePath={`${process.env.NEXT_PUBLIC_BASE_URL}/images/menu_logo.svg`}
         altText="An image of the crest and wreath of the city of Sault Ste. Marie"
         title="Room Scheduling/Booking"
         subtitle="The City of Sault Ste. Marie"
@@ -159,7 +159,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 }
 
 export function SideBarHeaderGroup({
-  imagePath = '/images/menu_logo.svg',
+  imagePath = `${process.env.NEXT_PUBLIC_BASE_URL}/images/menu_logo.svg`,
   altText,
   title,
   subtitle,

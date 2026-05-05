@@ -27,7 +27,7 @@ export default async function Home() {
       <PublicHeader
         left={
           <Image
-            src="/images/menu_logo.svg"
+            src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/menu_logo.svg`}
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={32}
             height={32}
@@ -54,7 +54,7 @@ export default async function Home() {
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center rounded-md">
                   <Image
-                    src="/images/login_logo.svg"
+                    src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/login_logo.svg`}
                     alt="An image of the crest and wreath of the city of Sault Ste. Marie"
                     width={180}
                     height={180}
@@ -88,28 +88,3 @@ export default async function Home() {
     </div>
   );
 }
-
-/*
-
-<header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
-        <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
-          <Image
-            src="/images/login_logo.svg"
-            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-            width={32}
-            height={32}
-            style={{ width: "32px", height: "32px" }}
-            priority={true}
-          />
-          <div className="w-full sm:ml-auto sm:w-auto">
-            <div className="flex gap-2">
-              <ThemeButton />
-              <Button>
-                <Link href={"/"}>Home</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-      
-      */

@@ -4,16 +4,6 @@ import { Role } from '../auth';
 import { IRole, IRolePermissions } from '../data/permissions';
 import { privateServerGET } from '../fetch-server';
 import { SessionRole } from '../types';
-/*
-export async function fetchPrivateCachedUserRole(
-  userId: number,
-  tag: string,
-  impersonatingRole?: SessionRole,
-): Promise<{ data: Role[]; message: string }> {
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/users/${userId}/roles`;
-  return privateServerGET(url, { impersonatingRole: impersonatingRole }, 300, [tag]);
-}
-*/
 
 // 4. The User Role example
 export async function fetchPrivateCachedUserRole(userId: number, tag: string, impersonatingRole?: SessionRole) {

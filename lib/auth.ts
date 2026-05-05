@@ -38,10 +38,20 @@ export type Permission = {
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: 'postgresql',
+    provider: `${process.env.DATABASE_PROVIDER}` as 'postgresql' | 'sqlserver',
   }),
+  baseURL: process.env.BETTER_AUTH_URL,
+  basePath: '/api/auth',
+  logger: {
+    level: 'debug',
+  },
   advanced: {
     database: { useNumberId: true, generateId: 'serial' },
+    trustedProxyHeaders: true,
+    ipAddress: {
+      ipAddressHeaders: ['x-forwarded-for'],
+    },
+    disableOriginCheck: true,
   },
   socialProviders: {
     github: {
