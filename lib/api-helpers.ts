@@ -191,3 +191,18 @@ export async function safeCreateMany<
     data: finalData,
   } as unknown as A);
 }
+
+export function formatServerURL(url: string) {
+  const serverURL = process.env.NEXT_PUBLIC_BASE_URL;
+
+  if (!serverURL) {
+    throw new Error('formatServerURL: NEXT_PUBLIC_BASE_URL is not defined. ' + 'Ensure it is set in your .env file or environment settings.');
+  }
+
+  //Check for a trailing slash to ensure it doesnt get overwritten by the url
+  const base = serverURL.endsWith('/') ? serverURL : `${serverURL}/`;
+  //Check for a leading slash to ensure it doesnt get treated as a root url request
+  const path = url.startsWith('/') ? url.slice(1) : url;
+
+  return new URL(path, base);
+}

@@ -1,5 +1,7 @@
 'use server';
 
+import { formatServerURL } from './api-helpers';
+
 type ApiResponse<T> = {
   data: T | null;
   status: number;
@@ -22,7 +24,9 @@ async function serverRequest<T>(url: string, method: string, options: FetchOptio
   const { params, data, revalidate, tags, headers } = options;
 
   // 1. Build URL with query parameters
-  const fullUrl = new URL(url, process.env.NEXT_PUBLIC_BASE_URL);
+  console.log(url, process.env.NEXT_PUBLIC_BASE_URL);
+  const fullUrl = formatServerURL(url);
+
   if (params) {
     Object.entries(params).forEach(([key, val]) => {
       if (val !== undefined && val !== null) {
@@ -36,6 +40,8 @@ async function serverRequest<T>(url: string, method: string, options: FetchOptio
     });
   }
 
+  console.log(fullUrl);
+  console.log(fullUrl.toString());
   // 2. Execute Request
   const response = await fetch(fullUrl.toString(), {
     method,
