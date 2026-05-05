@@ -40,7 +40,7 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: `${process.env.DATABASE_PROVIDER}` as 'postgresql' | 'sqlserver',
   }),
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: 'http://localhost:3000',
   basePath: '/api/auth',
   logger: {
     level: 'debug',
@@ -51,7 +51,6 @@ export const auth = betterAuth({
     ipAddress: {
       ipAddressHeaders: ['x-forwarded-for'],
     },
-    disableOriginCheck: true,
   },
   socialProviders: {
     github: {
