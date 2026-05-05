@@ -40,8 +40,10 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: `${process.env.DATABASE_PROVIDER}` as 'postgresql' | 'sqlserver',
   }),
-  baseURL: 'http://localhost:3000',
+  baseURL: 'https://corpsys.cityssm.on.ca',
   basePath: '/api/auth',
+  //baseURL: 'http://localhost:3000',
+  //basePath: '/api/auth',
   logger: {
     level: 'debug',
   },
@@ -51,7 +53,9 @@ export const auth = betterAuth({
     ipAddress: {
       ipAddressHeaders: ['x-forwarded-for'],
     },
+    useSecureCookies: true,
   },
+  trustHost: true,
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_ID as string,

@@ -18,7 +18,7 @@ import { ssoClient } from '@better-auth/sso/client';
 export const authClient = createAuthClient({
   /** The base URL of the server (optional if you're using the same domain) */
   baseURL: 'https://corpsys.cityssm.on.ca',
-  basePath: 'meeting/api/auth',
+  basePath: 'room-booking/api/auth',
   plugins: [customSessionClient<typeof auth>(), ssoClient()],
 });
 
