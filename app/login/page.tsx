@@ -27,7 +27,7 @@ export default async function Home() {
       <PublicHeader
         left={
           <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/menu_logo.svg`}
+            src={`${process.env.NEXT_PUBLIC_FULL_URL}/images/menu_logo.svg`}
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={32}
             height={32}
@@ -54,7 +54,7 @@ export default async function Home() {
               <div className="flex flex-col items-center gap-2">
                 <div className="flex items-center justify-center rounded-md">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/login_logo.svg`}
+                    src={`${process.env.NEXT_PUBLIC_FULL_URL}/images/login_logo.svg`}
                     alt="An image of the crest and wreath of the city of Sault Ste. Marie"
                     width={180}
                     height={180}

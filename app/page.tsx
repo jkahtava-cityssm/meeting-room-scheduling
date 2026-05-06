@@ -26,7 +26,7 @@ export default async function Home() {
       <PublicHeader
         left={
           <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/login_logo.svg`}
+            src={`${process.env.NEXT_PUBLIC_FULL_URL}/images/login_logo.svg`}
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={32}
             height={32}

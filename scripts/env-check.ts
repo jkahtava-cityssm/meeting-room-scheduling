@@ -36,6 +36,7 @@ requiredEnv.forEach((env) => {
 });
 
 // 2. Validate Format
+const fullUrl = process.env.NEXT_PUBLIC_FULL_URL || '';
 const domain = process.env.NEXT_PUBLIC_BASE_URL || '';
 const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
 
@@ -49,6 +50,10 @@ if (subfolder && !subfolder.startsWith('/')) {
 
 if (subfolder && subfolder.endsWith('/')) {
   errors.push('NEXT_PUBLIC_SUBFOLDER_PATH should not end with a slash.');
+}
+
+if (subfolder && !fullUrl.endsWith(subfolder)) {
+  errors.push('NEXT_PUBLIC_FULL_URL does not match BASE_URL + SUBFOLDER_PATH.');
 }
 
 if (errors.length > 0) {
