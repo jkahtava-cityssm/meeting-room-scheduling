@@ -195,7 +195,7 @@ const CONFIG_OVERRIDES: Record<string, React.FC<{ entry: TConfigurationEntry; on
   singleSignOnEnabled: ({ entry, onChange }) => {
     return (
       <div className="flex items-center gap-4">
-        <RegisterSSO isDisabled={entry.value as boolean} />
+        <RegisterSSO isActive={entry.value as boolean} />
       </div>
     );
   },

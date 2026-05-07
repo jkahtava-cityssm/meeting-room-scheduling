@@ -69,6 +69,22 @@ export async function findManyConfiguration(
   }));
 }
 
+export async function findFirstConfiguration(key: TConfigurationKeys, tx: Prisma.TransactionClient = prisma): Promise<IConfigurationRecord> {
+  const configEntry = await tx.configuration.findFirstOrThrow({
+    where: { key: key },
+    select: CONFIGURATION_SELECT,
+    orderBy: { configurationId: 'asc' },
+  });
+
+  return {
+    key: configEntry.key as TConfigurationKeys,
+    name: configEntry.name,
+    value: configEntry.value,
+    type: configEntry.type as 'string' | 'number' | 'boolean',
+    description: configEntry.description ?? '',
+  };
+}
+
 export async function upsertConfiguration(
   data: {
     key: string;
@@ -115,4 +131,14 @@ export async function updateConfiguration(
     },
     select: CONFIGURATION_SELECT,
   });
+}
+
+export async function deleteSSOProvider(
+  data: {
+    provider: string;
+  },
+  sessionUserId: number,
+  tx: Prisma.TransactionClient = prisma,
+) {
+  return tx.sSOProvider.deleteMany({ where: { providerId: data.provider } });
 }

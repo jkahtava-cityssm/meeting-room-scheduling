@@ -3,17 +3,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { guardRoute } from '@/lib/api-guard';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { APP_DOMAIN, NoContentMessage, SuccessMessage } from '@/lib/api-helpers';
+import { APP_DOMAIN, InternalServerErrorMessage, NoContentMessage, SuccessMessage } from '@/lib/api-helpers';
 import { prisma } from '@/prisma';
-import { updateConfiguration } from '@/lib/data/configuration';
+import { deleteSSOProvider, findFirstConfiguration, updateConfiguration } from '@/lib/data/configuration';
 
 export async function POST(req: NextRequest) {
   return guardRoute(
     req,
-    { IsDevelopment: { type: 'function', check: () => process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' } },
+    { IsDevelopment: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } },
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       try {
         const session_headers = await headers();
+
+        const record = await findFirstConfiguration('singleSignOnEnabled');
+        if (record.value === 'true') {
+          await updateConfiguration({ key: 'singleSignOnEnabled', value: 'false' }, sessionUserId);
+          await deleteSSOProvider({ provider: 'microsoft' }, sessionUserId);
+        }
 
         const result = await auth.api.registerSSOProvider({
           body: {
@@ -27,7 +33,6 @@ export async function POST(req: NextRequest) {
               tokenEndpoint: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/oauth2/v2.0/token`,
               jwksEndpoint: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/discovery/v2.0/keys`,
               discoveryEndpoint: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0/.well-known/openid-configuration`,
-
               scopes: ['openid', 'profile', 'email'], // minimal identity scopes
               pkce: true,
               mapping: {
@@ -50,7 +55,7 @@ export async function POST(req: NextRequest) {
         return NoContentMessage();
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Registration failed';
-        return NextResponse.json({ ok: false, error: errorMessage }, { status: 400 });
+        return InternalServerErrorMessage(errorMessage);
       }
     },
   );

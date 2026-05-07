@@ -20,53 +20,38 @@ import {
 } from '@/components/ui/alert-dialog';
 import { APP_FULL_URL } from '@/lib/api-helpers';
 
-export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
-  const [disabled, setDisabled] = useState(isDisabled);
+export function RegisterSSO({ isActive }: { isActive?: boolean }) {
+  const [active, setActive] = useState(isActive);
   const [pending, setPending] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
   async function onRegisterSSO() {
-    if (pending || disabled) return;
+    if (pending) return;
 
     setPending(true);
-    setDisabled(true);
 
     const result = await fetchPOST<null>('/api/admin/register-sso', {});
     if (result?.success) {
-      setDisabled(false);
+      setActive(true);
     }
     setPending(false);
   }
 
   return (
     <>
-      {disabled ? (
-        <>
-          <MicrosoftLabel>
-            <Image
-              src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
-              alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-              width={21}
-              height={21}
-            />
-            Single Sign On Configured
-            <CheckIcon className="w-4 h-4 text-green-600" />
-          </MicrosoftLabel>
-        </>
-      ) : (
-        <MicrosoftButton onClick={() => setShowAlert(true)} disabled={disabled} aria-busy={pending}>
-          {pending && <Loader2Icon className="animate-spin" />}
-          {!pending && (
-            <Image
-              src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
-              alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-              width={21}
-              height={21}
-            />
-          )}
-          Activate Microsoft Entra SSO
-        </MicrosoftButton>
-      )}
+      <MicrosoftButton onClick={() => setShowAlert(true)} disabled={pending} aria-busy={pending}>
+        {pending && <Loader2Icon className="animate-spin" />}
+        {!pending && (
+          <Image
+            src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
+            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+            width={21}
+            height={21}
+          />
+        )}
+        {active ? `Reset Microsoft Entra SSO` : `Activate Microsoft Entra SSO`}
+      </MicrosoftButton>
+
       <WarningDialog
         showAlert={showAlert}
         onContinue={() => {

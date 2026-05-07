@@ -37,10 +37,12 @@ const signInEntraSSO = async (callback: string) => {
   return res;
 };
 
+const defaultCallback = `${APP_SUBFOLDER}/bookings/user-view`;
+
 export function SignInMicrosoft() {
   const searchParams = useSearchParams();
 
-  const callbackURL = searchParams.get('callbackurl') == null ? `${APP_SUBFOLDER}/bookings/user-view` : (searchParams.get('callbackurl') as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? defaultCallback : (searchParams.get('callbackurl') as string);
 
   return (
     <>
@@ -62,7 +64,7 @@ export function SignInGithub() {
 
   const searchParams = useSearchParams();
 
-  const callbackURL = searchParams.get('callbackurl') == null ? `${APP_SUBFOLDER}/bookings/user-view` : (searchParams.get('callbackurl') as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? defaultCallback : (searchParams.get('callbackurl') as string);
 
   const [mounted, setMounted] = useState(false);
 
@@ -92,7 +94,7 @@ export function SignInGithub() {
 export function SignInMicrosoftSSO() {
   const searchParams = useSearchParams();
 
-  const callbackURL = searchParams.get('callbackurl') == null ? '/bookings/user-view' : (searchParams.get('callbackurl') as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? defaultCallback : (searchParams.get('callbackurl') as string);
 
   const [mounted, setMounted] = useState(false);
 

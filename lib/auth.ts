@@ -40,6 +40,9 @@ const stripsPath = process.env.PROXY_STRIPS_PATH === 'true';
 const domain = process.env.NEXT_PUBLIC_BASE_URL;
 const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH;
 
+const envOrigins = process.env.TRUSTED_ORIGINS?.split(',').filter(Boolean) || [];
+const staticOrigins = ['https://login.microsoftonline.com', 'https://graph.microsoft.com'];
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: `${process.env.DATABASE_PROVIDER}` as 'postgresql' | 'sqlserver',
@@ -90,7 +93,7 @@ export const auth = betterAuth({
       updateUserInfoOnLink: true,
     },
   },
-  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(',').filter(Boolean) || [],
+  trustedOrigins: [...envOrigins, ...staticOrigins],
 
   databaseHooks: {
     session: {
@@ -123,6 +126,7 @@ export const auth = betterAuth({
   plugins: [
     sso({
       modelName: 'SSOProvider',
+      redirectURI: `${domain}${subfolder}/api/auth/sso/callback/microsoft`,
     }),
 
     customSession(async ({ user, session }) => {
