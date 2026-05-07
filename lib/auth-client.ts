@@ -15,10 +15,13 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ssoClient } from '@better-auth/sso/client';
 
+const domain = process.env.NEXT_PUBLIC_BASE_URL || '';
+const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
+
 export const authClient = createAuthClient({
   /** The base URL of the server (optional if you're using the same domain) */
-  baseURL: 'https://corpsys.cityssm.on.ca',
-  basePath: 'room-booking/api/auth',
+  baseURL: domain,
+  basePath: `${subfolder}/api/auth`,
   plugins: [customSessionClient<typeof auth>(), ssoClient()],
 });
 

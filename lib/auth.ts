@@ -36,14 +36,16 @@ export type Permission = {
   action: SessionAction;
 };
 
+const stripsPath = process.env.PROXY_STRIPS_PATH === 'true';
+const domain = process.env.NEXT_PUBLIC_BASE_URL;
+const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH;
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: `${process.env.DATABASE_PROVIDER}` as 'postgresql' | 'sqlserver',
   }),
-  baseURL: 'https://corpsys.cityssm.on.ca',
-  basePath: '/api/auth',
-  //baseURL: 'http://localhost:3000',
-  //basePath: '/api/auth',
+  baseURL: domain,
+  basePath: stripsPath ? '/api/auth' : `${subfolder}/api/auth`,
   logger: {
     level: 'debug',
   },
@@ -67,6 +69,7 @@ export const auth = betterAuth({
       tenantId: process.env.AZURE_AD_TENANT_ID as string,
       disableProfilePhoto: false,
       overrideUserInfoOnSignIn: true,
+      redirectURI: `${domain}${subfolder}/api/auth/callback/microsoft`,
     },
   },
   session: {
