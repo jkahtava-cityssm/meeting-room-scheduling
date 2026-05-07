@@ -1,7 +1,10 @@
 import { prisma } from '@/prisma';
-import type { Prisma } from '@prisma/client';
+import type { EventRoom, Prisma } from '@prisma/client';
 import { SEvent } from '../schemas';
 import z from 'zod/v4';
+import { safeCreateMany } from '../api-helpers';
+
+const unique = <T>(array: T[]): T[] => Array.from(new Set(array));
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
@@ -40,8 +43,7 @@ export async function createEvent(
       endDate: data.endDate,
       eventRooms: {
         createMany: {
-          data: data.roomIds.map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-          skipDuplicates: true,
+          data: unique(data.roomIds).map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
         },
       },
       ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
@@ -50,16 +52,18 @@ export async function createEvent(
       ...(data.itemIds && {
         eventItems: {
           createMany: {
-            data: data.itemIds.map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-            skipDuplicates: true,
+            data: unique(data.itemIds).map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
           },
         },
       }),
       ...(data.recipientIds && {
         eventRecipients: {
           createMany: {
-            data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-            skipDuplicates: true,
+            data: unique(data.recipientIds).map((eventRecipientId) => ({
+              userId: eventRecipientId,
+              createdBy: sessionUserId,
+              updatedBy: sessionUserId,
+            })),
           },
         },
       }),
@@ -96,8 +100,7 @@ export async function upsertEvent(
     endDate: data.endDate,
     eventRooms: {
       createMany: {
-        data: data.roomIds.map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-        skipDuplicates: true,
+        data: unique(data.roomIds).map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
       },
     },
     ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
@@ -106,16 +109,18 @@ export async function upsertEvent(
     ...(data.itemIds && {
       eventItems: {
         createMany: {
-          data: data.itemIds.map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-          skipDuplicates: true,
+          data: unique(data.itemIds).map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
         },
       },
     }),
     ...(data.recipientIds && {
       eventRecipients: {
         createMany: {
-          data: data.recipientIds.map((eventRecipientId) => ({ userId: eventRecipientId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-          skipDuplicates: true,
+          data: unique(data.recipientIds).map((eventRecipientId) => ({
+            userId: eventRecipientId,
+            createdBy: sessionUserId,
+            updatedBy: sessionUserId,
+          })),
         },
       },
     }),
@@ -230,7 +235,6 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
 
   return isArray ? mapped : mapped[0];
 }
-
 export async function createManyEventRoom(
   data: {
     eventId: number;
@@ -239,12 +243,14 @@ export async function createManyEventRoom(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  return tx.eventRoom.createMany({
-    data: data.eventRooms.map((roomId) => {
-      return { eventId: data.eventId, roomId: roomId, createdBy: sessionUserId, updatedBy: sessionUserId };
-    }),
-    skipDuplicates: true,
-  });
+  const insertData: Prisma.EventRoomCreateManyInput[] = data.eventRooms.map((roomId) => ({
+    eventId: data.eventId,
+    roomId,
+    createdBy: sessionUserId,
+    updatedBy: sessionUserId,
+  }));
+
+  return await safeCreateMany(tx.eventRoom, insertData, ['eventId', 'roomId'], tx);
 }
 
 export async function createManyEventRecipients(
@@ -255,12 +261,14 @@ export async function createManyEventRecipients(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  return tx.eventRecipient.createMany({
-    data: data.eventRecipients.map((eventRecipientId) => {
-      return { eventId: data.eventId, userId: eventRecipientId, createdBy: sessionUserId, updatedBy: sessionUserId };
-    }),
-    skipDuplicates: true,
-  });
+  const insertData: Prisma.EventRecipientCreateManyInput[] = data.eventRecipients.map((userId) => ({
+    eventId: data.eventId,
+    userId,
+    createdBy: sessionUserId,
+    updatedBy: sessionUserId,
+  }));
+
+  return await safeCreateMany(tx.eventRecipient, insertData, ['eventId', 'userId'], tx);
 }
 
 export async function createManyEventItems(
@@ -271,10 +279,12 @@ export async function createManyEventItems(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  return tx.eventItem.createMany({
-    data: data.eventItems.map((itemId) => {
-      return { eventId: data.eventId, itemId: itemId, createdBy: sessionUserId, updatedBy: sessionUserId };
-    }),
-    skipDuplicates: true,
-  });
+  const insertData: Prisma.EventItemCreateManyInput[] = data.eventItems.map((itemId) => ({
+    eventId: data.eventId,
+    itemId,
+    createdBy: sessionUserId,
+    updatedBy: sessionUserId,
+  }));
+
+  return await safeCreateMany(tx.eventItem, insertData, ['eventId', 'itemId'], tx);
 }

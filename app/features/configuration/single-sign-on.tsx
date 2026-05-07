@@ -1,7 +1,7 @@
 'use client';
 
 import { MicrosoftButton, MicrosoftLabel } from '@/components/ui/microsoft-signin-button';
-import { fetchPOST } from '@/lib/fetch';
+import { fetchPOST } from '@/lib/fetch-client';
 import { usePublicConfiguration } from '@/lib/services/public';
 import { CheckIcon, CheckSquare, Loader2Icon, X } from 'lucide-react';
 import Image from 'next/image';
@@ -18,6 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogSave,
 } from '@/components/ui/alert-dialog';
+import { APP_FULL_URL } from '@/lib/api-helpers';
 
 export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
   const [disabled, setDisabled] = useState(isDisabled);
@@ -30,8 +31,8 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
     setPending(true);
     setDisabled(true);
 
-    const result = await fetchPOST('/api/admin/register-sso', {});
-    if (result?.status !== 204) {
+    const result = await fetchPOST<null>('/api/admin/register-sso', {});
+    if (result?.success) {
       setDisabled(false);
     }
     setPending(false);
@@ -43,7 +44,7 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
         <>
           <MicrosoftLabel>
             <Image
-              src="/images/ms-symbollockup_mssymbol_19.svg"
+              src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
               alt="An image of the crest and wreath of the city of Sault Ste. Marie"
               width={21}
               height={21}
@@ -57,7 +58,7 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
           {pending && <Loader2Icon className="animate-spin" />}
           {!pending && (
             <Image
-              src="/images/ms-symbollockup_mssymbol_19.svg"
+              src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
               alt="An image of the crest and wreath of the city of Sault Ste. Marie"
               width={21}
               height={21}

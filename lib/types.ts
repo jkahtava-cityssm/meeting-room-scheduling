@@ -67,7 +67,15 @@ export const CONFIGURATION_KEYS = [
   'maxBookingSpan',
 ] as const;
 
+export const SYSTEM_PROCESS_MANIFEST = {
+  ENTRA_SYNC_SCHEDULER: {
+    key: 'ENTRA_SYNC_SCHEDULER',
+    defaultParameter: '{ "schedule": "0 3 * * *" }',
+  },
+} as const;
 //export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
+
+export type TSystemProcess = keyof typeof SYSTEM_PROCESS_MANIFEST;
 
 export const CONFIG_MANIFEST = [
   {
@@ -82,7 +90,7 @@ export const CONFIG_MANIFEST = [
     key: 'visibleHoursEnd',
     name: 'Latest Visible Hour',
     description: 'The latest hour that is visible in the calendar view.',
-    defaultValue: 8,
+    defaultValue: 17,
     type: 'number',
   },
   {
@@ -112,6 +120,13 @@ export const CONFIG_MANIFEST = [
     description: '0 = no limit, determines the maximum number in the future a user can create events',
     defaultValue: 30,
     type: 'number',
+  },
+  {
+    key: 'bookingEmail',
+    name: 'Booking Email',
+    description: 'The email address that receives booking notifications and inquiries.',
+    defaultValue: '',
+    type: 'string',
   },
 ] as const;
 

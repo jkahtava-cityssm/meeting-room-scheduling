@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchGET } from '../fetch';
+import { fetchGET } from '../fetch-client';
 import z from 'zod/v4';
-import { SProperty } from '../schemas';
+import { IProperty, SProperty } from '../schemas';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
 
@@ -9,7 +9,7 @@ export const usePropertyQuery = (enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.references.properties(),
     queryFn: async () => {
-      const result = await fetchGET('/api/references/properties');
+      const result = await fetchGET<IProperty>('/api/references/properties');
 
       const parsedResult = z.array(SProperty).safeParse(result.data);
 

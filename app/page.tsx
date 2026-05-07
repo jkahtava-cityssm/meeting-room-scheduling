@@ -11,6 +11,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { CalendarPublicView } from './features/calendar/view-public/public-view';
 import { CalendarProviderPublic } from '@/contexts/CalendarProviderPublic';
+import { APP_FULL_URL } from '@/lib/api-helpers';
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -26,7 +27,7 @@ export default async function Home() {
       <PublicHeader
         left={
           <Image
-            src="/images/login_logo.svg"
+            src={`${APP_FULL_URL}/images/login_logo.svg`}
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={32}
             height={32}

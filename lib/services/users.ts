@@ -1,6 +1,6 @@
 import { QueryError } from '@/contexts/ReactQueryProvider';
-import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from '@/lib/fetch';
-import { SEvent, SUser } from '@/lib/schemas';
+import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from '@/lib/fetch-client';
+import { IUser, SEvent, SUser } from '@/lib/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import z from 'zod/v4';
 import { queryKeys } from './querykeys';
@@ -9,7 +9,7 @@ export const useUsersQuery = (onlyActive: boolean = true, enabled: boolean = tru
   useQuery({
     queryKey: queryKeys.users.lists(),
     queryFn: async () => {
-      const result = await fetchGET(`/api/users`, { onlyActive }, 180, ['users']);
+      const result = await fetchGET<IUser[]>(`/api/users`, { onlyActive }, 180, ['users']);
       const parsedResult = z.array(SUser).safeParse(result.data);
 
       if (!parsedResult.success) {
@@ -25,7 +25,7 @@ export const useUserQuery = (userId: number | undefined, enabled: boolean = true
   useQuery({
     queryKey: queryKeys.users.detail(userId),
     queryFn: async () => {
-      const result = await fetchGET(`/api/users/${userId}`);
+      const result = await fetchGET<IUser[]>(`/api/users/${userId}`);
 
       const parsedResult = z.array(SUser).safeParse(result.data);
 
@@ -57,10 +57,10 @@ export type IUserPUT = z.infer<typeof SUserPUT>;
 export const useUsersMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: IUserPUT) => fetchPUT(`/api/users`, data),
+    mutationFn: async (data: IUserPUT) => fetchPUT<IUser>(`/api/users`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(response.data.userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(response.data?.userId) });
     },
   });
 };
@@ -68,7 +68,7 @@ export const useUsersMutationUpsert = () => {
 export const useUsersMutationDelete = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (userId: number) => fetchDELETE(`/api/users/${userId}`),
+    mutationFn: async (userId: number) => fetchDELETE<void>(`/api/users/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
@@ -78,10 +78,10 @@ export const useUsersMutationDelete = () => {
 export const useUsersMutationCreate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: IUserPUT) => fetchPOST(`/api/users`, data),
+    mutationFn: async (data: IUserPUT) => fetchPOST<IUser>(`/api/users`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(response.data.userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(response.data?.userId) });
     },
   });
 };

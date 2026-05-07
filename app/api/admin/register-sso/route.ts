@@ -1,10 +1,9 @@
-// app/api/internal/sso/register-microsoft/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 import { guardRoute } from '@/lib/api-guard';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { NoContentMessage, SuccessMessage } from '@/lib/api-helpers';
+import { APP_DOMAIN, NoContentMessage, SuccessMessage } from '@/lib/api-helpers';
 import { prisma } from '@/prisma';
 import { updateConfiguration } from '@/lib/data/configuration';
 
@@ -15,12 +14,11 @@ export async function POST(req: NextRequest) {
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       try {
         const session_headers = await headers();
-        const domain = process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, '') ?? 'localhost:3000';
 
         const result = await auth.api.registerSSOProvider({
           body: {
             providerId: 'microsoft',
-            domain: domain,
+            domain: `${process.env.NEXT_PUBLIC_BASE_URL}`,
             issuer: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0`,
             oidcConfig: {
               clientId: process.env.AZURE_AD_CLIENT_ID!,

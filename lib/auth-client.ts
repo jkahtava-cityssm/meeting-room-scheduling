@@ -15,9 +15,13 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ssoClient } from '@better-auth/sso/client';
 
+const domain = process.env.NEXT_PUBLIC_BASE_URL || '';
+const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
+
 export const authClient = createAuthClient({
   /** The base URL of the server (optional if you're using the same domain) */
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: domain,
+  basePath: `${subfolder}/api/auth`,
   plugins: [customSessionClient<typeof auth>(), ssoClient()],
 });
 

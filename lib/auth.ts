@@ -36,13 +36,28 @@ export type Permission = {
   action: SessionAction;
 };
 
+const stripsPath = process.env.PROXY_STRIPS_PATH === 'true';
+const domain = process.env.NEXT_PUBLIC_BASE_URL;
+const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH;
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: 'postgresql',
+    provider: `${process.env.DATABASE_PROVIDER}` as 'postgresql' | 'sqlserver',
   }),
-  advanced: {
-    database: { useNumberId: true, generateId: false },
+  baseURL: domain,
+  basePath: stripsPath ? '/api/auth' : `${subfolder}/api/auth`,
+  logger: {
+    level: 'debug',
   },
+  advanced: {
+    database: { useNumberId: true, generateId: 'serial' },
+    trustedProxyHeaders: true,
+    ipAddress: {
+      ipAddressHeaders: ['x-forwarded-for'],
+    },
+    useSecureCookies: true,
+  },
+  trustHost: true,
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_ID as string,
@@ -54,6 +69,7 @@ export const auth = betterAuth({
       tenantId: process.env.AZURE_AD_TENANT_ID as string,
       disableProfilePhoto: false,
       overrideUserInfoOnSignIn: true,
+      redirectURI: `${domain}${subfolder}/api/auth/callback/microsoft`,
     },
   },
   session: {
@@ -64,7 +80,7 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: 10 * 60, // 5 Minutes
       strategy: 'compact',
-      refreshCache: { updateAge: 60 * 2 },
+      //refreshCache: { updateAge: 60 * 2 },
     },
   },
   account: {
@@ -120,7 +136,7 @@ export const auth = betterAuth({
 
       const result = await fetchPrivateCachedUserRole(userId, cacheKey, impersonatingRole as SessionRole);
 
-      const roles = result ? result.data : [];
+      const roles = result.data ? result.data : [];
       return {
         user: {
           ...user,

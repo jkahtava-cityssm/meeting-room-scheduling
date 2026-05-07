@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchGET, fetchPOST, fetchPUT } from '../fetch';
+import { fetchGET, fetchPUT } from '../fetch-client';
 import z from 'zod/v4';
 
 import { CONFIG_MANIFEST, TConfigurationKeys, TConfigurationRecord } from '../types';
-import { SConfigurationEntry } from '../data/configuration';
+import { SConfigurationEntry, TConfigurationEntry } from '../data/configuration';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
 
@@ -11,7 +11,7 @@ export const useConfigurationQuery = (keys?: TConfigurationKeys[], enabled: bool
   return useQuery({
     queryKey: queryKeys.configuration.filtered(keys),
     queryFn: async () => {
-      const result = await fetchGET('/api/configuration', keys ? { keys: keys } : undefined);
+      const result = await fetchGET<TConfigurationEntry[]>('/api/configuration', keys ? { keys: keys } : undefined);
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
 
       if (!parsedResult.success) {
@@ -28,7 +28,7 @@ export const usePrivateConfigurationQuery = (keys?: TConfigurationKeys[], enable
   return useQuery({
     queryKey: queryKeys.configuration.filtered(keys),
     queryFn: async () => {
-      const result = await fetchGET('/api/configuration', keys ? { keys: keys } : undefined);
+      const result = await fetchGET<TConfigurationEntry[]>('/api/configuration', keys ? { keys: keys } : undefined);
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
 
       if (!parsedResult.success) {
@@ -63,7 +63,7 @@ export type IConfigurationPUT = z.infer<typeof SConfigurationPUT>;
 export const useConfigurationMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: IConfigurationPUT[]) => fetchPUT(`/api/configuration`, data),
+    mutationFn: async (data: IConfigurationPUT[]) => fetchPUT<IConfigurationPUT[]>(`/api/configuration`, data),
     onMutate: async (newData) => {
       const key = queryKeys.configuration.all;
 

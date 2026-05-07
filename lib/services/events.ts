@@ -1,7 +1,7 @@
 import { formatISO } from 'date-fns';
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch';
+import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch-client';
 import z from 'zod/v4';
 import { IEvent, SEvent, utcDateSchema } from '@/lib/schemas';
 import { Prisma } from '@prisma/client';
@@ -26,7 +26,7 @@ export const useEventsQuery = (startDate: Date, endDate: Date, userId?: string, 
     queryKey: queryKeys.events.user(start, end, userId),
     //placeholderData: keepPreviousData,
     queryFn: async () => {
-      const result = await fetchGET(endpoint, {
+      const result = await fetchGET<IEvent[]>(endpoint, {
         startdate: start,
         enddate: end,
         userId: userId,
@@ -59,19 +59,19 @@ export const useMyEventsQuery = (
   return useQuery({
     queryKey: queryKeys.events.user(start, end, userId),
     queryFn: async () => {
-      const result = await fetchGET('/api/events/my-events', {
+      const result = await fetchGET<IEvent[]>('/api/events/my-events', {
         startdate: start,
         enddate: end,
         userId: userId,
       });
       const parsedResult = z.array(SEvent).safeParse(result.data);
 
-      if (!parsedResult.success) {
+      if (!parsedResult.success || !result.data) {
         throw new QueryError('Invalid event data', 'useMyEventsQuery', parsedResult.error);
       }
 
       return await processEventsAsync({
-        events: result.data as IEvent[],
+        events: result.data,
         selectedDate: date.toISOString() as ISODateString,
         selectedRoomId: roomId,
         action: action,
@@ -93,7 +93,7 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusKey
   return useQuery({
     queryKey: queryKeys.events.status(start, end, statusKey),
     queryFn: async () => {
-      const result = await fetchGET('/api/events/status', {
+      const result = await fetchGET<IEvent[]>('/api/events/status', {
         startdate: start,
         enddate: end,
         statusKey: statusKey,
@@ -114,7 +114,7 @@ export const useTotalEventsByStatusQuery = (statusKey: string, startDate?: Date,
   useQuery({
     queryKey: queryKeys.events.totalByStatus(statusKey),
     queryFn: async () => {
-      const result = await fetchGET('/api/events/status/counts', {
+      const result = await fetchGET<{ total: number }>('/api/events/status/counts', {
         startdate: startDate ? formatDate(startDate) : undefined,
         enddate: endDate ? formatDate(endDate) : undefined,
         statusKey: statusKey,
@@ -135,7 +135,7 @@ export const useEventQuery = (eventId: number | undefined, userId: string | unde
   return useQuery({
     queryKey: queryKeys.events.detail(eventId),
     queryFn: async () => {
-      const result = await fetchGET(endpoint);
+      const result = await fetchGET<IEvent>(endpoint);
       const parsedResult = SEvent.safeParse(result.data);
 
       if (!parsedResult.success) {
@@ -173,11 +173,11 @@ export type IEventPUT = z.infer<typeof SEventPUT>;
 export const useEventsMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: IEventPUT) => fetchPUT(`/api/events`, data),
+    mutationFn: async (data: IEventPUT) => fetchPUT<IEvent>(`/api/events`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.detail(response.data.eventId),
+        queryKey: queryKeys.events.detail(response.data?.eventId),
       });
     },
   });
@@ -186,11 +186,11 @@ export const useEventsMutationUpsert = () => {
 export const useEventsMutationCreate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: IEventPUT) => fetchPOST(`/api/events`, data),
+    mutationFn: async (data: IEventPUT) => fetchPOST<IEvent>(`/api/events`, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.events.detail(response.data.eventId),
+        queryKey: queryKeys.events.detail(response.data?.eventId),
       });
     },
   });
@@ -199,7 +199,7 @@ export const useEventsMutationCreate = () => {
 export const useEventsMutationDelete = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (eventId: number) => fetchDELETE(`/api/events/${eventId}`),
+    mutationFn: async (eventId: number) => fetchDELETE<null>(`/api/events/${eventId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
     },
@@ -217,7 +217,7 @@ export const useEventPatchMutation = () => {
 
   return useMutation({
     mutationFn: async ({ data, statusKey }: { data: IEventPATCH; statusKey: TStatusKey }) => {
-      return fetchPATCH('/api/events', data);
+      return fetchPATCH<IEvent>('/api/events', data);
     },
 
     /*onMutate: async ({ data, statusKey }) => {

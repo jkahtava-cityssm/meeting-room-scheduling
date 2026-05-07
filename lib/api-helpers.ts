@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify, importJWK, JWTPayload, errors } from 'jose';
+import { Prisma } from '@prisma/client';
 
 export async function CreatedMessage(message: string, data: object) {
   return NextResponse.json({ message: message, data: data }, { status: 201 }); // Created
@@ -115,4 +116,106 @@ export function validateTimeSlotInterval(interval?: number): number {
   }
 
   return interval;
+}
+
+interface PrismaModelDelegate<T, CreateInput, A> {
+  findMany: (args: { where: Record<string, unknown>; select: Record<string, boolean> }) => Promise<Partial<T>[]>;
+  createMany: (args: A) => Promise<Prisma.BatchPayload>;
+}
+
+//This is the ugly function that needs to exist so createMany can use
+export async function safeCreateMany<
+  T extends Record<string, unknown>,
+  CreateInput extends Record<string, unknown>,
+  K extends keyof CreateInput & keyof T,
+  A, // This represents the model's specific 'CreateManyArgs'
+>(model: PrismaModelDelegate<T, CreateInput, A>, data: CreateInput[], uniqueKeys: K[], tx: Prisma.TransactionClient): Promise<Prisma.BatchPayload> {
+  const isSqlServer = process.env.DATABASE_PROVIDER === 'sqlserver';
+
+  // 1. Native branch (Non-SQL Server)
+  if (!isSqlServer) {
+    // We construct the object and cast to 'unknown' then 'A'
+    // to satisfy the model-specific requirement for skipDuplicates.
+    return await model.createMany({
+      data,
+      skipDuplicates: true,
+    } as unknown as A);
+  }
+
+  if (data.length === 0) return { count: 0 };
+
+  // 2. Build the WHERE clause
+  const whereClause: Record<string, unknown> = {
+    OR: data.map((item) => {
+      const filter: Record<string, unknown> = {};
+      uniqueKeys.forEach((key) => {
+        filter[key as string] = item[key];
+      });
+      return filter;
+    }),
+  };
+
+  // 3. Build the SELECT clause
+  const selectClause: Record<string, boolean> = uniqueKeys.reduce(
+    (acc, key) => {
+      acc[key as string] = true;
+      return acc;
+    },
+    {} as Record<string, boolean>,
+  );
+
+  // 4. Fetch existing records
+  const existing = await model.findMany({
+    where: whereClause,
+    select: selectClause,
+  });
+
+  // 5. Filter out existing records
+  const filteredData = data.filter((newItem) => {
+    return !existing.some((ext) => {
+      return uniqueKeys.every((key) => {
+        return ext[key as keyof Partial<T>] === newItem[key];
+      });
+    });
+  });
+
+  // 6. Deduplicate the input array itself
+  const finalData = filteredData.filter((v, i, a) => {
+    return a.findIndex((t) => uniqueKeys.every((k) => t[k] === v[k])) === i;
+  });
+
+  if (finalData.length === 0) return { count: 0 };
+
+  // 7. Execute createMany (Passing only data, as SQL Server expects)
+  return await model.createMany({
+    data: finalData,
+  } as unknown as A);
+}
+
+export const APP_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || '';
+export const APP_SUBFOLDER = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
+export const APP_FULL_URL = `${APP_DOMAIN}${APP_SUBFOLDER}`;
+/*
+export function formatServerURL(url: string) {
+  const serverURL = process.env.NEXT_PUBLIC_BASE_URL;
+  const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
+
+  if (!serverURL) {
+    throw new Error('NEXT_PUBLIC_BASE_URL is not defined.');
+  }
+
+  const base = serverURL.replace(/\/+$/, '') + '/';
+  const cleanSubfolder = subfolder ? `/${subfolder.replace(/^\/+|\/+$/g, '')}` : '';
+  const path = url.replace(/^\/+/, '');
+  const finalPath = `${cleanSubfolder}/${path}`.replace(/\/+/g, '/').replace(/^\//, '');
+
+  return new URL(finalPath, base).toString();
+}
+*/
+
+export function formatServerURL(url: string) {
+  const base = `${APP_DOMAIN}${APP_SUBFOLDER}/`;
+  const cleanPath = url.replace(/^\/+/, '');
+
+  return new URL(cleanPath, base);
 }

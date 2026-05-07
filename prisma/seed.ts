@@ -7,9 +7,11 @@ import {
   SessionAction,
   SessionResource,
   SessionRole,
+  SYSTEM_PROCESS_MANIFEST,
   TColors,
   TConfigurationKeys,
   TStatusKey,
+  TSystemProcess,
 } from '../lib/types';
 import { addDays, addYears, differenceInDays, endOfDay, startOfDay } from 'date-fns';
 import {
@@ -199,20 +201,27 @@ async function findCreateUser(userData: {
   image?: string | null;
   employeeActive?: boolean;
 }) {
-  return await prisma.user.upsert({
+  let user = await prisma.user.findFirst({
     where: { email: userData.email },
-    update: {}, // Leave empty to avoid overwriting existing test data
-    create: {
-      name: userData.name,
-      email: userData.email,
-      emailVerified: userData.emailVerified ?? false,
-      image: userData.image ?? null,
-      externalId: userData.employeeNumber,
-      isActive: userData.employeeActive ?? true,
-      createdBy: 0,
-      updatedBy: 0,
-    },
   });
+
+  // 2. If not found, create them
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        name: userData.name,
+        email: userData.email,
+        emailVerified: userData.emailVerified ?? false,
+        image: userData.image ?? null,
+        externalId: userData.employeeNumber,
+        isActive: userData.employeeActive ?? true,
+        createdBy: 0,
+        updatedBy: 0,
+      },
+    });
+  }
+
+  return user;
 }
 
 async function FindCreateUserRole(roleId: number, userId: number) {
@@ -371,17 +380,6 @@ async function getActiveEventStatus(key: TStatusKey): Promise<{ statusId: number
   });
 
   return result;
-}
-
-function FindRoomID(
-  roomName: string,
-  rooms: { name: string; createdAt: Date; updatedAt: Date; roomId: number; color: string; icon: string | null }[],
-) {
-  const test = rooms.find((room) => {
-    return room.name === roomName;
-  });
-
-  return test?.roomId ?? 0;
 }
 
 function getRandomDescription(): string {
@@ -1208,6 +1206,47 @@ async function createLinkedServer() {
   await prisma.$executeRawUnsafe(`CALL public.insert_avanti_users();`);
 }
 
+async function FindCreateSystemProcess(processKey: TSystemProcess) {
+  const SYSTEM_PROCESS_KEY = SYSTEM_PROCESS_MANIFEST[processKey].key;
+  const SYSTEM_PROCESS_DEFAULT_PARAMETER = SYSTEM_PROCESS_MANIFEST[processKey].defaultParameter;
+
+  const processTag = `${SYSTEM_PROCESS_KEY}_${process.env.DATABASE_NAME ? process.env.DATABASE_NAME : 'unknown'}`.toUpperCase();
+
+  await prisma.systemProcess.upsert({
+    create: { pid: 0, key: processKey, tag: processTag, parameter: SYSTEM_PROCESS_DEFAULT_PARAMETER, createdBy: 0, updatedBy: 0 },
+    update: {},
+    where: { key: processKey },
+    select: { pid: true, tag: true, updatedAt: true },
+  });
+}
+
+export async function saveSystemProcess({
+  pid,
+  parameter,
+  processTag,
+  processKey,
+  userId = 0,
+}: {
+  pid: number;
+  parameter: string;
+  processTag: string;
+  processKey: string;
+  userId?: number;
+}) {
+  try {
+    const process = await prisma.systemProcess.upsert({
+      create: { pid, key: processKey, tag: processTag, parameter: parameter, createdBy: userId, updatedBy: userId },
+      update: { pid, parameter: parameter, updatedBy: userId },
+      where: { key: processKey },
+      select: { pid: true, tag: true, updatedAt: true },
+    });
+
+    return process;
+  } catch (err) {
+    console.error('[Scheduler] Failed to save metadata:', err);
+  }
+}
+
 async function deleteAllData() {
   await prisma.eventRoom.deleteMany();
   await prisma.eventRecipient.deleteMany();
@@ -1241,39 +1280,39 @@ async function deleteAllData() {
 }
 
 async function main() {
-  console.log('Deleting All Data...');
-  await deleteAllData();
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production') {
+    console.log('Deleting All Data...');
+    await deleteAllData();
+  }
+
+  FindCreateSystemProcess('ENTRA_SYNC_SCHEDULER');
 
   console.log('Creating System User...');
   const SYSTEM_USER = await prisma.user.upsert({
     where: { id: 0 },
     update: {},
     create: {
-      id: 0,
       name: 'SYSTEM',
       email: '',
       emailVerified: false,
       image: null,
       externalId: '000',
       isActive: false,
-      createdBy: 0,
-      updatedBy: 0,
     },
   });
 
-  /*if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
-    await prisma.session.deleteMany();
-    await prisma.account.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.sSOProvider.deleteMany();
-    await prisma.userRole.deleteMany();
-    await prisma.verification.deleteMany();
-  }
+  if (process.env.ADMIN_USER_EMAIL) {
+    const adminUser = await findCreateUser({
+      email: process.env.ADMIN_USER_EMAIL,
+      name: 'Admin User',
+      employeeNumber: '000',
+      emailVerified: false,
+      employeeActive: true,
+    });
 
-  await prisma.role.deleteMany();
-  await prisma.action.deleteMany();
-  await prisma.resource.deleteMany();
-  await prisma.roleResourceAction.deleteMany();*/
+    const adminRole = await FindCreateRole('Admin');
+    const adminUserRole = await FindCreateUserRole(adminRole.roleId, adminUser.id);
+  }
 
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
     console.log('Seeding Random Users...');
@@ -1365,25 +1404,6 @@ async function main() {
     await createLinkedServer();
   }
 
-  if (process.env.ADMIN_USER_EMAIL) {
-    const ADMIN_USER = await prisma.user.upsert({
-      where: { email: process.env.ADMIN_USER_EMAIL },
-      update: {},
-      create: {
-        name: 'Admin User',
-        email: process.env.ADMIN_USER_EMAIL,
-        emailVerified: false,
-        image: null,
-        externalId: '000',
-        isActive: true,
-        createdBy: 0,
-        updatedBy: 0,
-      },
-    });
-    const adminRole = await FindCreateRole('Admin');
-    const adminUserRole = await FindCreateUserRole(adminRole.roleId, ADMIN_USER.id);
-  }
-
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
     console.log('Seeding Random Events...');
     await prisma.event.deleteMany();
@@ -1398,47 +1418,6 @@ async function main() {
     console.log('Seeding Edge Case Multi-Day Events...');
     await CreateEdgeCaseMultiDayEvents(roomList);
   }
-
-  /*
-
-
-  const alice = await prisma.user.upsert({
-    where: { email: "alice@prisma.io" },
-    update: {},
-    create: {
-      email: "alice@prisma.io",
-      name: "Alice",
-      posts: {
-        create: {
-          title: "Check out Prisma with Next.js",
-          content: "https://www.prisma.io/nextjs",
-          published: true,
-        },
-      },
-    },
-  });
-  const bob = await prisma.user.upsert({
-    where: { email: "bob@prisma.io" },
-    update: {},
-    create: {
-      email: "bob@prisma.io",
-      name: "Bob",
-      posts: {
-        create: [
-          {
-            title: "Follow Prisma on Twitter",
-            content: "https://twitter.com/prisma",
-            published: true,
-          },
-          {
-            title: "Follow Nexus on Twitter",
-            content: "https://twitter.com/nexusgql",
-            published: true,
-          },
-        ],
-      },
-    },
-  });*/
 }
 main()
   .then(async () => {

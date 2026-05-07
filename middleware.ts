@@ -2,6 +2,7 @@ import { betterFetch } from '@better-fetch/fetch';
 import type { auth } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
+import { APP_SUBFOLDER } from './lib/api-helpers';
 
 type Session = typeof auth.$Infer.Session;
 
@@ -12,7 +13,11 @@ export async function middleware(request: NextRequest) {
   //it is not considered secure, because middleware is not secure.
   //so each page and api route should check for a session regardless
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL('/login/?callbackurl=' + request.nextUrl.pathname, request.url));
+    const currentPath = request.nextUrl.pathname;
+    const loginUrl = new URL(`${APP_SUBFOLDER}/login`, request.url);
+    loginUrl.searchParams.set('callbackurl', `${APP_SUBFOLDER}${currentPath}`);
+
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

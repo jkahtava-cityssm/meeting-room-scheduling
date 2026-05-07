@@ -22,6 +22,18 @@ const USER_ROLE_SELECT = {
   role: { select: { name: true } },
 } as const satisfies Prisma.UserRoleSelect;
 
+export async function findFirstUser(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
+  const user = await tx.user.findFirst({
+    where,
+    select: USER_SELECT,
+    orderBy: [{ name: 'asc' }, { email: 'asc' }, { id: 'asc' }],
+  });
+
+  if (!user) return null;
+
+  return mapBaseUser(user);
+}
+
 export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
   const userList = await tx.user.findMany({
     where,

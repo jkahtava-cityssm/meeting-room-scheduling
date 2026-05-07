@@ -1,7 +1,8 @@
 import { prisma } from '@/prisma';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, RoomRole } from '@prisma/client';
 import { IRoom, SRoom } from '../schemas';
 import z from 'zod/v4';
+import { safeCreateMany } from '../api-helpers';
 
 // Standard room select configuration — used across all DAL functions
 const ROOM_SELECT = {
@@ -103,12 +104,13 @@ export async function createManyRoomRole(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  return await tx.roomRole.createMany({
-    data: create.map((roomRole) => {
-      return { ...roomRole, createdBy: sessionUserId, updatedBy: sessionUserId };
-    }),
-    skipDuplicates: true,
-  });
+  const data: Prisma.RoomRoleCreateManyInput[] = create.map((roomRole) => ({
+    ...roomRole,
+    createdBy: sessionUserId,
+    updatedBy: sessionUserId,
+  }));
+
+  return await safeCreateMany(tx.roomRole, data, ['roomId', 'roleId'], tx);
 }
 
 type RoomWithRelations = Prisma.RoomGetPayload<{ select: typeof ROOM_SELECT }>;

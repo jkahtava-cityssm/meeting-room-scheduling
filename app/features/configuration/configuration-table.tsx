@@ -13,14 +13,17 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GenericError } from '@/components/shared/generic-error';
-import { useRevalidateAndInvalidate } from '@/hooks/use-revalidate-cache';
+
 import { RevalidateButton } from './revalidate-api';
+
+import { EntraSyncConfiguration } from './entra-sync';
+
+import { cn } from '@/lib/utils';
 
 export function ConfigurationPage() {
   const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
   const [workingConfiguration, setWorkingConfiguration] = useState<TConfigurationEntry[] | undefined>(undefined);
   const [isChanged, setChanged] = useState(false);
-  //const [resourceActions, setResourceActions] = useState<ResourceActions | undefined>(undefined);
   const configurationMutation = useConfigurationMutationUpsert();
 
   useEffect(() => {
@@ -95,32 +98,28 @@ export function ConfigurationPage() {
       </div>
       {/* The Container is the Grid */}
       <ScrollArea className="w-full flex-1 min-h-0 p-4" type="always">
-        <div className="grid grid-cols-[min-content_1fr] items-center gap-y-0 ">
+        <div className="grid grid-cols-[min-content_1fr] items-stretch gap-y-0 ">
           {workingConfiguration?.map((entry) => (
             // We use React.Fragment or just flat divs because
             // the children of the grid must be the columns themselves.
-            <React.Fragment key={entry.key}>
-              {/* Left Column: Label & Description */}
-              <div className="min-h-[70px] border-b flex flex-col justify-center min-w-max pr-4 ">
-                <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">{entry.name}</label>
-                {entry.description && <p className="text-xs text-muted-foreground mt-1 max-w-sm">{entry.description}</p>}
-              </div>
 
-              {/* Right Column: Controls */}
-              <div className="min-h-[70px] border-b flex items-center ">
-                <ConfigField entry={entry} onChange={(val) => handleChange(entry.key, val)} />
-              </div>
-            </React.Fragment>
+            <ConfigRow key={entry.key} label={entry.name} description={entry.description ?? ''}>
+              <ConfigField entry={entry} onChange={(val) => handleChange(entry.key, val)} />
+            </ConfigRow>
           ))}
-          <div className="min-h-[70px] border-b flex flex-col justify-center min-w-max pr-4 ">
-            <label className="text-sm font-semibold uppercase tracking-wider whitespace-nowrap">CLEAR CACHED ROUTES</label>
-            <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-              Certain API routes are cached to reduced the number of database calls. Especially for values that dont change very often
-            </p>
-          </div>
-          <div className="min-h-[70px] border-b flex items-center ">
+          <ConfigRow
+            label={'CLEAR CACHED ROUTES'}
+            description="Certain API routes are cached to reduced the number of database calls. Especially for values that dont change very often"
+          >
             <RevalidateButton />
-          </div>
+          </ConfigRow>
+
+          <ConfigRow
+            label={'ENTRA ID SYNC'}
+            description="This service synchronizes users information from Entra ID based on the schedule defined, it creates and deactivates users. Users created or updated are marked as managed and cannot be updated manually."
+          >
+            <EntraSyncConfiguration></EntraSyncConfiguration>
+          </ConfigRow>
         </div>
       </ScrollArea>
 
@@ -141,6 +140,28 @@ export function ConfigurationPage() {
           </Button>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function ConfigRow({
+  label,
+  description,
+  children,
+  className = 'min-h-[70px]',
+}: {
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div style={{ display: 'contents' }}>
+      <div className={cn('border-b flex flex-col justify-center pr-6 py-4 min-w-max ', className)}>
+        <label className="text-xs font-bold uppercase tracking-widest text-foreground/70">{label}</label>
+        {description && <p className="text-xs text-muted-foreground mt-1.5 max-w-md leading-relaxed">{description}</p>}
+      </div>
+      <div className={cn('border-b flex items-center py-4', className)}>{children}</div>
     </div>
   );
 }

@@ -34,6 +34,7 @@ import { useMemo } from 'react';
 import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
 import { useSearchParams } from 'next/navigation';
 import { NavigationPermissions } from './permissions/navigation.permissions';
+import { APP_FULL_URL } from '@/lib/api-helpers';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isPending } = useSession();
@@ -107,7 +108,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
       <SideBarHeaderGroup
-        imagePath="/images/menu_logo.svg"
+        imagePath={`${APP_FULL_URL}/images/menu_logo.svg`}
         altText="An image of the crest and wreath of the city of Sault Ste. Marie"
         title="Room Scheduling/Booking"
         subtitle="The City of Sault Ste. Marie"
@@ -123,7 +124,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {viewStaffRequests && (
                 <SideBarSubMenuItem
                   title={'Requests'}
-                  url={'/bookings/user-requests' + navigateURL(dateValue, 'day')}
+                  url={'/bookings/user-requests' + navigateURL(dateValue, 'year')}
                   iconName="circle-question-mark"
                   rightIndicator={<BadgeColored className=" ml-auto w-12">{pendingEvents ? pendingEvents.total : '-'}</BadgeColored>}
                 />
@@ -143,6 +144,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {editPermissions && <SideBarSubMenuItem title={'Manage Permissions'} url={'/settings/manage-permissions'} />}
               {editConfiguration && <SideBarSubMenuItem title={'Manage Configuration'} url={'/settings/manage-configuration'} />}
               {editUsers && <SideBarSubMenuItem title={'Manage Users'} url={'/settings/manage-users'} />}
+              {editConfiguration && <SideBarSubMenuItem title={'API Tests'} url={'/settings/manage-api'} />}
             </SideBarCollapsibleGroup>
           )}
         </SideBarGroup>
@@ -158,7 +160,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 }
 
 export function SideBarHeaderGroup({
-  imagePath = '/images/menu_logo.svg',
+  imagePath = `${APP_FULL_URL}/images/menu_logo.svg`,
   altText,
   title,
   subtitle,
