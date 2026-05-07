@@ -36,7 +36,7 @@ requiredEnv.forEach((env) => {
 });
 
 // 2. Validate Format
-const fullUrl = process.env.NEXT_PUBLIC_FULL_URL || '';
+
 const domain = process.env.NEXT_PUBLIC_BASE_URL || '';
 const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
 
@@ -44,16 +44,15 @@ if (domain && domain.endsWith('/')) {
   errors.push('NEXT_PUBLIC_BASE_URL should not end with a slash.');
 }
 
-if (subfolder && !subfolder.startsWith('/')) {
-  errors.push('NEXT_PUBLIC_SUBFOLDER_PATH must start with a forward slash (e.g., /room-booking).');
-}
-
-if (subfolder && subfolder.endsWith('/')) {
-  errors.push('NEXT_PUBLIC_SUBFOLDER_PATH should not end with a slash.');
-}
-
-if (subfolder && !fullUrl.endsWith(subfolder)) {
-  errors.push('NEXT_PUBLIC_FULL_URL does not match BASE_URL + SUBFOLDER_PATH.');
+if (subfolder) {
+  if (!subfolder.startsWith('/')) {
+    errors.push('NEXT_PUBLIC_SUBFOLDER_PATH must start with /');
+  }
+  if (subfolder.endsWith('/')) {
+    errors.push('NEXT_PUBLIC_SUBFOLDER_PATH should not end with /');
+  }
+} else {
+  console.log('NEXT_PUBLIC_SUBFOLDER_PATH is empty. Proceeding with root-level routing.');
 }
 
 if (errors.length > 0) {
