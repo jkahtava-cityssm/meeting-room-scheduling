@@ -11,11 +11,11 @@ export async function SuccessMessage(message: string, data: object) {
 }
 
 export async function NoContentMessage() {
-  return NextResponse.json({ success: true, data: null }, { status: 204 }); // No Content
+  return NextResponse.json({ status: 204 }); // No Content
 }
 
 export async function DeleteMessage() {
-  return NextResponse.json({ success: true, data: null }, { status: 204 }); // No content
+  return NextResponse.json({ status: 204 }); // No content
 }
 
 export async function InternalServerErrorMessage(message: string = 'Internal Server Error') {
@@ -192,17 +192,30 @@ export async function safeCreateMany<
   } as unknown as A);
 }
 
+export const APP_DOMAIN = process.env.NEXT_PUBLIC_BASE_URL || '';
+export const APP_SUBFOLDER = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
+export const APP_FULL_URL = `${APP_DOMAIN}${APP_SUBFOLDER}`;
+/*
 export function formatServerURL(url: string) {
   const serverURL = process.env.NEXT_PUBLIC_BASE_URL;
+  const subfolder = process.env.NEXT_PUBLIC_SUBFOLDER_PATH || '';
 
   if (!serverURL) {
-    throw new Error('formatServerURL: NEXT_PUBLIC_BASE_URL is not defined. ' + 'Ensure it is set in your .env file or environment settings.');
+    throw new Error('NEXT_PUBLIC_BASE_URL is not defined.');
   }
 
-  //Check for a trailing slash to ensure it doesnt get overwritten by the url
-  const base = serverURL.endsWith('/') ? serverURL : `${serverURL}/`;
-  //Check for a leading slash to ensure it doesnt get treated as a root url request
-  const path = url.startsWith('/') ? url.slice(1) : url;
+  const base = serverURL.replace(/\/+$/, '') + '/';
+  const cleanSubfolder = subfolder ? `/${subfolder.replace(/^\/+|\/+$/g, '')}` : '';
+  const path = url.replace(/^\/+/, '');
+  const finalPath = `${cleanSubfolder}/${path}`.replace(/\/+/g, '/').replace(/^\//, '');
 
-  return new URL(path, base);
+  return new URL(finalPath, base).toString();
+}
+*/
+
+export function formatServerURL(url: string) {
+  const base = `${APP_DOMAIN}${APP_SUBFOLDER}/`;
+  const cleanPath = url.replace(/^\/+/, '');
+
+  return new URL(cleanPath, base);
 }
