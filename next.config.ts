@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
 
 module.exports = {
   output: 'standalone',
-  basePath: '/room-booking',
+  basePath: process.env.NEXT_PUBLIC_SUBFOLDER_PATH,
   skipTrailingSlashRedirect: true,
 };
 
