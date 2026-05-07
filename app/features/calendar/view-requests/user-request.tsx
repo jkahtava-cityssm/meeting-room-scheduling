@@ -323,7 +323,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
       const nextRemovingEvents = new Map(removingEvents).set(id, newStatus);
       const shrinkage = getPendingShrinkage(flatData, nextRemovingEvents, newStatus, selectedStatusKeys, anchorItem.index, clampedColumn);
-      console.log(shrinkage);
+
       // We subtract shrinkage because the list is about to get shorter
       anchorRef.current = {
         key: anchorItem.key as string,

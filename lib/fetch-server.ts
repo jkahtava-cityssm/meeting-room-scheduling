@@ -38,8 +38,6 @@ async function serverRequest<T>(url: string, method: string, options: FetchOptio
     });
   }
 
-  console.log(fullUrl);
-  console.log(fullUrl.toString());
   // 2. Execute Request
   const response = await fetch(fullUrl.toString(), {
     method,

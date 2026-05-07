@@ -1,11 +1,13 @@
 import type { NextConfig } from 'next';
 
+const isDev = process.env.NODE_ENV === 'development';
+
 const nextConfig: NextConfig = {
   /* config options here */
   logging: {
     fetches: {
-      fullUrl: true,
-      hmrRefreshes: true,
+      fullUrl: isDev,
+      hmrRefreshes: isDev,
     },
   },
   typescript: {
