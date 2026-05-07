@@ -23,7 +23,7 @@ const signInEntra = async (callback: string) => {
   const data = await signIn.social({
     provider: 'microsoft',
     callbackURL: callback,
-    scopes: ['email', 'openid', 'profile', 'offline_access', 'User.Read', 'User.Read.All', 'User.ReadBasic.All', 'Mail.Send'],
+    scopes: ['email', 'openid', 'profile', 'offline_access', 'User.Read'],
   });
   return data;
 };
