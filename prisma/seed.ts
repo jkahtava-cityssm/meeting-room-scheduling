@@ -41,14 +41,6 @@ const prisma = new PrismaClient({
   },
 });
 
-const prismaAdmin = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL_ADMIN, // e.g., user with elevated privileges
-    },
-  },
-});
-
 async function FindCreateActionList() {
   const DEFAULT_ACTIONS = Array.from(new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS))) as readonly SessionAction[];
 
@@ -1105,107 +1097,6 @@ export function convertDateToRRuleDate(date: Date) {
   return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()));
 }
 
-async function createLinkedServer() {
-  await prismaAdmin.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS postgres_fdw;`);
-
-  await prismaAdmin.$executeRawUnsafe(`CREATE SERVER IF NOT EXISTS ${process.env.LINKED_SERVER_NAME}
-                                                  FOREIGN DATA WRAPPER postgres_fdw
-                                                  OPTIONS (
-                                                      host '${process.env.DATABASE_HOST}',
-                                                      dbname '${process.env.LINKED_DATABASE_NAME}',
-                                                      port '${process.env.DATABASE_PORT}'
-                                                  );`);
-  await prismaAdmin.$executeRawUnsafe(`CREATE USER MAPPING IF NOT EXISTS FOR ${process.env.DATABASE_USER_USERNAME}
-                                                  SERVER ${process.env.LINKED_SERVER_NAME}
-                                                  OPTIONS (
-                                                      user '${process.env.LINKED_USERNAME}',
-                                                      password '${process.env.LINKED_PASSWORD}'
-                                                  );`);
-
-  await prismaAdmin.$executeRawUnsafe(`CREATE FOREIGN TABLE IF NOT EXISTS public.avanti_z_ex_emp_pers (
-                                                    employee_number text,
-                                                    first_name text,
-                                                    last_name text,
-                                                    work_email text,
-                                                    avanti_user_id text
-                                                  )
-                                                  SERVER ${process.env.LINKED_SERVER_NAME}
-                                                  OPTIONS (schema_name 'public', table_name 'avanti_z_ex_emp_pers');`);
-
-  await prismaAdmin.$executeRawUnsafe(`CREATE FOREIGN TABLE IF NOT EXISTS public.avanti_z_ex_emp_data (
-                                                    employee_number text,
-                                                    location_description text,
-                                                    active text
-                                                  )
-                                                  SERVER ${process.env.LINKED_SERVER_NAME}
-                                                  OPTIONS (schema_name 'public', table_name 'avanti_z_ex_emp_data');`);
-
-  await prismaAdmin.$executeRawUnsafe(`GRANT USAGE ON FOREIGN SERVER ${process.env.LINKED_SERVER_NAME} TO ${process.env.DATABASE_USER_USERNAME};`);
-  await prismaAdmin.$executeRawUnsafe(`GRANT USAGE ON SCHEMA public TO ${process.env.DATABASE_USER_USERNAME};`);
-  await prismaAdmin.$executeRawUnsafe(`GRANT SELECT ON TABLE public.avanti_z_ex_emp_pers TO ${process.env.DATABASE_USER_USERNAME};`);
-  await prismaAdmin.$executeRawUnsafe(`GRANT SELECT ON TABLE public.avanti_z_ex_emp_data TO ${process.env.DATABASE_USER_USERNAME};`);
-
-  await prismaAdmin.$executeRawUnsafe(
-    `CREATE OR REPLACE PROCEDURE public.insert_avanti_users()
-    LANGUAGE 'sql'
-    AS $BODY$
-    INSERT INTO public.user
-    (name, email, image, external_id,department,is_active,created_at, updated_at)
-    SELECT employee_full_name,
-        work_email,
-        image,
-        employee_number,
-		    location_description,
-        employee_active,
-        created_at,
-        updated_at
-    FROM
-    (
-    SELECT 	employee_full_name,
-        work_email,
-        image,
-        employee_number,
-		location_description,
-        created_at,
-        updated_at,
-        CASE WHEN active = 'Yes' THEN true ELSE false END AS employee_active,
-        ROW_NUMBER() OVER (PARTITION BY work_email ORDER BY employee_full_name,active DESC) AS RANK
-    FROM
-    (
-      SELECT  INITCAP(avanti_z_ex_emp_pers.last_name) || ', ' || INITCAP(avanti_z_ex_emp_pers.first_name) AS employee_full_name,
-        CASE WHEN lower(avanti_z_ex_emp_pers.avanti_user_id) || '@cityssm.on.ca' <> avanti_z_ex_emp_pers.work_email THEN lower(avanti_z_ex_emp_pers.avanti_user_id) || '@cityssm.on.ca'
-        ELSE avanti_z_ex_emp_pers.work_email
-        END AS work_email,
-        'iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAADzUlEQVR4AXyVPYiVRxSG37PZYCBokBQmmgSScquAgS2EJEUICVmygTVN4oakCiSghfiD1gqCFv6ChRaua2XhxdVCBbGwELxgZangD2ghyG4jqIzPe2a+6yf+DHPmvHPmPe+Zme9+3x0L0XLAv6u/kxOKXm4fjxUv5GDwmn1MZCMJCyq6J8UzSTbjBeIbmcMpLIOyE01fh7HqPL66QGQX9hDbT/1f8Guk8h7eBpZj+5mbsyuzc4BFsPZQr0CpxwxNSLoOdwcesRiAZ8FfYe9j4xi4zBZpAIajHeDrHIPcIviE3Uu/QFaegHSBpbXYEOb3+N+wk9htzNfzHG/smNfMGSLqHOdOFAhdrw85Z1CkE0AffwBpkmJXmOP0Bx4cT/BPKAzOGFMZT8IfKORcaziOhfpX5Dv3LoaSZjDvFFf2MsyT/C1nXAZeRkVwzLOlvcQJ6Tl4hrhz14KtRZwrorIg8UvQNtW2GdfEc5eeo63/pVghyQbOX85mRH06nJwDN4ytZc12gqI/SfTDGuA5MnsA0P/F3BHUEaosMVliQ+BwTOCOY0xu8Y/CWmiGumfwo2BKOo3R81wiNKna5qoLQqBcLnMBZLsdh/oO6HQuS2h2VyR97VUSrqrfGpN4PzrCbZl51MIgeqeBZqh7yJ+otjvVjcZrRgj5PQCCGKtazEbFcPJ5eGa72+KpWQtkxGeoqWY1O9r8Yfx/2HJKLMeDi2NAdRy17AInxTzUAkUP2urnerWdkuKQakMwFoGL3DvY6ToINqdqp7K+aPtFU6MrukGiSes8GKeFfkbm98iJh6pgpEqcwf0AhzpqLdY1FpoxKsArnve4vmMi6o/ZeUmrSDiL/wZbmRYCl3Pg1fAv4n/CRDHR1mPuqVmvSJon4hdlGtJ3UqxE9BjJou3BfiXut/Qx+DFx4yk2sY84IR0HryBObpkmYC1rjk7wiOAeSDjt48j/AFZhl7Ht2Bt6vrFbEL3E4qfY3xi54ZreFJrRCoRosZNdD0ngexS88oQkvinhBGrmvOKExdgDohnYykiuhkXaCabzojG2Tlj6i8l91Fbj3T8AUxMYGD1ZePfERR+KUuA1kpxrDWDt9RmwWqe6CZdXXEs5Dy1IcUbSBqp8ifc3xn84xhuYey0/LyEtttybxFsP1W8Rq+paoUj9Yu5GlIeVD22O5FtQnkF9ijeew08Th6Pd4I/gvxSH6NO/9U+fdd+jH/Qmkv2T5PhhMZuxY5sQhVPMhdbr7VbqFfXi7ChnbZ1fgg4QmELoM3Y0TnwcjvEUca+ZwzKz1tmc4EgKvQAAAP//gA35VgAAAAZJREFUAwBM+gdFlgRZNQAAAABJRU5ErkJggg==' as image,
-        avanti_z_ex_emp_pers.employee_number,
-		avanti_z_ex_emp_data.location_description,
-        now() as created_at,
-        now() as updated_at,
-        avanti_z_ex_emp_data.active
-      FROM public.avanti_z_ex_emp_pers
-      LEFT JOIN public.avanti_z_ex_emp_data ON avanti_z_ex_emp_data.employee_number = avanti_z_ex_emp_pers.employee_number
-      WHERE 	(avanti_z_ex_emp_pers.work_email IS NOT NULL OR avanti_z_ex_emp_pers.avanti_user_id IS NOT NULL)			
-      ) AS user_list
-    WHERE work_email IS NOT NULL
-    ) AS ranked_list
-    WHERE RANK = 1
-    ON CONFLICT (email)
-    DO UPDATE SET
-      name = EXCLUDED.name,
-      email = EXCLUDED.email,
-      external_id = EXCLUDED.external_id,
-      department = EXCLUDED.department,
-      is_active = EXCLUDED.is_active,
-      image = EXCLUDED.image,
-      updated_at = now();
-    $BODY$;`,
-  );
-
-  await prismaAdmin.$executeRawUnsafe(`ALTER PROCEDURE public.insert_avanti_users() OWNER TO postgres;`);
-
-  await prisma.$executeRawUnsafe(`CALL public.insert_avanti_users();`);
-}
-
 async function FindCreateSystemProcess(processKey: TSystemProcess) {
   const SYSTEM_PROCESS_KEY = SYSTEM_PROCESS_MANIFEST[processKey].key;
   const SYSTEM_PROCESS_DEFAULT_PARAMETER = SYSTEM_PROCESS_MANIFEST[processKey].defaultParameter;
@@ -1279,8 +1170,46 @@ async function deleteAllData() {
   await prisma.user.deleteMany();
 }
 
+async function createSystemUser() {
+  const userId = 0;
+
+  if (process.env.DATABASE_PROVIDER === 'sqlserver') {
+    // SQL Server: Needs the IDENTITY_INSERT toggle wrap
+    return await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(`SET IDENTITY_INSERT "User" ON`);
+
+      // We use a raw query here because Prisma's upsert generates
+      // internal logic that often conflicts with IDENTITY_INSERT settings
+      const user = await tx.$executeRawUnsafe(`
+      IF NOT EXISTS (SELECT 1 FROM "User" WHERE id = ${userId})
+      INSERT INTO "User" (id, name, email, emailVerified, externalId, isActive)
+      VALUES (${userId}, 'SYSTEM', '', 0, '000', 0)
+    `);
+
+      await tx.$executeRawUnsafe(`SET IDENTITY_INSERT "User" OFF`);
+
+      // Fetch the result to keep the return type consistent
+      return tx.user.findUnique({ where: { id: userId } });
+    });
+  } else {
+    // Postgres (and others): Standard Prisma Upsert works perfectly
+    return await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: {
+        id: userId,
+        name: 'SYSTEM',
+        email: '',
+        externalId: '000',
+        emailVerified: false,
+        isActive: false,
+      },
+    });
+  }
+}
+
 async function main() {
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production') {
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
     console.log('Deleting All Data...');
     await deleteAllData();
   }
@@ -1288,18 +1217,7 @@ async function main() {
   FindCreateSystemProcess('ENTRA_SYNC_SCHEDULER');
 
   console.log('Creating System User...');
-  const SYSTEM_USER = await prisma.user.upsert({
-    where: { id: 0 },
-    update: {},
-    create: {
-      name: 'SYSTEM',
-      email: '',
-      emailVerified: false,
-      image: null,
-      externalId: '000',
-      isActive: false,
-    },
-  });
+  createSystemUser();
 
   if (process.env.ADMIN_USER_EMAIL) {
     const adminUser = await findCreateUser({
@@ -1399,10 +1317,6 @@ async function main() {
 
   console.log('Seeding Default Admin...');
   //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);
-
-  if (process.env.LINKED_SERVER === '1') {
-    await createLinkedServer();
-  }
 
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
     console.log('Seeding Random Events...');

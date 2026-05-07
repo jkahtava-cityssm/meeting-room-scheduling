@@ -113,14 +113,14 @@ export function buildPermissionCache(roles: Role[] | undefined): PermissionCache
         const allowed = RESOURCE_TO_ACTIONS[resource];
 
         if (!allowed) {
-          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production') {
+          if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
             console.warn(`[Permission Warning]: Unknown resource "${resource}" found on role "${roleName}".`);
           }
           continue;
         }
 
         if (!allowed.has(action)) {
-          if (process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production') {
+          if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
             console.warn(`[Permission Warning]: Action "${action}" is not valid for resource "${resource}" (Role: ${roleName}).`);
           }
           continue;
