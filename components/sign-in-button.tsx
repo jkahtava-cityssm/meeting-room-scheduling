@@ -9,6 +9,7 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { Loader2Icon } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
+import { APP_FULL_URL, APP_SUBFOLDER } from '@/lib/api-helpers';
 
 const signInGitHub = async (callback: string) => {
   const data = await signIn.social({
@@ -39,13 +40,13 @@ const signInEntraSSO = async (callback: string) => {
 export function SignInMicrosoft() {
   const searchParams = useSearchParams();
 
-  const callbackURL = searchParams.get('callbackurl') == null ? '/bookings/user-view' : (searchParams.get('callbackurl') as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? `${APP_SUBFOLDER}/bookings/user-view` : (searchParams.get('callbackurl') as string);
 
   return (
     <>
       <MicrosoftButton onClick={() => signInEntra(callbackURL)}>
         <Image
-          src={`${process.env.NEXT_PUBLIC_BASE_URL}/images/ms-symbollockup_mssymbol_19.svg`}
+          src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"
           width={21}
           height={21}
@@ -61,7 +62,7 @@ export function SignInGithub() {
 
   const searchParams = useSearchParams();
 
-  const callbackURL = searchParams.get('callbackurl') == null ? '/bookings/user-view' : (searchParams.get('callbackurl') as string);
+  const callbackURL = searchParams.get('callbackurl') == null ? `${APP_SUBFOLDER}/bookings/user-view` : (searchParams.get('callbackurl') as string);
 
   const [mounted, setMounted] = useState(false);
 
@@ -74,11 +75,7 @@ export function SignInGithub() {
       <Button onClick={() => signInGitHub(callbackURL)}>
         {mounted ? (
           <Image
-            src={
-              resolvedTheme === 'light'
-                ? `${process.env.NEXT_PUBLIC_BASE_URL}/images/github-mark-white.svg`
-                : `${process.env.NEXT_PUBLIC_BASE_URL}/images/github-mark.svg`
-            }
+            src={resolvedTheme === 'light' ? `${APP_FULL_URL}/images/github-mark-white.svg` : `${APP_FULL_URL}/images/github-mark.svg`}
             alt="An image of the crest and wreath of the city of Sault Ste. Marie"
             width={21}
             height={21}
@@ -107,7 +104,7 @@ export function SignInMicrosoftSSO() {
     <>
       <MicrosoftButton onClick={() => signInEntraSSO(callbackURL)}>
         <Image
-          src={`${process.env.NEXT_PUBLIC_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
+          src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
           alt="An image of the crest and wreath of the city of Sault Ste. Marie"
           width={21}
           height={21}

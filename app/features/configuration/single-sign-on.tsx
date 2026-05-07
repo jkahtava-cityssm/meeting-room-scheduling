@@ -18,6 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogSave,
 } from '@/components/ui/alert-dialog';
+import { APP_FULL_URL } from '@/lib/api-helpers';
 
 export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
   const [disabled, setDisabled] = useState(isDisabled);
@@ -43,7 +44,7 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
         <>
           <MicrosoftLabel>
             <Image
-              src={`${process.env.NEXT_PUBLIC_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
+              src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
               alt="An image of the crest and wreath of the city of Sault Ste. Marie"
               width={21}
               height={21}
@@ -57,7 +58,7 @@ export function RegisterSSO({ isDisabled }: { isDisabled?: boolean }) {
           {pending && <Loader2Icon className="animate-spin" />}
           {!pending && (
             <Image
-              src={`${process.env.NEXT_PUBLIC_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
+              src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
               alt="An image of the crest and wreath of the city of Sault Ste. Marie"
               width={21}
               height={21}
