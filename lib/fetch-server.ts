@@ -23,8 +23,6 @@ type FetchOptions = {
 async function serverRequest<T>(url: string, method: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
   const { params, data, revalidate, tags, headers } = options;
 
-  // 1. Build URL with query parameters
-  console.log(url, process.env.NEXT_PUBLIC_BASE_URL);
   const fullUrl = formatServerURL(url);
 
   if (params) {
