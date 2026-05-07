@@ -787,7 +787,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                               customStyle?.gradient && 'text-white border-transparent',
                               responsiveSettings.compactMode && 'text-xs px-1.5 py-0.5',
                               screenSize === 'mobile' && 'max-w-[120px] truncate',
-                              singleLine && 'flex-shrink-0 whitespace-nowrap',
+                              singleLine && 'shrink whitespace-nowrap',
                               '[&>svg]:pointer-events-auto',
                               'aria-readonly:cursor-auto',
                             )}
@@ -850,7 +850,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
                             isAnimating: isAnimating,
                           }),
                           responsiveSettings.compactMode && 'text-xs px-1.5 py-0.5',
-                          singleLine && 'flex-shrink-0 whitespace-nowrap',
+                          singleLine && 'shrink whitespace-nowrap',
                           '[&>svg]:pointer-events-auto',
                           'aria-readonly:cursor-auto',
                         )}
@@ -924,7 +924,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 
                           responsiveSettings.compactMode && 'text-xs px-1.5 py-0.5',
                           screenSize === 'mobile' && 'max-w-[120px] truncate',
-                          singleLine && 'flex-shrink-0 whitespace-nowrap',
+                          singleLine && 'shrink whitespace-nowrap',
                           '[&>svg]:pointer-events-auto',
                           'aria-readonly:cursor-auto',
                         )}

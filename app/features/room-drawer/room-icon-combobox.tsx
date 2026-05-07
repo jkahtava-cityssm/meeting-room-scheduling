@@ -182,7 +182,7 @@ export function RoomIconComboBox({
           disabled={isDisabled}
           data-invalid={dataInvalid}
           aria-invalid={dataInvalid}
-          className={cn('min-w-[240px] justify-between text-sm font-normal', !selectedValue && 'text-muted-foreground', className)}
+          className={cn('min-w-60 justify-between text-sm font-normal', !selectedValue && 'text-muted-foreground', className)}
         >
           <div className="flex items-center gap-2 truncate">
             {selectedRecord && <DynamicIcon name={selectedRecord.id} className={cn('h-4 w-4 shrink-0')} />}
