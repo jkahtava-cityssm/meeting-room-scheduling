@@ -4,9 +4,8 @@ This document is the detailed developer reference for building, configuring, and
 
 ## Prerequisites
 
-- Node.js 18.x or 20.x
-- npm
-- Git
+- **Node.js:** 18.x or 20.x
+- **Package Manager:** npm
 
 ## Environment variables
 
@@ -18,122 +17,86 @@ Copy-Item .\example.env .\.env -Force
 
 Then edit `.env` with values for your local environment.
 
-### Required env vars
+## Configuration
 
-- `NEXT_PUBLIC_BASE_URL` — public app URL, without trailing slash
-- `NEXT_PUBLIC_SUBFOLDER_PATH` — path prefix if app is hosted in a subfolder, otherwise leave blank
-- `PRIVATE_INTERNAL_API_KEY` — internal API key used by server-side code
-- `BETTER_AUTH_SECRET` — security secret for Better Auth
-- `TRUSTED_ORIGINS` — comma-separated list of allowed auth origins
-- `ADMIN_USER_EMAIL` — seed admin user email
-- `DATABASE_PROVIDER` — `postgresql` or `sqlserver`
-- `DATABASE_NAME`
-- `DATABASE_HOST`
-- `DATABASE_PORT`
-- `DATABASE_USER_USERNAME`
-- `DATABASE_USER_PASSWORD`
-- `AZURE_AD_CLIENT_ID`
-- `AZURE_AD_CLIENT_SECRET`
-- `AZURE_AD_TENANT_ID`
+Update `.env` with your local settings. Key variables include:
 
-### Optional auth vars
+### Core
 
-- `GITHUB_ID`
-- `GITHUB_SECRET`
+- `NEXT_PUBLIC_BASE_URL`: Public app URL (no trailing slash) `http://localhost:3000`.
+- `BETTER_AUTH_SECRET`: Random string for session encryption (RSA256 STRING).
+- `PRIVATE_INTERNAL_API_KEY`: Internal API key used by server-side calls (RSA256 STRING).
+- `TRUSTED_ORIGINS`: Comma-separated list of trusted domains, e.g., `http://localhost:3000`
 
-## Env validation
+### Database
 
-Use the built-in env validation script before building:
+- `DATABASE_PROVIDER`: `postgresql` or `sqlserver`.
+- `DATABASE_NAME`: Name of your database.
+- `DATABASE_HOST`: IP Address or Hostname of the database server.
+- `DATABASE_PORT`: `5432` (Postgres) or `1433` (SQL Server).
+- `DATABASE_USER_USERNAME`: Database Username (requires Admin permissions for the first migration).
+- `DATABASE_USER_PASSWORD`: Database User Password
 
-```powershell
-npm run build:env
-```
+### Deployment & Proxy
 
-This checks:
+- `NEXT_PUBLIC_SUBFOLDER_PATH`: Set if hosting under a subfolder (e.g., `/apps/rooms`).
+- `PROXY_STRIPS_PATH`: If `true`, the app ignores the subfolder path during auth callbacks (use if your proxy strips the path before forwarding).
+- `NEXT_PUBLIC_ENVIRONMENT`: `development` toggles GitHub OAuth functions and enables additional logging.
 
-- `NEXT_PUBLIC_BASE_URL` is present and has no trailing slash
-- `NEXT_PUBLIC_SUBFOLDER_PATH` either starts with `/` or is blank
-- required auth, database, and admin env vars are set
+### OAuth Credentials
 
-## How env vars affect the app
+- **GitHub:** `GITHUB_ID`, `GITHUB_SECRET` - (Active when `NEXT_PUBLIC_ENVIRONMENT` is set to development).
+- **Azure AD/Entra ID:** `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`, `AZURE_AD_TENANT_ID`
 
-### Base URL and routing
+---
 
-- `NEXT_PUBLIC_BASE_URL` is used for auth callback URLs and public links
-- `NEXT_PUBLIC_SUBFOLDER_PATH` is also used as Next.js `basePath`
-- `PROXY_STRIPS_PATH` controls whether the proxy removes the subfolder path before forwarding requests
+## Technical Workflow
 
-If you host the app at root:
+### Database Initialization
 
-```env
-NEXT_PUBLIC_SUBFOLDER_PATH=
-```
+This project uses a dynamic schema generator to support multiple database types.
 
-If the app is hosted in `/app`:
+- `npm run build:schema`: Generates `prisma/schema.prisma` from base.schema.prisma and strips provider-specific attributes.
+- `npm run db:migrate`: Symlinks `prisma/migrations` to the correct provider folder and runs the migration.
+- `npm run db:seed`: Populates initial data.
 
-```env
-NEXT_PUBLIC_SUBFOLDER_PATH=/app
-```
+### Build Pipeline
 
-### Database provider
+Running npm run build triggers the following automated sequence:
 
-The repository supports both SQL Server and PostgreSQL.
-
-Set `DATABASE_PROVIDER` to `sqlserver` or `postgresql`.
-
-The `build-schema.ts` script generates `prisma/schema.prisma` with the matching provider.
-
-### OAuth providers
-
-- GitHub config uses `GITHUB_ID` and `GITHUB_SECRET`
-- Microsoft/Azure AD config uses `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`, and `AZURE_AD_TENANT_ID`
-
-If you do not configure OAuth provider values, those login options will not be available.
+- Env Check: Validates all variables.
+- Schema Gen: Rebuilds Prisma client.
+- Next Build: Compiles the React application.
+- Scheduler: Bundles background jobs from `jobs/entra-sync/`.
+- Standalone: Bundles the app into a `dist/` folder via `scripts/bundle-standalone.ts`.
 
 ## Local development workflow
 
-### 1. Install dependencies
-
 ```powershell
+# Setup environment
+Copy-Item .env.example .env
+
+# Install & Build
 npm ci
+npm run build:schema  # Generates Prisma client
+npm run db:migrate    # Runs migrations
+npm run db:seed       # Seeds initial data
+
+# Start
+npm run dev  # Verifies Environment Variables before starting Development Server
+
 ```
 
-### 2. Generate Prisma schema and client
+Visit: `http://localhost:3000`
 
-```powershell
-npm run build:schema
-```
+---
 
-This runs `scripts/build-schema.ts` and writes `prisma/schema.prisma` using your selected `DATABASE_PROVIDER`.
-
-### 3. Run migrations
-
-```powershell
-npm run db:migrate
-```
-
-This command performs `npm run build:schema` and then runs `tsx scripts/db-migrate.ts dev`.
-
-### 4. Seed the database
-
-```powershell
-npm run db:seed
-```
-
-### 5. Start development server
-
-```powershell
-npm run dev
-```
-
-Then open `http://localhost:3000`.
-
-## Full build and production run
+## Production Workflow
 
 ### Build the app
 
 ```powershell
-npm run build
+npm run build #Executes build, and copies contents into /dist folder
 ```
 
 This executes:
@@ -144,41 +107,52 @@ This executes:
 - `npm run build:scheduler`
 - `tsx scripts/bundle-standalone.ts`
 
-### Start the production server
+### Copy the contents of /dist and start the production server
 
 ```powershell
-npm run start
+node server.js
 ```
 
-### Running with self-signed certificates
+---
 
-The repo includes `selfsignedstart` and `selfsignedstartdev` scripts that rely on `NODE_TLS_REJECT_UNAUTHORIZED=0`.
+## Authentication - Azure/Entra ID Configuration
 
-In PowerShell:
+### Microsoft Graph Permissions Required
 
-```powershell
-$env:NODE_TLS_REJECT_UNAUTHORIZED = '0'
-npm run start
-Remove-Item Env:\NODE_TLS_REJECT_UNAUTHORIZED
-```
+| Name           | Type        | Description                                         | Admin Consent Required |
+| -------------- | ----------- | --------------------------------------------------- | ---------------------- |
+| email          | Delegated   | View users' email address                           | No                     |
+| offline_access | Delegated   | Maintain access to data you have given it access to | No                     |
+| openid         | Delegated   | Sign users in                                       | No                     |
+| profile        | Delegated   | View users' basic profile                           | No                     |
+| User.Read      | Delegated   | Sign in and read user profile                       | No                     |
+| User.Read.All  | Application | Read all users' full profiles                       | Yes                    |
+| Mail.Send      | Application | Send mail as any user                               | Yes                    |
 
-## Database provider notes
+### Web and SPA Settings
 
-### PostgreSQL
+Implicit grant and hybrid flows
 
-Example `DATABASE_URL`:
+- ID tokens (used for implicit and hybrid flows): `Enabled`
+- Allow public client flows: `Enabled`
+- Supported Account Types: `Single Tenant Only`
 
-```env
-DATABASE_URL=postgresql://${DATABASE_USER_USERNAME}:${DATABASE_USER_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
-```
+### Redirect URI
 
-### SQL Server
+Add Web URI's for your server for example.
 
-Example `DATABASE_URL`:
+- http://localhost:3000/api/auth/callback/microsoft
+- http://localhost:3000/api/auth/sso/callback/microsoft
 
-```env
-DATABASE_URL=sqlserver://${DATABASE_HOST}:${DATABASE_PORT};database=${DATABASE_NAME};user=${DATABASE_USER_USERNAME};password=${DATABASE_USER_PASSWORD};encrypt=true;trustServerCertificate=true
-```
+> **Note:** `https://login.microsoftonline.com` and `https://graph.microsoft.com` are already configured as trusted origins
+
+### Important Files:
+
+- app/api/admin/register-sso.ts
+- app/lib/auth.ts
+- app/lib/auth-client.ts
+
+---
 
 ## Important scripts
 
@@ -189,7 +163,7 @@ DATABASE_URL=sqlserver://${DATABASE_HOST}:${DATABASE_PORT};database=${DATABASE_N
 - `npm run build` — full build pipeline
 - `npm run build:scheduler` — compile scheduled job scripts
 - `npm run dev` — start Next.js in development mode
-- `npm run start` — start built Next.js app
+- `npm run start` — start built Next.js app, from `.next` folder not the `/dist` files
 
 ## Script details
 
@@ -197,6 +171,7 @@ DATABASE_URL=sqlserver://${DATABASE_HOST}:${DATABASE_PORT};database=${DATABASE_N
 
 - Reads `prisma/base.schema.prisma`
 - Sets provider based on `DATABASE_PROVIDER`
+- Sets query string based on `DATABASE_PROVIDER`
 - Writes `prisma/schema.prisma`
 - Removes SQL Server-specific `@db.*` attributes when using PostgreSQL
 
@@ -222,54 +197,16 @@ DATABASE_URL=sqlserver://${DATABASE_HOST}:${DATABASE_PORT};database=${DATABASE_N
 - Copies the standalone next build output to `dist`
 - Includes `.next/static` and `public` assets
 
-## Auth and proxy guidance
+---
 
-The app uses Better Auth with social login providers.
+### Self-Signed Certificates
 
-- `NEXT_PUBLIC_BASE_URL` is used in auth redirect URLs
-- `NEXT_PUBLIC_SUBFOLDER_PATH` is used for `basePath`
-- `PROXY_STRIPS_PATH=true` if the proxy removes the subfolder before forwarding requests
+The repo includes `selfsignedstart` and `selfsignedstartdev` scripts that rely on `NODE_TLS_REJECT_UNAUTHORIZED=0`.
 
-If you see auth callback failures, verify these three values and ensure `TRUSTED_ORIGINS` includes your app URL.
-
-## Troubleshooting
-
-- If `npm run build:env` fails, fix the reported missing env vars
-- If Prisma complains about `DATABASE_URL`, verify the connection string format and database reachability
-- If migrations fail, confirm the database user has create/alter privileges
-- If login redirects fail, verify `NEXT_PUBLIC_BASE_URL`, `NEXT_PUBLIC_SUBFOLDER_PATH`, and `TRUSTED_ORIGINS`
-- On Windows, use PowerShell-style env assignment for temporary env vars
-
-## Useful command summary
-
-```powershell
-Copy-Item .\example.env .\.env -Force
-npm ci
-npm run build:env
-npm run build:schema
-npm run db:migrate
-npm run db:seed
-npm run dev
-```
-
-For production packaging:
+I implemented these for my containers so that I could test my application in different environments.
+They are not built for production, the dev version is the exact same thing it just runs on port 3002 so i could have 2 versions running on the same machine.
 
 ```powershell
 npm run build
-npm run start
+npm run selfsignedstart
 ```
-
-For Docker:
-
-```powershell
-docker compose -f .\container\docker-compose.yml up -d postgres
-# or full stack
-docker compose -f .\container\docker-compose.yml up --build -d
-```
-
-## References
-
-- `README.md` — onboarding summary
-- `container/example.env` — Docker env example
-- `scripts/env-check.ts` — required env validation
-- `container/docker-compose.yml` — full-stack container configuration
