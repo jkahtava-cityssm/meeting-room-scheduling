@@ -16,7 +16,7 @@ const generateSchema = () => {
     // 2. Define the header blocks
     const header = `datasource db {
                       provider = "${DATABASE_TYPE === 'sqlserver' ? 'sqlserver' : 'postgresql'}" 
-                      url      = env("DATABASE_URL")
+                      url      = env("${DATABASE_TYPE === 'sqlserver' ? 'DATABASE_URL_SQLSERVER' : 'DATABASE_URL_POSTGRESQL'}")
                     }
 
                   generator client {
