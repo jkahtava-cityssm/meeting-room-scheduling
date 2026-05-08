@@ -34,7 +34,7 @@ function syncMigrations() {
   try {
     const type = process.platform === 'win32' ? 'junction' : 'dir';
     fs.symlinkSync(sourceMigrationsDir, targetMigrationsDir, type);
-    console.log(`🔗 Linked ${sourceFolderName} to prisma/migrations`);
+    console.log(`Linked ${sourceFolderName} to prisma/migrations`);
   } catch (err) {
     console.error('Failed to link migrations. Make sure you have permissions.');
     process.exit(1);
