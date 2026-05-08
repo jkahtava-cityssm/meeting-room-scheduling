@@ -2,114 +2,84 @@
 
 Meeting Room Scheduling is a Next.js application for booking and managing meeting rooms with role-based access and OAuth authentication.
 
-## What this repository contains
-
-- Next.js app built with React 19 and Next 15
-- Prisma schema generation for PostgreSQL and SQL Server
-- Better Auth integration for GitHub and Microsoft / Azure AD
-- Environment validation and build scripts for developer onboarding
-
-## Quick start
-
-1. Clone the repository.
-2. Copy `example.env` to `.env`.
-3. Install dependencies.
-4. Generate Prisma schema and client.
-5. Run the app.
-
-### Local development commands
+## Quick Start
 
 ```powershell
-Copy-Item .\example.env .\.env -Force
+# Setup environment
+Copy-Item .env.example .env
+
+# Install & Build
 npm ci
-npm run build:schema
-npm run db:migrate
-npm run db:seed
+npm run build:schema  # Generates Prisma client
+npm run db:migrate    # Runs migrations
+npm run db:seed       # Seeds initial data
+
+# Start
 npm run dev
+
 ```
 
-Then open `http://localhost:3000`.
+Visit: `http://localhost:3000`
 
-## Prerequisites
+---
 
-- Node.js 18.x or 20.x
-- npm
-- Git
+## Tech Stack & Prerequisites
 
-## Environment variables
+- **Framework:** Next.js 15 (React 19)
+- **ORM:** Prisma (PostgreSQL & SQL Server support)
+- **Auth:** Better Auth (GitHub or Azure AD / Microsoft Entra)
+- **Runtime:** Node.js 18.x or 20.x
 
-Copy `example.env` to `.env` and update the values for your environment.
+---
 
-Important vars:
+## Configuration
 
-- `NEXT_PUBLIC_BASE_URL` — public app URL without trailing slash
-- `NEXT_PUBLIC_SUBFOLDER_PATH` — set to `/path` if the app is hosted under a subfolder; leave blank for root
-- `PROXY_STRIPS_PATH` — `true` when a reverse proxy strips the subfolder path before forwarding requests
-- `DATABASE_PROVIDER` — `postgresql` or `sqlserver`
-- `DATABASE_URL` — Prisma connection string
-- `TRUSTED_ORIGINS` — comma-separated allowed origins for auth
-- `BETTER_AUTH_SECRET` — auth secret used by Better Auth
-- `PRIVATE_INTERNAL_API_KEY` — internal API key used by server-side calls
+Update `.env` with your local settings. Key variables include:
 
-OAuth vars:
+### Core
 
-- `GITHUB_ID`, `GITHUB_SECRET`
-- `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`, `AZURE_AD_TENANT_ID`
+- `NEXT_PUBLIC_BASE_URL`: Public app URL (no trailing slash) `http://localhost:3000`.
+- `BETTER_AUTH_SECRET`: Random string for session encryption (RSA256 STRING).
+- `PRIVATE_INTERNAL_API_KEY`: Internal API key used by server-side calls (RSA256 STRING).
+- `TRUSTED_ORIGINS`: Comma-separated list of trusted domains, e.g., `http://localhost:3000`
 
-> Note: `NEXT_PUBLIC_BASE_URL` must match the public URL used by OAuth callbacks and app links.
+### Database
 
-## Local setup
+- `DATABASE_PROVIDER`: `postgresql` or `sqlserver`.
+- `DATABASE_NAME`: Name of your database.
+- `DATABASE_HOST`: IP Address or Hostname of the database server.
+- `DATABASE_PORT`: `5432` (Postgres) or `1433` (SQL Server).
+- `DATABASE_USER_USERNAME`: Database Username (requires Admin permissions for the first migration).
+- `DATABASE_USER_PASSWORD`: Database User Password
 
-### Install dependencies
+### Deployment & Proxy
 
-```powershell
-npm ci
-```
+- `NEXT_PUBLIC_SUBFOLDER_PATH`: Set if hosting under a subfolder (e.g., `/apps/rooms`).
+- `PROXY_STRIPS_PATH`: Set to `true` if your reverse proxy strips subfolder paths.
+- `NEXT_PUBLIC_ENVIRONMENT`: `development` toggles GitHub OAuth functions and enables additional logging.
 
-### Generate schema and Prisma client
+### OAuth Credentials
 
-```powershell
-npm run build:schema
-```
+- **GitHub:** `GITHUB_ID`, `GITHUB_SECRET` - (Active when `NEXT_PUBLIC_ENVIRONMENT` is set to development).
+- **Azure AD:** `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`, `AZURE_AD_TENANT_ID`
 
-### Run migrations and seed data
+---
 
-```powershell
-npm run db:migrate
-npm run db:seed
-```
+## Available Scripts
 
-### Start development server
+| Command                | Action                                                    |
+| ---------------------- | --------------------------------------------------------- |
+| `npm run build:schema` | Generates the Prisma schema and client based on provider. |
+| `npm run db:migrate`   | Executes database migrations via `scripts/db-migrate.ts`. |
+| `npm run db:seed`      | Populates the database with initial records.              |
+| `npm run dev`          | Spins up the local development server.                    |
+| `npm run build`        | Runs the full production build pipeline.                  |
+| `npm run start`        | Starts the production-ready server.                       |
 
-```powershell
-npm run dev
-```
+---
 
-## Build and production
+## Documentation & Resources
 
-```powershell
-npm run build
-npm run start
-```
+- **[DEVELOPMENT.md](https://www.google.com/search?q=./DEVELOPMENT.md):** Deep-dive into architecture, troubleshooting, and advanced setup.
 
-## Important scripts
-
-- `npm run build:schema` — generate Prisma schema and client
-- `npm run db:migrate` — run migrations using `scripts/db-migrate.ts`
-- `npm run db:seed` — seed the database
-- `npm run build` — full build pipeline
-- `npm run dev` — start Next.js development server
-- `npm run start` — start the built production server
-
-## Where to go next
-
-- `DEVELOPMENT.md` — deep developer setup and troubleshooting
-- `scripts/env-check.ts` — environment validation rules
-
-## Notes
-
-- This project supports PostgreSQL and SQL Server.
-- `NEXT_PUBLIC_SUBFOLDER_PATH` is used in Next.js `basePath`.
-- `PROXY_STRIPS_PATH` controls auth callback routing behind proxies.
-
-This README is the onboarding guide. For detailed setup, use `DEVELOPMENT.md`.
+> **Note:** Ensure `NEXT_PUBLIC_BASE_URL` exactly matches your OAuth provider's registered callback URL.
