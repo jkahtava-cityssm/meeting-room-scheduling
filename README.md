@@ -80,6 +80,6 @@ Update `.env` with your local settings. Key variables include:
 
 ## Documentation & Resources
 
-- **[DEVELOPMENT.md](https://www.google.com/search?q=./DEVELOPMENT.md):** Deep-dive into architecture, troubleshooting, and advanced setup.
+- **[DEVELOPMENT.md](DEVELOPMENT.md):** Deep-dive into architecture, troubleshooting, and advanced setup.
 
 > **Note:** Ensure `NEXT_PUBLIC_BASE_URL` exactly matches your OAuth provider's registered callback URL.
