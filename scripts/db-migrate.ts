@@ -5,32 +5,50 @@ import { loadEnvConfig } from '@next/env';
 
 loadEnvConfig(process.cwd());
 
-const provider = process.env.DATABASE_PROVIDER || 'sqlserver';
+const VALID_PROVIDERS = ['postgresql', 'sqlserver'];
+const provider = process.env.DATABASE_PROVIDER;
+
+if (!provider || !VALID_PROVIDERS.includes(provider)) {
+  console.error(`Error: DATABASE_PROVIDER must be one of: ${VALID_PROVIDERS.join(', ')}`);
+  console.error(`Current value: "${provider}"`);
+  process.exit(1);
+}
+
+const VALID_COMMANDS = ['dev', 'deploy', 'reset', 'status'];
+const prismaCmd = process.argv[2];
+
+if (!prismaCmd || !VALID_COMMANDS.includes(prismaCmd)) {
+  console.error(`Error: Please specify a valid prisma command (${VALID_COMMANDS.join(', ')})`);
+  process.exit(1);
+}
+
 const prismaDir = path.join(process.cwd(), 'prisma');
 const targetMigrationsDir = path.join(prismaDir, 'migrations');
-
-// Map providers to your separate source folders
 const sourceFolderName = provider === 'postgresql' ? 'migrations-postgresql' : 'migrations-sqlserver';
 const sourceMigrationsDir = path.join(prismaDir, sourceFolderName);
-
-const prismaCmd = process.argv[2];
 const additionalArgs = process.argv.slice(3).join(' ');
 
-function syncMigrations() {
+function linkMigrationFolders() {
   // 1. Create source folder if it doesn't exist yet
   if (!fs.existsSync(sourceMigrationsDir)) {
     fs.mkdirSync(sourceMigrationsDir, { recursive: true });
   }
 
-  // 2. Clear out the 'active' migrations folder to prevent cross-provider pollution
-  if (fs.existsSync(targetMigrationsDir)) {
-    // We use a safe delete to handle symlinks or directories
-    fs.rmSync(targetMigrationsDir, { recursive: true, force: true });
+  // Attempt to remove and Junctions or Symbolic Links
+  // If a user is switching between database providers the link could exist for the wrong folder.
+  try {
+    const stats = fs.lstatSync(targetMigrationsDir);
+    if (stats.isSymbolicLink()) {
+      fs.unlinkSync(targetMigrationsDir);
+      console.log(`Unlinked existing symbolic link at ${targetMigrationsDir}`);
+    }
+  } catch (e) {
+    // Directory doesn't exist.
   }
 
-  // 3. Sync the files.
-  // On dev machines, a Symbolic Link (junction on Windows) is best so
-  // changes made by Prisma are saved directly back to your source folder.
+  // Create a junction or Symbolic link to the sqlserver or postgresql migration folder.
+  // This ensures migrations generated get stored in the proper location.
+  // Prisma thinks the files are located in the migration folder so we can keep them seperate
   try {
     const type = process.platform === 'win32' ? 'junction' : 'dir';
     fs.symlinkSync(sourceMigrationsDir, targetMigrationsDir, type);
@@ -46,8 +64,8 @@ if (!prismaCmd) {
   process.exit(1);
 }
 
-// Sync first, then run Prisma
-syncMigrations();
+// Create Links first, then run Prisma migrate
+linkMigrationFolders();
 
 try {
   execSync(`npx prisma migrate ${prismaCmd} ${additionalArgs}`, { stdio: 'inherit' });
