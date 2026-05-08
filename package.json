@@ -14,9 +14,10 @@
     "build:env": "tsx scripts/env-check.ts",
     "build": "npm run build:env && npm run build:schema && next build && npm run build:scheduler && tsx scripts/bundle-standalone.ts",
     "start": "next start",
-    "lint": "next lint",
-    "worker": "tsx jobs/scheduler.ts",
-    "sync:start": "tsx jobs/entra-sync/entra-sync-process.ts --schedule \"0 3 * * *\""
+    "start:scheduler": "tsx jobs/entra-sync/entra-sync-process.ts --schedule \"0 3 * * *\" --marker \"TEST_SCHEDULER\"",
+    "db:deploy": "npm run build:schema && tsx scripts/db-migrate.ts deploy",
+    "db:migrate": "npm run build:schema && tsx scripts/db-migrate.ts dev",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",
