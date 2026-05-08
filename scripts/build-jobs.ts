@@ -7,7 +7,7 @@ const sourceDir = join(projectRoot, 'jobs');
 const targetDir = join(projectRoot, '.next', 'standalone', 'jobs');
 
 // Files to compile
-const filesToCompile = ['entra-sync/entra-sync-process.ts'];
+const filesToCompile = ['entra-sync/entra-sync-process.ts', 'entra-sync/entra-sync-windows-service.ts'];
 
 console.log('[Build] Compiling files...');
 console.log(`[Build] Source: ${sourceDir}`);

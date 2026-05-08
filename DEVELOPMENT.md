@@ -187,7 +187,7 @@ Add Web URI's for your server for example.
 - Ensures `NEXT_PUBLIC_BASE_URL` has no trailing slash
 - Ensures `NEXT_PUBLIC_SUBFOLDER_PATH` is either blank or starts with `/` and does not end with `/`
 
-### `scripts/build-scheduler.ts`
+### `scripts/build-jobs.ts`
 
 - Bundles scheduled job code from `jobs/entra-sync/entra-sync-process.ts`
 - Outputs compiled files into `.next/standalone/jobs`

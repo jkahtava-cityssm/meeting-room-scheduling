@@ -9,7 +9,7 @@
     "dev": "npm run build:env && next dev --turbopack",
     "selfsignedstart": "NODE_TLS_REJECT_UNAUTHORIZED=0 next start -p 3000",
     "selfsignedstartdev": "NODE_TLS_REJECT_UNAUTHORIZED=0 next start -p 3002",
-    "build:scheduler": "tsx scripts/build-scheduler.ts",
+    "build:scheduler": "tsx scripts/build-jobs.ts",
     "build:schema": "tsx scripts/build-schema.ts && prisma generate",
     "build:env": "tsx scripts/env-check.ts",
     "build": "npm run build:env && npm run build:schema && next build && npm run build:scheduler && tsx scripts/bundle-standalone.ts",
