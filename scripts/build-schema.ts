@@ -5,7 +5,7 @@ import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
 
 const DATABASE_TYPE = process.env.DATABASE_PROVIDER || 'sqlserver';
-const BASE_SCHEMA_PATH = path.join(__dirname, '../prisma/base.schema');
+const BASE_SCHEMA_PATH = path.join(__dirname, '../prisma/base.schema.prisma');
 const OUTPUT_SCHEMA_PATH = path.join(__dirname, '../prisma/schema.prisma');
 
 const generateSchema = () => {
@@ -14,18 +14,15 @@ const generateSchema = () => {
     let schemaContent = fs.readFileSync(BASE_SCHEMA_PATH, 'utf-8');
 
     // 2. Define the header blocks
-    const header = `
-datasource db {
-  provider = "${DATABASE_TYPE === 'sqlserver' ? 'sqlserver' : 'postgresql'}" 
-  url      = env("DATABASE_URL")
-}
+    const header = `datasource db {
+                      provider = "${DATABASE_TYPE === 'sqlserver' ? 'sqlserver' : 'postgresql'}" 
+                      url      = env("DATABASE_URL")
+                    }
 
-generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "windows", "linux-musl-openssl-3.0.x"]
-}
-
-`;
+                  generator client {
+                    provider      = "prisma-client-js"
+                    binaryTargets = ["native", "windows", "linux-musl-openssl-3.0.x"]
+                  }`;
 
     // 3. Transformation Logic
     if (DATABASE_TYPE !== 'sqlserver') {
