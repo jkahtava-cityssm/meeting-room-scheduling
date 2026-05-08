@@ -36,7 +36,7 @@ type IconName = keyof typeof dynamicIconImports;
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL, // e.g., regular user
+      url: process.env.DATABASE_PROVIDER === 'sqlserver' ? process.env.DATABASE_URL_SQLSERVER : process.env.DATABASE_URL_POSTGRESQL, // e.g., regular user
     },
   },
 });

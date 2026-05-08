@@ -50,8 +50,8 @@ export async function guardRoute<const T extends GuardRequirement, S = undefined
   }) => Promise<Response>,
   schema?: ZodType<S>,
 ): Promise<Response> {
-  if (!process.env.DATABASE_URL) {
-    return InternalServerErrorMessage('DATABASE_URL Missing');
+  if (!process.env.DATABASE_PROVIDER) {
+    return InternalServerErrorMessage('DATABASE_PROVIDER Missing');
   }
 
   const user = await getUserFromRequest(req);
