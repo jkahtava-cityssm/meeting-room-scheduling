@@ -113,7 +113,7 @@ export function UserLayout() {
         size: 200,
         header: ({ column }) => (
           <div className="hidden md:block ">
-            <FilterHeader title="Department" column={column}>
+            <FilterHeader title="Department" column={column} isCountVisible={true}>
               <CheckboxFilterGroup column={column} options={departmentList?.map((d) => ({ label: d, value: d }))} />
             </FilterHeader>
           </div>
@@ -175,7 +175,7 @@ export function UserLayout() {
 
           return (
             <div className="hidden md:block">
-              <FilterHeader title="Status" center column={column}>
+              <FilterHeader title="Status" center column={column} isCountVisible={true}>
                 <CheckboxFilterGroup column={column} options={STATUS_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))} />
               </FilterHeader>
             </div>
@@ -202,7 +202,7 @@ export function UserLayout() {
 
           return (
             <div className="hidden md:block">
-              <FilterHeader title="Type" center column={column}>
+              <FilterHeader title="Type" center column={column} isCountVisible={true}>
                 <CheckboxFilterGroup column={column} options={USER_TYPE_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))} />
               </FilterHeader>
             </div>
@@ -229,7 +229,7 @@ export function UserLayout() {
 
           return (
             <div className="hidden md:block">
-              <FilterHeader title="Email" center column={column}>
+              <FilterHeader title="Notify" center column={column} isCountVisible={true}>
                 <CheckboxFilterGroup column={column} options={EMAIL_OPTIONS?.map((d) => ({ label: d.label, value: d.value }))} />
               </FilterHeader>
             </div>
@@ -409,7 +409,7 @@ export function UserLayout() {
                             key={cell.id}
                             style={{ width: cell.column.getSize() }}
                             className={cn(
-                              'px-4 py-2 align-middle truncate group-hover:bg-muted',
+                              'px-4 align-middle truncate group-hover:bg-muted',
                               isName && 'sticky left-0 z-20  bg-background shadow-sticky-x',
                               isAction && 'sticky right-0 z-20  bg-background text-center shadow-sticky-x',
                               !isName && !isAction && ['hidden md:table-cell', !isLastScrollingCell && 'border-r'],
@@ -465,15 +465,20 @@ const FilterHeader = <TData, TValue>({
   title,
   column,
   center,
+  isCountVisible = false,
   children,
 }: {
   title: string;
   column: Column<TData, TValue>;
   center?: boolean;
+  isCountVisible?: boolean;
   children: React.ReactNode;
 }) => {
   const isFiltered = column.getIsFiltered();
   const sortDir = column.getIsSorted();
+
+  const currentFilters = column.getFilterValue();
+  const selectedCount = Array.isArray(currentFilters) ? currentFilters.length : 0;
 
   return (
     <div className={cn('flex items-center font-bold', center && 'justify-center')}>
@@ -501,6 +506,15 @@ const FilterHeader = <TData, TValue>({
           </div>
         </PopoverContent>
       </Popover>
+      {isCountVisible && selectedCount > 0 && (
+        <span
+          className="hidden lg:inline-flex shrink-0 items-center rounded-full bg-muted px-1.5 py-0.5 text-sm leading-none text-muted-foreground ml-0.5"
+          aria-label={`${selectedCount} selected`}
+          title={`${selectedCount} selected`}
+        >
+          {selectedCount}
+        </span>
+      )}
     </div>
   );
 };

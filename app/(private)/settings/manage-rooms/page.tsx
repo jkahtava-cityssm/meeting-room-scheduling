@@ -2,7 +2,7 @@ import { SharedRoomDrawerProvider } from '@/app/features/room-drawer/drawer-cont
 import RoomLayout from '@/app/features/rooms/room-layout';
 import { ServerNavigationPermissions } from '@/lib/permissions/navigation-permissions';
 
-export default function Home() {
+export default async function Home() {
   return (
     <ServerNavigationPermissions.Guard permissionKey="EditRooms">
       <SharedRoomDrawerProvider>
