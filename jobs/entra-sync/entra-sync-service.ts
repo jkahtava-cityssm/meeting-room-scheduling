@@ -1,7 +1,6 @@
 import { loadEnvConfig } from '@next/env';
 import { parseArgs } from 'node:util';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { EntraSyncSchema } from '../schema';
 import { getSystemProcess, saveSystemProcess, updateSystemProcess, resetSystemProcess } from '../system-process.data';
@@ -20,8 +19,8 @@ interface EntraSyncProcessConfig {
 }
 
 async function bootstrap() {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  loadEnvConfig(path.join(__dirname, '..', '..'));
+  const rootPath = path.join(__dirname, '..', '..');
+  loadEnvConfig(rootPath);
 
   const { values } = parseArgs({
     options: {

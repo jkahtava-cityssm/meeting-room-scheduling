@@ -7,7 +7,18 @@ const sourceDir = join(projectRoot, 'jobs');
 const targetDir = join(projectRoot, '.next', 'standalone', 'jobs');
 
 // Files to compile
-const filesToCompile = ['entra-sync/entra-sync-process.ts', 'entra-sync/entra-sync-windows-service.ts'];
+//const filesToCompile = ['entra-sync/entra-sync-process.ts', 'entra-sync/entra-sync-windows-service.ts'];
+
+const filesToCompile = [
+  {
+    fileName: 'entra-sync/entra-sync-process.ts',
+    externalList: [],
+  },
+  {
+    fileName: 'entra-sync/entra-sync-service.ts',
+    externalList: ['@prisma/client', '.prisma/client'],
+  },
+];
 
 console.log('[Build] Compiling files...');
 console.log(`[Build] Source: ${sourceDir}`);
@@ -16,12 +27,12 @@ console.log(`[Build] Target: ${targetDir}`);
 try {
   // Compile each file using tsc
   for (const file of filesToCompile) {
-    const sourceFile = join(sourceDir, file);
+    const sourceFile = join(sourceDir, file.fileName);
 
-    const fileSubdir = dirname(file);
+    const fileSubdir = dirname(file.fileName);
     const specificTargetDir = join(targetDir, fileSubdir);
 
-    const fileNameWithoutExt = parse(file).name;
+    const fileNameWithoutExt = parse(file.fileName).name;
     const outputFileName = `${fileNameWithoutExt}.js`;
     const outputFile = join(specificTargetDir, outputFileName);
 
@@ -36,7 +47,9 @@ try {
     console.log(`[Build] Compiling ${file}...`);
 
     // Use npx tsc to compile the single file
-    const command = `esbuild "${sourceFile}" --bundle --platform=node --outfile=${outputFile} `;
+    const build = `esbuild "${sourceFile}" --bundle --platform=node --format=cjs --minify --outfile=${outputFile} `;
+    const externalFlags = file.externalList.map((dep) => `--external:${dep}`).join(' ');
+    const command = externalFlags ? `${build} ${externalFlags}` : build;
     //--bundle --platform=node --outfile=dist/entra-sync-process.js
     //--module commonjs --target es2020 --strict false --esModuleInterop true --skipLibCheck true --forceConsistentCasingInFileNames true
     try {
