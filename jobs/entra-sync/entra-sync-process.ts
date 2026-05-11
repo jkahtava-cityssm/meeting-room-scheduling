@@ -1,77 +1,73 @@
 /**
- * Scheduler wrapper - entry point for the scheduler process
- * Spawned as a detached child process
- *
- * Usage:
- *   tsx jobs/entra-sync-process.ts --schedule "0 3 * * *" --marker "SCHEDULER_DB_meeting_room_scheduling_abc123"
+ * Entra Sync Worker Process
+ * Managed by Orchestrator
  */
-
 import { loadEnvConfig } from '@next/env';
 import cron from 'node-cron';
 import { parseArgs } from 'node:util';
 
-// Load environment variables
-loadEnvConfig(process.cwd());
+// Data access for cleanup
+import { resetSystemProcess } from '../system-process.data';
+import { SYSTEM_PROCESS_MANIFEST } from '@/lib/types';
+import { syncEntraUsers } from './entra-sync-users';
 
-// Parse command line arguments
+// 1. Environment & Config Setup
+loadEnvConfig(process.cwd());
+const PROCESS_KEY = SYSTEM_PROCESS_MANIFEST['ENTRA_SYNC_SCHEDULER'].key;
+
 const { values } = parseArgs({
   options: {
     schedule: { type: 'string' },
     marker: { type: 'string' },
   },
+  strict: false,
 });
 
-const schedule = values.schedule || process.env.ENTRA_SYNC_SCHEDULE || '0 3 * * *';
-const marker = values.marker || `SCHEDULER_${process.pid}`;
+const schedule: string = typeof values.schedule === 'string' ? values.schedule : '0 3 * * *';
 
-// Store marker in environment for process inspection
-//process.env.SCHEDULER_PROCESS_MARKER = marker;
+const marker = values.marker || `SERVICE_${process.pid}`;
 
-console.log(`[${new Date().toISOString()}] Scheduler initialized: ${marker}`);
-console.log(`[${new Date().toISOString()}] Schedule: ${schedule}`);
-console.log(`[${new Date().toISOString()}] PID: ${process.pid}`);
+console.log(`[${marker}] Initialized with PID: ${process.pid} | Schedule: ${schedule}`);
 
-// Import sync function
-import { syncEntraUsers } from './entra-sync-users';
+// 2. Task Scheduling
+const task = cron.schedule(schedule, async () => {
+  const now = new Date().toLocaleTimeString();
+  console.log(`[${now}] ${marker}: Starting Sync...`);
 
-// Schedule the recurring task
-try {
-  cron.schedule(schedule, async () => {
-    console.log(`[${new Date().toLocaleTimeString()}] Sync Starting`);
-
-    try {
-      await syncEntraUsers();
-      console.log(`[${new Date().toLocaleTimeString()}] Sync Completed`);
-    } catch (error) {
-      console.error('[Scheduler] Sync Error:', error);
-    }
-  });
-
-  console.log(`[${new Date().toLocaleTimeString()}] Worker is resident. Monitoring for schedule: ${schedule}...`);
-} catch (error) {
-  console.error('[Scheduler] Failed to schedule task:', error);
-  process.exit(1);
-}
-
-// Graceful shutdown on SIGTERM
-process.on('SIGTERM', () => {
-  console.log(`[${new Date().toLocaleTimeString()}] SIGTERM received, shutting down gracefully...`);
-  process.exit(0);
+  try {
+    await syncEntraUsers();
+    console.log(`[${now}] ${marker}: Sync Completed`);
+  } catch (error) {
+    console.error(`[${now}] ${marker}: Sync Failed:`, error);
+  }
 });
 
-// Graceful shutdown on SIGINT
-process.on('SIGINT', () => {
-  console.log(`[${new Date().toLocaleTimeString()}] SIGINT received, shutting down gracefully...`);
-  process.exit(0);
-});
+// 3. Graceful Shutdown & Cleanup logic
+const shutdown = async (signal: string) => {
+  console.log(`[${marker}] Received ${signal}. Cleaning up...`);
 
-// Log any uncaught exceptions
+  try {
+    task.stop();
+    // Inform the DB that this process is no longer active
+    await resetSystemProcess(PROCESS_KEY);
+    console.log(`[${marker}] DB status reset successfully.`);
+  } catch (err) {
+    console.error(`[${marker}] Failed to reset DB status:`, err);
+  } finally {
+    process.exit(0);
+  }
+};
+
+// Signal listeners
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Error handling
 process.on('uncaughtException', (err) => {
-  console.error('[Scheduler] Uncaught Exception:', err);
-  process.exit(1);
+  console.error(`[${marker}] Uncaught Exception:`, err);
+  shutdown('CRASH');
 });
 
-// Log unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('[Scheduler] Unhandled Rejection:', reason);
+process.on('unhandledRejection', (reason) => {
+  console.error(`[${marker}] Unhandled Rejection:`, reason);
 });
