@@ -42,6 +42,7 @@ Update `.env` with your local settings. Key variables include:
 - `NEXT_PUBLIC_SUBFOLDER_PATH`: Set if hosting under a subfolder (e.g., `/apps/rooms`).
 - `PROXY_STRIPS_PATH`: If `true`, the app ignores the subfolder path during auth callbacks (use if your proxy strips the path before forwarding).
 - `NEXT_PUBLIC_ENVIRONMENT`: `development` toggles GitHub OAuth functions and enables additional logging.
+- `PORT`: Used by the system-start.js file to start server.js on the right port.
 
 ### OAuth Credentials
 
@@ -111,6 +112,12 @@ This executes:
 
 ```powershell
 node server.js
+```
+
+### Start Server and Entra Sync
+
+```powershell
+node system-start.js
 ```
 
 ---
