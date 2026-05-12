@@ -18,7 +18,7 @@ const buildRegistry = [
   {
     sourcePath: 'jobs/entra-sync/entra-sync-process.ts',
     targetDir: 'jobs/entra-sync',
-    externalList: [],
+    externalList: ['@prisma/client', '.prisma/client'],
   },
   {
     sourcePath: 'jobs/entra-sync/entra-sync-service.ts',
