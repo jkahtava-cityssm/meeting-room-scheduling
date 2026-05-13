@@ -380,6 +380,13 @@ function getRandomDescription(): string {
   for (let index = 0; index <= numberOfLines; index++) {
     newDescription += EVENTDESCRIPTIONS[index] + '\n';
   }
+
+  const SQL_DESCRIPTION_LENGTH = 1000;
+
+  if (process.env.DATABASE_PROVIDER === 'sqlserver' && newDescription.length > SQL_DESCRIPTION_LENGTH) {
+    return newDescription.substring(0, SQL_DESCRIPTION_LENGTH);
+  }
+
   return newDescription;
 }
 
@@ -1167,7 +1174,7 @@ async function deleteAllData() {
   await prisma.verification.deleteMany();
   await prisma.configuration.deleteMany();
 
-  await prisma.user.deleteMany();
+  await prisma.user.deleteMany({ where: { NOT: { id: 0 } } });
 }
 
 async function createSystemUser() {
@@ -1181,8 +1188,8 @@ async function createSystemUser() {
       // We use a raw query here because Prisma's upsert generates
       // internal logic that often conflicts with IDENTITY_INSERT settings
       const user = await tx.$executeRawUnsafe(`
-      IF NOT EXISTS (SELECT 1 FROM "User" WHERE id = ${userId})
-      INSERT INTO "User" (id, name, email, emailVerified, externalId, isActive)
+      IF NOT EXISTS (SELECT 1 FROM "User" WHERE user_id = ${userId})
+      INSERT INTO "User" (user_id, name, email, email_verified, external_id, is_active)
       VALUES (${userId}, 'SYSTEM', '', 0, '000', 0)
     `);
 

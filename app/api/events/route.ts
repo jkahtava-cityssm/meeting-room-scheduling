@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest) {
         eventRooms,
       } = data;
 
-      const event = await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         let recurrence = null;
 
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
@@ -122,12 +122,9 @@ export async function PUT(request: NextRequest) {
             description,
             startDate,
             endDate,
-            roomIds: eventRooms,
             statusId,
             recurrenceId: recurrence?.recurrenceId,
             userId: userId,
-            itemIds: eventItems,
-            recipientIds: eventRecipients,
           },
           sessionUserId,
           tx,
@@ -165,9 +162,9 @@ export async function PUT(request: NextRequest) {
 
           await createManyEventItems({ eventId: eventId, eventItems: eventItems }, sessionUserId, tx);
         }
-
-        return await findFirstEvent({ eventId: eventId });
       });
+
+      const event = await findFirstEvent({ eventId: eventId });
 
       if (!event) {
         InternalServerErrorMessage();
@@ -206,7 +203,7 @@ export async function PATCH(request: NextRequest) {
         eventRooms,
       } = data;
 
-      const event = await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         // 1. Handle Recurrence Logic
         let recurrence = undefined;
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
@@ -248,9 +245,9 @@ export async function PATCH(request: NextRequest) {
             tx,
           );
         }
-
-        return await findFirstEvent({ eventId }, tx);
       });
+
+      const event = await findFirstEvent({ eventId });
 
       if (!event) return InternalServerErrorMessage();
 
