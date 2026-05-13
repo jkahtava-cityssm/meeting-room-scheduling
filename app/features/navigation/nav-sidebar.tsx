@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Calendar, ChevronRight, LifeBuoy, NotebookPen, Send, Settings2 } from 'lucide-react';
+import { AtSign, Bug, Calendar, ChevronRight, CircleQuestionMark, Inbox, Info, LifeBuoy, NotebookPen, Send, Settings2 } from 'lucide-react';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -35,6 +35,20 @@ import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
 import { useSearchParams } from 'next/navigation';
 import { NavigationPermissions } from './permissions/navigation.permissions';
 import { APP_FULL_URL } from '@/lib/api-helpers';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isPending } = useSession();
@@ -152,7 +166,8 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SideBarGroup title="">
-          <SideBarPrimaryMenuItem title={'Support'} icon={<LifeBuoy />} url={'#'} />
+          <SupportMenuItem title={'Support'} icon={<LifeBuoy />} />
+          <AboutMenuItem title={'About'} icon={<Info />}></AboutMenuItem>
         </SideBarGroup>
       </SidebarFooter>
     </Sidebar>
@@ -237,6 +252,117 @@ export function SideBarPrimaryMenuItem({ title, icon, url }: { title: string; ic
         <span>{title}</span>
       </Link>
     </SidebarMenuButton>
+  );
+}
+
+export function SupportMenuItem({ title, icon }: { title: string; icon?: React.ReactNode }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <SidebarMenuButton asChild key={title} tooltip={title}>
+          <div>
+            {icon}
+            <span>{title}</span>
+          </div>
+        </SidebarMenuButton>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl min-w-fit min-h-fit">
+        <DialogHeader>
+          <DialogTitle>Book-A-Roo Support</DialogTitle>
+          <DialogDescription>Have some questions or need help with something?</DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col items-center gap-2">
+          <Alert>
+            <CircleQuestionMark />
+            <AlertTitle>Looking for a missing room?</AlertTitle>
+            <AlertDescription>
+              Availability and bookings for rooms that are directly managed by one department or division, like Engineering&apos;s Garden Room, should
+              be inquired about by contacting the department or division directly.
+            </AlertDescription>
+          </Alert>
+          <Alert>
+            <Inbox />
+
+            <AlertTitle>Alternative Booking Options</AlertTitle>
+            <AlertDescription>
+              <p>
+                Phone:
+                <a href="tel:17057592500">
+                  <b>(705) 759-2500</b>
+                </a>
+              </p>
+              <p>
+                Email:
+                <a href="mailto:MeetingRoomBookings@cityssm.on.ca">
+                  <b>MeetingRoomBookings@cityssm.on.ca</b>
+                </a>
+              </p>
+            </AlertDescription>
+          </Alert>
+          <Alert>
+            <Bug />
+            <AlertTitle>Error Reporting</AlertTitle>
+            <AlertDescription>
+              <a href="mailto:MeetingRoomBookings@cityssm.on.ca">
+                <b>MeetingRoomBookings@cityssm.on.ca</b>
+              </a>
+              <p>
+                Please provide as much information as you can regarding the error, knowing what page caused the problem and the activity you were
+                trying to complete is very important!
+              </p>
+            </AlertDescription>
+          </Alert>
+        </div>
+
+        <DialogFooter className="sm:justify-start">
+          <DialogClose asChild>
+            <Button type="button">Close</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function AboutMenuItem({ title, icon }: { title: string; icon?: React.ReactNode }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <SidebarMenuButton asChild key={title} tooltip={title}>
+          <div>
+            {icon}
+            <span>{title}</span>
+          </div>
+        </SidebarMenuButton>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl min-w-fit min-h-fit">
+        <DialogHeader>
+          <DialogTitle>About Book-A-Roo</DialogTitle>
+          <DialogDescription>A centralized meeting room booking system for the city of sault ste. marie</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-row">
+          <div className="w-full p-2">
+            <Image src={`/images/MeetingRoomBookingLogo.webp`} alt={'altText'} width={260} height={260}></Image>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <Alert>
+              <CircleQuestionMark />
+              <AlertTitle>Looking for a missing room?</AlertTitle>
+              <AlertDescription>
+                Availability and bookings for rooms that are directly managed by one department or division, like Engineering&apos;s Garden Room,
+                should be inquired about by contacting the department or division directly.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+        <DialogFooter className="sm:justify-start">
+          <DialogClose asChild>
+            <Button type="button">Close</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
