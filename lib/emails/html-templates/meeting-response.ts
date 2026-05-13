@@ -1,8 +1,8 @@
 import { APP_FULL_URL } from '@/lib/api-helpers';
+import { TStatusKey } from '@/lib/types';
 
 export function getMeetingResponseEmailTemplate(content: {
-  color: string;
-  status: string;
+  status: TStatusKey;
   title: string;
   room: string;
   date: string;
@@ -10,8 +10,17 @@ export function getMeetingResponseEmailTemplate(content: {
   employeeName: string;
   notifiedNames: string;
 }) {
+  const statusColors = {
+    APPROVED: '#05df72', // Green-400
+    REJECTED: '#ff6467', // Red-400
+    INFORMATION: '#51a2ff', // Blue-400
+    PENDING: '#90a1b9', // Slate-400
+  };
+
+  const color = statusColors[content.status];
+
   return meetingTemplate
-    .replaceAll('{{HEADER_FOOTER_COLOR}}', content.color)
+    .replaceAll('{{HEADER_FOOTER_COLOR}}', color)
     .replaceAll('{{EVENT_STATUS}}', content.status)
     .replaceAll('{{EVENT_TITLE}}', content.title)
     .replaceAll('{{EVENT_ROOM}}', content.room)

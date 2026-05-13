@@ -6,6 +6,9 @@ import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-grap
 import { TStatusKey } from './types';
 
 import { Message } from '@microsoft/microsoft-graph-types';
+import { getMeetingResponseEmailTemplate } from './emails/html-templates/meeting-response';
+import { privateServerGET } from './fetch-server';
+import { IStatus } from './schemas';
 
 const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
 
@@ -32,7 +35,15 @@ export async function sendTestEmail(recipientEmail: string, senderEmail: string)
       subject: `Booking ${'APPROVED'}`,
       body: {
         contentType: 'html',
-        content: bookingHTMLTemplate('APPROVED', 'Test Event', 'John Doe', new Date().toLocaleString()),
+        content: getMeetingResponseEmailTemplate({
+          status: 'APPROVED',
+          title: 'Test Event',
+          employeeName: 'John Doe',
+          date: new Date().toLocaleString(),
+          duration: '30 Minutes',
+          notifiedNames: '',
+          room: 'Biggings Room',
+        }),
       },
       toRecipients: [
         {
