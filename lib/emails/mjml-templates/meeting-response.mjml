@@ -1,0 +1,120 @@
+<mjml>
+  <mj-head>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" color="#333333" />
+
+      <mj-text font-size="16px" line-height="24px" />
+      <mj-section background-color="#ffffff" padding="20px" />
+
+      <!-- Custom MJML Classes -->
+      <mj-class name="header-footer-bar" background-color="{{HEADER_FOOTER_COLOR}}" padding="25px 0" />
+      <mj-class name="status-bar" background-color="#fafafa" border-bottom="1px solid #eeeeee" />
+      <mj-class name="status-text" align="center" padding="10px 25px" font-size="20px" font-weight="bold" />
+      <mj-class name="heading-text" font-size="22px" font-weight="bold" padding-bottom="15px" />
+      <mj-class name="footer-section" background-color="#fafafa" border-top="1px solid #eeeeee" />
+      <mj-class
+        name="primary-button"
+        background-color="#18181b"
+        color="#ffffff"
+        border-radius="8px"
+        font-weight="500"
+        font-size="14px"
+        inner-padding="12px 24px"
+      />
+      <mj-class name="helper-text" align="left" font-size="12px" color="#a1a1aa" padding="0" />
+    </mj-attributes>
+
+    <mj-style>
+      .rounded-container {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #dddddd;
+      }
+      /* Standard CSS for the HTML table and links */
+      .meeting-table td {
+        padding: 6px;
+      }
+      .label-cell {
+        font-weight: bold;
+        width: 100px;
+        text-align: left;
+      }
+      .value-cell {
+        text-align: left;
+      }
+      .spacer-cell {
+        padding: 15px !important;
+      }
+      .support-link {
+        color: #18181b;
+        text-decoration: underline;
+      }
+    </mj-style>
+  </mj-head>
+
+  <mj-body background-color="#f4f4f4">
+    <mj-wrapper padding="0" css-class="rounded-container">
+      <!-- Header Section -->
+      <mj-section mj-class="header-footer-bar" />
+
+      <mj-section mj-class="status-bar">
+        <mj-column>
+          <mj-text mj-class="status-text">
+            {{ EVENT_STATUS }}
+          </mj-text>
+        </mj-column>
+      </mj-section>
+
+      <!-- Detail Section -->
+      <mj-section>
+        <mj-column>
+          <mj-text mj-class="heading-text">
+            {{ EVENT_TITLE }}
+          </mj-text>
+
+          <mj-table css-class="meeting-table">
+            <tr>
+              <td class="label-cell">Room</td>
+              <td class="value-cell">{{ EVENT_ROOM }}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">Date</td>
+              <td class="value-cell">{{ EVENT_DATE }}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">Duration</td>
+              <td class="value-cell">{{ EVENT_DURATION }}</td>
+            </tr>
+            <tr>
+              <td class="spacer-cell"></td>
+              <td class="spacer-cell"></td>
+            </tr>
+            <tr>
+              <td class="label-cell">Attendees</td>
+              <td class="value-cell">{{ EVENT_CC }}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">Owner</td>
+              <td class="value-cell">{{ EVENT_TO }}</td>
+            </tr>
+          </mj-table>
+        </mj-column>
+      </mj-section>
+
+      <!-- Footer Section -->
+      <mj-section mj-class="footer-section">
+        <mj-column>
+          <mj-button href="{{SYSTEM_URL}}" mj-class="primary-button"> Room Booking System </mj-button>
+
+          <mj-divider border-width="1px" border-color="#f4f4f5" padding="10px 0 10px 0" />
+
+          <mj-text mj-class="helper-text"> This is an automated message. </mj-text>
+
+          <mj-text mj-class="helper-text"> Need help? <a href="{{SUPPORT_URL}}" class="support-link">Contact Support</a> </mj-text>
+        </mj-column>
+      </mj-section>
+
+      <mj-section mj-class="header-footer-bar" />
+    </mj-wrapper>
+  </mj-body>
+</mjml>
