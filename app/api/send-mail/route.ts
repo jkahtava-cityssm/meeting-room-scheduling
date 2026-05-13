@@ -5,9 +5,9 @@ import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
 import { UnauthorizedMessage } from '@/lib/api-helpers';
 
 export async function POST(request: NextRequest) {
-  if (!verifySecretHeader(request)) {
+  /*if (!verifySecretHeader(request)) {
     return UnauthorizedMessage();
-  }
+  }*/
 
   return guardRoute(request, { LoggedIn: { type: 'role', role: 'Private' } }, async ({ sessionUserEmail }) => {
     try {

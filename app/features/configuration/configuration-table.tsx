@@ -19,6 +19,7 @@ import { RevalidateButton } from './revalidate-api';
 import { EntraSyncConfiguration } from './entra-sync';
 
 import { cn } from '@/lib/utils';
+import EmailButton from '@/components/send-email-button';
 
 export function ConfigurationPage() {
   const { data: serverConfiguration, isPending, error } = useConfigurationQuery();
@@ -119,6 +120,9 @@ export function ConfigurationPage() {
             description="This service synchronizes users information from Entra ID based on the schedule defined, it creates and deactivates users. Users created or updated are marked as managed and cannot be updated manually."
           >
             <EntraSyncConfiguration></EntraSyncConfiguration>
+          </ConfigRow>
+          <ConfigRow label="TEST EMAIL">
+            <EmailButton />
           </ConfigRow>
         </div>
       </ScrollArea>
