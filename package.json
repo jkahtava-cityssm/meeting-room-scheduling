@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "npm run build:schema && tsx prisma/seed.ts"
   },
   "scripts": {
     "dev": "next dev --turbopack",
@@ -17,7 +17,7 @@
     "start:scheduler": "tsx jobs/entra-sync/entra-sync-process.ts --schedule \"0 3 * * *\" --marker \"TEST_SCHEDULER\"",
     "db:deploy": "npm run build:schema && tsx scripts/db-migrate.ts deploy",
     "db:migrate": "npm run build:schema && tsx scripts/db-migrate.ts dev",
-    "db:seed": "prisma db seed"
+    "db:seed": "npm run build:schema && tsx prisma/seed.ts"
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",

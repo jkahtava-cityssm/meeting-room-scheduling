@@ -1182,7 +1182,7 @@ async function createSystemUser() {
 
   if (process.env.DATABASE_PROVIDER === 'sqlserver') {
     // SQL Server: Needs the IDENTITY_INSERT toggle wrap
-    return await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       await tx.$executeRawUnsafe(`SET IDENTITY_INSERT "User" ON`);
 
       // We use a raw query here because Prisma's upsert generates
@@ -1194,10 +1194,10 @@ async function createSystemUser() {
     `);
 
       await tx.$executeRawUnsafe(`SET IDENTITY_INSERT "User" OFF`);
-
-      // Fetch the result to keep the return type consistent
-      return tx.user.findUnique({ where: { id: userId } });
     });
+
+    // Fetch the result to keep the return type consistent
+    return prisma.user.findUnique({ where: { id: userId } });
   } else {
     // Postgres (and others): Standard Prisma Upsert works perfectly
     return await prisma.user.upsert({
@@ -1221,10 +1221,11 @@ async function main() {
     await deleteAllData();
   }
 
-  FindCreateSystemProcess('ENTRA_SYNC_SCHEDULER');
-
   console.log('Creating System User...');
-  createSystemUser();
+  await createSystemUser();
+
+  console.log('Creating System Processes...');
+  await FindCreateSystemProcess('ENTRA_SYNC_SCHEDULER');
 
   if (process.env.ADMIN_USER_EMAIL) {
     const adminUser = await findCreateUser({
