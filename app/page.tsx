@@ -47,11 +47,9 @@ export default async function Home() {
       >
         <div className="gap-4 sm:p-4 h-[calc(100vh-var(--header-height)-1px)] transition-[width] duration-300 min-w-0 flex flex-col overflow-y-auto">
           <div className="overflow-hidden min-w-92 flex flex-1 flex-col min-h-0">
-            <Suspense fallback={<>...Loading</>}>
-              <CalendarProviderPublic>
-                <CalendarPublicView></CalendarPublicView>
-              </CalendarProviderPublic>
-            </Suspense>
+            <CalendarProviderPublic>
+              <CalendarPublicView></CalendarPublicView>
+            </CalendarProviderPublic>
           </div>
         </div>
       </PublicHeader>
