@@ -102,6 +102,10 @@ export function SignInMicrosoftSSO() {
     setMounted(true);
   }, []);
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       <MicrosoftButton onClick={() => signInEntraSSO(callbackURL)}>

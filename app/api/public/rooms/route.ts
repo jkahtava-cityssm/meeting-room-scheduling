@@ -1,8 +1,6 @@
-import { prisma } from '@/prisma';
-
 import { NextRequest } from 'next/server';
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
-import { UTCDate } from '@date-fns/utc';
+import { InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
+
 import { findPublicRooms } from '@/lib/data/public';
 import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
 

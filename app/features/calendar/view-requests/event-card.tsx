@@ -3,24 +3,9 @@ import { Button } from '@/components/ui/button';
 import { ButtonColored } from '@/components/ui/button-colored';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { IEventSingleRoom } from '@/lib/schemas';
-import {
-  CalendarRange,
-  CalendarSync,
-  ChevronRight,
-  CirclePlus,
-  Clock,
-  Hourglass,
-  Loader2,
-  LucideCircleX,
-  MapPin,
-  Save,
-  Send,
-  SendHorizonal,
-  Text,
-} from 'lucide-react';
+import { CalendarRange, CalendarSync, Clock, Hourglass, Loader2, MapPin, SendHorizonal, Text } from 'lucide-react';
 
 import { TColors, TStatusKey } from '@/lib/types';
-import { IconColored } from '@/components/ui/icon-colored';
 import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
 import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 

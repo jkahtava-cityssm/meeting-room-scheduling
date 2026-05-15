@@ -4,9 +4,9 @@ import { execSync, spawn } from 'node:child_process';
 import path from 'path';
 
 import { platform } from 'node:os';
-import { getSystemProcess, resetSystemProcess, saveSystemProcess, updateSystemProcess } from './system-process.data';
-import { update } from 'lodash';
-import { z, ZodType } from 'zod/v4';
+import { getSystemProcess, resetSystemProcess, updateSystemProcess } from './system-process.data';
+
+import { ZodType } from 'zod/v4';
 import { existsSync } from 'node:fs';
 import { TSystemProcess } from '@/lib/types';
 

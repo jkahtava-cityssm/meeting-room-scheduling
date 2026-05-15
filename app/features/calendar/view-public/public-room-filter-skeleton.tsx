@@ -1,13 +1,9 @@
 'use client';
 
-import { PUBLIC_IROOM } from '@/lib/services/public';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { useRoomLayout } from './use-room-category-filter';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export interface SkeletonRooms {
   roomCategory: { name: string };

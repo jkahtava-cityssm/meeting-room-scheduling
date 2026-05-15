@@ -1,12 +1,10 @@
-import { createUser, deleteManyUsers, findManyUsers, upsertUser } from '@/lib/data/users';
+import { deleteManyUsers, findManyUsers } from '@/lib/data/users';
 
 import { NextRequest } from 'next/server';
 
-import { BadRequestMessage, CreatedMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 
 import { guardRoute } from '@/lib/api-guard';
-import { SUserPUT } from '@/lib/services/users';
-import { prisma } from '@/prisma';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   return guardRoute(

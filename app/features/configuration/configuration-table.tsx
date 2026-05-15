@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { IConfigurationPUT, useConfigurationMutationUpsert, useConfigurationQuery } from '@/lib/services/configuration';
 import { RegisterSSO } from './single-sign-on';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectItem } from '@/components/ui/select';
+
 import { RoleComboBox } from '../roles/role-combobox';
 import { TConfigurationEntry } from '@/lib/data/configuration';
 import { Input } from '@/components/ui/input';
@@ -168,14 +168,6 @@ function ConfigRow({
       <div className={cn('border-b flex items-center py-4', className)}>{children}</div>
     </div>
   );
-}
-
-function setConfigField(sets: TConfigurationEntry[], key: string, newValue: boolean): TConfigurationEntry[] {
-  return sets.map((set) => {
-    if (set.key !== key) return set;
-
-    return { ...set, value: newValue } as TConfigurationEntry;
-  });
 }
 
 const ConfigField = ({ entry, onChange }: { entry: TConfigurationEntry; onChange: (val: string) => void }) => {

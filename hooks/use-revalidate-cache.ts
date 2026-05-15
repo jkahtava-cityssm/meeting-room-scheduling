@@ -19,8 +19,6 @@ export function useRevalidateAndInvalidate() {
   const paths = ['/api/users/[userId]', '/api/users', '/api/users/' + session?.user.id, '/api/public/configuration'];
   const tags = Object.values(CACHE_TAGS); //[session?.user.id, "users"];
 
-  const clientTags = Object.values(CACHE_TAGS);
-
   const revalidateAndInvalidate = async () => {
     try {
       const response = await fetchPOST<null>('/api/admin/revalidate', {

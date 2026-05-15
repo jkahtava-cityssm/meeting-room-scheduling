@@ -4,26 +4,21 @@ import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
-import { CalendarDayColumnCalendar } from '../sidebar-day-picker/calendar-day-column-calendar';
 
 import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-events';
-import { CalendarScrollContainerPrivate } from '../components/calendar-scroll-container';
-import { CalendarScrollColumnPrivate } from '../components/calendar-scroll-column';
 
-import { CalendarScrollContainerSkeleton } from '../components/calendar-scroll-container-skeleton';
-
-import { LoaderCircle, LucideCalendarDays, LucideDoorOpen, LucidePartyPopper, Terminal } from 'lucide-react';
+import { LucideDoorOpen, LucidePartyPopper } from 'lucide-react';
 import { GenericError } from '../../../../components/shared/generic-error';
 
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { CalendarAction, IRequestGroup, IRequestSection } from '../webworkers/generic-webworker';
+import { CalendarAction } from '../webworkers/generic-webworker';
 import { useEventPatchMutation } from '@/lib/services/events';
 import { sharedColorVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
 import { EventCard } from './event-card';
 import { IEventSingleRoom } from '@/lib/schemas';
-import { useVirtualizer, useWindowVirtualizer, VirtualItem, Virtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useGridColumns } from './use-grid-columns';
 import { TColors, TStatusKey } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -74,16 +69,8 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const itemTypeRef = useRef<Array<'SECTION_HEADER' | 'GROUP_HEADER' | 'GROUP_ROW'>>([]);
 
-  const {
-    visibleHours,
-    selectedRoomIds,
-    selectedStatusKeys,
-    setSelectedStatusKeys,
-    setIsHeaderLoading,
-    setTotalEvents,
-    statusIdLookupByKey,
-    statusKeyLookupById,
-  } = usePrivateCalendar();
+  const { visibleHours, selectedRoomIds, selectedStatusKeys, setSelectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusIdLookupByKey } =
+    usePrivateCalendar();
 
   const groupKeyRef = useRef<string | null>(null);
 
@@ -307,8 +294,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   });
 
   const patchEvent = useEventPatchMutation();
-
-  const activeMutationsRef = useRef(0);
 
   const handleStatusChange = useCallback(
     (id: number, newStatus: TStatusKey) => {

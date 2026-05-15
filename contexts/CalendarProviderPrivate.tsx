@@ -2,11 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import type { Dispatch, SetStateAction } from 'react';
-
 import type { TStatusKey, TVisibleHours } from '@/lib/types';
-import { VISIBLE_HOURS } from '../lib/helpers';
-import { usePublicConfiguration } from '@/lib/services/public';
 import { useRoomsQuery } from '@/lib/services/rooms';
 import { IRoom } from '@/lib/schemas';
 import { usePrivateConfigurationQuery } from '@/lib/services/configuration';
@@ -46,7 +42,7 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
   } = usePrivateConfigurationQuery(['visibleHoursStart', 'visibleHoursEnd', 'timeSlotInterval', 'maxBookingSpan']);
 
   const { data: visibleRooms, error: roomError, isPending: isRoomsPending } = useRoomsQuery();
-  const { data: statuses, error: statusError, isPending: isStatusPending } = useStatusQuery();
+  const { data: statuses } = useStatusQuery();
 
   const [isHeaderLoading, setIsHeaderLoading] = useState(true);
   const [totalEvents, setTotalEvents] = useState(0);

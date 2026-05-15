@@ -1,14 +1,14 @@
 import { NextRequest } from 'next/server';
 import { getServerSession, Role } from './auth';
-import { SessionAction, SessionResource, SessionRole } from './types';
 import { prisma } from '@/prisma';
 import { BadRequestMessage, ForbiddenMessage, InternalServerErrorMessage, UnauthorizedMessage, VerifyToken } from './api-helpers';
 
 import { buildPermissionCache, isGroupRequirementMet, PermissionCache, PermissionRequirement } from './auth-permission-checks';
 
-import { getRolesByUserId } from './data/permissions';
+import { getRolesByName, getRolesByUserId } from './data/permissions';
 import { prettifyError, ZodType } from 'zod/v4';
 import { findFirstUser } from './data/users';
+import { verifySecretHeader } from './server/verifySecretHeader';
 
 export type LabeledRequirements = {
   [label: string]: PermissionRequirement | PermissionRequirement[];
@@ -54,7 +54,11 @@ export async function guardRoute<const T extends GuardRequirement, S = undefined
     return InternalServerErrorMessage('DATABASE_PROVIDER Missing');
   }
 
-  const user = await getUserFromRequest(req);
+  let user = await getUserFromRequest(req);
+
+  if (!user && verifySecretHeader(req)) {
+    user = await getSystemUser();
+  }
 
   if (!user) {
     return UnauthorizedMessage();
@@ -136,6 +140,16 @@ async function getUserFromRequest(
   if (!session) return null;
 
   return { userId: Number(session.user.id), roles: session.user.roles, sessionId: Number(session.session?.id), email: session.user.email };
+}
+
+async function getSystemUser(): Promise<{ userId: number; roles: Role[]; sessionId: number | null; email: string | null } | null> {
+  const systemUser = await findFirstUser({ id: 0 });
+
+  if (!systemUser) return null;
+
+  const adminRole = await getRolesByName('admin');
+
+  return { userId: systemUser.userId, roles: adminRole, sessionId: null, email: null };
 }
 
 export async function evaluateGuard<T extends GuardRequirement>(

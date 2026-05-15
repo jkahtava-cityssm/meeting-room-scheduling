@@ -1,22 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { endOfYear, startOfYear } from 'date-fns';
+import { useEffect } from 'react';
 
 import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 import YearViewMonth from './calendar-year-view-month';
-import { IEventSingleRoom } from '@/lib/schemas';
+
 import { YearViewSkeleton } from './skeleton-calendar-year-view';
-import { TStatusKey, TVisibleHours } from '@/lib/types';
-import { useEventsQuery } from '@/lib/services/events';
 import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-events';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { GenericError } from '../../../../components/shared/generic-error';
 
 export function CalendarYearView({ date, userId }: { date: Date; userId?: string }) {
-  const { interval, visibleHours, visibleRooms, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
-
-  const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
+  const { visibleHours, visibleRooms, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
 
   const { result, isLoading, error } = usePrivateCalendarEvents('YEAR', date, visibleHours, userId, selectedRoomIds, selectedStatusKeys);
 

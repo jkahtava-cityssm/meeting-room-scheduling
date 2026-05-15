@@ -1,16 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatISO } from 'date-fns';
 import { fetchGET, fetchPUT } from '../fetch-client';
-import { useSession } from '../auth-client';
-import { SStatus, SUser } from '../schemas';
+
+import { SUser } from '../schemas';
 import { IPermissionSet, IRole, SPermissionSet, SRole } from '../data/permissions';
 import z from 'zod/v4';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
-
-const formatDate = (date: Date) => {
-  return formatISO(date);
-};
 
 export const usePermissionsQuery = (enabled: boolean = true) => {
   return useQuery({
@@ -69,7 +64,7 @@ export const usePermissionMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: rolePermissionMutations[]) => fetchPUT<null>(`/api/admin/permissions`, data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.permissions.all });
     },
   });

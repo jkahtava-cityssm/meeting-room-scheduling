@@ -1,4 +1,4 @@
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { z } from 'zod/v4';
 
@@ -6,43 +6,14 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-
-import { Textarea } from '@/components/ui/textarea';
-
-import { DateTimePicker, DateTimePickerRef } from '@/components/ui/datetimepicker';
-import { useRef } from 'react';
-import { Session } from '@/lib/auth-client';
-import { getDurationText } from '@/lib/helpers';
 import { FormStatus } from './types';
 
-import { RoomSelect } from '../rooms/room-select';
-import { StatusSelect } from '../status/status-select';
-import { UserComboBox } from '../users/user-combobox';
+import { step1UserSchema } from './drawer-schema.validator';
 
-import { StaticTabsList, StaticTabsTrigger } from '@/components/ui/tabs-placeholder';
-import { UserMultiSelect } from '../users/user-multiselect';
-import { ItemMultiSelect } from './item-multiselect';
-
-import { StartEndDateTimeProvider } from '@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider';
-import { Label } from '@/components/ui/label';
-import { addDays, format } from 'date-fns';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { LucideLock } from 'lucide-react';
-import { useMultiStepForm } from './drawer-form-provider';
-import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
-import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
-import { step1Schema } from './drawer-schema.validator';
-import { UserDrawerPermissions } from './lib/permissions';
-import { Checkbox } from '@/components/ui/checkbox';
-import { GenericError } from '@/components/shared/generic-error';
 import { GenericInfoMessage } from '@/components/shared/generic-message';
 
-const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
-
 export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
-  const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
+  const { control, watch } = useFormContext<z.infer<typeof step1UserSchema>>();
 
   const isManaged = watch('isManaged') === 'true';
   const isReadOnly = formStatus === 'Read' || formStatus === 'Loading';

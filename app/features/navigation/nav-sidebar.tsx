@@ -10,7 +10,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -25,13 +24,12 @@ import { Sidebar, SidebarContent, SidebarFooter } from '@/components/ui/sidebar'
 import { navigateURL } from '@/lib/helpers';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { useSession } from '@/contexts/SessionProvider';
-import { useVerifySessionRequirement } from '@/lib/auth-client';
 
 import { BadgeColored } from '../../../components/ui/badge-colored';
 import { useTotalEventsByStatusQuery } from '@/lib/services/events';
-import { endOfDay, format, parse, startOfDay } from 'date-fns';
+import { parse } from 'date-fns';
 import { useMemo } from 'react';
-import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
+
 import { useSearchParams } from 'next/navigation';
 import { NavigationPermissions } from './permissions/navigation.permissions';
 import { APP_FULL_URL } from '@/lib/api-helpers';
@@ -77,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 }
 
 function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { can, canAny, isVerifying } = NavigationPermissions.usePermissions();
+  const { can, canAny } = NavigationPermissions.usePermissions();
 
   const searchParams = useSearchParams();
 
@@ -103,7 +101,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
 
-  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery('PENDING');
+  const { data: pendingEvents } = useTotalEventsByStatusQuery('PENDING');
 
   return (
     <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>

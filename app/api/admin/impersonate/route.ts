@@ -1,19 +1,19 @@
 // app/api/internal/sso/register-microsoft/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { guardRoute } from '@/lib/api-guard';
-import { auth, getServerSession } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
+
 import { BadRequestMessage, DeleteMessage, SuccessMessage } from '@/lib/api-helpers';
 import { prisma } from '@/prisma';
-import { request } from 'https';
+
 import { updateSession } from '@/lib/data/permissions';
 
 export async function POST(req: NextRequest) {
   return guardRoute(
     req,
     { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async ({ sessionUserId, sessionId }) => {
       const { roleId } = await req.json();
 
       if (!roleId || !sessionId) {
@@ -42,12 +42,12 @@ export async function DELETE(req: NextRequest) {
   return guardRoute(
     req,
     { isImpersonating: { type: 'function', check: () => Boolean(session?.session?.impersonatedRole) } },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async ({ sessionUserId, sessionId }) => {
       if (!sessionId) {
         return BadRequestMessage();
       }
 
-      const session = await updateSession({ sessionId, impersonatedRole: undefined }, sessionUserId);
+      await updateSession({ sessionId, impersonatedRole: undefined }, sessionUserId);
 
       return DeleteMessage();
     },

@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma';
 import { Prisma } from '@prisma/client';
-import { Role } from '../auth';
+
 import z from 'zod/v4';
 import { ROLES_ENUM, SessionAction, SessionResource, SessionRole } from '../types';
 
@@ -161,7 +161,7 @@ export async function upsertRoleResourceAction(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  return await prisma.roleResourceAction.upsert({
+  return await tx.roleResourceAction.upsert({
     where: {
       roleId_resourceActionId: {
         roleId,

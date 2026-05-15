@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     req,
 
     { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async () => {
       const permissionSets = await findManyExpandedPermissionSets();
 
       if (!permissionSets) {

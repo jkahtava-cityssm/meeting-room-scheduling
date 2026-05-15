@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma';
-import type { Prisma, RoomRole } from '@prisma/client';
-import { IRoom, SRoom } from '../schemas';
+import type { Prisma } from '@prisma/client';
+import { SRoom } from '../schemas';
 import z from 'zod/v4';
 import { safeCreateMany } from '../api-helpers';
 

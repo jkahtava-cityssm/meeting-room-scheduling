@@ -10,14 +10,13 @@ import { Prisma } from '@prisma/client';
 import {
   createEvent,
   upsertEvent,
-  updateEvent,
   findManyEvents,
   findFirstEvent,
   createManyEventRoom,
   createManyEventRecipients,
   createManyEventItems,
 } from '@/lib/data/events';
-import { createRecurrence, upsertRecurrence, deleteRecurrence } from '@/lib/data/recurrence';
+import { createRecurrence, upsertRecurrence } from '@/lib/data/recurrence';
 import { SEventPATCH, SEventPUT } from '@/lib/services/events';
 
 export async function POST(request: NextRequest) {
@@ -27,15 +26,12 @@ export async function POST(request: NextRequest) {
 
     async ({ data, sessionUserId }) => {
       const {
-        eventId,
-
         userId,
         statusId,
         title,
         description,
         startDate,
         endDate,
-        recurrenceId,
         rule,
         ruleDescription,
         ruleStartDate,
@@ -102,7 +98,7 @@ export async function PUT(request: NextRequest) {
         eventRooms,
       } = data;
 
-      const event = await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         let recurrence = null;
 
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
@@ -122,12 +118,9 @@ export async function PUT(request: NextRequest) {
             description,
             startDate,
             endDate,
-            roomIds: eventRooms,
             statusId,
             recurrenceId: recurrence?.recurrenceId,
             userId: userId,
-            itemIds: eventItems,
-            recipientIds: eventRecipients,
           },
           sessionUserId,
           tx,
@@ -165,9 +158,9 @@ export async function PUT(request: NextRequest) {
 
           await createManyEventItems({ eventId: eventId, eventItems: eventItems }, sessionUserId, tx);
         }
-
-        return await findFirstEvent({ eventId: eventId });
       });
+
+      const event = await findFirstEvent({ eventId: eventId });
 
       if (!event) {
         InternalServerErrorMessage();
@@ -206,7 +199,7 @@ export async function PATCH(request: NextRequest) {
         eventRooms,
       } = data;
 
-      const event = await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         // 1. Handle Recurrence Logic
         let recurrence = undefined;
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
@@ -230,7 +223,7 @@ export async function PATCH(request: NextRequest) {
         };
 
         // 3. Update the Event
-        const updatedEvent = await tx.event.update({
+        await tx.event.update({
           where: { eventId },
           data: updateData,
         });
@@ -248,9 +241,9 @@ export async function PATCH(request: NextRequest) {
             tx,
           );
         }
-
-        return await findFirstEvent({ eventId }, tx);
       });
+
+      const event = await findFirstEvent({ eventId });
 
       if (!event) return InternalServerErrorMessage();
 

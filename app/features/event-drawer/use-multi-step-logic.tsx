@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import { CombinedSchema, getCombinedSchema } from './drawer-schema.validator';
 
-import { usePublicConfiguration } from '@/lib/services/public';
 import {
   useEventQuery,
   useEventsMutationUpsert,
@@ -19,7 +18,7 @@ import { IEventSingleRoom } from '@/lib/schemas';
 import { getFormDefaults, mapEventToSchema } from './lib/default-util';
 import { useEventStore } from '@/lib/zustand/new-event-store-refactor';
 import { useStepNavigation } from './use-step-navigation';
-import { useConfigurationQuery, usePrivateConfigurationQuery } from '@/lib/services/configuration';
+
 import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
 
 export const useMultiStepFormLogic = (props: {
@@ -39,7 +38,7 @@ export const useMultiStepFormLogic = (props: {
   restrictHours: boolean;
 }): MultiStepFormContextProps => {
   const originRef = useRef<HTMLElement | null>(null);
-  const { event: storedEvent, setEvent, resetEvent } = useEventStore();
+  const { event: storedEvent, setEvent } = useEventStore();
 
   const mutationUpsert = useEventsMutationUpsert();
   const mutationCreate = useEventsMutationCreate();
@@ -88,7 +87,7 @@ export const useMultiStepFormLogic = (props: {
     }
   }, [props.isOpen, methods, defaultFormValues]);
 
-  const { data: collectedEvent, isFetching, refetch } = useEventQuery(Number(defaultFormValues.eventId), props.userId, false);
+  const { isFetching, refetch } = useEventQuery(Number(defaultFormValues.eventId), props.userId, false);
 
   const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === '0' ? 'New' : 'Read');
 
@@ -204,7 +203,7 @@ export const useMultiStepFormLogic = (props: {
   }, [methods, status, resetForm]);
 
   const onEdit = useCallback(async () => {
-    const { data, isError, error } = await refetch();
+    const { data, isError } = await refetch();
 
     if (data && !isError) {
       methods.reset(mapEventToSchema(data));

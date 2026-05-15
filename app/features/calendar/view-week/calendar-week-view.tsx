@@ -3,9 +3,8 @@
 import { format, parse } from 'date-fns';
 import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import { CalendarWeekViewSkeleton } from './skeleton-calendar-week-view';
 import { CalendarScrollContainerPrivate } from '../components/calendar-scroll-container';
 import { CalendarScrollColumnPrivate } from '../components/calendar-scroll-column';
 
@@ -14,7 +13,6 @@ import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-eve
 import { IEventBlock } from '../webworkers/generic-webworker';
 import { CalendarScrollContainerSkeleton } from '../components/calendar-scroll-container-skeleton';
 import { GenericError } from '../../../../components/shared/generic-error';
-import { TStatusKey } from '@/lib/types';
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const {
@@ -30,8 +28,6 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     setIsHeaderLoading,
     setTotalEvents,
   } = usePrivateCalendar();
-
-  const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
 
   const { result, isLoading, error } = usePrivateCalendarEvents('WEEK', date, visibleHours, userId, selectedRoomIds, selectedStatusKeys);
 

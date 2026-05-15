@@ -2,12 +2,9 @@ import { IEvent, IEventSingleRoom } from '@/lib/schemas';
 import { TColors, TIME_BLOCK_SIZE, TStatusKey, TVisibleHours } from '@/lib/types';
 import {
   addDays,
-  addHours,
-  addMinutes,
   addMonths,
   areIntervalsOverlapping,
   differenceInDays,
-  differenceInMinutes,
   eachDayOfInterval,
   endOfDay,
   endOfMonth,
@@ -15,7 +12,6 @@ import {
   endOfYear,
   format,
   getDaysInMonth,
-  isEqual,
   isSameDay,
   isSameMonth,
   isSunday,
@@ -30,10 +26,9 @@ import {
   subMinutes,
 } from 'date-fns';
 
-import { RRule, rrulestr } from 'rrule';
+import { rrulestr } from 'rrule';
 import {
   CalendarAction,
-  GroupingType,
   IRequestGroup,
   IEventBlock,
   IEventView,
@@ -45,8 +40,6 @@ import {
   IYearMonthView,
 } from './generic-webworker';
 import { daysBetween } from 'rrule/dist/esm/dateutil';
-import { EventType } from 'react-hook-form';
-import { getDurationText } from '@/lib/helpers';
 
 export function calculateViewBoundaries(config: TVisibleHours, events: IEventSingleRoom[], viewStart: Date, viewEnd: Date) {
   let minHour = config.from;
@@ -79,7 +72,6 @@ export function calculateViewBoundaries(config: TVisibleHours, events: IEventSin
   // STEP 2: Process multi-day events using the bounds established by otherEvents
   multiDayEvents.forEach((event) => {
     const position = event.multiDay?.position;
-    const isEndAtMidnight = event.multiDay?.isEndAtMidnight || false;
     const dateToProcess = event.multiDay?.calculatedDate ? new Date(event.multiDay.calculatedDate) : null;
 
     // --- START BOUNDARY (minHour) ---
@@ -616,25 +608,6 @@ function getDaysInView(selectedDate: Date) {
   return { startDate: firstDate, endDate: lastDate };
 }
 
-function getVisibleHours(visibleHours: TVisibleHours, singleDayEvents: IEventSingleRoom[]) {
-  let earliestEventHour = visibleHours.from;
-  let latestEventHour = visibleHours.to;
-
-  singleDayEvents.forEach((event) => {
-    const startHour = new Date(event.startDate).getHours();
-    const endTime = new Date(event.endDate);
-    const endHour = endTime.getHours() + (endTime.getMinutes() > 0 ? 1 : 0);
-    if (startHour < earliestEventHour) earliestEventHour = startHour;
-    if (endHour > latestEventHour) latestEventHour = endHour;
-  });
-
-  latestEventHour = Math.min(latestEventHour, 24);
-
-  const hours = Array.from({ length: latestEventHour - earliestEventHour }, (_, i) => i + earliestEventHour);
-
-  return { hours, earliestEventHour, latestEventHour };
-}
-
 function groupEvents(dayEvents: IEventSingleRoom[]) {
   const sortedEvents = dayEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   const groups: IEventSingleRoom[][] = [];
@@ -742,11 +715,6 @@ function getEventVisualRange(event: IEventSingleRoom, day: Date) {
   }
 
   return { startMinutes, endMinutes };
-}
-
-function getWallClockMinutes(date: Date): number {
-  // This ignores DST and just looks at what the "clock on the wall" says
-  return date.getHours() * 60 + date.getMinutes();
 }
 
 function isSingleAllDayEvent(startDate: Date, endDate: Date): boolean {
@@ -992,32 +960,6 @@ function getAdjustedEndDateForMultiDay(originalEndDate: Date): Date {
   }
 
   return end;
-}
-
-/**
- * Determines the display hours for a multi-day event segment
- */
-function getDisplayHoursForSegment(
-  position: 'first' | 'middle' | 'last' | 'single',
-  event: IEventSingleRoom,
-  minHour: number,
-  maxHour: number,
-  isEndAtMidnight: boolean,
-): { displayStartHour: number; displayEndHour: number } {
-  switch (position) {
-    case 'first':
-      return { displayStartHour: minHour, displayEndHour: maxHour };
-    case 'middle':
-      return { displayStartHour: minHour, displayEndHour: maxHour };
-    case 'last':
-      // If ends at midnight, cap at previous day's max hour
-      const effectiveEndHour = isEndAtMidnight ? 24 : maxHour;
-      return { displayStartHour: minHour, displayEndHour: effectiveEndHour };
-    case 'single':
-      return { displayStartHour: minHour, displayEndHour: maxHour };
-    default:
-      return { displayStartHour: minHour, displayEndHour: maxHour };
-  }
 }
 
 export function setMultiDayEventBoundaries(events: IEvent[], minHour: number, maxHour: number) {

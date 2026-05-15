@@ -6,7 +6,6 @@ import { UTCDate } from '@date-fns/utc';
 
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
-import { format } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   return guardRoute(

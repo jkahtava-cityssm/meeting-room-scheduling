@@ -1,5 +1,5 @@
-import { findManyEvents, deleteManyEvents, findFirstEvent } from '@/lib/data/events';
-import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
+import { findFirstEvent } from '@/lib/data/events';
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { NextRequest } from 'next/server';
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         { hasReadSelf: { type: 'permission', resource: 'Event', action: 'Read Self' } },
       ],
     },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async ({ sessionUserId, permissions }) => {
       const { eventId } = await params;
       if (!eventId || isNaN(Number(eventId))) {
         return BadRequestMessage();

@@ -2,7 +2,6 @@ import { addYears } from 'date-fns';
 import { ByWeekday, RRule } from 'rrule';
 
 import { CombinedSchema, FlatCombinedSchema } from '../drawer-schema.validator';
-import z from 'zod/v4';
 
 let lastOptionsString: string | null = null;
 let cachedResult: {

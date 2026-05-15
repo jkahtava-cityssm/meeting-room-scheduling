@@ -1,9 +1,6 @@
-import { useSession } from '@/contexts/SessionProvider';
-import { CALENDAR_VIEWS, TCalendarView } from '@/lib/types';
-import { useSearchParams } from 'next/navigation';
 import { CalendarPermissions } from '../permissions/calendar.permissions';
-import { getDefaultView, getViewDate, RequirePermission } from './calendar-all-views';
-import { useMemo } from 'react';
+import { RequirePermission } from './calendar-all-views';
+
 import { CalendarLoadingPage } from '@/app/(private)/calendar/loading';
 import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
 import { CalendarHeader } from './calendar-all-header';

@@ -1,6 +1,6 @@
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from '@/lib/fetch-client';
-import { IUser, SEvent, SUser } from '@/lib/schemas';
+import { IUser, SUser } from '@/lib/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import z from 'zod/v4';
 import { queryKeys } from './querykeys';

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod/v4';
+
 import { CombinedSchema, CombinedUserSchema } from './drawer-schema.validator';
 
 import { isFormValid, isStepValid } from './lib/form-helper';
@@ -150,7 +150,7 @@ export const useMultiStepFormLogic = (props: {
   }, [methods, status, resetForm]);
 
   const onEdit = useCallback(async () => {
-    const { data, isError, error } = await refetch();
+    const { data, isError } = await refetch();
 
     if (data && !isError) {
       methods.reset(mapUserToSchema(data));

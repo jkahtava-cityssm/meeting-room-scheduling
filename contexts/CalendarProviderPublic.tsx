@@ -1,14 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-
-import type { Dispatch, SetStateAction } from 'react';
-
 import type { TVisibleHours } from '@/lib/types';
-import { VISIBLE_HOURS } from '../lib/helpers';
 import { PUBLIC_IROOM, usePublicConfiguration, usePublicRoomsQuery } from '@/lib/services/public';
-import { useRoomsQuery } from '@/lib/services/rooms';
-import { IRoom } from '@/lib/schemas';
 
 interface ICalendarContext {
   selectedDate: Date;

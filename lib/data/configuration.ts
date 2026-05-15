@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma';
 import type { Prisma } from '@prisma/client';
-import { CONFIGURATION_KEYS, TConfigurationKeys } from '../types';
+import { TConfigurationKeys } from '../types';
 import { z } from 'zod/v4';
 
 export const SConfigurationEntry = z.discriminatedUnion('type', [

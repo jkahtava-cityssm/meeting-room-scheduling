@@ -8,7 +8,6 @@ import { IEventBlock } from '../webworkers/generic-webworker';
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { IEventSingleRoom } from '@/lib/schemas';
-import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
 
 export const EventCard = cva(
   'flex select-none flex-col gap-0.5 truncate whitespace-nowrap rounded-md border px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',

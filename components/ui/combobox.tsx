@@ -7,7 +7,6 @@ import { Check, ChevronDownIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { Button } from './button';
-import { Slot } from '@radix-ui/react-slot';
 
 interface ComboBoxItem {
   key: string;

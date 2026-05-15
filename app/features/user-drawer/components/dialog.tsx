@@ -49,7 +49,6 @@ export const EventDialog: React.FC<EventDialogProps> = ({
   showConfirm = false,
 }) => {
   const isDestructive = variant === 'error' || variant === 'warning';
-  const isInformational = variant === 'info' || variant === 'success';
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>

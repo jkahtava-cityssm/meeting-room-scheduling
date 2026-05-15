@@ -1,11 +1,8 @@
 import { TColors } from '@/lib/types';
-import DynamicIcon, { IconName } from '../ui/icon-dynamic';
+import { IconName } from '../ui/icon-dynamic';
 import { Button } from '../ui/button';
 import { Check, ChevronDownIcon, CircleX, Loader2Icon } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { BadgeColored } from '../ui/badge-colored';
 import { cn } from '@/lib/utils';
-import { ComboBox, ComboBoxTrigger } from '../ui/combobox';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command';
 import { useState } from 'react';

@@ -1,42 +1,25 @@
 'use client';
 import Link from 'next/link';
-import {
-  Columns,
-  Grid3x3,
-  List,
-  Plus,
-  Grid2x2,
-  CalendarRange,
-  ChevronLeft,
-  ChevronRight,
-  LucideFilter,
-  LucideSearch,
-  LucideMenuSquare,
-} from 'lucide-react';
+import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange, ChevronLeft, ChevronRight, LucideFilter, LucideMenuSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { RoomSelect } from '@/app/features/rooms/room-select';
 
 import type { TCalendarView, TStatusKey } from '@/lib/types';
 import { navigateDate, navigateURL } from '@/lib/helpers';
 import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
 import { useRouter } from 'next/navigation';
 
-import { DateNavigator, NavigationButtons } from './calendar-all-header-date-navigator';
+import { DateNavigator } from './calendar-all-header-date-navigator';
 import { TodayButton } from './calendar-all-header-today-button';
-import { CalendarPermissions } from '../permissions/calendar.permissions';
 
-import EventDrawer from '../../event-drawer/drawer-root';
 import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 
 import { StatusMultiSelect } from '../../status/status-multiselect';
 import { RoomMultiSelect } from '../../rooms/room-multiselect';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { DateControls } from '../view-public/public-date-control';
 import { useState } from 'react';
 import { CalendarDayPopover } from '@/components/calendar-day-popover/calendar-day-popover';
 import { formatDate, set } from 'date-fns';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { RoomMobileSelector } from './room-mobile-filter';
@@ -54,8 +37,6 @@ export function CalendarHeader({
   permissions: Partial<Record<TCalendarView, boolean>>;
   allowCreateEvent: boolean;
 }) {
-  const { day, week, month, year, agenda } = permissions;
-
   const { openEventDrawer } = useSharedEventDrawer();
 
   const { setSelectedRoomIds, selectedRoomIds, setSelectedStatusKeys, selectedStatusKeys } = usePrivateCalendar();

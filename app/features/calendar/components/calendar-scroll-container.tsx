@@ -1,11 +1,11 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarHourTimeline } from './calendar-scroll-hour-timeline';
 import { format } from 'date-fns';
-import { LoaderCircle, LucideBan, LucideCalendarDays, LucideCheck, LucideLock, X } from 'lucide-react';
-import { CalendarScrollProvider, useCalendarViewport } from './calendar-scroll-context';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { LoaderCircle, LucideCalendarDays } from 'lucide-react';
+import { CalendarScrollProvider } from './calendar-scroll-context';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
 
 export type CalendarScrollContainerProps = {

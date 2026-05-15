@@ -24,14 +24,12 @@ import { RoleSelect } from '@/app/features/roles/role-select';
 import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import { fetchDELETE, fetchPOST } from '@/lib/fetch-client';
-import { useRouter } from 'next/navigation';
 
 const PAGE_PERMISSIONS = {
   IsAdmin: { type: 'role', role: 'Admin' },
 } as const satisfies GroupedPermissionRequirement;
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
-  const router = useRouter();
   const { isMobile } = useSidebar();
   const { resolvedTheme, setTheme } = useTheme();
 
@@ -51,7 +49,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
 
   const handleAddImpersonation = async (roleId: string) => {
     const result = await fetchPOST<{ sessionId: string; impersonatedRole: string }>('/api/admin/impersonate', { roleId: roleId });
-    const session = await authClient.getSession({
+    await authClient.getSession({
       query: {
         disableCookieCache: true,
       },
@@ -63,7 +61,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
 
   const handleRemoveImpersonation = async () => {
     const result = await fetchDELETE<null>(`/api/admin/impersonate`);
-    const session = await authClient.getSession({
+    await authClient.getSession({
       query: {
         disableCookieCache: true,
       },

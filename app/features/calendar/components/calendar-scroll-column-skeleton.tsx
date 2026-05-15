@@ -1,14 +1,12 @@
 import { cn } from '@/lib/utils';
 
-import { useMemo } from 'react';
-
 import { TIME_BLOCK_SIZE } from '@/lib/types';
 
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function CalendarScrollColumnSkeleton({ hours, isLastColumn }: { hours: number[]; isLastColumn: boolean }) {
   const totalBlocks = 2;
-  const middleBlock = useMemo(() => Math.max(0, Math.floor(totalBlocks / 2) - 1), [totalBlocks]);
+
   return (
     <div className={cn('min-w-45 w-full border-b-2', isLastColumn && 'border-r-2')}>
       <div className="sticky top-0 z-5 bg-background border-b-2 h-8 flex items-center justify-center">
@@ -47,13 +45,4 @@ export function CalendarScrollColumnSkeleton({ hours, isLastColumn }: { hours: n
       </div>
     </div>
   );
-}
-
-const VALID_INTERVALS = [5, 10, 15, 20, 30, 60] as const;
-const MINIMUM_INTERVAL = 5;
-const MAXIMUM_INTERVAL = 60;
-
-function clampToValidInterval(interval: number) {
-  const bounded = Math.min(Math.max(interval, MINIMUM_INTERVAL), MAXIMUM_INTERVAL);
-  return VALID_INTERVALS.reduce((best, v) => (Math.abs(bounded - v) < Math.abs(bounded - best) ? v : best), VALID_INTERVALS[0]);
 }

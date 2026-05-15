@@ -1,12 +1,10 @@
-import { z } from 'zod/v4';
-import { createContext, useMemo, useRef, useState } from 'react';
+import { createContext } from 'react';
 import { Form, FormProvider } from 'react-hook-form';
 
 import { FormStep, MultiStepFormContextProps } from './types';
 
 import { useContext } from 'react';
-import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from '@/components/ui/sheet';
-import { useDisclosure } from '@/hooks/use-disclosure';
+import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet } from '@/components/ui/sheet';
 
 import React from 'react';
 import { IEventSingleRoom } from '@/lib/schemas';

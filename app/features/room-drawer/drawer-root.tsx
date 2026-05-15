@@ -1,10 +1,10 @@
-import { HomeIcon, UserIcon } from 'lucide-react';
+import { UserIcon } from 'lucide-react';
 import { FieldKeys, FormStep } from './types';
 
 import { IRoom, SRoom } from '@/lib/schemas';
 import React, { useMemo } from 'react';
 
-import { step1Schema } from './drawer-schema.validator';
+import { step1RoomSchema } from './drawer-schema.validator';
 import { MultiStepForm } from './drawer-form-provider';
 import { Step01Room } from './drawer-step-room-details';
 
@@ -15,8 +15,8 @@ export default function RoomDrawer({ room, isOpen, onOpen, onClose }: { room?: I
       component: Step01Room,
       icon: UserIcon,
       position: 1,
-      validationSchema: step1Schema,
-      fields: Object.keys(step1Schema.shape) as FieldKeys[],
+      validationSchema: step1RoomSchema,
+      fields: Object.keys(step1RoomSchema.shape) as FieldKeys[],
     },
   ];
 

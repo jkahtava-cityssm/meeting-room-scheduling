@@ -1,5 +1,5 @@
 // use-room-filtering.ts
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PUBLIC_IROOM } from '@/lib/services/public';
 
 export function useRoomFiltering(rooms: PUBLIC_IROOM[] | undefined) {

@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarHourTimeline } from './calendar-scroll-hour-timeline';
-import { format } from 'date-fns';
+
 import { CalendarScrollColumnSkeleton } from './calendar-scroll-column-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -41,9 +41,6 @@ export function CalendarContainerSkeleton({ hours, totalColumns }: { hours: numb
 }
 
 function HourColumnSkeleton({ hours }: { hours: number[] }) {
-  const lastItem = hours?.at(-1);
-  const lastHour = lastItem == null ? 0 : lastItem + 1;
-
   return (
     <div className="sticky left-0 z-10 bg-background min-w-18 border-r-2 pr-2 border-b-2  shrink-0 pt-8">
       <div className=" pt-1.5">

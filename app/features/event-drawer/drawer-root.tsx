@@ -9,7 +9,7 @@ import { Step2 } from './drawer-step-recurrence';
 import { CombinedSchema, getStep1Schema, Step2Fields, step2Schema } from './drawer-schema.validator';
 import { MultiStepForm } from './drawer-form-provider';
 import { EventDrawerPermissions } from './lib/permissions';
-import { useSession } from '@/contexts/SessionProvider';
+
 import { usePrivateConfigurationQuery } from '@/lib/services/configuration';
 import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
 
