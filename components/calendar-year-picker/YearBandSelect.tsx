@@ -14,8 +14,6 @@ export default function YearBandSelect({
   bandLabel: string;
   onYearChange?: (date: Date) => void;
 }) {
-  const selectedYear = selectedDate.getFullYear();
-
   return (
     <Select
       value={bandLabel}

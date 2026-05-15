@@ -75,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 }
 
 function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { can, canAny, isVerifying } = NavigationPermissions.usePermissions();
+  const { can, canAny } = NavigationPermissions.usePermissions();
 
   const searchParams = useSearchParams();
 
@@ -101,7 +101,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
 
-  const { data: pendingEvents, isPending: eventsPending } = useTotalEventsByStatusQuery('PENDING');
+  const { data: pendingEvents } = useTotalEventsByStatusQuery('PENDING');
 
   return (
     <Sidebar className="z-50 top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>

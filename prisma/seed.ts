@@ -747,13 +747,12 @@ async function CreateEdgeCaseMultiDayEvents(
     endDate.setHours(edgeCase.endTime.hours, edgeCase.endTime.minutes, 0, 0);
 
     const userIndex = Math.floor(Math.random() * userList.length);
-    const roomIndex = Math.floor(Math.random() * rooms.length);
 
     const randomRoomCount = Math.floor(Math.random() * rooms.length);
     const isMultiRoom = Math.random() < 0.1;
 
     try {
-      const event = await prisma.event.create({
+      await prisma.event.create({
         data: {
           eventRooms: {
             create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
@@ -845,13 +844,12 @@ async function CreateEdgeCaseMultiDayEvents(
         }
 
         const userIndex = Math.floor(Math.random() * userList.length);
-        const roomIndex = Math.floor(Math.random() * rooms.length);
 
         const randomRoomCount = Math.floor(Math.random() * rooms.length);
         const isMultiRoom = Math.random() < 0.1;
 
         try {
-          const event = await prisma.event.create({
+          await prisma.event.create({
             data: {
               eventRooms: {
                 create: [...generateRandomRoomList(rooms, randomRoomCount, isMultiRoom)],
@@ -1002,8 +1000,6 @@ async function CreateRandomRecurrence(startDate: Date, endDate: Date, createOnly
       dayValue = Math.floor(Math.random() * 7) + 1;
       break;
   }
-
-  const newStartDate = startDate; //addDays(startDate, -Math.floor(Math.random() * 31));
 
   let newRule = undefined;
 
@@ -1186,7 +1182,7 @@ async function createSystemUser() {
 
       // We use a raw query here because Prisma's upsert generates
       // internal logic that often conflicts with IDENTITY_INSERT settings
-      const user = await tx.$executeRawUnsafe(`
+      await tx.$executeRawUnsafe(`
       IF NOT EXISTS (SELECT 1 FROM "User" WHERE user_id = ${userId})
       INSERT INTO "User" (user_id, name, email, email_verified, external_id, is_active)
       VALUES (${userId}, 'SYSTEM', '', 0, '000', 0)
@@ -1236,7 +1232,7 @@ async function main() {
     });
 
     const adminRole = await FindCreateRole('Admin');
-    const adminUserRole = await FindCreateUserRole(adminRole.roleId, adminUser.id);
+    await FindCreateUserRole(adminRole.roleId, adminUser.id);
   }
 
   if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development') {
@@ -1253,8 +1249,6 @@ async function main() {
   for (const roleSet of DEFAULT_PERMISSION_SETS) {
     const role = roles[roleSet.ROLE];
     for (const resourceSet of roleSet.SET) {
-      const resource = resources[resourceSet.RESOURCE];
-
       for (const actionName of resourceSet.ACTIONS) {
         const resourceAction = resourceActions[resourceSet.RESOURCE][actionName];
         await FindCreatePermissionSet(role, resourceAction);
@@ -1278,7 +1272,7 @@ async function main() {
   }[] = [];
 
   console.log('Seeding Room Sizes...');
-  const { roomCategoryId: category_none } = await FindCreateRoomCategory('None');
+  await FindCreateRoomCategory('None');
   const { roomCategoryId: category_small } = await FindCreateRoomCategory('Small');
   const { roomCategoryId: category_large } = await FindCreateRoomCategory('Large');
   const { roomCategoryId: category_special } = await FindCreateRoomCategory('Special');
@@ -1309,7 +1303,7 @@ async function main() {
   const hasProjector = await FindCreateProperty('HasProjector', 'boolean');
 
   for (const room of roomList) {
-    const property = await FindCreateRoomProperty(room.roomId, hasProjector.propertyId, projectorRooms.includes(room.name) ? 'true' : 'false');
+    await FindCreateRoomProperty(room.roomId, hasProjector.propertyId, projectorRooms.includes(room.name) ? 'true' : 'false');
   }
   console.log('Seeding Event Statuses...');
   //await FindCreateEventStatus("Created");

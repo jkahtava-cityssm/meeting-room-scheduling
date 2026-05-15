@@ -30,7 +30,7 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
   const { startDate } = useMultiStepForm();
   const { control, watch } = useFormContext<z.infer<typeof step2Schema>>();
 
-  const { can, isVerifying } = EventDrawerPermissions.usePermissions();
+  const { can } = EventDrawerPermissions.usePermissions();
 
   const allowRecurrence = can('ToggleRecurrence');
   // All calculation logic, debouncing, and state is now hidden in this hook

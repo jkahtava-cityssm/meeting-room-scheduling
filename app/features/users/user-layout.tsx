@@ -53,7 +53,7 @@ const DEFAULT_FILTERS = [{ id: 'isActive', value: ['true'] }];
 const MOBILE_COL_SPAN = 2;
 
 export function UserLayout() {
-  const { data, isPending, isFetching, error } = useUsersQuery(false);
+  const { data, isFetching, error } = useUsersQuery(false);
   const { openUserDrawer } = useSharedUserDrawer();
 
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -170,8 +170,6 @@ export function UserLayout() {
       columnHelper.accessor('isActive', {
         size: 120,
         header: ({ column }) => {
-          const currentFilters = (column.getFilterValue() as string[]) ?? [];
-
           return (
             <div className="hidden md:block">
               <FilterHeader title="Status" center column={column} isCountVisible={true}>
@@ -197,8 +195,6 @@ export function UserLayout() {
       columnHelper.accessor('isManaged', {
         size: 120,
         header: ({ column }) => {
-          const currentFilters = (column.getFilterValue() as string[]) ?? [];
-
           return (
             <div className="hidden md:block">
               <FilterHeader title="Type" center column={column} isCountVisible={true}>
@@ -224,8 +220,6 @@ export function UserLayout() {
       columnHelper.accessor('emailEnabled', {
         size: 120,
         header: ({ column }) => {
-          const currentFilters = (column.getFilterValue() as string[]) ?? [];
-
           return (
             <div className="hidden md:block">
               <FilterHeader title="Notify" center column={column} isCountVisible={true}>

@@ -38,7 +38,7 @@ export const useMultiStepFormLogic = (props: {
   restrictHours: boolean;
 }): MultiStepFormContextProps => {
   const originRef = useRef<HTMLElement | null>(null);
-  const { event: storedEvent, setEvent, resetEvent } = useEventStore();
+  const { event: storedEvent, setEvent } = useEventStore();
 
   const mutationUpsert = useEventsMutationUpsert();
   const mutationCreate = useEventsMutationCreate();
@@ -87,7 +87,7 @@ export const useMultiStepFormLogic = (props: {
     }
   }, [props.isOpen, methods, defaultFormValues]);
 
-  const { data: collectedEvent, isFetching, refetch } = useEventQuery(Number(defaultFormValues.eventId), props.userId, false);
+  const { isFetching, refetch } = useEventQuery(Number(defaultFormValues.eventId), props.userId, false);
 
   const [status, setStatus] = useState<FormStatus>(defaultFormValues.eventId === '0' ? 'New' : 'Read');
 
@@ -203,7 +203,7 @@ export const useMultiStepFormLogic = (props: {
   }, [methods, status, resetForm]);
 
   const onEdit = useCallback(async () => {
-    const { data, isError, error } = await refetch();
+    const { data, isError } = await refetch();
 
     if (data && !isError) {
       methods.reset(mapEventToSchema(data));

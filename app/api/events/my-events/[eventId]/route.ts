@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         { hasReadSelf: { type: 'permission', resource: 'Event', action: 'Read Self' } },
       ],
     },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async ({ sessionUserId, permissions }) => {
       const { eventId } = await params;
       if (!eventId || isNaN(Number(eventId))) {
         return BadRequestMessage();

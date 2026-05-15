@@ -84,8 +84,6 @@ export function CalendarDayColumnCurrentEvents({ events, date }: { events: IEven
             {/* h-[422px] max-h-[25vh] md:max-h-[35vh] lg:max-h-[45vh] */}
             <div className="space-y-6 pb-4">
               {currentEvents.map((event, index) => {
-                const room = event.roomName; // = currentEvents.room; //rooms.find((room) => room.id === event.room.id);
-
                 return (
                   <div key={event.eventId + '-' + index} className="space-y-1.5">
                     <p className="line-clamp-2 text-sm font-semibold">{event.title}</p>

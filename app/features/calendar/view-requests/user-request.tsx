@@ -69,16 +69,8 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
 
   const itemTypeRef = useRef<Array<'SECTION_HEADER' | 'GROUP_HEADER' | 'GROUP_ROW'>>([]);
 
-  const {
-    visibleHours,
-    selectedRoomIds,
-    selectedStatusKeys,
-    setSelectedStatusKeys,
-    setIsHeaderLoading,
-    setTotalEvents,
-    statusIdLookupByKey,
-    statusKeyLookupById,
-  } = usePrivateCalendar();
+  const { visibleHours, selectedRoomIds, selectedStatusKeys, setSelectedStatusKeys, setIsHeaderLoading, setTotalEvents, statusIdLookupByKey } =
+    usePrivateCalendar();
 
   const groupKeyRef = useRef<string | null>(null);
 
@@ -302,8 +294,6 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   });
 
   const patchEvent = useEventPatchMutation();
-
-  const activeMutationsRef = useRef(0);
 
   const handleStatusChange = useCallback(
     (id: number, newStatus: TStatusKey) => {

@@ -13,15 +13,6 @@ import { cn } from '@/lib/utils';
 import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const RoomCardStyles = cva('', {
-  variants: {
-    color: sharedColorVariants,
-  },
-  defaultVariants: {
-    color: 'blue',
-  },
-});
-
 interface RoomCardProps extends Omit<DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>, 'color'> {
   room: IRoom;
   OnApprove: () => void;

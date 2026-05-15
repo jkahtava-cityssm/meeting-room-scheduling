@@ -158,7 +158,7 @@ export const useRoomFormLogic = (props: {
   }, [methods, status, resetForm]);
 
   const onEdit = useCallback(async () => {
-    const { data, isError, error } = await refetch();
+    const { data, isError } = await refetch();
 
     if (data && !isError) {
       methods.reset(mapRoomToSchema(data));

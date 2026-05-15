@@ -26,15 +26,12 @@ export async function POST(request: NextRequest) {
 
     async ({ data, sessionUserId }) => {
       const {
-        eventId,
-
         userId,
         statusId,
         title,
         description,
         startDate,
         endDate,
-        recurrenceId,
         rule,
         ruleDescription,
         ruleStartDate,
@@ -226,7 +223,7 @@ export async function PATCH(request: NextRequest) {
         };
 
         // 3. Update the Event
-        const updatedEvent = await tx.event.update({
+        await tx.event.update({
           where: { eventId },
           data: updateData,
         });

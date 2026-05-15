@@ -25,7 +25,7 @@ import { EventCard } from '../calendar/components/calendar-scroll-private-event-
 import { addHours, format } from 'date-fns';
 
 export const Step01Room = ({ formStatus }: { formStatus: FormStatus }) => {
-  const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
+  const { control, watch } = useFormContext<z.infer<typeof step1RoomSchema>>();
 
   const isReadOnly = formStatus === 'Read' || formStatus === 'Loading';
 

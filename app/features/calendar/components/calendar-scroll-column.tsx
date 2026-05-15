@@ -202,7 +202,6 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
 }: CalendarScrollColumnProps) {
   const validInterval = clampToValidInterval(interval);
   const totalBlocks = 60 / validInterval;
-  const middleBlock = useMemo(() => Math.max(0, Math.floor(totalBlocks / 2) - 1), [totalBlocks]);
 
   const lockDay = limitToSpan && currentDate.getTime() > addDays(new Date(), maxSpan).getTime();
 

@@ -64,7 +64,6 @@ export default function MonthGrid({
 
   const moveByOffset = (index: number, offset: number, fallback: number) => {
     const nextIndex = index + offset;
-    const col = index % totalColumns;
 
     if (nextIndex < 0) {
       onNavigate('prev');

@@ -6,7 +6,6 @@ import { z } from 'zod/v4';
 import { queryKeys } from './querykeys';
 
 type IRoomCategory = z.infer<typeof SRoomCategory>;
-type IRoomProperty = z.infer<typeof SRoomProperty>;
 
 const AllRooms: IRoom = {
   roomId: -1,

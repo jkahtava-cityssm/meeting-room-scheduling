@@ -37,7 +37,7 @@ const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v :
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { minHour, maxHour, interval, maxSpan } = useMultiStepForm();
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<ReturnType<typeof getStep1Schema>>>();
-  const { can, isVerifying } = EventDrawerPermissions.usePermissions();
+  const { can } = EventDrawerPermissions.usePermissions();
 
   const disableChangeStatus = !can('ChangeEventStatus');
   const disableChangeUser = !can('ChangeEventUser');

@@ -7,10 +7,6 @@ import z from 'zod/v4';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
 
-const formatDate = (date: Date) => {
-  return formatISO(date);
-};
-
 export const usePermissionsQuery = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.permissions.sets(),
@@ -68,7 +64,7 @@ export const usePermissionMutationUpsert = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: rolePermissionMutations[]) => fetchPUT<null>(`/api/admin/permissions`, data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.permissions.all });
     },
   });

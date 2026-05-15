@@ -12,10 +12,8 @@ import { step1UserSchema } from './drawer-schema.validator';
 
 import { GenericInfoMessage } from '@/components/shared/generic-message';
 
-const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v : v ? new Date(v) : new Date());
-
 export const Step1 = ({ formStatus }: { formStatus: FormStatus }) => {
-  const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<typeof step1Schema>>();
+  const { control, watch } = useFormContext<z.infer<typeof step1UserSchema>>();
 
   const isManaged = watch('isManaged') === 'true';
   const isReadOnly = formStatus === 'Read' || formStatus === 'Loading';

@@ -25,8 +25,6 @@ type Props = {
   onClick: (e: React.MouseEvent) => void;
 };
 
-const CLOSE_ALL_POPOVERS = 'calendar-private-close-all-tooltips';
-
 const HOVER_OPEN_DELAY = 500;
 const HOVER_CLOSE_DELAY = 100;
 

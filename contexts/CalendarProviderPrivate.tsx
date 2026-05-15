@@ -42,7 +42,7 @@ export function CalendarProviderPrivate({ children }: { children: React.ReactNod
   } = usePrivateConfigurationQuery(['visibleHoursStart', 'visibleHoursEnd', 'timeSlotInterval', 'maxBookingSpan']);
 
   const { data: visibleRooms, error: roomError, isPending: isRoomsPending } = useRoomsQuery();
-  const { data: statuses, error: statusError, isPending: isStatusPending } = useStatusQuery();
+  const { data: statuses } = useStatusQuery();
 
   const [isHeaderLoading, setIsHeaderLoading] = useState(true);
   const [totalEvents, setTotalEvents] = useState(0);

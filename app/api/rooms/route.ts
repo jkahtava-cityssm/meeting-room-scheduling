@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (data.roomProperty) {
-          const propertyIds = data.roomProperty.map((p) => p.propertyId);
+          //const propertyIds = data.roomProperty.map((p) => p.propertyId);
 
           await Promise.all(data.roomProperty.map((prop) => upsertRoomProperty(roomId, prop.propertyId, prop.value, sessionUserId, tx)));
         }

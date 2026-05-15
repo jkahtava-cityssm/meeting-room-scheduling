@@ -37,8 +37,6 @@ export function CalendarHeader({
   permissions: Partial<Record<TCalendarView, boolean>>;
   allowCreateEvent: boolean;
 }) {
-  const { day, week, month, year, agenda } = permissions;
-
   const { openEventDrawer } = useSharedEventDrawer();
 
   const { setSelectedRoomIds, selectedRoomIds, setSelectedStatusKeys, selectedStatusKeys } = usePrivateCalendar();

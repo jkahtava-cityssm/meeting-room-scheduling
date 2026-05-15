@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     request,
     { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
 
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async () => {
       const searchParams = request.nextUrl.searchParams;
 
       const roleId = searchParams.get('roleId');

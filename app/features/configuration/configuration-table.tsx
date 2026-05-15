@@ -166,14 +166,6 @@ function ConfigRow({
   );
 }
 
-function setConfigField(sets: TConfigurationEntry[], key: string, newValue: boolean): TConfigurationEntry[] {
-  return sets.map((set) => {
-    if (set.key !== key) return set;
-
-    return { ...set, value: newValue } as TConfigurationEntry;
-  });
-}
-
 const ConfigField = ({ entry, onChange }: { entry: TConfigurationEntry; onChange: (val: string) => void }) => {
   // 1. Check if we have a special component for this key
   const Override = CONFIG_OVERRIDES[entry.key];

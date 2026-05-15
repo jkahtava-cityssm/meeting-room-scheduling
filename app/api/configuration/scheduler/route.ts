@@ -15,27 +15,23 @@ import {
  * Fetch current Entra ID Sync Service status
  */
 export async function GET(request: NextRequest) {
-  return guardRoute(
-    request,
-    { EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } },
-    async ({ sessionUserId }) => {
-      try {
-        const results = await pollEntraSyncScheduler();
+  return guardRoute(request, { EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } }, async () => {
+    try {
+      const results = await pollEntraSyncScheduler();
 
-        if (!results) {
-          return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
-        }
-
-        return NextResponse.json({
-          success: true,
-          ...results,
-        });
-      } catch (err) {
-        console.error('[API] Scheduler GET error:', err);
+      if (!results) {
         return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
       }
-    },
-  );
+
+      return NextResponse.json({
+        success: true,
+        ...results,
+      });
+    } catch (err) {
+      console.error('[API] Scheduler GET error:', err);
+      return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
+    }
+  });
 }
 
 /**

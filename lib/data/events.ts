@@ -160,7 +160,7 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
 
   const mapped = events.map((event) => {
     //Remove Properties
-    const { user, createdByUser, updatedByUser, ...other } = event;
+    const { user } = event;
 
     return {
       ...event,

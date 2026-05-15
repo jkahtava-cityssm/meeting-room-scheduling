@@ -21,15 +21,6 @@ const IconColors = cva('', {
   },
 });
 
-const BackgroundColors = cva('', {
-  variants: {
-    background: sharedIconBackgrounVariants,
-  },
-  defaultVariants: {
-    background: 'invisible',
-  },
-});
-
 interface DynamicIconProps extends React.SVGProps<SVGSVGElement> {
   name: keyof typeof dynamicIconImports;
   color?: TColors;

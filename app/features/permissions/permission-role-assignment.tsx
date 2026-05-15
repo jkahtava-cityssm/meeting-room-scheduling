@@ -23,10 +23,6 @@ export interface Employee {
   employeeNumber: number;
 }
 
-interface EmployeeTableSectionProps {
-  onToggleAssigned: (id: number, next: boolean) => void;
-}
-
 interface UserFilters {
   name: string;
   email: string;
@@ -66,7 +62,7 @@ export function UserRoleAssignmentList() {
 
   const putUserRole = usePermissionUserRoleMutationUpsert();
 
-  const { data, isPending, isFetching, error } = usePermissionUserQuery(currentRole?.id, currentRole !== undefined);
+  const { data, isFetching, error } = usePermissionUserQuery(currentRole?.id, currentRole !== undefined);
 
   const [sort, setSort] = useState<{ key: SortColumn | null; dir: SortDirection }>({
     key: null,

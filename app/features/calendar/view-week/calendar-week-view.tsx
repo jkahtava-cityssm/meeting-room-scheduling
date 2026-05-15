@@ -29,8 +29,6 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
     setTotalEvents,
   } = usePrivateCalendar();
 
-  const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
-
   const { result, isLoading, error } = usePrivateCalendarEvents('WEEK', date, visibleHours, userId, selectedRoomIds, selectedStatusKeys);
 
   useEffect(() => {
