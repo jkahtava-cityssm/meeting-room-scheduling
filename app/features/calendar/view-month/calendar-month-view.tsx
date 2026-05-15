@@ -16,8 +16,6 @@ import { navigateURL } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
 
 import { GenericError } from '../../../../components/shared/generic-error';
-import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
-import { TStatusKey } from '@/lib/types';
 
 const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MIN_INNER_HEIGHT = 96;

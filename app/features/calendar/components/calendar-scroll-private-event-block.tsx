@@ -13,8 +13,7 @@ import { TColors, TStatusKey } from '@/lib/types';
 import { IEventBlock } from '../webworkers/generic-webworker';
 import { IEventSingleRoom } from '@/lib/schemas';
 
-import { BadgeColored } from '@/components/ui/badge-colored';
-import { Calendar, Clock, LucideDoorClosed, LucideDoorOpen, SendHorizonal, User } from 'lucide-react';
+import { Calendar, Clock, LucideDoorOpen, User } from 'lucide-react';
 import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
 import { CalendarPermissions } from '../permissions/calendar.permissions';
 

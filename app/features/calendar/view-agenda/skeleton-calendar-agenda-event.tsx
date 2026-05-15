@@ -1,10 +1,10 @@
-import { MapPin, Clock, Text, Printer } from 'lucide-react';
+import { Printer } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
+
 //import { SkeletonCalendarEventListRightPanel } from "./skeleton-calendar-day-right-panel";
 
 export function AgendaEventSkeleton({ selectedDate }: { selectedDate: Date }) {

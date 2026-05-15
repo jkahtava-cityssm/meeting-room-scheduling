@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { guardRoute } from '@/lib/api-guard';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { APP_DOMAIN, InternalServerErrorMessage, NoContentMessage, SuccessMessage } from '@/lib/api-helpers';
-import { prisma } from '@/prisma';
+import { InternalServerErrorMessage, NoContentMessage } from '@/lib/api-helpers';
+
 import { deleteSSOProvider, findFirstConfiguration, updateConfiguration } from '@/lib/data/configuration';
 
 export async function POST(req: NextRequest) {

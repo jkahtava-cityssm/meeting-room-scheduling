@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { findProcessById } from '@/jobs/system-process.util';
-import { getNextCronOccurrence, validateCronExpression } from '@/jobs/cron-util';
+import { validateCronExpression } from '@/jobs/cron-util';
 import { guardRoute } from '@/lib/api-guard';
-import { getSystemProcess, updateSystemProcess } from '@/jobs/system-process.data';
+
 import {
   pollEntraSyncScheduler,
   startEntraSyncScheduler,

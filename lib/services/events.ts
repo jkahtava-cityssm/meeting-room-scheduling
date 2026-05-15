@@ -1,10 +1,9 @@
 import { formatISO } from 'date-fns';
 
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch-client';
 import z from 'zod/v4';
 import { IEvent, SEvent, utcDateSchema } from '@/lib/schemas';
-import { Prisma } from '@prisma/client';
 import { processEventsAsync } from '@/app/features/calendar/webworkers/generic-webworker-client';
 import { CalendarAction, ISODateString } from '@/app/features/calendar/webworkers/generic-webworker';
 import { getDateRange } from '@/app/features/calendar/webworkers/generic-webworker-utilities';

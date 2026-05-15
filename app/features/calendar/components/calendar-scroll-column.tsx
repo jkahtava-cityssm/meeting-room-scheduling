@@ -1,17 +1,16 @@
 import { cn } from '@/lib/utils';
 
-import { GridEventBlock } from './calendar-scroll-private-event-block-old';
 import { Fragment, ReactNode, ButtonHTMLAttributes, forwardRef, memo, useCallback, useMemo } from 'react';
 
 import { TIME_BLOCK_SIZE } from '@/lib/types';
 import { useCalendarViewport } from './calendar-scroll-context';
 import { PublicEventBlock } from './calendar-scroll-public-event-block';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { IEventBlock } from '../webworkers/generic-webworker';
 import { CalendarPermissions } from '../permissions/calendar.permissions';
 import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 import { addDays } from 'date-fns';
-import { LucideLock, LucideShieldBan } from 'lucide-react';
+import { LucideShieldBan } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PrivateEventBlock } from './calendar-scroll-private-event-block';
 

@@ -24,7 +24,6 @@ import { RoleSelect } from '@/app/features/roles/role-select';
 import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import { fetchDELETE, fetchPOST } from '@/lib/fetch-client';
-import { useRouter } from 'next/navigation';
 
 const PAGE_PERMISSIONS = {
   IsAdmin: { type: 'role', role: 'Admin' },

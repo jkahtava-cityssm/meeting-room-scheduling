@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma';
-import type { EventRoom, Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { SEvent } from '../schemas';
 import z from 'zod/v4';
 import { safeCreateMany } from '../api-helpers';

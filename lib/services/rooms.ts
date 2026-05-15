@@ -1,8 +1,7 @@
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { fetchDELETE, fetchGET, fetchPOST, fetchPUT } from '@/lib/fetch-client';
-import { IRoom, SRoom, SRoomCategory, SRoomProperty, SRoomRoles } from '@/lib/schemas';
+import { IRoom, SRoom, SRoomCategory } from '@/lib/schemas';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { property } from 'lodash';
 import { z } from 'zod/v4';
 import { queryKeys } from './querykeys';
 

@@ -1,4 +1,4 @@
-import { useWatch, Control } from 'react-hook-form';
+import { Control } from 'react-hook-form';
 import { z } from 'zod/v4';
 
 import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
@@ -6,7 +6,7 @@ import { FormControl, FormField, FormItem, FormLabel } from '@/components/ui/for
 import { NumberFormInput } from '../components/number-form-input';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { ErrorMessage } from '../components/error-message';
+
 import { step2Schema } from '../drawer-schema.validator';
 
 export function WeeklyForm({ control, isReadOnly }: { control: Control<z.infer<typeof step2Schema>>; isReadOnly: boolean }) {

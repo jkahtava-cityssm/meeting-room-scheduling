@@ -5,9 +5,9 @@ import { useReactToPrint } from 'react-to-print';
 import { AgendaEventCard } from '@/app/features/calendar/view-agenda/calendar-agenda-event-block';
 
 import { usePrivateCalendar } from '@/contexts/CalendarProviderPrivate';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
-import { LoaderCircle, LucideCalendarDays, LucideDoorOpen, LucidePartyPopper, Printer } from 'lucide-react';
+import { LoaderCircle, LucideDoorOpen, LucidePartyPopper, Printer } from 'lucide-react';
 import { AgendaEventSkeleton } from './skeleton-calendar-agenda-event';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -17,12 +17,11 @@ import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-eve
 import { cn } from '@/lib/utils';
 import { GenericError } from '../../../../components/shared/generic-error';
 import { Label } from '@/components/ui/label';
-import { TStatusKey } from '@/lib/types';
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 export function CalendarAgendaView({ date, userId }: { date: Date; userId?: string }) {
-  const { visibleHours, visibleRooms, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents, configurationError, roomError } =
-    usePrivateCalendar();
+  const { visibleHours, visibleRooms, selectedRoomIds, selectedStatusKeys, setIsHeaderLoading, setTotalEvents } = usePrivateCalendar();
 
   const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
 

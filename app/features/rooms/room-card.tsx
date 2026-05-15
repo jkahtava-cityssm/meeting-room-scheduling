@@ -1,14 +1,13 @@
 import { BadgeColored } from '@/components/ui/badge-colored';
 import { Button } from '@/components/ui/button';
-import { ButtonColored } from '@/components/ui/button-colored';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { IEventSingleRoom, IRoom } from '@/lib/schemas';
-import { MapPin, Save, Send, SendHorizonal, Text } from 'lucide-react';
+
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { IRoom } from '@/lib/schemas';
+import { Save, Send } from 'lucide-react';
 
 import { TColors } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { cva } from 'class-variance-authority';
-import { sharedColorVariants } from '@/lib/theme/colorVariants';
+
 import { DetailedHTMLProps, HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';

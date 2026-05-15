@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 import { CombinedSchema, getCombinedSchema } from './drawer-schema.validator';
 
-import { usePublicConfiguration } from '@/lib/services/public';
 import {
   useEventQuery,
   useEventsMutationUpsert,
@@ -19,7 +18,7 @@ import { IEventSingleRoom } from '@/lib/schemas';
 import { getFormDefaults, mapEventToSchema } from './lib/default-util';
 import { useEventStore } from '@/lib/zustand/new-event-store-refactor';
 import { useStepNavigation } from './use-step-navigation';
-import { useConfigurationQuery, usePrivateConfigurationQuery } from '@/lib/services/configuration';
+
 import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
 
 export const useMultiStepFormLogic = (props: {

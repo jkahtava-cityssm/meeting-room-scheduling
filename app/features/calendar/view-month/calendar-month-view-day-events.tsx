@@ -3,7 +3,6 @@ import { eventBadgeVariants, MonthEventBadge } from '@/app/features/calendar/vie
 import { cn } from '@/lib/utils';
 import { IMonthDayView } from '../webworkers/generic-webworker';
 
-import { useCallback } from 'react';
 import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 
 export function MonthViewDayEvents({

@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { UTCDate } from '@date-fns/utc';
 
-import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 
 export async function GET(request: NextRequest) {

@@ -10,14 +10,13 @@ import { Prisma } from '@prisma/client';
 import {
   createEvent,
   upsertEvent,
-  updateEvent,
   findManyEvents,
   findFirstEvent,
   createManyEventRoom,
   createManyEventRecipients,
   createManyEventItems,
 } from '@/lib/data/events';
-import { createRecurrence, upsertRecurrence, deleteRecurrence } from '@/lib/data/recurrence';
+import { createRecurrence, upsertRecurrence } from '@/lib/data/recurrence';
 import { SEventPATCH, SEventPUT } from '@/lib/services/events';
 
 export async function POST(request: NextRequest) {

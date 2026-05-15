@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarHourTimeline } from './calendar-scroll-hour-timeline';
-import { format } from 'date-fns';
+
 import { CalendarScrollColumnSkeleton } from './calendar-scroll-column-skeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 

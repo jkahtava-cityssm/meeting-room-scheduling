@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { TConfigurationKeys } from '../types';
 
 export const queryKeys = {

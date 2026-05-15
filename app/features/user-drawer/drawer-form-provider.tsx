@@ -1,27 +1,21 @@
-import { z } from 'zod/v4';
-import { createContext, useMemo, useRef, useState } from 'react';
+import { createContext } from 'react';
 import { Form, FormProvider } from 'react-hook-form';
 
 import { FormStep, MultiStepFormContextProps } from './types';
 
 import { useContext } from 'react';
-import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet, SheetTrigger } from '@/components/ui/sheet';
-import { useDisclosure } from '@/hooks/use-disclosure';
+import { SheetContent, SheetHeader, SheetTitle, SheetDescription, Sheet } from '@/components/ui/sheet';
 
 import React from 'react';
-import { IEventSingleRoom, IUser } from '@/lib/schemas';
+import { IUser } from '@/lib/schemas';
 
 import FormFooter from './form-footer';
 
 import { useMultiStepFormLogic } from './use-multi-step-logic';
-import { useSession } from '@/contexts/SessionProvider';
-import { EventDialog } from './components/dialog';
-import { useEventStore } from '@/lib/zustand/new-event-store-refactor';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { TimeInterval } from '@/components/calendar-time-picker/useTimePicker';
 
-import { CombinedSchema } from './drawer-schema.validator';
-import { UserDrawerPermissions } from './lib/permissions';
+import { EventDialog } from './components/dialog';
+
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export const MultiStepFormContext = createContext<MultiStepFormContextProps | null>(null);
 

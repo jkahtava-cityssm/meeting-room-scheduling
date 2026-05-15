@@ -1,16 +1,6 @@
 import { guardRoute } from '@/lib/api-guard';
-import {
-  BadRequestMessage,
-  CreatedMessage,
-  DeleteMessage,
-  InternalServerErrorMessage,
-  NoContentMessage,
-  NotFoundMessage,
-  SuccessMessage,
-} from '@/lib/api-helpers';
+import { BadRequestMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage } from '@/lib/api-helpers';
 import { findManyUsersWithRoles, upsertUserRole } from '@/lib/data/users';
-import { prisma } from '@/prisma';
-import { Prisma } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {

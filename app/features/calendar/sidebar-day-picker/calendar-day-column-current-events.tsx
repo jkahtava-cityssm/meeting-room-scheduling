@@ -2,7 +2,7 @@ import { format, isToday, isWithinInterval, set } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 import { IEventSingleRoom } from '@/lib/schemas';
-import { Calendar, Clock, DoorClosed, User } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BadgeColored } from '@/components/ui/badge-colored';
 import { TColors, TStatusKey } from '@/lib/types';

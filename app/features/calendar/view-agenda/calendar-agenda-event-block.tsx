@@ -2,13 +2,12 @@
 
 import { format } from 'date-fns';
 import { cva } from 'class-variance-authority';
-import { BaggageClaim, Clock, Info, MapPin, Refrigerator, Text, User2 } from 'lucide-react';
+import { Clock, MapPin, Refrigerator, Text, User2 } from 'lucide-react';
 
 import { TColors } from '@/lib/types';
-import { IEvent, IEventSingleRoom } from '@/lib/schemas';
+import { IEventSingleRoom } from '@/lib/schemas';
 
 import { sharedColorVariants } from '@/lib/theme/colorVariants';
-import EventDrawer from '../../event-drawer/drawer-root';
 import { useSharedEventDrawer } from '../../event-drawer/drawer-context';
 
 const agendaEventCardVariants = cva(

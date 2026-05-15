@@ -4,17 +4,15 @@ import { CALENDAR_VIEWS, TCalendarView } from '@/lib/types';
 
 import { useMemo } from 'react';
 
-import { redirect, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { parse } from 'date-fns';
 
 import { useSession } from '@/contexts/SessionProvider';
-import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
-import { useVerifySessionRequirement } from '@/lib/auth-client';
 
-import { LoaderCircle, Terminal } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 
 import { CalendarDayColumnCalendar } from '@/app/features/calendar/sidebar-day-picker/calendar-day-column-calendar';
-import { useSidebar } from '@/components/ui/sidebar';
+
 import { CalendarDayView } from '../view-day/calendar-day-view';
 import { CalendarMonthView } from '@/app/features/calendar/view-month/calendar-month-view';
 import { CalendarWeekView } from '@/app/features/calendar/view-week/calendar-week-view';
@@ -24,7 +22,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { CalendarHeader } from './calendar-all-header';
 import { CalendarPermissions } from '../permissions/calendar.permissions';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarLoadingPage } from '@/app/(private)/calendar/loading';
 import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
 

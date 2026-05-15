@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { ArrowDownAz, ArrowUpAz, ChevronDown, ChevronUp, Eye, Filter, FilterX, LoaderCircle, LucideShieldUser, X } from 'lucide-react';
 
 import {
-  ColumnDef,
   ColumnFiltersState,
   SortingState,
   flexRender,

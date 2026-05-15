@@ -3,7 +3,6 @@ import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, Unauthor
 import { UTCDate } from '@date-fns/utc';
 import { TStatusKey } from '@/lib/types';
 import { findPublicEvents } from '@/lib/data/public';
-import { endOfDay, startOfDay } from 'date-fns';
 import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
 
 export async function GET(request: NextRequest) {

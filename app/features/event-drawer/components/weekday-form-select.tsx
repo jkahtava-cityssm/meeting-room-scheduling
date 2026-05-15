@@ -1,7 +1,7 @@
 import { FormField, FormItem, FormControl } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { Control, FieldPath, FieldPathByValue, FieldValues } from 'react-hook-form';
+import { Control, FieldPath, FieldValues } from 'react-hook-form';
 
 export function WeekDayFormSelection<TFieldValues extends FieldValues>({
   control,

@@ -1,6 +1,5 @@
-import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
-import { getServerSession } from '@/lib/auth';
-import { prisma } from '@/prisma';
+import { InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+
 import { findManyStatus } from '@/lib/data/status';
 import { guardRoute } from '@/lib/api-guard';
 import { NextRequest } from 'next/server';

@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma';
 import { Prisma } from '@prisma/client';
-import { PUBLIC_IEVENT, PUBLIC_IROOM, PUBLIC_SEVENT } from '../services/public';
+import { PUBLIC_IROOM, PUBLIC_SEVENT } from '../services/public';
 import z from 'zod/v4';
 
 const PUBLIC_EVENT_SELECT = {

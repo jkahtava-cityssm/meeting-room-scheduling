@@ -2,12 +2,9 @@ import { IEvent, IEventSingleRoom } from '@/lib/schemas';
 import { TColors, TIME_BLOCK_SIZE, TStatusKey, TVisibleHours } from '@/lib/types';
 import {
   addDays,
-  addHours,
-  addMinutes,
   addMonths,
   areIntervalsOverlapping,
   differenceInDays,
-  differenceInMinutes,
   eachDayOfInterval,
   endOfDay,
   endOfMonth,
@@ -15,7 +12,6 @@ import {
   endOfYear,
   format,
   getDaysInMonth,
-  isEqual,
   isSameDay,
   isSameMonth,
   isSunday,
@@ -30,10 +26,9 @@ import {
   subMinutes,
 } from 'date-fns';
 
-import { RRule, rrulestr } from 'rrule';
+import { rrulestr } from 'rrule';
 import {
   CalendarAction,
-  GroupingType,
   IRequestGroup,
   IEventBlock,
   IEventView,
@@ -45,8 +40,6 @@ import {
   IYearMonthView,
 } from './generic-webworker';
 import { daysBetween } from 'rrule/dist/esm/dateutil';
-import { EventType } from 'react-hook-form';
-import { getDurationText } from '@/lib/helpers';
 
 export function calculateViewBoundaries(config: TVisibleHours, events: IEventSingleRoom[], viewStart: Date, viewEnd: Date) {
   let minHour = config.from;

@@ -1,5 +1,5 @@
-import { findManyEvents, deleteManyEvents, findFirstEvent } from '@/lib/data/events';
-import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
+import { findFirstEvent } from '@/lib/data/events';
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { NextRequest } from 'next/server';
 

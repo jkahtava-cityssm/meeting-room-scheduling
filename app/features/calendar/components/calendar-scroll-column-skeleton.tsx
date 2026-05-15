@@ -1,7 +1,5 @@
 import { cn } from '@/lib/utils';
 
-import { useMemo } from 'react';
-
 import { TIME_BLOCK_SIZE } from '@/lib/types';
 
 import { Skeleton } from '@/components/ui/skeleton';

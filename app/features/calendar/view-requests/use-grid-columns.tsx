@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, RefObject } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export function useGridColumns(delay = 150) {
   const [columns, setColumns] = useState(1);

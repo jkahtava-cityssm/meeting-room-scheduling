@@ -1,7 +1,6 @@
-import { Role } from '@/lib/auth';
 import { useSession } from '@/lib/auth-client';
 import { redirect } from 'next/navigation';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect } from 'react';
 
 export function useClientSession() {
   const { data: session, isPending } = useSession();

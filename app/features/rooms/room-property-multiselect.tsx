@@ -1,4 +1,3 @@
-import { useRolesQuery } from '@/lib/services/permissions';
 import { GenericMultiSelect } from '@/components/shared/generic-multiselect';
 import { usePropertyQuery } from '@/lib/services/properties';
 

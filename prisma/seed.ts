@@ -26,10 +26,9 @@ import {
   VISIBLE_HOUR_END,
   VISIBLE_HOUR_START,
 } from './seed-data';
-import { ByWeekday, datetime, RRule } from 'rrule';
+import { ByWeekday, RRule } from 'rrule';
 
 import dynamicIconImports from 'lucide-react/dynamicIconImports';
-import { property } from 'lodash';
 
 type IconName = keyof typeof dynamicIconImports;
 

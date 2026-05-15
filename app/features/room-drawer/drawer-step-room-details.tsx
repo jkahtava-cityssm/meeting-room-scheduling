@@ -8,23 +8,18 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-import { Session } from '@/lib/auth-client';
-
 import { FormStatus } from './types';
-import { step1Schema } from './drawer-schema.validator';
-
-import { StatusSelect } from '../status/status-select';
+import { step1RoomSchema } from './drawer-schema.validator';
 
 import { RoomCategorySelect } from '../rooms/room-category-select';
 
-import { COLOR_OPTIONS, TColors } from '@/lib/types';
+import { TColors } from '@/lib/types';
 
 import { RoomIconComboBox } from './room-icon-combobox';
 import { RoleMultiSelect } from '../roles/role-multiselect';
 import { RoomPropertyMultiSelect } from '../rooms/room-property-multiselect';
 import { RoomColorSelect } from './room-color-select';
-import { BadgeColored } from '@/components/ui/badge-colored';
-import { method } from 'lodash';
+
 import { cn } from '@/lib/utils';
 import { EventCard } from '../calendar/components/calendar-scroll-private-event-block-old';
 import { addHours, format } from 'date-fns';

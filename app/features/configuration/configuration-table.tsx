@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { IConfigurationPUT, useConfigurationMutationUpsert, useConfigurationQuery } from '@/lib/services/configuration';
 import { RegisterSSO } from './single-sign-on';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectItem } from '@/components/ui/select';
+
 import { RoleComboBox } from '../roles/role-combobox';
 import { TConfigurationEntry } from '@/lib/data/configuration';
 import { Input } from '@/components/ui/input';

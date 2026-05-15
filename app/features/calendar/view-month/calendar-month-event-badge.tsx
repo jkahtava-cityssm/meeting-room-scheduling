@@ -6,7 +6,7 @@ import type { VariantProps } from 'class-variance-authority';
 import { IEventSingleRoom } from '@/lib/schemas';
 
 import { sharedColorVariants } from '@/lib/theme/colorVariants';
-import { Button } from '@/components/ui/button';
+
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 
 export const eventBadgeVariants = cva(

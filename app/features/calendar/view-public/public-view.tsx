@@ -2,7 +2,7 @@
 
 import { parse } from 'date-fns';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -10,7 +10,7 @@ import { DateControls, DateControlSkeleton } from './public-date-control';
 import { RoomCategoryLayout } from './public-room-filter';
 
 import { Button } from '@/components/ui/button';
-import { FilterIcon, LucideCalendarDays, LucideDoorClosedLocked, LucideDoorOpen } from 'lucide-react';
+import { FilterIcon, LucideCalendarDays, LucideDoorOpen } from 'lucide-react';
 import { ButtonGroup, ButtonGroupSeparator } from '@/components/ui/button-group';
 
 import { CalendarScrollContainerPublic } from '../components/calendar-scroll-container';

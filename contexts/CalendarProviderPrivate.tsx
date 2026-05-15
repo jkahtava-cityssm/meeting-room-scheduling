@@ -2,11 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import type { Dispatch, SetStateAction } from 'react';
-
 import type { TStatusKey, TVisibleHours } from '@/lib/types';
-import { VISIBLE_HOURS } from '../lib/helpers';
-import { usePublicConfiguration } from '@/lib/services/public';
 import { useRoomsQuery } from '@/lib/services/rooms';
 import { IRoom } from '@/lib/schemas';
 import { usePrivateConfigurationQuery } from '@/lib/services/configuration';

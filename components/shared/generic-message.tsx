@@ -1,6 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
-import { Info, Terminal } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 export function GenericInfoMessage({ message, title }: { message: string; title: string }) {
   return (

@@ -6,7 +6,7 @@ import { TimePicker } from '../calendar-time-picker/TimePicker';
 import { Label } from '../ui/label';
 import { TimeInterval } from '../calendar-time-picker/useTimePicker';
 import { cn } from '@/lib/utils';
-import { Button, buttonVariants } from '../ui/button';
+import { buttonVariants } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { LucideLock } from 'lucide-react';
 

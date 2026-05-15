@@ -1,12 +1,12 @@
 // app/api/internal/sso/register-microsoft/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { guardRoute } from '@/lib/api-guard';
-import { auth, getServerSession } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { getServerSession } from '@/lib/auth';
+
 import { BadRequestMessage, DeleteMessage, SuccessMessage } from '@/lib/api-helpers';
 import { prisma } from '@/prisma';
-import { request } from 'https';
+
 import { updateSession } from '@/lib/data/permissions';
 
 export async function POST(req: NextRequest) {

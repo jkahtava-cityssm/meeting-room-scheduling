@@ -1,32 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ArrowDownAz,
-  ArrowUpAz,
-  CheckCheck,
-  ChevronDown,
-  ChevronUp,
-  Dot,
-  Filter,
-  FilterX,
-  ListFilter,
-  ListFilterPlus,
-  LoaderCircle,
-  LucideShieldUser,
-  Minus,
-  X,
-} from 'lucide-react';
+import { ArrowDownAz, ArrowUpAz, ChevronDown, ChevronUp, Filter, FilterX, LoaderCircle, LucideShieldUser, X } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { GenericSelect } from '@/components/shared/generic-select';
-import { ComboBox, ComboBoxTrigger } from '@/components/ui/combobox';
-import { IUserWithRoles, usePermissionUserQuery, usePermissionUserRoleMutationUpsert, useRolesQuery } from '@/lib/services/permissions';
-import { GenericComboBox } from '@/components/shared/generic-combobox';
+import { IUserWithRoles, usePermissionUserQuery, usePermissionUserRoleMutationUpsert } from '@/lib/services/permissions';
 import { RoleComboBox } from '../roles/role-combobox';
-import { useUsersQuery } from '@/lib/services/users';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
 import React from 'react';

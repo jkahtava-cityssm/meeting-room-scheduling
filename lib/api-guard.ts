@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { getServerSession, Role } from './auth';
-import { SessionAction, SessionResource, SessionRole } from './types';
 import { prisma } from '@/prisma';
 import { BadRequestMessage, ForbiddenMessage, InternalServerErrorMessage, UnauthorizedMessage, VerifyToken } from './api-helpers';
 
