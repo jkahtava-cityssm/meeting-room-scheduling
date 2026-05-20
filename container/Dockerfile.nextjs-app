@@ -1,70 +1,80 @@
+FROM node:20-slim AS base
 
+ARG BUILD_ENV=dev
 
-FROM node:20-alpine AS base
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies only when needed
+RUN apt-get update 
+RUN apt-get install -y --no-install-recommends openssl ca-certificates curl procps 
+RUN rm -rf /var/lib/apt/lists/*
+
+# ---------- deps ----------
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* .npmrc* ./
 RUN npm ci
 
-
-
-# Rebuild the source code only when needed
+# ---------- builder ----------
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-COPY .env.docker .env
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED=1
+COPY . .
+# For development builds, copy dev environment file
+# For production, relies on runtime environment variables
+RUN if [ -f ".env.docker" ]; then cp .env.docker .env.production; fi
+
+RUN rm -rf .next
+COPY --from=deps /app/node_modules ./node_modules
+
 RUN npx prisma generate
 RUN npm run build
 
-# Production image, copy all the files and run next
+# ---------- runner ----------
 FROM base AS runner
+
+ARG BUILD_ENV=dev
+
+RUN groupadd --gid 1001 nodejs \
+  && useradd --uid 1001 --gid nodejs --home /home/nextjs --shell /usr/sbin/nologin nextjs
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache procps
+# NODE_TLS_REJECT_UNAUTHORIZED is set via docker-compose environment variables:
+# - Development (.env.dev): NODE_TLS_REJECT_UNAUTHORIZED=0 (allows self-signed certs)
+# - Production (.env.prod): NOT set (Node.js defaults to 1, enforces valid certs)
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-
-COPY --from=builder /app/public ./public
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Copy the full Prisma client and runtime
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+RUN set -eux; \
+  # Node package managers
+  rm -rf /usr/local/lib/node_modules/npm || true; \
+  rm -f  /usr/local/bin/npm            || true; \
+  rm -f  /usr/local/bin/npx            || true; \
+  rm -f  /usr/local/bin/pnpm           || true; \
+  rm -f  /usr/local/bin/yarn           || true; \
+  rm -rf /usr/local/lib/node_modules/corepack || true; \
+  rm -f  /usr/local/bin/corepack       || true; \
 
-USER nextjs
+  # Common fetch/install tools
+  rm -f  /usr/bin/curl                 || true; \
+  rm -f  /usr/bin/wget                 || true; \
+  rm -f  /usr/bin/git                  || true; 
 
+
+# Drop privileges (numeric UID/GID helps in Podman/K8s)
+USER 1001:1001
+
+# Networking
 EXPOSE 3000
-
 ENV PORT=3000
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
 ENV HOSTNAME="0.0.0.0"
 
+
+
+# Next.js standalone output provides server.js
 CMD ["node", "server.js"]
-
-
-

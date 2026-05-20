@@ -3,6 +3,7 @@ services:
     image: postgres:15
     container_name: container-postgres
     restart: always
+    profiles: ['app', 'init', 'dev', 'install-db', 'install-app']
     environment:
       POSTGRES_USER: ${DATABASE_USER_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_USER_PASSWORD}
@@ -19,101 +20,95 @@ services:
       timeout: 5s
       retries: 5
 
-    #entrypoint: >
-    #  sh -c "
-    #    npx prisma migrate deploy &&
-    #    npx prisma db seed &&
-    #    echo 'Migration complete.'"
+  prisma-migrate:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.prisma-migrate
+      args:
+        BUILD_ENV: ${BUILD_ENV}
+    image: meeting-room-booking-prisma-tools:latest
+    container_name: prisma-migrate
+    profiles: ['migrate', 'init', 'dev', 'install-db']
+    environment:
+      DATABASE_URL: ${DATABASE_URL_POSTGRESQL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npx prisma migrate deploy
+    networks:
+      - webnet
+
+  prisma-seed:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile.prisma-seed
+      args:
+        BUILD_ENV: ${BUILD_ENV}
+    image: meeting-room-booking-prisma-tools:latest
+    container_name: prisma-seed
+    profiles: ['seed', 'dev']
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
+      DATABASE_USER_PASSWORD: ${DATABASE_USER_PASSWORD}
+      ADMIN_USER_EMAIL: ${ADMIN_USER_EMAIL}
+    command: npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
+    networks:
+      - webnet
 
   nextjs-app:
     build:
       context: ..
       dockerfile: container/Dockerfile.nextjs-app
+      args:
+        BUILD_ENV: ${BUILD_ENV}
+    image: meeting-room-booking-nextjs-app:latest
     container_name: nextjs-app
+    profiles: ['app', 'init', 'dev', 'install-app']
     expose:
       - '3000'
     environment:
-      BETTER_AUTH_URL: https://${SERVER_NAME}
-      NEXT_PUBLIC_BASE_URL: https://${SERVER_NAME}
-      # other env vars from .env
+      BUILD_ENV: ${BUILD_ENV}
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED}
+      BETTER_AUTH_URL: ${NEXT_PUBLIC_BASE_URL}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      PRIVATE_INTERNAL_API_KEY: ${PRIVATE_INTERNAL_API_KEY}
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS}
+      GITHUB_ID: ${GITHUB_ID}
+      GITHUB_SECRET: ${GITHUB_SECRET}
+      AZURE_AD_CLIENT_ID: ${AZURE_AD_CLIENT_ID}
+      AZURE_AD_CLIENT_SECRET: ${AZURE_AD_CLIENT_SECRET}
+      AZURE_AD_TENANT_ID: ${AZURE_AD_TENANT_ID}
     depends_on:
       - postgres
       - nginx
     networks:
       - webnet
-    extra_hosts:
-      - '${SERVER_NAME}:host-gateway'
-    #healthcheck:
-    #  test: ["CMD", "curl", "-f", "http://localhost:3000"]
-    #  interval: 10s
-    #  timeout: 5s
-    #  retries: 5
 
   nginx:
     build:
       context: ..
       dockerfile: container/Dockerfile.nginx
+      args:
+        BUILD_ENV: ${BUILD_ENV}
+    image: meeting-room-booking-nginx:latest
+    container_name: nginx
+    profiles: ['app', 'init', 'dev', 'install-app', 'install-nginx']
     ports:
       - '80:80'
       - '443:443'
-    container_name: nginx
     environment:
+      BUILD_ENV: ${BUILD_ENV}
       SERVER_NAME: ${SERVER_NAME}
-    volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    entrypoint: /etc/nginx/startup.sh
-    networks:
-      - webnet
-    #healthcheck:
-    #  test: ["CMD", "curl", "-f", "http://localhost"]
-    #  interval: 10s
-    #  timeout: 5s
-    #  retries: 5
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    entrypoint: /bin/sh -c
-    command: >
-      "curl -s "https://www.duckdns.org/update?domains=${SERVER_NAME}&token=${DUCKDNS_TOKEN}&ip="
-  #    "trap exit TERM;
-  #    while :; do
-  #      certbot renew --webroot -w /var/www/certbot --quiet;
-  #      sleep 12h;
-  #    done"
-
-  duckdns-updater:
-    image: alpine:latest
-    container_name: duckdns
-    volumes:
-      - ./duckdns:/scripts
-    entrypoint: /bin/sh
-    command: -c "while true; do sh /scripts/update.sh; sleep 300; done"
-
-  prisma-migrate:
-    build:
-      context: ..
-      dockerfile: container/Dockerfile.prisma-migrate
-    container_name: prisma-migrate
-    image: prisma-migrate
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      DATABASE_URL_ADMIN: ${DATABASE_URL_ADMIN}
-      DATABASE_USER_USERNAME: ${DATABASE_USER_USERNAME}
-      DATABASE_NAME: ${DATABASE_NAME}
-      LINKED_SERVER: ${LINKED_SERVER}
-      LINKED_USERNAME: ${LINKED_USERNAME}
-      LINKED_PASSWORD: ${LINKED_PASSWORD}
-      LINKED_DATABASE_NAME: ${LINKED_DATABASE_NAME}
-      LINKED_SERVER_NAME: ${LINKED_SERVER_NAME}
-    depends_on:
-      - postgres
-    #entrypoint: /bin/sh
-    #command: -c "npx prisma migrate deploy"
+      CERT_DAYS: ${CERT_DAYS}
+      CERT_COUNTRY: ${CERT_COUNTRY}
+      CERT_STATE: ${CERT_STATE}
+      CERT_LOCALITY: ${CERT_LOCALITY}
+      CERT_ORG: ${CERT_ORG}
+      CERT_OU: ${CERT_OU}
     networks:
       - webnet
 

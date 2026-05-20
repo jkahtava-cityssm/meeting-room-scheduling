@@ -1,7 +1,13 @@
-# Docker.nginx
-FROM nginx:latest
+# container/Dockerfile.nginx
+FROM nginx:alpine
+
+ARG BUILD_ENV=dev
+
+# Install required tools: openssl (certs), bash (script), gettext (envsubst)
+RUN apk add --no-cache openssl bash gettext
 
 WORKDIR /container
+
 # Copy startup script
 COPY ./container/nginx/startup.sh /etc/nginx/startup.sh
 RUN chmod +x /etc/nginx/startup.sh
@@ -11,11 +17,18 @@ COPY ./container/nginx/full.conf.template /etc/nginx/full.conf.template
 COPY ./container/nginx/http-only.conf.template /etc/nginx/http-only.conf.template
 COPY ./container/nginx/nginx.conf.template /etc/nginx/nginx.conf.template
 
-# Remove Carriage Return characters from files (in case edited on Windows)
-RUN sed -i 's/\r$//' /etc/nginx/startup.sh
-
+# Remove Windows CRLF if present
+RUN sed -i 's/\r$//' /etc/nginx/startup.sh 
+RUN sed -i '1s/^\xEF\xBB\xBF//' /etc/nginx/startup.sh 
 RUN sed -i 's/\r$//' /etc/nginx/full.conf.template
 RUN sed -i 's/\r$//' /etc/nginx/http-only.conf.template
 RUN sed -i 's/\r$//' /etc/nginx/nginx.conf.template
 
+# Helpful: show the script exists (kept from your original)
 RUN ls -l /etc/nginx/startup.sh
+
+# Pass BUILD_ENV to startup script
+ENV BUILD_ENV=${BUILD_ENV}
+
+# Entrypoint uses the startup script (will generate certs if dev, or expect Let's Encrypt if prod)
+ENTRYPOINT ["/bin/sh","/etc/nginx/startup.sh"]
