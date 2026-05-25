@@ -99,6 +99,8 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const editConfiguration = can('EditConfiguration');
   const editUsers = can('EditUsers');
 
+  const isDevelopment = process.env.NEXT_PUBLIC_ENVIRONMENT === 'development';
+
   const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
 
   const { data: pendingEvents } = useTotalEventsByStatusQuery('PENDING');
@@ -142,7 +144,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {editPermissions && <SideBarSubMenuItem title={'Manage Permissions'} url={'/settings/manage-permissions'} />}
               {editConfiguration && <SideBarSubMenuItem title={'Manage Configuration'} url={'/settings/manage-configuration'} />}
               {editUsers && <SideBarSubMenuItem title={'Manage Users'} url={'/settings/manage-users'} />}
-              {editConfiguration && <SideBarSubMenuItem title={'API Tests'} url={'/settings/manage-api'} />}
+              {isDevelopment && <SideBarSubMenuItem title={'API Tests'} url={'/settings/manage-api'} />}
             </SideBarCollapsibleGroup>
           )}
         </SideBarGroup>
