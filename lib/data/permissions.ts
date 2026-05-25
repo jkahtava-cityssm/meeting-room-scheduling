@@ -161,33 +161,50 @@ export async function upsertRoleResourceAction(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  return await tx.roleResourceAction.upsert({
-    where: {
-      roleId_resourceActionId: {
+  const contextInfo = `[Role: ${roleId}, ResourceAction: ${resourceActionId}, User: ${sessionUserId}]`;
+
+  try {
+    // 1. Optimistically try to create the permission link
+    return await tx.roleResourceAction.create({
+      data: {
         roleId,
         resourceActionId,
+        permit,
+        createdBy: sessionUserId,
+        updatedBy: sessionUserId,
       },
-    },
-    update: { permit, updatedBy: sessionUserId },
-    create: { roleId, resourceActionId, permit, createdBy: sessionUserId, updatedBy: sessionUserId },
-    include: ROLE_RESOURCE_ACTION,
-  });
-}
+      include: ROLE_RESOURCE_ACTION,
+    });
+  } catch (err) {
+    // 2. Handle known database errors
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002') {
+        try {
+          // 3. Conflict found, fall back to update using the compound key
+          return await tx.roleResourceAction.update({
+            where: {
+              roleId_resourceActionId: {
+                roleId,
+                resourceActionId,
+              },
+            },
+            data: { permit, updatedBy: sessionUserId },
+            include: ROLE_RESOURCE_ACTION,
+          });
+        } catch (updateErr) {
+          console.error(`[RoleResourceAction] Concurrency fallback update failed for ${contextInfo}:`, updateErr);
+          throw new Error(`Failed to update existing role resource action for ${contextInfo}`, { cause: updateErr });
+        }
+      }
 
-export async function upsertResourceAction(
-  params: {
-    where: Prisma.ResourceActionWhereUniqueInput;
-    create: Prisma.ResourceActionCreateInput;
-    update: Prisma.ResourceActionUpdateInput;
-  },
-  tx: Prisma.TransactionClient = prisma,
-) {
-  return tx.resourceAction.upsert({
-    where: params.where,
-    create: params.create,
-    update: params.update,
-    include: RESOURCE_ACTION,
-  });
+      console.error(`[RoleResourceAction] Database error during initial create ${contextInfo}:`, err);
+      throw new Error(`Database error while saving role resource action (Prisma code: ${err.code})`, { cause: err });
+    }
+
+    // 4. Handle unexpected/generic errors
+    console.error(`[RoleResourceAction] Unexpected error during upsertRoleResourceAction ${contextInfo}:`, err);
+    throw new Error(`An unexpected error occurred while saving role resource action permissions`, { cause: err });
+  }
 }
 
 export async function updateSession(

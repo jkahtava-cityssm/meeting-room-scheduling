@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { TConfigurationKeys } from '../types';
 import { z } from 'zod/v4';
 
@@ -96,23 +96,50 @@ export async function upsertConfiguration(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  return tx.configuration.upsert({
-    where: { key: data.key },
-    create: {
-      key: data.key,
-      value: data.value,
-      name: data.name,
-      type: data.type,
-      description: data.description,
-      createdBy: sessionUserId,
-      updatedBy: sessionUserId,
-    },
-    update: {
-      value: data.value,
-      updatedBy: sessionUserId,
-    },
-    select: CONFIGURATION_SELECT,
-  });
+  const contextInfo = `[ConfigKey: ${data.key}, User: ${sessionUserId}]`;
+
+  try {
+    // 1. Optimistically try to create the configuration row first
+    return await tx.configuration.create({
+      data: {
+        key: data.key,
+        value: data.value,
+        name: data.name,
+        type: data.type,
+        description: data.description,
+        createdBy: sessionUserId,
+        updatedBy: sessionUserId,
+      },
+      select: CONFIGURATION_SELECT,
+    });
+  } catch (err) {
+    // 2. Handle known database errors
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002') {
+        try {
+          // 3. Conflict found (it already exists), safely fall back to an update
+          return await tx.configuration.update({
+            where: { key: data.key },
+            data: {
+              value: data.value,
+              updatedBy: sessionUserId,
+            },
+            select: CONFIGURATION_SELECT,
+          });
+        } catch (updateErr) {
+          console.error(`[Configuration] Concurrency fallback update failed for ${contextInfo}:`, updateErr);
+          throw new Error(`Failed to update existing configuration for key: ${data.key}`, { cause: updateErr });
+        }
+      }
+
+      console.error(`[Configuration] Database error during initial create ${contextInfo}:`, err);
+      throw new Error(`Database error encountered while saving configuration (Prisma code: ${err.code})`, { cause: err });
+    }
+
+    // 4. Handle unexpected/generic errors
+    console.error(`[Configuration] Unexpected error during upsertConfiguration ${contextInfo}:`, err);
+    throw new Error(`An unexpected error occurred while saving configuration`, { cause: err });
+  }
 }
 
 export async function updateConfiguration(
