@@ -6,11 +6,12 @@ import { UTCDate } from '@date-fns/utc';
 
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   return guardRoute(
     request,
-    { IsPublic: { type: 'role', role: 'Public' } },
+    { IsPublic: { type: 'permission', resource: 'Event', action: 'Read All' } },
 
     async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
       const searchParams = request.nextUrl.searchParams;
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
         AND: [{ statusId: Number(statusId) }],
       };*/
 
-      const whereClause: import('@prisma/client').Prisma.EventWhereInput = {
+      const whereClause: Prisma.EventWhereInput = {
         AND: [
           {
             createdAt: { lte: EndDate, gte: StartDate },
