@@ -760,9 +760,11 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
     // Adjust end date for calculation purposes if it's at midnight
     const adjustedEndDate = endAtMidnight ? getAdjustedEndDateForMultiDay(currentEndDate) : currentEndDate;
 
+    const startOccursInPeriod = isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd });
+
     // Handle all-day events
     if (isSingleAllDayEvent(currentStartDate, currentEndDate)) {
-      if (isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd })) {
+      if (startOccursInPeriod) {
         eventList.push({
           ...event,
           multiDay: {
@@ -778,13 +780,13 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
     }
 
     // Handle events ending at midnight on same day
-    if (isSingleDayEventEndAtMidnight(currentStartDate, currentEndDate)) {
-      if (isWithinInterval(currentStartDate, { start: periodStart, end: periodEnd })) {
+    /*if (isSingleDayEventEndAtMidnight(currentStartDate, currentEndDate)) {
+      if (startOccursInPeriod) {
         eventList.push({
           ...event,
           multiDay: {
-            position: 'single',
-            description: `All Day`,
+            position: 'first',
+            description: ``,
             calculatedDate: currentStartDate.toISOString(),
             isEndAtMidnight: true,
             originalEndDate: currentEndDate.toISOString(),
@@ -792,13 +794,13 @@ export function calculateMultiDayEventPositions(events: IEvent[], periodStart: D
         });
       }
       continue;
-    }
+    }*/
 
     // Calculate total days between (using adjusted end date for midnight events)
     const totalDaysBetween = differenceInDays(endOfDay(adjustedEndDate), startOfDay(currentStartDate));
 
     // Single-day events that don't end at midnight
-    if (totalDaysBetween === 0) {
+    if (totalDaysBetween === 0 && startOccursInPeriod) {
       eventList.push({
         ...event,
         multiDay: undefined,
@@ -966,6 +968,10 @@ export function setMultiDayEventBoundaries(events: IEvent[], minHour: number, ma
   return events.map((event) => {
     if (!event.multiDay) {
       return event;
+    }
+
+    if (event.title === '11PM to 12AM (1 hour, ends at midnight)') {
+      console.log(event);
     }
 
     const referenceDate = new Date(event.multiDay.calculatedDate);
