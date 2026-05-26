@@ -1,6 +1,5 @@
 import { TSystemProcess } from '@/lib/types';
 import { prisma } from '@/prisma';
-import { Prisma } from '@prisma/client';
 import z, { ZodType } from 'zod/v4';
 
 export async function getSystemProcess<T>(
@@ -71,46 +70,17 @@ export async function saveSystemProcess({
   processKey: TSystemProcess;
   userId?: number;
 }) {
-  const contextInfo = `[Key: ${processKey}, PID: ${pid}, User: ${userId}]`;
-
   try {
-    // 1. Optimistically try to create it first.
-    return await prisma.systemProcess.create({
-      data: {
-        pid,
-        key: processKey,
-        tag: processTag,
-        parameter,
-        createdBy: userId,
-        updatedBy: userId,
-      },
+    const process = await prisma.systemProcess.upsert({
+      create: { pid, key: processKey, tag: processTag, parameter: parameter, createdBy: userId, updatedBy: userId },
+      update: { pid, parameter: parameter, updatedBy: userId },
+      where: { key: processKey },
       select: { pid: true, tag: true, updatedAt: true },
     });
+
+    return process;
   } catch (err) {
-    // 2. Handle known database errors
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === 'P2002') {
-        try {
-          // 3. Conflict found, fall back to update
-          return await prisma.systemProcess.update({
-            data: { pid, parameter, updatedBy: userId },
-            where: { key: processKey },
-            select: { pid: true, tag: true, updatedAt: true },
-          });
-        } catch (updateErr) {
-          console.error(`[SystemProcess] Concurrency fallback update failed for ${contextInfo}:`, updateErr);
-          throw new Error(`Failed to update existing system process metadata for key: ${processKey}`, { cause: updateErr });
-        }
-      }
-
-      // Handle other Prisma codes (e.g., connection issues, foreign key constraints)
-      console.error(`[SystemProcess] Database error during initial create ${contextInfo}:`, err);
-      throw new Error(`Database error encountered while saving process metadata (Prisma code: ${err.code})`, { cause: err });
-    }
-
-    // 4. Handle unexpected/generic errors
-    console.error(`[SystemProcess] Unexpected error during saveSystemProcess ${contextInfo}:`, err);
-    throw new Error(`An unexpected error occurred while saving system process metadata`, { cause: err });
+    console.error('[Scheduler] Failed to save metadata:', err);
   }
 }
 
@@ -133,9 +103,9 @@ export async function updateSystemProcess({
       where: { key: processKey },
     });
 
-    console.log(`[SystemProcess] Metadata saved - PID: ${pid}, Marker: ${processTag}`);
+    console.log(`[Scheduler] Metadata saved - PID: ${pid}, Marker: ${processTag}`);
   } catch (err) {
-    console.error('[SystemProcess] Failed to save metadata:', err);
+    console.error('[Scheduler] Failed to save metadata:', err);
   }
 }
 
@@ -149,8 +119,8 @@ export async function resetSystemProcess(processKey: string) {
       where: { key: processKey },
     });
 
-    console.log('[SystemProcess] System Process reset');
+    console.log('[Scheduler] System Process reset');
   } catch (err) {
-    console.error('[SystemProcess] Failed to reset System Process:', err);
+    console.error('[Scheduler] Failed to reset System Process:', err);
   }
 }
