@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma';
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 // Standard user select configuration — used across all DAL functions
 const USER_SELECT = {
@@ -82,51 +82,13 @@ export async function upsertUserRole(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  const contextInfo = `[TargetUserId: ${data.userId}, RoleId: ${data.roleId}, User: ${sessionUserId}]`;
+  const userRole = await tx.userRole.upsert({
+    where: { userId_roleId: { userId: data.userId, roleId: data.roleId } },
+    create: { userId: data.userId, roleId: data.roleId, granted: data.granted, createdBy: sessionUserId, updatedBy: sessionUserId },
+    update: { granted: data.granted, updatedBy: sessionUserId },
+  });
 
-  try {
-    // 1. Optimistically try to create the user role relation first
-    return await tx.userRole.create({
-      data: {
-        userId: data.userId,
-        roleId: data.roleId,
-        granted: data.granted,
-        createdBy: sessionUserId,
-        updatedBy: sessionUserId,
-      },
-    });
-  } catch (err) {
-    // 2. Handle known database errors
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === 'P2002') {
-        try {
-          // 3. Conflict found (already exists), fall back to update using the compound key
-          return await tx.userRole.update({
-            where: {
-              userId_roleId: {
-                userId: data.userId,
-                roleId: data.roleId,
-              },
-            },
-            data: {
-              granted: data.granted,
-              updatedBy: sessionUserId,
-            },
-          });
-        } catch (updateErr) {
-          console.error(`[UserRole] Concurrency fallback update failed for ${contextInfo}:`, updateErr);
-          throw new Error(`Failed to update existing user role configuration for ${contextInfo}`, { cause: updateErr });
-        }
-      }
-
-      console.error(`[UserRole] Database error during initial create ${contextInfo}:`, err);
-      throw new Error(`Database error while saving user role (Prisma code: ${err.code})`, { cause: err });
-    }
-
-    // 4. Handle unexpected/generic errors
-    console.error(`[UserRole] Unexpected error during upsertUserRole ${contextInfo}:`, err);
-    throw new Error(`An unexpected error occurred while saving user role mapping`, { cause: err });
-  }
+  return userRole;
 }
 
 export async function createUserRole(
@@ -176,74 +138,35 @@ export async function upsertUser(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  const contextInfo = `[TargetUserId: ${data.userId ?? 'NEW'}, Email: ${data.email}, ModifierUser: ${sessionUserId}]`;
+  const user = await tx.user.upsert({
+    where: { id: data.userId },
+    create: {
+      name: data.name,
+      email: data.email,
+      isActive: data.isActive,
+      isManaged: data.isManaged,
+      emailEnabled: data.emailEnabled,
+      department: data.department,
+      jobTitle: data.jobTitle,
+      externalId: data.externalId,
+      createdBy: sessionUserId,
+      updatedBy: sessionUserId,
+    },
+    update: {
+      name: data.name,
+      email: data.email,
+      isActive: data.isActive,
+      isManaged: data.isManaged,
+      emailEnabled: data.emailEnabled,
+      department: data.department,
+      jobTitle: data.jobTitle,
+      externalId: data.externalId,
+      updatedBy: sessionUserId,
+    },
+    select: USER_SELECT,
+  });
 
-  // Shared mutation payload mapping
-  const sharedData = {
-    name: data.name,
-    email: data.email,
-    isActive: data.isActive,
-    isManaged: data.isManaged,
-    emailEnabled: data.emailEnabled,
-    department: data.department,
-    jobTitle: data.jobTitle,
-    externalId: data.externalId,
-    updatedBy: sessionUserId,
-  };
-
-  // Scenario A: No userId provided means it is explicitly a brand new user
-  if (!data.userId) {
-    try {
-      const user = await tx.user.create({
-        data: {
-          ...sharedData,
-          createdBy: sessionUserId,
-        },
-        select: USER_SELECT,
-      });
-      return mapBaseUser(user);
-    } catch (err) {
-      console.error(`[User] Failed to create new user profile ${contextInfo}:`, err);
-      throw new Error(`Database error encountered while creating new user profile`, { cause: err });
-    }
-  }
-
-  // Scenario B: UserId exists, execute the concurrency-safe update-first strategy
-  try {
-    // Optimistically assume the user profile exists and update it via 'id'
-    const user = await tx.user.update({
-      where: { id: data.userId },
-      data: sharedData,
-      select: USER_SELECT,
-    });
-    return mapBaseUser(user);
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      // P2025: Record to update not found (race condition catch window)
-      if (err.code === 'P2025') {
-        try {
-          const user = await tx.user.create({
-            data: {
-              ...sharedData,
-              createdBy: sessionUserId,
-            },
-            select: USER_SELECT,
-          });
-          return mapBaseUser(user);
-        } catch (createErr) {
-          console.error(`[User] Concurrency fallback create failed for ${contextInfo}:`, createErr);
-          throw new Error(`Failed to create user record after missing update check`, { cause: createErr });
-        }
-      }
-
-      console.error(`[User] Database error during update ${contextInfo}:`, err);
-      throw new Error(`Database error while updating user configurations (Prisma code: ${err.code})`, { cause: err });
-    }
-
-    // Handle unexpected/generic errors
-    console.error(`[User] Unexpected error during upsertUser ${contextInfo}:`, err);
-    throw new Error(`An unexpected error occurred while saving user data`, { cause: err });
-  }
+  return mapBaseUser(user);
 }
 
 export async function createUser(

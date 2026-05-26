@@ -94,6 +94,14 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
 
+  const viewMyBookingDay = can('ViewMyBookingDay');
+  const viewMyBookingMonth = can('ViewMyBookingMonth');
+  const viewMyBookingWeek = can('ViewMyBookingWeek');
+  const viewMyBookingYear = can('ViewMyBookingYear');
+  const viewMyBookingAgenda = can('ViewMyBookingAgenda');
+
+  const hasMyBookingAccess = canAny(viewMyBookingDay, viewMyBookingMonth, viewMyBookingWeek, viewMyBookingYear, viewMyBookingAgenda);
+
   const editPermissions = can('EditPermissions');
   const editRooms = can('EditRooms');
   const editConfiguration = can('EditConfiguration');
@@ -118,7 +126,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SideBarGroup title="Application">
           <SideBarPrimaryMenuItem title={'Availability'} icon={<NotebookPen />} url={'/availability'} />
-          <SideBarPrimaryMenuItem title={'My Bookings'} icon={<Send />} url={'/bookings/user-view'} />
+          {hasMyBookingAccess && <SideBarPrimaryMenuItem title={'My Bookings'} icon={<Send />} url={'/bookings/user-view'} />}
           {hasCalendarAccess && (
             <SideBarCollapsibleGroup isOpenByDefault={true} title={'Calendar'} icon={<Calendar />}>
               {viewStaffRequests && (

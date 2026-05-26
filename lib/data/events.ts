@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma';
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { SEvent } from '../schemas';
 import z from 'zod/v4';
 import { safeCreateMany } from '../api-helpers';
@@ -90,73 +90,24 @@ export async function upsertEvent(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  const contextInfo = `[EventId: ${data.eventId ?? 'NEW'}, Title: ${data.title}, User: ${sessionUserId}]`;
-
-  // Dynamically build up the relational connection payload
-  const inputData = {
+  const input = {
     title: data.title,
     description: data.description,
     startDate: data.startDate,
     endDate: data.endDate,
-    status: { connect: { statusId: data.statusId } },
     ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
+    status: { connect: { statusId: data.statusId } },
     ...(data.userId && { user: { connect: { id: data.userId } } }),
-    updatedByUser: { connect: { id: sessionUserId } },
   };
 
-  // Scenario A: No eventId provided means it is explicitly a brand new record
-  if (!data.eventId) {
-    try {
-      const event = await tx.event.create({
-        data: {
-          ...inputData,
-          createdByUser: { connect: { id: sessionUserId } },
-        },
-        include: EVENT_INCLUDE,
-      });
-      return flattenEvent(event);
-    } catch (err) {
-      console.error(`[Event] Failed to create new event ${contextInfo}:`, err);
-      throw new Error(`Database error encountered while creating new event`, { cause: err });
-    }
-  }
+  const event = await tx.event.upsert({
+    where: { eventId: data.eventId },
+    create: { ...input, createdByUser: { connect: { id: sessionUserId } }, updatedByUser: { connect: { id: sessionUserId } } },
+    update: { ...input, updatedByUser: { connect: { id: sessionUserId } } },
+    include: EVENT_INCLUDE,
+  });
 
-  // Scenario B: EventId exists, execute the concurrency-safe update-first strategy
-  try {
-    // Optimistically assume the record exists and update it
-    const event = await tx.event.update({
-      where: { eventId: data.eventId },
-      data: inputData,
-      include: EVENT_INCLUDE,
-    });
-    return flattenEvent(event);
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      // P2025: Record to update not found (concurrency fallback window)
-      if (err.code === 'P2025') {
-        try {
-          const event = await tx.event.create({
-            data: {
-              ...inputData,
-              createdByUser: { connect: { id: sessionUserId } },
-            },
-            include: EVENT_INCLUDE,
-          });
-          return flattenEvent(event);
-        } catch (createErr) {
-          console.error(`[Event] Concurrency fallback create failed for ${contextInfo}:`, createErr);
-          throw new Error(`Failed to create event after missing update check`, { cause: createErr });
-        }
-      }
-
-      console.error(`[Event] Database error during update ${contextInfo}:`, err);
-      throw new Error(`Database error while updating event data (Prisma code: ${err.code})`, { cause: err });
-    }
-
-    // Handle unexpected/generic errors
-    console.error(`[Event] Unexpected error during upsertEvent ${contextInfo}:`, err);
-    throw new Error(`An unexpected error occurred while saving event configurations`, { cause: err });
-  }
+  return flattenEvent(event);
 }
 
 export async function updateEvent(
