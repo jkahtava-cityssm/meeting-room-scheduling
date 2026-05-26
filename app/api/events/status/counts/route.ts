@@ -6,6 +6,7 @@ import { UTCDate } from '@date-fns/utc';
 
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   return guardRoute(
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
             }
           : {};
 
-      const whereClause: import('@prisma/client').Prisma.EventWhereInput = {
+      const whereClause: Prisma.EventWhereInput = {
         AND: [timeClause, { status: { key: statusKey } }],
       };
       const total = await countEvents(whereClause);

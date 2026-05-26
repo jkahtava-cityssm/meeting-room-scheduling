@@ -5,7 +5,6 @@ loadEnvConfig(process.cwd());
 
 const requiredEnv = [
   'NEXT_PUBLIC_BASE_URL',
-  'NEXT_PUBLIC_SUBFOLDER_PATH',
   'PRIVATE_INTERNAL_API_KEY',
   'BETTER_AUTH_SECRET',
   'TRUSTED_ORIGINS',

@@ -84,7 +84,7 @@ export const useMyEventsQuery = (
     enabled: enabled,
   });
 };
-
+/*
 export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusKey: string, enabled: boolean = true) => {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
@@ -108,7 +108,7 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusKey
     enabled: enabled,
   });
 };
-
+*/
 export const useTotalEventsByStatusQuery = (statusKey: string, startDate?: Date, endDate?: Date, enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.events.totalByStatus(statusKey),

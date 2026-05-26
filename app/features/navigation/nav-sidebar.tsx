@@ -94,10 +94,20 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const hasCalendarAccess = canAny(viewDay, viewMonth, viewWeek, viewYear, viewAgenda, viewStaffRequests);
 
+  const viewMyBookingDay = can('ViewMyBookingDay');
+  const viewMyBookingMonth = can('ViewMyBookingMonth');
+  const viewMyBookingWeek = can('ViewMyBookingWeek');
+  const viewMyBookingYear = can('ViewMyBookingYear');
+  const viewMyBookingAgenda = can('ViewMyBookingAgenda');
+
+  const hasMyBookingAccess = canAny(viewMyBookingDay, viewMyBookingMonth, viewMyBookingWeek, viewMyBookingYear, viewMyBookingAgenda);
+
   const editPermissions = can('EditPermissions');
   const editRooms = can('EditRooms');
   const editConfiguration = can('EditConfiguration');
   const editUsers = can('EditUsers');
+
+  const isDevelopment = process.env.NEXT_PUBLIC_ENVIRONMENT === 'development';
 
   const hasSettingsAccess = canAny(editPermissions, editRooms, editConfiguration, editUsers);
 
@@ -116,7 +126,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SideBarGroup title="Application">
           <SideBarPrimaryMenuItem title={'Availability'} icon={<NotebookPen />} url={'/availability'} />
-          <SideBarPrimaryMenuItem title={'My Bookings'} icon={<Send />} url={'/bookings/user-view'} />
+          {hasMyBookingAccess && <SideBarPrimaryMenuItem title={'My Bookings'} icon={<Send />} url={'/bookings/user-view'} />}
           {hasCalendarAccess && (
             <SideBarCollapsibleGroup isOpenByDefault={true} title={'Calendar'} icon={<Calendar />}>
               {viewStaffRequests && (
@@ -142,7 +152,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {editPermissions && <SideBarSubMenuItem title={'Manage Permissions'} url={'/settings/manage-permissions'} />}
               {editConfiguration && <SideBarSubMenuItem title={'Manage Configuration'} url={'/settings/manage-configuration'} />}
               {editUsers && <SideBarSubMenuItem title={'Manage Users'} url={'/settings/manage-users'} />}
-              {editConfiguration && <SideBarSubMenuItem title={'API Tests'} url={'/settings/manage-api'} />}
+              {isDevelopment && <SideBarSubMenuItem title={'API Tests'} url={'/settings/manage-api'} />}
             </SideBarCollapsibleGroup>
           )}
         </SideBarGroup>
