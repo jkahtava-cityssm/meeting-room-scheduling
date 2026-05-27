@@ -16,7 +16,7 @@ const FormFooter = ({ userId }: { userId?: string }) => {
     save: {
       show: ctx.isEditing || ctx.isNew,
       disabled: (ctx.isEditing ? !can('UpdateEvent') : !can('CreateEvent')) || ctx.mutationUpsert.isPending || isVerifying,
-      label: ctx.isEditing ? 'Save' : 'Create',
+      label: ctx.isEditing ? 'Save' : userId ? 'Request' : 'Create',
       icon: ctx.isEditing ? <SaveIcon /> : <CalendarPlus />,
       loading: ctx.mutationUpsert.isPending,
     },
