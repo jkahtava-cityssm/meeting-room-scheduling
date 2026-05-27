@@ -206,6 +206,7 @@ async function findCreateUser(userData: {
         image: userData.image ?? null,
         externalId: userData.employeeNumber,
         isActive: userData.employeeActive ?? true,
+        timezone: process.env.DEFAULT_TIMEZONE || 'America/Toronto',
         createdBy: 0,
         updatedBy: 0,
       },
