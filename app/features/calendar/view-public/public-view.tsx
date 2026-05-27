@@ -10,7 +10,7 @@ import { DateControls, DateControlSkeleton } from './public-date-control';
 import { RoomCategoryLayout } from './public-room-filter';
 
 import { Button } from '@/components/ui/button';
-import { FilterIcon, LucideCalendarDays, LucideDoorOpen } from 'lucide-react';
+import { FilterIcon, LucideCalendarDays, LucideDoorOpen, Mail, Phone } from 'lucide-react';
 import { ButtonGroup, ButtonGroupSeparator } from '@/components/ui/button-group';
 
 import { CalendarScrollContainerPublic } from '../components/calendar-scroll-container';
@@ -60,7 +60,7 @@ export function CalendarPublicView() {
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full min-h-0 overflow-auto ">
       {/* LEFT CONTAINER */}
-      <div className="w-full flex flex-col gap-2 p-4 sm:p-0 lg:w-72 ">
+      <div className="w-full flex flex-col gap-2 p-4 sm:p-0 lg:w-80 ">
         <div className="flex flex-wrap items-center justify-between py-2">
           {isMounting ? (
             <>
@@ -87,7 +87,7 @@ export function CalendarPublicView() {
           )}
         </div>
 
-        <div className="flex flex-col w-full shrink border rounded-lg p-4 lg:w-72 overflow-hidden h-full">
+        <div className="flex flex-col w-full shrink border rounded-lg p-4 lg:w-80 overflow-hidden h-full">
           {noRoomData ? (
             <Empty className="border border-dashed min-h-full">
               <EmptyHeader>
@@ -107,6 +107,7 @@ export function CalendarPublicView() {
             </ScrollArea>
           )}
         </div>
+        <MeetingRoomInformation />
       </div>
 
       {/* RIGHT CONTAINER */}
@@ -172,6 +173,37 @@ export function CalendarPublicView() {
             </CalendarScrollContainerPublic>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function MeetingRoomInformation() {
+  return (
+    <div className="w-full rounded-lg border bg-card p-4 text-card-foreground ">
+      {/* Title */}
+      <h3 className="font-semibold text-base leading-none tracking-tight mb-2">Looking to book a meeting room?</h3>
+
+      {/* Description */}
+      <p className="text-sm text-muted-foreground mb-3">Contact the switchboard:</p>
+
+      {/* Contact Links Container */}
+      <div className="flex flex-col gap-3 text-sm">
+        {/* Phone Link */}
+        <a href="tel:7057592500" className="flex items-center gap-3 text-primary hover:underline group w-full">
+          <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+            <Phone className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+          <span className="font-medium tabular-nums tracking-wide">(705) 759-2500</span>
+        </a>
+
+        {/* Email Link */}
+        <a href="mailto:MeetingRoomBookings@cityssm.on.ca" className="flex items-center gap-3 text-primary hover:underline group w-full">
+          <div className="flex h-4 w-4 shrink-0 items-center justify-center">
+            <Mail className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+          <span className="font-medium">MeetingRoomBookings@cityssm.on.ca</span>
+        </a>
       </div>
     </div>
   );
