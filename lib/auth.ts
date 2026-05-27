@@ -21,6 +21,7 @@ export type User = {
   createdAt: Date;
   updatedAt: Date;
   image?: string | null | undefined;
+  timezone?: string;
 };
 
 export type Role = {
@@ -91,6 +92,9 @@ export const auth = betterAuth({
       trustedProviders: ['microsoft', 'github'],
       updateUserInfoOnLink: true,
     },
+  },
+  user: {
+    additionalFields: { timezone: { type: 'string', required: false, defaultValue: process.env.DEFAULT_TIMEZONE || 'America/Toronto' } },
   },
   trustedOrigins: [...envOrigins, ...staticOrigins],
 

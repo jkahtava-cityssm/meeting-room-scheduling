@@ -12,6 +12,7 @@ const USER_SELECT = {
   isActive: true,
   isManaged: true,
   emailEnabled: true,
+  timezone: true,
 } as const satisfies Prisma.UserSelect;
 
 const USER_ROLE_SELECT = {
@@ -134,6 +135,7 @@ export async function upsertUser(
     department?: string;
     jobTitle?: string;
     externalId?: string;
+    timezone?: string;
   },
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
@@ -149,6 +151,7 @@ export async function upsertUser(
       department: data.department,
       jobTitle: data.jobTitle,
       externalId: data.externalId,
+      timezone: data.timezone,
       createdBy: sessionUserId,
       updatedBy: sessionUserId,
     },
@@ -161,6 +164,7 @@ export async function upsertUser(
       department: data.department,
       jobTitle: data.jobTitle,
       externalId: data.externalId,
+      timezone: data.timezone,
       updatedBy: sessionUserId,
     },
     select: USER_SELECT,
@@ -179,6 +183,7 @@ export async function createUser(
     department?: string;
     jobTitle?: string;
     externalId?: string;
+    timezone?: string;
   },
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
@@ -193,6 +198,7 @@ export async function createUser(
       department: data.department,
       jobTitle: data.jobTitle,
       externalId: data.externalId,
+      timezone: data.timezone,
       createdBy: sessionUserId,
       updatedBy: sessionUserId,
     },
@@ -221,5 +227,6 @@ function mapBaseUser(user: UserWithRelations) {
     externalId: user.externalId,
     isActive: user.isActive,
     isManaged: user.isManaged,
+    timezone: user.timezone,
   };
 }

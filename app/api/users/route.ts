@@ -52,6 +52,7 @@ export async function PUT(request: NextRequest) {
           department: data.department,
           jobTitle: data.jobTitle,
           externalId: data.externalId,
+          timezone: data.timezone,
         },
         sessionUserId,
       );
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
           department: data.department,
           jobTitle: data.jobTitle,
           externalId: data.externalId,
+          timezone: data.timezone,
         },
         sessionUserId,
       );

@@ -50,6 +50,7 @@ export const SUserPUT = z.object({
   externalId: z.string().optional(),
   isActive: z.union([z.boolean(), z.stringbool()]),
   isManaged: z.union([z.boolean(), z.stringbool()]),
+  timezone: z.string().optional(),
 });
 
 export type IUserPUT = z.infer<typeof SUserPUT>;

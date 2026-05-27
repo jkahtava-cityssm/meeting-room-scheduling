@@ -1,4 +1,3 @@
-
 model User {
   id            Int     @id @default(autoincrement()) @map("user_id")
   name          String  @db.NVarChar(255)
@@ -13,6 +12,7 @@ model User {
   supervisorId  Int?    @map("supervisor_id")
   isActive      Boolean @default(true) @map("is_active")
   isManaged     Boolean @default(true) @map("is_managed")
+  timezone      String? @db.NVarchar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -191,8 +191,8 @@ model Account {
 
 model Verification {
   id         Int      @id @default(autoincrement()) @map("user_verification_id")
-  identifier String @db.NVarChar(255) 
-  value      String @db.NVarChar(4000)
+  identifier String   @db.NVarChar(255)
+  value      String   @db.NVarChar(4000)
   expiresAt  DateTime @map("expires_at")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -208,8 +208,8 @@ model Verification {
 
 model SSOProvider {
   id             Int     @id @default(autoincrement()) @map("sso_provider_id")
-  issuer         String @db.NVarChar(255)
-  domain         String @db.NVarChar(255)
+  issuer         String  @db.NVarChar(255)
+  domain         String  @db.NVarChar(255)
   oidcConfig     String? @map("oidc_config") @db.NVarChar(Max)
   samlConfig     String? @map("saml_config") @db.NVarChar(Max)
   userId         Int?    @map("user_id")
@@ -253,7 +253,7 @@ model Room {
   createdByUser User @relation("RoomCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User @relation("RoomUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-@@index([displayOrder])
+  @@index([displayOrder])
   @@map("room")
 }
 
@@ -666,7 +666,7 @@ model Configuration {
 }
 
 model SystemProcess {
-  systemProcessId Int   @id @default(autoincrement()) @map("system_process_id")
+  systemProcessId Int      @id @default(autoincrement()) @map("system_process_id")
   key             String   @unique @db.NVarChar(255)
   tag             String   @db.NVarChar(255)
   pid             Int      @map("pid")

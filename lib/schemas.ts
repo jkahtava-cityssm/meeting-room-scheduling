@@ -93,6 +93,7 @@ export const SUser = z.object({
   externalId: z.string().optional().nullable(),
   isActive: z.union([z.boolean(), z.stringbool()]),
   isManaged: z.union([z.boolean(), z.stringbool()]),
+  timezone: z.string().optional(),
 });
 
 export const SMultiDay = z.object({

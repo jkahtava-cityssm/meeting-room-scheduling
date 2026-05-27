@@ -80,7 +80,7 @@ export async function syncEntraUsers() {
     const activeUuids = active_users.map((u) => u.uuid).filter((id): id is string => !!id);
     const activeEmails = active_users.map((u) => u.email).filter((e): e is string => !!e);
 
-    // Deactate users that have UUID's but nolonger exist in the active user list.
+    // Deactivate users that have UUID's but nolonger exist in the active user list.
 
     await prisma.user.updateMany({
       where: {
@@ -126,6 +126,7 @@ export async function syncEntraUsers() {
             image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
             createdBy: 0,
             updatedBy: 0,
+            timezone: process.env.DEFAULT_TIMEZONE || 'America/Toronto',
           },
         });
       }
