@@ -1,7 +1,7 @@
 import { APP_FULL_URL } from '@/lib/api-helpers';
 import { TStatusKey } from '@/lib/types';
 
-export function getMeetingResponseEmailTemplate(content: {
+export interface IEmailTemplate {
   status: TStatusKey;
   title: string;
   room: string;
@@ -9,7 +9,9 @@ export function getMeetingResponseEmailTemplate(content: {
   duration: string;
   employeeName: string;
   notifiedNames: string;
-}) {
+}
+
+export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
   const statusColors = {
     APPROVED: '#05df72', // Green-400
     REJECTED: '#ff6467', // Red-400
