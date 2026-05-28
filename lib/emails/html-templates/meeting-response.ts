@@ -10,6 +10,23 @@ export interface IEmailTemplate {
   duration: string;
   employeeName: string;
   notifiedNames: string;
+  bookingURL: string;
+}
+
+function getStatusKeyword(status: TStatusKey, action: TEmailAction): string {
+  if (action === 'DELETE') {
+    return 'REQUEST REMOVED';
+  }
+
+  if (status === 'INFORMATION') {
+    return 'INFORMATION REQUESTED';
+  }
+
+  if (status === 'REJECTED') {
+    return 'BOOKING UNAVAILABLE';
+  }
+
+  return status;
 }
 
 export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
@@ -22,16 +39,18 @@ export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
 
   const color = statusColors[content.status];
 
+  const statusText = getStatusKeyword(content.status, content.action);
+
   return meetingTemplate
     .replaceAll('{{HEADER_FOOTER_COLOR}}', color)
-    .replaceAll('{{EVENT_STATUS}}', content.status)
+    .replaceAll('{{EVENT_STATUS}}', statusText)
     .replaceAll('{{EVENT_TITLE}}', content.title)
     .replaceAll('{{EVENT_ROOM}}', content.room)
     .replaceAll('{{EVENT_DATE}}', content.date)
     .replaceAll('{{EVENT_DURATION}}', content.duration)
     .replaceAll('{{EVENT_TO}}', content.employeeName)
     .replaceAll('{{EVENT_CC}}', content.notifiedNames)
-    .replaceAll('{{SYSTEM_URL}}', APP_FULL_URL)
+    .replaceAll('{{SYSTEM_URL}}', content.bookingURL)
     .replaceAll('{{SUPPORT_URL}}', APP_FULL_URL);
 }
 
