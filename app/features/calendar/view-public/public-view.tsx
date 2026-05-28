@@ -180,7 +180,7 @@ export function CalendarPublicView() {
 
 function MeetingRoomInformation() {
   return (
-    <div className="w-full rounded-lg border bg-blue-50/50 p-4 text-card-foreground border-blue-300 shadow-blue-200/50">
+    <div className="w-full rounded-lg border bg-blue-50/50 dark:bg-blue-900/20 p-4 text-card-foreground border-blue-300 dark:border-blue-200/20 shadow-blue-200/50">
       {/* Title */}
       <h3 className="font-semibold text-base leading-none tracking-tight mb-2">Book a meeting room</h3>
 
