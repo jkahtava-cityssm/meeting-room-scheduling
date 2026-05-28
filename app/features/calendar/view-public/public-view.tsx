@@ -180,19 +180,19 @@ export function CalendarPublicView() {
 
 function MeetingRoomInformation() {
   return (
-    <div className="w-full rounded-lg border bg-card p-4 text-card-foreground ">
+    <div className="w-full rounded-lg border bg-blue-50/50 dark:bg-blue-900/20 p-4 text-card-foreground border-blue-300 dark:border-blue-200/20 shadow-blue-200/50">
       {/* Title */}
-      <h3 className="font-semibold text-base leading-none tracking-tight mb-2">Looking to book a meeting room?</h3>
+      <h3 className="font-semibold text-base leading-none tracking-tight mb-2">Book a meeting room</h3>
 
       {/* Description */}
-      <p className="text-sm text-muted-foreground mb-3">Contact the switchboard:</p>
+      <p className="text-sm text-primary mb-3">Contact the switchboard:</p>
 
       {/* Contact Links Container */}
       <div className="flex flex-col gap-3 text-sm">
         {/* Phone Link */}
         <a href="tel:7057592500" className="flex items-center gap-3 text-primary hover:underline group w-full">
           <div className="flex h-4 w-4 shrink-0 items-center justify-center">
-            <Phone className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <Phone className="h-4 w-4 text-primary group-hover:text-primary transition-colors" />
           </div>
           <span className="font-medium tabular-nums tracking-wide">(705) 759-2500</span>
         </a>
@@ -200,7 +200,7 @@ function MeetingRoomInformation() {
         {/* Email Link */}
         <a href="mailto:MeetingRoomBookings@cityssm.on.ca" className="flex items-center gap-3 text-primary hover:underline group w-full">
           <div className="flex h-4 w-4 shrink-0 items-center justify-center">
-            <Mail className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <Mail className="h-4 w-4 text-primary group-hover:text-primary transition-colors" />
           </div>
           <span className="font-medium">MeetingRoomBookings@cityssm.on.ca</span>
         </a>
