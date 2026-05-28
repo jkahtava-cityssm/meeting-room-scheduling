@@ -22,6 +22,7 @@ export function useCalendarSearchParams(permissions: Record<string, boolean>) {
   const searchParams = useSearchParams();
   const dateParam = searchParams.get('selectedDate');
   const viewParam = searchParams.get('view') as Exclude<TCalendarView, 'all' | 'public'>;
+  const eventParam = searchParams.get('eventId');
 
   const dateValue = useMemo(() => getViewDate(dateParam), [dateParam]);
 
@@ -29,5 +30,9 @@ export function useCalendarSearchParams(permissions: Record<string, boolean>) {
     return viewParam && CALENDAR_VIEWS.filter((v) => v !== 'public' && v !== 'all').includes(viewParam) ? viewParam : getDefaultView(permissions);
   }, [viewParam, permissions]);
 
-  return { dateValue, view };
+  const eventId = useMemo(() => {
+    return eventParam ? parseInt(eventParam, 10) : undefined;
+  }, [eventParam]);
+
+  return { dateValue, view, eventId };
 }

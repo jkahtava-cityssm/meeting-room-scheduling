@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
         endDate: endDate,
         title: title,
         action: 'CREATE',
+        eventId: event.eventId,
       });
 
       return CreatedMessage('Created Event', event);
@@ -195,6 +196,7 @@ export async function PUT(request: NextRequest) {
           endDate: endDate,
           title: title,
           action: 'UPDATE',
+          eventId: event.eventId,
         });
 
         return SuccessMessage('Updated Event', event);
@@ -209,6 +211,7 @@ export async function PUT(request: NextRequest) {
         endDate: endDate,
         title: title,
         action: 'CREATE',
+        eventId: event.eventId,
       });
       return CreatedMessage('Created Event', event);
     },
@@ -296,6 +299,7 @@ export async function PATCH(request: NextRequest) {
         endDate: new Date(event.endDate),
         title: event.title,
         action: 'STATUS_CHANGE',
+        eventId: event.eventId,
       });
 
       return SuccessMessage('Event updated successfully', event);

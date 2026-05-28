@@ -129,10 +129,11 @@ interface ISendEventEmailOptions {
   endDate: Date;
   title: string;
   action: TEmailAction;
+  eventId: number;
 }
 
 export async function sendEventNotificationEmail(options: ISendEventEmailOptions) {
-  const { userId, eventRecipients, eventRooms, statusId, startDate, endDate, title, action } = options;
+  const { userId, eventRecipients, eventRooms, statusId, startDate, endDate, title, action, eventId } = options;
 
   try {
     const [user, recipients, rooms, status] = await Promise.all([
@@ -179,7 +180,7 @@ export async function sendEventNotificationEmail(options: ISendEventEmailOptions
     });
 
     const bookingURL = byGroup
-      ? APP_FULL_URL + '/bookings/user-view?view=day&selectedDate=' + format(startDate, 'yyyy-MM-dd')
+      ? APP_FULL_URL + '/bookings/user-view?view=day&selectedDate=' + format(startDate, 'yyyy-MM-dd') + '&eventId=' + eventId
       : '/availability?view=public&selectedDate=' + format(startDate, 'yyyy-MM-dd');
 
     const formattedDate = format(new TZDate(startDate, timezone), 'yyyy-MM-dd hh:mm a');

@@ -45,6 +45,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         endDate: new Date(event.endDate),
         title: event.title,
         action: 'DELETE',
+        eventId: event.eventId,
       });
 
       const totalDeleted = await deleteManyEvents({ eventId: parseInt(eventId) });
