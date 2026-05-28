@@ -4,6 +4,8 @@ export type TCalendarView = (typeof CALENDAR_VIEWS)[number];
 export const STATUS_KEYS = ['PENDING', 'APPROVED', 'REJECTED', 'INFORMATION'] as const;
 export type TStatusKey = (typeof STATUS_KEYS)[number];
 
+export type TEmailAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE';
+
 export const COLOR_OPTIONS = [
   'red',
   'rose',

@@ -3,6 +3,7 @@ import { prisma } from '@/prisma';
 import { NextRequest } from 'next/server';
 
 import { UTCDate } from '@date-fns/utc';
+import { TZDate } from '@date-fns/tz';
 
 import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
@@ -18,6 +19,13 @@ import {
 } from '@/lib/data/events';
 import { createRecurrence, upsertRecurrence } from '@/lib/data/recurrence';
 import { SEventPATCH, SEventPUT } from '@/lib/services/events';
+import { sendEmail, sendEventNotificationEmail } from '@/lib/email';
+import { findFirstUser, findManyUsers } from '@/lib/data/users';
+import { format } from 'date-fns';
+import { getDurationText } from '@/lib/helpers';
+import { findManyRooms } from '@/lib/data/rooms';
+import { findFirstStatus } from '@/lib/data/status';
+import { TStatusKey } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   return guardRoute(
@@ -66,6 +74,17 @@ export async function POST(request: NextRequest) {
       if (!event) {
         InternalServerErrorMessage();
       }
+
+      await sendEventNotificationEmail({
+        userId: userId,
+        eventRecipients: eventRecipients || [],
+        eventRooms: eventRooms || [],
+        statusId: statusId,
+        startDate: startDate,
+        endDate: endDate,
+        title: title,
+        action: 'CREATE',
+      });
 
       return CreatedMessage('Created Event', event);
     },
@@ -167,9 +186,30 @@ export async function PUT(request: NextRequest) {
       }
 
       if (event.eventId === data.eventId) {
+        await sendEventNotificationEmail({
+          userId: userId,
+          eventRecipients: eventRecipients || [],
+          eventRooms: eventRooms || [],
+          statusId: statusId,
+          startDate: startDate,
+          endDate: endDate,
+          title: title,
+          action: 'UPDATE',
+        });
+
         return SuccessMessage('Updated Event', event);
       }
 
+      await sendEventNotificationEmail({
+        userId: userId,
+        eventRecipients: eventRecipients || [],
+        eventRooms: eventRooms || [],
+        statusId: statusId,
+        startDate: startDate,
+        endDate: endDate,
+        title: title,
+        action: 'CREATE',
+      });
       return CreatedMessage('Created Event', event);
     },
     SEventPUT,
@@ -210,7 +250,7 @@ export async function PATCH(request: NextRequest) {
           );
         }
 
-        // 2. Build dynamic update object for Prisma
+        // Build dynamic update object for Prisma
         const updateData: Prisma.EventUpdateInput = {
           ...(title !== undefined && { title }),
           ...(description !== undefined && { description }),
@@ -246,6 +286,17 @@ export async function PATCH(request: NextRequest) {
       const event = await findFirstEvent({ eventId });
 
       if (!event) return InternalServerErrorMessage();
+
+      await sendEventNotificationEmail({
+        userId: event.userId || undefined,
+        eventRecipients: event.eventRecipients?.map((recipient) => recipient.userId) || [],
+        eventRooms: event.eventRooms.map((room) => room.roomId) || [],
+        statusId: event.statusId,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        title: event.title,
+        action: 'STATUS_CHANGE',
+      });
 
       return SuccessMessage('Event updated successfully', event);
     },

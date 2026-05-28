@@ -1,7 +1,8 @@
 import { APP_FULL_URL } from '@/lib/api-helpers';
-import { TStatusKey } from '@/lib/types';
+import { TEmailAction, TStatusKey } from '@/lib/types';
 
 export interface IEmailTemplate {
+  action: TEmailAction;
   status: TStatusKey;
   title: string;
   room: string;

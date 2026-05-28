@@ -13,3 +13,7 @@ const STATUS_SELECT = {
 export async function findManyStatus(where?: Prisma.StatusWhereInput, tx: Prisma.TransactionClient = prisma) {
   return tx.status.findMany({ where, select: STATUS_SELECT, orderBy: { statusId: 'asc' } });
 }
+
+export async function findFirstStatus(where?: Prisma.StatusWhereInput, tx: Prisma.TransactionClient = prisma) {
+  return tx.status.findFirst({ where, select: STATUS_SELECT, orderBy: { statusId: 'asc' } });
+}
