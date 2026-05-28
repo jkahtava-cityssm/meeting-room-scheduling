@@ -10,8 +10,9 @@ export async function middleware(request: NextRequest) {
   //so each page and api route should check for a session regardless
   if (!sessionCookie) {
     const currentPath = request.nextUrl.pathname;
+    const currentSearch = request.nextUrl.search;
     const loginUrl = new URL(`${APP_SUBFOLDER}/login`, request.url);
-    loginUrl.searchParams.set('callbackurl', `${APP_SUBFOLDER}${currentPath}`);
+    loginUrl.searchParams.set('callbackurl', `${APP_SUBFOLDER}${currentPath}${currentSearch}`);
 
     return NextResponse.redirect(loginUrl);
   }
