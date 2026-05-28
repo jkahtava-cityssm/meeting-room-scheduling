@@ -7,14 +7,15 @@ import { TEmailAction, TStatusKey } from './types';
 
 import { Message } from '@microsoft/microsoft-graph-types';
 import { getMeetingResponseEmailTemplate, IEmailTemplate } from './emails/html-templates/meeting-response';
-import { privateServerGET } from './fetch-server';
-import { IStatus } from './schemas';
 import { findFirstUser, findManyUsers } from './data/users';
 import { findManyRooms } from './data/rooms';
 import { findFirstStatus } from './data/status';
 import { format } from 'date-fns';
 import { TZDate } from '@date-fns/tz';
 import { getDurationText } from './helpers';
+import { getRolesByUserId } from './data/permissions';
+import { buildPermissionCache, GuardRequest, isGroupRequirementMet } from './auth-permission-checks';
+import { APP_FULL_URL } from './api-helpers';
 
 const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
 
@@ -38,7 +39,7 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], c
 
   const mailPayload = {
     message: {
-      subject: `Booking ${getSubjectKeyword(content.status, content.action)}`,
+      subject: `Booking ${getSubjectKeyword(content.status, content.action)} [${content.date}]`,
       body: {
         contentType: 'html',
         content: getMeetingResponseEmailTemplate(content),
@@ -60,12 +61,12 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], c
       /*replyTo: [
         {
           emailAddress: {
-            address: requestingUser,
+            address: SHARED_MAILBOX,
           },
         },
       ],*/
     } as Message,
-    saveToSentItems: 'false',
+    saveToSentItems: 'true',
   };
 
   try {
@@ -85,7 +86,7 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], c
 function getSubjectKeyword(status: TStatusKey, action: TEmailAction): string {
   // 1. Highest priority: Deletion drops all status checks
   if (action === 'DELETE') {
-    return 'Deleted';
+    return 'Removed';
   }
 
   // 2. Absolute Statuses: Rejected and Information look the same whether Created, Updated, or Patched
@@ -163,6 +164,24 @@ export async function sendEventNotificationEmail(options: ISendEventEmailOptions
       throw new Error('Send Event Email Failed: User timezone and DEFAULT_TIMEZONE environment variable are both missing.');
     }
 
+    const roles = await getRolesByUserId(user.userId);
+
+    const permissionCache = buildPermissionCache(roles);
+
+    const { byGroup } = await isGroupRequirementMet(permissionCache, {
+      canViewBookings: GuardRequest.any(
+        { type: 'permission', action: 'View Agenda', resource: 'My Bookings' },
+        { type: 'permission', action: 'View Day', resource: 'My Bookings' },
+        { type: 'permission', action: 'View Week', resource: 'My Bookings' },
+        { type: 'permission', action: 'View Month', resource: 'My Bookings' },
+        { type: 'permission', action: 'View Year', resource: 'My Bookings' },
+      ),
+    });
+
+    const bookingURL = byGroup
+      ? APP_FULL_URL + '/bookings/user-view?view=day&selectedDate=' + format(startDate, 'yyyy-MM-dd')
+      : '/availability?view=public&selectedDate=' + format(startDate, 'yyyy-MM-dd');
+
     const formattedDate = format(new TZDate(startDate, timezone), 'yyyy-MM-dd hh:mm a');
 
     await sendEmail(
@@ -177,6 +196,7 @@ export async function sendEventNotificationEmail(options: ISendEventEmailOptions
         action: action,
         status: status.key as TStatusKey,
         title: title,
+        bookingURL: bookingURL,
       },
     );
   } catch (error) {
