@@ -1,9 +1,8 @@
 'use client';
 
-import { MicrosoftButton, MicrosoftLabel } from '@/components/ui/microsoft-signin-button';
+import { MicrosoftButton } from '@/components/ui/microsoft-signin-button';
 import { fetchPOST } from '@/lib/fetch-client';
-import { usePublicConfiguration } from '@/lib/services/public';
-import { CheckIcon, CheckSquare, Loader2Icon, X } from 'lucide-react';
+import { Loader2Icon } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -16,7 +15,6 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogSave,
 } from '@/components/ui/alert-dialog';
 import { APP_FULL_URL } from '@/lib/api-helpers';
 

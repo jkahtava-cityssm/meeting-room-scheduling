@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { format, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -64,7 +64,6 @@ export default function MonthGrid({
 
   const moveByOffset = (index: number, offset: number, fallback: number) => {
     const nextIndex = index + offset;
-    const col = index % totalColumns;
 
     if (nextIndex < 0) {
       onNavigate('prev');

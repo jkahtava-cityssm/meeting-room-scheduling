@@ -7,8 +7,6 @@ import { Label } from '../ui/label';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-type Period = 'AM' | 'PM';
-
 export function TimePicker({
   id,
   currentDate,

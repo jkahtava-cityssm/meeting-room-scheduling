@@ -6,12 +6,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-
 import { Textarea } from '@/components/ui/textarea';
 
-import { DateTimePicker, DateTimePickerRef } from '@/components/ui/datetimepicker';
-import { useRef } from 'react';
 import { Session } from '@/lib/auth-client';
 import { getDurationText } from '@/lib/helpers';
 import { FormStatus } from './types';
@@ -21,12 +17,11 @@ import { StatusSelect } from '../status/status-select';
 import { UserComboBox } from '../users/user-combobox';
 import { EventDrawerPermissions } from './lib/permissions';
 
-import { StaticTabsList, StaticTabsTrigger } from '@/components/ui/tabs-placeholder';
 import { UserMultiSelect } from '../users/user-multiselect';
 import { ItemMultiSelect } from './components/item-multiselect';
 
 import { StartEndDateTimeProvider } from '@/components/calendar-start-end-datetime-provider/StartEndDateTimeProvider';
-import { Label } from '@/components/ui/label';
+
 import { addDays, format } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { LucideLock } from 'lucide-react';
@@ -42,7 +37,7 @@ const toDate = (v: string | Date | null | undefined) => (v instanceof Date ? v :
 export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session: Session | null }) => {
   const { minHour, maxHour, interval, maxSpan } = useMultiStepForm();
   const { control, getValues, setValue, watch, trigger } = useFormContext<z.infer<ReturnType<typeof getStep1Schema>>>();
-  const { can, isVerifying } = EventDrawerPermissions.usePermissions();
+  const { can } = EventDrawerPermissions.usePermissions();
 
   const disableChangeStatus = !can('ChangeEventStatus');
   const disableChangeUser = !can('ChangeEventUser');

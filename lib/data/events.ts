@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma';
-import type { EventRoom, Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { SEvent } from '../schemas';
 import z from 'zod/v4';
 import { safeCreateMany } from '../api-helpers';
@@ -83,12 +83,9 @@ export async function upsertEvent(
     description: string;
     startDate: Date;
     endDate: Date;
-    roomIds: number[];
     statusId: number;
     recurrenceId?: number;
     userId?: number;
-    itemIds?: number[];
-    recipientIds?: number[];
   },
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
@@ -98,32 +95,9 @@ export async function upsertEvent(
     description: data.description,
     startDate: data.startDate,
     endDate: data.endDate,
-    eventRooms: {
-      createMany: {
-        data: unique(data.roomIds).map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-      },
-    },
     ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
     status: { connect: { statusId: data.statusId } },
     ...(data.userId && { user: { connect: { id: data.userId } } }),
-    ...(data.itemIds && {
-      eventItems: {
-        createMany: {
-          data: unique(data.itemIds).map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-        },
-      },
-    }),
-    ...(data.recipientIds && {
-      eventRecipients: {
-        createMany: {
-          data: unique(data.recipientIds).map((eventRecipientId) => ({
-            userId: eventRecipientId,
-            createdBy: sessionUserId,
-            updatedBy: sessionUserId,
-          })),
-        },
-      },
-    }),
   };
 
   const event = await tx.event.upsert({
@@ -168,7 +142,6 @@ export async function countEvents(where?: Prisma.EventWhereInput, tx: Prisma.Tra
 
 export async function findFirstEvent(where?: Prisma.EventWhereInput, tx: Prisma.TransactionClient = prisma) {
   const event = await tx.event.findFirstOrThrow({ where, include: EVENT_INCLUDE, orderBy: { eventId: 'asc' } });
-
   if (!event) return event;
 
   return flattenEvent(event);
@@ -187,7 +160,7 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventIn
 
   const mapped = events.map((event) => {
     //Remove Properties
-    const { user, createdByUser, updatedByUser, ...other } = event;
+    const { user } = event;
 
     return {
       ...event,

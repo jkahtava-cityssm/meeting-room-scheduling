@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import type { PropsSingleRequired, PropsBase, DropdownProps } from 'react-day-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 
-import { TCalendarView } from '@/lib/types';
 import { ScrollArea, ScrollBar } from './scroll-area';
 
 function DayPicker({

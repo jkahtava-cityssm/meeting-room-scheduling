@@ -23,7 +23,7 @@ const signInEntra = async (callback: string) => {
   const data = await signIn.social({
     provider: 'microsoft',
     callbackURL: callback,
-    scopes: ['email', 'openid', 'profile', 'offline_access', 'User.Read'],
+    scopes: ['openid', 'profile', 'email'], //['email', 'openid', 'profile', 'offline_access', 'User.Read'],
   });
   return data;
 };
@@ -37,7 +37,7 @@ const signInEntraSSO = async (callback: string) => {
   return res;
 };
 
-const defaultCallback = `${APP_SUBFOLDER}/bookings/user-view`;
+const defaultCallback = `${APP_SUBFOLDER}/availability`;
 
 export function SignInMicrosoft() {
   const searchParams = useSearchParams();
@@ -101,6 +101,10 @@ export function SignInMicrosoftSSO() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>

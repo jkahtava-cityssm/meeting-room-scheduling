@@ -1,11 +1,9 @@
-import { prisma } from '@/prisma';
-import { findManyConfiguration, SConfigurationEntry } from '@/lib/data/configuration';
+import { findManyConfiguration } from '@/lib/data/configuration';
 
 import { NextRequest } from 'next/server';
-import { InternalServerErrorMessage, SuccessMessage, UnauthorizedMessage, validateVisibleHours } from '@/lib/api-helpers';
+import { SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
 import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
 import { TConfigurationKeys } from '@/lib/types';
-import z from 'zod/v4';
 
 export async function GET(request: NextRequest) {
   if (!verifySecretHeader(request)) {

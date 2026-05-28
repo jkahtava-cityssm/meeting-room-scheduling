@@ -1,12 +1,11 @@
 'use client';
 
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { z } from 'zod/v4';
 import { endOfDay } from 'date-fns';
 
 import { FormField, FormLabel, FormItem, FormControl } from '@/components/ui/form';
 import { Select, SelectItem, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 import { CalendarDayPopover } from '@/components/calendar-day-popover/calendar-day-popover';
 import { Session } from '@/lib/auth-client';
@@ -31,7 +30,7 @@ export function Step2({ formStatus }: { formStatus: FormStatus; session: Session
   const { startDate } = useMultiStepForm();
   const { control, watch } = useFormContext<z.infer<typeof step2Schema>>();
 
-  const { can, isVerifying } = EventDrawerPermissions.usePermissions();
+  const { can } = EventDrawerPermissions.usePermissions();
 
   const allowRecurrence = can('ToggleRecurrence');
   // All calculation logic, debouncing, and state is now hidden in this hook

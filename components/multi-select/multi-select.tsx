@@ -1,24 +1,14 @@
 import * as React from 'react';
-import { Asterisk, CheckIcon } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { buttonVariants } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import DynamicIcon from '../ui/icon-dynamic';
-import { BadgeColored } from '../ui/badge-colored';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
 
 // Extracted utilities and components
-import { type MultiSelectOption, type MultiSelectGroup, type MultiSelectProps, type MultiSelectRef, multiSelectVariants } from './multi-select.types';
-import {
-  isGroupedOptions,
-  arraysEqual,
-  buildSelectionList,
-  filterOptions,
-  getNavigationIndices,
-  createOptionsMap,
-  getOptionByValue,
-} from './multi-select.utils';
+import { type MultiSelectOption, type MultiSelectGroup, type MultiSelectProps, type MultiSelectRef } from './multi-select.types';
+import { isGroupedOptions, buildSelectionList, filterOptions, getNavigationIndices, createOptionsMap, getOptionByValue } from './multi-select.utils';
 import { useMultiSelectState } from './use-multi-select-state';
 import { useMultiSelectAnnouncements } from './use-multi-select-announcements';
 import { useMultiSelectKeyboard } from './use-multi-select-keyboard';

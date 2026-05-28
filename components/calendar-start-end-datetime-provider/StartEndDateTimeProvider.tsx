@@ -6,7 +6,7 @@ import { TimePicker } from '../calendar-time-picker/TimePicker';
 import { Label } from '../ui/label';
 import { TimeInterval } from '../calendar-time-picker/useTimePicker';
 import { cn } from '@/lib/utils';
-import { Button, buttonVariants } from '../ui/button';
+import { buttonVariants } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { LucideLock } from 'lucide-react';
 
@@ -118,7 +118,7 @@ type LeafProps = {
 };
 
 function StartDatePicker({ invalid, isDisabled, className, label = 'Start Date', maxFutureDate }: LeafProps) {
-  const { startDate, endDate, setStart } = useStartEnd();
+  const { startDate, setStart } = useStartEnd();
   return (
     <div className="flex flex-col gap-2">
       <Label id="start-date-label" data-error={invalid ? 'data-invalid' : ''} className={cn(invalid && 'text-destructive ')}>
@@ -144,7 +144,7 @@ function StartDatePicker({ invalid, isDisabled, className, label = 'Start Date',
 }
 
 function StartTimePicker({ invalid, isDisabled, className }: LeafProps) {
-  const { startDate, endDate, minHour, maxHour, minuteInterval, setStart } = useStartEnd();
+  const { startDate, minHour, maxHour, minuteInterval, setStart } = useStartEnd();
   return (
     <TimePicker
       id="start"

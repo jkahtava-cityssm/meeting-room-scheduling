@@ -2,7 +2,7 @@ import { ZodType } from 'zod/v4';
 
 import { LucideIcon } from 'lucide-react';
 import { CombinedSchema } from './drawer-schema.validator';
-import { Session } from '@/lib/auth-client';
+
 import { UseFormReturn } from 'react-hook-form';
 import { RefObject } from 'react';
 

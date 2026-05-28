@@ -11,7 +11,6 @@ export function createClientSecurity<const T extends Readonly<GroupedPermissionR
   type Key = keyof Result;
 
   type Evaluatable = Key | boolean | (() => boolean) | Evaluatable[];
-  type Predicate = () => boolean;
 
   type CtxValue = {
     cache: PermissionCache | null;

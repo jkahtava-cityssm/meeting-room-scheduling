@@ -1,5 +1,5 @@
-import { BadRequestMessage, InternalServerErrorMessage, NotFoundMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
-import { getRolesByName, getRolesByUserId, IPermissionSet } from '@/lib/data/permissions';
+import { BadRequestMessage, NotFoundMessage, SuccessMessage, UnauthorizedMessage } from '@/lib/api-helpers';
+import { getRolesByName, getRolesByUserId } from '@/lib/data/permissions';
 import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
 import { NextRequest } from 'next/server';
 

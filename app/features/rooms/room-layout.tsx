@@ -1,36 +1,15 @@
 'use client';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  ArrowDownAz,
-  ArrowUpAz,
-  ChevronDown,
-  ChevronUp,
-  Eye,
-  Filter,
-  FilterX,
-  LoaderCircle,
-  LoaderIcon,
-  LucideDoorOpen,
-  LucideShieldUser,
-  Pencil,
-  Terminal,
-  X,
-} from 'lucide-react';
-
-import { useEventPatchMutation } from '@/lib/services/events';
+import { ArrowDownAz, ArrowUpAz, ChevronDown, ChevronUp, Eye, Filter, FilterX, LoaderCircle, LucideDoorOpen, X } from 'lucide-react';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRoomsQuery } from '@/lib/services/rooms';
-import RoomCard from './room-card';
+
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-
-import { id } from 'date-fns/locale';
-import { type } from 'os';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -69,8 +48,6 @@ type SortColumn = 'icon' | 'publicFacing' | 'color' | 'roomCategory' | 'name';
 type SortDirection = 'desc' | 'asc' | null;
 
 export default function RoomLayout() {
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-
   const [filters, setFilters] = useState<RoomFilters>(defaultFilters);
 
   const { data, isFetching, error } = useRoomsQuery();
@@ -190,13 +167,6 @@ export default function RoomLayout() {
     // slice() to avoid mutating original; modern JS sort is stable.
     return filteredEmployee.slice().sort((a, b) => factor * cmp(a, b));
   }, [filteredEmployee, sort, getSortValue]);
-
-  const toggleRow = (id: number) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
 
   const onFilter = useCallback((value: string, key: keyof IRoom) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -498,18 +468,6 @@ export default function RoomLayout() {
           <ScrollBar orientation="vertical" />
         </ScrollArea>
       </div>
-    </div>
-  );
-}
-
-function NoContentWarning() {
-  return (
-    <div className="relative flex-1  p-4">
-      <Alert className="mt-4 ">
-        <Terminal className="h-4 w-4" />
-        <AlertTitle>No Requests Found</AlertTitle>
-        <AlertDescription>Please pick a different day, room, or status</AlertDescription>
-      </Alert>
     </div>
   );
 }

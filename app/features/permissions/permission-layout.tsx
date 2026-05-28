@@ -52,15 +52,6 @@ export function PermissionGrid() {
 
   const putPermission = usePermissionMutationUpsert();
 
-  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-
-  const toggleRow = (id: number) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
   if (error) {
     return <GenericError error={error} />;
   }

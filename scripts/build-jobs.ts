@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from 'fs';
-import { dirname, join, parse } from 'path';
+import { join, parse } from 'path';
 import { execSync } from 'child_process';
 const projectRoot = process.cwd();
 const standaloneRoot = join(projectRoot, '.next', 'standalone');

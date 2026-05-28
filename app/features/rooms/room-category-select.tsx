@@ -1,8 +1,6 @@
 import { GenericSelect } from '@/components/shared/generic-select';
-import { IconName } from '@/components/ui/icon-dynamic';
-import { TColors } from '@/lib/types';
-import { useRoomCategoryQuery, useRoomsQuery } from '@/lib/services/rooms';
-import { useUsersQuery } from '@/lib/services/users';
+
+import { useRoomCategoryQuery } from '@/lib/services/rooms';
 
 export function RoomCategorySelect({
   selectedUserId,

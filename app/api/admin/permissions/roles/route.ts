@@ -5,17 +5,13 @@ import { findManyRoles } from '@/lib/data/permissions';
 import { guardRoute } from '@/lib/api-guard';
 
 export async function GET(req: NextRequest) {
-  return guardRoute(
-    req,
-    { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
-      const roles = await findManyRoles();
+  return guardRoute(req, { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } }, async () => {
+    const roles = await findManyRoles();
 
-      if (!roles) {
-        return InternalServerErrorMessage();
-      }
+    if (!roles) {
+      return InternalServerErrorMessage();
+    }
 
-      return SuccessMessage('Roles Found', roles);
-    },
-  );
+    return SuccessMessage('Roles Found', roles);
+  });
 }

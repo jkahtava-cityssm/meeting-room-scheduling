@@ -1,6 +1,5 @@
 import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
 import { createClientSecurity } from '@/lib/auth-permission-security-client';
-import { createServerSecurity } from '@/lib/auth-permission-security-server';
 
 const PAGE_PERMISSIONS = {
   ViewCalendarDay: { type: 'permission', resource: 'Calendar', action: 'View Day' },

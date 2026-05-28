@@ -98,7 +98,7 @@ export async function updateSystemProcess({
   userId?: number;
 }) {
   try {
-    const process = await prisma.systemProcess.update({
+    await prisma.systemProcess.update({
       data: { pid: pid, key: processKey, tag: processTag, parameter: parameter, createdBy: userId, updatedBy: userId },
       where: { key: processKey },
     });

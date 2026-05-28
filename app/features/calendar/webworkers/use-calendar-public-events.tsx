@@ -11,7 +11,7 @@ export function usePublicCalendarEvents<T extends CalendarAction, V extends 'cal
   roomIdList: string[],
   visibleHours: TVisibleHours | undefined,
 ) {
-  const { data: events, isPending, isLoading, isFetching, error } = usePublicEventsQuery(date);
+  const { data: events, isLoading, isFetching, error } = usePublicEventsQuery(date);
 
   const { processEvents, data, loading: isProcessing, error: workerError } = useCalendarWorker<T>();
 

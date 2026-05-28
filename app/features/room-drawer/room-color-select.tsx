@@ -1,9 +1,7 @@
-import { GenericSelect } from '@/components/shared/generic-select';
 import { Button } from '@/components/ui/button';
-import DynamicIcon, { IconName } from '@/components/ui/icon-dynamic';
-import { COLOR_OPTIONS, TColors } from '@/lib/types';
-import { useStatusQuery } from '@/lib/services/status';
-import { CircleX } from 'lucide-react';
+
+import { COLOR_OPTIONS } from '@/lib/types';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BadgeColored } from '@/components/ui/badge-colored';
 import { cn } from '@/lib/utils';

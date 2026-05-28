@@ -7,18 +7,15 @@ import { DayViewDayHeader } from './calendar-day-view-day-header';
 
 import { cn } from '@/lib/utils';
 import { CalendarDayColumnCalendar } from '../sidebar-day-picker/calendar-day-column-calendar';
-import { CalendarPermissions } from '../permissions/calendar.permissions';
+
 import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-events';
 import { CalendarScrollContainerPrivate } from '../components/calendar-scroll-container';
 import { CalendarScrollColumnPrivate } from '../components/calendar-scroll-column';
-import { CalendarWeekViewSkeleton } from '../view-week/skeleton-calendar-week-view';
+
 import { CalendarScrollContainerSkeleton } from '../components/calendar-scroll-container-skeleton';
-import { CalendarAccessDenied } from '../calendar-controller/calendar-all-views';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LucideCalendarDays, Terminal } from 'lucide-react';
+
+import { LucideCalendarDays } from 'lucide-react';
 import { GenericError } from '../../../../components/shared/generic-error';
-import { vi } from 'date-fns/locale';
-import { TStatusKey } from '@/lib/types';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 export function CalendarDayView({ date, userId }: { date: Date; userId?: string }) {

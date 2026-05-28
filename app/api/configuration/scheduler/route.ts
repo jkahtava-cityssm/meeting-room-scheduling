@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { findProcessById } from '@/jobs/system-process.util';
-import { getNextCronOccurrence, validateCronExpression } from '@/jobs/cron-util';
+import { validateCronExpression } from '@/jobs/cron-util';
 import { guardRoute } from '@/lib/api-guard';
-import { getSystemProcess, updateSystemProcess } from '@/jobs/system-process.data';
+
 import {
   pollEntraSyncScheduler,
   startEntraSyncScheduler,
@@ -16,27 +15,23 @@ import {
  * Fetch current Entra ID Sync Service status
  */
 export async function GET(request: NextRequest) {
-  return guardRoute(
-    request,
-    { EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } },
-    async ({ sessionUserId }) => {
-      try {
-        const results = await pollEntraSyncScheduler();
+  return guardRoute(request, { EditConfiguration: { type: 'permission', resource: 'Settings', action: 'Edit Configuration' } }, async () => {
+    try {
+      const results = await pollEntraSyncScheduler();
 
-        if (!results) {
-          return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
-        }
-
-        return NextResponse.json({
-          success: true,
-          ...results,
-        });
-      } catch (err) {
-        console.error('[API] Scheduler GET error:', err);
+      if (!results) {
         return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
       }
-    },
-  );
+
+      return NextResponse.json({
+        success: true,
+        ...results,
+      });
+    } catch (err) {
+      console.error('[API] Scheduler GET error:', err);
+      return NextResponse.json({ success: false, error: 'Failed to fetch scheduler configuration' }, { status: 500 });
+    }
+  });
 }
 
 /**

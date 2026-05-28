@@ -38,8 +38,6 @@ export function SharedUserDrawerProvider({ children }: { children: React.ReactNo
 
   const ctxValue = useMemo(() => ({ openUserDrawer }), [openUserDrawer]);
 
-  const fallbackDate = useMemo(() => new Date(), []);
-
   return (
     <SharedDrawerContext.Provider value={ctxValue}>
       {children}

@@ -1,5 +1,5 @@
 // calendar-scroll-context.tsx
-import { createContext, useContext, RefObject } from 'react';
+import { createContext, useContext } from 'react';
 
 const CalendarScrollContext = createContext<{
   viewport: HTMLDivElement | null;

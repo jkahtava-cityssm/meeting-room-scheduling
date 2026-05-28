@@ -1,6 +1,5 @@
 import { CombinedSchema } from '../drawer-schema.validator';
 
-import { getDurationText } from '@/lib/helpers';
 import { IRoom } from '@/lib/schemas';
 
 export const getFormDefaults = (): CombinedSchema => {

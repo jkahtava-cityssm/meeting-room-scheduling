@@ -1,10 +1,8 @@
-import { prisma } from '@/prisma';
-
 import { NextRequest } from 'next/server';
 
 import { UTCDate } from '@date-fns/utc';
 
-import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
+import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { findManyEvents } from '@/lib/data/events';
 import { TColors, TStatusKey } from '@/lib/types';

@@ -7,13 +7,12 @@ import { step2Schema } from './drawer-schema.validator';
 import { getRRuleData, RRuleFieldValues } from './lib/rrule-preview-helper';
 
 export function useRRulePreview(startDate: string) {
-  const { control, setValue, trigger, getValues } = useFormContext<z.infer<typeof step2Schema>>();
+  const { control, setValue, trigger } = useFormContext<z.infer<typeof step2Schema>>();
 
   const [localDates, setLocalDates] = useState<Date[]>([]);
   const [count, setCount] = useState(0);
   const [isCalculating, setCalculating] = useState(false);
 
-  const prevValuesRef = useRef<string>('');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Watch all fields that impact the RRULE string

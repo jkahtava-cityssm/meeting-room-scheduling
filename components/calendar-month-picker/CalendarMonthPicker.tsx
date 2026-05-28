@@ -4,14 +4,11 @@ import React, { useMemo, useRef } from 'react';
 
 import { navigateURL } from '@/lib/helpers';
 
-import { addMonths, addYears, format, isSameMonth, parse, startOfMonth, startOfYear } from 'date-fns';
+import { addMonths, addYears, startOfMonth, startOfYear } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import MonthPickerNavigation from './MonthPickerNavigation';
-import { date } from 'zod';
+
 import MonthGrid from './MonthGrid';
 
 export default function CalendarMonthPicker({ selectedDate }: { selectedDate: Date }) {

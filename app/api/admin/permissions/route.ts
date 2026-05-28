@@ -3,14 +3,13 @@ import { NextRequest } from 'next/server';
 import { BadRequestMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { findManyExpandedPermissionSets, findManyResourceAction, upsertRoleResourceAction } from '@/lib/data/permissions';
 import { guardRoute } from '@/lib/api-guard';
-import { prisma } from '@/prisma';
 
 export async function GET(req: NextRequest) {
   return guardRoute(
     req,
 
     { EditPermission: { type: 'permission', resource: 'Settings', action: 'Edit Permissions' } },
-    async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+    async () => {
       const permissionSets = await findManyExpandedPermissionSets();
 
       if (!permissionSets) {
@@ -66,14 +65,24 @@ export async function PUT(request: NextRequest) {
       );
 
       try {
-        const results = await prisma.$transaction(async (tx) => {
-          return permissionList.map(async (p) => {
-            const resourceActionId = resourceActionLookup.get(`${p.resourceId}-${p.actionId}`);
-            if (!resourceActionId) throw new Error(`Mapping not found for Res:${p.resourceId} Act:${p.actionId}`);
+        const results = [];
 
-            return await upsertRoleResourceAction(Number(p.roleId), resourceActionId, p.permit, sessionUserId, tx);
-          });
-        });
+        for (const p of permissionList) {
+          const resourceActionId = resourceActionLookup.get(`${p.resourceId}-${p.actionId}`);
+
+          if (!resourceActionId) {
+            // Log the missing mapping, but keep the loop going so other permissions succeed
+            console.error(`Mapping not found for Res:${p.resourceId} Act:${p.actionId}`);
+            continue;
+          }
+
+          try {
+            const result = await upsertRoleResourceAction(Number(p.roleId), resourceActionId, p.permit, sessionUserId);
+            results.push(result);
+          } catch (error) {
+            console.error(`Failed to upsert permission for Res:${p.resourceId} Act:${p.actionId}:`, error);
+          }
+        }
 
         return SuccessMessage('Updated Permissions', results);
       } catch (error) {

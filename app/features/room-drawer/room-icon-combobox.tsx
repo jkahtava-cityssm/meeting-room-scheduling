@@ -1,17 +1,16 @@
 'use client';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
-import React, { useState, useMemo, useDeferredValue, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { icons } from 'lucide-react';
 import dynamicIconImports from 'lucide-react/dynamicIconImports';
-import type { LucideIcon, LucideProps } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-import { Check, ChevronDownIcon, CircleX, Loader2Icon } from 'lucide-react';
+import { ChevronDownIcon, Loader2Icon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { TColors } from '@/lib/types';
-import { sharedIconColorVariants } from '@/lib/theme/colorVariants';
-import { cva } from 'class-variance-authority';
+
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';

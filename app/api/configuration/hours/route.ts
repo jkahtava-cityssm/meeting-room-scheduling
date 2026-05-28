@@ -6,7 +6,7 @@ import { guardRoute } from '@/lib/api-guard';
 import { TConfigurationKeys } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
-  return guardRoute(request, { IsPublic: { type: 'role', role: 'Public' } }, async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+  return guardRoute(request, { IsPublic: { type: 'role', role: 'Public' } }, async () => {
     const config = await findManyConfiguration(['visibleHoursStart', 'visibleHoursEnd']);
 
     if (!config) {

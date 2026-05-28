@@ -1,6 +1,6 @@
 import { z } from 'zod/v4';
 
-export const step1Schema = z.object({
+export const step1RoomSchema = z.object({
   roomId: z.string().optional(),
   name: z.string().min(1, 'A Room Name is required'),
   color: z.string().min(1, 'Please select a Color'),
@@ -12,6 +12,6 @@ export const step1Schema = z.object({
   roomProperty: z.array(z.string()),
 });
 
-export const CombinedRoomSchema = step1Schema;
+export const CombinedRoomSchema = step1RoomSchema;
 
 export type CombinedSchema = z.infer<typeof CombinedRoomSchema>;

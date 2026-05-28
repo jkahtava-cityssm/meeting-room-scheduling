@@ -1,9 +1,8 @@
 import { GenericSelect } from '@/components/shared/generic-select';
-import { Button } from '@/components/ui/button';
+
 import { IconName } from '@/components/ui/icon-dynamic';
 import { TColors } from '@/lib/types';
 import { useStatusQuery } from '@/lib/services/status';
-import { CircleX } from 'lucide-react';
 
 export function StatusSelect({
   selectedStatusId,

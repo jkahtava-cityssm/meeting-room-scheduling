@@ -219,8 +219,6 @@ export function useTimePicker({
     const snapValue = getClosestSnap(currentMinutes);
     const snapPointIndex = minuteSnapPoints.indexOf(snapValue);
 
-    const isLastSnapPoint = snapPointIndex === minuteSnapPoints.length - 1;
-
     if (snapPointIndex < minuteSnapPoints.length - 1) {
       const nextMinutes = minuteSnapPoints[snapPointIndex + 1];
       setDate(getClampedDate(currentDate, currentHours, nextMinutes));
@@ -238,7 +236,6 @@ export function useTimePicker({
 
     const snapValue = getClosestSnap(currentMinutes);
     const snapPointIndex = minuteSnapPoints.indexOf(snapValue);
-    const isFirstSnapPoint = snapPointIndex === 0;
 
     if (snapPointIndex > 0) {
       const prevMinutes = minuteSnapPoints[snapPointIndex - 1];

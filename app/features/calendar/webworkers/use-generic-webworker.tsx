@@ -1,16 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import {
-  CalendarAction,
-  CalendarDataMap,
-  GroupingType,
-  ICalendarProcessData,
-  IDayRoomBlock,
-  IEventBlock,
-  IRequestSection,
-  IUnifiedResponse,
-  IWeekData,
-  ProcessedDataMap,
-} from './generic-webworker';
+import { CalendarAction, ICalendarProcessData, IRequestSection, IUnifiedResponse, ProcessedDataMap } from './generic-webworker';
 
 type CalendarState<A extends CalendarAction> = {
   action: A;

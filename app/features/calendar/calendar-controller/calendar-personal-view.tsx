@@ -1,10 +1,10 @@
 import { CalendarLoadingPage } from '@/app/(private)/calendar/loading';
 import { useSession } from '@/contexts/SessionProvider';
-import { useSearchParams } from 'next/navigation';
+
 import { CalendarPermissions } from '../permissions/calendar.permissions';
-import { CALENDAR_VIEWS, TCalendarView } from '@/lib/types';
-import { CalendarViewSwitcher, getDefaultView, getViewDate, RequirePermission } from './calendar-all-views';
-import { useMemo } from 'react';
+import { TCalendarView } from '@/lib/types';
+import { CalendarViewSwitcher, RequirePermission } from './calendar-all-views';
+
 import { SharedEventDrawerProvider } from '../../event-drawer/drawer-context';
 import { CalendarHeader } from './calendar-all-header';
 import { CalendarProviderPrivate } from '@/contexts/CalendarProviderPrivate';

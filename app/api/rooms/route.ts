@@ -41,7 +41,7 @@ export async function PUT(request: NextRequest) {
       ],
     },
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
-      const room = await prisma.$transaction(async (tx) => {
+      const roomId = await prisma.$transaction(async (tx) => {
         const updatedRoom = await upsertRoom(
           {
             roomId: data.roomId,
@@ -79,9 +79,10 @@ export async function PUT(request: NextRequest) {
 
           await Promise.all(data.roomProperty.map((prop) => upsertRoomProperty(roomId, prop.propertyId, prop.value, sessionUserId, tx)));
         }
-
-        return await findFirstRoom({ roomId }, tx);
+        return roomId;
       });
+
+      const room = await findFirstRoom({ roomId });
 
       if (!room) {
         return InternalServerErrorMessage();
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       ],
     },
     async ({ sessionUserId, data }) => {
-      const room = await prisma.$transaction(async (tx) => {
+      const roomId = await prisma.$transaction(async (tx) => {
         const createdRoom = await createRoom(
           {
             name: data.name,
@@ -134,14 +135,15 @@ export async function POST(request: NextRequest) {
         }
 
         if (data.roomProperty) {
-          const propertyIds = data.roomProperty.map((p) => p.propertyId);
+          //const propertyIds = data.roomProperty.map((p) => p.propertyId);
 
           await Promise.all(data.roomProperty.map((prop) => upsertRoomProperty(roomId, prop.propertyId, prop.value, sessionUserId, tx)));
         }
 
-        return await findFirstRoom({ roomId }, tx);
+        return roomId;
       });
 
+      const room = await findFirstRoom({ roomId });
       if (!room) {
         return InternalServerErrorMessage();
       }

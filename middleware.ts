@@ -1,10 +1,6 @@
-import { betterFetch } from '@better-fetch/fetch';
-import type { auth } from '@/lib/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 import { APP_SUBFOLDER } from './lib/api-helpers';
-
-type Session = typeof auth.$Infer.Session;
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);

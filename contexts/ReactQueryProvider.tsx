@@ -3,7 +3,6 @@
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider, isServer } from '@tanstack/react-query';
 import * as React from 'react';
 import { ZodError } from 'zod';
-import z from 'zod/v4';
 
 export class QueryError extends Error {
   public hookName: string;

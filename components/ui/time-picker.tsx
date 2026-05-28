@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Period, TimePickerInput } from './time-picker-input';
+import { TimePickerInput } from './time-picker-input';
 import { Label } from './label';
 import { TimePeriodSelect } from './time-period-select';
 

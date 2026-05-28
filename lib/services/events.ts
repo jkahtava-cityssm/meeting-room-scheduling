@@ -1,10 +1,9 @@
 import { formatISO } from 'date-fns';
 
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchPUT, fetchGET, fetchDELETE, fetchPATCH, fetchPOST } from '@/lib/fetch-client';
 import z from 'zod/v4';
 import { IEvent, SEvent, utcDateSchema } from '@/lib/schemas';
-import { Prisma } from '@prisma/client';
 import { processEventsAsync } from '@/app/features/calendar/webworkers/generic-webworker-client';
 import { CalendarAction, ISODateString } from '@/app/features/calendar/webworkers/generic-webworker';
 import { getDateRange } from '@/app/features/calendar/webworkers/generic-webworker-utilities';
@@ -85,7 +84,7 @@ export const useMyEventsQuery = (
     enabled: enabled,
   });
 };
-
+/*
 export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusKey: string, enabled: boolean = true) => {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
@@ -109,7 +108,7 @@ export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusKey
     enabled: enabled,
   });
 };
-
+*/
 export const useTotalEventsByStatusQuery = (statusKey: string, startDate?: Date, endDate?: Date, enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.events.totalByStatus(statusKey),

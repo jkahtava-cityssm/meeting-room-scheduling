@@ -5,7 +5,6 @@ import { guardRoute } from '@/lib/api-guard';
 import { CONFIGURATION_KEYS, TConfigurationKeys } from '@/lib/types';
 import { SConfigurationPUT } from '@/lib/services/configuration';
 import z from 'zod/v4';
-import { prisma } from '@/prisma';
 
 function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[] {
   const url = new URL(request.url);
@@ -24,7 +23,7 @@ function parseRequestedKeys(request: NextRequest): readonly TConfigurationKeys[]
 }
 
 export async function GET(request: NextRequest) {
-  return guardRoute(request, { LoggedIn: { type: 'role', role: 'Private' } }, async ({ sessionUserId, permissionCache, permissions, sessionId }) => {
+  return guardRoute(request, { LoggedIn: { type: 'role', role: 'Private' } }, async () => {
     const requestedKeys = parseRequestedKeys(request);
 
     const configEntries = await findManyConfiguration(requestedKeys);
@@ -45,24 +44,25 @@ export async function PUT(request: NextRequest) {
     },
     async ({ sessionUserId, data }) => {
       try {
-        const results = await prisma.$transaction(
-          async (tx) =>
-            await Promise.all(
-              data.map((configurationPairs) => {
-                return upsertConfiguration(
-                  {
-                    key: configurationPairs.key,
-                    value: configurationPairs.value,
-                    name: configurationPairs.name,
-                    type: configurationPairs.type,
-                    description: configurationPairs.description,
-                  },
-                  sessionUserId,
-                  tx,
-                );
-              }),
-            ),
-        );
+        const results = [];
+
+        for (const configurationPairs of data) {
+          try {
+            const result = await upsertConfiguration(
+              {
+                key: configurationPairs.key,
+                value: configurationPairs.value,
+                name: configurationPairs.name,
+                type: configurationPairs.type,
+                description: configurationPairs.description,
+              },
+              sessionUserId,
+            );
+            results.push(result);
+          } catch (error) {
+            console.error(`Failed to upsert configuration key "${configurationPairs.key}":`, error);
+          }
+        }
 
         return SuccessMessage('Updated Configurations', results);
       } catch (error) {

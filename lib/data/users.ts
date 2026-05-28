@@ -1,7 +1,5 @@
 import { prisma } from '@/prisma';
 import type { Prisma } from '@prisma/client';
-import { SUser } from '../schemas';
-import z from 'zod/v4';
 
 // Standard user select configuration — used across all DAL functions
 const USER_SELECT = {

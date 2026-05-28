@@ -1,11 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { SheetFooter } from '@/components/ui/sheet';
 import { SaveIcon, CalendarPlus, Loader2Icon, PenBoxIcon, CircleX, ArrowLeftCircle, ArrowRightCircle, Trash2 } from 'lucide-react';
-import { useVerifySessionRequirement, Session } from '@/lib/auth-client';
-import { FormStatus, FormStep } from './types';
-import { GroupedPermissionRequirement } from '@/lib/auth-permission-checks';
-import { useSession } from '@/contexts/SessionProvider';
+
 import { useMultiStepForm } from './drawer-form-provider';
 import { cn } from '@/lib/utils';
 import { UserDrawerPermissions } from './lib/permissions';

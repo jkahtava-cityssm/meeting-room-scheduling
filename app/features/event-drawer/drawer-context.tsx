@@ -3,7 +3,7 @@ import { createContext, useContext, useRef, useState, useCallback, useMemo } fro
 import { IEventSingleRoom } from '@/lib/schemas';
 import EventDrawer from './drawer-root';
 import { EventDrawerPermissions } from './lib/permissions';
-import { useSession } from '@/contexts/SessionProvider';
+
 import { CombinedSchema } from './drawer-schema.validator';
 
 export type EventDrawerPayload = {

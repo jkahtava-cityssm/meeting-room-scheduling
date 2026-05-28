@@ -1,6 +1,6 @@
 'use client';
 import { GenericSelect } from '@/components/shared/generic-select';
-import { IconName } from '@/components/ui/icon-dynamic';
+
 import { TColors } from '@/lib/types';
 import { useRolesQuery } from '@/lib/services/permissions';
 import { cn } from '@/lib/utils';

@@ -1,6 +1,6 @@
 import { z } from 'zod/v4';
 
-export const step1Schema = z
+export const step1UserSchema = z
   .object({
     userId: z.string().optional(),
     name: z.string().min(1, 'A Name is required'),
@@ -22,6 +22,6 @@ export const step1Schema = z
     }
   });
 
-export const CombinedUserSchema = step1Schema;
+export const CombinedUserSchema = step1UserSchema;
 
 export type CombinedSchema = z.infer<typeof CombinedUserSchema>;

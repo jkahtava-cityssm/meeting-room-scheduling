@@ -7,7 +7,6 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { headers } from 'next/headers';
 import { SessionAction, SessionResource, SessionRole } from './types';
 
-import { getCachedUserRoles } from './auth-role-cache';
 import { nextCookies } from 'better-auth/next-js';
 import { createUserRole, getDefaultRole } from './data/users';
 import { fetchPrivateCachedUserRole } from './server/private';

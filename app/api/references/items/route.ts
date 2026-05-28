@@ -1,7 +1,6 @@
 import { guardRoute } from '@/lib/api-guard';
 import { InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { findManyItems } from '@/lib/data/items';
-import { findManyProperties } from '@/lib/data/properties';
 
 import { NextRequest } from 'next/server';
 

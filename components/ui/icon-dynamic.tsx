@@ -1,8 +1,8 @@
 'use client';
 
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { cva } from 'class-variance-authority';
-import { sharedIconBackgrounVariants, sharedIconColorVariants } from '../../lib/theme/colorVariants';
+import { sharedIconColorVariants } from '../../lib/theme/colorVariants';
 import { TColors } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { BadgeColored } from './badge-colored';
@@ -18,15 +18,6 @@ const IconColors = cva('', {
   },
   defaultVariants: {
     color: 'invisible',
-  },
-});
-
-const BackgroundColors = cva('', {
-  variants: {
-    background: sharedIconBackgrounVariants,
-  },
-  defaultVariants: {
-    background: 'invisible',
   },
 });
 
