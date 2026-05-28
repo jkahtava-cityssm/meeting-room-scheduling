@@ -120,7 +120,7 @@ function PrivateSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         altText="An image of the crest and wreath of the city of Sault Ste. Marie"
         title="Room Scheduling/Booking"
         subtitle="The City of Sault Ste. Marie"
-        url="/bookings/user-view"
+        url="/availability"
       ></SideBarHeaderGroup>
 
       <SidebarContent>

@@ -37,7 +37,7 @@ const signInEntraSSO = async (callback: string) => {
   return res;
 };
 
-const defaultCallback = `${APP_SUBFOLDER}/bookings/user-view`;
+const defaultCallback = `${APP_SUBFOLDER}/availability`;
 
 export function SignInMicrosoft() {
   const searchParams = useSearchParams();
