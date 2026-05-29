@@ -10,14 +10,8 @@ export default function Loading() {
     <div className="[--header-height:calc(--spacing(14))]">
       <PublicHeader
         left={
-          <Image
-            src={`${APP_FULL_URL}/images/menu_logo.svg`}
-            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-            width={32}
-            height={32}
-            style={{ width: '32px', height: '32px' }}
-            priority={true}
-          />
+          // Empty skeleton matching the logo dimensions
+          <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
         }
         right={
           <div className="flex gap-2">
