@@ -1,36 +1,18 @@
 import { APP_FULL_URL } from '@/lib/api-helpers';
 import { TEmailAction, TStatusKey } from '@/lib/types';
+import { IEmailTemplate } from './meeting-response';
 
-export interface IEmailTemplate {
-  status: TStatusKey;
-  header: string;
-  title: string;
-  room: string;
-  date: string;
-  duration: string;
-  description: string;
-  employeeName: string;
-  notifiedNames: string;
-  bookingURL: string;
-}
+export type INotificationEmailTemplate = Omit<IEmailTemplate, 'status' | 'header'> & {
+  requestedItems: string;
+};
 
-export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
-  const statusColors = {
-    APPROVED: '#05df72', // Green-400
-    REJECTED: '#ff6467', // Red-400
-    INFORMATION: '#51a2ff', // Blue-400
-    PENDING: '#90a1b9', // Slate-400
-  };
-
-  const color = statusColors[content.status];
-
-  return meetingTemplate
-    .replaceAll('{{HEADER_FOOTER_COLOR}}', color)
-    .replaceAll('{{EVENT_STATUS}}', content.header)
+export function getStaffNotificationEmailTemplate(content: INotificationEmailTemplate) {
+  return notificationTemplate
     .replaceAll('{{EVENT_TITLE}}', content.title)
     .replaceAll('{{EVENT_ROOM}}', content.room)
     .replaceAll('{{EVENT_DATE}}', content.date)
     .replaceAll('{{EVENT_DURATION}}', content.duration)
+    .replaceAll('{{REQUESTED_ITEMS}}', content.requestedItems)
     .replaceAll('{{EVENT_DESCRIPTION}}', content.description)
     .replaceAll('{{EVENT_TO}}', content.employeeName)
     .replaceAll('{{EVENT_CC}}', content.notifiedNames)
@@ -41,7 +23,8 @@ export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
 //THIS TEMPLATE IS GENERATED BASED ON THE mjml FILE.
 //I USED https://mjml.io/try-it-live/bgLjUzXBx TO CONVERT IT.
 //OTHERWISE WE COULD USE THE mjml PACKAGE AT BUILD TIME BUT IT DOESNT CHANGE MUCH.
-const meetingTemplate = `<!doctype html>
+
+const notificationTemplate = `<!doctype html>
 <html lang="und" dir="auto" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
 <head>
@@ -155,20 +138,8 @@ const meetingTemplate = `<!doctype html>
           <tr>
             <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
               <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><![endif]-->
-              <!-- Header Section -->
-              <!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="{{HEADER_FOOTER_COLOR}}" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
-              <div style="background:{{HEADER_FOOTER_COLOR}};background-color:{{HEADER_FOOTER_COLOR}};margin:0px auto;max-width:600px;">
-                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:{{HEADER_FOOTER_COLOR}};background-color:{{HEADER_FOOTER_COLOR}};width:100%;">
-                  <tbody>
-                    <tr>
-                      <td style="direction:ltr;font-size:0px;padding:25px 0;text-align:center;">
-                        <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr></tr></table><![endif]-->
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="#fafafa" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+              <!-- Status Header Bar -->
+              <!--[if mso | IE]><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="#fafafa" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
               <div style="background:#fafafa;background-color:#fafafa;margin:0px auto;max-width:600px;">
                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:#fafafa;background-color:#fafafa;width:100%;">
                   <tbody>
@@ -180,7 +151,7 @@ const meetingTemplate = `<!doctype html>
                             <tbody>
                               <tr>
                                 <td align="center" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Helvetica, Arial, sans-serif;font-size:20px;font-weight:bold;line-height:24px;text-align:center;color:#333333;">{{EVENT_STATUS}}</div>
+                                  <div style="font-family:Helvetica, Arial, sans-serif;font-size:20px;font-weight:bold;line-height:24px;text-align:center;color:#e11d48;">APPROVAL REQUIRED</div>
                                 </td>
                               </tr>
                             </tbody>
@@ -240,6 +211,14 @@ const meetingTemplate = `<!doctype html>
                                       <td class="label-cell">Owner</td>
                                       <td class="value-cell">{{EVENT_TO}}</td>
                                     </tr>
+                                    <tr>
+                                      <td class="spacer-cell"></td>
+                                      <td class="spacer-cell"></td>
+                                    </tr>
+                                    <tr>
+                                      <td class="label-cell">Requested</td>
+                                      <td class="value-cell">{{REQUESTED_ITEMS}}</td>
+                                    </tr>
                                   </table>
                                 </td>
                               </tr>
@@ -270,7 +249,7 @@ const meetingTemplate = `<!doctype html>
                                     <tbody>
                                       <tr>
                                         <td align="center" bgcolor="#18181b" role="presentation" style="border:none;border-radius:8px;cursor:auto;mso-padding-alt:12px 24px;background:#18181b;" valign="middle">
-                                          <a href="{{SYSTEM_URL}}" style="display:inline-block;background:#18181b;color:#ffffff;font-family:Helvetica, Arial, sans-serif;font-size:14px;font-weight:500;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:12px 24px;mso-padding-alt:0px;border-radius:8px;" target="_blank"> Room Booking System </a>
+                                          <a href="{{SYSTEM_URL}}" style="display:inline-block;background:#18181b;color:#ffffff;font-family:Helvetica, Arial, sans-serif;font-size:14px;font-weight:500;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:12px 24px;mso-padding-alt:0px;border-radius:8px;" target="_blank"> Review Booking Request </a>
                                         </td>
                                       </tr>
                                     </tbody>
@@ -290,27 +269,10 @@ const meetingTemplate = `<!doctype html>
                                   <div style="font-family:Helvetica, Arial, sans-serif;font-size:12px;line-height:24px;text-align:left;color:#a1a1aa;">This is an automated message.</div>
                                 </td>
                               </tr>
-                              <tr>
-                                <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
-                                  <div style="font-family:Helvetica, Arial, sans-serif;font-size:12px;line-height:24px;text-align:left;color:#a1a1aa;">Need help? <a href="{{SUPPORT_URL}}" class="support-link">Contact Support</a></div>
-                                </td>
-                              </tr>
                             </tbody>
                           </table>
                         </div>
                         <!--[if mso | IE]></td></tr></table><![endif]-->
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <!--[if mso | IE]></td></tr></table></td></tr><tr><td class="" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" bgcolor="{{HEADER_FOOTER_COLOR}}" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
-              <div style="background:{{HEADER_FOOTER_COLOR}};background-color:{{HEADER_FOOTER_COLOR}};margin:0px auto;max-width:600px;">
-                <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background:{{HEADER_FOOTER_COLOR}};background-color:{{HEADER_FOOTER_COLOR}};width:100%;">
-                  <tbody>
-                    <tr>
-                      <td style="direction:ltr;font-size:0px;padding:25px 0;text-align:center;">
-                        <!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr></tr></table><![endif]-->
                       </td>
                     </tr>
                   </tbody>
