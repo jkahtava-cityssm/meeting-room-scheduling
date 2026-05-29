@@ -523,7 +523,9 @@ model Event {
   title       String   @db.NVarChar(255)
   description String   @db.NVarChar(1000)
 
-  recurrenceId Int? @map("recurrence_id")
+  recurrenceId Int?   @map("recurrence_id")
+  sequence     Int    @default(0)
+  uid          String @db.NVarchar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
