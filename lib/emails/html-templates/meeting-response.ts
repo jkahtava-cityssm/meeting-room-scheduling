@@ -4,6 +4,7 @@ import { TEmailAction, TStatusKey } from '@/lib/types';
 export interface IEmailTemplate {
   action: TEmailAction;
   status: TStatusKey;
+  header: string;
   title: string;
   room: string;
   date: string;
@@ -11,22 +12,6 @@ export interface IEmailTemplate {
   employeeName: string;
   notifiedNames: string;
   bookingURL: string;
-}
-
-function getStatusKeyword(status: TStatusKey, action: TEmailAction): string {
-  if (action === 'DELETE') {
-    return 'REQUEST REMOVED';
-  }
-
-  if (status === 'INFORMATION') {
-    return 'INFORMATION REQUESTED';
-  }
-
-  if (status === 'REJECTED') {
-    return 'BOOKING UNAVAILABLE';
-  }
-
-  return status;
 }
 
 export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
@@ -39,11 +24,9 @@ export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
 
   const color = statusColors[content.status];
 
-  const statusText = getStatusKeyword(content.status, content.action);
-
   return meetingTemplate
     .replaceAll('{{HEADER_FOOTER_COLOR}}', color)
-    .replaceAll('{{EVENT_STATUS}}', statusText)
+    .replaceAll('{{EVENT_STATUS}}', content.header)
     .replaceAll('{{EVENT_TITLE}}', content.title)
     .replaceAll('{{EVENT_ROOM}}', content.room)
     .replaceAll('{{EVENT_DATE}}', content.date)
