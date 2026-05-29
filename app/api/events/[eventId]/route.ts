@@ -46,6 +46,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         title: event.title,
         action: 'DELETE',
         eventId: event.eventId,
+        description: event.description,
+        requestedItems: event.eventItems?.map((item) => item.itemId) || [],
       });
 
       const totalDeleted = await deleteManyEvents({ eventId: parseInt(eventId) });

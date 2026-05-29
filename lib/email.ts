@@ -16,10 +16,12 @@ import { getDurationText } from './helpers';
 import { getRolesByUserId } from './data/permissions';
 import { buildPermissionCache, GuardRequest, isGroupRequirementMet } from './auth-permission-checks';
 import { APP_FULL_URL } from './api-helpers';
+import { getStaffNotificationEmailTemplate } from './emails/html-templates/staff-notification';
+import { findManyItems } from './data/items';
 
 const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
 
-export async function sendEmail(requestingUser: string, notifyUsers: string[], content: IEmailTemplate) {
+export async function sendEmail(requestingUser: string, notifyUsers: string[], subject: string, htmlContent: string) {
   if (!SHARED_MAILBOX) {
     console.log('SHARED_MAILBOX Environment Variable Not Configured');
     return;
@@ -39,10 +41,10 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], c
 
   const mailPayload = {
     message: {
-      subject: `Booking ${getSubjectKeyword(content.status, content.action)} [${content.date}]`,
+      subject: subject,
       body: {
         contentType: 'html',
-        content: getMeetingResponseEmailTemplate(content),
+        content: htmlContent,
       },
       toRecipients: [
         {
@@ -58,13 +60,6 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], c
           },
         })),
       ],
-      /*replyTo: [
-        {
-          emailAddress: {
-            address: SHARED_MAILBOX,
-          },
-        },
-      ],*/
     } as Message,
     saveToSentItems: 'true',
   };
@@ -83,43 +78,6 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], c
   }
 }
 
-function getSubjectKeyword(status: TStatusKey, action: TEmailAction): string {
-  // 1. Highest priority: Deletion drops all status checks
-  if (action === 'DELETE') {
-    return 'Removed';
-  }
-
-  // 2. Absolute Statuses: Rejected and Information look the same whether Created, Updated, or Patched
-  if (status === 'REJECTED') {
-    return 'Rejected'; // Changed from 'Denied' to match your exact prompt requirement
-  }
-  if (status === 'INFORMATION') {
-    return 'Requires More Information';
-  }
-
-  // 3. CREATE Action Conditions
-  if (action === 'CREATE') {
-    if (status === 'PENDING') return 'Requested';
-    if (status === 'APPROVED') return 'Approved';
-  }
-
-  // 4. UPDATE Action Conditions (Normal detail updates)
-  if (action === 'UPDATE') {
-    if (status === 'PENDING') return 'Requested - Details Updated';
-    if (status === 'APPROVED') return 'Approved - Details Updated';
-  }
-
-  // 5. PATCH / STATUS_CHANGE Action Conditions
-  // (When changing status to Approved/Pending without wanting "Details Updated")
-  if (action === 'STATUS_CHANGE') {
-    if (status === 'PENDING') return 'Requested';
-    if (status === 'APPROVED') return 'Approved';
-  }
-
-  // Fallback case just in case
-  return '';
-}
-
 interface ISendEventEmailOptions {
   userId: number | undefined;
   eventRecipients: number[];
@@ -130,43 +88,31 @@ interface ISendEventEmailOptions {
   title: string;
   action: TEmailAction;
   eventId: number;
+  description: string;
+  requestedItems: number[];
 }
 
 export async function sendEventNotificationEmail(options: ISendEventEmailOptions) {
-  const { userId, eventRecipients, eventRooms, statusId, startDate, endDate, title, action, eventId } = options;
+  const { userId, eventRecipients, eventRooms, statusId, startDate, endDate, title, action, eventId, description, requestedItems } = options;
 
   try {
-    const [user, recipients, rooms, status] = await Promise.all([
+    const [user, recipients, rooms, status, items] = await Promise.all([
       findFirstUser({ id: userId }),
       findManyUsers({ id: { in: eventRecipients || [] } }),
       findManyRooms({ roomId: { in: eventRooms || [] } }),
       findFirstStatus({ statusId: statusId }),
+      findManyItems({ itemId: { in: requestedItems || [] } }),
     ]);
 
-    if (!user) {
-      throw new Error(`Send Event Email Failed: Requesting user with ID ${userId} not found.`);
-    }
-
-    if (!user.email) {
-      throw new Error(`Send Event Email Failed: Requesting user with ID ${userId} missing email.`);
-    }
-
-    if (!user.emailEnabled) {
-      return;
-    }
-
-    if (!status || !status.key) {
-      throw new Error(`Send Event Email Failed: Valid status key not found for statusId ${statusId}.`);
-    }
+    if (!user) throw new Error(`Send Event Email Failed: Requesting user with ID ${userId} not found.`);
+    if (!user.email) throw new Error(`Send Event Email Failed: Requesting user with ID ${userId} missing email.`);
+    if (!user.emailEnabled) return;
+    if (!status || !status.key) throw new Error(`Send Event Email Failed: Valid status key not found for statusId ${statusId}.`);
 
     const timezone = user.timezone || process.env.DEFAULT_TIMEZONE;
-
-    if (!timezone) {
-      throw new Error('Send Event Email Failed: User timezone and DEFAULT_TIMEZONE environment variable are both missing.');
-    }
+    if (!timezone) throw new Error('Send Event Email Failed: User timezone and DEFAULT_TIMEZONE environment variable are both missing.');
 
     const roles = await getRolesByUserId(user.userId);
-
     const permissionCache = buildPermissionCache(roles);
 
     const { byGroup } = await isGroupRequirementMet(permissionCache, {
@@ -181,26 +127,72 @@ export async function sendEventNotificationEmail(options: ISendEventEmailOptions
 
     const bookingURL = byGroup
       ? APP_FULL_URL + '/bookings/user-view?view=day&selectedDate=' + format(startDate, 'yyyy-MM-dd') + '&eventId=' + eventId
-      : '/availability?view=public&selectedDate=' + format(startDate, 'yyyy-MM-dd');
+      : APP_FULL_URL + '/availability?view=public&selectedDate=' + format(startDate, 'yyyy-MM-dd');
 
     const formattedDate = format(new TZDate(startDate, timezone), 'yyyy-MM-dd hh:mm a');
 
     await sendEmail(
       user.email,
       recipients.map((r) => r.email || ''),
-      {
+      `Booking ${getSubjectKeyword(status.key as TStatusKey, action)} [${formattedDate}]`,
+      getMeetingResponseEmailTemplate({
+        header: getHeader(status.key as TStatusKey, action),
         date: formattedDate,
         duration: getDurationText(startDate, endDate),
+        description: description,
         employeeName: user.name,
         notifiedNames: recipients.map((r) => r.name).join(', '),
         room: rooms.map((r) => r.name).join(', '),
-        action: action,
         status: status.key as TStatusKey,
         title: title,
         bookingURL: bookingURL,
-      },
+      }),
     );
+
+    if (status.key === 'PENDING' && action === 'CREATE') {
+      if (!SHARED_MAILBOX) {
+        console.log('SHARED_MAILBOX Environment Variable Not Configured');
+        return;
+      }
+
+      await sendEmail(
+        SHARED_MAILBOX,
+        [],
+        `Booking ${getSubjectKeyword(status.key as TStatusKey, action)} [${formattedDate}]`,
+        getStaffNotificationEmailTemplate({
+          date: formattedDate,
+          duration: getDurationText(startDate, endDate),
+          description: description,
+          requestedItems: items.map((i) => i.name).join(', '),
+          employeeName: user.name,
+          notifiedNames: recipients.map((r) => r.name).join(', '),
+          room: rooms.map((r) => r.name).join(', '),
+          title: title,
+          bookingURL: APP_FULL_URL + '/bookings/user-requests?view=year&selectedDate=' + format(startDate, 'yyyy-MM-dd') + '&eventId=' + eventId,
+        }),
+      );
+    }
   } catch (error) {
     console.error('Failed to orchestrate event email notification:', error);
   }
+}
+
+function getHeader(status: TStatusKey, action: TEmailAction): string {
+  if (action === 'DELETE') return 'REQUEST REMOVED';
+  if (status === 'INFORMATION') return 'INFORMATION REQUESTED';
+  if (status === 'REJECTED') return 'BOOKING UNAVAILABLE';
+  return status;
+}
+
+function getSubjectKeyword(status: TStatusKey, action: TEmailAction): string {
+  if (action === 'DELETE') return 'Removed';
+  if (status === 'REJECTED') return 'Rejected';
+  if (status === 'INFORMATION') return 'Requires More Information';
+  if (action === 'CREATE' || action === 'STATUS_CHANGE') {
+    return status === 'PENDING' ? 'Requested' : 'Approved';
+  }
+  if (action === 'UPDATE') {
+    return status === 'PENDING' ? 'Requested - Details Updated' : 'Approved - Details Updated';
+  }
+  return '';
 }

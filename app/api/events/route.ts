@@ -85,6 +85,8 @@ export async function POST(request: NextRequest) {
         title: title,
         action: 'CREATE',
         eventId: event.eventId,
+        description: description,
+        requestedItems: eventItems || [],
       });
 
       return CreatedMessage('Created Event', event);
@@ -197,6 +199,8 @@ export async function PUT(request: NextRequest) {
           title: title,
           action: 'UPDATE',
           eventId: event.eventId,
+          description: description,
+          requestedItems: eventItems || [],
         });
 
         return SuccessMessage('Updated Event', event);
@@ -212,6 +216,8 @@ export async function PUT(request: NextRequest) {
         title: title,
         action: 'CREATE',
         eventId: event.eventId,
+        description: description,
+        requestedItems: eventItems || [],
       });
       return CreatedMessage('Created Event', event);
     },
@@ -300,6 +306,8 @@ export async function PATCH(request: NextRequest) {
         title: event.title,
         action: 'STATUS_CHANGE',
         eventId: event.eventId,
+        description: event.description,
+        requestedItems: event.eventItems?.map((item) => item.itemId) || [],
       });
 
       return SuccessMessage('Event updated successfully', event);
