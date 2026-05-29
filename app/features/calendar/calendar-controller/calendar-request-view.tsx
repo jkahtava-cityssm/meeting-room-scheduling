@@ -24,7 +24,7 @@ export function CalendarRequestView() {
     year: can('ViewStaffRequests'),
   };
 
-  const { dateValue, view } = useCalendarSearchParams(permissions);
+  const { dateValue, view, eventId } = useCalendarSearchParams(permissions);
   const hasAccess = canAny(...Object.values(permissions));
 
   const VIEW_TO_ACTION_MAP: Record<string, CalendarAction> = {
@@ -52,7 +52,7 @@ export function CalendarRequestView() {
 
           <RequirePermission allowed={hasAccess}>
             <div className="flex flex-1 min-h-0">
-              <CalendarUserRequestView action={currentAction} date={dateValue} />
+              <CalendarUserRequestView action={currentAction} date={dateValue} eventId={eventId} />
               <div className="hidden w-74 divide-y border-l md:block">
                 {view === 'month' && <CalendarMonthPicker selectedDate={dateValue}></CalendarMonthPicker>}
                 {view === 'year' && <CalendarYearPicker selectedDate={dateValue}></CalendarYearPicker>}

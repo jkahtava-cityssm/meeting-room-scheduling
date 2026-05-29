@@ -62,7 +62,17 @@ export type VirtualRowItem =
       data: IEventSingleRoom[];
     };
 
-export function CalendarUserRequestView({ action, date, userId }: { action: CalendarAction; date: Date; userId?: string }) {
+export function CalendarUserRequestView({
+  action,
+  date,
+  userId,
+  eventId,
+}: {
+  action: CalendarAction;
+  date: Date;
+  userId?: string;
+  eventId?: number;
+}) {
   const [removingEvents, setRemovingEvents] = useState<Map<number, TStatusKey>>(() => new Map());
 
   const removingEventIds = useMemo(() => new Set(removingEvents.keys()), [removingEvents]);
@@ -341,6 +351,39 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     });
     if (changed) setRemovingEvents(nextRemovingEvents);
   }, [result?.data?.requestSections, removingEvents]);
+
+  useEffect(() => {
+    if (!eventId || !flatData.length) return;
+
+    let targetIndex = -1;
+
+    for (let i = 0; i < flatData.length; i++) {
+      const item = flatData[i];
+      if (item.type === 'GROUP_ROW' && item.data) {
+        const containsId = item.data.some((t) => t.eventId === eventId);
+        if (containsId) {
+          targetIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (targetIndex === -1) return;
+
+    const scrollFrame = requestAnimationFrame(() => {
+      const offsetMeta = rowVirtualizer.getOffsetForIndex(targetIndex, 'start');
+
+      if (offsetMeta) {
+        const rawOffset = offsetMeta[0];
+
+        const paddedOffset = Math.max(0, rawOffset - 24);
+
+        rowVirtualizer.scrollToOffset(paddedOffset, { behavior: 'auto' });
+      }
+    });
+
+    return () => cancelAnimationFrame(scrollFrame);
+  }, [eventId, flatData, rowVirtualizer]);
 
   if (error) {
     return <GenericError error={error} />;
