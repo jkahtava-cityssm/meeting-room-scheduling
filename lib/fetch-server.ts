@@ -64,8 +64,7 @@ async function serverRequest<T>(url: string, method: string, options: FetchOptio
 
   // 3. Centralized Error Handling
   if (!success) {
-    const errorData = await response.json().catch(() => ({}));
-    const message = errorData.message || response.statusText;
+    const message = json.message || response.statusText;
     throw new Error(`${response.status} - ${response.statusText}, ${url} [${message}]`);
     //Might want to do this instead of throwing an error?
     /*return { 
