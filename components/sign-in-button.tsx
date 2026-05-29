@@ -47,12 +47,9 @@ export function SignInMicrosoft() {
   return (
     <>
       <MicrosoftButton onClick={() => signInEntra(callbackURL)}>
-        <Image
-          src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
-          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-          width={21}
-          height={21}
-        />
+        <span className="w-[21px] h-[21px] flex items-center justify-center shrink-0">
+          <Image src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`} alt="Microsoft Logo" width={21} height={21} priority={true} />
+        </span>
         Sign in with Microsoft
       </MicrosoftButton>
     </>
@@ -75,16 +72,15 @@ export function SignInGithub() {
   return (
     <>
       <Button onClick={() => signInGitHub(callbackURL)}>
-        {mounted ? (
+        <span className="w-[21px] h-[21px] flex items-center justify-center shrink-0">
           <Image
             src={resolvedTheme === 'light' ? `${APP_FULL_URL}/images/github-mark-white.svg` : `${APP_FULL_URL}/images/github-mark.svg`}
-            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+            alt="Github Logo"
             width={21}
             height={21}
+            priority={true}
           />
-        ) : (
-          <Loader2Icon className="h-5.25 w-5.25 animate-spin" />
-        )}
+        </span>
         Sign in with GitHub
       </Button>
     </>
@@ -109,12 +105,9 @@ export function SignInMicrosoftSSO() {
   return (
     <>
       <MicrosoftButton onClick={() => signInEntraSSO(callbackURL)}>
-        <Image
-          src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`}
-          alt="An image of the crest and wreath of the city of Sault Ste. Marie"
-          width={21}
-          height={21}
-        />
+        <span className="w-[21px] h-[21px] flex items-center justify-center shrink-0">
+          <Image src={`${APP_FULL_URL}/images/ms-symbollockup_mssymbol_19.svg`} alt="Microsoft Logo" width={21} height={21} priority={true} />
+        </span>
         Sign in with Microsoft
       </MicrosoftButton>
     </>
