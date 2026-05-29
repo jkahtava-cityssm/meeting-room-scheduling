@@ -22,7 +22,7 @@ export default function Loading() {
         right={
           <div className="flex gap-2">
             <ThemeButton />
-            <Button>
+            <Button className="w-20" asChild>
               <Link href={'/'}>Home</Link>
             </Button>
           </div>

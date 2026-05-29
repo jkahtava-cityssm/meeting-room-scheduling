@@ -38,7 +38,7 @@ export default async function Home() {
         right={
           <div className="flex gap-2">
             <ThemeButton />
-            <Button asChild>
+            <Button className="w-20" asChild>
               <Link href={'/login'}>Sign In</Link>
             </Button>
           </div>
