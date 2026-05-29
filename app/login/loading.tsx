@@ -1,19 +1,30 @@
 import { PublicHeader } from '@/components/public-header';
 import { ThemeButton } from '@/components/theme-button';
 import { Button } from '@/components/ui/button';
+import { APP_FULL_URL } from '@/lib/api-helpers';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Loading() {
   return (
     <div className="[--header-height:calc(--spacing(14))]">
       <PublicHeader
         left={
-          // Empty skeleton matching the logo dimensions
-          <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+          <Image
+            src={`${APP_FULL_URL}/images/menu_logo.svg`}
+            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+            width={32}
+            height={32}
+            style={{ width: '32px', height: '32px' }}
+            priority={true}
+          />
         }
         right={
           <div className="flex gap-2">
             <ThemeButton />
-            <Button disabled>Home</Button>
+            <Button>
+              <Link href={'/'}>Home</Link>
+            </Button>
           </div>
         }
         title="Room Scheduling/Booking"
@@ -22,14 +33,89 @@ export default function Loading() {
           className="flex flex-col items-center justify-center gap-6 bg-background p-6 md:p-10"
           style={{ minHeight: 'calc(100vh - var(--header-height) - 1px)' }}
         >
-          <div className="w-full max-w-[180px] flex flex-col items-center gap-4">
-            {/* Logo Skeleton */}
-            <div className="w-[180px] h-[180px] rounded-md bg-muted animate-pulse" />
-            {/* Text Skeletons */}
-            <div className="h-6 w-48 bg-muted rounded animate-pulse" />
-            <div className="h-8 w-64 bg-muted rounded animate-pulse" />
-            {/* Button Skeleton */}
-            <div className="h-10 w-full bg-muted rounded mt-4 animate-pulse" />
+          <div className="w-full">
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center justify-center rounded-md">
+                  <Image
+                    src={`${APP_FULL_URL}/images/login_logo.svg`}
+                    alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+                    width={180}
+                    height={180}
+                    style={{ width: '180px', height: '180px' }}
+                    priority={true}
+                  />
+                </div>
+
+                <h1 className="text-xl">City of Sault Ste. Marie</h1>
+                <h1 className="text-2xl font-bold">Room Scheduling/Booking</h1>
+                <div className="flex flex-col items-center gap-2 m-4 w-full">
+                  <div className="h-[41px] w-52 bg-muted shadow-xs animate-pulse" />
+                </div>
+                {process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' && (
+                  <div className="flex flex-col items-center gap-2 m-4 w-full">
+                    {/* Standard shadcn UI Button height is h-10 (40px) */}
+                    <div className="h-9 w-46.5 bg-muted rounded-md shadow-xs animate-pulse" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </PublicHeader>
+    </div>
+  );
+
+  return (
+    <div className="[--header-height:calc(--spacing(14))]">
+      <PublicHeader
+        left={
+          <Image
+            src={`${APP_FULL_URL}/images/menu_logo.svg`}
+            alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+            width={32}
+            height={32}
+            style={{ width: '32px', height: '32px' }}
+            priority={true}
+          />
+        }
+        right={
+          <div className="flex gap-2">
+            <ThemeButton />
+            <Button>
+              <Link href={'/'}>Home</Link>
+            </Button>
+          </div>
+        }
+        title="Room Scheduling/Booking"
+      >
+        <div
+          className="flex flex-col items-center justify-center gap-6 bg-background p-6 md:p-10"
+          style={{ minHeight: 'calc(100vh - var(--header-height) - 1px)' }}
+        >
+          <div className="w-full">
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col items-center gap-2">
+                {/* Logo Skeleton */}
+                <div className="flex items-center justify-center rounded-md">
+                  <Image
+                    src={`${APP_FULL_URL}/images/login_logo.svg`}
+                    alt="An image of the crest and wreath of the city of Sault Ste. Marie"
+                    width={180}
+                    height={180}
+                    style={{ width: '180px', height: '180px' }}
+                    priority={true}
+                  />
+                </div>
+
+                <h1 className="text-xl">City of Sault Ste. Marie</h1>
+                <h1 className="text-2xl font-bold">Room Scheduling/Booking</h1>
+                {/* Button Skeleton */}
+                <div className="flex flex-col items-center gap-2 m-4 w-full">
+                  <div className="h-[41px] w-56 bg-muted rounded shadow-xs animate-pulse" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </PublicHeader>
