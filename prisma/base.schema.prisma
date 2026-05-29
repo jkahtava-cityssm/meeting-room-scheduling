@@ -12,7 +12,7 @@ model User {
   supervisorId  Int?    @map("supervisor_id")
   isActive      Boolean @default(true) @map("is_active")
   isManaged     Boolean @default(true) @map("is_managed")
-  timezone      String? @db.NVarchar(255)
+  timezone      String? @db.NVarChar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -525,7 +525,7 @@ model Event {
 
   recurrenceId Int?   @map("recurrence_id")
   sequence     Int    @default(0)
-  uid          String @db.NVarchar(255)
+  uid          String @db.NVarChar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
