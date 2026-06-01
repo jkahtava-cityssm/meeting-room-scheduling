@@ -11,7 +11,7 @@ import { CalendarProviderPrivate } from '@/contexts/CalendarProviderPrivate';
 import { useCalendarSearchParams } from './use-calendar-search-params';
 import { useEventQuery } from '@/lib/services/events';
 import { processMultiRoomEvents } from '../webworkers/generic-webworker-utilities';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function CalendarPersonalView() {
   const { session } = useSession();
@@ -60,6 +60,7 @@ export function CalendarPersonalView() {
 
 function EventFilterTrigger({ eventId, userId }: { eventId?: number; userId?: string }) {
   const { openEventDrawer } = useSharedEventDrawer();
+  const [wasTriggered, setTriggered] = useState(false);
 
   const { data: event } = useEventQuery(eventId, userId);
   const { canAny } = CalendarPermissions.usePermissions();
@@ -68,7 +69,7 @@ function EventFilterTrigger({ eventId, userId }: { eventId?: number; userId?: st
 
   useEffect(() => {
     // Only trigger if we have a valid event fetched and user has permission
-    if (eventId && event && canReadEvent) {
+    if (eventId && event && canReadEvent && !wasTriggered) {
       const processedEvent = {
         ...event,
         roomId: event.eventRooms[0]?.roomId ?? -2,
@@ -79,8 +80,9 @@ function EventFilterTrigger({ eventId, userId }: { eventId?: number; userId?: st
       };
 
       openEventDrawer({ event: processedEvent, creationDate: new Date(event.startDate) });
+      setTriggered(true);
     }
-  }, [event, eventId, canReadEvent, openEventDrawer]);
+  }, [event, eventId, canReadEvent, openEventDrawer, wasTriggered]);
 
   return null;
 }
