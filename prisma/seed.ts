@@ -539,7 +539,7 @@ async function CreateRandomEvents(
     const randomRoomCount = Math.floor(Math.random() * rooms.length);
     const isMultiRoom = Math.random() < 0.1;
 
-    const uid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+    const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
 
     const event = await prisma.event.create({
       data: {
@@ -759,7 +759,7 @@ async function CreateEdgeCaseMultiDayEvents(
     const randomRoomCount = Math.floor(Math.random() * rooms.length);
     const isMultiRoom = Math.random() < 0.1;
 
-    const uid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+    const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
 
     try {
       await prisma.event.create({
@@ -860,7 +860,7 @@ async function CreateEdgeCaseMultiDayEvents(
         const randomRoomCount = Math.floor(Math.random() * rooms.length);
         const isMultiRoom = Math.random() < 0.1;
 
-        const uid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+        const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
 
         try {
           await prisma.event.create({

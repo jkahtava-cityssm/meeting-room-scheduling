@@ -37,7 +37,7 @@ export async function createEvent(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  const uid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+  const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
 
   const event = await tx.event.create({
     data: {
@@ -106,7 +106,7 @@ export async function upsertEvent(
     ...(data.userId && { user: { connect: { id: data.userId } } }),
   };
 
-  const icalUid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+  const icalUid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
 
   const event = await tx.event.upsert({
     where: { eventId: data.eventId },
