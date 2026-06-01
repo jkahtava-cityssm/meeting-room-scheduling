@@ -249,7 +249,7 @@ export async function PATCH(request: NextRequest) {
       } = data;
 
       await prisma.$transaction(async (tx) => {
-        // 1. Handle Recurrence Logic
+        // Handle Recurrence Logic
         let recurrence = undefined;
         if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
           recurrence = await upsertRecurrence(
@@ -259,22 +259,20 @@ export async function PATCH(request: NextRequest) {
           );
         }
 
-        // Build dynamic update object for Prisma
-        const updateData: Prisma.EventUpdateInput = {
-          ...(title !== undefined && { title }),
-          ...(description !== undefined && { description }),
-          ...(startDate !== undefined && { startDate }),
-          ...(endDate !== undefined && { endDate }),
-          ...(statusId !== undefined && { status: { connect: { statusId } } }),
-          ...(userId !== undefined && { user: userId ? { connect: { id: userId } } : { disconnect: true } }),
-          ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-          ...(sessionUserId && { updatedByUser: { connect: { id: sessionUserId } } }),
-        };
-
-        // 3. Update the Event
+        // Update the Event
         await tx.event.update({
           where: { eventId },
-          data: updateData,
+          data: {
+            ...(title !== undefined && { title }),
+            ...(description !== undefined && { description }),
+            ...(startDate !== undefined && { startDate }),
+            ...(endDate !== undefined && { endDate }),
+            ...(statusId !== undefined && { status: { connect: { statusId } } }),
+            ...(userId !== undefined && { user: userId ? { connect: { id: userId } } : { disconnect: true } }),
+            ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
+            ...(sessionUserId && { updatedByUser: { connect: { id: sessionUserId } } }),
+            sequence: { increment: 1 },
+          },
         });
 
         if (eventRooms) {
