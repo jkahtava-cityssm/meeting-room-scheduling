@@ -37,7 +37,7 @@ export async function createEvent(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
-  const icalUid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+  const uid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
 
   const event = await tx.event.create({
     data: {
@@ -52,7 +52,7 @@ export async function createEvent(
       },
       ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
       sequence: 0,
-      uid: icalUid,
+      uid: uid,
       status: { connect: { statusId: data.statusId } },
       ...(data.userId && { user: { connect: { id: data.userId } } }),
       ...(data.itemIds && {
