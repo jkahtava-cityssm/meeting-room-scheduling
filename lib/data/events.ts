@@ -3,8 +3,10 @@ import type { Prisma } from '@prisma/client';
 import { SEvent } from '../schemas';
 import z from 'zod/v4';
 import { safeCreateMany } from '../api-helpers';
+import crypto from 'crypto';
 
 const unique = <T>(array: T[]): T[] => Array.from(new Set(array));
+const DATABASE_NAME = process.env.DATABASE_NAME || 'Unknown';
 
 // Standard event include configuration — used across all DAL functions
 const EVENT_INCLUDE = {
@@ -35,6 +37,8 @@ export async function createEvent(
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
 ) {
+  const icalUid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+
   const event = await tx.event.create({
     data: {
       title: data.title,
@@ -47,6 +51,8 @@ export async function createEvent(
         },
       },
       ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
+      sequence: 0,
+      uid: icalUid,
       status: { connect: { statusId: data.statusId } },
       ...(data.userId && { user: { connect: { id: data.userId } } }),
       ...(data.itemIds && {
@@ -100,10 +106,18 @@ export async function upsertEvent(
     ...(data.userId && { user: { connect: { id: data.userId } } }),
   };
 
+  const icalUid = `${crypto.randomUUID()}@${DATABASE_NAME}}`;
+
   const event = await tx.event.upsert({
     where: { eventId: data.eventId },
-    create: { ...input, createdByUser: { connect: { id: sessionUserId } }, updatedByUser: { connect: { id: sessionUserId } } },
-    update: { ...input, updatedByUser: { connect: { id: sessionUserId } } },
+    create: {
+      ...input,
+      uid: icalUid,
+      sequence: 0,
+      createdByUser: { connect: { id: sessionUserId } },
+      updatedByUser: { connect: { id: sessionUserId } },
+    },
+    update: { ...input, sequence: { increment: 1 }, updatedByUser: { connect: { id: sessionUserId } } },
     include: EVENT_INCLUDE,
   });
 
