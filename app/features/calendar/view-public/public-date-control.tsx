@@ -91,12 +91,12 @@ export const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
             setCurrentDate(selectedDate);
             push(navigateURL(selectedDate, 'public'));
           }}
-          placeholder={formatDate(currentDate, 'MMMM do, yyyy')}
+          placeholder={formatDate(currentDate, 'PPPP')}
           className="block text-base font-semibold w-40"
           data-invalid={false}
         >
           <Button size={'sm'} variant="ghost" className="block text-base font-semibold ">
-            {<span>{formatDate(currentDate, 'PPP')}</span>}
+            {<span>{formatDate(currentDate, 'PPPP')}</span>}
           </Button>
         </CalendarDayPopover>
       </div>
@@ -123,7 +123,7 @@ export const DateControlSkeleton = ({ selectedDate }: { selectedDate: Date }) =>
   return (
     <div className="grid grid-cols-2 gap-2 auto-cols-min w-full items-center min-w-65 lg:grid-cols-[auto_minmax(10rem,1fr)_auto] py-2">
       <div className="text-center justify-self-center col-span-2 lg:col-start-2 lg:col-span-1 lg:row-start-1">
-        <Skeleton className="w-45 h-8 inline-flex items-center justify-center text-base font-semibold ">{formatDate(selectedDate, 'PPP')}</Skeleton>
+        <Skeleton className="w-45 h-8 inline-flex items-center justify-center text-base font-semibold ">{formatDate(selectedDate, 'PPPP')}</Skeleton>
       </div>
       <div className="justify-self-end lg:col-start-1">
         <Skeleton className="w-30 h-8"></Skeleton>
