@@ -121,6 +121,8 @@ export const SEvent = z.object({
   userEmail: z.string().nullable().optional(),
   statusId: z.number(),
   recurrenceId: z.number().nullable(),
+  uid: z.string(),
+  sequence: z.number(),
   eventItems: z.array(SEventItem).optional(),
   eventRecipients: z.array(SEventRecipient).optional(),
   eventRooms: z.array(SRoom),

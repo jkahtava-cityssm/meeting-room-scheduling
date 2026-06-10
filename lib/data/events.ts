@@ -163,12 +163,12 @@ export async function findFirstEvent(where?: Prisma.EventWhereInput, tx: Prisma.
 
 type EventWithRelations = Prisma.EventGetPayload<{ include: typeof EVENT_INCLUDE }>;
 
-type IEventInput = z.input<typeof SEvent>;
+export type IFlattenedEvent = z.input<typeof SEvent>;
 
-function flattenEvent(event: EventWithRelations): IEventInput;
-function flattenEvent(event: EventWithRelations[]): IEventInput[];
+function flattenEvent(event: EventWithRelations): IFlattenedEvent;
+function flattenEvent(event: EventWithRelations[]): IFlattenedEvent[];
 
-function flattenEvent(data: EventWithRelations | EventWithRelations[]): IEventInput | IEventInput[] {
+function flattenEvent(data: EventWithRelations | EventWithRelations[]): IFlattenedEvent | IFlattenedEvent[] {
   const isArray = Array.isArray(data);
   const events = isArray ? data : [data];
 

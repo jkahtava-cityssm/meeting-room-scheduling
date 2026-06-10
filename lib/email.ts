@@ -3,25 +3,34 @@
 import { ClientSecretCredential } from '@azure/identity';
 import { Client, GraphError } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { TEmailAction, TStatusKey } from './types';
+import { ICalendarStatus, NOTIFICATION_MATRIX, NotificationConfig, TEmailAction, TStatusKey } from './types';
 
-import { Message } from '@microsoft/microsoft-graph-types';
+import { FileAttachment, Message } from '@microsoft/microsoft-graph-types';
 import { getMeetingResponseEmailTemplate, IEmailTemplate } from './emails/html-templates/meeting-response';
 import { findFirstUser, findManyUsers } from './data/users';
 import { findManyRooms } from './data/rooms';
 import { findFirstStatus } from './data/status';
 import { format } from 'date-fns';
-import { TZDate } from '@date-fns/tz';
+import { tz, TZDate } from '@date-fns/tz';
+import { utc } from '@date-fns/utc';
 import { getDurationText } from './helpers';
 import { getRolesByUserId } from './data/permissions';
 import { buildPermissionCache, GuardRequest, isGroupRequirementMet } from './auth-permission-checks';
 import { APP_FULL_URL } from './api-helpers';
 import { getStaffNotificationEmailTemplate } from './emails/html-templates/staff-notification';
 import { findManyItems } from './data/items';
+import { findFirstEvent, findManyEvents, IFlattenedEvent } from './data/events';
+import crypto from 'crypto';
 
 const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
 
-export async function sendEmail(requestingUser: string, notifyUsers: string[], subject: string, htmlContent: string) {
+export async function sendEmail(
+  requestingUser: string,
+  notifyUsers: string[],
+  subject: string,
+  htmlContent: string,
+  base64CalendarAttachment?: string,
+) {
   if (!SHARED_MAILBOX) {
     console.log('SHARED_MAILBOX Environment Variable Not Configured');
     return;
@@ -60,6 +69,15 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], s
           },
         })),
       ],
+      attachments: [
+        base64CalendarAttachment &&
+          ({
+            '@odata.type': '#microsoft.graph.fileAttachment',
+            name: 'invite.ics', // The filename staff will see in Outlook
+            contentType: 'text/calendar; charset=utf-8; method=REQUEST', // Explicit calendar mime type
+            contentBytes: base64CalendarAttachment, // Your base64 data stream string
+          } as FileAttachment),
+      ],
     } as Message,
     saveToSentItems: 'true',
   };
@@ -78,36 +96,48 @@ export async function sendEmail(requestingUser: string, notifyUsers: string[], s
   }
 }
 
-interface ISendEventEmailOptions {
-  userId: number | undefined;
-  eventRecipients: number[];
-  eventRooms: number[];
-  statusId: number;
-  startDate: Date;
-  endDate: Date;
-  title: string;
-  action: TEmailAction;
-  eventId: number;
-  description: string;
-  requestedItems: number[];
-}
-
-export async function sendEventNotificationEmail(options: ISendEventEmailOptions) {
-  const { userId, eventRecipients, eventRooms, statusId, startDate, endDate, title, action, eventId, description, requestedItems } = options;
-
+export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent, action: TEmailAction) {
   try {
-    const [user, recipients, rooms, status, items] = await Promise.all([
-      findFirstUser({ id: userId }),
-      findManyUsers({ id: { in: eventRecipients || [] } }),
-      findManyRooms({ roomId: { in: eventRooms || [] } }),
-      findFirstStatus({ statusId: statusId }),
-      findManyItems({ itemId: { in: requestedItems || [] } }),
+    if (!SHARED_MAILBOX) {
+      console.log('SHARED_MAILBOX Environment Variable Not Configured');
+      return;
+    }
+
+    if (!flattenedEvent) throw new Error(`Send Event Email Failed: Event was null or undefined.`);
+
+    const variables = {
+      userId: flattenedEvent.userId ? Number(flattenedEvent.userId) : undefined,
+      eventRecipients: flattenedEvent.eventRecipients ? flattenedEvent.eventRecipients.map((recipients) => recipients.userId) : [],
+      eventRooms: flattenedEvent.eventRooms ? flattenedEvent.eventRooms : [],
+      statusId: flattenedEvent.statusId,
+      startDate: flattenedEvent.startDate as string,
+      endDate: flattenedEvent.endDate as string,
+      title: flattenedEvent.title,
+      description: flattenedEvent.description,
+      requestedItems: flattenedEvent.eventItems ? flattenedEvent.eventItems : [],
+      rrule: flattenedEvent.recurrence?.rule,
+      uid: flattenedEvent.uid,
+      sequence: String(flattenedEvent.sequence),
+    };
+
+    const [user, recipients, status] = await Promise.all([
+      findFirstUser({ id: variables.userId, emailEnabled: true }),
+      findManyUsers({
+        id: { in: variables.eventRecipients },
+        emailEnabled: true,
+        email: {
+          not: null,
+          notIn: [''],
+        },
+      }),
+      findFirstStatus({ statusId: variables.statusId }),
     ]);
 
-    if (!user) throw new Error(`Send Event Email Failed: Requesting user with ID ${userId} not found.`);
-    if (!user.email) throw new Error(`Send Event Email Failed: Requesting user with ID ${userId} missing email.`);
-    if (!user.emailEnabled) return;
-    if (!status || !status.key) throw new Error(`Send Event Email Failed: Valid status key not found for statusId ${statusId}.`);
+    if (!user) throw new Error(`Send Event Email Failed: Requesting user with ID ${variables.userId} not found.`);
+    if (!user.email) throw new Error(`Send Event Email Failed: Requesting user with ID ${variables.userId} missing email.`);
+    if (!status || !status.key) throw new Error(`Send Event Email Failed: Valid status key not found for statusId ${variables.statusId}.`);
+
+    const statusKey = status.key as TStatusKey;
 
     const timezone = user.timezone || process.env.DEFAULT_TIMEZONE;
     if (!timezone) throw new Error('Send Event Email Failed: User timezone and DEFAULT_TIMEZONE environment variable are both missing.');
@@ -125,51 +155,80 @@ export async function sendEventNotificationEmail(options: ISendEventEmailOptions
       ),
     });
 
-    const bookingURL = byGroup
-      ? APP_FULL_URL + '/bookings/user-view?view=day&selectedDate=' + format(startDate, 'yyyy-MM-dd') + '&eventId=' + eventId
-      : APP_FULL_URL + '/availability?view=public&selectedDate=' + format(startDate, 'yyyy-MM-dd');
+    const formattedStartDate = format(new TZDate(variables.startDate, timezone), 'yyyy-MM-dd');
 
-    const formattedDate = format(new TZDate(startDate, timezone), 'yyyy-MM-dd hh:mm a');
+    const bookingURL = byGroup
+      ? APP_FULL_URL + '/bookings/user-view?view=day&selectedDate=' + formattedStartDate + '&eventId=' + flattenedEvent.eventId
+      : APP_FULL_URL + '/availability?view=public&selectedDate=' + formattedStartDate;
+
+    const roomsListString = variables.eventRooms.map((room) => room.name).join(', ');
+    const recipientsListString = recipients.map((r) => r.name).join(', ');
+    const itemsListString = variables.requestedItems.map((item) => item.name).join(', ');
+    const formattedDate = format(new TZDate(variables.startDate, timezone), 'yyyy-MM-dd hh:mm a');
+
+    const iCalTextContent = generateCalendarAttachment({
+      timezone: timezone,
+      startDateTime: variables.startDate,
+      endDateTime: variables.endDate,
+      rrule: variables.rrule,
+      rruleCancellations: undefined,
+      rruleExceptions: undefined,
+      title: variables.title,
+      bookingURL: bookingURL,
+      uid: variables.uid,
+      sequence: variables.sequence,
+      description: variables.description,
+      rooms: roomsListString,
+      status: NOTIFICATION_MATRIX[action][statusKey].iCalStatus,
+      owner: {
+        name: 'MEETING_ROOM_BOOKING',
+        email: SHARED_MAILBOX,
+      },
+      attendees: [
+        { name: user.name, email: user.email },
+        ...recipients.map((recipient) => {
+          return { name: recipient.name, email: recipient.email! };
+        }),
+      ],
+    });
+    const base64CalendarAttachment = Buffer.from(iCalTextContent, 'utf-8').toString('base64');
 
     await sendEmail(
       user.email,
       recipients.map((r) => r.email || ''),
-      `Booking ${getSubjectKeyword(status.key as TStatusKey, action)} [${formattedDate}]`,
+      `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
       getMeetingResponseEmailTemplate({
-        header: getHeader(status.key as TStatusKey, action),
+        header: NOTIFICATION_MATRIX[action][statusKey].emailHeader,
         date: formattedDate,
-        duration: getDurationText(startDate, endDate),
-        description: description,
+        duration: getDurationText(variables.startDate, variables.endDate),
+        description: variables.description,
         employeeName: user.name,
-        notifiedNames: recipients.map((r) => r.name).join(', '),
-        room: rooms.map((r) => r.name).join(', '),
-        status: status.key as TStatusKey,
-        title: title,
+        notifiedNames: recipientsListString,
+        room: roomsListString,
+        status: statusKey,
+        title: variables.title,
         bookingURL: bookingURL,
       }),
+      base64CalendarAttachment,
     );
 
     if (status.key === 'PENDING' && action === 'CREATE') {
-      if (!SHARED_MAILBOX) {
-        console.log('SHARED_MAILBOX Environment Variable Not Configured');
-        return;
-      }
-
       await sendEmail(
         SHARED_MAILBOX,
         [],
-        `Booking ${getSubjectKeyword(status.key as TStatusKey, action)} [${formattedDate}]`,
+        `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
         getStaffNotificationEmailTemplate({
           date: formattedDate,
-          duration: getDurationText(startDate, endDate),
-          description: description,
-          requestedItems: items.map((i) => i.name).join(', '),
+          duration: getDurationText(variables.startDate, variables.endDate),
+          description: variables.description,
+          requestedItems: itemsListString,
           employeeName: user.name,
-          notifiedNames: recipients.map((r) => r.name).join(', '),
-          room: rooms.map((r) => r.name).join(', '),
-          title: title,
-          bookingURL: APP_FULL_URL + '/bookings/user-requests?view=year&selectedDate=' + format(startDate, 'yyyy-MM-dd') + '&eventId=' + eventId,
+          notifiedNames: recipientsListString,
+          room: roomsListString,
+          title: variables.title,
+          bookingURL: APP_FULL_URL + '/bookings/user-requests?view=year&selectedDate=' + formattedStartDate + '&eventId=' + flattenedEvent.eventId,
         }),
+        base64CalendarAttachment,
       );
     }
   } catch (error) {
@@ -177,146 +236,200 @@ export async function sendEventNotificationEmail(options: ISendEventEmailOptions
   }
 }
 
-function getHeader(status: TStatusKey, action: TEmailAction): string {
-  if (action === 'DELETE') return 'REQUEST REMOVED';
-  if (status === 'INFORMATION') return 'INFORMATION REQUESTED';
-  if (status === 'REJECTED') return 'BOOKING UNAVAILABLE';
-  return status;
+function generateCalendarAttachment(content: {
+  timezone: string;
+  startDateTime: string;
+  endDateTime: string;
+  rrule?: string;
+  rruleCancellations?: string[];
+  rruleExceptions?: string[];
+  title: string;
+  bookingURL: string;
+  uid: string;
+  sequence: string;
+  description: string;
+  rooms: string;
+  status: ICalendarStatus;
+  owner: { name: string; email: string };
+  attendees?: { name: string; email: string }[];
+}) {
+  const wallStartDateTime = format(content.startDateTime, "yyyyMMdd'T'HHmmss", {
+    in: tz(content.timezone),
+  });
+  const wallEndDateTime = format(content.endDateTime, "yyyyMMdd'T'HHmmss", {
+    in: tz(content.timezone),
+  });
+  const programId = process.env.DATABASE_NAME || 'Unknown';
+  const timestamp = format(new Date(), "yyyyMMdd'T'HHmmss'Z'", { in: utc });
+
+  const organizerLine = `ORGANIZER;CN=${escapeICalText(content.owner.name)}:mailto:${content.owner.email}`;
+  const attendeeLine =
+    content.attendees && content.attendees.length > 0
+      ? content.attendees
+          .map(
+            (attendee) => `ATTENDEE;RSVP=FALSE;ROLE=REQ-PARTICIPANT;CUTYPE=INDIVIDUAL;CN=${escapeICalText(attendee.name)}:mailto:${attendee.email}`,
+          )
+          .join('\n')
+      : null;
+
+  const rruleLine = content.rrule ? `RRULE:${content.rrule}` : null;
+
+  const rdateLine =
+    content.rruleExceptions && content.rruleExceptions.length > 0 ? `RDATE;TZID=${content.timezone}:${content.rruleExceptions.join(',')}` : null;
+
+  const exdateLine =
+    content.rruleCancellations && content.rruleCancellations.length > 0
+      ? `EXDATE;TZID=${content.timezone}:${content.rruleCancellations.join(',')}`
+      : null;
+
+  const email = SHARED_MAILBOX || 'Unknown';
+
+  const escapedTitle = escapeICalText(content.title);
+  const escapedDescription = escapeICalText(content.description);
+  const escapedRoom = escapeICalText(content.rooms);
+
+  const iCalText = [
+    'BEGIN:VCALENDAR',
+    `VERSION:2.0`,
+    `PRODID:-//City of Sault Ste. Marie//${programId}//EN`,
+    `CALSCALE:GREGORIAN`,
+    `METHOD:REQUEST`,
+    `BEGIN:VEVENT`,
+    `UID:${content.uid}`,
+    `DTSTAMP:${timestamp}`,
+    `SEQUENCE:${content.sequence}`,
+    `URL:${content.bookingURL}`,
+    `DTSTART;TZID=${content.timezone}:${wallStartDateTime}`,
+    `DTEND;TZID=${content.timezone}:${wallEndDateTime}`,
+    `TRANSP:OPAQUE`,
+    foldICalLine(`SUMMARY:${escapedTitle}`),
+    foldICalLine(`DESCRIPTION:${escapedDescription}`),
+    foldICalLine(`LOCATION:${escapedRoom}`),
+    `CATEGORIES:Meeting Room Booking`,
+    `STATUS:${content.status}`,
+    organizerLine,
+    attendeeLine,
+    `CONTACT:${email} / Meeting Room Bookings`,
+    rruleLine,
+    rdateLine,
+    exdateLine,
+    `BEGIN:VALARM`,
+    `ACTION:DISPLAY`,
+    `TRIGGER:-PT15M`,
+    foldICalLine(`DESCRIPTION:Reminder: ${escapedTitle} begins in 15 minutes.`),
+    `END:VALARM`,
+    `END:VEVENT`,
+    `END:VCALENDAR`,
+  ]
+    .filter(Boolean) //Filter out null values
+    .join('\n');
+
+  return iCalText;
 }
 
-function getSubjectKeyword(status: TStatusKey, action: TEmailAction): string {
-  if (action === 'DELETE') return 'Removed';
-  if (status === 'REJECTED') return 'Rejected';
-  if (status === 'INFORMATION') return 'Requires More Information';
-  if (action === 'CREATE' || action === 'STATUS_CHANGE') {
-    return status === 'PENDING' ? 'Requested' : 'Approved';
-  }
-  if (action === 'UPDATE') {
-    return status === 'PENDING' ? 'Requested - Details Updated' : 'Approved - Details Updated';
-  }
-  return '';
+function escapeICalText(text: string | null | undefined): string {
+  if (!text) return '';
+
+  return text
+    .replace(/\\/g, '\\\\') // 1. Escape literal backslashes first
+    .replace(/,/g, '\\,') // 2. Escape commas
+    .replace(/;/g, '\\;') // 3. Escape semicolons
+    .replace(/\r?\n/g, '\\n'); // 4. Convert structural newlines to literal '\n'
 }
 
-function generateCalendarAttachment() {
-  const format = `BEGIN:VCALENDAR
-                  VERSION:2.0
-                  PRODID:-//Example Corp//Comprehensive Calendar File//EN
-                  CALSCALE:GREGORIAN
-                  METHOD:PUBLISH
-                  X-WR-CALNAME:Ultimate Master Calendar
-                  X-WR-TIMEZONE:America/New_York
+function foldICalLine(line: string): string {
+  if (line.length <= 75) return line;
 
-                  BEGIN:VTIMEZONE
-                  TZID:America/New_York
-                  TZURL:https://tzurl.org
-                  BEGIN:STANDARD
-                  TZOFFSETFROM:-0400
-                  TZOFFSETTO:-0500
-                  TZNAME:EST
-                  DTSTART:19701101T020000
-                  RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
-                  END:STANDARD
-                  BEGIN:DAYLIGHT
-                  TZOFFSETFROM:-0500
-                  TZOFFSETTO:-0400
-                  TZNAME:EDT
-                  DTSTART:19700308T020000
-                  RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
-                  END:DAYLIGHT
-                  END:VTIMEZONE
+  const chunks: string[] = [];
+  let currentLine = line;
 
-                  BEGIN:VEVENT
-                  UID:evt-9876543210@example.com
-                  DTSTAMP:20260601T141500Z
-                  SEQUENCE:0
-                  URL:https://example.com
-                  DTSTART;TZID=America/New_York:20260615T090000
-                  DTEND;TZID=America/New_York:20260615T100000
-                  TRANSP:OPAQUE
-                  SUMMARY:Project Kickoff Launch Event
-                  DESCRIPTION:Comprehensive kickoff session.\nReview deliverables.
-                  LOCATION:Conference Room B\, 123 Main Street
-                  GEO:40.7128;-74.0060
-                  CATEGORIES:WORK,PROJECTS
-                  COMMENT:Please arrive 5 minutes early for AV setup.
-                  STATUS:CONFIRMED
-                  PRIORITY:1
-                  ORGANIZER;CN=Jane Doe:mailto:jane.doe@example.com
-                  ATTENDEE;RSVP=TRUE;ROLE=REQ-PARTICIPANT;CUTYPE=INDIVIDUAL:mailto:john.smith@example.com
-                  CONTACT:Project Management Office (PMO) ext. 441
-                  RRULE:FREQ=WEEKLY;COUNT=4;BYDAY=MO
-                  RDATE;TZID=America/New_York:20260715T090000
-                  EXDATE;TZID=America/New_York:20260622T090000
-                  RESOURCES:PROJECTOR,WHITEBOARD
-                  ATTACH:https://example.com
-                  BEGIN:VALARM
-                  ACTION:DISPLAY
-                  TRIGGER:-PT15M
-                  DESCRIPTION:Reminder: Project Kickoff Launch Event begins in 15 minutes.
-                  END:VALARM
-                  BEGIN:VALARM
-                  ACTION:EMAIL
-                  TRIGGER:-P1D
-                  DESCRIPTION:Tomorrow is the Project Kickoff.
-                  SUMMARY:Event Reminder: Project Kickoff
-                  ATTENDEE:mailto:jane.doe@example.com
-                  END:VALARM
-                  END:VEVENT
+  // Grab the first 75 characters
+  chunks.push(currentLine.substring(0, 75));
+  currentLine = currentLine.substring(75);
 
-                  BEGIN:VTODO
-                  UID:task-1122334455@example.com
-                  DTSTAMP:20260601T141500Z
-                  SEQUENCE:1
-                  URL:https://example.com
-                  DTSTART;TZID=America/New_York:20260610T120000
-                  DUE;TZID=America/New_York:20260614T170000
-                  COMPLETED:20260614T163000Z
-                  PERCENT-COMPLETE:100
-                  SUMMARY:Sign vendor contract agreement
-                  DESCRIPTION:Review final legal clauses and sign execution copy.
-                  LOCATION:Legal Department Office
-                  GEO:40.7128;-74.0060
-                  CATEGORIES:LEGAL,ADMIN
-                  COMMENT:Counter-signature from vendor is attached.
-                  STATUS:COMPLETED
-                  PRIORITY:3
-                  ORGANIZER;CN=Legal Team:mailto:legal@example.com
-                  ATTENDEE;ROLE=REQ-PARTICIPANT:mailto:john.smith@example.com
-                  CONTACT:Legal Support Desk ext. 900
-                  ATTACH:https://example.com
-                  BEGIN:VALARM
-                  ACTION:AUDIO
-                  TRIGGER;VALUE=DATE-TIME:20260614T120000Z
-                  DURATION:PT5M
-                  REPEAT:3
-                  ATTACH;VALUE=URI:CID:AlarmSound
-                  END:VALARM
-                  END:VTODO
+  // All subsequent folded lines must begin with a single whitespace space character
+  while (currentLine.length > 0) {
+    chunks.push(' ' + currentLine.substring(0, 74));
+    currentLine = currentLine.substring(74);
+  }
 
-                  BEGIN:VJOURNAL
-                  UID:jrnl-5566778899@example.com
-                  DTSTAMP:20260601T141500Z
-                  SEQUENCE:0
-                  STATUS:FINAL
-                  DTSTART;VALUE=DATE:20260615
-                  SUMMARY:Post-Kickoff Meeting Notes
-                  DESCRIPTION:The kickoff was successful. Team agreed on milestones.\nNext sync scheduled.
-                  ORGANIZER;CN=Jane Doe:mailto:jane.doe@example.com
-                  CATEGORIES:NOTES,PROJECTS
-                  END:VJOURNAL
+  return chunks.join('\n');
+}
 
-                  BEGIN:VFREEBUSY
-                  UID:fb-0011223344@example.com
-                  DTSTAMP:20260601T141500Z
-                  ORGANIZER;CN=Jane Doe:mailto:jane.doe@example.com
-                  URL:https://example.com
-                  DTSTART:20260615T000000Z
-                  DTEND:20260616T000000Z
-                  FREEBUSY;FBTYPE=BUSY:20260615T090000Z/20260615T100000Z
-                  FREEBUSY;FBTYPE=BUSY-TENTATIVE:20260615T130000Z/20260615T140000Z
-                  COMMENT:Standard Monday operational availability profile.
-                  END:VFREEBUSY
+/*
+    await sendRawMimeEmail(
+      user.email,
+      recipients.map((r) => r.email || ''),
+      `Booking ${getSubjectKeyword(status.key as TStatusKey, action)} [${formattedDate}]`,
+      getMeetingResponseEmailTemplate({
+        header: getHeader(status.key as TStatusKey, action),
+        date: formattedDate,
+        duration: getDurationText(variables.startDate, variables.endDate),
+        description: variables.description,
+        employeeName: user.name,
+        notifiedNames: recipientsListString,
+        room: roomsListString,
+        status: status.key as TStatusKey,
+        title: variables.title,
+        bookingURL: bookingURL,
+      }),
+      iCalTextContent,
+    );*/
 
-                  END:VCALENDAR
-`;
+export async function sendRawMimeEmail(requestingUser: string, notifyUsers: string[], subject: string, htmlContent: string, iCalTextContent: string) {
+  const boundary = `----=_Part_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+
+  // Construct a compliant MIME string manually
+  const mimeParts = [
+    `From: ${SHARED_MAILBOX}`,
+    `To: ${requestingUser}`,
+    notifyUsers.length ? `Cc: ${notifyUsers.join(', ')}` : '',
+    `Subject: ${subject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
+    `Content-Type: text/html; charset="UTF-8"`,
+    `Content-Transfer-Encoding: 7bit`,
+    '',
+    htmlContent,
+    '',
+    `--${boundary}`,
+    // CRITICAL: The method=REQUEST header turns the attachment into an inline meeting invite
+    `Content-Type: text/calendar; charset="UTF-8"; method=REQUEST`,
+    `Content-Transfer-Encoding: 7bit`,
+    '',
+    iCalTextContent,
+    '',
+    `--${boundary}--`,
+  ];
+
+  const rawMimeString = mimeParts.filter((line) => line !== null).join('\r\n');
+  const base64Mime = Buffer.from(rawMimeString, 'utf-8').toString('base64');
+
+  try {
+    if (!SHARED_MAILBOX) {
+      console.log('SHARED_MAILBOX Environment Variable Not Configured');
+      return;
+    }
+
+    const credential = new ClientSecretCredential(
+      process.env.AZURE_AD_TENANT_ID!,
+      process.env.AZURE_AD_CLIENT_ID!,
+      process.env.AZURE_AD_CLIENT_SECRET!,
+    );
+
+    const authProvider = new TokenCredentialAuthenticationProvider(credential, {
+      scopes: ['https://graph.microsoft.com/.default'],
+    });
+
+    const graphClient = Client.initWithMiddleware({ authProvider });
+
+    // Use the .content() modifier to send raw data
+    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail`).headers({ 'Content-Type': 'text/plain' }).post(base64Mime);
+
+    console.log('MIME meeting invite sent!');
+  } catch (error) {
+    console.error('Failed sending MIME mail:', error);
+  }
 }

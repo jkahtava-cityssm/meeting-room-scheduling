@@ -36,25 +36,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
       if (!event) return InternalServerErrorMessage();
 
-      await sendEventNotificationEmail({
-        userId: event.userId || undefined,
-        eventRecipients: event.eventRecipients?.map((recipient) => recipient.userId) || [],
-        eventRooms: event.eventRooms.map((room) => room.roomId) || [],
-        statusId: event.statusId,
-        startDate: new Date(event.startDate),
-        endDate: new Date(event.endDate),
-        title: event.title,
-        action: 'DELETE',
-        eventId: event.eventId,
-        description: event.description,
-        requestedItems: event.eventItems?.map((item) => item.itemId) || [],
-      });
-
       const totalDeleted = await deleteManyEvents({ eventId: parseInt(eventId) });
 
       if (!totalDeleted) {
         return InternalServerErrorMessage();
       }
+
+      await sendEventNotificationEmail(event, 'DELETE');
 
       return DeleteMessage();
     },

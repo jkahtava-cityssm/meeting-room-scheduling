@@ -75,19 +75,7 @@ export async function POST(request: NextRequest) {
         InternalServerErrorMessage();
       }
 
-      await sendEventNotificationEmail({
-        userId: userId,
-        eventRecipients: eventRecipients || [],
-        eventRooms: eventRooms || [],
-        statusId: statusId,
-        startDate: startDate,
-        endDate: endDate,
-        title: title,
-        action: 'CREATE',
-        eventId: event.eventId,
-        description: description,
-        requestedItems: eventItems || [],
-      });
+      await sendEventNotificationEmail(event, 'CREATE');
 
       return CreatedMessage('Created Event', event);
     },
@@ -189,36 +177,13 @@ export async function PUT(request: NextRequest) {
       }
 
       if (event.eventId === data.eventId) {
-        await sendEventNotificationEmail({
-          userId: userId,
-          eventRecipients: eventRecipients || [],
-          eventRooms: eventRooms || [],
-          statusId: statusId,
-          startDate: startDate,
-          endDate: endDate,
-          title: title,
-          action: 'UPDATE',
-          eventId: event.eventId,
-          description: description,
-          requestedItems: eventItems || [],
-        });
+        await sendEventNotificationEmail(event, 'UPDATE');
 
         return SuccessMessage('Updated Event', event);
       }
 
-      await sendEventNotificationEmail({
-        userId: userId,
-        eventRecipients: eventRecipients || [],
-        eventRooms: eventRooms || [],
-        statusId: statusId,
-        startDate: startDate,
-        endDate: endDate,
-        title: title,
-        action: 'CREATE',
-        eventId: event.eventId,
-        description: description,
-        requestedItems: eventItems || [],
-      });
+      await sendEventNotificationEmail(event, 'CREATE');
+
       return CreatedMessage('Created Event', event);
     },
     SEventPUT,
@@ -294,19 +259,7 @@ export async function PATCH(request: NextRequest) {
 
       if (!event) return InternalServerErrorMessage();
 
-      await sendEventNotificationEmail({
-        userId: event.userId || undefined,
-        eventRecipients: event.eventRecipients?.map((recipient) => recipient.userId) || [],
-        eventRooms: event.eventRooms.map((room) => room.roomId) || [],
-        statusId: event.statusId,
-        startDate: new Date(event.startDate),
-        endDate: new Date(event.endDate),
-        title: event.title,
-        action: 'STATUS_CHANGE',
-        eventId: event.eventId,
-        description: event.description,
-        requestedItems: event.eventItems?.map((item) => item.itemId) || [],
-      });
+      await sendEventNotificationEmail(event, 'STATUS_CHANGE');
 
       return SuccessMessage('Event updated successfully', event);
     },

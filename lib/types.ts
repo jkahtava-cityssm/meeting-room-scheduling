@@ -6,6 +6,47 @@ export type TStatusKey = (typeof STATUS_KEYS)[number];
 
 export type TEmailAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE';
 
+export type ICalendarStatus = 'CONFIRMED' | 'TENTATIVE' | 'CANCELLED';
+
+export interface NotificationConfig {
+  emailHeader: string;
+  subjectKeyword: string;
+  iCalStatus: ICalendarStatus;
+}
+
+export type TNotificationMatrix = {
+  [Action in TEmailAction]: {
+    [Status in TStatusKey]: NotificationConfig;
+  };
+};
+
+export const NOTIFICATION_MATRIX: TNotificationMatrix = {
+  DELETE: {
+    PENDING: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+    APPROVED: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+    REJECTED: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+  },
+  CREATE: {
+    PENDING: { emailHeader: 'PENDING', subjectKeyword: 'Requested', iCalStatus: 'TENTATIVE' },
+    APPROVED: { emailHeader: 'APPROVED', subjectKeyword: 'Approved', iCalStatus: 'CONFIRMED' },
+    REJECTED: { emailHeader: 'BOOKING UNAVAILABLE', subjectKeyword: 'Rejected', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'INFORMATION REQUESTED', subjectKeyword: 'Requires More Information', iCalStatus: 'TENTATIVE' },
+  },
+  STATUS_CHANGE: {
+    PENDING: { emailHeader: 'PENDING', subjectKeyword: 'Requested', iCalStatus: 'TENTATIVE' },
+    APPROVED: { emailHeader: 'APPROVED', subjectKeyword: 'Approved', iCalStatus: 'CONFIRMED' },
+    REJECTED: { emailHeader: 'BOOKING UNAVAILABLE', subjectKeyword: 'Rejected', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'INFORMATION REQUESTED', subjectKeyword: 'Requires More Information', iCalStatus: 'TENTATIVE' },
+  },
+  UPDATE: {
+    PENDING: { emailHeader: 'PENDING', subjectKeyword: 'Requested - Details Updated', iCalStatus: 'TENTATIVE' },
+    APPROVED: { emailHeader: 'APPROVED', subjectKeyword: 'Approved - Details Updated', iCalStatus: 'CONFIRMED' },
+    REJECTED: { emailHeader: 'BOOKING UNAVAILABLE', subjectKeyword: 'Rejected', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'INFORMATION REQUESTED', subjectKeyword: 'Requires More Information', iCalStatus: 'TENTATIVE' },
+  },
+};
+
 export const COLOR_OPTIONS = [
   'red',
   'rose',
