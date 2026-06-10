@@ -13,7 +13,7 @@ import { GenericError } from '../../../../components/shared/generic-error';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { CalendarAction } from '../webworkers/generic-webworker';
-import { useEventPatchMutation } from '@/lib/services/events';
+import { useEventConflictCheckMutation, useEventPatchMutation } from '@/lib/services/events';
 import { sharedColorVariants } from '@/lib/theme/colorVariants';
 import { cva } from 'class-variance-authority';
 import { EventCard } from './event-card';
@@ -294,8 +294,9 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
   });
 
   const patchEvent = useEventPatchMutation();
+  const checkEventConflict = useEventConflictCheckMutation();
 
-  const handleStatusChange = useCallback(
+  const executeStatusChange = useCallback(
     (id: number, newStatus: TStatusKey) => {
       if (!parentRef.current) return;
 
@@ -324,14 +325,46 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
     [parentRef, rowVirtualizer, removingEvents, flatData, selectedStatusKeys, clampedColumn, patchEvent, statusIdLookupByKey],
   );
 
+  const handleStatusChange = useCallback(
+    async (event: IEventSingleRoom, newStatus: TStatusKey) => {
+      try {
+        const result = await checkEventConflict.mutateAsync({
+          roomIds: event.eventRooms.map((room) => room.roomId),
+          startDate: new Date(event.startDate),
+          endDate: new Date(event.endDate),
+          statusKey: newStatus,
+          excludeEventId: event.eventId,
+        });
+
+        if (result.data?.hasConflict) {
+          if (window.confirm(`Conflicts found:\n${result.data.conflicts.join('\n')}\n\nProceed?`)) {
+            executeStatusChange(event.eventId, newStatus);
+          }
+        } else {
+          executeStatusChange(event.eventId, newStatus);
+        }
+      } catch (error) {}
+    },
+    [checkEventConflict, executeStatusChange],
+  );
+
+  //This effect checks to see if mutating an event would change its current status
+  //If the status is going to change we need to show a loading state on the event card.
   useEffect(() => {
     if (removingEvents.size === 0) return;
+
     const currentServerStatuses = new Map<number, TStatusKey>();
+
+    //build a map of events and their status value such as PENDING | APPROVED etc.
     result?.data?.requestSections?.forEach((s) =>
       s.sectionGroups.forEach((g) => g.groupEvents.forEach((e) => currentServerStatuses.set(e.eventId, e.status.key as TStatusKey))),
     );
+
+    //make a copy of the existing removingEvents Map
     const nextRemovingEvents = new Map(removingEvents);
     let changed = false;
+
+    //if the statuses match but still exists in removing events then remove it
     removingEvents.forEach((targetStatus, id) => {
       const serverStatus = currentServerStatuses.get(id);
       if (!serverStatus || serverStatus === targetStatus) {
@@ -339,6 +372,7 @@ export function CalendarUserRequestView({ action, date, userId }: { action: Cale
         changed = true;
       }
     });
+
     if (changed) setRemovingEvents(nextRemovingEvents);
   }, [result?.data?.requestSections, removingEvents]);
 

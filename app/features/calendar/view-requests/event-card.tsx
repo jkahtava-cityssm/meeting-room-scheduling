@@ -23,7 +23,7 @@ export const EventCard = React.memo(
     {
       event: IEventSingleRoom;
       index: number;
-      onStatusChange: (id: number, newStatus: TStatusKey) => void;
+      onStatusChange: (event: IEventSingleRoom, newStatus: TStatusKey) => void;
       isUpdating: boolean;
     }
   >(({ event, index, onStatusChange, isUpdating }, ref) => {
@@ -145,7 +145,7 @@ export const EventCard = React.memo(
                     color="green"
                     size="sm"
                     className="w-full"
-                    onClick={() => onStatusChange(event.eventId, 'APPROVED')}
+                    onClick={() => onStatusChange(event, 'APPROVED')}
                     disabled={isUpdating || !canChangeStatus}
                   >
                     Confirm
@@ -156,7 +156,7 @@ export const EventCard = React.memo(
                     color="red"
                     size="sm"
                     className="w-full"
-                    onClick={() => onStatusChange(event.eventId, 'REJECTED')}
+                    onClick={() => onStatusChange(event, 'REJECTED')}
                     disabled={isUpdating || !canChangeStatus}
                   >
                     Reject
@@ -167,7 +167,7 @@ export const EventCard = React.memo(
                     color="slate"
                     size="sm"
                     className="w-full"
-                    onClick={() => onStatusChange(event.eventId, 'PENDING')}
+                    onClick={() => onStatusChange(event, 'PENDING')}
                     disabled={isUpdating || !canChangeStatus}
                   >
                     Pending

@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { SEvent } from '../schemas';
 import z from 'zod/v4';
 import { safeCreateMany } from '../api-helpers';
+import { TStatusKey } from '../types';
 
 const unique = <T>(array: T[]): T[] => Array.from(new Set(array));
 
@@ -260,4 +261,45 @@ export async function createManyEventItems(
   }));
 
   return await safeCreateMany(tx.eventItem, insertData, ['eventId', 'itemId'], tx);
+}
+
+export async function getConflictingEvents({
+  roomIds,
+  startDate,
+  endDate,
+  statusKey,
+  excludeEventId,
+}: {
+  roomIds: number[];
+  startDate: Date;
+  endDate: Date;
+  statusKey: TStatusKey;
+  excludeEventId?: number;
+}) {
+  if (statusKey !== 'APPROVED') {
+    return [];
+  }
+
+  return await prisma.eventRoom.findMany({
+    where: {
+      roomId: { in: roomIds },
+      event: {
+        ...(excludeEventId && { NOT: { eventId: excludeEventId } }),
+        startDate: { lt: endDate },
+        endDate: { gt: startDate },
+        status: { key: { equals: 'APPROVED' as TStatusKey } },
+      },
+    },
+    select: {
+      roomId: true,
+      event: {
+        select: {
+          eventId: true,
+          title: true,
+          startDate: true,
+          endDate: true,
+        },
+      },
+    },
+  });
 }

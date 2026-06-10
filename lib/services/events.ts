@@ -84,31 +84,7 @@ export const useMyEventsQuery = (
     enabled: enabled,
   });
 };
-/*
-export const useEventsByStatusQuery = (startDate: Date, endDate: Date, statusKey: string, enabled: boolean = true) => {
-  const start = formatDate(startDate);
-  const end = formatDate(endDate);
 
-  return useQuery({
-    queryKey: queryKeys.events.status(start, end, statusKey),
-    queryFn: async () => {
-      const result = await fetchGET<IEvent[]>('/api/events/status', {
-        startdate: start,
-        enddate: end,
-        statusKey: statusKey,
-      });
-      const parsedResult = z.array(SEvent).safeParse(result.data);
-
-      if (!parsedResult.success) {
-        throw new QueryError('Invalid event data', 'useEventsByStatusQuery', parsedResult.error);
-      }
-
-      return parsedResult.data;
-    },
-    enabled: enabled,
-  });
-};
-*/
 export const useTotalEventsByStatusQuery = (statusKey: string, startDate?: Date, endDate?: Date, enabled: boolean = true) =>
   useQuery({
     queryKey: queryKeys.events.totalByStatus(statusKey),
@@ -275,5 +251,30 @@ export const useEventPatchMutation = () => {
         queryKey: queryKeys.events.detail(variables.data.eventId),
       });
     },
+  });
+};
+
+export const SEventConflictPOST = z.object({
+  roomIds: z.array(z.coerce.number()).min(1, 'At least one room is required'),
+  startDate: utcDateSchema,
+  endDate: utcDateSchema,
+  statusKey: z.string(),
+  excludeEventId: z.coerce.number().optional(),
+});
+
+export type IEventConflictPOST = z.infer<typeof SEventConflictPOST>;
+
+export const useEventConflictCheckMutation = () => {
+  return useMutation({
+    mutationFn: async (data: IEventConflictPOST) =>
+      fetchPOST<{
+        hasConflict: boolean;
+        conflicts: {
+          startDate: Date;
+          endDate: Date;
+          eventId: number;
+          title: string;
+        }[];
+      }>(`/api/events/check-conflict`, data),
   });
 };
