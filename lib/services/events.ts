@@ -266,8 +266,8 @@ export type IEventConflictPOST = z.infer<typeof SEventConflictPOST>;
 
 export const useEventConflictCheckMutation = () => {
   return useMutation({
-    mutationFn: async (data: IEventConflictPOST) =>
-      fetchPOST<{
+    mutationFn: async (data: IEventConflictPOST) => {
+      return fetchPOST<{
         hasConflict: boolean;
         conflicts: {
           startDate: Date;
@@ -275,6 +275,7 @@ export const useEventConflictCheckMutation = () => {
           eventId: number;
           title: string;
         }[];
-      }>(`/api/events/check-conflict`, data),
+      }>(`/api/events/check-conflicts`, data);
+    },
   });
 };
