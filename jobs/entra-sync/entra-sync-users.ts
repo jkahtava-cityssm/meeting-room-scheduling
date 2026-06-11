@@ -111,6 +111,7 @@ export async function syncEntraUsers() {
         uuid: graphUser.uuid,
         isActive: true,
         isManaged: true,
+        emailVerified: true,
         emailEnabled: true,
       };
 
