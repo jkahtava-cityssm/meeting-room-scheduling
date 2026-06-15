@@ -33,6 +33,24 @@ export async function findFirstUser(where?: Prisma.UserWhereInput, tx: Prisma.Tr
   return mapBaseUser(user);
 }
 
+export async function findFirstUserProfile(userId: number, tx: Prisma.TransactionClient = prisma) {
+  const user = await tx.user.findFirst({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, image: true, userRole: { where: { granted: true }, select: { role: { select: { name: true } } } } },
+    orderBy: [{ name: 'asc' }, { email: 'asc' }, { id: 'asc' }],
+  });
+
+  if (!user) return null;
+
+  return {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    image: user.image,
+    roles: user.userRole.map((userRole) => userRole.role.name),
+  };
+}
+
 export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
   const userList = await tx.user.findMany({
     where,

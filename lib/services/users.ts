@@ -40,6 +40,34 @@ export const useUserQuery = (userId: number | undefined, enabled: boolean = true
     staleTime: 0,
   });
 
+export const SUserProfile = z.object({
+  userId: z.number(),
+  name: z.string(),
+  email: z.string(),
+  image: z.string(),
+  roles: z.array(z.string()),
+});
+
+type IUserProfile = z.infer<typeof SUserProfile>;
+
+export const useUserProfileQuery = (userId: string | undefined, enabled: boolean = true) =>
+  useQuery({
+    queryKey: queryKeys.users.profile(userId),
+    queryFn: async () => {
+      const result = await fetchGET<IUserProfile>(`/api/users/${userId}/profile`);
+
+      const parsedResult = SUserProfile.safeParse(result.data);
+
+      if (!parsedResult.success) {
+        throw new QueryError('Invalid profile data', 'useUserQuery', parsedResult.error);
+      }
+
+      return parsedResult.data;
+    },
+    enabled: enabled && userId !== undefined,
+    staleTime: 60 * 60 * 1000, //1 Hour
+  });
+
 export const SUserPUT = z.object({
   userId: z.coerce.number().optional(),
   name: z.string().min(1, 'Name is required'),

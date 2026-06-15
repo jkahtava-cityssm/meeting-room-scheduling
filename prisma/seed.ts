@@ -1243,7 +1243,7 @@ async function main() {
       email: process.env.ADMIN_USER_EMAIL,
       name: 'Admin User',
       employeeNumber: '000',
-      emailVerified: false,
+      emailVerified: true,
       employeeActive: true,
     });
 
