@@ -133,6 +133,8 @@ export const auth = betterAuth({
       const token = session.token;
       const userId = Number(user.id);
 
+      const { image, ...userWithoutImage } = user;
+
       const impersonatingRole = currentSession.impersonatedRole;
 
       const cacheKey = impersonatingRole ? `impersonate:${token}:${impersonatingRole}` : token;
@@ -142,7 +144,7 @@ export const auth = betterAuth({
       const roles = result.data ? result.data : [];
       return {
         user: {
-          ...user,
+          ...userWithoutImage,
           roles: roles,
         },
         session: currentSession,

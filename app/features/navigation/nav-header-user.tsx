@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
-import { SignOutMenuItem } from '../../../components/sign-out-button';
+import { SignOutMenuButton, SignOutMenuItem } from '../../../components/sign-out-button';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Switch } from '../../../components/ui/switch';
 import { useTheme } from 'next-themes';
@@ -24,28 +24,22 @@ import { RoleSelect } from '@/app/features/roles/role-select';
 import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import { fetchDELETE, fetchPOST } from '@/lib/fetch-client';
+import { useUserProfileQuery } from '@/lib/services/users';
 
 const PAGE_PERMISSIONS = {
   IsAdmin: { type: 'role', role: 'Admin' },
 } as const satisfies GroupedPermissionRequirement;
 
 export function NavUser({ session, isPending }: { session: Session; isPending: boolean }) {
-  const { isMobile } = useSidebar();
   const { resolvedTheme, setTheme } = useTheme();
 
-  const [selectedRoleId, setSelectedRoleId] = useState<string | undefined>(undefined);
+  const { data: user, isLoading } = useUserProfileQuery(session?.user.id);
 
-  const user: IUser = {
-    name: session?.user.name ? session.user.name : undefined,
-    email: session?.user.email ? session.user.email : undefined,
-    image: session?.user.image ? session.user.image : undefined,
-  };
+  const [selectedRoleId, setSelectedRoleId] = useState<string | undefined>(undefined);
 
   const { permissions } = useVerifySessionRequirement(session, PAGE_PERMISSIONS);
 
   const isImpersonating = Boolean(session?.session?.impersonatedRole);
-
-  const listRoles = getSessionRoles(session);
 
   const handleAddImpersonation = async (roleId: string) => {
     const result = await fetchPOST<{ sessionId: string; impersonatedRole: string }>('/api/admin/impersonate', { roleId: roleId });
@@ -70,9 +64,9 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
     return result;
   };
 
-  if (isPending) {
+  if (isPending || isLoading) {
     return (
-      <SidebarMenuButton size="lg" className="w-56 rounded-lg">
+      <SidebarMenuButton size="lg" className="w-56 rounded-lg disabled">
         <Skeleton className="h-8 w-8 rounded-full" />
         <div className="grid flex-1 text-left text-sm leading-tight space-y-2">
           <Skeleton className="h-2" />
@@ -82,15 +76,16 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
     );
   }
 
+  if (!user) {
+    return <SignOutMenuButton />;
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg" className="w-(--radix-dropdown-menu-trigger-width) min-w-56 max-w-75 rounded-lg">
-              {
-                //rounded-2xl
-              }
               <Avatar className="h-8 w-8 border-2">
                 {user.image ? (
                   <AvatarImage src={user.image} alt={user.name} className={resolvedTheme === 'dark' ? 'mask-radial-from-50%' : ''} />
@@ -105,12 +100,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
               <ChevronDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? 'bottom' : 'bottom'}
-            align="end"
-            sideOffset={4}
-          >
+          <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg" side={'bottom'} align="end" sideOffset={4}>
             <DropdownMenuGroup>
               <DropdownMenuItem
                 onClick={(event) => {
@@ -136,7 +126,7 @@ export function NavUser({ session, isPending }: { session: Session; isPending: b
                 <DropdownMenuSeparator />
                 <div className="px-3 py-2 text-xs text-muted-foreground">
                   <div>
-                    <span className="font-medium">Roles:</span> {listRoles?.join(', ')}
+                    <span className="font-medium">Roles:</span> {user.roles?.join(', ')}
                   </div>
                 </div>
               </>
