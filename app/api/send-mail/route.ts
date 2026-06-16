@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail, sendEventNotificationEmail } from '@/lib/email';
+import { sendEmailJSON, sendEventNotificationEmail } from '@/lib/email';
 import { guardRoute } from '@/lib/api-guard';
 import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
 import { UnauthorizedMessage } from '@/lib/api-helpers';
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       }
       const today = new Date().toLocaleString();
 
-      await sendEmail(
+      await sendEmailJSON(
         recipientEmail,
         [sessionUserEmail],
         'Test Email',
