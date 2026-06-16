@@ -648,7 +648,8 @@ model Status {
   createdByUser User @relation("StatusCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User @relation("StatusUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  event Event[]
+  event         Event[]
+  statusHistory EventStatusHistory[]
 
   @@map("status")
 }

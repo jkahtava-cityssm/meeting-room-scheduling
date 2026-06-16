@@ -120,6 +120,7 @@ export const SEvent = z.object({
   userName: z.string().nullable().optional(),
   userEmail: z.string().nullable().optional(),
   statusId: z.number(),
+  wasApproved: z.boolean(),
   recurrenceId: z.number().nullable(),
   uid: z.string(),
   sequence: z.number(),

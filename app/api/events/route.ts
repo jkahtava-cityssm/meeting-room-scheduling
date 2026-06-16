@@ -1,31 +1,14 @@
-import { prisma } from '@/prisma';
-
 import { NextRequest } from 'next/server';
 
 import { UTCDate } from '@date-fns/utc';
-import { TZDate } from '@date-fns/tz';
 
 import { BadRequestMessage, CreatedMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
-import { Prisma } from '@prisma/client';
-import {
-  createEvent,
-  upsertEvent,
-  findManyEvents,
-  findFirstEvent,
-  createManyEventRoom,
-  createManyEventRecipients,
-  createManyEventItems,
-} from '@/lib/data/events';
-import { createRecurrence, upsertRecurrence } from '@/lib/data/recurrence';
+
+import { upsertEvent, findManyEvents, patchEvent } from '@/lib/data/events';
+
 import { SEventPATCH, SEventPUT } from '@/lib/services/events';
-import { sendEmail, sendEventNotificationEmail } from '@/lib/email';
-import { findFirstUser, findManyUsers } from '@/lib/data/users';
-import { format } from 'date-fns';
-import { getDurationText } from '@/lib/helpers';
-import { findManyRooms } from '@/lib/data/rooms';
-import { findFirstStatus } from '@/lib/data/status';
-import { TStatusKey } from '@/lib/types';
+import { sendEventNotificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   return guardRoute(
@@ -33,43 +16,7 @@ export async function POST(request: NextRequest) {
     { CreateEvent: { type: 'permission', resource: 'Event', action: 'Create' } },
 
     async ({ data, sessionUserId }) => {
-      const {
-        userId,
-        statusId,
-        title,
-        description,
-        startDate,
-        endDate,
-        rule,
-        ruleDescription,
-        ruleStartDate,
-        ruleEndDate,
-        eventItems,
-        eventRecipients,
-        eventRooms,
-      } = data;
-
-      let recurrence = null;
-
-      if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
-        recurrence = await createRecurrence({ rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate }, sessionUserId);
-      }
-
-      const event = await createEvent(
-        {
-          title,
-          description,
-          startDate,
-          endDate,
-          roomIds: eventRooms,
-          statusId,
-          recurrenceId: recurrence?.recurrenceId,
-          userId: userId,
-          itemIds: eventItems,
-          recipientIds: eventRecipients,
-        },
-        sessionUserId,
-      );
+      const event = await upsertEvent(data, sessionUserId);
 
       if (!event) {
         InternalServerErrorMessage();
@@ -90,87 +37,7 @@ export async function PUT(request: NextRequest) {
       UpdateEvent: { type: 'permission', resource: 'Event', action: 'Update' },
     },
     async ({ sessionUserId, permissionCache, permissions, sessionId, data }) => {
-      const {
-        eventId,
-        userId,
-        statusId,
-        title,
-        description,
-        startDate,
-        endDate,
-        recurrenceId,
-        rule,
-        ruleDescription,
-        ruleStartDate,
-        ruleEndDate,
-        eventRecipients,
-        eventItems,
-        eventRooms,
-      } = data;
-
-      await prisma.$transaction(async (tx) => {
-        let recurrence = null;
-
-        if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
-          recurrence = await upsertRecurrence(
-            { recurrenceId, rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
-            sessionUserId,
-            tx,
-          );
-        } else if (recurrenceId) {
-          await tx.recurrence.delete({ where: { recurrenceId } });
-        }
-
-        const event = await upsertEvent(
-          {
-            eventId: data.eventId,
-            title,
-            description,
-            startDate,
-            endDate,
-            statusId,
-            recurrenceId: recurrence?.recurrenceId,
-            userId: userId,
-          },
-          sessionUserId,
-          tx,
-        );
-
-        const eventId = event.eventId;
-
-        if (eventRooms) {
-          await tx.eventRoom.deleteMany({
-            where: { eventId, roomId: { notIn: eventRooms } },
-          });
-
-          await createManyEventRoom(
-            {
-              eventId: eventId,
-              eventRooms: eventRooms,
-            },
-            sessionUserId,
-            tx,
-          );
-        }
-
-        if (eventRecipients) {
-          await tx.eventRecipient.deleteMany({
-            where: { eventId, eventRecipientId: { notIn: eventRecipients } },
-          });
-
-          await createManyEventRecipients({ eventId: eventId, eventRecipients: eventRecipients }, sessionUserId, tx);
-        }
-
-        if (eventItems) {
-          await tx.eventItem.deleteMany({
-            where: { eventId, itemId: { notIn: eventItems } },
-          });
-
-          await createManyEventItems({ eventId: eventId, eventItems: eventItems }, sessionUserId, tx);
-        }
-      });
-
-      const event = await findFirstEvent({ eventId: eventId });
+      const event = await upsertEvent(data, sessionUserId);
 
       if (!event) {
         InternalServerErrorMessage();
@@ -197,67 +64,9 @@ export async function PATCH(request: NextRequest) {
       UpdateEvent: { type: 'permission', resource: 'Event', action: 'Update' },
     },
     async ({ sessionUserId, data }) => {
-      const {
-        eventId,
-        title,
-        description,
-        startDate,
-        endDate,
-        statusId,
-        userId,
-        recurrenceId,
-        rule,
-        ruleDescription,
-        ruleStartDate,
-        ruleEndDate,
-        eventRooms,
-      } = data;
+      const event = await patchEvent(data, sessionUserId);
 
-      await prisma.$transaction(async (tx) => {
-        // Handle Recurrence Logic
-        let recurrence = undefined;
-        if (rule && ruleStartDate && ruleEndDate && ruleDescription) {
-          recurrence = await upsertRecurrence(
-            { recurrenceId, rule, description: ruleDescription, startDate: ruleStartDate, endDate: ruleEndDate },
-            sessionUserId,
-            tx,
-          );
-        }
-
-        // Update the Event
-        await tx.event.update({
-          where: { eventId },
-          data: {
-            ...(title !== undefined && { title }),
-            ...(description !== undefined && { description }),
-            ...(startDate !== undefined && { startDate }),
-            ...(endDate !== undefined && { endDate }),
-            ...(statusId !== undefined && { status: { connect: { statusId } } }),
-            ...(userId !== undefined && { user: userId ? { connect: { id: userId } } : { disconnect: true } }),
-            ...(recurrence && { recurrence: { connect: { recurrenceId: recurrence.recurrenceId } } }),
-            ...(sessionUserId && { updatedByUser: { connect: { id: sessionUserId } } }),
-            sequence: { increment: 1 },
-          },
-        });
-
-        if (eventRooms) {
-          await tx.eventRoom.deleteMany({
-            where: { eventId, roomId: { notIn: eventRooms } },
-          });
-          await createManyEventRoom(
-            {
-              eventId: eventId,
-              eventRooms: eventRooms,
-            },
-            sessionUserId,
-            tx,
-          );
-        }
-      });
-
-      const event = await findFirstEvent({ eventId });
-
-      if (!event) return InternalServerErrorMessage();
+      if (!event) return BadRequestMessage();
 
       await sendEventNotificationEmail(event, 'STATUS_CHANGE');
 

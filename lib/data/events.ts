@@ -4,8 +4,21 @@ import { SEvent } from '../schemas';
 import z from 'zod/v4';
 import { safeCreateMany } from '../api-helpers';
 import crypto from 'crypto';
+import { TStatusKey } from '../types';
+import { upsertRecurrence } from './recurrence';
 
-const unique = <T>(array: T[]): T[] => Array.from(new Set(array));
+const unique = <T>(array: T[]): T[] => [...new Set(array)];
+
+function categorizeDatabaseChanges(incoming: number[], existing: number[]) {
+  const incomingSet = new Set(incoming);
+  const existingSet = new Set(existing);
+
+  return {
+    toAdd: incoming.filter((id) => !existingSet.has(id)),
+    toDelete: existing.filter((id) => !incomingSet.has(id)),
+  };
+}
+
 const DATABASE_NAME = process.env.DATABASE_NAME || 'Unknown';
 
 // Standard event include configuration — used across all DAL functions
@@ -15,125 +28,283 @@ const EVENT_INCLUDE = {
   eventRecipients: true,
   recurrence: true,
   status: true,
+  statusHistory: {
+    include: { status: true },
+    orderBy: { changedAt: 'asc' },
+  },
   user: { select: { name: true, email: true } },
   createdByUser: { select: { name: true } },
   updatedByUser: { select: { name: true } },
 } as const satisfies Prisma.EventInclude;
 
-// Create an event — the DAL controls which relations are included.
-export async function createEvent(
-  data: {
-    title: string;
-    description: string;
-    startDate: Date;
-    endDate: Date;
-    roomIds: number[];
-    statusId: number;
-    recurrenceId?: number;
-    userId?: number;
-    itemIds?: number[];
-    recipientIds?: number[];
-  },
-  sessionUserId: number,
-  tx: Prisma.TransactionClient = prisma,
-) {
+interface EventData {
+  eventId?: number;
+  title: string;
+  description: string;
+  startDate: Date;
+  endDate: Date;
+  statusId: number;
+  userId?: number;
+
+  eventRooms: number[];
+  eventItems?: number[];
+  eventRecipients?: number[];
+
+  recurrenceId?: number;
+  rule?: string;
+  ruleDescription?: string;
+  ruleStartDate?: Date;
+  ruleEndDate?: Date;
+}
+
+async function createEvent(data: EventData, sessionUserId: number) {
   const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
 
-  const event = await tx.event.create({
+  const event = await prisma.event.create({
     data: {
       title: data.title,
       description: data.description,
       startDate: data.startDate,
       endDate: data.endDate,
-      eventRooms: {
-        createMany: {
-          data: unique(data.roomIds).map((roomId: number) => ({ roomId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-        },
-      },
       ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
       sequence: 0,
       uid: uid,
       status: { connect: { statusId: data.statusId } },
+      statusHistory: {
+        create: {
+          statusId: data.statusId,
+          changedBy: sessionUserId,
+        },
+      },
       ...(data.userId && { user: { connect: { id: data.userId } } }),
-      ...(data.itemIds && {
-        eventItems: {
-          createMany: {
-            data: unique(data.itemIds).map((itemId) => ({ itemId, createdBy: sessionUserId, updatedBy: sessionUserId })),
-          },
-        },
-      }),
-      ...(data.recipientIds && {
-        eventRecipients: {
-          createMany: {
-            data: unique(data.recipientIds).map((eventRecipientId) => ({
-              userId: eventRecipientId,
-              createdBy: sessionUserId,
-              updatedBy: sessionUserId,
-            })),
-          },
-        },
-      }),
       createdByUser: { connect: { id: sessionUserId } },
       updatedByUser: { connect: { id: sessionUserId } },
     },
-    include: EVENT_INCLUDE,
+    select: { eventId: true },
   });
 
-  return flattenEvent(event);
+  return event.eventId;
 }
 
-export async function upsertEvent(
-  data: {
-    eventId?: number;
-    title: string;
-    description: string;
-    startDate: Date;
-    endDate: Date;
-    statusId: number;
-    recurrenceId?: number;
-    userId?: number;
-  },
-  sessionUserId: number,
-  tx: Prisma.TransactionClient = prisma,
-) {
-  const input = {
-    title: data.title,
-    description: data.description,
-    startDate: data.startDate,
-    endDate: data.endDate,
-    ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
-    status: { connect: { statusId: data.statusId } },
-    ...(data.userId && { user: { connect: { id: data.userId } } }),
-  };
-
-  const icalUid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
-
-  const event = await tx.event.upsert({
+async function updateEvent(data: EventData, sessionUserId: number) {
+  const event = await prisma.event.update({
     where: { eventId: data.eventId },
-    create: {
-      ...input,
-      uid: icalUid,
-      sequence: 0,
-      createdByUser: { connect: { id: sessionUserId } },
+    data: {
+      title: data.title,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      ...(data.recurrenceId && { recurrence: { connect: { recurrenceId: data.recurrenceId } } }),
+      sequence: { increment: 1 },
+      status: { connect: { statusId: data.statusId } },
+      ...(data.userId && { user: { connect: { id: data.userId } } }),
       updatedByUser: { connect: { id: sessionUserId } },
     },
-    update: { ...input, sequence: { increment: 1 }, updatedByUser: { connect: { id: sessionUserId } } },
-    include: EVENT_INCLUDE,
+    select: { eventId: true },
   });
 
-  return flattenEvent(event);
+  return event.eventId;
 }
 
-export async function updateEvent(
-  params: { where: Prisma.EventWhereUniqueInput; data: Prisma.EventUpdateInput },
-  tx: Prisma.TransactionClient = prisma,
-) {
-  const event = await tx.event.update({
-    where: params.where,
-    data: params.data,
+export async function upsertEvent(data: EventData, sessionUserId: number) {
+  let updatedRecurrenceId = data.recurrenceId;
+
+  if (data.rule && data.ruleStartDate && data.ruleEndDate && data.ruleDescription) {
+    const recurrence = await upsertRecurrence(
+      {
+        recurrenceId: data.recurrenceId,
+        rule: data.rule,
+        description: data.ruleDescription,
+        startDate: data.ruleStartDate,
+        endDate: data.ruleEndDate,
+      },
+      sessionUserId,
+    );
+    updatedRecurrenceId = recurrence?.recurrenceId;
+  } else if (data.recurrenceId) {
+    await prisma.recurrence.delete({ where: { recurrenceId: data.recurrenceId } });
+    updatedRecurrenceId = undefined;
+  }
+
+  const existingEvent = data.eventId
+    ? await prisma.event.findFirst({
+        where: { eventId: data.eventId },
+        select: {
+          eventId: true,
+          statusId: true,
+          eventItems: { select: { itemId: true } },
+          eventRooms: { select: { roomId: true } },
+          eventRecipients: { select: { userId: true } },
+        },
+      })
+    : null;
+
+  // Extract the existing IDs
+  const existingRoomIds = existingEvent?.eventRooms.map((r) => r.roomId) ?? [];
+  const existingItemIds = existingEvent?.eventItems.map((i) => i.itemId) ?? [];
+  const existingRecipientIds = existingEvent?.eventRecipients.map((r) => r.userId) ?? [];
+
+  // 2. Calculate the differences
+  const roomChanges = categorizeDatabaseChanges(data.eventRooms, existingRoomIds);
+  const itemChanges = categorizeDatabaseChanges(data.eventItems ?? [], existingItemIds);
+  const recipientChanges = categorizeDatabaseChanges(data.eventRecipients ?? [], existingRecipientIds);
+
+  const basePayload = { ...data, recurrenceId: updatedRecurrenceId };
+
+  let eventId;
+
+  if (existingEvent) {
+    eventId = await updateEvent(basePayload, sessionUserId);
+
+    if (existingEvent?.statusId !== data.statusId) {
+      await prisma.eventStatusHistory.create({ data: { eventId: eventId, statusId: data.statusId, changedBy: sessionUserId } });
+    }
+  } else {
+    eventId = await createEvent(basePayload, sessionUserId);
+  }
+
+  for (const roomId of roomChanges.toDelete) {
+    await prisma.eventRoom.delete({ where: { eventId_roomId: { eventId: eventId, roomId: roomId } } });
+  }
+  for (const roomId of roomChanges.toAdd) {
+    await prisma.eventRoom.create({ data: { eventId: eventId, roomId: roomId, createdBy: sessionUserId, updatedBy: sessionUserId } });
+  }
+
+  for (const itemId of itemChanges.toDelete) {
+    await prisma.eventItem.delete({ where: { eventId_itemId: { eventId: eventId, itemId: itemId } } });
+  }
+  for (const itemId of itemChanges.toAdd) {
+    await prisma.eventItem.create({ data: { eventId: eventId, itemId: itemId, createdBy: sessionUserId, updatedBy: sessionUserId } });
+  }
+
+  for (const recipientId of recipientChanges.toDelete) {
+    await prisma.eventRecipient.delete({ where: { eventId_userId: { eventId: eventId, userId: recipientId } } });
+  }
+  for (const recipientId of recipientChanges.toAdd) {
+    await prisma.eventRecipient.create({ data: { eventId: eventId, userId: recipientId, createdBy: sessionUserId, updatedBy: sessionUserId } });
+  }
+
+  const updatedEvent = await prisma.event.findUnique({
+    where: { eventId: eventId },
     include: EVENT_INCLUDE,
   });
-  return flattenEvent(event);
+
+  if (!updatedEvent) throw new Error('Event Upsert Failed.');
+
+  return flattenEvent(updatedEvent);
+}
+
+export async function patchEvent(data: Partial<EventData> & { eventId: number }, sessionUserId: number) {
+  let updatedRecurrenceId = data.recurrenceId;
+
+  // 1. Handle Recurrence Logic
+  if (data.rule && data.ruleStartDate && data.ruleEndDate && data.ruleDescription) {
+    const recurrence = await upsertRecurrence(
+      {
+        recurrenceId: data.recurrenceId,
+        rule: data.rule,
+        description: data.ruleDescription,
+        startDate: data.ruleStartDate,
+        endDate: data.ruleEndDate,
+      },
+      sessionUserId,
+    );
+    updatedRecurrenceId = recurrence?.recurrenceId;
+  } else if (data.recurrenceId === null) {
+    // If explicitly setting recurrenceId to null, break the connection / delete it
+    await prisma.recurrence.delete({ where: { recurrenceId: data.recurrenceId } });
+    updatedRecurrenceId = undefined;
+  }
+
+  // 2. Fetch existing relations *only* for fields provided in the patch data
+  const existingEvent = await prisma.event.findUnique({
+    where: { eventId: data.eventId },
+    select: {
+      statusId: true,
+      eventRooms: data.eventRooms !== undefined ? { select: { roomId: true } } : false,
+      eventItems: data.eventItems !== undefined ? { select: { itemId: true } } : false,
+      eventRecipients: data.eventRecipients !== undefined ? { select: { userId: true } } : false,
+    },
+  });
+
+  if (!existingEvent) throw new Error('Event not found.');
+
+  // 3. Update the base Event record
+  await prisma.event.update({
+    where: { eventId: data.eventId },
+    data: {
+      ...(data.title !== undefined && { title: data.title }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.startDate !== undefined && { startDate: data.startDate }),
+      ...(data.endDate !== undefined && { endDate: data.endDate }),
+      ...(data.statusId !== undefined && { status: { connect: { statusId: data.statusId } } }),
+      ...(data.userId !== undefined && { user: data.userId ? { connect: { id: data.userId } } : { disconnect: true } }),
+      ...(updatedRecurrenceId && { recurrence: { connect: { recurrenceId: updatedRecurrenceId } } }),
+      ...(data.recurrenceId === null && { recurrence: { disconnect: true } }),
+      updatedByUser: { connect: { id: sessionUserId } },
+      sequence: { increment: 1 },
+    },
+  });
+
+  // 4. Handle Status History Log if changed
+  if (data.statusId !== undefined && existingEvent.statusId !== data.statusId) {
+    await prisma.eventStatusHistory.create({
+      data: { eventId: data.eventId, statusId: data.statusId, changedBy: sessionUserId },
+    });
+  }
+
+  // 5. Categorize and process relational updates conditionally
+
+  // Rooms
+  if (data.eventRooms !== undefined) {
+    const existingRoomIds = existingEvent.eventRooms?.map((r) => r.roomId) ?? [];
+    const roomChanges = categorizeDatabaseChanges(data.eventRooms, existingRoomIds);
+
+    for (const roomId of roomChanges.toDelete) {
+      await prisma.eventRoom.delete({ where: { eventId_roomId: { eventId: data.eventId, roomId } } });
+    }
+    for (const roomId of roomChanges.toAdd) {
+      await prisma.eventRoom.create({ data: { eventId: data.eventId, roomId, createdBy: sessionUserId, updatedBy: sessionUserId } });
+    }
+  }
+
+  // Items
+  if (data.eventItems !== undefined) {
+    const existingItemIds = existingEvent.eventItems?.map((i) => i.itemId) ?? [];
+    const itemChanges = categorizeDatabaseChanges(data.eventItems, existingItemIds);
+
+    for (const itemId of itemChanges.toDelete) {
+      await prisma.eventItem.delete({ where: { eventId_itemId: { eventId: data.eventId, itemId } } });
+    }
+    for (const itemId of itemChanges.toAdd) {
+      await prisma.eventItem.create({ data: { eventId: data.eventId, itemId, createdBy: sessionUserId, updatedBy: sessionUserId } });
+    }
+  }
+
+  // Recipients
+  if (data.eventRecipients !== undefined) {
+    const existingRecipientIds = existingEvent.eventRecipients?.map((r) => r.userId) ?? [];
+    const recipientChanges = categorizeDatabaseChanges(data.eventRecipients, existingRecipientIds);
+
+    for (const recipientId of recipientChanges.toDelete) {
+      await prisma.eventRecipient.delete({ where: { eventId_userId: { eventId: data.eventId, userId: recipientId } } });
+    }
+    for (const recipientId of recipientChanges.toAdd) {
+      await prisma.eventRecipient.create({
+        data: { eventId: data.eventId, userId: recipientId, createdBy: sessionUserId, updatedBy: sessionUserId },
+      });
+    }
+  }
+
+  // 6. Fetch full updated object to match your return pattern
+  const updatedEvent = await prisma.event.findUnique({
+    where: { eventId: data.eventId },
+    include: EVENT_INCLUDE,
+  });
+
+  if (!updatedEvent) throw new Error('Event Update Failed.');
+
+  return flattenEvent(updatedEvent);
 }
 
 // Find many events — only accept a where clause; DAL applies the include.
@@ -173,11 +344,13 @@ function flattenEvent(data: EventWithRelations | EventWithRelations[]): IFlatten
   const events = isArray ? data : [data];
 
   const mapped = events.map((event) => {
-    //Remove Properties
-    const { user } = event;
+    const { user, statusHistory } = event;
+
+    const firstApprovedHistory = statusHistory?.find((history) => (history.status.key as TStatusKey) === 'APPROVED');
 
     return {
       ...event,
+      wasApproved: firstApprovedHistory ? true : false,
       userName: user?.name,
       userEmail: user?.email,
       createdBy: event.createdByUser.name,
