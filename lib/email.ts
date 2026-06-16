@@ -20,80 +20,137 @@ import { APP_FULL_URL } from './api-helpers';
 import { getStaffNotificationEmailTemplate } from './emails/html-templates/staff-notification';
 
 import { IFlattenedEvent } from './data/events';
-import crypto from 'crypto';
+
+interface TEmailAttendee {
+  name: string;
+  email: string;
+}
+
+interface TEmailContext {
+  requestingUserEmail: string;
+  recipientEmails: string[];
+  attendees: TEmailAttendee[];
+  statusKey: TStatusKey;
+  iCalStatus: ICalendarStatus;
+  timezone: string;
+
+  header: string;
+  subject: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  rrule: string;
+  uid: string;
+  sequence: string;
+  wasApproved: boolean;
+  duration: string;
+  employeeName: string;
+
+  formattedDate: string;
+  formattedDateTime: string;
+  roomList: string;
+  recipientsList: string;
+  itemsList: string;
+  bookingURL: string;
+  supportURL: string;
+  systemBookingURL: string;
+}
 
 const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
-
-export async function sendEmail(
-  requestingUser: string,
-  notifyUsers: string[],
-  subject: string,
-  htmlContent: string,
-  base64CalendarAttachment?: string,
-) {
+async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmailAction): Promise<TEmailContext | undefined> {
   if (!SHARED_MAILBOX) {
     console.log('SHARED_MAILBOX Environment Variable Not Configured');
-    return;
+    return undefined;
   }
 
-  const credential = new ClientSecretCredential(
-    process.env.AZURE_AD_TENANT_ID!,
-    process.env.AZURE_AD_CLIENT_ID!,
-    process.env.AZURE_AD_CLIENT_SECRET!,
-  );
+  if (!flattenedEvent) throw new Error(`Send Event Email Failed: Event was null or undefined.`);
 
-  const authProvider = new TokenCredentialAuthenticationProvider(credential, {
-    scopes: ['https://graph.microsoft.com/.default'],
+  const userId = flattenedEvent.userId ? Number(flattenedEvent.userId) : undefined;
+  const eventRecipients = flattenedEvent.eventRecipients ? flattenedEvent.eventRecipients.map((r) => r.userId) : [];
+  const statusId = flattenedEvent.statusId;
+
+  const [user, recipients, status] = await Promise.all([
+    findFirstUser({ id: userId, emailEnabled: true }),
+    findManyUsers({
+      id: { in: eventRecipients },
+      emailEnabled: true,
+      email: { not: null, notIn: [''] },
+    }),
+    findFirstStatus({ statusId: statusId }),
+  ]);
+
+  if (!user?.email) throw new Error(`Send Event Email Failed: Requesting user with ID ${userId} missing or not found.`);
+  if (!status?.key) throw new Error(`Send Event Email Failed: Valid status key not found for statusId ${statusId}.`);
+
+  const statusKey = status.key as TStatusKey;
+  const timezone = user.timezone || process.env.DEFAULT_TIMEZONE;
+  if (!timezone) throw new Error('Send Event Email Failed: Timezone configuration missing.');
+
+  const roles = await getRolesByUserId(user.userId);
+  const permissionCache = buildPermissionCache(roles);
+  const { byGroup } = await isGroupRequirementMet(permissionCache, {
+    canViewBookings: GuardRequest.any(
+      { type: 'permission', action: 'View Agenda', resource: 'My Bookings' },
+      { type: 'permission', action: 'View Day', resource: 'My Bookings' },
+      { type: 'permission', action: 'View Week', resource: 'My Bookings' },
+      { type: 'permission', action: 'View Month', resource: 'My Bookings' },
+      { type: 'permission', action: 'View Year', resource: 'My Bookings' },
+    ),
   });
 
-  const graphClient = Client.initWithMiddleware({ authProvider });
+  // Date Formats
+  const startTZDate = new TZDate(flattenedEvent.startDate as string, timezone);
+  const formattedDate = format(startTZDate, 'yyyy-MM-dd');
+  const formattedDateTime = format(startTZDate, 'yyyy-MM-dd hh:mm a');
 
-  const mailPayload = {
-    message: {
-      subject: subject,
-      body: {
-        contentType: 'html',
-        content: htmlContent,
-      },
-      toRecipients: [
-        {
-          emailAddress: {
-            address: requestingUser,
-          },
-        },
-      ],
-      ccRecipients: [
-        ...notifyUsers.map((email) => ({
-          emailAddress: {
-            address: email,
-          },
-        })),
-      ],
+  // Create string lists
+  const roomList = flattenedEvent.eventRooms?.map((room) => room.name).join(', ') ?? '';
+  const recipientsList = recipients?.map((r) => r.name).join(', ') ?? '';
+  const itemsList = flattenedEvent.eventItems?.map((item) => item.name).join(', ') ?? '';
 
-      attachments: base64CalendarAttachment && [
-        {
-            '@odata.type': '#microsoft.graph.fileAttachment',
-            name: 'invite.ics', // The filename staff will see in Outlook
-            contentType: 'text/calendar; charset=utf-8; method=REQUEST', // Explicit calendar mime type
-            contentBytes: base64CalendarAttachment, // Your base64 data stream string
-        } as FileAttachment,
-      ],
-    } as Message,
-    saveToSentItems: 'true',
+  // Format URL'S
+  const bookingURL = byGroup
+    ? `${APP_FULL_URL}/bookings/user-view?view=day&selectedDate=${formattedDate}&eventId=${flattenedEvent.eventId}`
+    : `${APP_FULL_URL}/availability?view=public&selectedDate=${formattedDate}`;
+
+  const supportSubject = encodeURIComponent(`Help with Booking Request: [${formattedDateTime}] @ ${roomList}`);
+  const supportBody = `Booking Link:%0A${encodeURIComponent(bookingURL)}`;
+  const supportURL = `mailto:${SHARED_MAILBOX}?body=${supportBody}&subject=${supportSubject}`;
+
+  const systemBookingURL = `${APP_FULL_URL}/bookings/user-requests?view=year&selectedDate=${formattedDate}&eventId=${flattenedEvent.eventId}`;
+
+  // Create Attendee List for ICAL Content
+  const attendees: TEmailAttendee[] = [{ name: user.name, email: user.email }, ...recipients.map((r) => ({ name: r.name, email: r.email! }))];
+
+  return {
+    requestingUserEmail: user.email,
+    recipientEmails: recipients.map((r) => r.email || ''),
+    attendees,
+    statusKey,
+    iCalStatus: NOTIFICATION_MATRIX[action][statusKey].iCalStatus,
+    timezone,
+    startDate: flattenedEvent.startDate as string,
+    endDate: flattenedEvent.endDate as string,
+    formattedDate,
+    formattedDateTime,
+    title: flattenedEvent.title,
+    description: flattenedEvent.description || 'No description provided.',
+    itemsList,
+    recipientsList,
+    roomList,
+    rrule: flattenedEvent.recurrence?.rule ?? '',
+    uid: flattenedEvent.uid,
+    sequence: String(flattenedEvent.sequence),
+    wasApproved: flattenedEvent.wasApproved,
+    header: NOTIFICATION_MATRIX[action][statusKey].emailHeader,
+    subject: `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
+    duration: getDurationText(flattenedEvent.startDate as string, flattenedEvent.endDate as string),
+    employeeName: user.name,
+    bookingURL,
+    supportURL,
+    systemBookingURL,
   };
-
-  try {
-    console.log(`Attempting to send email to ${SHARED_MAILBOX}...`);
-
-    // Send email
-    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail`).post(mailPayload);
-
-    console.log('Email sent successfully!');
-  } catch (error: unknown) {
-    const err = error as GraphError;
-
-    console.error('Failed to send email:', err.body?.error?.message || err.message || 'Unknown Error');
-  }
 }
 
 export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent, action: TEmailAction) {
@@ -103,164 +160,78 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
       return;
     }
 
-    if (!flattenedEvent) throw new Error(`Send Event Email Failed: Event was null or undefined.`);
+    const emailContext = await buildEmailContext(flattenedEvent, action);
 
-    const variables = {
-      userId: flattenedEvent.userId ? Number(flattenedEvent.userId) : undefined,
-      eventRecipients: flattenedEvent.eventRecipients ? flattenedEvent.eventRecipients.map((recipients) => recipients.userId) : [],
-      eventRooms: flattenedEvent.eventRooms ? flattenedEvent.eventRooms : [],
-      statusId: flattenedEvent.statusId,
-      startDate: flattenedEvent.startDate as string,
-      endDate: flattenedEvent.endDate as string,
-      title: flattenedEvent.title,
-      description: flattenedEvent.description,
-      requestedItems: flattenedEvent.eventItems ? flattenedEvent.eventItems : [],
-      rrule: flattenedEvent.recurrence?.rule,
-      uid: flattenedEvent.uid,
-      sequence: String(flattenedEvent.sequence),
-    };
+    if (!emailContext) return;
 
-    const [user, recipients, status] = await Promise.all([
-      findFirstUser({ id: variables.userId, emailEnabled: true }),
-      findManyUsers({
-        id: { in: variables.eventRecipients },
-        emailEnabled: true,
-        email: {
-          not: null,
-          notIn: [''],
-        },
-      }),
-      findFirstStatus({ statusId: variables.statusId }),
-    ]);
-
-    if (!user) throw new Error(`Send Event Email Failed: Requesting user with ID ${variables.userId} not found.`);
-    if (!user.email) throw new Error(`Send Event Email Failed: Requesting user with ID ${variables.userId} missing email.`);
-    if (!status || !status.key) throw new Error(`Send Event Email Failed: Valid status key not found for statusId ${variables.statusId}.`);
-
-    const statusKey = status.key as TStatusKey;
-
-    const timezone = user.timezone || process.env.DEFAULT_TIMEZONE;
-    if (!timezone) throw new Error('Send Event Email Failed: User timezone and DEFAULT_TIMEZONE environment variable are both missing.');
-
-    const roles = await getRolesByUserId(user.userId);
-    const permissionCache = buildPermissionCache(roles);
-
-    const { byGroup } = await isGroupRequirementMet(permissionCache, {
-      canViewBookings: GuardRequest.any(
-        { type: 'permission', action: 'View Agenda', resource: 'My Bookings' },
-        { type: 'permission', action: 'View Day', resource: 'My Bookings' },
-        { type: 'permission', action: 'View Week', resource: 'My Bookings' },
-        { type: 'permission', action: 'View Month', resource: 'My Bookings' },
-        { type: 'permission', action: 'View Year', resource: 'My Bookings' },
-      ),
-    });
-
-    const formattedStartDate = format(new TZDate(variables.startDate, timezone), 'yyyy-MM-dd');
-
-    const bookingURL = byGroup
-      ? APP_FULL_URL + '/bookings/user-view?view=day&selectedDate=' + formattedStartDate + '&eventId=' + flattenedEvent.eventId
-      : APP_FULL_URL + '/availability?view=public&selectedDate=' + formattedStartDate;
-
-    const roomsListString = variables.eventRooms.map((room) => room.name).join(', ');
-    const recipientsListString = recipients.map((r) => r.name).join(', ');
-    const itemsListString = variables.requestedItems.map((item) => item.name).join(', ');
-    const formattedDate = format(new TZDate(variables.startDate, timezone), 'yyyy-MM-dd hh:mm a');
-
-    const iCalTextContent = generateCalendarAttachment({
-      timezone: timezone,
-      startDateTime: variables.startDate,
-      endDateTime: variables.endDate,
-      rrule: variables.rrule,
+    const iCalTextBody = generateICalendarText({
+      timezone: emailContext.timezone,
+      startDateTime: emailContext.startDate,
+      endDateTime: emailContext.endDate,
+      rrule: emailContext.rrule,
       rruleCancellations: undefined,
       rruleExceptions: undefined,
-      title: variables.title,
-      bookingURL: bookingURL,
-      uid: variables.uid,
-      sequence: variables.sequence,
-      description: variables.description,
-      rooms: roomsListString,
-      status: NOTIFICATION_MATRIX[action][statusKey].iCalStatus,
+      title: emailContext.title,
+      bookingURL: emailContext.bookingURL,
+      uid: emailContext.uid,
+      sequence: emailContext.sequence,
+      description: emailContext.description,
+      rooms: emailContext.roomList,
+      status: emailContext.iCalStatus,
       owner: {
         name: 'MEETING_ROOM_BOOKING',
         email: SHARED_MAILBOX,
       },
-      attendees: [
-        { name: user.name, email: user.email },
-        ...recipients.map((recipient) => {
-          return { name: recipient.name, email: recipient.email! };
-        }),
-      ],
+      attendees: emailContext.attendees,
     });
-    const base64CalendarAttachment = Buffer.from(iCalTextContent, 'utf-8').toString('base64');
 
-    const supportSubject = `${encodeURIComponent('Help with Booking Request: [' + formattedDate + '] @ ' + roomsListString)}`;
-    const supportBody = `Booking Link:%0A${encodeURIComponent(bookingURL)}`;
-    const supportURL = `mailto:${SHARED_MAILBOX}?body=${supportBody}&subject=${supportSubject}`;
+    const htmlBody = getMeetingResponseEmailTemplate({
+      header: emailContext.header,
+      date: emailContext.formattedDate,
+      duration: emailContext.duration,
+      description: emailContext.description,
+      employeeName: emailContext.employeeName,
+      notifiedNames: emailContext.recipientsList,
+      room: emailContext.roomList,
+      status: action === 'DELETE' ? 'REJECTED' : emailContext.statusKey,
+      title: emailContext.title,
+      bookingURL: emailContext.bookingURL,
+      supportURL: emailContext.supportURL,
+    });
 
-    await sendEmail(
-      user.email,
-      recipients.map((r) => r.email || ''),
-      `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
-      getMeetingResponseEmailTemplate({
-        header: NOTIFICATION_MATRIX[action][statusKey].emailHeader,
-        date: formattedDate,
-        duration: getDurationText(variables.startDate, variables.endDate),
-        description: variables.description,
-        employeeName: user.name,
-        notifiedNames: recipientsListString,
-        room: roomsListString,
-        status: action === 'DELETE' ? 'REJECTED' : statusKey,
-        title: variables.title,
-        bookingURL: bookingURL,
-        supportURL: supportURL,
-      }),
-      flattenedEvent.wasApproved ? base64CalendarAttachment : undefined,
-    );
+    const plainTextBody = await generatePlainTextTemplate(emailContext);
 
-    /*await sendRawMimeEmail(
-      user.email,
-      recipients.map((r) => r.email || ''),
-      `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
-      getMeetingResponseEmailTemplate({
-        header: NOTIFICATION_MATRIX[action][statusKey].emailHeader,
-        date: formattedDate,
-        duration: getDurationText(variables.startDate, variables.endDate),
-        description: variables.description,
-        employeeName: user.name,
-        notifiedNames: recipientsListString,
-        room: roomsListString,
-        status: status.key as TStatusKey,
-        title: variables.title,
-        bookingURL: bookingURL,
-      }),
-      iCalTextContent,
-    );*/
+    await sendEmailMIME({
+      requestingUser: emailContext.requestingUserEmail,
+      recipientEmails: emailContext.recipientEmails,
+      subject: emailContext.subject,
+      textContent: plainTextBody,
+      htmlContent: htmlBody,
+      iCalContent: emailContext.wasApproved ? iCalTextBody : undefined,
+    });
 
-    if (status.key === 'PENDING' && action === 'CREATE') {
-      await sendEmail(
-        SHARED_MAILBOX,
-        [],
-        `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
-        getStaffNotificationEmailTemplate({
-          date: formattedDate,
-          duration: getDurationText(variables.startDate, variables.endDate),
-          description: variables.description,
-          requestedItems: itemsListString,
-          employeeName: user.name,
-          notifiedNames: recipientsListString,
-          room: roomsListString,
-          title: variables.title,
-          bookingURL: APP_FULL_URL + '/bookings/user-requests?view=year&selectedDate=' + formattedStartDate + '&eventId=' + flattenedEvent.eventId,
-          supportURL: `mailto:${SHARED_MAILBOX}`,
-        }),
-      );
+    if (emailContext.statusKey === 'PENDING' && action === 'CREATE') {
+      const staffHtmlBody = getStaffNotificationEmailTemplate({
+        date: emailContext.formattedDate,
+        duration: emailContext.duration,
+        description: emailContext.description,
+        requestedItems: emailContext.itemsList,
+        employeeName: emailContext.employeeName,
+        notifiedNames: emailContext.recipientsList,
+        room: emailContext.roomList,
+        title: emailContext.title,
+        bookingURL: emailContext.systemBookingURL,
+        supportURL: `mailto:${SHARED_MAILBOX}`,
+      });
+
+      await sendEmailJSON(SHARED_MAILBOX!, [], emailContext.subject, staffHtmlBody);
     }
   } catch (error) {
     console.error('Failed to orchestrate event email notification:', error);
   }
 }
 
-function generateCalendarAttachment(content: {
+function generateICalendarText(content: {
   timezone: string;
   startDateTime: string;
   endDateTime: string;
@@ -380,62 +351,325 @@ function foldICalLine(line: string): string {
   return chunks.join('\n');
 }
 
-/*
-    await sendRawMimeEmail(
-      user.email,
-      recipients.map((r) => r.email || ''),
-      `Booking ${getSubjectKeyword(status.key as TStatusKey, action)} [${formattedDate}]`,
-      getMeetingResponseEmailTemplate({
-        header: getHeader(status.key as TStatusKey, action),
-        date: formattedDate,
-        duration: getDurationText(variables.startDate, variables.endDate),
-        description: variables.description,
-        employeeName: user.name,
-        notifiedNames: recipientsListString,
-        room: roomsListString,
-        status: status.key as TStatusKey,
-        title: variables.title,
-        bookingURL: bookingURL,
-      }),
-      iCalTextContent,
-    );*/
+async function generatePlainTextTemplate(data: {
+  header: string;
+  title: string;
+  roomList: string;
+  formattedDateTime: string;
+  duration: string;
+  employeeName: string;
+  recipientsList: string;
+  description: string;
+  bookingURL: string;
+  supportURL: string;
+}): Promise<string> {
+  return [
+    `======================================================================`,
+    ` MEETING ROOM BOOKING: ${data.header}`,
+    `======================================================================`,
+    ``,
+    `Hello,`,
+    ``,
+    `This is an automated notification regarding your room booking reservation.`,
+    `The status of this request is currently tracked as: ${data.header}.`,
+    ``,
+    `----------------------------------------------------------------------`,
+    ` BOOKING DETAILS`,
+    `----------------------------------------------------------------------`,
+    ` Title:        ${data.title}`,
+    ` Room(s):      ${data.roomList}`,
+    ` Date/Time:    ${data.formattedDateTime}`,
+    ` Duration:     ${data.duration}`,
+    ` Organized By: ${data.employeeName}`,
+    ` Attendees:    ${data.recipientsList}`,
+    ``,
+    ` Description:`,
+    ` ${data.description || 'No description provided.'}`,
+    `----------------------------------------------------------------------`,
+    ``,
+    `ACTION REQUIRED:`,
+    `Please use an interactive, HTML-compatible email client (like Outlook `,
+    `or Gmail) to Accept, Decline, or Tentatively accept this invitation.`,
+    ``,
+    `Manage Booking Online:`,
+    ` ${data.bookingURL}`,
+    ``,
+    `Need Support?`,
+    ` ${data.supportURL}`,
+    ``,
+    `======================================================================`,
+    ` Meeting Room Bookings`,
+    `======================================================================`,
+  ].join('\r\n');
+}
 
-export async function sendRawMimeEmail(requestingUser: string, notifyUsers: string[], subject: string, htmlContent: string, iCalTextContent: string) {
-  const boundary = `----=_Part_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+async function sendEmailMIME(data: {
+  requestingUser: string;
+  recipientEmails: string[];
+  subject: string;
+  textContent: string;
+  htmlContent: string;
+  iCalContent?: string;
+}) {
+  if (!SHARED_MAILBOX) {
+    console.log('SHARED_MAILBOX Environment Variable Not Configured');
+    return;
+  }
 
-  // Construct a compliant MIME string manually
-  const mimeParts = [
+  const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+  const boundaryMixed = `----=_Part_Mixed_${uniqueId}`;
+  const boundaryAlternative = `----=_Part_Alt_${uniqueId}`;
+
+  const rawMimeLines: string[] = [
     `From: ${SHARED_MAILBOX}`,
-    `To: ${requestingUser}`,
-    notifyUsers.length ? `Cc: ${notifyUsers.join(', ')}` : '',
-    `Subject: ${subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    '',
-    `--${boundary}`,
-    `Content-Type: text/html; charset="UTF-8"`,
-    `Content-Transfer-Encoding: 7bit`,
-    '',
-    htmlContent,
-    '',
-    `--${boundary}`,
-    // CRITICAL: The method=REQUEST header turns the attachment into an inline meeting invite
-    `Content-Type: text/calendar; charset="UTF-8"; method=REQUEST`,
-    `Content-Transfer-Encoding: 7bit`,
-    '',
-    iCalTextContent,
-    '',
-    `--${boundary}--`,
+    `To: ${data.requestingUser}`,
+    `Cc: ${data.recipientEmails.join(';')}`,
+    `Subject: ${data.subject}`,
+    'MIME-Version: 1.0',
   ];
 
-  const rawMimeString = mimeParts.filter((line) => line !== null).join('\r\n');
-  const base64Mime = Buffer.from(rawMimeString, 'utf-8').toString('base64');
+  if (data.iCalContent) {
+    // --- LAYOUT A: Standard Meeting Invitation Layout ---
+    rawMimeLines.push(
+      `Content-Type: multipart/mixed; boundary="${boundaryMixed}"`,
+      '',
+      `--${boundaryMixed}`,
+      `Content-Type: multipart/alternative; boundary="${boundaryAlternative}"`,
+      '',
+      `--${boundaryAlternative}`,
+      'Content-Type: text/plain; charset="utf-8"',
+      'Content-Transfer-Encoding: 7bit',
+      '',
+      data.textContent,
+      '',
+      `--${boundaryAlternative}`,
+      'Content-Type: text/html; charset="utf-8"',
+      'Content-Transfer-Encoding: 7bit',
+      '',
+      data.htmlContent,
+      '',
+      `--${boundaryAlternative}`,
+      'Content-Type: text/calendar; charset="utf-8"; method=REQUEST',
+      'Content-Transfer-Encoding: 7bit',
+      '',
+      data.iCalContent,
+      '',
+      `--${boundaryAlternative}--`,
+      '',
+      `--${boundaryMixed}--`,
+    );
+  } else {
+    // --- LAYOUT B: Clean, Standard Standard Email Layout ---
+    rawMimeLines.push(
+      `Content-Type: multipart/alternative; boundary="${boundaryAlternative}"`,
+      '',
+      `--${boundaryAlternative}`,
+      'Content-Type: text/plain; charset="utf-8"',
+      'Content-Transfer-Encoding: 7bit',
+      '',
+      data.textContent,
+      '',
+      `--${boundaryAlternative}`,
+      'Content-Type: text/html; charset="utf-8"',
+      'Content-Transfer-Encoding: 7bit',
+      '',
+      data.htmlContent,
+      '',
+      `--${boundaryAlternative}--`,
+    );
+  }
+
+  // Join the entire tree structural map with CRLF
+  const rawMimeString = rawMimeLines.join('\r\n');
+
+  // Transform the final raw output into Base64 format, Save it as a buffer so that graphClient interprets it properly
+  const base64MimeString = Buffer.from(rawMimeString, 'utf-8').toString('base64');
+  const payloadBuffer = Buffer.from(base64MimeString, 'utf-8');
 
   try {
-    if (!SHARED_MAILBOX) {
-      console.log('SHARED_MAILBOX Environment Variable Not Configured');
-      return;
-    }
+    const credential = new ClientSecretCredential(
+      process.env.AZURE_AD_TENANT_ID!,
+      process.env.AZURE_AD_CLIENT_ID!,
+      process.env.AZURE_AD_CLIENT_SECRET!,
+    );
+
+    const authProvider = new TokenCredentialAuthenticationProvider(credential, {
+      scopes: ['https://graph.microsoft.com/.default'],
+    });
+
+    const graphClient = Client.initWithMiddleware({ authProvider });
+
+    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail?saveToSentItems=true`).headers({ 'Content-Type': 'text/plain' }).post(payloadBuffer);
+  } catch (error) {
+    console.error('Execution Failed!');
+    console.error(error);
+  }
+}
+
+export async function sendEmailJSON(requestingUser: string, notifyUsers: string[], subject: string, htmlContent: string) {
+  if (!SHARED_MAILBOX) {
+    console.log('SHARED_MAILBOX Environment Variable Not Configured');
+    return;
+  }
+
+  const credential = new ClientSecretCredential(
+    process.env.AZURE_AD_TENANT_ID!,
+    process.env.AZURE_AD_CLIENT_ID!,
+    process.env.AZURE_AD_CLIENT_SECRET!,
+  );
+
+  const authProvider = new TokenCredentialAuthenticationProvider(credential, {
+    scopes: ['https://graph.microsoft.com/.default'],
+  });
+
+  const graphClient = Client.initWithMiddleware({ authProvider });
+
+  const mailPayload = {
+    message: {
+      subject: subject,
+      body: {
+        contentType: 'html',
+        content: htmlContent,
+      },
+      toRecipients: [
+        {
+          emailAddress: {
+            address: requestingUser,
+          },
+        },
+      ],
+      ccRecipients: [
+        ...notifyUsers.map((email) => ({
+          emailAddress: {
+            address: email,
+          },
+        })),
+      ],
+    } as Message,
+    saveToSentItems: 'true',
+  };
+
+  try {
+    console.log(`Attempting to send email to ${SHARED_MAILBOX}...`);
+
+    // Send email
+    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail`).post(mailPayload);
+
+    console.log('Email sent successfully!');
+  } catch (error: unknown) {
+    const err = error as GraphError;
+
+    console.error('Failed to send email:', err.body?.error?.message || err.message || 'Unknown Error');
+  }
+}
+
+async function sendStaticMimeTestEmail() {
+  // Hardcoded configuration for testing
+
+  const RECIPIENT_EMAIL = 'j.kahtava@cityssm.on.ca';
+
+  // Fixed boundary strings
+  const boundaryMixed = '----=_Part_Mixed_StaticTest12345';
+  const boundaryAlternative = '----=_Part_Alt_StaticTest12345';
+
+  // 1. Static Professional HTML Body
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 5px;">
+      <h2 style="color: #0056b3; margin-top: 0;">Meeting Room Booking Confirmation</h2>
+      <p>Hello,</p>
+      <p>Your booking for <strong>Project Sync & Strategy Session</strong> has been processed successfully.</p>
+      <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #0056b3; margin: 20px 0;">
+        <strong>Location:</strong> Boardroom A (Main Floor)<br/>
+        <strong>Time:</strong> 2:00 PM - 3:00 PM (EST)
+      </div>
+      <p>Please use the interactive buttons in your email client header to Accept or Decline this invitation.</p>
+      <hr style="border: 0; border-top: 1px solid #ccc; margin-top: 30px;" />
+      <p style="font-size: 12px; color: #666;">City of Sault Ste. Marie - Meeting Room Bookings</p>
+    </div>
+  `.trim();
+
+  // 2. Static iCalendar Payload (Strictly using \r\n line endings)
+  const iCalText = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//City of Sault Ste. Marie//PropertyBookingSystem//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    'UID:static-test-uid-99999-2026@saultstemarie.ca',
+    'DTSTAMP:20260616T120000Z',
+    'SEQUENCE:0',
+    'URL:https://www.saultstemarie.ca/bookings',
+    'DTSTART;TZID=America/Toronto:20260617T140000',
+    'DTEND;TZID=America/Toronto:20260617T150000',
+    'TRANSP:OPAQUE',
+    'SUMMARY:Project Sync & Strategy Session',
+    'DESCRIPTION:Static test meeting description generated for Graph API testing.',
+    'LOCATION:Boardroom A (Main Floor)',
+    'CATEGORIES:Meeting Room Booking',
+    'STATUS:CONFIRMED',
+    `ORGANIZER;CN="Meeting Rooms":MAILTO:${SHARED_MAILBOX}`,
+    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN="Test User":MAILTO:${RECIPIENT_EMAIL}`,
+    'CONTACT:bookings@saultstemarie.ca / Meeting Room Bookings',
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'TRIGGER:-PT15M',
+    'DESCRIPTION:Reminder: Project Sync & Strategy Session begins in 15 minutes.',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  // 3. Static Multipart MIME Tree Layout
+  const rawMimeLines = [
+    `From: ${SHARED_MAILBOX}`,
+    `To: ${RECIPIENT_EMAIL}`,
+    'Subject: Booking: Project Sync & Strategy Session',
+    'MIME-Version: 1.0',
+    `Content-Type: multipart/mixed; boundary="${boundaryMixed}"`,
+    '',
+    `--${boundaryMixed}`,
+    `Content-Type: multipart/alternative; boundary="${boundaryAlternative}"`,
+    '',
+    `--${boundaryAlternative}`,
+    'Content-Type: text/plain; charset="utf-8"',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    'You have a meeting request for Project Sync & Strategy Session. Please use an HTML/Calendar compatible client.',
+    '',
+    `--${boundaryAlternative}`,
+    'Content-Type: text/html; charset="utf-8"',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    htmlBody,
+    '',
+    `--${boundaryAlternative}`,
+    'Content-Type: text/calendar; charset="utf-8"; method=REQUEST',
+    'Content-Transfer-Encoding: 7bit',
+    '',
+    iCalText,
+    '',
+    `--${boundaryAlternative}--`,
+    '',
+    `--${boundaryMixed}--`,
+  ];
+
+  // Join the entire tree structural map with CRLF
+  const rawMimeString = rawMimeLines.join('\r\n');
+
+  // 4. Transform the final raw output into Base64 format
+  const base64MimeString = Buffer.from(rawMimeString, 'utf-8').toString('base64');
+  const payloadBuffer = Buffer.from(base64MimeString, 'utf-8');
+
+  console.log('Compiling payload and executing request against Microsoft Graph...');
+
+  try {
+    /*const response = await axios.post(graphEndpoint, base64MimeBody, {
+      headers: {
+        'Authorization': `Bearer ${YOUR_GRAPH_ACCESS_TOKEN}`,
+        'Content-Type': 'text/plain'
+      }
+    });*/
 
     const credential = new ClientSecretCredential(
       process.env.AZURE_AD_TENANT_ID!,
@@ -449,11 +683,18 @@ export async function sendRawMimeEmail(requestingUser: string, notifyUsers: stri
 
     const graphClient = Client.initWithMiddleware({ authProvider });
 
-    // Use the .content() modifier to send raw data
-    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail`).headers({ 'Content-Type': 'text/plain' }).post(base64Mime);
+    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail`).headers({ 'Content-Type': 'text/plain' }).post(payloadBuffer);
 
-    console.log('MIME meeting invite sent!');
+    //console.log('Success! HTTP Status:', response.status);
+    console.log('The static calendar event has been delivered to your test inbox.');
   } catch (error) {
-    console.error('Failed sending MIME mail:', error);
+    console.error('Execution Failed!');
+    console.error(error);
+    //if (error.response) {
+    //console.error(`Graph Error Status: ${error.response.status}`);
+    //console.error('Graph Error Payload:', JSON.stringify(error.response.data, null, 2));
+    //} else {
+    //console.error('System Exception:', error.message);
+    //}
   }
 }
