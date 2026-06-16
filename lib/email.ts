@@ -3,12 +3,12 @@
 import { ClientSecretCredential } from '@azure/identity';
 import { Client, GraphError } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { ICalendarStatus, NOTIFICATION_MATRIX, NotificationConfig, TEmailAction, TStatusKey } from './types';
+import { ICalendarStatus, NOTIFICATION_MATRIX, TEmailAction, TStatusKey } from './types';
 
 import { FileAttachment, Message } from '@microsoft/microsoft-graph-types';
-import { getMeetingResponseEmailTemplate, IEmailTemplate } from './emails/html-templates/meeting-response';
+import { getMeetingResponseEmailTemplate } from './emails/html-templates/meeting-response';
 import { findFirstUser, findManyUsers } from './data/users';
-import { findManyRooms } from './data/rooms';
+
 import { findFirstStatus } from './data/status';
 import { format } from 'date-fns';
 import { tz, TZDate } from '@date-fns/tz';
@@ -18,8 +18,8 @@ import { getRolesByUserId } from './data/permissions';
 import { buildPermissionCache, GuardRequest, isGroupRequirementMet } from './auth-permission-checks';
 import { APP_FULL_URL } from './api-helpers';
 import { getStaffNotificationEmailTemplate } from './emails/html-templates/staff-notification';
-import { findManyItems } from './data/items';
-import { findFirstEvent, findManyEvents, IFlattenedEvent } from './data/events';
+
+import { IFlattenedEvent } from './data/events';
 import crypto from 'crypto';
 
 const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
@@ -69,14 +69,14 @@ export async function sendEmail(
           },
         })),
       ],
-      attachments: [
-        base64CalendarAttachment &&
-          ({
+
+      attachments: base64CalendarAttachment && [
+        {
             '@odata.type': '#microsoft.graph.fileAttachment',
             name: 'invite.ics', // The filename staff will see in Outlook
             contentType: 'text/calendar; charset=utf-8; method=REQUEST', // Explicit calendar mime type
             contentBytes: base64CalendarAttachment, // Your base64 data stream string
-          } as FileAttachment),
+        } as FileAttachment,
       ],
     } as Message,
     saveToSentItems: 'true',
@@ -209,13 +209,32 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
         employeeName: user.name,
         notifiedNames: recipientsListString,
         room: roomsListString,
-        status: statusKey,
+        status: action === 'DELETE' ? 'REJECTED' : statusKey,
         title: variables.title,
         bookingURL: bookingURL,
         supportURL: supportURL,
       }),
-      base64CalendarAttachment,
+      flattenedEvent.wasApproved ? base64CalendarAttachment : undefined,
     );
+
+    /*await sendRawMimeEmail(
+      user.email,
+      recipients.map((r) => r.email || ''),
+      `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
+      getMeetingResponseEmailTemplate({
+        header: NOTIFICATION_MATRIX[action][statusKey].emailHeader,
+        date: formattedDate,
+        duration: getDurationText(variables.startDate, variables.endDate),
+        description: variables.description,
+        employeeName: user.name,
+        notifiedNames: recipientsListString,
+        room: roomsListString,
+        status: status.key as TStatusKey,
+        title: variables.title,
+        bookingURL: bookingURL,
+      }),
+      iCalTextContent,
+    );*/
 
     if (status.key === 'PENDING' && action === 'CREATE') {
       await sendEmail(
@@ -234,7 +253,6 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
           bookingURL: APP_FULL_URL + '/bookings/user-requests?view=year&selectedDate=' + formattedStartDate + '&eventId=' + flattenedEvent.eventId,
           supportURL: `mailto:${SHARED_MAILBOX}`,
         }),
-        base64CalendarAttachment,
       );
     }
   } catch (error) {
@@ -299,7 +317,7 @@ function generateCalendarAttachment(content: {
     `VERSION:2.0`,
     `PRODID:-//City of Sault Ste. Marie//${programId}//EN`,
     `CALSCALE:GREGORIAN`,
-    `METHOD:REQUEST`,
+    `METHOD:${content.status === 'CANCELLED' ? 'CANCEL' : 'REQUEST'}`,
     `BEGIN:VEVENT`,
     `UID:${content.uid}`,
     `DTSTAMP:${timestamp}`,
