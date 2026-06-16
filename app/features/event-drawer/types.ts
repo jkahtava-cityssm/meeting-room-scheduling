@@ -53,6 +53,9 @@ export interface MultiStepFormContextProps {
   onDelete: () => void;
   onClose: () => void;
   resetForm: () => void;
+  mutationCreate: {
+    isPending: boolean;
+  };
   mutationUpsert: {
     isPending: boolean;
   };
