@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
           status: 'APPROVED',
           title: 'Test Event',
           bookingURL: '/bookings/user-view?view=day&selectedDate=' + format(today, 'yyyy-MM-dd'),
+          supportURL: '/bookings/user-view?view=day&selectedDate=' + format(today, 'yyyy-MM-dd'),
         }),
       );
 
