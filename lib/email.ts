@@ -3,7 +3,7 @@
 import { ClientSecretCredential } from '@azure/identity';
 import { Client, GraphError } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { ICalendarStatus, NOTIFICATION_MATRIX, TEmailAction, TStatusKey } from './types';
+import { ICalendarMethod, ICalendarStatus, NOTIFICATION_MATRIX, TEmailAction, TStatusKey } from './types';
 
 import { FileAttachment, Message } from '@microsoft/microsoft-graph-types';
 import { getMeetingResponseEmailTemplate } from './emails/html-templates/meeting-response';
@@ -32,6 +32,7 @@ interface TEmailContext {
   attendees: TEmailAttendee[];
   statusKey: TStatusKey;
   iCalStatus: ICalendarStatus;
+  iCalMethod: ICalendarMethod;
   timezone: string;
 
   header: string;
@@ -129,6 +130,7 @@ async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmail
     attendees,
     statusKey,
     iCalStatus: NOTIFICATION_MATRIX[action][statusKey].iCalStatus,
+    iCalMethod: NOTIFICATION_MATRIX[action][statusKey].iCalStatus === 'CANCELLED' ? 'CANCEL' : 'REQUEST',
     timezone,
     startDate: flattenedEvent.startDate as string,
     endDate: flattenedEvent.endDate as string,
@@ -142,6 +144,7 @@ async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmail
     rrule: flattenedEvent.recurrence?.rule ?? '',
     uid: flattenedEvent.uid,
     sequence: String(flattenedEvent.sequence),
+
     wasApproved: flattenedEvent.wasApproved,
     header: NOTIFICATION_MATRIX[action][statusKey].emailHeader,
     subject: `Booking ${NOTIFICATION_MATRIX[action][statusKey].subjectKeyword} [${formattedDate}]`,
@@ -178,6 +181,7 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
       description: emailContext.description,
       rooms: emailContext.roomList,
       status: emailContext.iCalStatus,
+      method: emailContext.iCalMethod,
       owner: {
         name: 'MEETING_ROOM_BOOKING',
         email: SHARED_MAILBOX,
@@ -208,6 +212,7 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
       textContent: plainTextBody,
       htmlContent: htmlBody,
       iCalContent: emailContext.wasApproved ? iCalTextBody : undefined,
+      iCalMethod: emailContext.iCalMethod,
     });
 
     if (emailContext.statusKey === 'PENDING' && action === 'CREATE') {
@@ -245,6 +250,7 @@ function generateICalendarText(content: {
   description: string;
   rooms: string;
   status: ICalendarStatus;
+  method: ICalendarMethod;
   owner: { name: string; email: string };
   attendees?: { name: string; email: string }[];
 }) {
@@ -288,7 +294,7 @@ function generateICalendarText(content: {
     `VERSION:2.0`,
     `PRODID:-//City of Sault Ste. Marie//${programId}//EN`,
     `CALSCALE:GREGORIAN`,
-    `METHOD:${content.status === 'CANCELLED' ? 'CANCEL' : 'REQUEST'}`,
+    `METHOD:${content.method}`,
     `BEGIN:VEVENT`,
     `UID:${content.uid}`,
     `DTSTAMP:${timestamp}`,
@@ -410,6 +416,7 @@ async function sendEmailMIME(data: {
   textContent: string;
   htmlContent: string;
   iCalContent?: string;
+  iCalMethod?: 'REQUEST' | 'CANCEL';
 }) {
   if (!SHARED_MAILBOX) {
     console.log('SHARED_MAILBOX Environment Variable Not Configured');
@@ -429,6 +436,7 @@ async function sendEmailMIME(data: {
   ];
 
   if (data.iCalContent) {
+    const method = data.iCalMethod || 'REQUEST';
     // --- LAYOUT A: Standard Meeting Invitation Layout ---
     rawMimeLines.push(
       `Content-Type: multipart/mixed; boundary="${boundaryMixed}"`,
@@ -449,7 +457,7 @@ async function sendEmailMIME(data: {
       data.htmlContent,
       '',
       `--${boundaryAlternative}`,
-      'Content-Type: text/calendar; charset="utf-8"; method=REQUEST',
+      `Content-Type: text/calendar; charset="utf-8"; method=${method}`,
       'Content-Transfer-Encoding: 7bit',
       '',
       data.iCalContent,

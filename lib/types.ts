@@ -8,6 +8,8 @@ export type TEmailAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE';
 
 export type ICalendarStatus = 'CONFIRMED' | 'TENTATIVE' | 'CANCELLED';
 
+export type ICalendarMethod = 'REQUEST' | 'CANCEL';
+
 export interface NotificationConfig {
   emailHeader: string;
   subjectKeyword: string;
