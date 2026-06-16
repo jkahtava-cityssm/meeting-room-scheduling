@@ -12,6 +12,7 @@ export interface IEmailTemplate {
   employeeName: string;
   notifiedNames: string;
   bookingURL: string;
+  supportURL: string;
 }
 
 export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
@@ -35,7 +36,7 @@ export function getMeetingResponseEmailTemplate(content: IEmailTemplate) {
     .replaceAll('{{EVENT_TO}}', content.employeeName)
     .replaceAll('{{EVENT_CC}}', content.notifiedNames)
     .replaceAll('{{SYSTEM_URL}}', content.bookingURL)
-    .replaceAll('{{SUPPORT_URL}}', APP_FULL_URL);
+    .replaceAll('{{SUPPORT_URL}}', content.supportURL);
 }
 
 //THIS TEMPLATE IS GENERATED BASED ON THE mjml FILE.
@@ -233,13 +234,14 @@ const meetingTemplate = `<!doctype html>
                                       <td class="spacer-cell"></td>
                                     </tr>
                                     <tr>
-                                      <td class="label-cell">Attendees</td>
-                                      <td class="value-cell">{{EVENT_CC}}</td>
-                                    </tr>
-                                    <tr>
                                       <td class="label-cell">Owner</td>
                                       <td class="value-cell">{{EVENT_TO}}</td>
                                     </tr>
+                                    <tr>
+                                      <td class="label-cell">Attendees</td>
+                                      <td class="value-cell">{{EVENT_CC}}</td>
+                                    </tr>
+
                                   </table>
                                 </td>
                               </tr>
@@ -292,7 +294,7 @@ const meetingTemplate = `<!doctype html>
                               </tr>
                               <tr>
                                 <td align="left" style="font-size:0px;padding:0;word-break:break-word;">
-                                  <div style="font-family:Helvetica, Arial, sans-serif;font-size:12px;line-height:24px;text-align:left;color:#a1a1aa;">Need help? <a href="{{SUPPORT_URL}}" class="support-link">Contact Support</a></div>
+                                  <div style="font-family:Helvetica, Arial, sans-serif;font-size:12px;line-height:24px;text-align:left;color:#a1a1aa;">Need help? <a href="{{SUPPORT_URL}}" class="support-link">Contact Switchboard</a></div>
                                 </td>
                               </tr>
                             </tbody>

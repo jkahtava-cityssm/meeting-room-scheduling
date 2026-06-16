@@ -90,12 +90,12 @@
               <td class="spacer-cell"></td>
             </tr>
             <tr>
-              <td class="label-cell">Attendees</td>
-              <td class="value-cell">{{ EVENT_CC }}</td>
-            </tr>
-            <tr>
               <td class="label-cell">Owner</td>
               <td class="value-cell">{{ EVENT_TO }}</td>
+            </tr>
+            <tr>
+              <td class="label-cell">Attendees</td>
+              <td class="value-cell">{{ EVENT_CC }}</td>
             </tr>
           </mj-table>
         </mj-column>
@@ -110,7 +110,7 @@
 
           <mj-text mj-class="helper-text"> This is an automated message. </mj-text>
 
-          <mj-text mj-class="helper-text"> Need help? <a href="{{SUPPORT_URL}}" class="support-link">Contact Support</a> </mj-text>
+          <mj-text mj-class="helper-text"> Need help? <a href="{{SUPPORT_URL}}" class="support-link">Contact Switchboard</a> </mj-text>
         </mj-column>
       </mj-section>
 

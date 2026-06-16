@@ -17,7 +17,7 @@ export function getStaffNotificationEmailTemplate(content: INotificationEmailTem
     .replaceAll('{{EVENT_TO}}', content.employeeName)
     .replaceAll('{{EVENT_CC}}', content.notifiedNames)
     .replaceAll('{{SYSTEM_URL}}', content.bookingURL)
-    .replaceAll('{{SUPPORT_URL}}', APP_FULL_URL);
+    .replaceAll('{{SUPPORT_URL}}', content.supportURL);
 }
 
 //THIS TEMPLATE IS GENERATED BASED ON THE mjml FILE.
@@ -204,12 +204,12 @@ const notificationTemplate = `<!doctype html>
                                       <td class="spacer-cell"></td>
                                     </tr>
                                     <tr>
-                                      <td class="label-cell">Attendees</td>
-                                      <td class="value-cell">{{EVENT_CC}}</td>
-                                    </tr>
-                                    <tr>
                                       <td class="label-cell">Owner</td>
                                       <td class="value-cell">{{EVENT_TO}}</td>
+                                    </tr>
+                                    <tr>
+                                      <td class="label-cell">Attendees</td>
+                                      <td class="value-cell">{{EVENT_CC}}</td>
                                     </tr>
                                     <tr>
                                       <td class="spacer-cell"></td>

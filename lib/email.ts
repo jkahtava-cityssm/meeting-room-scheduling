@@ -193,6 +193,10 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
     });
     const base64CalendarAttachment = Buffer.from(iCalTextContent, 'utf-8').toString('base64');
 
+    const supportSubject = `${encodeURIComponent('Help with Booking Request: [' + formattedDate + '] @ ' + roomsListString)}`;
+    const supportBody = `Booking Link:%0A${encodeURIComponent(bookingURL)}`;
+    const supportURL = `mailto:${SHARED_MAILBOX}?body=${supportBody}&subject=${supportSubject}`;
+
     await sendEmail(
       user.email,
       recipients.map((r) => r.email || ''),
@@ -208,6 +212,7 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
         status: statusKey,
         title: variables.title,
         bookingURL: bookingURL,
+        supportURL: supportURL,
       }),
       base64CalendarAttachment,
     );
@@ -227,6 +232,7 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
           room: roomsListString,
           title: variables.title,
           bookingURL: APP_FULL_URL + '/bookings/user-requests?view=year&selectedDate=' + formattedStartDate + '&eventId=' + flattenedEvent.eventId,
+          supportURL: `mailto:${SHARED_MAILBOX}`,
         }),
         base64CalendarAttachment,
       );
