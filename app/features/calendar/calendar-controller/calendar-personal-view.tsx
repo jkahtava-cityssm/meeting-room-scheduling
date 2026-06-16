@@ -65,28 +65,45 @@ function EventFilterTrigger({ eventId, userId }: { eventId: number; userId: stri
   const { openEventDrawer } = useSharedEventDrawer();
   const [lastTriggeredId, setLastTriggeredId] = useState<number | null>(null);
 
-  const { data: event } = useEventQuery(eventId, userId);
+  const { data: event, refetch } = useEventQuery(eventId, userId, false);
   const { canAny } = CalendarPermissions.usePermissions();
 
   const canReadEvent = canAny('ReadAllEvent', ['ReadSelfEvent', String(event?.userId) === userId]);
 
   useEffect(() => {
-    if (!event || lastTriggeredId === eventId || !canReadEvent) {
-      return;
-    }
+    const triggerRefetchAndOpen = async () => {
+      try {
+        // Rename the destructured data to 'refetchedEvent' to avoid collision
+        const { data: refetchedEvent } = await refetch();
 
-    const processedEvent = {
-      ...event,
-      roomId: event.eventRooms[0]?.roomId ?? -2,
-      roomColor: event.eventRooms[0]?.color ?? 'zinc',
-      roomIcon: event.eventRooms[0]?.icon ?? 'bug',
-      roomName: event.eventRooms[0]?.name ?? 'error',
-      multiRoom: event.eventRooms.length > 1,
+        // Fallback to the original event if refetch returned nothing
+        const finalEvent = refetchedEvent || event;
+
+        if (!finalEvent) return;
+
+        const processedEvent = {
+          ...finalEvent,
+          roomId: finalEvent.eventRooms?.[0]?.roomId ?? -2,
+          roomColor: finalEvent.eventRooms?.[0]?.color ?? 'zinc',
+          roomIcon: finalEvent.eventRooms?.[0]?.icon ?? 'bug',
+          roomName: finalEvent.eventRooms?.[0]?.name ?? 'error',
+          multiRoom: (finalEvent.eventRooms?.length ?? 0) > 1,
+        };
+
+        // Open drawer with fresh data
+        openEventDrawer({
+          event: processedEvent,
+          creationDate: new Date(finalEvent.startDate),
+        });
+
+        // Update ID state to lock this effect from running again for this eventId
+        setLastTriggeredId(eventId);
+      } catch (error) {
+        console.error('Failed to refetch event data:', error);
+      }
     };
-
-    openEventDrawer({ event: processedEvent, creationDate: new Date(event.startDate) });
-    setLastTriggeredId(eventId);
-  }, [event, eventId, canReadEvent, openEventDrawer, lastTriggeredId]);
+    triggerRefetchAndOpen();
+  }, [event, eventId, canReadEvent, openEventDrawer, lastTriggeredId, refetch]);
 
   return null;
 }
