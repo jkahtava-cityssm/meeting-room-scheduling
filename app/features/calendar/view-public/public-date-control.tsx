@@ -92,7 +92,6 @@ export const DateControls = ({ selectedDate }: { selectedDate: Date }) => {
             push(navigateURL(selectedDate, 'public'));
           }}
           placeholder={formatDate(currentDate, 'PPPP')}
-          placeholder={formatDate(currentDate, 'PPPP')}
           className="block text-base font-semibold w-40"
           data-invalid={false}
         >
