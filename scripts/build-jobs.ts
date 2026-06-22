@@ -25,6 +25,11 @@ const buildRegistry = [
     targetDir: 'jobs/entra-sync',
     externalList: ['@prisma/client', '.prisma/client'],
   },
+  {
+    sourcePath: 'jobs/email-queue/email-queue-process.ts',
+    targetDir: 'jobs/email-queue',
+    externalList: ['@prisma/client', '.prisma/client'],
+  },
 ];
 
 console.log('[Build] Starting esbuild compilation...');
