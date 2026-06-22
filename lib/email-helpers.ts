@@ -1,11 +1,21 @@
-'use server';
+import 'server-only';
 
 import { ClientSecretCredential } from '@azure/identity';
 import { Client, GraphError } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
-import { ICalendarMethod, ICalendarStatus, NOTIFICATION_MATRIX, TEmailAction, TStatusKey } from './types';
+import {
+  CALENDAR_METHOD,
+  CALENDAR_STATUS,
+  EMAIL_ACTIONS,
+  ICalendarMethod,
+  ICalendarStatus,
+  NOTIFICATION_MATRIX,
+  STATUS_KEYS,
+  TEmailAction,
+  TStatusKey,
+} from './types';
 
-import { FileAttachment, Message } from '@microsoft/microsoft-graph-types';
+import { Message } from '@microsoft/microsoft-graph-types';
 import { getMeetingResponseEmailTemplate } from './emails/html-templates/meeting-response';
 import { findFirstUser, findManyUsers } from './data/users';
 
@@ -21,45 +31,54 @@ import { getStaffNotificationEmailTemplate } from './emails/html-templates/staff
 
 import { IFlattenedEvent } from './data/events';
 
-interface TEmailAttendee {
-  name: string;
-  email: string;
-}
+import z from 'zod/v4';
 
-interface TEmailContext {
-  requestingUserEmail: string;
-  recipientEmails: string[];
-  attendees: TEmailAttendee[];
-  statusKey: TStatusKey;
-  iCalStatus: ICalendarStatus;
-  iCalMethod: ICalendarMethod;
-  timezone: string;
+const SEmailAttendeeSchema = z.object({
+  name: z.string(),
+  email: z.string(),
+});
 
-  header: string;
-  subject: string;
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  rrule: string;
-  uid: string;
-  sequence: string;
-  wasApproved: boolean;
-  duration: string;
-  employeeName: string;
+export const SEmailContextSchema = z.object({
+  requestingUserEmail: z.string(),
+  recipientEmails: z.array(z.string()),
+  attendees: z.array(SEmailAttendeeSchema),
+  statusKey: z.enum(STATUS_KEYS),
+  emailAction: z.enum(EMAIL_ACTIONS),
+  iCalStatus: z.enum(CALENDAR_STATUS),
+  iCalMethod: z.enum(CALENDAR_METHOD),
+  timezone: z.string(),
 
-  formattedDate: string;
-  formattedDateTime: string;
-  roomList: string;
-  recipientsList: string;
-  itemsList: string;
-  bookingURL: string;
-  supportURL: string;
-  systemBookingURL: string;
-}
+  header: z.string(),
+  subject: z.string(),
+  title: z.string(),
+  description: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+  rrule: z.string(),
+  uid: z.string(),
+  sequence: z.string(),
+  wasApproved: z.boolean(),
+  duration: z.string(),
+  employeeName: z.string(),
+
+  formattedDate: z.string(),
+  formattedDateTime: z.string(),
+  roomList: z.string(),
+  recipientsList: z.string(),
+  itemsList: z.string(),
+  bookingURL: z.string(),
+  supportURL: z.string(),
+  systemBookingURL: z.string(),
+
+  notifySharedMailbox: z.boolean(),
+});
+
+export type TEmailAttendee = z.infer<typeof SEmailAttendeeSchema>;
+export type TEmailContext = z.infer<typeof SEmailContextSchema>;
 
 const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
-async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmailAction): Promise<TEmailContext | undefined> {
+
+export async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmailAction): Promise<TEmailContext | undefined> {
   if (!SHARED_MAILBOX) {
     console.log('SHARED_MAILBOX Environment Variable Not Configured');
     return undefined;
@@ -128,7 +147,8 @@ async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmail
     requestingUserEmail: user.email,
     recipientEmails: recipients.map((r) => r.email || ''),
     attendees,
-    statusKey,
+    statusKey: action === 'DELETE' ? 'REJECTED' : statusKey,
+    emailAction: action,
     iCalStatus: NOTIFICATION_MATRIX[action][statusKey].iCalStatus,
     iCalMethod: NOTIFICATION_MATRIX[action][statusKey].iCalStatus === 'CANCELLED' ? 'CANCEL' : 'REQUEST',
     timezone,
@@ -153,21 +173,18 @@ async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmail
     bookingURL,
     supportURL,
     systemBookingURL,
+    notifySharedMailbox: statusKey === 'PENDING' && action === 'CREATE',
   };
 }
 
-export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent, action: TEmailAction) {
+export async function sendEventNotificationEmail(emailContext: TEmailContext) {
   try {
     if (!SHARED_MAILBOX) {
       console.log('SHARED_MAILBOX Environment Variable Not Configured');
       return;
     }
 
-    const emailContext = await buildEmailContext(flattenedEvent, action);
-
-    if (!emailContext) return;
-
-    const iCalTextBody = generateICalendarText({
+    const iCalTextBody = await generateICalendarText({
       timezone: emailContext.timezone,
       startDateTime: emailContext.startDate,
       endDateTime: emailContext.endDate,
@@ -197,7 +214,7 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
       employeeName: emailContext.employeeName,
       notifiedNames: emailContext.recipientsList,
       room: emailContext.roomList,
-      status: action === 'DELETE' ? 'REJECTED' : emailContext.statusKey,
+      status: emailContext.statusKey,
       title: emailContext.title,
       bookingURL: emailContext.bookingURL,
       supportURL: emailContext.supportURL,
@@ -205,7 +222,8 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
 
     const plainTextBody = await generatePlainTextTemplate(emailContext);
 
-    await sendEmailMIME({
+    const mimeBuffer = await generateMimePayload({
+      sharedMailbox: SHARED_MAILBOX,
       requestingUser: emailContext.requestingUserEmail,
       recipientEmails: emailContext.recipientEmails,
       subject: emailContext.subject,
@@ -215,7 +233,9 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
       iCalMethod: emailContext.iCalMethod,
     });
 
-    if (emailContext.statusKey === 'PENDING' && action === 'CREATE') {
+    await sendEmailMIME(mimeBuffer);
+
+    if (emailContext.notifySharedMailbox) {
       const staffHtmlBody = getStaffNotificationEmailTemplate({
         date: emailContext.formattedDate,
         duration: emailContext.duration,
@@ -236,7 +256,7 @@ export async function sendEventNotificationEmail(flattenedEvent: IFlattenedEvent
   }
 }
 
-function generateICalendarText(content: {
+export async function generateICalendarText(content: {
   timezone: string;
   startDateTime: string;
   endDateTime: string;
@@ -357,7 +377,7 @@ function foldICalLine(line: string): string {
   return chunks.join('\n');
 }
 
-async function generatePlainTextTemplate(data: {
+export async function generatePlainTextTemplate(data: {
   header: string;
   title: string;
   roomList: string;
@@ -409,26 +429,22 @@ async function generatePlainTextTemplate(data: {
   ].join('\r\n');
 }
 
-async function sendEmailMIME(data: {
+function generateMimePayload(data: {
+  sharedMailbox: string;
   requestingUser: string;
   recipientEmails: string[];
   subject: string;
   textContent: string;
   htmlContent: string;
   iCalContent?: string;
-  iCalMethod?: 'REQUEST' | 'CANCEL';
-}) {
-  if (!SHARED_MAILBOX) {
-    console.log('SHARED_MAILBOX Environment Variable Not Configured');
-    return;
-  }
-
+  iCalMethod?: ICalendarMethod;
+}): Buffer {
   const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
   const boundaryMixed = `----=_Part_Mixed_${uniqueId}`;
   const boundaryAlternative = `----=_Part_Alt_${uniqueId}`;
 
   const rawMimeLines: string[] = [
-    `From: ${SHARED_MAILBOX}`,
+    `From: ${data.sharedMailbox}`,
     `To: ${data.requestingUser}`,
     `Cc: ${data.recipientEmails.join(';')}`,
     `Subject: ${data.subject}`,
@@ -437,7 +453,6 @@ async function sendEmailMIME(data: {
 
   if (data.iCalContent) {
     const method = data.iCalMethod || 'REQUEST';
-    // --- LAYOUT A: Standard Meeting Invitation Layout ---
     rawMimeLines.push(
       `Content-Type: multipart/mixed; boundary="${boundaryMixed}"`,
       '',
@@ -467,7 +482,6 @@ async function sendEmailMIME(data: {
       `--${boundaryMixed}--`,
     );
   } else {
-    // --- LAYOUT B: Clean, Standard Standard Email Layout ---
     rawMimeLines.push(
       `Content-Type: multipart/alternative; boundary="${boundaryAlternative}"`,
       '',
@@ -487,12 +501,15 @@ async function sendEmailMIME(data: {
     );
   }
 
-  // Join the entire tree structural map with CRLF
   const rawMimeString = rawMimeLines.join('\r\n');
+  return Buffer.from(Buffer.from(rawMimeString, 'utf-8').toString('base64'), 'utf-8');
+}
 
-  // Transform the final raw output into Base64 format, Save it as a buffer so that graphClient interprets it properly
-  const base64MimeString = Buffer.from(rawMimeString, 'utf-8').toString('base64');
-  const payloadBuffer = Buffer.from(base64MimeString, 'utf-8');
+export async function sendEmailMIME(payloadBuffer: Buffer) {
+  if (!SHARED_MAILBOX) {
+    console.log('SHARED_MAILBOX Environment Variable Not Configured');
+    return;
+  }
 
   try {
     const credential = new ClientSecretCredential(
