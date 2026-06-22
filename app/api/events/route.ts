@@ -8,7 +8,8 @@ import { guardRoute } from '@/lib/api-guard';
 import { upsertEvent, findManyEvents, patchEvent } from '@/lib/data/events';
 
 import { SEventPATCH, SEventPUT } from '@/lib/services/events';
-import { sendEventNotificationEmail } from '@/lib/email';
+
+import { createEmailQueue } from '@/lib/data/email';
 
 export async function POST(request: NextRequest) {
   return guardRoute(
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
         InternalServerErrorMessage();
       }
 
-      await sendEventNotificationEmail(event, 'CREATE');
+      await createEmailQueue(event, 'CREATE');
 
       return CreatedMessage('Created Event', event);
     },
@@ -44,12 +45,12 @@ export async function PUT(request: NextRequest) {
       }
 
       if (event.eventId === data.eventId) {
-        await sendEventNotificationEmail(event, 'UPDATE');
+        await createEmailQueue(event, 'UPDATE');
 
         return SuccessMessage('Updated Event', event);
       }
 
-      await sendEventNotificationEmail(event, 'CREATE');
+      await createEmailQueue(event, 'CREATE');
 
       return CreatedMessage('Created Event', event);
     },
@@ -68,7 +69,7 @@ export async function PATCH(request: NextRequest) {
 
       if (!event) return BadRequestMessage();
 
-      await sendEventNotificationEmail(event, 'STATUS_CHANGE');
+      await createEmailQueue(event, 'STATUS_CHANGE');
 
       return SuccessMessage('Event updated successfully', event);
     },

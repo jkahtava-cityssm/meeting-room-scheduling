@@ -2,7 +2,8 @@ import { deleteManyEvents, findFirstEvent } from '@/lib/data/events';
 import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMessage } from '@/lib/api-helpers';
 import { guardRoute } from '@/lib/api-guard';
 import { NextRequest } from 'next/server';
-import { sendEventNotificationEmail } from '@/lib/email';
+
+import { createEmailQueue } from '@/lib/data/email';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
   return guardRoute(request, { ReadEvent: { type: 'permission', resource: 'Event', action: 'Read All' } }, async () => {
@@ -42,7 +43,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         return InternalServerErrorMessage();
       }
 
-      await sendEventNotificationEmail(event, 'DELETE');
+      await createEmailQueue(event, 'DELETE');
 
       return DeleteMessage();
     },

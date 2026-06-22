@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmailJSON, sendEventNotificationEmail } from '@/lib/email';
+import { sendEmailJSON } from '@/lib/email-helpers';
 import { guardRoute } from '@/lib/api-guard';
-import { verifySecretHeader } from '@/lib/server/verifySecretHeader';
-import { UnauthorizedMessage } from '@/lib/api-helpers';
+
 import { getMeetingResponseEmailTemplate } from '@/lib/emails/html-templates/meeting-response';
 import { format } from 'date-fns';
 
