@@ -704,3 +704,17 @@ model SystemProcess {
 
   @@map("system_process")
 }
+
+model EmailQueue {
+  emailQueueId Int      @id @default(autoincrement()) @map("email_queue_id")
+  status       String   @default("PENDING") @db.NVarChar(255)
+  eventId      Int      @map("event_id")
+  emailContext String   @map("email_context") @db.NVarChar(Max)
+  attempts     Int      @default(0)
+  errorMessage String?  @map("error_message") @db.NVarChar(Max)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([eventId, status])
+  @@map("email_queue")
+}
