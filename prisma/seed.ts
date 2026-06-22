@@ -1237,6 +1237,7 @@ async function main() {
 
   console.log('Creating System Processes...');
   await FindCreateSystemProcess('ENTRA_SYNC_SCHEDULER');
+  await FindCreateSystemProcess('EMAIL_QUEUE_WORKER');
 
   if (process.env.ADMIN_USER_EMAIL) {
     const adminUser = await findCreateUser({
