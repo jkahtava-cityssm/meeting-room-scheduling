@@ -4,11 +4,14 @@ export type TCalendarView = (typeof CALENDAR_VIEWS)[number];
 export const STATUS_KEYS = ['PENDING', 'APPROVED', 'REJECTED', 'INFORMATION'] as const;
 export type TStatusKey = (typeof STATUS_KEYS)[number];
 
-export type TEmailAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE';
+export const EMAIL_ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE'] as const;
+export type TEmailAction = (typeof EMAIL_ACTIONS)[number];
 
-export type ICalendarStatus = 'CONFIRMED' | 'TENTATIVE' | 'CANCELLED';
+export const CALENDAR_STATUS = ['CONFIRMED', 'TENTATIVE', 'CANCELLED'] as const;
+export type ICalendarStatus = (typeof CALENDAR_STATUS)[number];
 
-export type ICalendarMethod = 'REQUEST' | 'CANCEL';
+export const CALENDAR_METHOD = ['REQUEST', 'CANCEL'] as const;
+export type ICalendarMethod = (typeof CALENDAR_METHOD)[number];
 
 export interface NotificationConfig {
   emailHeader: string;
@@ -115,8 +118,9 @@ export const CONFIGURATION_KEYS = [
 export const SYSTEM_PROCESS_MANIFEST = {
   ENTRA_SYNC_SCHEDULER: {
     key: 'ENTRA_SYNC_SCHEDULER',
-    defaultParameter: '{ "schedule": "0 3 * * *" }',
+    defaultParameter: '{ "schedule": "0 0 3 * * *" }',
   },
+  EMAIL_QUEUE_WORKER: { key: 'EMAIL_QUEUE_WORKER', defaultParameter: '{ "schedule": "*/30 * * * * *" }' },
 } as const;
 //export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
 
