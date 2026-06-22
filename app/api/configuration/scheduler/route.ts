@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
  * PATCH /api/configuration/scheduler
  * Update Entra ID Sync Service cron schedule
  *
- * Request body: { schedule: "0 3 * * *" }
+ * Request body: { schedule: "* 0 3 * * *" }
  */
 export async function PATCH(request: NextRequest) {
   return guardRoute(
