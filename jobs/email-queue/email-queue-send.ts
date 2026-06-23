@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { SEmailContextSchema, sendEventNotificationEmail } from '@/lib/email-helpers';
 import { prisma } from '../../prisma';
 import z from 'zod/v4';

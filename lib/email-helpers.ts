@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { ClientSecretCredential } from '@azure/identity';
 import { Client, GraphError } from '@microsoft/microsoft-graph-client';
 import { TokenCredentialAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials';
