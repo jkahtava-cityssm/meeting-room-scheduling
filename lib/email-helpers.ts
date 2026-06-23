@@ -291,7 +291,14 @@ export async function generateICalendarText(content: {
           .join('\n')
       : null;
 
-  const rruleLine = content.rrule ? `RRULE:${content.rrule}` : null;
+  const rruleLine = content.rrule
+    ? content.rrule
+        .split('\n')
+        .find((line) => line.trim().startsWith('RRULE:'))
+        ?.trim()
+    : null;
+
+  console.log(rruleLine);
 
   const rdateLine =
     content.rruleExceptions && content.rruleExceptions.length > 0 ? `RDATE;TZID=${content.timezone}:${content.rruleExceptions.join(',')}` : null;
