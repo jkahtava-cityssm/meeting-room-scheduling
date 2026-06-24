@@ -536,7 +536,7 @@ model Event {
   createdBy Int @map("created_by")
   updatedBy Int @map("updated_by")
 
-  recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: Cascade)
+  recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: SetNull)
 
   user User? @relation(fields: [userId], references: [id])
 
