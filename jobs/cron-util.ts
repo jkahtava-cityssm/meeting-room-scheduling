@@ -3,12 +3,11 @@
  * Basic validation using cron-parser or regex
  */
 export function validateCronExpression(cron: string): boolean {
-  const atom = `(\\*|(\\d+(-\\d+)?)(/\\d+)?|\\d+(,\\d+)*|\\?)`;
+  const atom = `((\\*|\\d+(-\\d+)?)(/\\d+)?|\\d+(,\\d+)*|\\?)`;
   const cron6Regex = new RegExp(`^${atom}\\s+${atom}\\s+${atom}\\s+${atom}\\s+${atom}\\s+${atom}$`);
 
   return cron6Regex.test(cron.trim());
 }
-
 export function getNextCronOccurrence(cron: string): string | null {
   const parts = cron.trim().split(/\s+/);
   if (parts.length < 6) return null;
