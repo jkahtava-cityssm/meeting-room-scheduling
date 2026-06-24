@@ -176,7 +176,7 @@ export function SchedulerStatus({
       <div className="flex flex-1 flex-col">
         <div className="flex flex-row justify-between items-center min-h-9">
           <div>
-            <span className="font-bold">Email Queue Worker: </span>
+            <span className="font-bold">Email Queue: </span>
             <span className={cn('font-bold', config.isRunning ? textVariants({ color: 'green' }) : textVariants({ color: 'red' }))}>
               {config.isRunning === null ? 'Loading...' : config.isRunning ? 'Running' : 'Stopped'}
             </span>
