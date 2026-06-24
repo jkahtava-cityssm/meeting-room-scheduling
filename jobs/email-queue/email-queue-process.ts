@@ -32,7 +32,6 @@ console.log(`[${marker}] Initialized with PID: ${process.pid} | Schedule: ${sche
 
 const task = cron.schedule(schedule, async () => {
   const now = new Date().toLocaleTimeString();
-  console.log(`[${now}] ${marker}: Starting Email Queue...`);
 
   try {
     await processNextEmailJob();
