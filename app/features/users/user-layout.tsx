@@ -13,6 +13,7 @@ import {
   useReactTable,
   Column,
   createColumnHelper,
+  Table,
 } from '@tanstack/react-table';
 
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -52,6 +53,8 @@ const DEFAULT_FILTERS = [{ id: 'isActive', value: ['true'] }];
 
 const MOBILE_COL_SPAN = 2;
 
+const columnHelper = createColumnHelper<IUser>();
+
 export function UserLayout() {
   const { data, isFetching, error } = useUsersQuery(false);
   const { openUserDrawer } = useSharedUserDrawer();
@@ -81,8 +84,6 @@ export function UserLayout() {
     prevIsDefault.current = isDefaultState;
   }, [isDefaultState]);
 
-  const columnHelper = createColumnHelper<IUser>();
-
   const columns = useMemo(
     () => [
       columnHelper.accessor('name', {
@@ -95,7 +96,10 @@ export function UserLayout() {
             <DebouncedInput
               placeholder="Search names..."
               value={(column.getFilterValue() as string) ?? ''}
-              onChange={(value) => column.setFilterValue(value)}
+              onChange={(value) => {
+                console.log(value);
+                column.setFilterValue(value);
+              }}
             />
           </FilterHeader>
         ),
@@ -140,7 +144,7 @@ export function UserLayout() {
         filterFn: (row, id, filterValue) => {
           if (!filterValue || filterValue.length === 0) return true;
 
-          return filterValue.includes(String(row.getValue(id)));
+          return String(row.getValue(id)).includes(filterValue);
         },
         cell: ({ row, getValue }) => (
           <div className="flex items-center gap-2 py-2">
@@ -250,31 +254,7 @@ export function UserLayout() {
         maxSize: 100,
         enableResizing: false,
 
-        header: () => {
-          const hasChanged = prevIsDefault.current !== isDefaultState;
-
-          const animationClasses = hasChanged ? 'animate-in fade-in zoom-in duration-200' : '';
-          return (
-            <div className="flex items-center justify-center min-w-0 font-bold">
-              {!isDefaultState ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setColumnFilters(DEFAULT_FILTERS)}
-                  className={cn(
-                    'h-7 text-destructive hover:bg-destructive/10',
-                    animationClasses, // Only applied when flipping into this state
-                  )}
-                >
-                  <FilterX className="h-4 w-4 mr-1" />
-                  <span className="text-[10px] uppercase">Clear</span>
-                </Button>
-              ) : (
-                <span className={cn('text-sm', animationClasses)}>Actions</span>
-              )}
-            </div>
-          );
-        },
+        header: ActionHeader,
 
         cell: ({ row }) => (
           <div className="flex justify-center py-2">
@@ -292,7 +272,7 @@ export function UserLayout() {
         ),
       }),
     ],
-    [columnHelper, departmentList, isDefaultState, openUserDrawer],
+    [departmentList, openUserDrawer],
   );
 
   const table = useReactTable({
@@ -454,6 +434,45 @@ export function UserLayout() {
     </div>
   );
 }
+
+// 1. Defined OUTSIDE the parent component entirely
+const ActionHeader = ({ table }: { table: Table<IUser> }) => {
+  const columnFilters = table.getState().columnFilters;
+
+  // Compute isDefaultState directly inside the component
+  const isDefaultState = useMemo(() => {
+    if (columnFilters.length !== DEFAULT_FILTERS.length) return false;
+    return columnFilters.every((f) => f.id === 'isActive' && Array.isArray(f.value) && f.value[0] === 'true' && f.value.length === 1);
+  }, [columnFilters]);
+
+  const prevIsDefault = React.useRef(isDefaultState);
+
+  React.useEffect(() => {
+    prevIsDefault.current = isDefaultState;
+  }, [isDefaultState]);
+
+  const hasChanged = prevIsDefault.current !== isDefaultState;
+  const animationClasses = hasChanged ? 'animate-in fade-in zoom-in duration-200' : '';
+
+  return (
+    <div className="flex items-center justify-center min-w-0 font-bold">
+      {!isDefaultState ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => table.setColumnFilters(DEFAULT_FILTERS)}
+          className={cn('h-7 text-destructive hover:bg-destructive/10', animationClasses)}
+        >
+          <FilterX className="h-4 w-4 mr-1" />
+          <span className="text-[10px] uppercase">Clear</span>
+        </Button>
+      ) : (
+        <span className={cn('text-sm', animationClasses)}>Actions</span>
+      )}
+    </div>
+  );
+};
+
 const FilterHeader = <TData, TValue>({
   title,
   column,
@@ -472,6 +491,7 @@ const FilterHeader = <TData, TValue>({
 
   const currentFilters = column.getFilterValue();
   const selectedCount = Array.isArray(currentFilters) ? currentFilters.length : 0;
+  const [open, setOpen] = useState(false);
 
   return (
     <div className={cn('flex items-center font-bold', center && 'justify-center')}>
@@ -481,21 +501,44 @@ const FilterHeader = <TData, TValue>({
         {sortDir === 'desc' && <ArrowUpAz className="h-4 w-4" />}
       </Button>
 
-      <Popover>
+      <Popover open={open} onOpenChange={(open) => setOpen(open)}>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className={cn('h-7 w-7', isFiltered && 'text-primary')}>
             {isFiltered ? <FilterX className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-60 p-3" align="start">
+        <PopoverContent
+          onOpenAutoFocus={(e) => {
+            // Prevent default behavior (which focuses the Close X button)
+            e.preventDefault();
+
+            // Query for any focusable element inside children
+            const container = e.currentTarget as HTMLElement;
+            const target = container.querySelector<HTMLElement>(
+              '.children-container input, .children-container button, .children-container [tabindex="0"]',
+            );
+
+            target?.focus();
+          }}
+          className="w-60 p-3"
+          align="start"
+        >
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium">Filter {title}</h4>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => column.setFilterValue(undefined)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => {
+                  column.setFilterValue(undefined);
+                  setOpen(false);
+                }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            {children}
+            <div className="children-container">{children}</div>
           </div>
         </PopoverContent>
       </Popover>

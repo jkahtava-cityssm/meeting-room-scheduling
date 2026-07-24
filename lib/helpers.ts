@@ -205,14 +205,24 @@ export function filterEventsByRoom(events: IEvent[], selectedRoomId: string[] | 
   return results;
 }
 
-export const getDurationText = (startDateTime: string, endDateTime: string): string => {
-  const duration = formatDuration(intervalToDuration({ start: new Date(startDateTime), end: new Date(endDateTime) }), {
-    format: ['years', 'months', 'days', 'hours', 'minutes'],
-    delimiter: ', ',
-  });
+export function getDurationText(startDateTime: string, endDateTime: string): string;
+export function getDurationText(startDate: Date, endDate: Date): string;
+
+// 2. Write the Single Implementation
+export function getDurationText(start: string | Date, end: string | Date): string {
+  const duration = formatDuration(
+    intervalToDuration({
+      start: new Date(start),
+      end: new Date(end),
+    }),
+    {
+      format: ['years', 'months', 'days', 'hours', 'minutes'],
+      delimiter: ', ',
+    },
+  );
 
   return duration.length === 0 ? '0 Minutes' : duration;
-};
+}
 
 export function getDistinctValuesByKey<T, K extends keyof T>(list: T[], key: K): T[K][] {
   if (!list) return [];

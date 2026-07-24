@@ -23,7 +23,7 @@ const { values } = parseArgs({
   strict: false,
 });
 
-const schedule: string = typeof values.schedule === 'string' ? values.schedule : '0 3 * * *';
+const schedule: string = typeof values.schedule === 'string' ? values.schedule : '* 0 3 * * *';
 
 const marker = values.marker || `SERVICE_${process.pid}`;
 

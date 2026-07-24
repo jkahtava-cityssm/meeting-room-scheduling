@@ -27,6 +27,7 @@ import {
   VISIBLE_HOUR_START,
 } from './seed-data';
 import { ByWeekday, RRule } from 'rrule';
+import crypto from 'crypto';
 
 import dynamicIconImports from 'lucide-react/dynamicIconImports';
 
@@ -39,6 +40,8 @@ const prisma = new PrismaClient({
     },
   },
 });
+
+const DATABASE_NAME = process.env.DATABASE_NAME || 'Unknown';
 
 async function FindCreateActionList() {
   const DEFAULT_ACTIONS = Array.from(new Set(DEFAULT_RESOURCE_ACTIONS.flatMap((r) => r.ACTIONS))) as readonly SessionAction[];
@@ -206,6 +209,7 @@ async function findCreateUser(userData: {
         image: userData.image ?? null,
         externalId: userData.employeeNumber,
         isActive: userData.employeeActive ?? true,
+        timezone: process.env.DEFAULT_TIMEZONE || 'America/Toronto',
         createdBy: 0,
         updatedBy: 0,
       },
@@ -535,6 +539,8 @@ async function CreateRandomEvents(
     const randomRoomCount = Math.floor(Math.random() * rooms.length);
     const isMultiRoom = Math.random() < 0.1;
 
+    const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
+
     const event = await prisma.event.create({
       data: {
         eventRooms: {
@@ -545,6 +551,8 @@ async function CreateRandomEvents(
         title: EVENTS[eventIndex],
         description: getRandomDescription(),
         recurrenceId: await CreateRandomRecurrence(startDate, endDate, createOnlyRecurring),
+        uid: uid,
+        sequence: 0,
         statusId: pendingStatusId,
         userId: userList[userIndex].id,
         createdAt: startDate.toISOString(),
@@ -751,6 +759,8 @@ async function CreateEdgeCaseMultiDayEvents(
     const randomRoomCount = Math.floor(Math.random() * rooms.length);
     const isMultiRoom = Math.random() < 0.1;
 
+    const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
+
     try {
       await prisma.event.create({
         data: {
@@ -762,6 +772,8 @@ async function CreateEdgeCaseMultiDayEvents(
           title: edgeCase.name,
           description: edgeCase.description,
           recurrenceId: null,
+          uid: uid,
+          sequence: 0,
           statusId: pendingStatusId,
           userId: userList[userIndex].id,
           createdAt: new Date(),
@@ -848,6 +860,8 @@ async function CreateEdgeCaseMultiDayEvents(
         const randomRoomCount = Math.floor(Math.random() * rooms.length);
         const isMultiRoom = Math.random() < 0.1;
 
+        const uid = `${crypto.randomUUID()}@${DATABASE_NAME}`;
+
         try {
           await prisma.event.create({
             data: {
@@ -859,6 +873,8 @@ async function CreateEdgeCaseMultiDayEvents(
               title: dstCase.name,
               description: dstCase.description,
               recurrenceId: null,
+              uid: uid,
+              sequence: 0,
               statusId: pendingStatusId,
               userId: userList[userIndex].id,
               createdAt: new Date(),
@@ -1221,13 +1237,14 @@ async function main() {
 
   console.log('Creating System Processes...');
   await FindCreateSystemProcess('ENTRA_SYNC_SCHEDULER');
+  await FindCreateSystemProcess('EMAIL_QUEUE_WORKER');
 
   if (process.env.ADMIN_USER_EMAIL) {
     const adminUser = await findCreateUser({
       email: process.env.ADMIN_USER_EMAIL,
       name: 'Admin User',
       employeeNumber: '000',
-      emailVerified: false,
+      emailVerified: true,
       employeeActive: true,
     });
 

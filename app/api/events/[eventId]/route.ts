@@ -3,6 +3,8 @@ import { BadRequestMessage, DeleteMessage, InternalServerErrorMessage, SuccessMe
 import { guardRoute } from '@/lib/api-guard';
 import { NextRequest } from 'next/server';
 
+import { createEmailQueue } from '@/lib/data/email';
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ eventId: string }> }) {
   return guardRoute(request, { ReadEvent: { type: 'permission', resource: 'Event', action: 'Read All' } }, async () => {
     const { eventId } = await params;
@@ -31,11 +33,17 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         return BadRequestMessage();
       }
 
+      const event = await findFirstEvent({ eventId: parseInt(eventId) });
+
+      if (!event) return InternalServerErrorMessage();
+
       const totalDeleted = await deleteManyEvents({ eventId: parseInt(eventId) });
 
       if (!totalDeleted) {
         return InternalServerErrorMessage();
       }
+
+      await createEmailQueue(event, 'DELETE');
 
       return DeleteMessage();
     },

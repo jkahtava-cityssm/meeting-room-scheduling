@@ -1,4 +1,3 @@
-
 model User {
   id            Int     @id @default(autoincrement()) @map("user_id")
   name          String  @db.NVarChar(255)
@@ -13,6 +12,7 @@ model User {
   supervisorId  Int?    @map("supervisor_id")
   isActive      Boolean @default(true) @map("is_active")
   isManaged     Boolean @default(true) @map("is_managed")
+  timezone      String? @db.NVarChar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -138,6 +138,8 @@ model User {
   systemProcessCreated SystemProcess[] @relation("SystemProcessCreatedBy")
   systemProcessUpdated SystemProcess[] @relation("SystemProcessUpdatedBy")
 
+  StatusHistoryChanged EventStatusHistory[] @relation("StatusHistoryChangedBy")
+
   @@map("user")
 }
 
@@ -191,8 +193,8 @@ model Account {
 
 model Verification {
   id         Int      @id @default(autoincrement()) @map("user_verification_id")
-  identifier String @db.NVarChar(255) 
-  value      String @db.NVarChar(4000)
+  identifier String   @db.NVarChar(255)
+  value      String   @db.NVarChar(4000)
   expiresAt  DateTime @map("expires_at")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
@@ -208,8 +210,8 @@ model Verification {
 
 model SSOProvider {
   id             Int     @id @default(autoincrement()) @map("sso_provider_id")
-  issuer         String @db.NVarChar(255)
-  domain         String @db.NVarChar(255)
+  issuer         String  @db.NVarChar(255)
+  domain         String  @db.NVarChar(255)
   oidcConfig     String? @map("oidc_config") @db.NVarChar(Max)
   samlConfig     String? @map("saml_config") @db.NVarChar(Max)
   userId         Int?    @map("user_id")
@@ -253,7 +255,7 @@ model Room {
   createdByUser User @relation("RoomCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User @relation("RoomUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-@@index([displayOrder])
+  @@index([displayOrder])
   @@map("room")
 }
 
@@ -515,15 +517,18 @@ model RecurrenceException {
 }
 
 model Event {
-  eventId     Int      @id @default(autoincrement()) @map("event_id")
-  statusId    Int      @map("status_id")
+  eventId  Int @id @default(autoincrement()) @map("event_id")
+  statusId Int @map("status_id")
+
   userId      Int?     @map("user_id")
   startDate   DateTime @map("start_date")
   endDate     DateTime @map("end_date")
   title       String   @db.NVarChar(255)
   description String   @db.NVarChar(1000)
 
-  recurrenceId Int? @map("recurrence_id")
+  recurrenceId Int?   @map("recurrence_id")
+  sequence     Int    @default(0)
+  uid          String @db.NVarChar(255)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -531,7 +536,7 @@ model Event {
   createdBy Int @map("created_by")
   updatedBy Int @map("updated_by")
 
-  recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: Cascade)
+  recurrence Recurrence? @relation(fields: [recurrenceId], references: [recurrenceId], onDelete: SetNull)
 
   user User? @relation(fields: [userId], references: [id])
 
@@ -543,6 +548,8 @@ model Event {
   eventRooms      EventRoom[]
   eventItems      EventItem[]
   eventRecipients EventRecipient[]
+
+  statusHistory EventStatusHistory[]
 
   @@map("event")
 }
@@ -641,9 +648,24 @@ model Status {
   createdByUser User @relation("StatusCreatedBy", fields: [createdBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   updatedByUser User @relation("StatusUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  event Event[]
+  event         Event[]
+  statusHistory EventStatusHistory[]
 
   @@map("status")
+}
+
+model EventStatusHistory {
+  historyId Int      @id @default(autoincrement()) @map("history_id")
+  eventId   Int      @map("event_id")
+  statusId  Int      @map("status_id")
+  changedAt DateTime @default(now()) @map("changed_at")
+  changedBy Int      @map("changed_by")
+
+  event  Event  @relation(fields: [eventId], references: [eventId], onDelete: Cascade)
+  status Status @relation(fields: [statusId], references: [statusId])
+  user   User   @relation("StatusHistoryChangedBy", fields: [changedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("event_status_history")
 }
 
 model Configuration {
@@ -666,7 +688,7 @@ model Configuration {
 }
 
 model SystemProcess {
-  systemProcessId Int   @id @default(autoincrement()) @map("system_process_id")
+  systemProcessId Int      @id @default(autoincrement()) @map("system_process_id")
   key             String   @unique @db.NVarChar(255)
   tag             String   @db.NVarChar(255)
   pid             Int      @map("pid")
@@ -681,4 +703,18 @@ model SystemProcess {
   updatedByUser User @relation("SystemProcessUpdatedBy", fields: [updatedBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("system_process")
+}
+
+model EmailQueue {
+  emailQueueId Int      @id @default(autoincrement()) @map("email_queue_id")
+  status       String   @default("PENDING") @db.NVarChar(255)
+  eventId      Int      @map("event_id")
+  emailContext String   @map("email_context") @db.NVarChar(Max)
+  attempts     Int      @default(0)
+  errorMessage String?  @map("error_message") @db.NVarChar(Max)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([eventId, status])
+  @@map("email_queue")
 }

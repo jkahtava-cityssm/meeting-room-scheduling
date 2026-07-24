@@ -1,4 +1,5 @@
-'use server';
+import 'server-only';
+
 import { EntraSyncSchema } from '../schema';
 import { getSystemProcess, updateSystemProcess } from '../system-process.data';
 import { findProcessById, startBackgroundProcess, stopBackgroundProcess } from '../system-process.util';

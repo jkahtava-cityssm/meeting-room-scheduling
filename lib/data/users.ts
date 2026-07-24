@@ -12,6 +12,7 @@ const USER_SELECT = {
   isActive: true,
   isManaged: true,
   emailEnabled: true,
+  timezone: true,
 } as const satisfies Prisma.UserSelect;
 
 const USER_ROLE_SELECT = {
@@ -30,6 +31,24 @@ export async function findFirstUser(where?: Prisma.UserWhereInput, tx: Prisma.Tr
   if (!user) return null;
 
   return mapBaseUser(user);
+}
+
+export async function findFirstUserProfile(userId: number, tx: Prisma.TransactionClient = prisma) {
+  const user = await tx.user.findFirst({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, image: true, userRole: { where: { granted: true }, select: { role: { select: { name: true } } } } },
+    orderBy: [{ name: 'asc' }, { email: 'asc' }, { id: 'asc' }],
+  });
+
+  if (!user) return null;
+
+  return {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    image: user.image,
+    roles: user.userRole.map((userRole) => userRole.role.name),
+  };
 }
 
 export async function findManyUsers(where?: Prisma.UserWhereInput, tx: Prisma.TransactionClient = prisma) {
@@ -134,6 +153,7 @@ export async function upsertUser(
     department?: string;
     jobTitle?: string;
     externalId?: string;
+    timezone?: string;
   },
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
@@ -149,6 +169,7 @@ export async function upsertUser(
       department: data.department,
       jobTitle: data.jobTitle,
       externalId: data.externalId,
+      timezone: data.timezone,
       createdBy: sessionUserId,
       updatedBy: sessionUserId,
     },
@@ -161,6 +182,7 @@ export async function upsertUser(
       department: data.department,
       jobTitle: data.jobTitle,
       externalId: data.externalId,
+      timezone: data.timezone,
       updatedBy: sessionUserId,
     },
     select: USER_SELECT,
@@ -179,6 +201,7 @@ export async function createUser(
     department?: string;
     jobTitle?: string;
     externalId?: string;
+    timezone?: string;
   },
   sessionUserId: number,
   tx: Prisma.TransactionClient = prisma,
@@ -193,6 +216,7 @@ export async function createUser(
       department: data.department,
       jobTitle: data.jobTitle,
       externalId: data.externalId,
+      timezone: data.timezone,
       createdBy: sessionUserId,
       updatedBy: sessionUserId,
     },
@@ -221,5 +245,6 @@ function mapBaseUser(user: UserWithRelations) {
     externalId: user.externalId,
     isActive: user.isActive,
     isManaged: user.isManaged,
+    timezone: user.timezone,
   };
 }

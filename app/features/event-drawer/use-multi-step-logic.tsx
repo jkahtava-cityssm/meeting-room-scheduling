@@ -281,6 +281,7 @@ export const useMultiStepFormLogic = (props: {
     onEdit,
     onClose: props.onClose,
     onDelete,
+    mutationCreate,
     mutationUpsert,
     mutationDelete,
     dialogConfig,

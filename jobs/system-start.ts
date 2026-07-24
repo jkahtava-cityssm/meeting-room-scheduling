@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 import { existsSync } from 'fs';
-import { EntraSyncSchema } from './schema';
+import { EmailQueueSchema, EntraSyncSchema } from './schema';
 import z from 'zod/v4';
 import { SYSTEM_PROCESS_MANIFEST, TSystemProcess } from '@/lib/types';
 import { getSystemProcess, updateSystemProcess } from './system-process.data';
@@ -41,6 +41,15 @@ const PROCESS_CONFIGS: Record<string, ProcessDef> = {
     dbTracking: {
       key: SYSTEM_PROCESS_MANIFEST['ENTRA_SYNC_SCHEDULER'].key,
       schema: EntraSyncSchema,
+    },
+  },
+  EMAIL_QUEUE: {
+    name: 'EmailQueue',
+    scriptPath: './jobs/email-queue/email-queue-process.js',
+    isCritical: false,
+    dbTracking: {
+      key: SYSTEM_PROCESS_MANIFEST['EMAIL_QUEUE_WORKER'].key,
+      schema: EmailQueueSchema,
     },
   },
   // Example of how easy it is to add a new one:

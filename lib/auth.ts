@@ -21,6 +21,7 @@ export type User = {
   createdAt: Date;
   updatedAt: Date;
   image?: string | null | undefined;
+  timezone?: string;
 };
 
 export type Role = {
@@ -92,6 +93,9 @@ export const auth = betterAuth({
       updateUserInfoOnLink: true,
     },
   },
+  user: {
+    additionalFields: { timezone: { type: 'string', required: false, defaultValue: process.env.DEFAULT_TIMEZONE || 'America/Toronto' } },
+  },
   trustedOrigins: [...envOrigins, ...staticOrigins],
 
   databaseHooks: {
@@ -133,6 +137,8 @@ export const auth = betterAuth({
       const token = session.token;
       const userId = Number(user.id);
 
+      const { image, ...userWithoutImage } = user;
+
       const impersonatingRole = currentSession.impersonatedRole;
 
       const cacheKey = impersonatingRole ? `impersonate:${token}:${impersonatingRole}` : token;
@@ -142,7 +148,7 @@ export const auth = betterAuth({
       const roles = result.data ? result.data : [];
       return {
         user: {
-          ...user,
+          ...userWithoutImage,
           roles: roles,
         },
         session: currentSession,

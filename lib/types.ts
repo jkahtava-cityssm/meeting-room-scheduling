@@ -4,6 +4,54 @@ export type TCalendarView = (typeof CALENDAR_VIEWS)[number];
 export const STATUS_KEYS = ['PENDING', 'APPROVED', 'REJECTED', 'INFORMATION'] as const;
 export type TStatusKey = (typeof STATUS_KEYS)[number];
 
+export const EMAIL_ACTIONS = ['CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE'] as const;
+export type TEmailAction = (typeof EMAIL_ACTIONS)[number];
+
+export const CALENDAR_STATUS = ['CONFIRMED', 'TENTATIVE', 'CANCELLED'] as const;
+export type ICalendarStatus = (typeof CALENDAR_STATUS)[number];
+
+export const CALENDAR_METHOD = ['REQUEST', 'CANCEL'] as const;
+export type ICalendarMethod = (typeof CALENDAR_METHOD)[number];
+
+export interface NotificationConfig {
+  emailHeader: string;
+  subjectKeyword: string;
+  iCalStatus: ICalendarStatus;
+}
+
+export type TNotificationMatrix = {
+  [Action in TEmailAction]: {
+    [Status in TStatusKey]: NotificationConfig;
+  };
+};
+
+export const NOTIFICATION_MATRIX: TNotificationMatrix = {
+  DELETE: {
+    PENDING: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+    APPROVED: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+    REJECTED: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'REQUEST REMOVED', subjectKeyword: 'Removed', iCalStatus: 'CANCELLED' },
+  },
+  CREATE: {
+    PENDING: { emailHeader: 'PENDING', subjectKeyword: 'Requested', iCalStatus: 'TENTATIVE' },
+    APPROVED: { emailHeader: 'APPROVED', subjectKeyword: 'Approved', iCalStatus: 'CONFIRMED' },
+    REJECTED: { emailHeader: 'BOOKING UNAVAILABLE', subjectKeyword: 'Rejected', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'INFORMATION REQUESTED', subjectKeyword: 'Requires More Information', iCalStatus: 'TENTATIVE' },
+  },
+  STATUS_CHANGE: {
+    PENDING: { emailHeader: 'PENDING', subjectKeyword: 'Requested', iCalStatus: 'TENTATIVE' },
+    APPROVED: { emailHeader: 'APPROVED', subjectKeyword: 'Approved', iCalStatus: 'CONFIRMED' },
+    REJECTED: { emailHeader: 'BOOKING UNAVAILABLE', subjectKeyword: 'Rejected', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'INFORMATION REQUESTED', subjectKeyword: 'Requires More Information', iCalStatus: 'TENTATIVE' },
+  },
+  UPDATE: {
+    PENDING: { emailHeader: 'PENDING', subjectKeyword: 'Requested - Details Updated', iCalStatus: 'TENTATIVE' },
+    APPROVED: { emailHeader: 'APPROVED', subjectKeyword: 'Approved - Details Updated', iCalStatus: 'CONFIRMED' },
+    REJECTED: { emailHeader: 'BOOKING UNAVAILABLE', subjectKeyword: 'Rejected', iCalStatus: 'CANCELLED' },
+    INFORMATION: { emailHeader: 'INFORMATION REQUESTED', subjectKeyword: 'Requires More Information', iCalStatus: 'TENTATIVE' },
+  },
+};
+
 export const COLOR_OPTIONS = [
   'red',
   'rose',
@@ -70,8 +118,9 @@ export const CONFIGURATION_KEYS = [
 export const SYSTEM_PROCESS_MANIFEST = {
   ENTRA_SYNC_SCHEDULER: {
     key: 'ENTRA_SYNC_SCHEDULER',
-    defaultParameter: '{ "schedule": "0 3 * * *" }',
+    defaultParameter: '{ "schedule": "0 0 3 * * *" }',
   },
+  EMAIL_QUEUE_WORKER: { key: 'EMAIL_QUEUE_WORKER', defaultParameter: '{ "schedule": "*/30 * * * * *" }' },
 } as const;
 //export type TConfigurationKeys = (typeof CONFIGURATION_KEYS)[number];
 

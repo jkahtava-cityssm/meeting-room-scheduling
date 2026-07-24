@@ -93,6 +93,7 @@ export const SUser = z.object({
   externalId: z.string().optional().nullable(),
   isActive: z.union([z.boolean(), z.stringbool()]),
   isManaged: z.union([z.boolean(), z.stringbool()]),
+  timezone: z.string().nullable(),
 });
 
 export const SMultiDay = z.object({
@@ -119,7 +120,10 @@ export const SEvent = z.object({
   userName: z.string().nullable().optional(),
   userEmail: z.string().nullable().optional(),
   statusId: z.number(),
+  wasApproved: z.boolean(),
   recurrenceId: z.number().nullable(),
+  uid: z.string(),
+  sequence: z.number(),
   eventItems: z.array(SEventItem).optional(),
   eventRecipients: z.array(SEventRecipient).optional(),
   eventRooms: z.array(SRoom),

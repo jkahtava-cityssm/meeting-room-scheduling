@@ -410,6 +410,7 @@ export const Step1 = ({ formStatus, session }: { formStatus: FormStatus; session
                 {...field}
                 value={field.value}
                 data-invalid={fieldState.invalid}
+                maxLength={process.env.DATABASE_PROVIDER === 'sqlserver' ? 1000 : undefined}
               ></Textarea>
             </FormControl>
           </FormItem>

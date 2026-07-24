@@ -112,10 +112,9 @@ export function EntraSyncConfiguration() {
   };
 
   const validateCronExpression = (cron: string) => {
-    // Basic regex: 5 fields separated by spaces
-    const cronRegex =
-      /^(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*|\?)\s+(\*|(\d+(-\d+)?)(\/\d+)?|\d+(,\d+)*)$/;
-    return cronRegex.test(cron.trim());
+    // Validates a 6-field standard cron string (including seconds)
+    const segments = cron.trim().split(/\s+/);
+    return segments.length === 6;
   };
 
   return (
@@ -241,6 +240,7 @@ export function CronInput({
   onPendingChange: (val: string) => void;
   disabled: boolean;
 }) {
+  const [seconds, setSeconds] = useState('0');
   const [minute, setMinute] = useState('0');
   const [hour, setHour] = useState('3');
   const [day, setDay] = useState('*');
@@ -250,18 +250,19 @@ export function CronInput({
   useEffect(() => {
     if (!currentSchedule) return;
     const parts = currentSchedule.split(' ');
-    if (parts.length >= 5) {
-      setMinute(parts[0]);
-      setHour(parts[1]);
-      setDay(parts[2]);
-      setMonth(parts[3]);
+    if (parts.length >= 6) {
+      setSeconds(parts[0]);
+      setMinute(parts[1]);
+      setHour(parts[2]);
+      setDay(parts[3]);
+      setMonth(parts[4]);
     }
   }, [currentSchedule]);
 
   useEffect(() => {
-    const current = buildCronString(minute, hour, day, month);
+    const current = buildCronString(seconds, minute, hour, day, month);
     onPendingChange(current);
-  }, [minute, hour, day, month, onPendingChange]);
+  }, [seconds, minute, hour, day, month, onPendingChange]);
 
   return (
     <div className="flex flex-col  gap-2 border-t pt-2">
@@ -304,10 +305,8 @@ export function CronInput({
   );
 }
 
-function buildCronString(minute: string, hour: string, day: string, month: string) {
-  const cronString = `${minute || '0'} ${hour || '3'} ${day || '*'} ${month || '*'} *`;
-
-  return cronString;
+function buildCronString(seconds: string, minute: string, hour: string, day: string, month: string) {
+  return `${seconds || '0'} ${minute || '0'} ${hour || '3'} ${day || '*'} ${month || '*'} *`;
 }
 
 function CronSelect({
