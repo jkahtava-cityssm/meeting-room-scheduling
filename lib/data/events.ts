@@ -454,25 +454,31 @@ export async function getConflictingEvents({
   startDate,
   endDate,
   statusKey,
+  bufferMinutes,
   excludeEventId,
 }: {
   roomIds: number[];
   startDate: Date;
   endDate: Date;
   statusKey: TStatusKey;
+  bufferMinutes: number;
   excludeEventId?: number;
 }) {
   if (statusKey !== 'APPROVED') {
     return [];
   }
 
+  const bufferMs = bufferMinutes * 60 * 1000;
+  const bufferedStartDate = new Date(startDate.getTime() - bufferMs);
+  const bufferedEndDate = new Date(endDate.getTime() + bufferMs);
+
   return await prisma.eventRoom.findMany({
     where: {
       roomId: { in: roomIds },
       event: {
         ...(excludeEventId && { NOT: { eventId: excludeEventId } }),
-        startDate: { lt: endDate },
-        endDate: { gt: startDate },
+        startDate: { lt: bufferedEndDate },
+        endDate: { gt: bufferedStartDate },
         status: { key: { equals: 'APPROVED' as TStatusKey } },
       },
     },

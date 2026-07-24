@@ -30,6 +30,7 @@ import { getStaffNotificationEmailTemplate } from './emails/html-templates/staff
 import { IFlattenedEvent } from './data/events';
 
 import z from 'zod/v4';
+import { findFirstConfiguration } from './data/configuration';
 
 const SEmailAttendeeSchema = z.object({
   name: z.string(),
@@ -39,6 +40,7 @@ const SEmailAttendeeSchema = z.object({
 export const SEmailContextSchema = z.object({
   requestingUserEmail: z.string(),
   recipientEmails: z.array(z.string()),
+  sharedMailbox: z.string(),
   attendees: z.array(SEmailAttendeeSchema),
   statusKey: z.enum(STATUS_KEYS),
   emailAction: z.enum(EMAIL_ACTIONS),
@@ -74,13 +76,15 @@ export const SEmailContextSchema = z.object({
 export type TEmailAttendee = z.infer<typeof SEmailAttendeeSchema>;
 export type TEmailContext = z.infer<typeof SEmailContextSchema>;
 
-const SHARED_MAILBOX = process.env.SHARED_MAILBOX;
-
 export async function buildEmailContext(flattenedEvent: IFlattenedEvent, action: TEmailAction): Promise<TEmailContext | undefined> {
-  if (!SHARED_MAILBOX) {
-    console.log('SHARED_MAILBOX Environment Variable Not Configured');
+  const bookingEmail = await findFirstConfiguration('bookingEmail');
+
+  if (!bookingEmail) {
+    console.log('bookingEmail Configuration Variable Not Set');
     return undefined;
   }
+
+  const SHARED_MAILBOX = bookingEmail.value;
 
   if (!flattenedEvent) throw new Error(`Send Event Email Failed: Event was null or undefined.`);
 
@@ -144,6 +148,7 @@ export async function buildEmailContext(flattenedEvent: IFlattenedEvent, action:
   return {
     requestingUserEmail: user.email,
     recipientEmails: recipients.map((r) => r.email || ''),
+    sharedMailbox: SHARED_MAILBOX,
     attendees,
     statusKey: action === 'DELETE' ? 'REJECTED' : statusKey,
     emailAction: action,
@@ -177,7 +182,7 @@ export async function buildEmailContext(flattenedEvent: IFlattenedEvent, action:
 
 export async function sendEventNotificationEmail(emailContext: TEmailContext) {
   try {
-    if (!SHARED_MAILBOX) {
+    if (!emailContext.sharedMailbox) {
       console.log('SHARED_MAILBOX Environment Variable Not Configured');
       return;
     }
@@ -199,9 +204,10 @@ export async function sendEventNotificationEmail(emailContext: TEmailContext) {
       method: emailContext.iCalMethod,
       owner: {
         name: 'MEETING_ROOM_BOOKING',
-        email: SHARED_MAILBOX,
+        email: emailContext.sharedMailbox,
       },
       attendees: emailContext.attendees,
+      sharedMailbox: emailContext.sharedMailbox,
     });
 
     const htmlBody = getMeetingResponseEmailTemplate({
@@ -221,7 +227,7 @@ export async function sendEventNotificationEmail(emailContext: TEmailContext) {
     const plainTextBody = await generatePlainTextTemplate(emailContext);
 
     const mimeBuffer = await generateMimePayload({
-      sharedMailbox: SHARED_MAILBOX,
+      sharedMailbox: emailContext.sharedMailbox,
       requestingUser: emailContext.requestingUserEmail,
       recipientEmails: emailContext.recipientEmails,
       subject: emailContext.subject,
@@ -231,7 +237,7 @@ export async function sendEventNotificationEmail(emailContext: TEmailContext) {
       iCalMethod: emailContext.iCalMethod,
     });
 
-    await sendEmailMIME(mimeBuffer);
+    await sendEmailMIME(mimeBuffer, emailContext.sharedMailbox);
 
     if (emailContext.notifySharedMailbox) {
       const staffHtmlBody = getStaffNotificationEmailTemplate({
@@ -244,10 +250,10 @@ export async function sendEventNotificationEmail(emailContext: TEmailContext) {
         room: emailContext.roomList,
         title: emailContext.title,
         bookingURL: emailContext.systemBookingURL,
-        supportURL: `mailto:${SHARED_MAILBOX}`,
+        supportURL: `mailto:${emailContext.sharedMailbox}`,
       });
 
-      await sendEmailJSON(SHARED_MAILBOX!, [], emailContext.subject, staffHtmlBody);
+      await sendEmailJSON(emailContext.sharedMailbox!, [], emailContext.subject, staffHtmlBody, emailContext.sharedMailbox);
     }
   } catch (error) {
     console.error('Failed to orchestrate event email notification:', error);
@@ -271,7 +277,13 @@ export async function generateICalendarText(content: {
   method: ICalendarMethod;
   owner: { name: string; email: string };
   attendees?: { name: string; email: string }[];
+  sharedMailbox: string;
 }) {
+  if (!content.sharedMailbox) {
+    console.log('bookingEmail Configuration Variable Not Set');
+    return;
+  }
+
   const wallStartDateTime = format(content.startDateTime, "yyyyMMdd'T'HHmmss", {
     in: tz(content.timezone),
   });
@@ -308,8 +320,6 @@ export async function generateICalendarText(content: {
       ? `EXDATE;TZID=${content.timezone}:${content.rruleCancellations.join(',')}`
       : null;
 
-  const email = SHARED_MAILBOX || 'Unknown';
-
   const escapedTitle = escapeICalText(content.title);
   const escapedDescription = escapeICalText(content.description);
   const escapedRoom = escapeICalText(content.rooms);
@@ -335,7 +345,7 @@ export async function generateICalendarText(content: {
     `STATUS:${content.status}`,
     organizerLine,
     attendeeLine,
-    `CONTACT:${email} / Meeting Room Bookings`,
+    `CONTACT:${content.sharedMailbox} / Meeting Room Bookings`,
     rruleLine,
     rdateLine,
     exdateLine,
@@ -510,9 +520,9 @@ function generateMimePayload(data: {
   return Buffer.from(Buffer.from(rawMimeString, 'utf-8').toString('base64'), 'utf-8');
 }
 
-export async function sendEmailMIME(payloadBuffer: Buffer) {
-  if (!SHARED_MAILBOX) {
-    console.log('SHARED_MAILBOX Environment Variable Not Configured');
+async function sendEmailMIME(payloadBuffer: Buffer, sharedMailbox: string) {
+  if (!sharedMailbox) {
+    console.log('bookingEmail Configuration Variable Not Set');
     return;
   }
 
@@ -529,16 +539,16 @@ export async function sendEmailMIME(payloadBuffer: Buffer) {
 
     const graphClient = Client.initWithMiddleware({ authProvider });
 
-    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail?saveToSentItems=true`).headers({ 'Content-Type': 'text/plain' }).post(payloadBuffer);
+    await graphClient.api(`/users/${sharedMailbox}/sendMail?saveToSentItems=true`).headers({ 'Content-Type': 'text/plain' }).post(payloadBuffer);
   } catch (error) {
     console.error('Execution Failed!');
     console.error(error);
   }
 }
 
-export async function sendEmailJSON(requestingUser: string, notifyUsers: string[], subject: string, htmlContent: string) {
-  if (!SHARED_MAILBOX) {
-    console.log('SHARED_MAILBOX Environment Variable Not Configured');
+export async function sendEmailJSON(requestingUser: string, notifyUsers: string[], subject: string, htmlContent: string, sharedMailbox: string) {
+  if (!sharedMailbox) {
+    console.log('bookingEmail Configuration Variable Not Set');
     return;
   }
 
@@ -580,151 +590,15 @@ export async function sendEmailJSON(requestingUser: string, notifyUsers: string[
   };
 
   try {
-    console.log(`Attempting to send email to ${SHARED_MAILBOX}...`);
+    console.log(`Attempting to send email to ${sharedMailbox}...`);
 
     // Send email
-    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail`).post(mailPayload);
+    await graphClient.api(`/users/${sharedMailbox}/sendMail`).post(mailPayload);
 
     console.log('Email sent successfully!');
   } catch (error: unknown) {
     const err = error as GraphError;
 
     console.error('Failed to send email:', err.body?.error?.message || err.message || 'Unknown Error');
-  }
-}
-
-async function sendStaticMimeTestEmail() {
-  // Hardcoded configuration for testing
-
-  const RECIPIENT_EMAIL = 'j.kahtava@cityssm.on.ca';
-
-  // Fixed boundary strings
-  const boundaryMixed = '----=_Part_Mixed_StaticTest12345';
-  const boundaryAlternative = '----=_Part_Alt_StaticTest12345';
-
-  // 1. Static Professional HTML Body
-  const htmlBody = `
-    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 5px;">
-      <h2 style="color: #0056b3; margin-top: 0;">Meeting Room Booking Confirmation</h2>
-      <p>Hello,</p>
-      <p>Your booking for <strong>Project Sync & Strategy Session</strong> has been processed successfully.</p>
-      <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #0056b3; margin: 20px 0;">
-        <strong>Location:</strong> Boardroom A (Main Floor)<br/>
-        <strong>Time:</strong> 2:00 PM - 3:00 PM (EST)
-      </div>
-      <p>Please use the interactive buttons in your email client header to Accept or Decline this invitation.</p>
-      <hr style="border: 0; border-top: 1px solid #ccc; margin-top: 30px;" />
-      <p style="font-size: 12px; color: #666;">City of Sault Ste. Marie - Meeting Room Bookings</p>
-    </div>
-  `.trim();
-
-  // 2. Static iCalendar Payload (Strictly using \r\n line endings)
-  const iCalText = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//City of Sault Ste. Marie//PropertyBookingSystem//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:REQUEST',
-    'BEGIN:VEVENT',
-    'UID:static-test-uid-99999-2026@saultstemarie.ca',
-    'DTSTAMP:20260616T120000Z',
-    'SEQUENCE:0',
-    'URL:https://www.saultstemarie.ca/bookings',
-    'DTSTART;TZID=America/Toronto:20260617T140000',
-    'DTEND;TZID=America/Toronto:20260617T150000',
-    'TRANSP:OPAQUE',
-    'SUMMARY:Project Sync & Strategy Session',
-    'DESCRIPTION:Static test meeting description generated for Graph API testing.',
-    'LOCATION:Boardroom A (Main Floor)',
-    'CATEGORIES:Meeting Room Booking',
-    'STATUS:CONFIRMED',
-    `ORGANIZER;CN="Meeting Rooms":MAILTO:${SHARED_MAILBOX}`,
-    `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN="Test User":MAILTO:${RECIPIENT_EMAIL}`,
-    'CONTACT:bookings@saultstemarie.ca / Meeting Room Bookings',
-    'BEGIN:VALARM',
-    'ACTION:DISPLAY',
-    'TRIGGER:-PT15M',
-    'DESCRIPTION:Reminder: Project Sync & Strategy Session begins in 15 minutes.',
-    'END:VALARM',
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].join('\r\n');
-
-  // 3. Static Multipart MIME Tree Layout
-  const rawMimeLines = [
-    `From: ${SHARED_MAILBOX}`,
-    `To: ${RECIPIENT_EMAIL}`,
-    'Subject: Booking: Project Sync & Strategy Session',
-    'MIME-Version: 1.0',
-    `Content-Type: multipart/mixed; boundary="${boundaryMixed}"`,
-    '',
-    `--${boundaryMixed}`,
-    `Content-Type: multipart/alternative; boundary="${boundaryAlternative}"`,
-    '',
-    `--${boundaryAlternative}`,
-    'Content-Type: text/plain; charset="utf-8"',
-    'Content-Transfer-Encoding: 7bit',
-    '',
-    'You have a meeting request for Project Sync & Strategy Session. Please use an HTML/Calendar compatible client.',
-    '',
-    `--${boundaryAlternative}`,
-    'Content-Type: text/html; charset="utf-8"',
-    'Content-Transfer-Encoding: 7bit',
-    '',
-    htmlBody,
-    '',
-    `--${boundaryAlternative}`,
-    'Content-Type: text/calendar; charset="utf-8"; method=REQUEST',
-    'Content-Transfer-Encoding: 7bit',
-    '',
-    iCalText,
-    '',
-    `--${boundaryAlternative}--`,
-    '',
-    `--${boundaryMixed}--`,
-  ];
-
-  // Join the entire tree structural map with CRLF
-  const rawMimeString = rawMimeLines.join('\r\n');
-
-  // 4. Transform the final raw output into Base64 format
-  const base64MimeString = Buffer.from(rawMimeString, 'utf-8').toString('base64');
-  const payloadBuffer = Buffer.from(base64MimeString, 'utf-8');
-
-  console.log('Compiling payload and executing request against Microsoft Graph...');
-
-  try {
-    /*const response = await axios.post(graphEndpoint, base64MimeBody, {
-      headers: {
-        'Authorization': `Bearer ${YOUR_GRAPH_ACCESS_TOKEN}`,
-        'Content-Type': 'text/plain'
-      }
-    });*/
-
-    const credential = new ClientSecretCredential(
-      process.env.AZURE_AD_TENANT_ID!,
-      process.env.AZURE_AD_CLIENT_ID!,
-      process.env.AZURE_AD_CLIENT_SECRET!,
-    );
-
-    const authProvider = new TokenCredentialAuthenticationProvider(credential, {
-      scopes: ['https://graph.microsoft.com/.default'],
-    });
-
-    const graphClient = Client.initWithMiddleware({ authProvider });
-
-    await graphClient.api(`/users/${SHARED_MAILBOX}/sendMail`).headers({ 'Content-Type': 'text/plain' }).post(payloadBuffer);
-
-    //console.log('Success! HTTP Status:', response.status);
-    console.log('The static calendar event has been delivered to your test inbox.');
-  } catch (error) {
-    console.error('Execution Failed!');
-    console.error(error);
-    //if (error.response) {
-    //console.error(`Graph Error Status: ${error.response.status}`);
-    //console.error('Graph Error Payload:', JSON.stringify(error.response.data, null, 2));
-    //} else {
-    //console.error('System Exception:', error.message);
-    //}
   }
 }

@@ -4,6 +4,7 @@ import { guardRoute } from '@/lib/api-guard';
 
 import { getMeetingResponseEmailTemplate } from '@/lib/emails/html-templates/meeting-response';
 import { format } from 'date-fns';
+import { findFirstConfiguration } from '@/lib/data/configuration';
 
 export async function POST(request: NextRequest) {
   /*if (!verifySecretHeader(request)) {
@@ -20,6 +21,7 @@ export async function POST(request: NextRequest) {
       }
       const today = new Date().toLocaleString();
 
+      const bookingEmail = await findFirstConfiguration('bookingEmail');
       await sendEmailJSON(
         recipientEmail,
         [sessionUserEmail],
@@ -37,6 +39,7 @@ export async function POST(request: NextRequest) {
           bookingURL: '/bookings/user-view?view=day&selectedDate=' + format(today, 'yyyy-MM-dd'),
           supportURL: '/bookings/user-view?view=day&selectedDate=' + format(today, 'yyyy-MM-dd'),
         }),
+        bookingEmail.value,
       );
 
       return NextResponse.json({ message: 'Email sent successfully' }, { status: 200 });

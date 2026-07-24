@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma';
 import type { Prisma } from '@prisma/client';
-import { TConfigurationKeys } from '../types';
+import { CONFIG_MANIFEST, TConfigurationKeys } from '../types';
 import { z } from 'zod/v4';
 
 export const SConfigurationEntry = z.discriminatedUnion('type', [
@@ -31,6 +31,10 @@ export const SConfigurationEntry = z.discriminatedUnion('type', [
 
 export type TConfigurationEntry = z.infer<typeof SConfigurationEntry>;
 
+export type ConfigurationMap = {
+  [C in (typeof CONFIG_MANIFEST)[number] as C['key']]: C['defaultValue'];
+};
+
 const CONFIGURATION_SELECT = {
   key: true,
   name: true,
@@ -39,47 +43,44 @@ const CONFIGURATION_SELECT = {
   description: true,
 } as const satisfies Prisma.ConfigurationSelect;
 
-export interface IConfigurationRecord {
-  key: TConfigurationKeys;
+export interface IConfigurationRecord<K extends TConfigurationKeys = TConfigurationKeys> {
+  key: K;
   name: string;
-  value: string | number | boolean;
+  value: ConfigurationMap[K];
   type: 'string' | 'number' | 'boolean';
   description: string;
 }
 
-export async function findManyConfiguration(
-  keys: readonly TConfigurationKeys[],
-  tx: Prisma.TransactionClient = prisma,
-): Promise<IConfigurationRecord[]> {
+export async function findManyConfiguration<K extends TConfigurationKeys>(keys: readonly K[]): Promise<Array<IConfigurationRecord<K>>> {
   const where = {
     OR: keys.map((key) => ({ key })),
   };
-  const configEntries = await tx.configuration.findMany({
+  const configEntries = await prisma.configuration.findMany({
     where,
     select: CONFIGURATION_SELECT,
     orderBy: { configurationId: 'asc' },
   });
 
   return configEntries.map((entry) => ({
-    key: entry.key as TConfigurationKeys,
+    key: entry.key as K,
     name: entry.name,
-    value: entry.value,
+    value: entry.value as ConfigurationMap[K],
     type: entry.type as 'string' | 'number' | 'boolean',
     description: entry.description ?? '',
   }));
 }
 
-export async function findFirstConfiguration(key: TConfigurationKeys, tx: Prisma.TransactionClient = prisma): Promise<IConfigurationRecord> {
-  const configEntry = await tx.configuration.findFirstOrThrow({
+export async function findFirstConfiguration<K extends TConfigurationKeys>(key: K): Promise<IConfigurationRecord<K>> {
+  const configEntry = await prisma.configuration.findFirstOrThrow({
     where: { key: key },
     select: CONFIGURATION_SELECT,
     orderBy: { configurationId: 'asc' },
   });
 
   return {
-    key: configEntry.key as TConfigurationKeys,
+    key: configEntry.key as K,
     name: configEntry.name,
-    value: configEntry.value,
+    value: configEntry.value as ConfigurationMap[K],
     type: configEntry.type as 'string' | 'number' | 'boolean',
     description: configEntry.description ?? '',
   };

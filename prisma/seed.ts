@@ -1332,6 +1332,7 @@ async function main() {
   console.log('Seeding Event Items...');
   await FindCreateItem('Coffee');
   await FindCreateItem('Tea');
+  await FindCreateItem('Water');
 
   console.log('Seeding Default Admin...');
   //const memberRole = FindCreateUserRole(roleAdmin.roleId, user.id);

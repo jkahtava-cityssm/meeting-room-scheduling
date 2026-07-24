@@ -42,6 +42,8 @@ export type CalendarScrollColumnProps = {
   userId: string | undefined;
   limitToHours: boolean;
   limitToSpan: boolean;
+  limitToBuffer: boolean;
+  bufferSpan: number;
   hours: number[];
   minHour: number;
   maxHour: number;
@@ -189,6 +191,8 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   hours,
   limitToHours,
   limitToSpan,
+  limitToBuffer = true,
+  bufferSpan = 30,
   minHour,
   maxHour,
   maxSpan,
@@ -204,6 +208,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   const totalBlocks = 60 / validInterval;
 
   const lockDay = limitToSpan && currentDate.getTime() > addDays(new Date(), maxSpan).getTime();
+  const bufferMs = bufferSpan * 60 * 1000;
 
   //
   return (
@@ -252,6 +257,24 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
               {Array.from({ length: totalBlocks }, (_, blockIndex) => {
                 const startMinute = blockIndex * validInterval;
 
+                const slotStartTime = getDateTime(currentDate, hour, startMinute).getTime();
+                const slotEndTime = slotStartTime + validInterval * 60 * 1000;
+
+                // Lock slot if it overlaps with an existing event's buffer window
+                const lockBuffer =
+                  limitToBuffer &&
+                  bufferMs > 0 &&
+                  eventBlocks.some((block) => {
+                    const eventStart = new Date(block.event.startDate).getTime();
+                    const eventEnd = new Date(block.event.endDate).getTime();
+
+                    const bufferedEventStart = eventStart - bufferMs;
+                    const bufferedEventEnd = eventEnd + bufferMs;
+
+                    // Overlap check between current slot interval and buffered event interval
+                    return slotStartTime < bufferedEventEnd && slotEndTime > bufferedEventStart;
+                  });
+
                 return (
                   <Fragment key={`${hour}-${blockIndex}`}>
                     {renderTimeBlock({
@@ -263,7 +286,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
                       totalBlocks,
                       blockIndex,
                       lockDay,
-                      lockHour,
+                      lockHour: lockHour || lockBuffer,
                     })}
                   </Fragment>
                 );
@@ -329,6 +352,7 @@ const TimeBlockEventDrawer = memo(function TimeBlockEventDrawer({
       blockIndex={blockIndex}
       disabled={isDisabled}
       isReadOnly={false}
+      isBlocked={lockHour}
       onClick={openDrawer}
       aria-label={`Create event at ${hour}:${String(startMinute).padStart(2, '0')}`}
     />
@@ -341,10 +365,10 @@ const TimeBlockButton = memo(
     ButtonHTMLAttributes<HTMLButtonElement> & {
       totalBlocks: number;
       blockIndex: number;
-
+      isBlocked: boolean;
       isReadOnly: boolean;
     }
-  >(function TimeBlockButton({ totalBlocks, blockIndex, disabled, isReadOnly, className, ...props }, ref) {
+  >(function TimeBlockButton({ totalBlocks, blockIndex, disabled, isReadOnly, isBlocked, className, ...props }, ref) {
     return (
       <button
         ref={ref}
@@ -354,8 +378,8 @@ const TimeBlockButton = memo(
           'w-full h-full transition-colors relative group flex items-center justify-center',
 
           disabled && !isReadOnly && 'cursor-not-allowed ',
-          !isReadOnly && 'cursor-pointer hover:bg-accent',
-
+          !disabled && 'cursor-pointer hover:bg-accent',
+          isBlocked && 'cursor-not-allowed ',
           className,
         )}
         {...props}

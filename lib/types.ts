@@ -177,6 +177,13 @@ export const CONFIG_MANIFEST = [
     defaultValue: '',
     type: 'string',
   },
+  {
+    key: 'eventBufferSpan',
+    name: 'Event Buffer Span',
+    description: '0 = no limit, determines how many minutes before and after an event are ineligible for bookings.',
+    defaultValue: 30,
+    type: 'number',
+  },
 ] as const;
 
 export type TConfigurationKeys = (typeof CONFIG_MANIFEST)[number]['key'];
