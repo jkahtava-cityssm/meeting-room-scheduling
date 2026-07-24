@@ -3,50 +3,62 @@ import { fetchGET, fetchPUT } from '../fetch-client';
 import z from 'zod/v4';
 
 import { CONFIG_MANIFEST, TConfigurationKeys, TConfigurationRecord } from '../types';
-import { SConfigurationEntry, TConfigurationEntry } from '../data/configuration';
+import { ConfigurationMap, IConfigurationRecord, SConfigurationEntry, TConfigurationEntry } from '../data/configuration';
 import { QueryError } from '@/contexts/ReactQueryProvider';
 import { queryKeys } from './querykeys';
 
-export const useConfigurationQuery = (keys?: TConfigurationKeys[], enabled: boolean = true) => {
+export const useConfigurationQuery = <K extends TConfigurationKeys = TConfigurationKeys>(keys?: readonly K[], enabled: boolean = true) => {
   return useQuery({
-    queryKey: queryKeys.configuration.filtered(keys),
-    queryFn: async () => {
-      const result = await fetchGET<TConfigurationEntry[]>('/api/configuration', keys ? { keys: keys } : undefined);
+    queryKey: queryKeys.configuration.filtered(keys ? [...keys] : undefined),
+    queryFn: async (): Promise<Array<IConfigurationRecord<K>>> => {
+      const result = await fetchGET<unknown[]>('/api/configuration', keys ? { keys: [...keys] } : undefined);
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
 
       if (!parsedResult.success) {
         throw new QueryError('Invalid configuration data', 'useConfigurationQuery', parsedResult.error);
       }
 
-      return parsedResult.data;
+      return parsedResult.data as Array<IConfigurationRecord<K>>;
     },
-    enabled: enabled,
+    enabled,
   });
 };
 
-export const usePrivateConfigurationQuery = (keys?: TConfigurationKeys[], enabled: boolean = true) => {
+export const usePrivateConfigurationQuery = <K extends TConfigurationKeys = TConfigurationKeys>(keys?: readonly K[], enabled: boolean = true) => {
   return useQuery({
-    queryKey: queryKeys.configuration.filtered(keys),
-    queryFn: async () => {
-      const result = await fetchGET<TConfigurationEntry[]>('/api/configuration', keys ? { keys: keys } : undefined);
+    queryKey: queryKeys.configuration.filtered(keys ? [...keys] : undefined),
+    queryFn: async (): Promise<Pick<ConfigurationMap, K>> => {
+      const result = await fetchGET<unknown[]>('/api/configuration', keys ? { keys: [...keys] } : undefined);
       const parsedResult = z.array(SConfigurationEntry).safeParse(result.data);
 
       if (!parsedResult.success) {
         throw new QueryError('Invalid configuration data', 'usePrivateConfigurationQuery', parsedResult.error);
       }
 
-      const defaults = Object.fromEntries(CONFIG_MANIFEST.map((m) => [m.key, m.defaultValue])) as TConfigurationRecord;
+      // 1. Build default values object
+      const defaults = Object.fromEntries(CONFIG_MANIFEST.map((m) => [m.key, m.defaultValue])) as ConfigurationMap;
 
+      // 2. Build overrides object from API response
       const overrides = Object.fromEntries(parsedResult.data.map((entry) => [entry.key, entry.value]));
 
-      const configMap: TConfigurationRecord = {
+      // 3. Combine defaults and overrides
+      const configMap = {
         ...defaults,
         ...overrides,
-      };
+      } as ConfigurationMap;
 
-      return configMap;
+      // Filter keys if specified, otherwise return full configuration map
+      if (keys && keys.length > 0) {
+        const filteredMap = {} as Pick<ConfigurationMap, K>;
+        for (const key of keys) {
+          filteredMap[key] = configMap[key];
+        }
+        return filteredMap;
+      }
+
+      return configMap as Pick<ConfigurationMap, K>;
     },
-    enabled: enabled,
+    enabled,
   });
 };
 
