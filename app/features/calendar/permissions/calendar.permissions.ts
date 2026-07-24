@@ -20,6 +20,7 @@ const PAGE_PERMISSIONS = {
   ViewMyBookingAgenda: { type: 'permission', resource: 'My Bookings', action: 'View Agenda' },
   IgnoreBookingSpan: { type: 'permission', resource: 'Event', action: 'Ignore Booking Span' },
   IgnoreHours: { type: 'permission', resource: 'Event', action: 'Ignore Visible Hours' },
+  IgnoreBookingBuffer: { type: 'permission', resource: 'Event', action: 'Ignore Booking Buffer' },
 } as const satisfies GroupedPermissionRequirement;
 
 export const CalendarPermissions = createClientSecurity(PAGE_PERMISSIONS);
