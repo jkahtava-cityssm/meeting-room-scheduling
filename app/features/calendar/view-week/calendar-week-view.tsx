@@ -13,6 +13,7 @@ import { usePrivateCalendarEvents } from '../webworkers/use-calendar-private-eve
 import { IEventBlock } from '../webworkers/generic-webworker';
 import { CalendarScrollContainerSkeleton } from '../components/calendar-scroll-container-skeleton';
 import { GenericError } from '../../../../components/shared/generic-error';
+import { useConfigurationQuery } from '@/lib/services/configuration';
 
 export function CalendarWeekView({ date, userId }: { date: Date; userId?: string }) {
   const {
@@ -30,6 +31,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
   } = usePrivateCalendar();
 
   const { result, isLoading, error } = usePrivateCalendarEvents('WEEK', date, visibleHours, userId, selectedRoomIds, selectedStatusKeys);
+  const { data } = useConfigurationQuery(['eventBufferSpan']);
 
   useEffect(() => {
     if (isLoading) {
@@ -103,6 +105,7 @@ export function CalendarWeekView({ date, userId }: { date: Date; userId?: string
                     maxHour={visibleHours ? visibleHours.to : 24}
                     minHour={visibleHours ? visibleHours.from : 0}
                     maxSpan={maxSpan}
+                    bufferSpan={data ? data[0].value : 0}
                   />
                 );
               })}

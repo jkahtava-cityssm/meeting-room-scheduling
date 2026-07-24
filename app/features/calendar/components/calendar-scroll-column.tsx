@@ -62,7 +62,7 @@ export type EventBlockRenderProps = {
 };
 
 export function CalendarScrollColumnPrivate(
-  props: Omit<CalendarScrollColumnProps, 'renderTimeBlock' | 'renderEventBlock' | 'limitToHours' | 'limitToSpan'>,
+  props: Omit<CalendarScrollColumnProps, 'renderTimeBlock' | 'renderEventBlock' | 'limitToHours' | 'limitToSpan' | 'limitToBuffer'>,
 ) {
   const { viewport, popoverLayer } = useCalendarViewport();
   const { can, canAny } = CalendarPermissions.usePermissions();
@@ -141,8 +141,10 @@ export function CalendarScrollColumnPrivate(
       minHour={props.minHour}
       maxHour={props.maxHour}
       maxSpan={props.maxSpan}
+      bufferSpan={props.bufferSpan}
       limitToHours={!can('IgnoreHours')}
       limitToSpan={!can('IgnoreBookingSpan')}
+      limitToBuffer={!can('IgnoreBookingBuffer')}
     />
   );
 }
@@ -165,6 +167,7 @@ export function CalendarScrollColumnPublic(props: Omit<CalendarScrollColumnProps
         disabled={true}
         aria-label={`Time slot ${hour}:${String(startMinute).padStart(2, '0')}`}
         isReadOnly={true}
+        isBlocked={false}
       />
     ),
     [],
@@ -191,7 +194,7 @@ const CalendarScrollColumnBase = memo(function CalendarScrollColumnBase({
   hours,
   limitToHours,
   limitToSpan,
-  limitToBuffer = true,
+  limitToBuffer,
   bufferSpan = 30,
   minHour,
   maxHour,

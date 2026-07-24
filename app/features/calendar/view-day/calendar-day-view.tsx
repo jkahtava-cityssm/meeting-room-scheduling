@@ -17,6 +17,7 @@ import { CalendarScrollContainerSkeleton } from '../components/calendar-scroll-c
 import { LucideCalendarDays } from 'lucide-react';
 import { GenericError } from '../../../../components/shared/generic-error';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { useConfigurationQuery, usePrivateConfigurationQuery } from '@/lib/services/configuration';
 
 export function CalendarDayView({ date, userId }: { date: Date; userId?: string }) {
   // const { can } = CalendarPermissions.usePermissions();
@@ -37,6 +38,8 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
   const roomIds = useMemo(() => (visibleRooms ? visibleRooms.map((room) => room.roomId.toString()) : []), [visibleRooms]);
 
   const { result, isLoading, error } = usePrivateCalendarEvents('DAY', date, visibleHours, userId, roomIds, selectedStatusKeys);
+
+  const { data } = useConfigurationQuery(['eventBufferSpan']);
 
   useEffect(() => {
     if (isLoading) {
@@ -125,6 +128,7 @@ export function CalendarDayView({ date, userId }: { date: Date; userId?: string 
                       maxHour={visibleHours ? visibleHours.to : 24}
                       minHour={visibleHours ? visibleHours.from : 0}
                       maxSpan={maxSpan}
+                      bufferSpan={data ? data[0].value : 0}
                     />
                   );
                 })
