@@ -1157,6 +1157,10 @@ export async function saveSystemProcess({
 }
 
 async function deleteAllData() {
+  await prisma.emailQueue.deleteMany();
+  await prisma.systemProcess.deleteMany();
+  await prisma.eventStatusHistory.deleteMany();
+
   await prisma.eventRoom.deleteMany();
   await prisma.eventRecipient.deleteMany();
   await prisma.eventItem.deleteMany();
@@ -1164,17 +1168,14 @@ async function deleteAllData() {
   await prisma.roomRole.deleteMany();
   await prisma.roleResourceAction.deleteMany();
   await prisma.resourceAction.deleteMany();
+  await prisma.userRole.deleteMany();
 
   await prisma.event.deleteMany();
-  await prisma.room.deleteMany();
-  await prisma.userRole.deleteMany();
-  await prisma.sSOProvider.deleteMany();
-  await prisma.account.deleteMany();
-  await prisma.session.deleteMany();
-
   await prisma.recurrence.deleteMany();
   await prisma.recurrenceCancellation.deleteMany();
   await prisma.recurrenceException.deleteMany();
+
+  await prisma.room.deleteMany();
   await prisma.roomCategory.deleteMany();
   await prisma.property.deleteMany();
   await prisma.role.deleteMany();
@@ -1182,8 +1183,12 @@ async function deleteAllData() {
   await prisma.action.deleteMany();
   await prisma.item.deleteMany();
   await prisma.status.deleteMany();
-  await prisma.verification.deleteMany();
   await prisma.configuration.deleteMany();
+
+  await prisma.sSOProvider.deleteMany();
+  await prisma.account.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.verification.deleteMany();
 
   await prisma.user.deleteMany({ where: { NOT: { id: 0 } } });
 }
